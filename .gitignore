@@ -1,0 +1,16 @@
+
+*.pyc
+
+control.err.log
+
+docs/restricted/
+
+local/
+
+settings.json
+
+templates/backups/
+
+test-startup.json
+
+test-working.json

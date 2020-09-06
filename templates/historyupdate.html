@@ -1,0 +1,177 @@
+
+<script>
+var data = {
+		labels: [{{ time_list | safe }}],
+		datasets: [
+				{
+						label: "Grill Temp",
+						fill: false,
+						lineTension: 0.1,
+						backgroundColor: "rgba(0,0,127,0.4)",
+						borderColor: "rgba(0,0,127,1)",
+						borderCapStyle: 'butt',
+						borderDash: [],
+						borderDashOffset: 0.0,
+						borderJoinStyle: 'miter',
+						pointBorderColor: "rgba(0,0,127,1)",
+						pointBackgroundColor: "#fff",
+						pointBorderWidth: 1,
+						pointHoverRadius: 5,
+						pointHoverBackgroundColor: "rgba(0,0,127,0.4)",
+						pointHoverBorderColor: "rgba(0,0,127,1)",
+						pointHoverBorderWidth: 2,
+						pointRadius: 1,
+						pointHitRadius: 10,
+						data: [{{ probe_list[0] }}],
+						spanGaps: false,
+				},
+				{
+						label: "Grill Set Point",
+						fill: false,
+						lineTension: 0.1,
+						backgroundColor: "rgba(0,0,255,0.4)",
+						borderColor: "rgba(0,0,255,1)",
+						borderCapStyle: 'butt',
+						borderDash: [],
+						borderDashOffset: 0.0,
+						borderJoinStyle: 'miter',
+						pointBorderColor: "rgba(0,0,255,1)",
+						pointBackgroundColor: "#fff",
+						pointBorderWidth: 1,
+						pointHoverRadius: 5,
+						pointHoverBackgroundColor: "rgba(0,0,255,0.4)",
+						pointHoverBorderColor: "rgba(0,0,255,1)",
+						pointHoverBorderWidth: 2,
+						pointRadius: 1,
+						pointHitRadius: 10,
+						data: [{{ settemp_list[0] }}],
+						spanGaps: false,
+						{% if probes_enabled[0] == 0 %}
+							hidden: true,
+						{% endif %}
+				},
+				{
+						label: "Probe-1 Temp",
+						fill: false,
+						lineTension: 0.1,
+						backgroundColor: "rgba(256,0,0,0.4)",
+						borderColor: "rgba(256,0,0,1)",
+						borderCapStyle: 'butt',
+						borderDash: [],
+						borderDashOffset: 0.0,
+						borderJoinStyle: 'miter',
+						pointBorderColor: "rgba(256,0,0,1)",
+						pointBackgroundColor: "#fff",
+						pointBorderWidth: 1,
+						pointHoverRadius: 5,
+						pointHoverBackgroundColor: "rgba(256,0,0,0.4)",
+						pointHoverBorderColor: "rgba(256,0,0,1)",
+						pointHoverBorderWidth: 2,
+						pointRadius: 1,
+						pointHitRadius: 10,
+						data: [{{ probe_list[1] }}],
+						spanGaps: false,
+						{% if probes_enabled[1] == 0 %}
+							hidden: true,
+						{% endif %}
+				},
+				{
+						label: "Probe-1 Set Point",
+						fill: false,
+						lineTension: 0.1,
+						backgroundColor: "rgba(127,0,0,0.4)",
+						borderColor: "rgba(127,0,0,1)",
+						borderCapStyle: 'butt',
+						borderDash: [],
+						borderDashOffset: 0.0,
+						borderJoinStyle: 'miter',
+						pointBorderColor: "rgba(127,0,0,1)",
+						pointBackgroundColor: "#fff",
+						pointBorderWidth: 1,
+						pointHoverRadius: 5,
+						pointHoverBackgroundColor: "rgba(127,0,0,0.4)",
+						pointHoverBorderColor: "rgba(127,0,0,1)",
+						pointHoverBorderWidth: 2,
+						pointRadius: 1,
+						pointHitRadius: 10,
+						data: [{{ settemp_list[1] }}],
+						spanGaps: false,
+						{% if probes_enabled[1] == 0 %}
+							hidden: true,
+						{% endif %}
+				},
+				{
+						label: "Probe-2 Temp",
+						fill: false,
+						lineTension: 0.1,
+						backgroundColor: "rgba(0,127,0,0.4)",
+						borderColor: "rgba(0,127,0,1)",
+						borderCapStyle: 'butt',
+						borderDash: [],
+						borderDashOffset: 0.0,
+						borderJoinStyle: 'miter',
+						pointBorderColor: "rgba(0,127,0,1)",
+						pointBackgroundColor: "#fff",
+						pointBorderWidth: 1,
+						pointHoverRadius: 5,
+						pointHoverBackgroundColor: "rgba(0,127,0,0.4)",
+						pointHoverBorderColor: "rgba(0,127,0,1)",
+						pointHoverBorderWidth: 2,
+						pointRadius: 1,
+						pointHitRadius: 10,
+						data: [{{ probe_list[2] }}],
+						spanGaps: false,
+						{% if probes_enabled[2] == 0 %}
+							hidden: true,
+						{% endif %}
+				},
+				{
+						label: "Probe-2 Set Point",
+						fill: false,
+						lineTension: 0.1,
+						backgroundColor: "rgba(0,255,0,0.4)",
+						borderColor: "rgba(0,255,0,1)",
+						borderCapStyle: 'butt',
+						borderDash: [],
+						borderDashOffset: 0.0,
+						borderJoinStyle: 'miter',
+						pointBorderColor: "rgba(0,255,0,1)",
+						pointBackgroundColor: "#fff",
+						pointBorderWidth: 1,
+						pointHoverRadius: 5,
+						pointHoverBackgroundColor: "rgba(0,255,0,0.4)",
+						pointHoverBorderColor: "rgba(0,255,0,1)",
+						pointHoverBorderWidth: 2,
+						pointRadius: 1,
+						pointHitRadius: 10,
+						data: [{{ settemp_list[2] }}],
+						spanGaps: false,
+						{% if probes_enabled[2] == 0 %}
+							hidden: true,
+						{% endif %}
+				}
+		]
+	}
+
+	var temperatureCharts = new Chart(document.getElementById('HistoryChart'), {
+			type: 'line',
+			data: data,
+			options: {
+				scales: {
+						yAxes: [{
+								ticks: {
+										beginAtZero:true
+								}
+						}]
+				},
+				responsive: true,
+				maintainAspectRatio: false,
+				animation: false
+			}
+		});
+
+
+</script>
+<div style="min-height: 400px">
+	<canvas id="HistoryChart" class="table"></canvas>
+</div>

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+		<!-- Redirects on Action -->
+		{% if "shutdown" in action %}
+      <meta http-equiv="refresh" content="30;url=/" />
+    {% elif "reboot" in action %}
+      <meta http-equiv="refresh" content="30;url=/" />
+    {% else %}
+      <meta http-equiv="refresh" content="3;url=/" />
+    {% endif %}
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+
+    <!-- Adding a Favicon -->
+     <link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon" type="image/x-icon" />
+
+    <!-- WebApp Manifest -->
+    <link rel="manifest" href="{{ url_for('manifest') }}">
+
+    <title>PiFire</title>
+
+  </head>
+	<body>
+
+    <div class="container">
+      <br>
+      {% if "shutdown" in action %}
+        <center>
+          <H1>Shutting Down...</H1><br>
+        </center>
+      {% elif "reboot" in action %}
+        <center>
+          <H1>Rebooting...</H1><br>
+          Hang in there, this could take a few minutes.
+        </center>
+      {% else %}
+        <center><H1>Unspecified Action</H1></center>
+      {% endif %}
+      <br>
+			<div class="progress">
+			  <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="80" aria-valuemin="0" aria-valuemax="80" style="width: 100%"></div>
+			</div>
+    </div>
+		<!-- Optional JavaScript -->
+		<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+		<script src="{{ url_for('static', filename='js/jquery-3.4.1.js') }}"></script>
+		<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+
+  </body>
+</html>

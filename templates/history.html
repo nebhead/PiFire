@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+		<!-- Bootstrap CSS -->
+		<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css" />
+
+		<!-- Circliful CSS -->
+		<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" type="text/css" />
+
+		<!-- Adding a Favicon -->
+		<link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon" type="image/x-icon" />
+
+    <!-- WebApp Manifest -->
+    <link rel="manifest" href="{{ url_for('manifest') }}">
+
+    <title>PiFire History</title>
+
+  </head>
+	<body>
+
+		<!-- Navbar Header -->
+		<nav class="navbar sticky-top navbar-dark bg-dark">
+
+			<a class="navbar-brand" href="/index">
+				<img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="30" height="30" class="d-inline-block align-top" alt="">
+				<b>Pi<i class="text-danger">Fire</i></b></a>
+
+				<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+
+				<div class="collapse navbar-collapse" id="navbarNav">
+					<ul class="nav navbar-nav mr-auto">
+						<li class="nav-item">
+							<a class="nav-link" href="/">Dashboard</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="/recipes">Recipes</a>
+						</li>
+						<li class="nav-item active">
+							<a class="nav-link" href="#">History <span class="sr-only">(current)</span></a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="/events">Events</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="/settings">Settings</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="/admin">Admin</a>
+						</li>
+					</ul>
+				</div>
+
+		</nav>
+
+		<br>
+
+		<div class="container theme-showcase" role="main">
+			{% if control['timer']['start'] != 0 %}
+			<div class="row">
+				<div class="col text-center">
+					<!--<div class="card text-center bg-warning shadow">-->
+						<form name="ChangeValues" method="POST">
+							<div class="btn-group shadow">
+								<button type="button" class="btn btn-warning btn-lg"><i class="fas fa-stopwatch"></i>&nbsp; <i id="Timer_Countdown"></i></button>
+								{% if control['timer']['paused'] != 0 %}
+								<button type="submit" data-toggle="tooltip" title="Start the timer" class="btn btn-outline-success border-warning btn-lg" name="start" value='true'><i class="fas fa-play-circle"></i></button>
+								{% else %}
+								<button type="submit" data-toggle="tooltip" title="Pause the timer" class="btn btn-outline-warning btn-lg" name="pause" value='true'><i class="fas fa-pause-circle"></i></button>
+								{% endif %}
+								<button type="submit" data-toggle="tooltip" title="Stop the timer" class="btn btn-outline-danger border-warning btn-lg" name="stop" value='true'><i class="fas fa-stop-circle"></i></button>
+							</div>
+						</form>
+					<!--</div>-->
+				</div>
+			</div>
+			<br>
+			{% endif %}
+
+			<br>
+				<div class="row">
+					<div class="col">
+						<div class="card shadow">
+							<div class="card-header bg-primary text-white">
+								<a href="/history/export" class="btn btn-primary float-right" role="button"><i class="fas fa-file-download"></i></a>
+								<button class="btn btn-primary float-right" type="button" data-toggle="modal" data-target="#clearallhistory"><i class="fas fa-trash-alt"></i></button>
+								<h5><i class="fas fa-history"></i>&nbsp; History</h5>
+							</div>
+			        <div class="card-body">
+								<div class="table-responsive">
+									<div id="refreshdata"></div>
+								</div>
+			        </div> <!-- End of card body -->
+			        <div class="card-footer bg-light">
+								<form name="setmins" action="/history/setmins" method="POST">
+									<div class="input-group">
+										<input id="minutes" name="minutes" type="number" min="1" class="form-control" placeholder="{{ num_mins }}" data-toggle="tooltip" title="Number of Minutes to Display (Note that if your datapoints value is higher than the default (60) in Settings, this may cause very slow loading with large datasets, especially on the RaspberryPi Zero)">
+										<div class="input-group-append">
+											<button class="btn btn-success" type="submit">History (Mins)</button>
+										</div>
+									</div>
+								</form>
+			        </div>
+						</div> <!-- End of Card -->
+					</div> <!-- End of Column -->
+				</div> <!-- End of Row -->
+
+				<div class="container">
+					<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #ebebeb;">
+						<span class="navbar-text">
+
+							<!-- Auto-Refresh Control Section -->
+							<div class="row">
+								<div class="col">
+
+									<form name="refreshmode" method="POST">
+										{% if autorefresh == "off" %}
+										<button class="btn btn-outline-success" type="submit" id="autorefresh" name="autorefresh" value="on"><i class="fas fa-sync-alt"></i> Auto Refresh: OFF</button>
+										{% else %}
+										<button class="btn btn-success" type="submit" id="autorefresh" name="autorefresh" value="off"><i class="fas fa-sync-alt"></i> Auto Refresh: ON</button>
+										{% endif %}
+									</form>
+
+								</div> <!-- End of Column -->
+							</div> <!-- End of Row -->
+
+					  </span>
+		 			</nav>
+				</div> <!-- End of Container -->
+
+		<br>
+		<br>
+		<br>
+
+		<form name="clearhistory" action="/history/clear" method="POST">
+			<div class="modal" id="clearallhistory">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<!-- Modal Header -->
+						<div class="modal-header">
+							<h4 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Clear History</h4>
+							<button type="button" class="close" data-dismiss="modal">&times;</button>
+						</div>
+						<!-- Modal body -->
+						<div class="modal-body text-center">
+							Are you sure that you want to permanently delete the history.log?  This operation cannot be undone.
+						</div>
+						<!-- Modal footer -->
+						<div class="modal-footer">
+							<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+							<button type="submit" class="btn btn-danger" name="clearhistory" value="true">I'm Sure.</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</form>
+
+	<!-- JavaScript -->
+	<!-- jQuery first, then Bootstrap JS -->
+	<script src="{{ url_for('static', filename='js/jquery-3.4.1.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/Chart.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/all.js') }}"></script>
+
+	<script>
+	$(document).ready(function(){
+		$('#refreshdata').load("/historyupdate");
+		{% if autorefresh == 'on' %}
+		setInterval(function(){
+			$('#refreshdata').load("/historyupdate");
+		}, 3000);
+		{% endif %}
+	});
+	</script>
+	{% if control['timer']['start'] != 0 %}
+		<script>
+		// Set the date we're counting down to
+		var countDownDate = {{ control['timer']['end'] }} * 1000;
+		// Update the count down every 1 second
+		var x = setInterval(function() {
+
+		  // Get today's date and time
+		  var now = new Date().getTime();
+
+		  // Find the distance between now and the count down date
+			{% if control['timer']['paused'] == 0 %}
+		  var distance = countDownDate - now;
+			{% else %}
+			var distance = countDownDate - ( {{ control['timer']['paused'] }} * 1000 );
+			{% endif %}
+
+		  // Time calculations for days, hours, minutes and seconds
+		  var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+		  var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+		  var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+		  var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+		  // Display the result in the element with id="demo"
+			if (hours < 10) {
+				var display = "0"
+			}
+			var display = display + hours + " : " ;
+			if (minutes < 10) {
+				var display = display + "0"
+			}
+			var display = display + minutes + " : ";
+			if (seconds < 10) {
+				var display = display + "0"
+			}
+			var display = display + seconds;
+
+		  document.getElementById("Timer_Countdown").innerHTML = display;
+
+		  // If the count down is finished, write some text
+		  if (distance < 0) {
+		    clearInterval(x);
+				var display = " Finished ";
+				document.getElementById("Timer_Countdown").innerHTML = display;
+		  }
+
+		}, 1000);
+		</script>
+	{% endif %}
+
+
+</body>
+</html>

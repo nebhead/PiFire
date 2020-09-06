@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+  <head>
+		<!-- Required meta tags -->
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+		<!-- Bootstrap CSS -->
+		<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css" />
+
+		<!-- Circliful CSS -->
+		<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" type="text/css" />
+
+		<!-- Adding a Favicon -->
+		<link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon" type="image/x-icon" />
+
+		<!-- WebApp Manifest -->
+		<link rel="manifest" href="{{ url_for('manifest') }}">
+
+    <title>PiFire Dashboard</title>
+
+  </head>
+	<body>
+
+		<!-- Navbar Header -->
+		<nav class="navbar sticky-top navbar-dark bg-dark">
+
+			<a class="navbar-brand" href="/">
+				<img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="30" height="30" class="d-inline-block align-top" alt="">
+				<b>Pi<i class="text-danger">Fire</i></b></a>
+
+				<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+
+				<div class="collapse navbar-collapse" id="navbarNav">
+					<ul class="nav navbar-nav mr-auto">
+						<li class="nav-item active">
+							<a class="nav-link" href="#">Dashboard <span class="sr-only">(current)</span></a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="/recipes">Recipes</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="/history">History</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="/events">Events</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="/settings">Settings</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="/admin">Admin</a>
+						</li>
+					</ul>
+				</div>
+
+		</nav>
+
+		<br>
+
+		<div class="container theme-showcase" role="main">
+
+			<!-- Error Notify -->
+      {% if (mode_status == 'error') %}
+        <div class="alert alert-danger alert-dismissible">
+  				<button type="button" class="close" data-dismiss="alert">&times;</button>
+          <b> ERROR OCCURRED. Please check the event logs for more information. </b>
+        </div>
+				<br>
+      {% endif %}
+
+			{% if control['timer']['start'] != 0 %}
+			<div class="row">
+				<div class="col text-center">
+					<!--<div class="card text-center bg-warning shadow">-->
+						<form name="ChangeValues" method="POST">
+							<div class="btn-group shadow">
+								<button type="button" class="btn btn-warning btn-lg"><i class="fas fa-stopwatch"></i>&nbsp; <i id="Timer_Countdown"></i></button>
+								{% if control['timer']['paused'] != 0 %}
+								<button type="submit" data-toggle="tooltip" title="Start the timer" class="btn btn-outline-success border-warning btn-lg" name="start" value='true'><i class="fas fa-play-circle"></i></button>
+								{% else %}
+								<button type="submit" data-toggle="tooltip" title="Pause the timer" class="btn btn-outline-warning btn-lg" name="pause" value='true'><i class="fas fa-pause-circle"></i></button>
+								{% endif %}
+								<button type="submit" data-toggle="tooltip" title="Stop the timer" class="btn btn-outline-danger border-warning btn-lg" name="stop" value='true'><i class="fas fa-stop-circle"></i></button>
+							</div>
+						</form>
+					<!--</div>-->
+				</div>
+			</div>
+			<br>
+			{% endif %}
+
+			<br>
+			<!-- Data Section -->
+			<div class="row">
+
+				<div class="col-lg-4 col-md-6 col-sm-12">
+					<div class="card shadow mt-4">
+				  	<div class="card-body text-center">
+								<div id="GrillTempCircle"></div>
+						</div> <!-- End of card body -->
+						{% if probes_enabled[0] == 1 %}
+						<div class="card-footer text-center">
+							<form name="input" action="/setnotify" method="POST">
+							<div class="btn-group">
+								<button type="button" class="btn btn-outline-primary"><i class="fas fa-temperature-high"></i> <b>Grill</b></button>
+								<a href="/settings" class="btn btn-outline-primary" role="button"><i class="fas fa-cog"></i></a>
+								{% if notify_req['grill'] %}
+  									<button type="submit" class="btn btn-primary" name="grillnotify" value="false"><i class="fas fa-bell"></i> {{ set_points['grill'] }}°F</button>
+								{% else %}
+									<button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#grillnotifyModal"><i class="far fa-bell-slash"></i></button>
+								{% endif %}
+							</div>
+							</form>
+						</div>
+						{% else %}
+						<div class="card-footer text-center">
+							<div class="btn-group">
+								<button type="button" class="btn btn-outline-secondary"><i class="fas fa-temperature-high"></i> Grill Off</button>
+								<a href="/settings" class="btn btn-outline-secondary" role="button"><i class="fas fa-cog"></i></a>
+								<a href="/settings" class="btn btn-outline-secondary" role="button"><i class="far fa-bell-slash"></i></a>
+							</div>
+						</div>
+						{% endif %}					</div> <!-- End of card -->
+				</div> <!-- End of Column -->
+				<br>
+				<br>
+
+				<div class="col-lg-4 col-md-6 col-sm-12">
+					<div class="card shadow mt-4">
+						<div class="card-body text-center">
+							<div id="Probe1TempCircle"></div>
+						</div> <!-- End of card body -->
+						{% if probes_enabled[1] == 1 %}
+						<div class="card-footer text-center">
+							<form name="input" action="/setnotify" method="POST">
+							<div class="btn-group">
+								<button type="button" class="btn btn-outline-primary"><i class="fas fa-temperature-high"></i> <b>Probe 1</b></button>
+								<a href="/settings" class="btn btn-outline-primary" role="button"><i class="fas fa-cog"></i></a>
+								{% if notify_req['probe1'] %}
+  									<button type="submit" class="btn btn-primary" name="probe1notify" value="false"><i class="fas fa-bell"></i> {{ set_points['probe1'] }}°F</button>
+								{% else %}
+									<button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#probe1notifyModal"><i class="far fa-bell-slash"></i></button>
+								{% endif %}
+							</div>
+							</form>
+						</div>
+						{% else %}
+						<div class="card-footer text-center">
+							<div class="btn-group">
+								<button type="button" class="btn btn-outline-secondary"><i class="fas fa-temperature-high"></i> Probe 1 Off</button>
+								<a href="/settings" class="btn btn-outline-secondary" role="button"><i class="fas fa-cog"></i></a>
+								<a href="/settings" class="btn btn-outline-secondary" role="button"><i class="far fa-bell-slash"></i></a>
+							</div>
+						</div>
+						{% endif %}
+					</div> <!-- End of card -->
+				</div> <!-- End of Column -->
+				<br>
+				<br>
+
+				<div class="col-lg-4 col-md-6 col-sm-12">
+					<div class="card shadow mt-4">
+						<div class="card-body text-center">
+							<div id="Probe2TempCircle"></div>
+						</div> <!-- End of card body -->
+						{% if probes_enabled[2] == 1 %}
+						<div class="card-footer text-center">
+							<form name="input" action="/setnotify" method="POST">
+							<div class="btn-group">
+								<button type="button" class="btn btn-outline-primary"><i class="fas fa-temperature-high"></i> <b>Probe 2</b></button>
+								<a href="/settings" class="btn btn-outline-primary" role="button"><i class="fas fa-cog"></i></a>
+								{% if notify_req['probe2'] %}
+  									<button type="submit" class="btn btn-primary" name="probe2notify" value="false"><i class="fas fa-bell"></i> {{ set_points['probe2'] }}°F</button>
+								{% else %}
+									<button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#probe2notifyModal"><i class="far fa-bell-slash"></i></button>
+								{% endif %}
+							</div>
+							</form>
+						</div>
+						{% else %}
+						<div class="card-footer text-center">
+							<div class="btn-group">
+								<button type="button" class="btn btn-outline-secondary"><i class="fas fa-temperature-high"></i> Probe 2 Off</button>
+								<a href="/settings" class="btn btn-outline-secondary" role="button"><i class="fas fa-cog"></i></a>
+								<a href="/settings" class="btn btn-outline-secondary" role="button"><i class="far fa-bell-slash"></i></a>
+							</div>
+						</div>
+						{% endif %}					</div> <!-- End of card -->
+				</div> <!-- End of Column -->
+<br>
+<br>
+			</div> <!-- End of Row -->
+
+			<form name="input" action="/setnotify" method="POST">
+				<div class="modal" id="grillnotifyModal">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<!-- Modal Header -->
+							<div class="modal-header">
+								<h4 class="modal-title"><i class="fas fa-temperature-high"></i> Set Point Temperature</h4>
+								<button type="button" class="close" data-dismiss="modal">&times;</button>
+							</div>
+							<!-- Modal body -->
+							<div class="modal-body text-center">
+									<h1><output name="grilltempOutput" id="grilltempOutputId">{{ set_points['grill'] }}</output>°F</h1>
+									<input type="range" class="custom-range" min="125" max="425" value="{{ set_points['grill'] }}" id="grilltempInputId" name="grilltempInputRange" oninput="grilltempOutputId.value = grilltempInputId.value">
+							</div>
+							<!-- Modal footer -->
+							<div class="modal-footer">
+								<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+								<button type="submit" class="btn btn-danger" name="grillnotify" value="true">Set</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</form>
+
+			<form name="input" action="/setnotify" method="POST">
+				<div class="modal" id="probe1notifyModal">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<!-- Modal Header -->
+							<div class="modal-header">
+								<h4 class="modal-title"><i class="fas fa-temperature-high"></i> Set Point Temperature</h4>
+								<button type="button" class="close" data-dismiss="modal">&times;</button>
+							</div>
+							<!-- Modal body -->
+							<div class="modal-body text-center">
+									<h1><output name="probe1tempOutput" id="probe1tempOutputId">{{ set_points['probe1'] }}</output>°F</h1>
+									<input type="range" class="custom-range" min="0" max="300" value="{{ set_points['probe1'] }}" id="probe1tempInputId" name="probe1tempInputRange" oninput="probe1tempOutputId.value = probe1tempInputId.value">
+							</div>
+							<!-- Modal footer -->
+							<div class="modal-footer">
+								<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+								<button type="submit" class="btn btn-danger" name="probe1notify" value="true">Set</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</form>
+
+			<form name="input" action="/setnotify" method="POST">
+				<div class="modal" id="probe2notifyModal">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<!-- Modal Header -->
+							<div class="modal-header">
+								<h4 class="modal-title"><i class="fas fa-temperature-high"></i> Set Point Temperature</h4>
+								<button type="button" class="close" data-dismiss="modal">&times;</button>
+							</div>
+							<!-- Modal body -->
+							<div class="modal-body text-center">
+									<h1><output name="probe2tempOutput" id="probe2tempOutputId">{{ set_points['probe2'] }}</output>°F</h1>
+									<input type="range" class="custom-range" min="0" max="300" value="{{ set_points['probe2'] }}" id="probe2tempInputId" name="probe2tempInputRange" oninput="probe2tempOutputId.value = probe2tempInputId.value">
+							</div>
+							<!-- Modal footer -->
+							<div class="modal-footer">
+								<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+								<button type="submit" class="btn btn-danger" name="probe2notify" value="true">Set</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</form>
+
+			<br><br>
+
+      <div class="row">
+        <div class="col">
+    			<a href="/history" class="btn btn-outline-primary btn-block shadow" role="button"><i class="fas fa-chart-line"></i> History Graph</a>
+          <br><br>
+          <a href="/events" class="btn btn-outline-primary btn-block shadow" role="button"><i class="fas fa-history"></i> Event Log</a>
+					<br><br>
+					<button type="button" class="btn btn-outline-primary btn-block shadow" data-toggle="modal" data-target="#timerModal"><i class="fas fa-stopwatch"></i>&nbsp;Timer</a>
+        </div> <!-- End of Column -->
+
+				<!-- Timer START Modal -->
+				<form name="timerstart" method="POST">
+					<div class="modal" id="timerModal">
+						<div class="modal-dialog">
+							<div class="modal-content">
+								<!-- Modal Header -->
+								<div class="modal-header">
+									<h4 class="modal-title"><i class="fas fa-clock"></i> Set Timer</h4>
+									<button type="button" class="close" data-dismiss="modal">&times;</button>
+								</div>
+								<!-- Modal body -->
+								<div class="modal-body text-center">
+										<h1><output name="hoursOutput" id="hoursOutputId">0</output> Hours</h1>
+										<input type="range" class="custom-range" min="0" max="23" value="0" id="hoursInputId" name="hoursInputRange" oninput="hoursOutputId.value = hoursInputId.value">
+
+										<h1><output name="minsOutput" id="minsOutputId">0</output> Mins</h1>
+										<input type="range" class="custom-range" min="0" max="59" value="0" id="minsInputId" name="minsInputRange" oninput="minsOutputId.value = minsInputId.value">
+								</div>
+								<!-- Modal footer -->
+								<div class="modal-footer">
+									<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+									<button type="submit" class="btn btn-danger" name="start" value="true">Start</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</form>
+
+      </div> <!-- End of Row -->
+			<br>
+			<br>
+
+		</div> <!-- End main showcase -->
+
+		<form name="input" action="/setmode" method="POST">
+
+		<div class="container">
+			<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #ebebeb;">
+				<span class="navbar-text">
+      		<div id="refreshmedata"></div>
+			  </span>
+ 			</nav>
+		</div> <!-- End of Container -->
+		</form>
+
+		<form name="input" action="/setmode" method="POST">
+			<div class="modal" id="setpointModal">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<!-- Modal Header -->
+						<div class="modal-header">
+							<h4 class="modal-title"><i class="fas fa-temperature-high"></i> Set Point Temperature</h4>
+							<button type="button" class="close" data-dismiss="modal">&times;</button>
+						</div>
+						<!-- Modal body -->
+						<div class="modal-body text-center">
+								<h1><output name="tempOutput" id="tempOutputId">{{ set_points['grill'] }}</output>°F</h1>
+								<input type="range" class="custom-range" min="125" max="425" value="{{ set_points['grill'] }}" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
+						</div>
+						<!-- Modal footer -->
+						<div class="modal-footer">
+							<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+							<button type="submit" class="btn btn-danger" name="setpointtemp" value="true">Set</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</form>
+
+		<br>
+		<br>
+		<br>
+	<!-- Optional JavaScript -->
+	<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+	<script src="{{ url_for('static', filename='js/jquery-3.4.1.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/circliful1.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/all.js') }}"></script>
+
+	<script>
+		$(document).ready(function(){
+			$('#refreshmedata').load("/data");
+			setInterval(function(){
+				$('#refreshmedata').load("/data");
+			}, 2000);
+		});
+	</script>
+	<script>
+		var GrillTempCircle = circliful.newCircle({
+		    percent: (({{ cur_probe_temps[0] }} * 100) / 600),
+		    id: 'GrillTempCircle',
+		    type: 'simple',
+		    foregroundCircleWidth: 10,
+		    startAngle: -180,
+		    backgroundCircleWidth: 10,
+		    text: '{{ cur_probe_temps[0] }}°F',
+		    textReplacesPercentage: true,
+				strokeLinecap: "round",
+		});
+
+		var Probe1TempCircle = circliful.newCircle({
+		    percent: (({{ cur_probe_temps[1] }} * 100) / 600),
+		    id: 'Probe1TempCircle',
+		    type: 'simple',
+		    foregroundCircleWidth: 10,
+		    startAngle: -180,
+		    backgroundCircleWidth: 10,
+		    text: '{{ cur_probe_temps[1] }}°F',
+		    textReplacesPercentage: true,
+				strokeLinecap: "round",
+		});
+
+		var Probe2TempCircle = circliful.newCircle({
+		    percent: (({{ cur_probe_temps[2] }} * 100) / 600),
+		    id: 'Probe2TempCircle',
+		    type: 'simple',
+		    foregroundCircleWidth: 10,
+		    startAngle: -180,
+		    backgroundCircleWidth: 10,
+		    text: '{{ cur_probe_temps[2] }}°F',
+		    textReplacesPercentage: true,
+				strokeLinecap: "round",
+		});
+	</script>
+
+{% if control['timer']['start'] != 0 %}
+	<script>
+	// Set the date we're counting down to
+	var countDownDate = {{ control['timer']['end'] }} * 1000;
+	// Update the count down every 1 second
+	var x = setInterval(function() {
+
+	  // Get today's date and time
+	  var now = new Date().getTime();
+
+	  // Find the distance between now and the count down date
+		{% if control['timer']['paused'] == 0 %}
+	  var distance = countDownDate - now;
+		{% else %}
+		var distance = countDownDate - ( {{ control['timer']['paused'] }} * 1000 );
+		{% endif %}
+
+	  // Time calculations for days, hours, minutes and seconds
+	  var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+	  var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+	  var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+	  var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+	  // Display the result in the element with id="demo"
+		if (hours < 10) {
+			var display = "0"
+		}
+		var display = display + hours + " : " ;
+		if (minutes < 10) {
+			var display = display + "0"
+		}
+		var display = display + minutes + " : ";
+		if (seconds < 10) {
+			var display = display + "0"
+		}
+		var display = display + seconds;
+
+	  document.getElementById("Timer_Countdown").innerHTML = display;
+
+	  // If the count down is finished, write some text
+	  if (distance < 0) {
+	    clearInterval(x);
+			var display = " Finished ";
+			document.getElementById("Timer_Countdown").innerHTML = display;
+	  }
+
+	}, 1000);
+	</script>
+{% endif %}
+
+</body>
+</html>
