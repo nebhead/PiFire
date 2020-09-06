@@ -225,13 +225,13 @@ I've created a script to install this automatically, but it is in ALPHA testing.
 After you've done the above steps to configure your raspberry pi, at the command line type the following:
 
 ```
-curl https://raw.githubusercontent.com/nebhead/spkr-select/master/auto-install/install.sh | bash
+curl https://raw.githubusercontent.com/nebhead/pifire/main/auto-install/install.sh | bash
 ```
 
 OR you may find that it is more reliable to download the script to your raspberry pi first, and execute directly.
 
 ```
-wget https://raw.githubusercontent.com/nebhead/spkr-select/master/auto-install/install.sh
+wget https://raw.githubusercontent.com/nebhead/pifire/main/auto-install/install.sh
 ./install.sh
 ```
 
