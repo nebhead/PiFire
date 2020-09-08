@@ -58,7 +58,7 @@
 
 	Probe1TempCircle.update([
 	{% if probes_enabled[1] == 1 %}
-	      { type: "percent", value: (({{ cur_probe_temps[1] }} * 100) / 600) },
+	      { type: "percent", value: (({{ cur_probe_temps[1] }} * 100) / 300) },
 	      { type: "text", value: "{{ cur_probe_temps[1] }}°F" }
 	{% else %}
 				{ type: "percent", value: 0 },
@@ -68,7 +68,7 @@
 
 	Probe2TempCircle.update([
 	{% if probes_enabled[2] == 1 %}
-	      { type: "percent", value: (({{ cur_probe_temps[2] }} * 100) / 600) },
+	      { type: "percent", value: (({{ cur_probe_temps[2] }} * 100) / 300) },
 	      { type: "text", value: "{{ cur_probe_temps[2] }}°F" }
 	{% else %}
 				{ type: "percent", value: 0 },

@@ -6,11 +6,15 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
 		<!-- Bootstrap CSS -->
-		<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css" />
-
 		<!-- Circliful CSS -->
-		<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" type="text/css" />
-
+		{% if page_theme == 'dark' %}
+		<link rel="stylesheet" href="{{ url_for('static', filename='css/dark.bootstrap.min.css') }}" type="text/css" />
+		<link rel="stylesheet" href="{{ url_for('static', filename='css/dark.main.css') }}" type="text/css" /> 
+		{% else %}
+		<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css" />
+		<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" type="text/css" /> 
+		{% endif %}
+		
 		<!-- Adding a Favicon -->
 		<link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon" type="image/x-icon" />
 
@@ -314,7 +318,12 @@
 		<form name="input" action="/setmode" method="POST">
 
 		<div class="container">
-			<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #ebebeb;">
+			{% if page_theme == 'dark' %}
+			<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #aaaaaa;">
+			{% else %}
+			<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #dddddd;">
+			{% endif %}
+
 				<span class="navbar-text">
       		<div id="refreshmedata"></div>
 			  </span>
@@ -378,7 +387,7 @@
 		});
 
 		var Probe1TempCircle = circliful.newCircle({
-		    percent: (({{ cur_probe_temps[1] }} * 100) / 600),
+		    percent: (({{ cur_probe_temps[1] }} * 100) / 300),
 		    id: 'Probe1TempCircle',
 		    type: 'simple',
 		    foregroundCircleWidth: 10,
@@ -390,7 +399,7 @@
 		});
 
 		var Probe2TempCircle = circliful.newCircle({
-		    percent: (({{ cur_probe_temps[2] }} * 100) / 600),
+		    percent: (({{ cur_probe_temps[2] }} * 100) / 300),
 		    id: 'Probe2TempCircle',
 		    type: 'simple',
 		    foregroundCircleWidth: 10,

@@ -153,7 +153,7 @@ def index(action=None):
 	cur_probe_temps = []
 	cur_probe_temps = ReadCurrent()
 
-	return render_template('index.html', cur_probe_temps=cur_probe_temps, probes_enabled=probes_enabled, set_points=control['setpoints'], current_mode=control['mode'], mode_status=control['status'], notify_req=control['notify_req'], control=control)
+	return render_template('index.html', cur_probe_temps=cur_probe_temps, probes_enabled=probes_enabled, set_points=control['setpoints'], current_mode=control['mode'], mode_status=control['status'], notify_req=control['notify_req'], control=control, page_theme=settings['page_theme'])
 
 @app.route('/data/<action>', methods=['POST','GET'])
 @app.route('/data', methods=['POST','GET'])
@@ -166,7 +166,7 @@ def data_dump(action=None):
 	cur_probe_temps = []
 	cur_probe_temps = ReadCurrent()
 
-	return render_template('data.html', cur_probe_temps=cur_probe_temps, probes_enabled=probes_enabled, set_points=control['setpoints'], current_mode=control['mode'], mode_status=control['status'])
+	return render_template('data.html', cur_probe_temps=cur_probe_temps, probes_enabled=probes_enabled, set_points=control['setpoints'], current_mode=control['mode'], mode_status=control['status'], page_theme=settings['page_theme'])
 
 @app.route('/history/<action>', methods=['POST','GET'])
 @app.route('/history', methods=['POST','GET'])
@@ -278,7 +278,7 @@ def historypage(action=None):
 	data_blob = {}
 	data_blob = prepare_data(num_items, True, settings['datapoints'])
 
-	return render_template('history.html', control=control, time_list=data_blob['time_list'], probe_list=data_blob['probe_list'], settemp_list=data_blob['settemp_list'], cur_probe_temps=data_blob['cur_probe_temps'], probes_enabled=probes_enabled, num_mins=settings['minutes'], autorefresh=settings['autorefresh'])
+	return render_template('history.html', control=control, time_list=data_blob['time_list'], probe_list=data_blob['probe_list'], settemp_list=data_blob['settemp_list'], cur_probe_temps=data_blob['cur_probe_temps'], probes_enabled=probes_enabled, num_mins=settings['minutes'], autorefresh=settings['autorefresh'], page_theme=settings['page_theme'])
 
 @app.route('/historyupdate')
 def historyupdate(action=None):
@@ -301,8 +301,9 @@ def eventspage(action=None):
 	# Show list of logged events and debug event list
 	event_list, num_events = ReadLog()
 	debug_event_list, debug_num_events = DebugRead()
+	settings = ReadSettings()
 
-	return render_template('events.html', event_list=event_list, num_events=num_events, debug_event_list=debug_event_list, debug_num_events=debug_num_events)
+	return render_template('events.html', event_list=event_list, num_events=num_events, debug_event_list=debug_event_list, debug_num_events=debug_num_events, page_theme=settings['page_theme'])
 
 
 @app.route('/recipes', methods=['POST','GET'])
@@ -313,8 +314,9 @@ def recipespage(action=None):
 	# Add a recipe
 	# Delete a Recipe
 	# Run a Recipe
+	settings = ReadSettings()
 
-	return render_template('recipes.html')
+	return render_template('recipes.html', page_theme=settings['page_theme'])
 
 @app.route('/settings/<action>', methods=['POST','GET'])
 @app.route('/settings', methods=['POST','GET'])
@@ -523,6 +525,22 @@ def settingspage(action=None):
 
 		WriteSettings(settings)
 
+	if (request.method == 'POST') and (action == 'pagesettings'):
+		response = request.form
+
+		print(response)
+
+		if('darkmode' in response):
+			if(response['darkmode'] == 'on'):
+				settings['page_theme'] = 'dark'
+		else:
+			settings['page_theme'] = 'light'
+
+		event['type'] = 'updated'
+		event['text'] = 'Successfully updated page settings.'
+
+		WriteSettings(settings)
+
 	if (request.method == 'POST') and (action == 'safety'):
 		response = request.form
 
@@ -554,14 +572,14 @@ def adminpage(action=None):
 		WriteLog(event)
 		DebugWrite(event)
 		os.system("sleep 3 && sudo reboot &")
-		return render_template('shutdown.html', action=action)
+		return render_template('shutdown.html', action=action, page_theme=settings['page_theme'])
 
 	elif action == 'shutdown':
 		event = "Admin: Shutdown"
 		WriteLog(event)
 		DebugWrite(event)
 		os.system("sleep 3 && sudo shutdown -h now &")
-		return render_template('shutdown.html', action=action)
+		return render_template('shutdown.html', action=action, page_theme=settings['page_theme'])
 
 	if (request.method == 'POST') and (action == 'setting'):
 		response = request.form
@@ -760,5 +778,5 @@ def prepare_data(num_items=10, reduce=True, datapoints=60):
 	return(data_blob)
 
 if __name__ == '__main__':
-	app.run(host='0.0.0.0')
-	#app.run(host='0.0.0.0',debug=True) # Use this instead of the above line for debug mode
+	#app.run(host='0.0.0.0')
+	app.run(host='0.0.0.0',debug=True) # Use this instead of the above line for debug mode

@@ -5,8 +5,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-		<!-- Bootstrap CSS -->
-		<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css" />
+	<!-- Bootstrap CSS -->
+	{% if page_theme == 'dark' %}
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/dark.bootstrap.min.css') }}" type="text/css" />
+	{% else %}
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css" />
+	{% endif %}
 
 		<!-- Circliful CSS -->
 		<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" type="text/css" />
@@ -147,8 +151,12 @@
 
 
 				<div class="container">
-					<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #ebebeb;">
-						<span class="navbar-text">
+					{% if page_theme == 'dark' %}
+					<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #aaaaaa;">
+					{% else %}
+					<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #dddddd;">
+					{% endif %}
+								<span class="navbar-text">
 
 							<!-- Refresh Section -->
 							<div class="row">

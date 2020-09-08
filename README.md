@@ -499,7 +499,8 @@ In this section, I'm going to keep a running list of ideas for possible upgrades
 
 ```
 Known Issues
-	Intermittent issue where relays switch very quickly (i.e. no delays) on startup / smoke.  Fixed by going to shutdown mode and selecting startup again.  This issue can be difficult to reproduce, thus still under debug.  
+	* Intermittent issue where relays switch very quickly (i.e. no delays) on startup / smoke.  Fixed by going to shutdown mode and selecting startup again.  This issue can be difficult to reproduce, thus still under debug.  
+	* Issue where sometimes temperature readings from the ADC fail.  Not sure if this is an i2c bus problem or something else.  Does not effect overall functionality, but can be annoying when looking at the history data.  
 
 Ideas for WebUI / App
 	Dashboard
@@ -519,17 +520,23 @@ Ideas for WebUI / App
 
 	Settings
 		New: Name your Smoker (give your install a unique name)
+		New: Dark Mode for when you don't want to be blinded at night.  
 
 	Admin
 		New: Check for Updates / Pull latest updates from GitHub
 
+	API
+		New: API interface to control functions and return JSON data structures for status/history (could be used to develop an Android or iPhone native app)
+
 Ideas for Control process
 	New: Smart Probe Enable (i.e. enable when plugged in, disable when unplugged)
+	New: Physical Buttons / Control Dial for grill control while you are standing in front of it.  
 
 Ideas for display
 	New: Display Probe Temperature
 	New: Display Not Connected to Internet Symbol if not connected
 	New: Display IP Address (or QR Code?) https://pypi.org/project/qrcode/
+	New: Larger display with more display capabilities
 ```
 
 ### Updates

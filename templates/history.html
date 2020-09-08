@@ -5,8 +5,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-		<!-- Bootstrap CSS -->
-		<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css" />
+	<!-- Bootstrap CSS -->
+	{% if page_theme == 'dark' %}
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/dark.bootstrap.min.css') }}" type="text/css" />
+	{% else %}
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css" />
+	{% endif %}
 
 		<!-- Circliful CSS -->
 		<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" type="text/css" />
@@ -91,7 +95,7 @@
 								<button class="btn btn-primary float-right" type="button" data-toggle="modal" data-target="#clearallhistory"><i class="fas fa-trash-alt"></i></button>
 								<h5><i class="fas fa-history"></i>&nbsp; History</h5>
 							</div>
-			        <div class="card-body">
+			        <div class="card-body" style="background-color: #aaaaaa;">
 								<div class="table-responsive">
 									<div id="refreshdata"></div>
 								</div>
@@ -111,7 +115,12 @@
 				</div> <!-- End of Row -->
 
 				<div class="container">
-					<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #ebebeb;">
+					{% if page_theme == 'dark' %}
+					<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #aaaaaa;">
+					{% else %}
+					<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #dddddd;">
+					{% endif %}
+		
 						<span class="navbar-text">
 
 							<!-- Auto-Refresh Control Section -->
