@@ -5,8 +5,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+	<!-- Bootstrap CSS -->
+	{% if settings['page_theme'] == 'dark' %}
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/dark.bootstrap.min.css') }}" type="text/css" />
+	{% else %}
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css" />
+	{% endif %}
 
     <!-- Adding a Favicon -->
      <link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon" type="image/x-icon" />
@@ -391,15 +395,7 @@
 				</div>
 					<br><br><br>
 
-        <!-- Footer -->
-				<div class="container">
-					<nav class="navbar fixed-bottom navbar-light" style="background-color: #e3f2fd;">
-						<span class="navbar-text">
-					    Web Application created by Ben Parmeter, copyright <i class="far fa-copyright"></i> 2020. Licensed under the MIT license. <i class="fas fa-balance-scale"></i> 
-					  </span>
-		 			</nav>
-				</div>
-			<!-- Optional JavaScript -->
+			<!-- JavaScript -->
 			<!-- jQuery first, then Popper.js, then Bootstrap JS -->
 			<script src="{{ url_for('static', filename='js/jquery-3.4.1.js') }}"></script>
 			<script src="{{ url_for('static', filename='js/popper.min.js') }}"></script>

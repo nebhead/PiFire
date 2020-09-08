@@ -6,8 +6,12 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
 		<!-- Bootstrap CSS -->
+		{% if settings['page_theme'] == 'dark' %}
+		<link rel="stylesheet" href="{{ url_for('static', filename='css/dark.bootstrap.min.css') }}" type="text/css" />
+		{% else %}
 		<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css" />
-
+		{% endif %}
+		
 		<!-- Circliful CSS -->
 		<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" type="text/css" />
 

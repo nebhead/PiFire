@@ -68,6 +68,8 @@ def DefaultSettings():
 		'maxtemp' : 500 # User Defined. If temp exceeds this value in any mode, shut off.  (including monitor mode)
 	}
 
+	settings['page_theme'] = 'light'
+
 	return settings
 
 def DefaultControl():

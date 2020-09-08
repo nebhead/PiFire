@@ -5,10 +5,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+	<!-- Bootstrap CSS -->
+	{% if settings['page_theme'] == 'dark' %}
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/dark.bootstrap.min.css') }}" type="text/css" />
+	{% else %}
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css" />
+	{% endif %}
 
-		<!-- Settings CSS -->
+	<!-- Settings CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
 
     <!-- Adding a Favicon -->
@@ -520,6 +524,30 @@
 		</div> <!-- End of Column -->
 </div> <!-- End of Row -->
 
+		<!-- ============================ Page Settings ========================== -->
+		<br>
+		<div class="row">
+			<div class="col">
+				<div class="card shadow">
+
+					<form name="pagesettings" action="/settings/pagesettings" method="POST">
+
+						<div class="card-header bg-primary text-white"><h5><i class="fas fa-tools"></i>&nbsp; Page Settings</h5></div>
+						<div class="card-body">
+							<div class="custom-control custom-switch">
+								<input type="checkbox" class="custom-control-input" id="darkmode" name="darkmode" {% if settings['page_theme'] == 'dark' %}checked{% endif %}>
+						    <label class="custom-control-label" for="darkmode">Enable Dark Mode</label>
+						  </div>
+						<br>
+
+						</div> <!-- End of card body -->
+						<div class="card-footer bg-light">
+								<button type="submit" class="btn btn-outline-primary">Save</button>
+						</div>
+					</form>
+				</div> <!-- End of Card -->
+			</div> <!-- End of Column -->
+		</div> <!-- End of Row -->
 
 		<!-- ========================== Notification Types ========================== -->
 			<br>
