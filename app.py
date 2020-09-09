@@ -778,5 +778,5 @@ def prepare_data(num_items=10, reduce=True, datapoints=60):
 	return(data_blob)
 
 if __name__ == '__main__':
-	#app.run(host='0.0.0.0')
-	app.run(host='0.0.0.0',debug=True) # Use this instead of the above line for debug mode
+	app.run(host='0.0.0.0')
+	#app.run(host='0.0.0.0',debug=True) # Use this instead of the above line for debug mode

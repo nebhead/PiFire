@@ -520,7 +520,6 @@ Ideas for WebUI / App
 
 	Settings
 		New: Name your Smoker (give your install a unique name)
-		New: Dark Mode for when you don't want to be blinded at night.  
 
 	Admin
 		New: Check for Updates / Pull latest updates from GitHub
