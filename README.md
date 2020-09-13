@@ -499,7 +499,6 @@ In this section, I'm going to keep a running list of ideas for possible upgrades
 
 ```
 Known Issues
-	* Intermittent issue where relays switch very quickly (i.e. no delays) on startup / smoke.  Fixed by going to shutdown mode and selecting startup again.  This issue can be difficult to reproduce, thus still under debug.  
 	* Issue where sometimes temperature readings from the ADC fail.  Not sure if this is an i2c bus problem or something else.  Does not effect overall functionality, but can be annoying when looking at the history data.  
 
 Ideas for WebUI / App
