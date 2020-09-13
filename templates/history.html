@@ -95,7 +95,7 @@
 								<button class="btn btn-primary float-right" type="button" data-toggle="modal" data-target="#clearallhistory"><i class="fas fa-trash-alt"></i></button>
 								<h5><i class="fas fa-history"></i>&nbsp; History</h5>
 							</div>
-			        <div class="card-body" style="background-color: #aaaaaa;">
+			        <div class="card-body" {% if page_theme == 'dark' %} style="background-color: #aaaaaa;"{% endif %}>
 								<div class="table-responsive">
 									<div id="refreshdata"></div>
 								</div>
