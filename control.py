@@ -173,7 +173,8 @@ def WorkCycle(mode, grill_platform, adc_device, display_device):
 					event = 'Switch set to off, going to monitor mode.'
 					WriteLog(event)
 					control['updated'] = True # Change mode
-					control['mode'] == 'Monitor'
+					control['mode'] = 'Stop'
+					control['statu'] = 'active'
 					WriteControl(control)
 
 					break
@@ -382,10 +383,11 @@ def Monitor(grill_platform, adc_device, display_device):
 			last = grill_platform.GetInputStatus()
 			if(last == 1):
 				status = 'Inactive'
-				event = 'Switch set to off, going to monitor mode.'
+				event = 'Switch set to off, going to Stop mode.'
 				WriteLog(event)
 				control['updated'] = True # Change mode
-				control['mode'] == 'Monitor'
+				control['mode'] == 'Stop'
+				control['status'] == 'active'
 				WriteControl(control)
 				break
 
@@ -504,10 +506,11 @@ def Manual_Mode(grill_platform, adc_device, display_device):
 			last = grill_platform.GetInputStatus()
 			if(last == 1):
 				status = 'Inactive'
-				event = 'Switch set to off, going to monitor mode.'
+				event = 'Switch set to off, going to Stop mode.'
 				WriteLog(event)
 				control['updated'] = True # Change mode
-				control['mode'] == 'Monitor'
+				control['mode'] == 'Stop'
+				control['status'] == 'active'
 				WriteControl(control)
 				break
 
@@ -836,6 +839,7 @@ while True:
 
 		# Clear control flag
 		control['updated'] = False # Reset Control Updated to False to acknowledge
+		WriteControl(control) # Commit change in 'updated' status to the file 
 
 		# Check if there was an Error flagged in Monitor Mode - If no, then change status to active
 		if(control['status'] != 'monitor') and (control['mode'] != 'Error'):
@@ -849,7 +853,7 @@ while True:
 			if(control['status'] == 'monitor') and (control['mode'] == 'Error'):
 				grill_platform.PowerOn()
 			else:
-				grill_platform.PowerOn()
+				grill_platform.PowerOff()
 			if(control['mode'] == 'Stop'):
 				display_device.ClearDisplay() # When in error mode, leave the display showing ERROR
 				control['status'] = 'inactive'
@@ -866,6 +870,10 @@ while True:
 			WriteControl(control)
 		#	a. Startup (startup sequence)
 		elif (control['mode'] == 'Startup'):
+			if(grill_platform.GetInputStatus() == 1):
+				event = "Warning: PiFire is set to OFF. This doesn't prevent startup, but this means the switch won't behave as normal."
+				WriteLog(event)
+				DebugWrite(event)
 			settings = ReadSettings()
 			if(settings['clearhistoryonstart'] == True):
 				DebugWrite('Clearing History and Current Log on Startup Mode.')
