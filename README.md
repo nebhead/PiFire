@@ -39,6 +39,10 @@ This is what PiFire looks like on your mobile device.
 
 ![Mobile History](docs/webui/PiFire-Mobile-01.jpg)
 
+Example comparison that I did on a real cook of the Traeger controller attempting to hold 275F and the PiFire holding at the same temperature.  The difference is very impressive.  The Traeger swings massively up to 25F over and under the set temperature.  However the PID in from PiSmoker does a great job holding roughly +-7 degrees.  And this is without any extra tuning. 
+
+![Performance](docs/photos/SW-Performance.jpg)
+
 Here's a brief YouTube video giving a basic overview of the PiFire web interfaces.
 
 ##### PiFire Demo Video
