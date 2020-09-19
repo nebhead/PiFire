@@ -263,7 +263,7 @@ Save and exit.
 ```
 sudo apt update
 sudo apt upgrade
-sudo apt install python3-dev python3-pip python3-pil libfreetype6-dev libjpeg-dev build-essential libopenjp2-7 libtiff5 nginx git gunicorn3 supervisor -y
+sudo apt install python3-dev python3-pip python3-pil libfreetype6-dev libjpeg-dev build-essential libopenjp2-7 libtiff5 nginx git gunicorn3 supervisor ttf-mscorefonts-installer -y
 sudo pip3 install flask luma.oled ADS1115
 
 git clone https://github.com/nebhead/pifire
