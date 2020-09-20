@@ -13,8 +13,7 @@
 # *****************************************
 
 # Set this to False on Raspberry Pi Host ()
-prototype_mode = False
-prototype_mode = True # Comment out this line to disable TEST / Prototype mode
+prototype_mode = False # Set this to True to enable TEST / Prototype mode
 
 # *****************************************
 # Imported Libraries
