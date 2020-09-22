@@ -66,8 +66,9 @@ class ReadADC:
 
 		else:
 			tempF = 0.0
+			Tr = 0
 
-		return tempF
+		return tempF, Tr  # Return Calculated Temperature and Thermistor Value in Ohms
 
 	def ReadAllPorts(self):
 		adc_value = [0,0,0]
@@ -80,13 +81,20 @@ class ReadADC:
 			now = str(datetime.datetime.now())
 			now = now[0:19] # Truncate the microseconds
 			print(str(now) + ' Error Reading Temperature.')
-			return(0,0,0)
+			adc_data = {}
+			adc_data['GrillTemp'] = 0
+			adc_data['GrillTr'] = 0 
+			adc_data['Probe1Temp'] = 0
+			adc_data['Probe1Tr'] = 0
+			adc_data['Probe2Temp'] = 0
+			adc_data['Probe2Tr'] = 0
+			return(adc_data)
 
-		GrillTemp = self.adctotemp(adc_value[0], self.grill_probe_profile)
-		#print('Grill Temp = ' + str(GrillTemp) + 'F')
-		Probe1Temp = self.adctotemp(adc_value[1], self.probe_01_profile)
-		#print('Probe 1 Temp = ' + str(Probe1Temp) + 'F')
-		Probe2Temp = self.adctotemp(adc_value[2], self.probe_02_profile)
-		#print('Probe 2 Temp = ' + str(Probe2Temp) + 'F')
+		adc_data = {}
+		adc_data['GrillTemp'], adc_data['GrillTr'] = self.adctotemp(adc_value[0], self.grill_probe_profile)
 
-		return (GrillTemp, Probe1Temp, Probe2Temp)
+		adc_data['Probe1Temp'], adc_data['Probe1Tr'] = self.adctotemp(adc_value[1], self.probe_01_profile)
+
+		adc_data['Probe2Temp'], adc_data['Probe2Tr'] = self.adctotemp(adc_value[2], self.probe_02_profile)
+
+		return (adc_data)
