@@ -33,28 +33,31 @@ class Display:
 				font = ImageFont.truetype("impact.ttf", 42)
 				text = str(in_data['GrillTemp'])[:5]
 				(font_width, font_height) = font.getsize(text)
-				draw.text((128//2 - font_width//2, 64//2 - font_height//2), text, font=font, fill=255)
+				draw.text((128//2 - font_width//2,0), text, font=font, fill=255)
 				# Active Outputs F = Fan, I = Igniter, A = Auger (Upper Left)
-				font = ImageFont.truetype("trebuc.ttf", 24)
-				text = ''
+				font = ImageFont.truetype("FA-Free-Solid.otf", 24)
 				if(status_data['outpins']['fan']==0):
-					text = 'F '
+					text = '\uf863'
+					draw.text((0, 0), text, font=font, fill=255)
 				if(status_data['outpins']['igniter']==0):
-					text += 'I '
+					text = '\uf46a'
+					(font_width, font_height) = font.getsize(text)
+					draw.text((0, 5 + (64//2 - font_height//2)), text, font=font, fill=255)
 				if(status_data['outpins']['auger']==0):
-					text += 'A '
-				draw.text((0, 0), text, font=font, fill=255)
+					text = '\uf101'
+					(font_width, font_height) = font.getsize(text)
+					draw.text((128 - font_width, 5 + (64//2 - font_height//2)), text, font=font, fill=255)
 				# Current Mode (Bottom Left)
 				font = ImageFont.truetype("trebuc.ttf", 18)
 				text = status_data['mode'] + ' Mode.'
 				(font_width, font_height) = font.getsize(text)
 				draw.text((0, 64 - font_height), text, font=font, fill=255)
 				# Notification Indicator (Upper Right)
-				font = ImageFont.truetype("trebuc.ttf", 24)
+				font = ImageFont.truetype("FA-Free-Solid.otf", 24)
 				text = ' '
 				for item in status_data['notify_req']:
 					if status_data['notify_req'][item] == True:
-						text = '*'
+						text = '\uf0f3'
 				(font_width, font_height) = font.getsize(text)
 				draw.text((128 - font_width, 0), text, font=font, fill=255)
 
