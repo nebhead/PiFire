@@ -26,17 +26,42 @@ class Display:
 		self.DisplaySplash()
 		time.sleep(3) # Keep the splash up for three seconds on boot-up - you can certainly disable this if you want 
 
-	def DisplayTemp(self, temp):
+	def DisplayStatus(self, in_data, status_data):
 		with canvas(self.device) as draw:
-			font = ImageFont.truetype("impact.ttf", 42)
-			text = str(temp)[:5]
-			(font_width, font_height) = font.getsize(text)
 			try:
+				# Grill Temperature (Large Centered) 
+				font = ImageFont.truetype("impact.ttf", 42)
+				text = str(in_data['GrillTemp'])[:5]
+				(font_width, font_height) = font.getsize(text)
 				draw.text((128//2 - font_width//2, 64//2 - font_height//2), text, font=font, fill=255)
+				# Active Outputs F = Fan, I = Igniter, A = Auger (Upper Left)
+				font = ImageFont.truetype("trebuc.ttf", 24)
+				text = ''
+				if(status_data['outpins']['fan']==0):
+					text = 'F '
+				if(status_data['outpins']['igniter']==0):
+					text += 'I '
+				if(status_data['outpins']['auger']==0):
+					text += 'A '
+				draw.text((0, 0), text, font=font, fill=255)
+				# Current Mode (Bottom Left)
+				font = ImageFont.truetype("trebuc.ttf", 18)
+				text = status_data['mode'] + ' Mode.'
+				(font_width, font_height) = font.getsize(text)
+				draw.text((0, 64 - font_height), text, font=font, fill=255)
+				# Notification Indicator (Upper Right)
+				font = ImageFont.truetype("trebuc.ttf", 24)
+				text = ' '
+				for item in status_data['notify_req']:
+					if status_data['notify_req'][item] == True:
+						text = '*'
+				(font_width, font_height) = font.getsize(text)
+				draw.text((128 - font_width, 0), text, font=font, fill=255)
+
 			except:
 				now = str(datetime.datetime.now())
 				now = now[0:19] # Truncate the microseconds
-				print(str(now) + ' Error displaying temperature.')
+				print(str(now) + ' Error displaying status.')
 
 	def DisplaySplash(self):
 		frameSize = (128, 64)

@@ -13,7 +13,8 @@
 # *****************************************
 
 # Set this to False on Raspberry Pi Host ()
-prototype_mode = False # Set this to True to enable TEST / Prototype mode
+prototype_mode = False
+#prototype_mode = True # Comment out this line to disable TEST / Prototype mode
 
 # *****************************************
 # Imported Libraries
@@ -41,6 +42,24 @@ else:
 # *****************************************
 # Function Definitions
 # *****************************************
+
+def GetStatus(grill_platform, control, settings):
+	# *****************************************
+	# Get Status Details for Display Function
+	# *****************************************
+	status_data = {}
+	status_data['outpins'] = {}
+
+	current = grill_platform.GetOutputStatus()	# Get current pin settings
+	for item in settings['outpins']:
+		status_data['outpins'][item] = current[item]
+	
+	status_data['mode'] = control['mode'] # Get current mode
+	status_data['notify_req'] = control['notify_req'] # Get any flagged notificiations
+	status_data['timer'] = control['timer'] # Get the timer information
+	status_data['ipaddress'] = '192.168.10.43' # Future implementation (TODO)
+
+	return(status_data)
 
 def WorkCycle(mode, grill_platform, adc_device, display_device):
 	# *****************************************
@@ -107,12 +126,13 @@ def WorkCycle(mode, grill_platform, adc_device, display_device):
 	probe2type = settings['probe_types']['probe2type']
 
 	adc_device.SetProfiles(settings['probe_profiles'][grill0type], settings['probe_profiles'][probe1type], settings['probe_profiles'][probe2type])
+	
+	adc_data = {}
+	adc_data = adc_device.ReadAllPorts()
 
-	GrillTemp, Probe1Temp, Probe2Temp = adc_device.ReadAllPorts()
-
-	AvgGT = GrillTemp
-	AvgP1 = Probe1Temp
-	AvgP2 = Probe2Temp
+	AvgGT = adc_data['GrillTemp']
+	AvgP1 = adc_data['Probe1Temp']
+	AvgP2 = adc_data['Probe2Temp']
 
 	status = 'Active'
 
@@ -205,18 +225,19 @@ def WorkCycle(mode, grill_platform, adc_device, display_device):
 
 			adc_device.SetProfiles(settings['probe_profiles'][grill0type], settings['probe_profiles'][probe1type], settings['probe_profiles'][probe2type])
 
-			GrillTemp, Probe1Temp, Probe2Temp = adc_device.ReadAllPorts()
+			adc_data = {}
+			adc_data = adc_device.ReadAllPorts()
 
-			if(GrillTemp != 0):
-				AvgGT = (GrillTemp + AvgGT) / 2
+			if(adc_data['GrillTemp'] != 0):
+				AvgGT = (adc_data['GrillTemp'] + AvgGT) / 2
 
-			AvgP1 = (Probe1Temp + AvgP1) / 2
-			AvgP2 = (Probe2Temp + AvgP2) / 2
+			AvgP1 = (adc_data['Probe1Temp'] + AvgP1) / 2
+			AvgP2 = (adc_data['Probe2Temp'] + AvgP2) / 2
 
 			# Write History after 3 seconds has passed
 			if (now - temptoggletime > 3):
 				temptoggletime = time.time()
-				in_data = DefaultTempStuct()
+				in_data = {}
 				in_data['GrillTemp'] = int(AvgGT)
 				in_data['GrillSetPoint'] = control['setpoints']['grill']
 				in_data['Probe1Temp'] = int(AvgP1)
@@ -224,7 +245,8 @@ def WorkCycle(mode, grill_platform, adc_device, display_device):
 				in_data['Probe2Temp'] = int(AvgP2)
 				in_data['Probe2SetPoint'] = control['setpoints']['probe2']
 				WriteHistory(in_data)
-				display_device.DisplayTemp(in_data['GrillTemp'])
+				status_data = GetStatus(grill_platform, control, settings)
+				display_device.DisplayStatus(in_data, status_data)
 				RefreshControlData = CheckNotify(in_data)
 
 				# Safety Controls
@@ -358,11 +380,12 @@ def Monitor(grill_platform, adc_device, display_device):
 
 	adc_device.SetProfiles(settings['probe_profiles'][grill0type], settings['probe_profiles'][probe1type], settings['probe_profiles'][probe2type])
 
-	GrillTemp, Probe1Temp, Probe2Temp = adc_device.ReadAllPorts()
+	adc_data = {}
+	adc_data = adc_device.ReadAllPorts()
 
-	AvgGT = GrillTemp
-	AvgP1 = Probe1Temp
-	AvgP2 = Probe2Temp
+	AvgGT = adc_data['GrillTemp']
+	AvgP1 = adc_data['Probe1Temp']
+	AvgP2 = adc_data['Probe2Temp']
 
 	# Set time since toggle for temperature
 	temptoggletime = time.time()
@@ -403,16 +426,17 @@ def Monitor(grill_platform, adc_device, display_device):
 
 		adc_device.SetProfiles(settings['probe_profiles'][grill0type], settings['probe_profiles'][probe1type], settings['probe_profiles'][probe2type])
 
-		GrillTemp, Probe1Temp, Probe2Temp = adc_device.ReadAllPorts()
+		adc_data = {}
+		adc_data = adc_device.ReadAllPorts()
 
-		AvgGT = (GrillTemp + AvgGT) / 2
-		AvgP1 = (Probe1Temp + AvgP1) / 2
-		AvgP2 = (Probe2Temp + AvgP2) / 2
+		AvgGT = (adc_data['GrillTemp'] + AvgGT) / 2
+		AvgP1 = (adc_data['Probe1Temp'] + AvgP1) / 2
+		AvgP2 = (adc_data['Probe2Temp'] + AvgP2) / 2
 
 		# Write History after 3 seconds has passed
 		if (now - temptoggletime > 3):
 			temptoggletime = time.time()
-			in_data = DefaultTempStuct()
+			in_data = {}
 			in_data['GrillTemp'] = int(AvgGT)
 			in_data['GrillSetPoint'] = control['setpoints']['grill']
 			in_data['Probe1Temp'] = int(AvgP1)
@@ -420,7 +444,8 @@ def Monitor(grill_platform, adc_device, display_device):
 			in_data['Probe2Temp'] = int(AvgP2)
 			in_data['Probe2SetPoint'] = control['setpoints']['probe2']
 			WriteHistory(in_data)
-			display_device.DisplayTemp(in_data['GrillTemp'])
+			status_data = GetStatus(grill_platform, control, settings)
+			display_device.DisplayStatus(in_data, status_data)
 			CheckNotify(in_data)
 
 			# Safety Control Section
@@ -481,11 +506,12 @@ def Manual_Mode(grill_platform, adc_device, display_device):
 
 	adc_device.SetProfiles(settings['probe_profiles'][grill0type], settings['probe_profiles'][probe1type], settings['probe_profiles'][probe2type])
 
-	GrillTemp, Probe1Temp, Probe2Temp = adc_device.ReadAllPorts()
+	adc_data = {}
+	adc_data = adc_device.ReadAllPorts()
 
-	AvgGT = GrillTemp
-	AvgP1 = Probe1Temp
-	AvgP2 = Probe2Temp
+	AvgGT = adc_data['GrillTemp']
+	AvgP1 = adc_data['Probe1Temp']
+	AvgP2 = adc_data['Probe2Temp']
 
 	# Set time since toggle for temperature
 	temptoggletime = time.time()
@@ -553,16 +579,17 @@ def Manual_Mode(grill_platform, adc_device, display_device):
 
 		adc_device.SetProfiles(settings['probe_profiles'][grill0type], settings['probe_profiles'][probe1type], settings['probe_profiles'][probe2type])
 
-		GrillTemp, Probe1Temp, Probe2Temp = adc_device.ReadAllPorts()
+		adc_data = {}
+		adc_data = adc_device.ReadAllPorts()
 
-		AvgGT = (GrillTemp + AvgGT) / 2
-		AvgP1 = (Probe1Temp + AvgP1) / 2
-		AvgP2 = (Probe2Temp + AvgP2) / 2
+		AvgGT = (adc_data['GrillTemp'] + AvgGT) / 2
+		AvgP1 = (adc_data['Probe1Temp'] + AvgP1) / 2
+		AvgP2 = (adc_data['Probe2Temp'] + AvgP2) / 2
 
 		# Write History after 3 seconds has passed
 		if (now - temptoggletime > 3):
 			temptoggletime = time.time()
-			in_data = DefaultTempStuct()
+			in_data = {}
 			in_data['GrillTemp'] = int(AvgGT)
 			in_data['GrillSetPoint'] = control['setpoints']['grill']
 			in_data['Probe1Temp'] = int(AvgP1)
@@ -570,8 +597,9 @@ def Manual_Mode(grill_platform, adc_device, display_device):
 			in_data['Probe2Temp'] = int(AvgP2)
 			in_data['Probe2SetPoint'] = control['setpoints']['probe2']
 			WriteHistory(in_data)
-			display_device.DisplayTemp(in_data['GrillTemp'])
-			CheckNotify(in_data)
+			status_data = GetStatus(grill_platform, control, settings)
+			display_device.DisplayStatus(in_data, status_data)
+			CheckNotify(in_data) 
 
 		time.sleep(0.5)
 

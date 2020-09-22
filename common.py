@@ -65,7 +65,8 @@ def DefaultSettings():
 	settings['safety'] = {
 		'minstartuptemp' : 75, # User Defined. Minimum temperature allowed for startup.
 		'maxstartuptemp' : 100, # User Defined. Take this value if the startup temp is higher than maxstartuptemp
-		'maxtemp' : 500 # User Defined. If temp exceeds this value in any mode, shut off.  (including monitor mode)
+		'maxtemp' : 500, # User Defined. If temp exceeds this value in any mode, shut off.  (including monitor mode)
+		'reignitetries' : 0, # Number of tries to reignite the grill if it has gone below the safe temperature (set to 0 to disable) (TODO)
 	}
 
 	settings['page_theme'] = 'light'
@@ -84,7 +85,7 @@ def DefaultControl():
 	control['status'] = ''
 
 	control['setpoints'] = {
-		'grill' : 150,
+		'grill' : 0,
 		'probe1' : 0,
 		'probe2' : 0
 	}
@@ -152,18 +153,6 @@ def DefaultRecipes():
 	}
 
 	return recipes
-
-def DefaultTempStuct():
-	tempstruct = {}
-
-	tempstruct['GrillTemp'] = 0
-	tempstruct['GrillSetPoint'] = 0
-	tempstruct['Probe1Temp'] = 0
-	tempstruct['Probe1SetPoint'] = 0
-	tempstruct['Probe2Temp'] = 0
-	tempstruct['Probe2SetPoint'] = 0
-
-	return tempstruct
 
 def DefaultProbeProfiles():
 
