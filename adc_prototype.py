@@ -22,7 +22,7 @@ class ReadADC:
 		self.SetProfiles(grill_probe_profile, probe_01_profile, probe_02_profile)
 
 		self.adc_data = {}
-		self.adc_data['GrillTemp'] = 125	# Fake starting temperature for prototype only
+		self.adc_data['GrillTemp'] = 55		# Fake starting temperature for prototype only
 		self.adc_data['Probe1Temp'] = 32	# Fake starting temperature for prototype only
 		self.adc_data['Probe2Temp'] = 42	# Fake starting temperature for prototype only
 
@@ -33,44 +33,9 @@ class ReadADC:
 
 	def adctotemp(self, adc_value, probe_profile):
 		# Since this is just a prototype module, and data is simulated, this function is not used. 
-		if(adc_value > 0) and (adc_value < (probe_profile['Vs'] * 1000)):
-			# Voltage at the divider (i.e. input to the ADC)
-			Vo = (adc_value / 1000) # mV to V of ADC (at the divider)
-
-			# Thermistor Resistor Value Ohms (R1)
-			# R1 = ( (Vin * R2) - (Vout * R2) ) / Vout
-			# Tr = ((probe_profile['Vs'] * probe_profile['Rd']) - (Vo * probe_profile['Rd'])) / Vo
-			# R2 = ( Vout * R1 ) / ( Vin - Vout )
-			Tr = ( Vo * probe_profile['Rd']) / ( probe_profile['Vs'] - Vo )
-
-			# Coefficient a, b, & c values
-
-			a = probe_profile['A']
-			b = probe_profile['B']
-			c = probe_profile['C']
-
-		    #Steinhart Hart Equation
-
-			# 1/T = A + B(ln(R)) + C(ln(R))^3
-
-		    # T = 1/(a + b[ln(ohm)] + c[ln(ohm)]^3)
-
-			lnohm = math.log(Tr) # ln(ohms)
-
-			t1 = (b*lnohm) # b[ln(ohm)]
-
-			t2 = c * math.pow(lnohm,3) # c[ln(ohm)]^3
-
-			tempK = 1/(a + t1 + t2) # calculate temperature in Kelvin
-
-			tempC = tempK - 273.15 # Kelvin to Celsius
-
-			tempF = tempC * (9/5) + 32 # Celsius to Farenheit
-
-		else:
-			tempF = 0.0
-
-		return tempF
+		tempF = 100
+		Tr = 1000
+		return tempF, Tr 
 
 	def ReadAllPorts(self):
 		# This is my attemp at making a psuedo-random temperature that will generally rise
@@ -81,7 +46,7 @@ class ReadADC:
 
 		if (adc_value[0] > 7) and (self.adc_data['GrillTemp'] < 425):
 			self.adc_data['GrillTemp'] += 1 # raise temperature by 1 degree
-		elif (adc_value[0] < 1) and (self.adc_data['GrillTemp'] > 125):
+		elif (adc_value[0] < 1) and (self.adc_data['GrillTemp'] > 50):
 			self.adc_data['GrillTemp'] -= 1 # reduce temperature by 1 degree
 
 		if (adc_value[1] > 7) and (self.adc_data['Probe1Temp'] < 200):

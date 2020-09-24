@@ -508,12 +508,19 @@
 						</div>
 						<div class="input-group mb-3">
 							<div class="input-group-prepend">
+								<span class="input-group-text" data-toggle="tooltip" title="Number of retries to attempt re-ignite after the grill temperature goes too low. Set to zero to disable. [default=1]"><i class="fas fa-redo-alt"></i>&nbsp; Reignite Retries</span>
+							</div>
+							<input id="reigniteretries" type="number" min="0" max="10" class="form-control" placeholder="{{ settings['safety']['reigniteretries'] }}" value="{{ settings['safety']['reigniteretries'] }}" name="reigniteretries">
+						</div>
+
+						<div class="input-group mb-3">
+							<div class="input-group-prepend">
 								<span class="input-group-text" data-toggle="tooltip" title="Maximum allowable temperature.  Shut down grill to prevent potential damage."><i class="fas fa-temperature-high"></i>&nbsp; Max Operational Temp (F)</span>
 							</div>
 							<input id="maxtemp" type="number" min="1" class="form-control" placeholder="{{ settings['safety']['maxtemp'] }}" value="{{ settings['safety']['mintemp'] }}" name="maxtemp">
 						</div>
 						<br>
-						<i><b>Note:</b> In an error condition (temp too low, temp too high) the grill will immediately shutdown and log the error in the events log.  Notifications of an error will be sent if enabled.  Safety features are also enabled in Monitor mode.</i><br>
+						<i><b>Note:</b> In an error condition (temp too low, temp too high) the grill will immediately shutdown and log the error in the events log.  Notifications of an error will be sent if enabled.  The Max Temp safety setting is also enabled in Monitor mode.</i><br>
 						<i><b class="text-danger">Warning:</b> Safety features are not infallible and may not prevent safety issues with your grill in all cases.  As with any grill, it is the operator's responsibility to monitor their equipment to ensure proper operational safety.</i>
 					</div> <!-- End of card body -->
 					<div class="card-footer bg-light">
