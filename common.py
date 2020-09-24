@@ -66,7 +66,7 @@ def DefaultSettings():
 		'minstartuptemp' : 75, # User Defined. Minimum temperature allowed for startup.
 		'maxstartuptemp' : 100, # User Defined. Take this value if the startup temp is higher than maxstartuptemp
 		'maxtemp' : 500, # User Defined. If temp exceeds this value in any mode, shut off.  (including monitor mode)
-		'reignitetries' : 0, # Number of tries to reignite the grill if it has gone below the safe temperature (set to 0 to disable) (TODO)
+		'reigniteretries' : 1, # Number of tries to reignite the grill if it has gone below the safe temperature (set to 0 to disable)
 	}
 
 	settings['page_theme'] = 'light'
@@ -74,6 +74,9 @@ def DefaultSettings():
 	return settings
 
 def DefaultControl():
+
+	settings = ReadSettings()
+
 	control = {}
 
 	control['updated'] = True
@@ -118,6 +121,8 @@ def DefaultControl():
 	control['safety'] = {
 		'startuptemp' : 0, # Set by control function at startup
 		'afterstarttemp' : 0, # Set by control function during startup
+		'reigniteretries' : settings['safety']['reigniteretries'], # Set by user to attempt a re-ignite when the grill drops below a certain temp
+		'reignitelaststate' : 'Smoke' # Set by control function to remember the last state we were in when the temp dropped below safety levels 
 	}
 
 	return(control)

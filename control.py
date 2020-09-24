@@ -79,11 +79,11 @@ def WorkCycle(mode, grill_platform, adc_device, display_device):
 	grill_platform.PowerOn()
 	event = 'Fan ON, Igniter OFF, Auger OFF'
 	DebugWrite(event)
-	if (mode == 'Startup'):
+	if ((mode == 'Startup') or (mode == 'Reignite')):
 		grill_platform.IgniterOn()
 		event = 'Igniter ON'
 		DebugWrite(event)
-	if ((mode == 'Smoke') or (mode == 'Hold') or (mode == 'Startup')):
+	if ((mode == 'Smoke') or (mode == 'Hold') or (mode == 'Startup') or (mode == 'Reignite')):
 		grill_platform.AugerOn()
 		event = 'Auger ON'
 		DebugWrite(event)
@@ -92,7 +92,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device):
 	settings = ReadSettings()
 	control = ReadControl()
 
-	if (mode == 'Startup' or 'Smoke'):
+	if (mode == 'Startup' or 'Smoke' or 'Reignite'):
 		OnTime = 15		#  Auger On Time
 		OffTime = 45 + (settings['cycle_data']['PMode'] * 10) 	#  Auger Off Time
 		CycleTime = OnTime + OffTime 	#  Total Cycle Time
@@ -137,26 +137,38 @@ def WorkCycle(mode, grill_platform, adc_device, display_device):
 	status = 'Active'
 
 	# Safety Controls
-	if (mode == 'Startup'):
+	if ((mode == 'Startup') or (mode == 'Reignite')):
 		control['safety']['startuptemp'] = max((GrillTemp*0.9), settings['safety']['minstartuptemp'])
 		control['safety']['startuptemp'] = min(control['safety']['startuptemp'], settings['safety']['maxstartuptemp'])
 		control['safety']['afterstarttemp'] = GrillTemp
 		WriteControl(control)
-	# Commented out this safety control until I can fix it.
+	# Check if the temperature of the grill dropped below the startuptemperature 
 	elif ((mode == 'Hold') or (mode == 'Smoke')):
 		if (control['safety']['afterstarttemp'] < control['safety']['startuptemp']):
-			status = 'Inactive'
-			event = 'Grill temperature dropped below minimum startup temperature of ' + str(control['safety']['startuptemp']) + 'F! Shutting down to prevent firepot overload.'
-			DebugWrite(event)
-			WriteLog(event)
-			display_device.DisplayText('ERROR')
-			control['mode'] = 'Stop'
-			control['updated'] = True
-			WriteControl(control)
-			if(settings['ifttt']['APIKey'] != ''):
-				SendIFTTTNotification("Grill_Error_02")
-			if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
-				SendPushoverNotification("Grill_Error_02")
+			if(control['safety']['reigniteretries'] == 0):
+				status = 'Inactive'
+				event = 'Grill temperature dropped below minimum startup temperature of ' + str(control['safety']['startuptemp']) + 'F! Shutting down to prevent firepot overload.'
+				DebugWrite(event)
+				WriteLog(event)
+				display_device.DisplayText('ERROR')
+				control['mode'] = 'Stop'
+				control['updated'] = True
+				WriteControl(control)
+				if(settings['ifttt']['APIKey'] != ''):
+					SendIFTTTNotification("Grill_Error_02")
+				if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
+					SendPushoverNotification("Grill_Error_02")
+			else:
+				control['safety']['reigniteretries'] -= 1
+				control['safety']['reignitelaststate'] = mode 
+				status = 'Inactive'
+				event = 'Grill temperature dropped below minimum startup temperature of ' + str(control['safety']['startuptemp']) + 'F. Starting a re-ignite attempt, per user settings.'
+				DebugWrite(event)
+				WriteLog(event)
+				display_device.DisplayText('Re-Ignite')
+				control['mode'] = 'Reignite'
+				control['updated'] = True
+				WriteControl(control)
 
 	# Set the start time
 	starttime = time.time()
@@ -250,25 +262,37 @@ def WorkCycle(mode, grill_platform, adc_device, display_device):
 				RefreshControlData = CheckNotify(in_data)
 
 				# Safety Controls
-				if (mode == 'Startup'):
+				if ((mode == 'Startup') or (mode == 'Reignite')):
 					if(RefreshControlData == True):
 						control = ReadControl()
 					control['safety']['afterstarttemp'] = AvgGT
 					WriteControl(control)
 				elif ((mode == 'Hold') or (mode == 'Smoke')):
 					if (AvgGT < control['safety']['startuptemp']):
-						status = 'Inactive'
-						event = 'Grill temperature dropped below minimum startup temperature of ' + str(control['safety']['startuptemp']) + 'F! Shutting down to prevent firepot overload.'
-						DebugWrite(event)
-						WriteLog(event)
-						display_device.DisplayText('ERROR')
-						control['mode'] = 'Error'
-						control['updated'] = True
-						WriteControl(control)
-						if(settings['ifttt']['APIKey'] != ''):
-							SendIFTTTNotification("Grill_Error_02")
-						if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
-							SendPushoverNotification("Grill_Error_02")
+						if(control['safety']['reigniteretries'] == 0):
+							status = 'Inactive'
+							event = 'Grill temperature dropped below minimum startup temperature of ' + str(control['safety']['startuptemp']) + 'F! Shutting down to prevent firepot overload.'
+							DebugWrite(event)
+							WriteLog(event)
+							display_device.DisplayText('ERROR')
+							control['mode'] = 'Stop'
+							control['updated'] = True
+							WriteControl(control)
+							if(settings['ifttt']['APIKey'] != ''):
+								SendIFTTTNotification("Grill_Error_02")
+							if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
+								SendPushoverNotification("Grill_Error_02")
+						else:
+							control['safety']['reigniteretries'] -= 1
+							control['safety']['reignitelaststate'] = mode 
+							status = 'Inactive'
+							event = 'Grill temperature dropped below minimum startup temperature of ' + str(control['safety']['startuptemp']) + 'F. Starting a re-ignite attempt, per user settings.'
+							DebugWrite(event)
+							WriteLog(event)
+							display_device.DisplayText('Re-Ignite')
+							control['mode'] = 'Reignite'
+							control['updated'] = True
+							WriteControl(control)
 
 				if (AvgGT > settings['safety']['maxtemp']):
 					status = 'Inactive'
@@ -319,8 +343,9 @@ def WorkCycle(mode, grill_platform, adc_device, display_device):
 				control['mode'] == 'Stop'
 				WriteControl(control)
 
-		if ((mode == 'Startup') and ((now - starttime) > 240)):
-			status = 'Inactive'
+		if ((mode == 'Startup') or (mode == 'Reignite')):
+			if((now - starttime) > 240):
+				status = 'Inactive'
 
 		if ((mode == 'Shutdown') and ((now - starttime) > 60)):
 			status = 'Inactive'
@@ -885,17 +910,25 @@ while True:
 				display_device.ClearDisplay() # When in error mode, leave the display showing ERROR
 				control['status'] = 'inactive'
 				event = "Stop Mode Started."
+				# Reset Control to Defaults
+				control = DefaultControl()
+				control['updated'] = False
+				WriteControl(control)
 			else:
-				control['status'] = 'error'
 				event = "An error has occured, Stop Mode enabled."
+				# Reset Control to Defaults but preserve 'Error' mode condition
+				control = DefaultControl()
+				control['mode'] = 'Error'
+				control['status'] = 'error'
+				control['updated'] = False
+				WriteControl(control)
 
 			curfile = open("/tmp/current.log", "w") # Write current data to current.log file
 			curfile.write('00:00:0 0 0 0 0 0 0')
 			curfile.close()
 			WriteLog(event)
 			DebugWrite(event)
-			WriteControl(control)
-		#	a. Startup (startup sequence)
+		#	Startup (startup sequence)
 		elif (control['mode'] == 'Startup'):
 			if(grill_platform.GetInputStatus() == 1):
 				event = "Warning: PiFire is set to OFF. This doesn't prevent startup, but this means the switch won't behave as normal."
@@ -912,13 +945,13 @@ while True:
 				control['mode'] = 'Smoke' # Set status to active
 				WriteControl(control)
 				WorkCycle('Smoke', grill_platform, adc_device, display_device)
-		#	b. Smoke (smoke cycle)
+		#	Smoke (smoke cycle)
 		elif (control['mode'] == 'Smoke'):
 			WorkCycle('Smoke', grill_platform, adc_device, display_device)
-		#	c. Hold (hold at setpoint)
+		#	Hold (hold at setpoint)
 		elif (control['mode'] == 'Hold'):
 			WorkCycle('Hold', grill_platform, adc_device, display_device)
-		#	d. Shutdown (shutdown sequence)
+		#	Shutdown (shutdown sequence)
 		elif (control['mode'] == 'Shutdown'):
 			WorkCycle('Shutdown', grill_platform, adc_device, display_device)
 			control = ReadControl()
@@ -935,6 +968,26 @@ while True:
 			Manual_Mode(grill_platform, adc_device, display_device)
 		elif (control['mode'] == 'Recipe'):
 			Recipe_Mode(grill_platform, adc_device, display_device)
+		#	Reignite (reignite sequence)
+		elif (control['mode'] == 'Reignite'):
+			if(grill_platform.GetInputStatus() == 1):
+				event = "Warning: PiFire is set to OFF. This doesn't prevent reignite, but this means the switch won't behave as normal."
+				WriteLog(event)
+				DebugWrite(event)
+			
+			WorkCycle('Reignite', grill_platform, adc_device, display_device)
+
+			control = ReadControl()
+			lastmode = control['safety']['reignitelaststate']
+			
+			if(lastmode == 'Hold'):
+				control['mode'] = 'Hold' # Set status to active
+			else:
+				control['mode'] = 'Smoke' # Set status to active
+			
+			WriteControl(control)
+			WorkCycle(control['mode'], grill_platform, adc_device, display_device)
+				
 
 	time.sleep(0.5)
 	# ===================

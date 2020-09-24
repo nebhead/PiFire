@@ -550,6 +550,9 @@ def settingspage(action=None):
 		if('maxstartuptemp' in response):
 			if(response['maxstartuptemp'] != ''):
 				settings['safety']['maxstartuptemp'] = int(response['maxstartuptemp'])
+		if('reigniteretries' in response):
+			if(response['reigniteretries'] != ''):
+				settings['safety']['reigniteretries'] = int(response['reigniteretries'])
 		if('maxtemp' in response):
 			if(response['maxtemp'] != ''):
 				settings['safety']['maxtemp'] = int(response['maxtemp'])

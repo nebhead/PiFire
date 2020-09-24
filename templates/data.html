@@ -17,7 +17,7 @@
 
 			{% else %}
 
-				{% if (current_mode == 'Startup') %}
+				{% if (current_mode == 'Startup') or (current_mode == 'Reignite') %}
 				<button type="submit" class="btn btn-success border border-secondary" name="setmodestartup" value="true"><i class="fas fa-play"></i></button>
 				{% endif %}
 
