@@ -53,7 +53,7 @@ A shot of the splash screen on the display when booting up.
 
 ![Splash](docs/photos/HW-Splash.jpg)
 
-Typical temperature display for the grill.
+Typical temperature display for the grill. [Edit: The display has been enhanced to show status for the fan, auger, igniter, mode and notifications]
 
 ![Display Temp](docs/photos/HW-Display-Temp.jpg)
 
@@ -399,10 +399,13 @@ When adding a new profile, these are the configurable settings:
 
 * Preventing Firepot Overload - PiFire will sample the grill temperature at the beginning and end of startup to set a safe minimum temperature to operate.  If the grill temperature drops below this temperature, it will stop the grill and send a notification of an error to prevent firepot overload.  
 	* _Min Startup Temp_ - If after the startup cycle has completed, the temperature has not exceeded this temperature, the grill will go into stop mode.    
-	* _Max Startup Temp_ - If after the startup cycle has completed, the temperature of the grill exceeds this temperature, it will set the minimum safe temperature to this value.  This is to prevent the grill from shutting down pre-maturely if the startup temperature was high.  
+	* _Max Startup Temp_ - If after the startup cycle has completed, the temperature of the grill exceeds this temperature, it will set the minimum safe temperature to this value.  This is to prevent the grill from shutting down pre-maturely if the startup temperature was high. 
+	* _Reignite Retries_ - If the grill temperature drops below the startup temperature, attempt reignite.  This number can be set to up to 10 total retries before failing.   
 * Preventing Grill Overtemp - PiFire will monitor the grill temperature during Smoke, Hold and Monitor modes to ensure that the grill does not exceed the _Max Operational Temp_ setting defined here.  
 
 ![Settings](docs/webui/PiFire-Settings-03.png)
+
+**Page Settings** - Currently allows the user to enable a dark theme for night-time viewing or if just preferred.  
 
 **Notification Settings** - If you don't want to enable notifications, ensure that all the fields with this section are left blank.  If you want to utilize notifications, you can fill in the information for the notification services that are available.  At the time of publishing, IFTTT and Pushover notifications are supported.  If you currently use one of these services you can setup your appropriate keys and settings to enable them.  
 
@@ -504,6 +507,7 @@ In this section, I'm going to keep a running list of ideas for possible upgrades
 ```
 Known Issues
 	* Issue where sometimes temperature readings from the ADC fail.  Not sure if this is an i2c bus problem or something else.  Does not effect overall functionality, but can be annoying when looking at the history data.  
+	* Issue where if the history page is left open too long the auto-refresh may eventually cause the tab to crash with out of memory errors.  
 
 Ideas for WebUI / App
 	Dashboard
