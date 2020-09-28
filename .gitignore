@@ -14,3 +14,7 @@ templates/backups/
 test-startup.json
 
 test-working.json
+
+.vs/
+
+.vscode/
