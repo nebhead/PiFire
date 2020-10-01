@@ -293,6 +293,114 @@ def historyupdate(action=None):
 
 	return render_template('historyupdate.html', time_list=data_blob['time_list'], probe_list=data_blob['probe_list'], settemp_list=data_blob['settemp_list'], cur_probe_temps=data_blob['cur_probe_temps'], probes_enabled=probes_enabled, num_mins=settings['minutes'])
 
+@app.route('/tuning/<action>', methods=['POST','GET'])
+@app.route('/tuning', methods=['POST','GET'])
+def tuningpage(action=None):
+
+	settings = ReadSettings()
+	control = ReadControl()
+
+	pagectrl = {}
+
+	pagectrl['refresh'] = 'off'
+	pagectrl['selected'] = 'none'
+	pagectrl['showcalc'] = 'false'
+	pagectrl['low_trvalue'] = ''
+	pagectrl['med_trvalue'] = ''
+	pagectrl['high_trvalue'] = ''
+	pagectrl['low_tempvalue'] = ''
+	pagectrl['med_tempvalue'] = ''
+	pagectrl['high_tempvalue'] = ''
+
+	if (request.method == 'POST'):
+		response = request.form
+		if('probe_select' in response):
+			pagectrl['selected'] = response['probe_select']
+			pagectrl['refresh'] = 'on'
+			if(('pause' in response)):
+				if(response['low_trvalue'] != ''):
+					pagectrl['low_trvalue'] = response['low_trvalue']
+				if(response['med_trvalue'] != ''):
+					pagectrl['med_trvalue'] = response['med_trvalue']
+				if(response['high_trvalue'] != ''):
+					pagectrl['high_trvalue'] = response['high_trvalue']
+
+				if(response['low_tempvalue'] != ''):
+					pagectrl['low_tempvalue'] = response['low_tempvalue']
+				if(response['med_tempvalue'] != ''):
+					pagectrl['med_tempvalue'] = response['med_tempvalue']
+				if(response['high_tempvalue'] != ''):
+					pagectrl['high_tempvalue'] = response['high_tempvalue']
+
+				pagectrl['refresh'] = 'off'	
+
+			elif(('save' in response)):
+				if(response['low_trvalue'] != ''):
+					pagectrl['low_trvalue'] = response['low_trvalue']
+				if(response['med_trvalue'] != ''):
+					pagectrl['med_trvalue'] = response['med_trvalue']
+				if(response['high_trvalue'] != ''):
+					pagectrl['high_trvalue'] = response['high_trvalue']
+
+				if(response['low_tempvalue'] != ''):
+					pagectrl['low_tempvalue'] = response['low_tempvalue']
+				if(response['med_tempvalue'] != ''):
+					pagectrl['med_tempvalue'] = response['med_tempvalue']
+				if(response['high_tempvalue'] != ''):
+					pagectrl['high_tempvalue'] = response['high_tempvalue']
+
+				if(pagectrl['low_tempvalue'] != '') and (pagectrl['med_tempvalue'] != '') and (pagectrl['high_tempvalue'] != ''):
+					pagectrl['refresh'] = 'off'
+					pagectrl['showcalc'] = 'true'
+					a, b, c = calc_shh_coefficients(int(pagectrl['low_tempvalue']), int(pagectrl['med_tempvalue']), int(pagectrl['high_tempvalue']), int(pagectrl['low_trvalue']), int(pagectrl['med_trvalue']), int(pagectrl['high_trvalue']))
+					pagectrl['a'] = a
+					pagectrl['b'] = b
+					pagectrl['c'] = c
+					
+					pagectrl['templist'] = ''
+					pagectrl['trlist'] = ''
+
+					for index in range(int(pagectrl['low_tempvalue'])-20, int(pagectrl['high_tempvalue'])+20, 20):
+						if(index > (int(pagectrl['low_tempvalue'])-20)):
+							pagectrl['templist'] += ','
+							pagectrl['trlist'] += ','
+						pagectrl['templist'] += str(index)
+						pagectrl['trlist'] += str(shh_temp_to_tr(index, a, b, c))
+
+					#print(pagectrl['templist'])
+					#print(pagectrl['trlist']) 
+				else:
+					pagectrl['refresh'] = 'on'
+	
+	return render_template('tuning.html', control=control, settings=settings, pagectrl=pagectrl)
+
+@app.route('/_grilltr', methods = ['GET'])
+def grilltr(action=None):
+
+	cur_probe_tr = ReadTr()
+	tr = {}
+	tr['trohms'] = cur_probe_tr[0]
+
+	return json.dumps(tr)
+
+@app.route('/_probe1tr', methods = ['GET'])
+def probe1tr(action=None):
+
+	cur_probe_tr = ReadTr()
+	tr = {}
+	tr['trohms'] = cur_probe_tr[1]
+
+	return json.dumps(tr)
+
+@app.route('/_probe2tr', methods = ['GET'])
+def probe2tr(action=None):
+
+	cur_probe_tr = ReadTr()
+	tr = {}
+	tr['trohms'] = cur_probe_tr[1]
+
+	return json.dumps(tr)
+
 
 @app.route('/events/<action>', methods=['POST','GET'])
 @app.route('/events', methods=['POST','GET'])
@@ -779,6 +887,63 @@ def prepare_data(num_items=10, reduce=True, datapoints=60):
 		data_blob['cur_probe_temps'][2] = 0
 
 	return(data_blob)
+
+def calc_shh_coefficients(T1, T2, T3, R1, R2, R3):
+	try: 
+    	# Convert Temps from Farenheit to Kelvin
+		T1 = ((T1 - 32) * (5/9)) + 273.15
+		T2 = ((T2 - 32) * (5/9)) + 273.15
+		T3 = ((T3 - 32) * (5/9)) + 273.15
+
+		# https://en.wikipedia.org/wiki/Steinhart%E2%80%93Hart_equation
+
+		# Step 1: L1 = ln (R1), L2 = ln (R2), L3 = ln (R3)
+		L1 = math.log(R1)
+		L2 = math.log(R2)
+		L3 = math.log(R3)
+
+		# Step 2: Y1 = 1 / T1, Y2 = 1 / T2, Y3 = 1 / T3
+		Y1 = 1/T1
+		Y2 = 1/T2
+		Y3 = 1/T3
+
+		# Step 3: G2 = (Y2 - Y1) / (L2 - L1) , G3 = (Y3 - Y1) / (L3 - L1)
+		G2 = (Y2 - Y1) / (L2 - L1)
+		G3 = (Y3 - Y1) / (L3 - L1)
+
+		# Step 4: C = ((G3 - G2) / (L3 - L2)) * (L1 + L2 + L3)^-1
+		C = ((G3 - G2) / (L3 - L2)) * math.pow(L1 + L2 + L3, -1)
+
+		# Step 5: B = G2 - C * (L1^2 + (L1*L2) + L2^2)
+		B = G2 - C * (math.pow(L1,2) + (L1*L2) + math.pow(L2,2))
+
+		# Step 6: A = Y1 - (B + L1^2*C) * L1
+		A = Y1 - ((B + (math.pow(L1,2) * C)) * L1)
+	except:
+		print('An error occurred when calculating coefficients.')
+		A = 0
+		B = 0
+		C = 0
+    
+	return(A, B, C)
+
+def shh_temp_to_tr(tempF, A, B, C):
+	try: 
+		tempK = ((tempF - 32) * (5/9)) + 273.15
+
+		# https://en.wikipedia.org/wiki/Steinhart%E2%80%93Hart_equation
+		# Inverse of the equation, to determine Tr = Resistance Value of the thermistor
+
+		x = (1/(2*C))*(A-(1/tempK))
+
+		y = math.sqrt(math.pow((B/(3*C)),3)+math.pow(x,2))
+
+		Tr = math.exp(((y-x)**(1/3)) - ((y+x)**(1/3)))
+	except: 
+		Tr = 0
+
+	return int(Tr) 
+
 
 if __name__ == '__main__':
 	app.run(host='0.0.0.0')

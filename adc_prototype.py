@@ -31,11 +31,27 @@ class ReadADC:
 		self.probe_01_profile = probe_01_profile
 		self.probe_02_profile = probe_02_profile
 
-	def adctotemp(self, adc_value, probe_profile):
-		# Since this is just a prototype module, and data is simulated, this function is not used. 
-		tempF = 100
-		Tr = 1000
-		return tempF, Tr 
+	def adctotemp(self, tempF, probe_profile):
+		# Since this is just a prototype module, and data is simulated, this function is used to determine the resistance value
+		A = probe_profile['A']
+		B = probe_profile['B']
+		C = probe_profile['C']
+
+		try: 
+			tempK = ((tempF - 32) * (5/9)) + 273.15
+
+			# https://en.wikipedia.org/wiki/Steinhart%E2%80%93Hart_equation
+			# Inverse of the equation, to determine Tr = Resistance Value of the thermistor
+
+			x = (1/(2*C))*(A-(1/tempK))
+
+			y = math.sqrt(math.pow((B/(3*C)),3)+math.pow(x,2))
+
+			Tr = math.exp(((y-x)**(1/3)) - ((y+x)**(1/3)))
+		except: 
+			Tr = 0
+
+		return Tr 
 
 	def ReadAllPorts(self):
 		# This is my attemp at making a psuedo-random temperature that will generally rise
@@ -60,8 +76,8 @@ class ReadADC:
 			self.adc_data['Probe2Temp'] -= 1 # reduce temperature by 1 degree
 
 		# Thermistor data is not useful in prototype mode
-		self.adc_data['GrillTr'] = 0 # Resistance of Grill Thermistor
-		self.adc_data['Probe1Tr'] = 0 # Resistance of Probe Thermistor
-		self.adc_data['Probe2Tr'] = 0 # Resistance of Probe Thermistor
+		self.adc_data['GrillTr'] = self.adctotemp(self.adc_data['GrillTemp'], self.grill_probe_profile) # Resistance of Grill Thermistor
+		self.adc_data['Probe1Tr'] = self.adctotemp(self.adc_data['Probe1Temp'], self.probe_01_profile) # Resistance of Probe Thermistor
+		self.adc_data['Probe2Tr'] = self.adctotemp(self.adc_data['Probe2Temp'], self.probe_02_profile) # Resistance of Probe Thermistor
 
 		return (self.adc_data)

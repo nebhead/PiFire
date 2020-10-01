@@ -405,6 +405,11 @@ def WriteHistory(TempStruct, maxsizelines=28800):
 	curfile.write(timestr + ' ' + event)
 	curfile.close()
 
+	tr_values = str(int(TempStruct['GrillTr'])) + ' ' + str(int(TempStruct['Probe1Tr'])) + ' ' + str(int(TempStruct['Probe2Tr']))
+	trfile = open("/tmp/tr.log", "w") # Write current data to current.log file
+	trfile.write(tr_values)
+	trfile.close()
+
 	command = 'wc -l /tmp/history.log' # Use the Word Count CLI tool to get number of lines
 	history_file = os.popen(command)
 	history_lines = history_file.readlines()
@@ -490,3 +495,27 @@ def WriteControl(control):
 	json_data_string = json.dumps(control)
 	with open("/tmp/control.json", 'w') as control_file:
 		control_file.write(json_data_string)
+
+def ReadTr():
+	# *****************************************
+	# Function: ReadTr
+	# Input: none
+	# Output: cur_probe_tr []
+	# Description: Read tr.log and populate
+	#  a list of data
+	# *****************************************
+
+	try:
+		with open('/tmp/tr.log') as tr_file:
+			tr_line = tr_file.readline()
+			tr_file.close()
+	# If file not found error, then return 0'd data
+	except(IOError, OSError):
+		cur_probe_tr = [0,0,0]
+		DebugWrite('Issue reading /tmp/tr.log')
+
+		return(cur_probe_tr)
+
+	cur_probe_tr = tr_line.split(' ',2) # Splits out each of the values into seperate list items
+
+	return(cur_probe_tr)

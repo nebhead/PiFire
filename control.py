@@ -256,6 +256,9 @@ def WorkCycle(mode, grill_platform, adc_device, display_device):
 				in_data['Probe1SetPoint'] = control['setpoints']['probe1']
 				in_data['Probe2Temp'] = int(AvgP2)
 				in_data['Probe2SetPoint'] = control['setpoints']['probe2']
+				in_data['GrillTr'] = adc_data['GrillTr']
+				in_data['Probe1Tr'] = adc_data['Probe1Tr']
+				in_data['Probe2Tr'] = adc_data['Probe2Tr']
 				WriteHistory(in_data)
 				status_data = GetStatus(grill_platform, control, settings)
 				display_device.DisplayStatus(in_data, status_data)
@@ -468,6 +471,9 @@ def Monitor(grill_platform, adc_device, display_device):
 			in_data['Probe1SetPoint'] = control['setpoints']['probe1']
 			in_data['Probe2Temp'] = int(AvgP2)
 			in_data['Probe2SetPoint'] = control['setpoints']['probe2']
+			in_data['GrillTr'] = adc_data['GrillTr']
+			in_data['Probe1Tr'] = adc_data['Probe1Tr']
+			in_data['Probe2Tr'] = adc_data['Probe2Tr']
 			WriteHistory(in_data)
 			status_data = GetStatus(grill_platform, control, settings)
 			display_device.DisplayStatus(in_data, status_data)
@@ -621,6 +627,9 @@ def Manual_Mode(grill_platform, adc_device, display_device):
 			in_data['Probe1SetPoint'] = control['setpoints']['probe1']
 			in_data['Probe2Temp'] = int(AvgP2)
 			in_data['Probe2SetPoint'] = control['setpoints']['probe2']
+			in_data['GrillTr'] = adc_data['GrillTr']
+			in_data['Probe1Tr'] = adc_data['Probe1Tr']
+			in_data['Probe2Tr'] = adc_data['Probe2Tr']
 			WriteHistory(in_data)
 			status_data = GetStatus(grill_platform, control, settings)
 			display_device.DisplayStatus(in_data, status_data)
