@@ -360,15 +360,32 @@ def tuningpage(action=None):
 					pagectrl['templist'] = ''
 					pagectrl['trlist'] = ''
 
-					for index in range(int(pagectrl['low_tempvalue'])-20, int(pagectrl['high_tempvalue'])+20, 20):
-						if(index > (int(pagectrl['low_tempvalue'])-20)):
-							pagectrl['templist'] += ','
-							pagectrl['trlist'] += ','
-						pagectrl['templist'] += str(index)
-						pagectrl['trlist'] += str(shh_temp_to_tr(index, a, b, c))
+					range_size = abs(int(pagectrl['low_trvalue']) - int(pagectrl['high_trvalue']))
+					range_step = int(range_size / 20)
 
-					#print(pagectrl['templist'])
-					#print(pagectrl['trlist']) 
+					if(int(pagectrl['low_trvalue']) < int(pagectrl['high_trvalue'])): 
+						low_tr_range = int(int(pagectrl['low_trvalue']) - (range_size * 0.05)) # Add 5% to the resistance at the low temperature side
+						high_tr_range = int(int(pagectrl['high_trvalue']) + (range_size * 0.05)) # Add 5% to the resistance at the high temperature side
+						high_tr_range, low_tr_range = low_tr_range, high_tr_range # Swap Tr values for the loop below, so that we start with a low value and go high
+						# Swapped Value Case (i.e. Low Temp = Low Resistance)
+						for index in range(high_tr_range, low_tr_range, range_step):
+							if(index == high_tr_range):
+								pagectrl['trlist'] = str(index)
+								pagectrl['templist'] = str(tr_to_temp(index, a, b, c))
+							else:
+								pagectrl['trlist'] = str(index) + ', ' + pagectrl['trlist']
+								pagectrl['templist'] = str(tr_to_temp(index, a, b, c)) + ', ' + pagectrl['templist']
+					else:
+						low_tr_range = int(int(pagectrl['low_trvalue']) + (range_size * 0.05)) # Add 5% to the resistance at the low temperature side
+						high_tr_range = int(int(pagectrl['high_trvalue']) - (range_size * 0.05)) # Add 5% to the resistance at the high temperature side
+						# Normal Value Case (i.e. Low Temp = High Resistance)
+						for index in range(high_tr_range, low_tr_range, range_step):
+							if(index == high_tr_range):
+								pagectrl['trlist'] = str(index)
+								pagectrl['templist'] = str(tr_to_temp(index, a, b, c))
+							else:
+								pagectrl['trlist'] += ', ' + str(index)
+								pagectrl['templist'] += ', ' + str(tr_to_temp(index, a, b, c))
 				else:
 					pagectrl['refresh'] = 'on'
 	
@@ -927,12 +944,14 @@ def calc_shh_coefficients(T1, T2, T3, R1, R2, R3):
     
 	return(A, B, C)
 
-def shh_temp_to_tr(tempF, A, B, C):
+def temp_to_tr(tempF, A, B, C):
 	try: 
 		tempK = ((tempF - 32) * (5/9)) + 273.15
 
 		# https://en.wikipedia.org/wiki/Steinhart%E2%80%93Hart_equation
 		# Inverse of the equation, to determine Tr = Resistance Value of the thermistor
+
+		# Not recommended for use, as it commonly produces a complex number
 
 		x = (1/(2*C))*(A-(1/tempK))
 
@@ -944,6 +963,21 @@ def shh_temp_to_tr(tempF, A, B, C):
 
 	return int(Tr) 
 
+def tr_to_temp(Tr, a, b, c):
+    try:
+        #Steinhart Hart Equation
+        # 1/T = A + B(ln(R)) + C(ln(R))^3
+        # T = 1/(a + b[ln(ohm)] + c[ln(ohm)]^3)
+        lnohm = math.log(Tr) # ln(ohms)
+        t1 = (b*lnohm) # b[ln(ohm)]
+        t2 = c * math.pow(lnohm,3) # c[ln(ohm)]^3
+        tempK = 1/(a + t1 + t2) # calculate temperature in Kelvin
+        tempC = tempK - 273.15 # Kelvin to Celsius
+        tempF = tempC * (9/5) + 32 # Celsius to Farenheit
+    except:
+        print('Error occured while calculating temperature.')
+        tempF = 0.0
+    return int(tempF) # Return Calculated Temperature and Thermistor Value in Ohms
 
 if __name__ == '__main__':
 	app.run(host='0.0.0.0')

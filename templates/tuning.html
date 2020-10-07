@@ -351,7 +351,7 @@
 {% if pagectrl['showcalc'] == 'true' %}
 	<script>
 	var data = {
-		labels: [{{ pagectrl['templist'] }}],
+		labels: [{{ pagectrl['trlist'] }}],
 		datasets: [
 				{
 						label: "Stienhart Hart Curve",
@@ -372,7 +372,7 @@
 						pointHoverBorderWidth: 2,
 						pointRadius: 1,
 						pointHitRadius: 10,
-						data: [{{ pagectrl['trlist'] }}],
+						data: [{{ pagectrl['templist'] }}],
 						spanGaps: false,
 				},
 		]
@@ -386,22 +386,19 @@
 					display: true,
 					scaleLabel: {
 						display: true,
-						labelString: 'Temperature (F)'
-					}
+						labelString: 'Thermistor (Ohms)'
+					},
 				}],
 				yAxes: [{
-						scaleLabel: {
-							display: true,
-							labelString: 'Thermistor (Ohms)'
-						},
-						ticks: {
-								beginAtZero:true
-						}
+					display: true,	
+					scaleLabel: {
+						display: true,
+						labelString: 'Temperature (F)'
+					},
 				}]
 			},
 			responsive: true,
 			maintainAspectRatio: false,
-			animation: true
 		}
 	});
 	</script>
