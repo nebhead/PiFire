@@ -12,7 +12,7 @@
 #
 # *****************************************
 
-from flask import Flask, request, render_template, make_response, send_file
+from flask import Flask, request, render_template, make_response, send_file, jsonify
 import time
 import os
 import json
@@ -825,6 +825,40 @@ def manual_page(action=None):
 		control = ReadControl()
 
 	return render_template('manual.html', settings=settings, control=control)
+
+@app.route('/api/<action>', methods=['POST','GET'])
+@app.route('/api', methods=['POST','GET'])
+def api_page(action=None):
+
+	if (request.method == 'GET'):
+		if(action == 'settings'):
+			settings=ReadSettings()
+			return jsonify({'settings':settings}), 201
+		elif(action == 'control'):
+			control=ReadControl()
+			return jsonify({'control':control}), 201
+		elif(action == 'current'):
+			current=ReadCurrent()
+			current_temps = {
+				'grill_temp' : current[0],
+				'probe1_temp' : current[1],
+				'probe2_temp' : current[2]
+			}
+			return jsonify({'current':current_temps}), 201
+		else:
+			return jsonify({'Error':'Recieved GET request with no action.'}), 404
+	elif (request.method == 'POST'):
+		if(action == 'settings'):
+			#settings=ReadSettings()
+			return jsonify({'settings':'updated successfully'}), 201
+		elif(action == 'control'):
+			#control=ReadControl()
+			return jsonify({'control':'updated successfully'}), 201
+		else:
+			return jsonify({'Error':'Recieved POST request with no action.'}), 404
+	else:
+		return jsonify({'Error':'Recieved undefined/unsupported request.'}), 404
+	#return jsonify({'settings':settings,'control':control, 'current':current_temps}), 201
 
 @app.route('/manifest')
 def manifest():

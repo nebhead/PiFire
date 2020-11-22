@@ -376,7 +376,7 @@
 							<div class="card-header bg-primary text-white"><h5><i class="fas fa-tools"></i>&nbsp; Cycle Settings</h5></div>
 							<div class="card-body">
 								<h5>General Settings</h5>
-								<i><b>Note:</b> More information about the PMode can be found <a href="http://tipsforbbq.com/Definition/Traeger-P-Setting" target="blank">here.</a>  P-Mode is used for both Startup and Smoke modes, but not Hold mode.</i>
+								<span class="badge badge-warning">NOTE:</span><i class="small"> More information about the PMode can be found <a href="http://tipsforbbq.com/Definition/Traeger-P-Setting" target="blank">here.</a>  P-Mode is used for both Startup and Smoke modes, but not Hold mode.</i>
 								<div class="input-group mb-3">
 									<div class="input-group-prepend">
 										<span class="input-group-text" data-toggle="tooltip" title="Set P-Mode for Smoke Cycle (1-10)"><i class="fas fa-cog"></i>&nbsp; P-Mode</span>
@@ -407,7 +407,7 @@
 							  </table>
 								<br>
 								<h5>PID Settings (HOLD Mode)</h5>
-								<i><b>Note:</b> If you are in hold mode currently, you will need to change to another mode and back into hold mode for this to take effect. More information on the PID control settings can be found <a href="http://engineeredmusings.com/pismoker/" target="blank">here.</a></i>
+								<span class="badge badge-warning">NOTE:</span><i class="small"> If you are in hold mode currently, you will need to change to another mode and back into hold mode for this to take effect. More information on the PID control settings can be found <a href="http://engineeredmusings.com/pismoker/" target="blank">here.</a></i>
 								<div class="input-group mb-3">
 									<div class="input-group-prepend">
 										<span class="input-group-text" data-toggle="tooltip" title="Cycle Time for PID Controller (seconds)[Default=20]"><i class="far fa-clock"></i>&nbsp; Cycle Time</span>
@@ -522,8 +522,8 @@
 							<input id="maxtemp" type="number" min="1" class="form-control" placeholder="{{ settings['safety']['maxtemp'] }}" value="{{ settings['safety']['mintemp'] }}" name="maxtemp">
 						</div>
 						<br>
-						<i><b>Note:</b> In an error condition (temp too low, temp too high) the grill will immediately shutdown and log the error in the events log.  Notifications of an error will be sent if enabled.  The Max Temp safety setting is also enabled in Monitor mode.</i><br>
-						<i><b class="text-danger">Warning:</b> Safety features are not infallible and may not prevent safety issues with your grill in all cases.  As with any grill, it is the operator's responsibility to monitor their equipment to ensure proper operational safety.</i>
+						<span class="badge badge-warning">NOTE:</span><i class="small"> In an error condition (temp too low, temp too high) the grill will immediately shutdown and log the error in the events log.  Notifications of an error will be sent if enabled.  The Max Temp safety setting is also enabled in Monitor mode.</i><br>
+						<span class="badge badge-danger">WARNING:</span><i class="small"> Safety features are not infallible and may not prevent safety issues with your grill in all cases.  As with any grill, it is the operator's responsibility to monitor their equipment to ensure proper operational safety.</i>
 					</div> <!-- End of card body -->
 					<div class="card-footer bg-light">
 							<button type="submit" class="btn btn-outline-primary">Save</button>
@@ -584,7 +584,7 @@
 
 										</div>
 									</form>
-									<i><b>Note:</b> Leave blank to disable.</i>
+									<span class="badge badge-warning">NOTE:</span><i class="small"> Leave blank to disable.</i>
 
 								</div> <!-- End of card body -->
 							</div> <!-- End of Card -->
@@ -622,7 +622,7 @@
 										</div>
 
 									</form>
-									<i><b>Note:</b> Add commas for multiple user keys.  Leave blank to disable.</i>
+									<span class="badge badge-warning">NOTE:</span><i class="small"> Add commas for multiple user keys.  Leave blank to disable.</i>
 
 								</div> <!-- End of card body -->
 							</div> <!-- End of Card -->
