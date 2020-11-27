@@ -728,8 +728,8 @@ def SendPushoverNotification(notifyevent):
 				"token": settings['pushover']['APIKey'],
 				"user": user.strip(),
 				"message": notifymessage,
-				"title": subjectmessage
-				#"url": settings['misc']['PublicURL']
+				"title": subjectmessage,
+				"url": settings['pushover']['PublicURL']
 			})
 			DebugWrite('Pushover Response: ' + r.text)
 			WriteLog(subjectmessage + ". Pushover notification sent to: " + user.strip())

@@ -220,9 +220,9 @@ Save your changes, exit the nano editor and reboot
 sudo reboot
 ```
 
-### Automatic Software Installation (Experimental)
+### Automatic Software Installation (Recommended)
 
-I've created a script to install this automatically, but it is in ALPHA testing.  Your mileage may vary, and if anything fails, you may just want to try running the manual steps below.  
+I've created a script to install this automatically.  Your mileage may vary, and if anything fails, you may just want to try running the manual steps below.  
 
 *NOTE: This script requires that you install on the 'pi' user account, otherwise the supervisor portion of the install will likely fail.*
 
@@ -512,7 +512,6 @@ Known Issues
 Ideas for WebUI / App
 	Dashboard
 		New: Smoke+ Mode (Toggle Fan On/Off) - Experimental feature to increase smoke output by modulating the fan on/off time. This will require some experimentation.
-		New: Probe Tuning - Return Calculated Probe Resistance and the calculated temperature.
 
 	History
 		New: Incorporate "streaming" instead of re-writing the chart every 3 seconds
@@ -532,7 +531,7 @@ Ideas for WebUI / App
 		New: Check for Updates / Pull latest updates from GitHub
 
 	API
-		New: API interface to control functions and return JSON data structures for status/history (could be used to develop an Android or iPhone native app)
+		New: API interface to control functions and return JSON data structures for status/history (could be used to develop an Android or iPhone native app) (partially implemented - read status only)
 
 Ideas for Control process
 	New: Smart Probe Enable (i.e. enable when plugged in, disable when unplugged)

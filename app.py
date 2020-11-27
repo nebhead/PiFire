@@ -525,6 +525,17 @@ def settingspage(action=None):
 				settings['pushover']['UserKeys'] = response['pushover_userkeys']
 				event['type'] = 'updated'
 				event['text'] = 'PushOver User Keys updated. Settings saved.'
+		
+		if('pushover_publicurl' in response):
+			if((response['pushover_publicurl'] == "0") or (response['pushover_publicurl'] == '')) and (settings['pushover']['PublicURL'] != ''):
+				settings['pushover']['PublicURL'] = ''
+				event['type'] = 'warning'
+				event['text'] = 'Pushover Public URL removed. Settings saved.'
+			elif(response['pushover_publicurl'] != settings['pushover']['PublicURL']):
+				settings['pushover']['PublicURL'] = response['pushover_publicurl']
+				event['type'] = 'updated'
+				event['text'] = 'PushOver Public URL updated. Settings saved.'
+
 		# Take all settings and write them
 		WriteSettings(settings)
 

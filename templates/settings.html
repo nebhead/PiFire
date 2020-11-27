@@ -607,7 +607,8 @@
 											</div>
 
 									  </div>
-
+										 
+									 	<span class="badge badge-warning">NOTE:</span><i class="small"> Add commas for multiple user keys.  Leave blank to disable.</i>
 										<div class="input-group mb-3">
 											<div class="input-group-prepend">
 												<span class="input-group-text"><i class="fas fa-key"></i>&nbsp; User Keys</span>
@@ -618,12 +619,23 @@
 											<div class="input-group-append">
 													<button type="submit" class="btn btn-success btn-sm float-right"><i class="far fa-save"></i></button>
 											</div>
-
 										</div>
+										<span class="badge badge-warning">NOTE:</span><i class="small"> URL to be added to Pushover notifications.</i>
+										<div class="input-group mb-3">
+											<div class="input-group-prepend">
+												<span class="input-group-text"><i class="fas fa-link"></i>&nbsp; Public URL</span>
+											</div>
+
+											<input id="pushover_publicurl" type="text" class="form-control" name="pushover_publicurl" value="{{settings['pushover']['PublicURL']}}">
+
+											<div class="input-group-append">
+													<button type="submit" class="btn btn-success btn-sm float-right"><i class="far fa-save"></i></button>
+											</div>
+										</div>
+										
 
 									</form>
-									<span class="badge badge-warning">NOTE:</span><i class="small"> Add commas for multiple user keys.  Leave blank to disable.</i>
-
+									
 								</div> <!-- End of card body -->
 							</div> <!-- End of Card -->
 

@@ -17,6 +17,7 @@ def DefaultSettings():
 	settings['pushover'] = {
 		'APIKey': '', # API Key for Pushover notifications
 		'UserKeys': '', # Comma-separated list of user keys
+		'PublicURL': '', # Used in Pushover notifications
 	}
 
 	settings['probe_types'] = {
