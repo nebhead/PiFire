@@ -18,3 +18,7 @@ test-working.json
 .vs/
 
 .vscode/
+
+*.code-workspace
+
+test.json
