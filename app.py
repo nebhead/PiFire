@@ -278,20 +278,17 @@ def historypage(action=None):
 	data_blob = {}
 	data_blob = prepare_data(num_items, True, settings['datapoints'])
 
-	return render_template('history.html', control=control, time_list=data_blob['time_list'], probe_list=data_blob['probe_list'], settemp_list=data_blob['settemp_list'], cur_probe_temps=data_blob['cur_probe_temps'], probes_enabled=probes_enabled, num_mins=settings['minutes'], autorefresh=settings['autorefresh'], page_theme=settings['page_theme'])
+	return render_template('history.html', control=control, time_list=data_blob['time_list'], probe_list=data_blob['probe_list'], settemp_list=data_blob['settemp_list'], cur_probe_temps=data_blob['cur_probe_temps'], probes_enabled=probes_enabled, num_mins=settings['minutes'], num_datapoints=settings['datapoints'], autorefresh=settings['autorefresh'], page_theme=settings['page_theme'])
 
 @app.route('/historyupdate')
 def historyupdate(action=None):
 
 	settings = ReadSettings()
 
-	num_items = settings['minutes'] * 20
-	probes_enabled = settings['probes_enabled']
-
 	data_blob = {}
-	data_blob = prepare_data(num_items, True, settings['datapoints'])
+	data_blob = prepare_data(1, True, settings['datapoints'])
 
-	return render_template('historyupdate.html', time_list=data_blob['time_list'], probe_list=data_blob['probe_list'], settemp_list=data_blob['settemp_list'], cur_probe_temps=data_blob['cur_probe_temps'], probes_enabled=probes_enabled, num_mins=settings['minutes'])
+	return jsonify({ 'cur_probe_temps' : data_blob['cur_probe_temps'], 'grill_settemp' : data_blob['settemp_list'][0], 'probe1_settemp' : data_blob['settemp_list'][1], 'probe2_settemp' : data_blob['settemp_list'][2], 'time_label' : data_blob['time_list'].replace('"', '') })
 
 @app.route('/tuning/<action>', methods=['POST','GET'])
 @app.route('/tuning', methods=['POST','GET'])

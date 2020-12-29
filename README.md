@@ -514,7 +514,6 @@ Ideas for WebUI / App
 		New: Smoke+ Mode (Toggle Fan On/Off) - Experimental feature to increase smoke output by modulating the fan on/off time. This will require some experimentation.
 
 	History
-		New: Incorporate "streaming" instead of re-writing the chart every 3 seconds
 		New: Annotation when mode changes?
 
 	Recipes Page

@@ -97,7 +97,10 @@
 							</div>
 			        <div class="card-body" {% if page_theme == 'dark' %} style="background-color: #aaaaaa;"{% endif %}>
 								<div class="table-responsive">
-									<div id="refreshdata"></div>
+									<!-- History Chart -->
+									<div style="min-height: 400px">
+										<canvas id="HistoryChart" class="table"></canvas>
+									</div>
 								</div>
 			        </div> <!-- End of card body -->
 			        <div class="card-footer bg-light">
@@ -125,13 +128,13 @@
 
 							<!-- Auto-Refresh Control Section -->
 							<div class="row">
-								<div class="col">
+								<div class="col text-center">
 
 									<form name="refreshmode" method="POST">
 										{% if autorefresh == "off" %}
 										<button class="btn btn-outline-success" type="submit" id="autorefresh" name="autorefresh" value="on"><i class="fas fa-sync-alt"></i> Auto Refresh: OFF</button>
 										{% else %}
-										<button class="btn btn-success" type="submit" id="autorefresh" name="autorefresh" value="off"><i class="fas fa-sync-alt"></i> Auto Refresh: ON</button>
+										<button class="btn btn-success" type="submit" id="autorefresh" name="autorefresh" value="off"><i class="fas fa-sync-alt"></i> Auto Refresh: ON <br><i class="small" id="IntervalTime"></i></button>
 										{% endif %}
 									</form>
 
@@ -173,35 +176,254 @@
 	<!-- jQuery first, then Bootstrap JS -->
 	<script src="{{ url_for('static', filename='js/jquery-3.4.1.js') }}"></script>
 	<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
-	<script src="{{ url_for('static', filename='js/Chart.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/Chart.js') }}"></script>
 	<script src="{{ url_for('static', filename='js/all.js') }}"></script>
 
 	<script>
 	$(document).ready(function(){
-		$('#refreshdata').load("/historyupdate");
+		//$('#refreshdata').load("/historyupdate");
+
+			var chartdata = {
+					labels: [{{ time_list | safe }}],
+					datasets: [
+							{
+									label: "Grill Temp",
+									fill: false,
+									lineTension: 0.1,
+									backgroundColor: "rgba(0,0,127,0.4)",
+									borderColor: "rgba(0,0,127,1)",
+									borderCapStyle: 'butt',
+									borderDash: [],
+									borderDashOffset: 0.0,
+									borderJoinStyle: 'miter',
+									pointBorderColor: "rgba(0,0,127,1)",
+									pointBackgroundColor: "#fff",
+									pointBorderWidth: 1,
+									pointHoverRadius: 5,
+									pointHoverBackgroundColor: "rgba(0,0,127,0.4)",
+									pointHoverBorderColor: "rgba(0,0,127,1)",
+									pointHoverBorderWidth: 2,
+									pointRadius: 1,
+									pointHitRadius: 10,
+									data: [{{ probe_list[0] }}],
+									spanGaps: false,
+							},
+							{
+									label: "Grill Set Point",
+									fill: false,
+									lineTension: 0.1,
+									backgroundColor: "rgba(0,0,255,0.4)",
+									borderColor: "rgba(0,0,255,1)",
+									borderCapStyle: 'butt',
+									borderDash: [],
+									borderDashOffset: 0.0,
+									borderJoinStyle: 'miter',
+									pointBorderColor: "rgba(0,0,255,1)",
+									pointBackgroundColor: "#fff",
+									pointBorderWidth: 1,
+									pointHoverRadius: 5,
+									pointHoverBackgroundColor: "rgba(0,0,255,0.4)",
+									pointHoverBorderColor: "rgba(0,0,255,1)",
+									pointHoverBorderWidth: 2,
+									pointRadius: 1,
+									pointHitRadius: 10,
+									data: [{{ settemp_list[0] }}],
+									spanGaps: false,
+									{% if probes_enabled[0] == 0 %}
+										hidden: true,
+									{% endif %}
+							},
+							{
+									label: "Probe-1 Temp",
+									fill: false,
+									lineTension: 0.1,
+									backgroundColor: "rgba(256,0,0,0.4)",
+									borderColor: "rgba(256,0,0,1)",
+									borderCapStyle: 'butt',
+									borderDash: [],
+									borderDashOffset: 0.0,
+									borderJoinStyle: 'miter',
+									pointBorderColor: "rgba(256,0,0,1)",
+									pointBackgroundColor: "#fff",
+									pointBorderWidth: 1,
+									pointHoverRadius: 5,
+									pointHoverBackgroundColor: "rgba(256,0,0,0.4)",
+									pointHoverBorderColor: "rgba(256,0,0,1)",
+									pointHoverBorderWidth: 2,
+									pointRadius: 1,
+									pointHitRadius: 10,
+									data: [{{ probe_list[1] }}],
+									spanGaps: false,
+									{% if probes_enabled[1] == 0 %}
+										hidden: true,
+									{% endif %}
+							},
+							{
+									label: "Probe-1 Set Point",
+									fill: false,
+									lineTension: 0.1,
+									backgroundColor: "rgba(127,0,0,0.4)",
+									borderColor: "rgba(127,0,0,1)",
+									borderCapStyle: 'butt',
+									borderDash: [],
+									borderDashOffset: 0.0,
+									borderJoinStyle: 'miter',
+									pointBorderColor: "rgba(127,0,0,1)",
+									pointBackgroundColor: "#fff",
+									pointBorderWidth: 1,
+									pointHoverRadius: 5,
+									pointHoverBackgroundColor: "rgba(127,0,0,0.4)",
+									pointHoverBorderColor: "rgba(127,0,0,1)",
+									pointHoverBorderWidth: 2,
+									pointRadius: 1,
+									pointHitRadius: 10,
+									data: [{{ settemp_list[1] }}],
+									spanGaps: false,
+									{% if probes_enabled[1] == 0 %}
+										hidden: true,
+									{% endif %}
+							},
+							{
+									label: "Probe-2 Temp",
+									fill: false,
+									lineTension: 0.1,
+									backgroundColor: "rgba(0,127,0,0.4)",
+									borderColor: "rgba(0,127,0,1)",
+									borderCapStyle: 'butt',
+									borderDash: [],
+									borderDashOffset: 0.0,
+									borderJoinStyle: 'miter',
+									pointBorderColor: "rgba(0,127,0,1)",
+									pointBackgroundColor: "#fff",
+									pointBorderWidth: 1,
+									pointHoverRadius: 5,
+									pointHoverBackgroundColor: "rgba(0,127,0,0.4)",
+									pointHoverBorderColor: "rgba(0,127,0,1)",
+									pointHoverBorderWidth: 2,
+									pointRadius: 1,
+									pointHitRadius: 10,
+									data: [{{ probe_list[2] }}],
+									spanGaps: false,
+									{% if probes_enabled[2] == 0 %}
+										hidden: true,
+									{% endif %}
+							},
+							{
+									label: "Probe-2 Set Point",
+									fill: false,
+									lineTension: 0.1,
+									backgroundColor: "rgba(0,255,0,0.4)",
+									borderColor: "rgba(0,255,0,1)",
+									borderCapStyle: 'butt',
+									borderDash: [],
+									borderDashOffset: 0.0,
+									borderJoinStyle: 'miter',
+									pointBorderColor: "rgba(0,255,0,1)",
+									pointBackgroundColor: "#fff",
+									pointBorderWidth: 1,
+									pointHoverRadius: 5,
+									pointHoverBackgroundColor: "rgba(0,255,0,0.4)",
+									pointHoverBorderColor: "rgba(0,255,0,1)",
+									pointHoverBorderWidth: 2,
+									pointRadius: 1,
+									pointHitRadius: 10,
+									data: [{{ settemp_list[2] }}],
+									spanGaps: false,
+									{% if probes_enabled[2] == 0 %}
+										hidden: true,
+									{% endif %}
+							}
+					]
+				}
+
+			var temperatureCharts = new Chart(document.getElementById('HistoryChart'), {
+					type: 'line',
+					data: chartdata,
+					options: {
+						scales: {
+								yAxes: [{
+										ticks: {
+												beginAtZero:true
+										}
+								}]
+						},
+						responsive: true,
+						maintainAspectRatio: false,
+						animation: false
+					}
+				});
+
 		{% if autorefresh == 'on' %}
+		
+		// Auto-Refresh of History Data
+
+		// Set Auto-Refresh Interval by calculating number of minutes displayed divided by the number of datapoints displayed.  
+		var intervaltime = Math.round((( {{ num_mins }} * 20) / {{ num_datapoints }}) * 3000);
+		
+		// Minimum Auto-Refresh Time
+		intervaltime = Math.max(3000, intervaltime);
+
+		// Display interval time in seconds in auto-refresh button
+		var interval_text = 'Update every ' + (intervaltime / 1000) + ' seconds.'
+		document.getElementById("IntervalTime").innerHTML = interval_text;
+
+		//console.log('Interval Time = '+intervaltime);
+
 		setInterval(function(){
-			$('#refreshdata').load("/historyupdate");
-		}, 3000);
+			// Get Data from historyupdate route
+			req = $.ajax({
+				url : '/historyupdate',
+				type : 'GET'
+			});
+
+			req.done(function(data) {
+				// Update chart data
+				// console.log(data);
+
+  				// Remove the first point so we dont just add values forever
+
+				temperatureCharts.data.labels.shift();
+				temperatureCharts.data.datasets.forEach((dataset) => {
+					dataset.data.shift();
+				});
+
+				// Add data for each dataset
+				var updated_data = [data.cur_probe_temps[0], data.grill_settemp, data.cur_probe_temps[1], data.probe1_settemp, data.cur_probe_temps[2], data.probe2_settemp];
+				temperatureCharts.data.labels.push(data.time_label);
+				temperatureCharts.data.datasets[0].data.push(data.cur_probe_temps[0]);
+				temperatureCharts.data.datasets[1].data.push(data.grill_settemp);
+				temperatureCharts.data.datasets[2].data.push(data.cur_probe_temps[1]);
+				temperatureCharts.data.datasets[3].data.push(data.probe1_settemp);
+				temperatureCharts.data.datasets[4].data.push(data.cur_probe_temps[2]);
+				temperatureCharts.data.datasets[5].data.push(data.probe2_settemp);
+    			
+				//temperatureCharts.addData([data.cur_probe_temps[0], data.grill_settemp, data.cur_probe_temps[1], data.probe1_settemp, data.cur_probe_temps[2], data.probe2_settemp], data.time_label);
+
+				// Update Chart
+				temperatureCharts.update();
+
+			});
+		}, intervaltime);
 		{% endif %}
 	});
 	</script>
+
 	{% if control['timer']['start'] != 0 %}
-		<script>
+	<script>
 		// Set the date we're counting down to
 		var countDownDate = {{ control['timer']['end'] }} * 1000;
 		// Update the count down every 1 second
 		var x = setInterval(function() {
 
-		  // Get today's date and time
-		  var now = new Date().getTime();
+		// Get today's date and time
+		var now = new Date().getTime();
 
-		  // Find the distance between now and the count down date
-			{% if control['timer']['paused'] == 0 %}
-		  var distance = countDownDate - now;
-			{% else %}
-			var distance = countDownDate - ( {{ control['timer']['paused'] }} * 1000 );
-			{% endif %}
+		// Find the distance between now and the count down date
+		{% if control['timer']['paused'] == 0 %}
+		var distance = countDownDate - now;
+		{% else %}
+		var distance = countDownDate - ( {{ control['timer']['paused'] }} * 1000 );
+		{% endif %}
 
 		  // Time calculations for days, hours, minutes and seconds
 		  var days = Math.floor(distance / (1000 * 60 * 60 * 24));
