@@ -134,7 +134,7 @@
 										{% if autorefresh == "off" %}
 										<button class="btn btn-outline-success" type="submit" id="autorefresh" name="autorefresh" value="on"><i class="fas fa-sync-alt"></i> Auto Refresh: OFF</button>
 										{% else %}
-										<button class="btn btn-success" type="submit" id="autorefresh" name="autorefresh" value="off"><i class="fas fa-sync-alt"></i> Auto Refresh: ON <br><i class="small" id="IntervalTime"></i></button>
+										<button class="btn btn-success" type="submit" id="autorefresh" name="autorefresh" value="off"><i class="fas fa-sync-alt"></i> Auto Refresh: ON</button>
 										{% endif %}
 									</form>
 
@@ -181,10 +181,8 @@
 
 	<script>
 	$(document).ready(function(){
-		//$('#refreshdata').load("/historyupdate");
-
 			var chartdata = {
-					labels: [{{ time_list | safe }}],
+					labels: {{ label_time_list | safe }},
 					datasets: [
 							{
 									label: "Grill Temp",
@@ -205,7 +203,7 @@
 									pointHoverBorderWidth: 2,
 									pointRadius: 1,
 									pointHitRadius: 10,
-									data: [{{ probe_list[0] }}],
+									data: {{ grill_temp_list }},
 									spanGaps: false,
 							},
 							{
@@ -227,7 +225,7 @@
 									pointHoverBorderWidth: 2,
 									pointRadius: 1,
 									pointHitRadius: 10,
-									data: [{{ settemp_list[0] }}],
+									data: {{ grill_settemp_list }},
 									spanGaps: false,
 									{% if probes_enabled[0] == 0 %}
 										hidden: true,
@@ -252,7 +250,7 @@
 									pointHoverBorderWidth: 2,
 									pointRadius: 1,
 									pointHitRadius: 10,
-									data: [{{ probe_list[1] }}],
+									data: {{ probe1_temp_list }},
 									spanGaps: false,
 									{% if probes_enabled[1] == 0 %}
 										hidden: true,
@@ -277,7 +275,7 @@
 									pointHoverBorderWidth: 2,
 									pointRadius: 1,
 									pointHitRadius: 10,
-									data: [{{ settemp_list[1] }}],
+									data: {{ probe1_settemp_list }},
 									spanGaps: false,
 									{% if probes_enabled[1] == 0 %}
 										hidden: true,
@@ -302,7 +300,7 @@
 									pointHoverBorderWidth: 2,
 									pointRadius: 1,
 									pointHitRadius: 10,
-									data: [{{ probe_list[2] }}],
+									data: {{ probe2_temp_list }},
 									spanGaps: false,
 									{% if probes_enabled[2] == 0 %}
 										hidden: true,
@@ -327,7 +325,7 @@
 									pointHoverBorderWidth: 2,
 									pointRadius: 1,
 									pointHitRadius: 10,
-									data: [{{ settemp_list[2] }}],
+									data: {{ probe2_settemp_list }},
 									spanGaps: false,
 									{% if probes_enabled[2] == 0 %}
 										hidden: true,
@@ -357,18 +355,6 @@
 		
 		// Auto-Refresh of History Data
 
-		// Set Auto-Refresh Interval by calculating number of minutes displayed divided by the number of datapoints displayed.  
-		var intervaltime = Math.round((( {{ num_mins }} * 20) / {{ num_datapoints }}) * 3000);
-		
-		// Minimum Auto-Refresh Time
-		intervaltime = Math.max(3000, intervaltime);
-
-		// Display interval time in seconds in auto-refresh button
-		var interval_text = 'Update every ' + (intervaltime / 1000) + ' seconds.'
-		document.getElementById("IntervalTime").innerHTML = interval_text;
-
-		//console.log('Interval Time = '+intervaltime);
-
 		setInterval(function(){
 			// Get Data from historyupdate route
 			req = $.ajax({
@@ -378,32 +364,31 @@
 
 			req.done(function(data) {
 				// Update chart data
-				// console.log(data);
+				// console.log(data);  // Debug logging
 
-  				// Remove the first point so we dont just add values forever
+				// Returned Lists: 
+				// 'grill_temp_list' 
+				// 'grill_settemp_list'
+				// 'probe1_temp_list' 
+				// 'probe1_settemp_list'
+				// 'probe2_temp_list' 
+				// 'probe2_settemp_list' 
+				// 'label_time_list' 
 
-				temperatureCharts.data.labels.shift();
-				temperatureCharts.data.datasets.forEach((dataset) => {
-					dataset.data.shift();
-				});
-
-				// Add data for each dataset
-				var updated_data = [data.cur_probe_temps[0], data.grill_settemp, data.cur_probe_temps[1], data.probe1_settemp, data.cur_probe_temps[2], data.probe2_settemp];
-				temperatureCharts.data.labels.push(data.time_label);
-				temperatureCharts.data.datasets[0].data.push(data.cur_probe_temps[0]);
-				temperatureCharts.data.datasets[1].data.push(data.grill_settemp);
-				temperatureCharts.data.datasets[2].data.push(data.cur_probe_temps[1]);
-				temperatureCharts.data.datasets[3].data.push(data.probe1_settemp);
-				temperatureCharts.data.datasets[4].data.push(data.cur_probe_temps[2]);
-				temperatureCharts.data.datasets[5].data.push(data.probe2_settemp);
+				// Replace data for each dataset and label list
+				temperatureCharts.data.labels = data.label_time_list;
+				temperatureCharts.data.datasets[0].data = data.grill_temp_list;
+				temperatureCharts.data.datasets[1].data = data.grill_settemp_list;
+				temperatureCharts.data.datasets[2].data = data.probe1_temp_list;
+				temperatureCharts.data.datasets[3].data = data.probe1_settemp_list;
+				temperatureCharts.data.datasets[4].data = data.probe2_temp_list;
+				temperatureCharts.data.datasets[5].data = data.probe2_settemp_list;
     			
-				//temperatureCharts.addData([data.cur_probe_temps[0], data.grill_settemp, data.cur_probe_temps[1], data.probe1_settemp, data.cur_probe_temps[2], data.probe2_settemp], data.time_label);
-
 				// Update Chart
 				temperatureCharts.update();
 
 			});
-		}, intervaltime);
+		}, 3000);
 		{% endif %}
 	});
 	</script>

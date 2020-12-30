@@ -278,17 +278,18 @@ def historypage(action=None):
 	data_blob = {}
 	data_blob = prepare_data(num_items, True, settings['datapoints'])
 
-	return render_template('history.html', control=control, time_list=data_blob['time_list'], probe_list=data_blob['probe_list'], settemp_list=data_blob['settemp_list'], cur_probe_temps=data_blob['cur_probe_temps'], probes_enabled=probes_enabled, num_mins=settings['minutes'], num_datapoints=settings['datapoints'], autorefresh=settings['autorefresh'], page_theme=settings['page_theme'])
-
+	return render_template('history.html', control=control, grill_temp_list=data_blob['grill_temp_list'], grill_settemp_list=data_blob['grill_settemp_list'], probe1_temp_list=data_blob['probe1_temp_list'], probe1_settemp_list=data_blob['probe1_settemp_list'], probe2_temp_list=data_blob['probe2_temp_list'], probe2_settemp_list=data_blob['probe2_settemp_list'], label_time_list=data_blob['label_time_list'], probes_enabled=probes_enabled, num_mins=settings['minutes'], num_datapoints=settings['datapoints'], autorefresh=settings['autorefresh'], page_theme=settings['page_theme'])
+    
 @app.route('/historyupdate')
 def historyupdate(action=None):
 
 	settings = ReadSettings()
 
 	data_blob = {}
-	data_blob = prepare_data(1, True, settings['datapoints'])
+	num_items = settings['minutes'] * 20
+	data_blob = prepare_data(num_items, True, settings['datapoints'])
 
-	return jsonify({ 'cur_probe_temps' : data_blob['cur_probe_temps'], 'grill_settemp' : data_blob['settemp_list'][0], 'probe1_settemp' : data_blob['settemp_list'][1], 'probe2_settemp' : data_blob['settemp_list'][2], 'time_label' : data_blob['time_list'].replace('"', '') })
+	return jsonify({ 'grill_temp_list' : data_blob['grill_temp_list'], 'grill_settemp_list' : data_blob['grill_settemp_list'], 'probe1_temp_list' : data_blob['probe1_temp_list'], 'probe1_settemp_list' : data_blob['probe1_settemp_list'], 'probe2_temp_list' : data_blob['probe2_temp_list'], 'probe2_settemp_list' : data_blob['probe2_settemp_list'], 'label_time_list' : data_blob['label_time_list'] })
 
 @app.route('/tuning/<action>', methods=['POST','GET'])
 @app.route('/tuning', methods=['POST','GET'])
@@ -880,17 +881,20 @@ def checkcputemp():
 
 def prepare_data(num_items=10, reduce=True, datapoints=60):
 
-	# num_items Number of items to store in the data blob
+	# num_items: Number of items to store in the data blob
 
 	data_list = ReadHistory(num_items)
 
 	data_blob = {}
 
-	data_blob['time_list'] = ''
-	data_blob['settemp_list'] = ['','','']
-	data_blob['probe_list'] = ['','','']
-	data_blob['cur_probe_temps'] = [0,0,0]
-
+	data_blob['label_time_list'] = []
+	data_blob['grill_temp_list'] = []
+	data_blob['grill_settemp_list'] = []
+	data_blob['probe1_temp_list'] = []
+	data_blob['probe1_settemp_list'] = []
+	data_blob['probe2_temp_list'] = []
+	data_blob['probe2_settemp_list'] = []
+	
 	list_length = len(data_list) # Length of list
 
 	if((list_length < num_items) and (list_length > 0)):
@@ -902,48 +906,26 @@ def prepare_data(num_items=10, reduce=True, datapoints=60):
 		step = 1
 
 	if(list_length > 0):
-		# Build Time_List, Settemp_List, Probe_List, cur_probe_temps backwards from current time
+		# Build all lists from file data
 		for index in range(list_length - num_items, list_length, step):
-			if(index == 0):
-				comma = ''
-			else:
-				comma = ', '
-
-			data_blob['time_list'] = '"' + str(data_list[(list_length-1-index)][0]) + '"' + comma + data_blob['time_list']
-			data_blob['probe_list'][0] = str(data_list[list_length-1-index][1]) + comma + data_blob['probe_list'][0]
-			data_blob['settemp_list'][0] = str(data_list[list_length-1-index][2]) + comma + data_blob['settemp_list'][0]
-			data_blob['probe_list'][1] = str(data_list[list_length-1-index][3]) + comma + data_blob['probe_list'][1]
-			data_blob['settemp_list'][1] = str(data_list[list_length-1-index][4]) + comma + data_blob['settemp_list'][1]
-			data_blob['probe_list'][2] = str(data_list[list_length-1-index][5]) + comma + data_blob['probe_list'][2]
-			data_blob['settemp_list'][2] = str(data_list[list_length-1-index][6]) + comma + data_blob['settemp_list'][2]
-
-		data_blob['cur_probe_temps'][0] = int(data_list[list_length-1][1])
-		data_blob['cur_probe_temps'][1] = int(data_list[list_length-1][3])
-		data_blob['cur_probe_temps'][2] = int(data_list[list_length-1][5])
+			data_blob['label_time_list'].append(data_list[index][0]) 
+			data_blob['grill_temp_list'].append(int(data_list[index][1]))
+			data_blob['grill_settemp_list'].append(int(data_list[index][2]))
+			data_blob['probe1_temp_list'].append(int(data_list[index][3]))
+			data_blob['probe1_settemp_list'].append(int(data_list[index][4]))
+			data_blob['probe2_temp_list'].append(int(data_list[index][5]))
+			data_blob['probe2_settemp_list'].append(int(data_list[index][6]))
 	else:
 		now = str(datetime.datetime.now())
 		now = now[0:19] # Truncate the microseconds
 		for index in range(num_items):
-			data_blob['time_list'] = data_blob['time_list'] + '"' + str(now) + '"'
-			data_blob['probe_list'][0] = data_blob['probe_list'][0] + "0"
-			data_blob['settemp_list'][0] = data_blob['settemp_list'][0] + "0"
-			data_blob['probe_list'][1] = data_blob['probe_list'][1] + "0"
-			data_blob['settemp_list'][1] = data_blob['settemp_list'][1] + "0"
-			data_blob['probe_list'][2] = data_blob['probe_list'][2] + "0"
-			data_blob['settemp_list'][2] = data_blob['settemp_list'][2] + "0"
-
-			if(index < num_items - 1):
-				data_blob['time_list'] = data_blob['time_list'] + ", "
-				data_blob['probe_list'][0] = data_blob['probe_list'][0] + ", "
-				data_blob['settemp_list'][0] = data_blob['settemp_list'][0] + ", "
-				data_blob['probe_list'][1] = data_blob['probe_list'][1] + ", "
-				data_blob['settemp_list'][1] = data_blob['settemp_list'][1] + ", "
-				data_blob['probe_list'][2] = data_blob['probe_list'][2] + ", "
-				data_blob['settemp_list'][2] = data_blob['settemp_list'][2] + ", "
-
-		data_blob['cur_probe_temps'][0] = 0
-		data_blob['cur_probe_temps'][1] = 0
-		data_blob['cur_probe_temps'][2] = 0
+			data_blob['label_time_list'].append(str(now)) 
+			data_blob['grill_temp_list'].append(0)
+			data_blob['grill_settemp_list'].append(0)
+			data_blob['probe1_temp_list'].append(0)
+			data_blob['probe1_settemp_list'].append(0)
+			data_blob['probe2_temp_list'].append(0)
+			data_blob['probe2_settemp_list'].append(0)
 
 	return(data_blob)
 
