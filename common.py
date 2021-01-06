@@ -55,6 +55,15 @@ def DefaultSettings():
 		'u_max' : 1.0
 	}
 
+	settings['smoke_plus'] = {
+		'enabled' : False, # Sets default Enable/Disable (True = Enabled, False = Disabled)
+		'min_temp' : 160, # Minimum temperature to cycle fan on/off
+		'max_temp' : 220, # Maximum temperature to cycle fan on/off
+		'cycle' : 10,  # Number of seconds to cycle the fan on/off
+		'frequency' : 1, # For PWM, if implemented (Currently not used)
+		'duty_cycle' : 50 # For PWM, if implemented (Currently not used)
+	}
+
 	settings['minutes'] = 60 # Sets default number of items to show in history
 
 	settings['clearhistoryonstart'] = True # Clear history when StartUp Mode selected
@@ -83,6 +92,8 @@ def DefaultControl():
 	control['updated'] = True
 
 	control['mode'] = 'Stop'
+
+	control['s_plus'] = False # Smoke-Plus Feature Enable/Disable
 
 	control['recipe'] = ''
 

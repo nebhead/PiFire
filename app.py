@@ -131,6 +131,18 @@ def index(action=None):
 			if(response['setmodesmoke']=='true'):
 				control['updated'] = True
 				control['mode'] = 'Smoke'
+				if(settings['smoke_plus']['enabled'] == True):
+					control['s_plus'] = True
+				else: 
+					control['s_plus'] = False 
+				WriteControl(control)
+			if(response['setmodesmoke']=='update'):
+				control['updated'] = True
+				control['mode'] = 'Smoke'
+				if(control['s_plus'] == True):
+					control['s_plus'] = False
+				else:
+					control['s_plus'] = True 
 				WriteControl(control)
 		if('setmodeshutdown' in response):
 			if(response['setmodeshutdown']=='true'):
@@ -166,7 +178,7 @@ def data_dump(action=None):
 	cur_probe_temps = []
 	cur_probe_temps = ReadCurrent()
 
-	return render_template('data.html', cur_probe_temps=cur_probe_temps, probes_enabled=probes_enabled, set_points=control['setpoints'], current_mode=control['mode'], mode_status=control['status'], page_theme=settings['page_theme'])
+	return render_template('data.html', cur_probe_temps=cur_probe_temps, probes_enabled=probes_enabled, set_points=control['setpoints'], current_mode=control['mode'], mode_status=control['status'], s_plus=control['s_plus'], page_theme=settings['page_theme'])
 
 @app.route('/history/<action>', methods=['POST','GET'])
 @app.route('/history', methods=['POST','GET'])
@@ -625,7 +637,21 @@ def settingspage(action=None):
 		if('derivtime' in response):
 			if(response['derivtime'] != ''):
 				settings['cycle_data']['Td'] = float(response['derivtime'])
-
+		if('sp_cycle' in response):
+			if(response['sp_cycle'] != ''):
+				settings['smoke_plus']['cycle'] = int(response['sp_cycle'])
+		if('minsptemp' in response):
+			if(response['minsptemp'] != ''):
+				settings['smoke_plus']['min_temp'] = int(response['minsptemp'])
+		if('maxsptemp' in response):
+			if(response['maxsptemp'] != ''):
+				settings['smoke_plus']['max_temp'] = int(response['maxsptemp'])
+		if('defaultsmokeplus' in response):
+			if(response['defaultsmokeplus'] == 'on'):
+				settings['smoke_plus']['enabled'] = True 
+			else:
+				settings['smoke_plus']['enabled'] = False
+				
 		event['type'] = 'updated'
 		event['text'] = 'Successfully updated cycle settings.'
 

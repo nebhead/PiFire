@@ -182,6 +182,10 @@ def WorkCycle(mode, grill_platform, adc_device, display_device):
 	# Initialize Current Auger State Structure
 	current_output_status = {}
 
+	# Smoke Plus Mode
+	if((mode == 'Smoke') and (control['s_plus'] == True)):
+		sp_cycletoggletime = time.time()
+
 	while(status == 'Active'):
 		now = time.time()
 
@@ -205,11 +209,11 @@ def WorkCycle(mode, grill_platform, adc_device, display_device):
 					WriteLog(event)
 					control['updated'] = True # Change mode
 					control['mode'] = 'Stop'
-					control['statu'] = 'active'
+					control['status'] = 'active'
 					WriteControl(control)
 
 					break
-
+			
 			# Change Auger State based on Cycle Time
 			current_output_status = grill_platform.GetOutputStatus()
 
@@ -245,6 +249,19 @@ def WorkCycle(mode, grill_platform, adc_device, display_device):
 
 			AvgP1 = (adc_data['Probe1Temp'] + AvgP1) / 2
 			AvgP2 = (adc_data['Probe2Temp'] + AvgP2) / 2
+
+			# If in Smoke Plus Mode, Cycle the Fan
+			if((mode == 'Smoke') and (control['s_plus'] == True)):
+				# If Temperature is > settings['smoke_plus']['max_temp'] then turn on fan
+				if(AvgGT > settings['smoke_plus']['max_temp']):
+					grill_platform.FanOn()
+				# elif Temperature is < settings['smoke_plus']['min_temp'] then turn on fan
+				elif(AvgGT < settings['smoke_plus']['min_temp']):
+					grill_platform.FanOn()
+				# elif now - sp_cycletoggletime > settings['smoke_plus']['cycle'] / 2 then toggle fan, reset cycletoggletime = now
+				elif((now - sp_cycletoggletime) > (settings['smoke_plus']['cycle']*0.5)):
+					grill_platform.FanToggle()
+					sp_cycletoggletime = time.time()
 
 			# Write History after 3 seconds has passed
 			if (now - temptoggletime > 3):

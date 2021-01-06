@@ -22,7 +22,11 @@
 				{% endif %}
 
 				{% if (current_mode == 'Smoke') %}
-				<button type="submit" class="btn btn-warning border border-secondary" name="setmodesmoke" value="true">Smoke</button>
+				<button type="submit" class="btn btn-warning border border-secondary" name="setmodesmoke" value="update">Smoke
+					{% if (s_plus) %}
+					<i class="fas fa-plus"></i>
+					{% endif %}
+				</button>
 				{% else %}
 				<button type="submit" class="btn btn-outline-warning border border-secondary text-secondary" name="setmodesmoke" value="true">Smoke</button>
 				{% endif %}

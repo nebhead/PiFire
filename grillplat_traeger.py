@@ -4,7 +4,9 @@
 # PiFire Traeger Interface Library
 # *****************************************
 #
-# Description: This library supports controlling the Traeger outputs via
+# Description: This library supports 
+#  controlling the PiFire Outputs, alongside 
+#  the Traeger outputs via
 #  Raspberry Pi GPIOs, to a 4-channel relay
 #
 # *****************************************
@@ -46,6 +48,12 @@ class GrillPlatform:
 
 	def FanOff(self):
 		GPIO.output(self.outpins['fan'], 1)
+
+	def FanToggle(self):
+		if(GPIO.input(self.outpins['fan']) == 0):
+			GPIO.output(self.outpins['fan'], 1)
+		else:
+			GPIO.output(self.outpins['fan'], 0)
 
 	def IgniterOn(self):
 		GPIO.output(self.outpins['igniter'], 0)

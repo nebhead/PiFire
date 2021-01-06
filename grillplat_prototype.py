@@ -36,6 +36,12 @@ class GrillPlatform:
 	def FanOff(self):
 		self.outpins['fan'] = 1
 
+	def FanToggle(self):
+		if(self.outpins['fan'] == 0):
+			self.outpins['fan'] = 1
+		else:
+			self.outpins['fan'] = 0
+
 	def IgniterOn(self):
 		self.outpins['igniter'] = 0
 

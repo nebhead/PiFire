@@ -384,27 +384,59 @@
 									<input id="pmode" type="number" min="0" max = "9" class="form-control" placeholder="{{ settings['cycle_data']['PMode'] }}" value="{{ settings['cycle_data']['PMode'] }}" name="pmode">
 								</div>
 								<table class="table table-bordered">
-							    <thead class="thead-light">
-							      <tr>
-							        <th>P-Mode</th>
-							        <th>Auger ON Time</th>
-							        <th>Auger OFF Time</th>
-							      </tr>
-							    </thead>
-									{% for row in range(10) %}
-							    <tbody>
-										{% if row == settings['cycle_data']['PMode'] %}
-										<tr class="table-warning">
-										{% else %}
-							      <tr>
-										{% endif %}
-							        <td>{{ row }} {% if (row == 2) %}(Factory Default){% endif %}</td>
-							        <td>15 seconds</td>
-							        <td>{{ (row * 10)+45 }} seconds</td>
-							      </tr>
-									{% endfor %}
-							    </tbody>
-							  </table>
+									<thead class="thead-light">
+									<tr>
+										<th>P-Mode</th>
+										<th>Auger ON Time</th>
+										<th>Auger OFF Time</th>
+									</tr>
+									</thead>
+										{% for row in range(10) %}
+									<tbody>
+											{% if row == settings['cycle_data']['PMode'] %}
+											<tr class="table-warning">
+											{% else %}
+									<tr>
+											{% endif %}
+										<td>{{ row }} {% if (row == 2) %}(Factory Default){% endif %}</td>
+										<td>15 seconds</td>
+										<td>{{ (row * 10)+45 }} seconds</td>
+									</tr>
+										{% endfor %}
+									</tbody>
+								</table>
+
+								<br>
+							
+								<h5>Smoke Plus Settings (SMOKE Mode)</h5>
+								<span class="badge badge-warning">NOTE:</span><i class="small">Smoke Plus Mode can be toggled on/off by tapping the Smoke button on the dashboard. A plus symbol (<i class="fas fa-plus"></i>) will appear indicating that smoke plus is enabled.  Smoke Plus will cycle the fan on and off during smoke mode to promote additional smoke generation.</i>
+								<br><br>
+								<div class="custom-control custom-switch">
+									<input type="checkbox" class="custom-control-input" id="defaultsmokeplus" name="defaultsmokeplus" {% if settings['smoke_plus']['enabled'] == True %}checked{% endif %}>
+						    		<label class="custom-control-label" for="defaultsmokeplus">Smoke Plus Enabled by Default</label>
+								</div>
+								<br>
+								<div class="input-group mb-3">
+									<div class="input-group-prepend">
+										<span class="input-group-text" data-toggle="tooltip" title="Fan Cycle Time (seconds) [Default: 6]"><i class="far fa-clock"></i>&nbsp; Fan Cycle Time (s)</span>
+									</div>
+									<input id="sp_cycle" type="number" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['cycle'] }}" value="{{ settings['smoke_plus']['cycle'] }}" name="sp_cycle">
+								</div>
+								<div class="input-group mb-3">
+									<div class="input-group-prepend">
+										<span class="input-group-text" data-toggle="tooltip" title="Lowest temperature for Smoke Plus to operate. (F) [Default: 160]"><i class="fas fa-temperature-high"></i>&nbsp; Min Oprerational Temp (F) </span>
+									</div>
+									<input id="minsptemp" type="number" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['min_temp'] }}" value="{{ settings['smoke_plus']['min_temp'] }}" name="minsptemp">
+								</div>
+								<div class="input-group mb-3">
+									<div class="input-group-prepend">
+										<span class="input-group-text" data-toggle="tooltip" title="Highest temperature for Smoke Plus to operate. (F) [Default: 220]"><i class="fas fa-temperature-high"></i>&nbsp; Max Oprerational Temp (F) </span>
+									</div>
+									<input id="maxsptemp" type="number" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['max_temp'] }}" value="{{ settings['smoke_plus']['max_temp'] }}" name="maxsptemp">
+								</div>
+
+								
+
 								<br>
 								<h5>PID Settings (HOLD Mode)</h5>
 								<span class="badge badge-warning">NOTE:</span><i class="small"> If you are in hold mode currently, you will need to change to another mode and back into hold mode for this to take effect. More information on the PID control settings can be found <a href="http://engineeredmusings.com/pismoker/" target="blank">here.</a></i>
