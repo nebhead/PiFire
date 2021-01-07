@@ -185,6 +185,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device):
 	# Smoke Plus Mode
 	if((mode == 'Smoke') and (control['s_plus'] == True)):
 		sp_cycletoggletime = time.time()
+		DebugWrite('Smoke Plus Mode Enabled.')
 
 	while(status == 'Active'):
 		now = time.time()
@@ -262,6 +263,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device):
 				elif((now - sp_cycletoggletime) > (settings['smoke_plus']['cycle']*0.5)):
 					grill_platform.FanToggle()
 					sp_cycletoggletime = time.time()
+					DebugWrite('Smoke Plus: Fan Toggled')
 
 			# Write History after 3 seconds has passed
 			if (now - temptoggletime > 3):
