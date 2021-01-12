@@ -121,12 +121,17 @@ def index(action=None):
 	if (request.method == 'POST') and (action == 'setmode'):
 		response = request.form
 
+		print(response)
 		if('setpointtemp' in response):
 			if(response['setpointtemp']=='true'):
 				set_point = int(response['tempInputRange'])
 				control['setpoints']['grill'] = set_point
 				control['updated'] = True
 				control['mode'] = 'Hold'
+				if(settings['smoke_plus']['enabled'] == True):
+					control['s_plus'] = True
+				else: 
+					control['s_plus'] = False 
 				WriteControl(control)
 		if('setmodestartup' in response):
 			if(response['setmodestartup']=='true'):
@@ -141,14 +146,6 @@ def index(action=None):
 					control['s_plus'] = True
 				else: 
 					control['s_plus'] = False 
-				WriteControl(control)
-			if(response['setmodesmoke']=='update'):
-				control['updated'] = True
-				control['mode'] = 'Smoke'
-				if(control['s_plus'] == True):
-					control['s_plus'] = False
-				else:
-					control['s_plus'] = True 
 				WriteControl(control)
 		if('setmodeshutdown' in response):
 			if(response['setmodeshutdown']=='true'):
@@ -165,6 +162,19 @@ def index(action=None):
 				control['updated'] = True
 				control['mode'] = 'Stop'
 				WriteControl(control)
+		if('setmodesmoke' in response):
+			if(response['setmodesmoke']=='true'):
+				control['updated'] = True
+				control['mode'] = 'Smoke'
+		if('setmodesmokeplus' in response):
+			if(response['setmodesmokeplus']=='true'):
+				control['updated'] = True
+				control['s_plus'] = True
+			else:
+				control['updated'] = True
+				control['s_plus'] = False 
+			print (control['s_plus'])
+			WriteControl(control)
 
 	probes_enabled = settings['probes_enabled']
 

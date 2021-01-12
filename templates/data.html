@@ -22,11 +22,7 @@
 				{% endif %}
 
 				{% if (current_mode == 'Smoke') %}
-				<button type="submit" class="btn btn-warning border border-secondary" name="setmodesmoke" value="update">Smoke
-					{% if (s_plus) %}
-					<i class="fas fa-plus"></i>
-					{% endif %}
-				</button>
+				<button type="submit" class="btn btn-warning border border-secondary" name="setmodesmoke" value="true">Smoke</button>
 				{% else %}
 				<button type="submit" class="btn btn-outline-warning border border-secondary text-secondary" name="setmodesmoke" value="true">Smoke</button>
 				{% endif %}
@@ -49,8 +45,14 @@
 			{% if (mode_status == 'error') %}
 				<a href="/events" class="btn btn-danger" role="button"><i class="fas fa-exclamation-triangle"></i></a>
 			{% endif %}
-
+			
 		</div> <!-- End of Button Group -->
+
+		{% if s_plus == True %}
+		<button type="submit" class="btn btn-primary border border-secondary" name="setmodesmokeplus" value="false"><i class="fas fa-fan"></i></button>
+		{% else %}
+		<button type="submit" class="btn btn-outline-primary border border-secondary text-secondary" name="setmodesmokeplus" value="true"><i class="fas fa-fan"></i></button>
+		{% endif %}
 	</div> <!-- End of Column -->
 </div> <!-- End of Row -->
 

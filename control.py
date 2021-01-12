@@ -183,7 +183,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device):
 	current_output_status = {}
 
 	# Smoke Plus Mode
-	if((mode == 'Smoke') and (control['s_plus'] == True)):
+	if(((mode == 'Smoke') or (mode == 'Hold')) and (control['s_plus'] == True)):
 		sp_cycletoggletime = time.time()
 		DebugWrite('Smoke Plus Mode Enabled.')
 
@@ -252,7 +252,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device):
 			AvgP2 = (adc_data['Probe2Temp'] + AvgP2) / 2
 
 			# If in Smoke Plus Mode, Cycle the Fan
-			if((mode == 'Smoke') and (control['s_plus'] == True)):
+			if(((mode == 'Smoke') or (mode == 'Hold')) and (control['s_plus'] == True)):
 				# If Temperature is > settings['smoke_plus']['max_temp'] then turn on fan
 				if(AvgGT > settings['smoke_plus']['max_temp']):
 					grill_platform.FanOn()
