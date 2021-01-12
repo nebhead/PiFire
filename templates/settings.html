@@ -317,13 +317,20 @@
 
 						<form name="cyclesettings" action="/settings/cycle" method="POST">
 
-							<div class="card-header bg-primary text-white"><h5><i class="fas fa-tools"></i>&nbsp; Cycle Settings</h5></div>
+							<div class="card-header bg-primary text-white"><h5><i class="fas fa-tools"></i>&nbsp; Work Mode Settings</h5></div>
 							<div class="card-body">
-								<h5>General Settings</h5>
+								<h5>Startup / Smoke Mode Cycle Settings</h5>
+								<div class="input-group mb-3">
+									<div class="input-group-prepend">
+										<span class="input-group-text" data-toggle="tooltip" title="Auger-On Time for Smoke / Startup (seconds)[Default=15]"><i class="far fa-clock"></i>&nbsp; Auger On Time</span>
+									</div>
+									<input id="smokecycletime" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['SmokeCycleTime'] }}" value="{{ settings['cycle_data']['SmokeCycleTime'] }}" name="smokecycletime">
+								</div>
+
 								<span class="badge badge-warning">NOTE:</span><i class="small"> More information about the PMode can be found <a href="http://tipsforbbq.com/Definition/Traeger-P-Setting" target="blank">here.</a>  P-Mode is used for both Startup and Smoke modes, but not Hold mode.</i>
 								<div class="input-group mb-3">
 									<div class="input-group-prepend">
-										<span class="input-group-text" data-toggle="tooltip" title="Set P-Mode for Smoke Cycle (1-10)"><i class="fas fa-cog"></i>&nbsp; P-Mode</span>
+										<span class="input-group-text" data-toggle="tooltip" title="(Auger-Off Time: Set P-Mode for Smoke Cycle (1-10)"><i class="fas fa-cog"></i>&nbsp; P-Mode</span>
 									</div>
 									<input id="pmode" type="number" min="0" max = "9" class="form-control" placeholder="{{ settings['cycle_data']['PMode'] }}" value="{{ settings['cycle_data']['PMode'] }}" name="pmode">
 								</div>
@@ -343,7 +350,7 @@
 									<tr>
 											{% endif %}
 										<td>{{ row }} {% if (row == 2) %}(Factory Default){% endif %}</td>
-										<td>15 seconds</td>
+										<td>{{ settings['cycle_data']['SmokeCycleTime'] }}</td>
 										<td>{{ (row * 10)+45 }} seconds</td>
 									</tr>
 										{% endfor %}
@@ -388,7 +395,7 @@
 									<div class="input-group-prepend">
 										<span class="input-group-text" data-toggle="tooltip" title="Cycle Time for PID Controller (seconds)[Default=20]"><i class="far fa-clock"></i>&nbsp; Cycle Time</span>
 									</div>
-									<input id="cycletime" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['CycleTime'] }}" value="{{ settings['cycle_data']['CycleTime'] }}" name="cycletime">
+									<input id="holdcycletime" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['HoldCycleTime'] }}" value="{{ settings['cycle_data']['HoldCycleTime'] }}" name="holdcycletime">
 								</div>
 								<div class="input-group mb-3">
 									<div class="input-group-prepend">

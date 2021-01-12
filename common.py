@@ -49,7 +49,8 @@ def DefaultSettings():
 		'PB' : 60.0,
 		'Ti' : 180.0,
 		'Td' : 45.0,
-		'CycleTime' : 20,
+		'HoldCycleTime' : 20,
+		'SmokeCycleTime' : 15,
 		'PMode' : 2,  # http://tipsforbbq.com/Definition/Traeger-P-Setting
 		'u_min' : 0.15,
 		'u_max' : 1.0

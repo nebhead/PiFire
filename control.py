@@ -93,7 +93,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device):
 	control = ReadControl()
 
 	if (mode == 'Startup' or 'Smoke' or 'Reignite'):
-		OnTime = 15		#  Auger On Time
+		OnTime = settings['cycle_data']['SmokeCycleTime'] #  Auger On Time (Default 15s)
 		OffTime = 45 + (settings['cycle_data']['PMode'] * 10) 	#  Auger Off Time
 		CycleTime = OnTime + OffTime 	#  Total Cycle Time
 		CycleRatio = OnTime / CycleTime #  Ratio of OnTime to CycleTime
@@ -105,9 +105,9 @@ def WorkCycle(mode, grill_platform, adc_device, display_device):
 		CycleRatio = 0 	#  Ratio of OnTime to CycleTime
 
 	if (mode == 'Hold'):
-		OnTime = settings['cycle_data']['CycleTime'] * settings['cycle_data']['u_min']		#  Auger On Time
-		OffTime = settings['cycle_data']['CycleTime'] * (1 - settings['cycle_data']['u_min'])	#  Auger Off Time
-		CycleTime = settings['cycle_data']['CycleTime'] #  Total Cycle Time
+		OnTime = settings['cycle_data']['HoldCycleTime'] * settings['cycle_data']['u_min']		#  Auger On Time
+		OffTime = settings['cycle_data']['HoldCycleTime'] * (1 - settings['cycle_data']['u_min'])	#  Auger Off Time
+		CycleTime = settings['cycle_data']['HoldCycleTime'] #  Total Cycle Time
 		CycleRatio = settings['cycle_data']['u_min'] 	#  Ratio of OnTime to CycleTime
 		PIDControl = PID.PID(settings['cycle_data']['PB'],settings['cycle_data']['Ti'],settings['cycle_data']['Td'])
 		PIDControl.setTarget(control['setpoints']['grill'])	# Initialize with setpoint for grill
@@ -344,8 +344,8 @@ def WorkCycle(mode, grill_platform, adc_device, display_device):
 			CycleRatio = PIDControl.update(AvgGT)
 			CycleRatio = max(CycleRatio, settings['cycle_data']['u_min'])
 			CycleRatio = min(CycleRatio, settings['cycle_data']['u_max'])
-			OnTime = settings['cycle_data']['CycleTime'] * CycleRatio
-			OffTime = settings['cycle_data']['CycleTime'] * (1 - CycleRatio)
+			OnTime = settings['cycle_data']['HoldCycleTime'] * CycleRatio
+			OffTime = settings['cycle_data']['HoldCycleTime'] * (1 - CycleRatio)
 			CycleTime = OnTime + OffTime
 			event = 'On Time = ' + str(OnTime) + ', OffTime = ' + str(OffTime) + ', CycleTime = ' + str(CycleTime) + ', CycleRatio = ' + str(CycleRatio)
 			DebugWrite(event)

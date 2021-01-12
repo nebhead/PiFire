@@ -768,9 +768,12 @@ def settingspage(action=None):
 		if('pmode' in response):
 			if(response['pmode'] != ''):
 				settings['cycle_data']['PMode'] = int(response['pmode'])
-		if('cycletime' in response):
-			if(response['cycletime'] != ''):
-				settings['cycle_data']['CycleTime'] = int(response['cycletime'])
+		if('holdcycletime' in response):
+			if(response['holdcycletime'] != ''):
+				settings['cycle_data']['HoldCycleTime'] = int(response['holdcycletime'])
+		if('smokecycletime' in response):
+			if(response['smokecycletime'] != ''):
+				settings['cycle_data']['SmokeCycleTime'] = int(response['smokecycletime'])
 		if('propband' in response):
 			if(response['propband'] != ''):
 				settings['cycle_data']['PB'] = float(response['propband'])
