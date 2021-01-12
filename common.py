@@ -171,6 +171,40 @@ def DefaultRecipes():
 
 	return recipes
 
+def DefaultPellets():
+	pelletdb = {}
+
+	now = str(datetime.datetime.now())
+	now = now[0:19] # Truncate the microseconds
+
+	ID = ''.join(filter(str.isalnum, str(datetime.datetime.now())))
+
+	pelletdb['current'] = {
+		'pelletid' : ID,			# Pellet ID for the profile currently loaded
+		'hopper_level' : 100,	# Percentage of pellets remaining
+		'date_loaded' : now, 		# Date that current pellets loaded
+	}
+
+	pelletdb['woods'] = ['Alder', 'Almond', 'Apple', 'Apricot', 'Blend', 'Competition', 'Cherry', 'Chestnut', 'Hickory', 'Lemon', 'Maple', 'Mesquite', 'Mulberry', 'Nectarine', 'Oak', 'Orange', 'Peach', 'Pear', 'Plum', 'Walnut' ]
+
+	pelletdb['brands'] = ['Generic', 'Custom']
+
+	pelletdb['archive'] = {
+		ID : {
+			'id' : ID,
+			'brand' : 'Generic', 
+			'wood' : 'Alder', 
+			'rating' : 4, 
+			'comments' : 'This is a placeholder profile.  Alder is generic and used in almost all pellets, regardless of the wood type indicated on the packaging.  It tends to burn consistantly and produces a mild smoke.'
+		}
+	}
+
+	pelletdb['log'] = {
+		now : ID
+	}
+
+	return pelletdb 
+
 def DefaultProbeProfiles():
 
 	probe_profiles = {}
@@ -243,7 +277,7 @@ def ReadSettings():
 
 def WriteSettings(settings):
 	# *****************************************
-	# Write all control states to JSON file
+	# Write all settings to JSON file
 	# *****************************************
 	json_data_string = json.dumps(settings)
 	with open("settings.json", 'w') as settings_file:
@@ -251,7 +285,7 @@ def WriteSettings(settings):
 
 def ReadRecipes():
 	# *****************************************
-	# Read Switch States from File
+	# Read RecipeDB from File
 	# *****************************************
 
 	# Read all lines of states.json into an list(array)
@@ -269,11 +303,37 @@ def ReadRecipes():
 
 def WriteRecipes(recipes):
 	# *****************************************
-	# Write all control states to JSON file
+	# Write RecipeDB to JSON file
 	# *****************************************
 	json_data_string = json.dumps(recipes)
 	with open("recipes.json", 'w') as recipes_file:
 		recipes_file.write(json_data_string)
+
+def ReadPelletDB():
+	# *****************************************
+	# Read Pellet DataBase from file
+	# *****************************************
+
+	# Read all lines of states.json into an list(array)
+	try:
+		json_data_file = open("pelletdb.json", "r")
+		json_data_string = json_data_file.read()
+		pelletdb = json.loads(json_data_string)
+		json_data_file.close()
+	except(IOError, OSError):
+		# Issue with reading JSON, so create one/write new one
+		pelletdb = DefaultPellets()
+		WritePelletDB(pelletdb)
+
+	return(pelletdb)
+
+def WritePelletDB(pelletdb):
+	# *****************************************
+	# Write Pellet DataBase to JSON file
+	# *****************************************
+	json_data_string = json.dumps(pelletdb)
+	with open("pelletdb.json", 'w') as json_file:
+		json_file.write(json_data_string)
 
 def ReadLog():
 	# *****************************************

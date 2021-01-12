@@ -1,71 +1,10 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+{% extends 'base.html' %} 
 
-	<!-- Bootstrap CSS -->
-	{% if page_theme == 'dark' %}
-	<link rel="stylesheet" href="{{ url_for('static', filename='css/dark.bootstrap.min.css') }}" type="text/css" />
-	{% else %}
-	<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css" />
-	{% endif %}
+{% block title %} PiFire History {% endblock %} 
 
-		<!-- Circliful CSS -->
-		<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" type="text/css" />
+{% block content %}
 
-		<!-- Adding a Favicon -->
-		<link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon" type="image/x-icon" />
-
-    <!-- WebApp Manifest -->
-    <link rel="manifest" href="{{ url_for('manifest') }}">
-
-    <title>PiFire History</title>
-
-  </head>
-	<body>
-
-		<!-- Navbar Header -->
-		<nav class="navbar sticky-top navbar-dark bg-dark">
-
-			<a class="navbar-brand" href="/index">
-				<img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="30" height="30" class="d-inline-block align-top" alt="">
-				<b>Pi<i class="text-danger">Fire</i></b></a>
-
-				<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-					<span class="navbar-toggler-icon"></span>
-				</button>
-
-				<div class="collapse navbar-collapse" id="navbarNav">
-					<ul class="nav navbar-nav mr-auto">
-						<li class="nav-item">
-							<a class="nav-link" href="/">Dashboard</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/recipes">Recipes</a>
-						</li>
-						<li class="nav-item active">
-							<a class="nav-link" href="#">History <span class="sr-only">(current)</span></a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/events">Events</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/settings">Settings</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/admin">Admin</a>
-						</li>
-					</ul>
-				</div>
-
-		</nav>
-
-		<br>
-
-		<div class="container theme-showcase" role="main">
-			{% if control['timer']['start'] != 0 %}
+{% if control['timer']['start'] != 0 %}
 			<div class="row">
 				<div class="col text-center">
 					<!--<div class="card text-center bg-warning shadow">-->
@@ -117,35 +56,7 @@
 					</div> <!-- End of Column -->
 				</div> <!-- End of Row -->
 
-				<div class="container">
-					{% if page_theme == 'dark' %}
-					<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #aaaaaa;">
-					{% else %}
-					<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #dddddd;">
-					{% endif %}
-		
-						<span class="navbar-text">
-
-							<!-- Auto-Refresh Control Section -->
-							<div class="row">
-								<div class="col text-center">
-
-									<form name="refreshmode" method="POST">
-										{% if autorefresh == "off" %}
-										<button class="btn btn-outline-success" type="submit" id="autorefresh" name="autorefresh" value="on"><i class="fas fa-sync-alt"></i> Auto Refresh: OFF</button>
-										{% else %}
-										<button class="btn btn-success" type="submit" id="autorefresh" name="autorefresh" value="off"><i class="fas fa-sync-alt"></i> Auto Refresh: ON</button>
-										{% endif %}
-									</form>
-
-								</div> <!-- End of Column -->
-							</div> <!-- End of Row -->
-
-					  </span>
-		 			</nav>
-				</div> <!-- End of Container -->
-
-		<br>
+				<br>
 		<br>
 		<br>
 
@@ -171,13 +82,40 @@
 				</div>
 			</div>
 		</form>
+{% endblock %}
 
-	<!-- JavaScript -->
-	<!-- jQuery first, then Bootstrap JS -->
-	<script src="{{ url_for('static', filename='js/jquery-3.4.1.js') }}"></script>
-	<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+{% block postcontainer %}
+<div class="container">
+	{% if page_theme == 'dark' %}
+	<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #aaaaaa;">
+	{% else %}
+	<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #dddddd;">
+	{% endif %}
+
+		<span class="navbar-text">
+
+			<!-- Auto-Refresh Control Section -->
+			<div class="row">
+				<div class="col text-center">
+
+					<form name="refreshmode" method="POST">
+						{% if autorefresh == "off" %}
+						<button class="btn btn-outline-success" type="submit" id="autorefresh" name="autorefresh" value="on"><i class="fas fa-sync-alt"></i> Auto Refresh: OFF</button>
+						{% else %}
+						<button class="btn btn-success" type="submit" id="autorefresh" name="autorefresh" value="off"><i class="fas fa-sync-alt"></i> Auto Refresh: ON</button>
+						{% endif %}
+					</form>
+
+				</div> <!-- End of Column -->
+			</div> <!-- End of Row -->
+
+	  </span>
+	 </nav>
+</div> <!-- End of Container -->
+{% endblock %}
+
+{% block scripts %}
 	<script src="{{ url_for('static', filename='js/Chart.js') }}"></script>
-	<script src="{{ url_for('static', filename='js/all.js') }}"></script>
 
 	<script>
 	$(document).ready(function(){
@@ -443,6 +381,4 @@
 		</script>
 	{% endif %}
 
-
-</body>
-</html>
+{% endblock %}

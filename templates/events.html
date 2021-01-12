@@ -1,185 +1,111 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+{% extends 'base.html' %} 
 
-	<!-- Bootstrap CSS -->
-	{% if page_theme == 'dark' %}
-	<link rel="stylesheet" href="{{ url_for('static', filename='css/dark.bootstrap.min.css') }}" type="text/css" />
-	{% else %}
-	<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css" />
-	{% endif %}
+{% block title %} PiFire Events History {% endblock %} 
 
-		<!-- Circliful CSS -->
-		<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" type="text/css" />
+{% block content %}
 
-		<!-- Adding a Favicon -->
-		<link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon" type="image/x-icon" />
-
-    <!-- WebApp Manifest -->
-    <link rel="manifest" href="{{ url_for('manifest') }}">
-
-    <title>PiFire Events History</title>
-
-  </head>
-	<body>
-
-		<!-- Navbar Header -->
-		<nav class="navbar sticky-top navbar-dark bg-dark">
-
-			<a class="navbar-brand" href="/index">
-				<img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="30" height="30" class="d-inline-block align-top" alt="">
-				<b>Pi<i class="text-danger">Fire</i></b></a>
-
-				<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-					<span class="navbar-toggler-icon"></span>
-				</button>
-
-				<div class="collapse navbar-collapse" id="navbarNav">
-					<ul class="nav navbar-nav mr-auto">
-						<li class="nav-item">
-							<a class="nav-link" href="/">Dashboard</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/recipes">Recipes</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/history">History</a>
-						</li>
-						<li class="nav-item active">
-							<a class="nav-link" href="#">Events <span class="sr-only">(current)</span></a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/settings">Settings</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/admin">Admin</a>
-						</li>
-					</ul>
+	<br>
+	<div class="row">
+		<div class="col">
+			<div class="card shadow">
+				<div class="card-header bg-primary text-white">
+					<h5><i class="fas fa-list"></i>&nbsp; Event Log</h5>
 				</div>
+				<div class="card-body">
+					<!-- Events Go Here -->
+					<table class="table table-striped">
+						<thead>
+						<tr>
+							<th>Date</th>
+							<th>Time</th>
+							<th>Event</th>
+						</tr>
+						</thead>
+						<tbody>
+						{% for row in range(num_events) %}
+						<tr>
+							{% for column in range(3) %}
+							<td> {{ event_list[row][column] }} </td>
+							{% endfor %}
+						</tr>
+						{% endfor %}
+						</tbody>
+					</table>
 
-		</nav>
+				</div> <!-- End of card body -->
+				<div class="card-footer bg-light">
+					End of File.
+				</div>
+			</div> <!-- End of Card -->
+		</div> <!-- End of Column -->
+	</div> <!-- End of Row -->
 
-		<br>
+	<br>
+	<div class="row">
+		<div class="col">
+			<div class="card shadow">
+				<div class="card-header bg-primary text-white">
+					<h5><i class="fas fa-bug"></i>&nbsp; Debug Log</h5>
+				</div>
+				<div class="card-body">
+					<!-- Events Go Here -->
+					<table class="table table-striped">
+						<thead>
+							<tr>
+								<th>Date</th>
+								<th>Time</th>
+								<th>Event</th>
+							</tr>
+						</thead>
+						<tbody>
+						{% for row in range(debug_num_events) %}
+							{% if "Script Starting" in debug_event_list[row][2] %}
+							<tr class="table-success">
+							{% elif "Mode started" in debug_event_list[row][2] %}
+							<tr class="table-info">
+							{% elif "Script ended" in debug_event_list[row][2] %}
+							<tr class="table-danger">
+							{% elif "Mode ended" in debug_event_list[row][2] %}
+							<tr class="table-warning">
+							{% else %}
+							<tr>
+							{% endif %}
+							{% for column in range(3) %}
+							<td> {{ debug_event_list[row][column] }} </td>
+							{% endfor %}
+							</tr>
+						{% endfor %}
+						</tbody>
+					</table>
+				</div> <!-- End of card body -->
+				<div class="card-footer bg-light">
+					End of File.
+				</div>
+			</div> <!-- End of Card -->
+		</div> <!-- End of Column -->
+	</div> <!-- End of Row -->
+	<br>
+	<br>
+	<br>
+{% endblock %}
 
-		<div class="container theme-showcase" role="main">
-			<br>
-				<div class="row">
-					<div class="col">
-						<div class="card shadow">
-							<div class="card-header bg-primary text-white">
-								<h5><i class="fas fa-list"></i>&nbsp; Event Log</h5>
-							</div>
-			        <div class="card-body">
+{% block postcontainer %}
 
-								<!-- Events Go Here -->
-								<table class="table table-striped">
-				          <thead>
-				            <tr>
-				              <th>Date</th>
-				              <th>Time</th>
-				              <th>Event</th>
-				            </tr>
-				          </thead>
-				          <tbody>
-				            {% for row in range(num_events) %}
-			                <tr>
-				              {% for column in range(3) %}
-				              <td> {{ event_list[row][column] }} </td>
-				              {% endfor %}
-				            </tr>
-				            {% endfor %}
-				          </tbody>
-				        </table>
+<div class="container">
+	{% if page_theme == 'dark' %}
+	<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #aaaaaa;">
+	{% else %}
+	<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #dddddd;">
+	{% endif %}
+		<span class="navbar-text">
+			<!-- Refresh Section -->
+			<div class="row">
+				<div class="col">
+					<a href="/events" class="btn btn-outline-success shadow" role="button"><i class="fas fa-sync-alt"></i></a>
+				</div> <!-- End of Column -->
+			</div> <!-- End of Row -->
+		</span>
+	</nav>
+</div>
 
-			        </div> <!-- End of card body -->
-			        <div class="card-footer bg-light">
-								End of File.
-			        </div>
-						</div> <!-- End of Card -->
-					</div> <!-- End of Column -->
-				</div> <!-- End of Row -->
-
-				<br>
-					<div class="row">
-						<div class="col">
-							<div class="card shadow">
-								<div class="card-header bg-primary text-white">
-									<h5><i class="fas fa-bug"></i>&nbsp; Debug Log</h5>
-								</div>
-				        <div class="card-body">
-
-									<!-- Events Go Here -->
-									<table class="table table-striped">
-					          <thead>
-					            <tr>
-					              <th>Date</th>
-					              <th>Time</th>
-					              <th>Event</th>
-					            </tr>
-					          </thead>
-					          <tbody>
-					            {% for row in range(debug_num_events) %}
-					              {% if "Script Starting" in debug_event_list[row][2] %}
-					                <tr class="table-success">
-					              {% elif "Mode started" in debug_event_list[row][2] %}
-					                <tr class="table-info">
-					              {% elif "Script ended" in debug_event_list[row][2] %}
-					                <tr class="table-danger">
-					              {% elif "Mode ended" in debug_event_list[row][2] %}
-					                <tr class="table-warning">
-					              {% else %}
-					                <tr>
-					              {% endif %}
-					              {% for column in range(3) %}
-					              <td> {{ debug_event_list[row][column] }} </td>
-					              {% endfor %}
-					            </tr>
-					            {% endfor %}
-					          </tbody>
-					        </table>
-
-				        </div> <!-- End of card body -->
-				        <div class="card-footer bg-light">
-									End of File.
-				        </div>
-							</div> <!-- End of Card -->
-						</div> <!-- End of Column -->
-					</div> <!-- End of Row -->
-
-
-				<div class="container">
-					{% if page_theme == 'dark' %}
-					<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #aaaaaa;">
-					{% else %}
-					<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #dddddd;">
-					{% endif %}
-								<span class="navbar-text">
-
-							<!-- Refresh Section -->
-							<div class="row">
-								<div class="col">
-
-                  <a href="/events" class="btn btn-outline-success shadow" role="button"><i class="fas fa-sync-alt"></i></a>
-
-								</div> <!-- End of Column -->
-							</div> <!-- End of Row -->
-
-					  </span>
-		 			</nav>
-				</div> <!-- End of Container -->
-
-		<br>
-		<br>
-		<br>
-	<!-- JavaScript -->
-	<!-- jQuery first, then Bootstrap JS -->
-	<script src="{{ url_for('static', filename='js/jquery-3.4.1.js') }}"></script>
-	<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
-	<script src="{{ url_for('static', filename='js/Chart.min.js') }}"></script>
-	<script src="{{ url_for('static', filename='js/all.js') }}"></script>
-
-</body>
-</html>
+{% endblock %}

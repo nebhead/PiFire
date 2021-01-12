@@ -1,100 +1,49 @@
-<!doctype html>
-<html lang="en">
-  <head>
-		<!-- Required meta tags -->
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+{% extends 'base.html' %} 
 
-		<!-- Bootstrap CSS -->
-		<!-- Circliful CSS -->
-		{% if page_theme == 'dark' %}
-		<link rel="stylesheet" href="{{ url_for('static', filename='css/dark.bootstrap.min.css') }}" type="text/css" />
-		<link rel="stylesheet" href="{{ url_for('static', filename='css/dark.main.css') }}" type="text/css" /> 
-		{% else %}
-		<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css" />
-		<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" type="text/css" /> 
-		{% endif %}
-		
-		<!-- Adding a Favicon -->
-		<link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon" type="image/x-icon" />
+{% block cssextend %}
+	<!-- Circliful CSS -->
+	{% if page_theme == 'dark' %}
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/dark.main.css') }}" type="text/css" /> 
+	{% else %}
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" type="text/css" />
+	{% endif %}
+{% endblock %} 
 
-		<!-- WebApp Manifest -->
-		<link rel="manifest" href="{{ url_for('manifest') }}">
+{% block title %} PiFire Dashboard {% endblock %} 
 
-    <title>PiFire Dashboard</title>
-
-  </head>
-	<body>
-
-		<!-- Navbar Header -->
-		<nav class="navbar sticky-top navbar-dark bg-dark">
-
-			<a class="navbar-brand" href="/">
-				<img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="30" height="30" class="d-inline-block align-top" alt="">
-				<b>Pi<i class="text-danger">Fire</i></b></a>
-
-				<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-					<span class="navbar-toggler-icon"></span>
-				</button>
-
-				<div class="collapse navbar-collapse" id="navbarNav">
-					<ul class="nav navbar-nav mr-auto">
-						<li class="nav-item active">
-							<a class="nav-link" href="#">Dashboard <span class="sr-only">(current)</span></a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/recipes">Recipes</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/history">History</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/events">Events</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/settings">Settings</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/admin">Admin</a>
-						</li>
-					</ul>
-				</div>
-
-		</nav>
-
-		<br>
-
-		<div class="container theme-showcase" role="main">
-
-			<!-- Error Notify -->
-      {% if (mode_status == 'error') %}
-        <div class="alert alert-danger alert-dismissible">
-  				<button type="button" class="close" data-dismiss="alert">&times;</button>
-          <b> ERROR OCCURRED. Please check the event logs for more information. </b>
-        </div>
-				<br>
-      {% endif %}
-
-			{% if control['timer']['start'] != 0 %}
-			<div class="row">
-				<div class="col text-center">
-					<!--<div class="card text-center bg-warning shadow">-->
-						<form name="ChangeValues" method="POST">
-							<div class="btn-group shadow">
-								<button type="button" class="btn btn-warning btn-lg"><i class="fas fa-stopwatch"></i>&nbsp; <i id="Timer_Countdown"></i></button>
-								{% if control['timer']['paused'] != 0 %}
-								<button type="submit" data-toggle="tooltip" title="Start the timer" class="btn btn-outline-success border-warning btn-lg" name="start" value='true'><i class="fas fa-play-circle"></i></button>
-								{% else %}
-								<button type="submit" data-toggle="tooltip" title="Pause the timer" class="btn btn-outline-warning btn-lg" name="pause" value='true'><i class="fas fa-pause-circle"></i></button>
-								{% endif %}
-								<button type="submit" data-toggle="tooltip" title="Stop the timer" class="btn btn-outline-danger border-warning btn-lg" name="stop" value='true'><i class="fas fa-stop-circle"></i></button>
-							</div>
-						</form>
-					<!--</div>-->
-				</div>
-			</div>
+{% block notify %}
+	<!-- Error Notify -->
+	{% if (mode_status == 'error') %}
+	<div class="alert alert-danger alert-dismissible">
+			<button type="button" class="close" data-dismiss="alert">&times;</button>
+		<b> ERROR OCCURRED. Please check the event logs for more information. </b>
+	</div>
 			<br>
-			{% endif %}
+	{% endif %}
+{% endblock %}
+
+{% block content %}
+
+{% if control['timer']['start'] != 0 %}
+	<div class="row">
+		<div class="col text-center">
+			<!--<div class="card text-center bg-warning shadow">-->
+				<form name="ChangeValues" method="POST">
+					<div class="btn-group shadow">
+						<button type="button" class="btn btn-warning btn-lg"><i class="fas fa-stopwatch"></i>&nbsp; <i id="Timer_Countdown"></i></button>
+						{% if control['timer']['paused'] != 0 %}
+						<button type="submit" data-toggle="tooltip" title="Start the timer" class="btn btn-outline-success border-warning btn-lg" name="start" value='true'><i class="fas fa-play-circle"></i></button>
+						{% else %}
+						<button type="submit" data-toggle="tooltip" title="Pause the timer" class="btn btn-outline-warning btn-lg" name="pause" value='true'><i class="fas fa-pause-circle"></i></button>
+						{% endif %}
+						<button type="submit" data-toggle="tooltip" title="Stop the timer" class="btn btn-outline-danger border-warning btn-lg" name="stop" value='true'><i class="fas fa-stop-circle"></i></button>
+					</div>
+				</form>
+			<!--</div>-->
+		</div>
+	</div>
+	<br>
+{% endif %}
 
 			<br>
 			<!-- Data Section -->
@@ -274,49 +223,57 @@
 
       <div class="row">
         <div class="col">
-    			<a href="/history" class="btn btn-outline-primary btn-block shadow" role="button"><i class="fas fa-chart-line"></i> History Graph</a>
-          <br><br>
-          <a href="/events" class="btn btn-outline-primary btn-block shadow" role="button"><i class="fas fa-history"></i> Event Log</a>
-					<br><br>
-					<button type="button" class="btn btn-outline-primary btn-block shadow" data-toggle="modal" data-target="#timerModal"><i class="fas fa-stopwatch"></i>&nbsp;Timer</a>
-        </div> <!-- End of Column -->
+   			<a href="/history" class="btn btn-outline-primary btn-block shadow" role="button"><i class="fas fa-chart-line"></i> History Graph</a>
+			<br><br>
+			<button type="button" class="btn btn-outline-primary btn-block shadow" data-toggle="modal" data-target="#timerModal"><i class="fas fa-stopwatch"></i>&nbsp;Timer</button>
+			<br><br>
+			{% if pellet_level >= 70 %}
+			<a href="/pellets" class="btn btn-outline-success btn-block shadow" role="button"><i class="fas fa-tree"></i> {{ pellet_name }} @ {{ pellet_level }}% </a>
+			{% elif pellet_level > 30 %}
+			<a href="/pellets" class="btn btn-outline-warning btn-block shadow" role="button"><i class="fas fa-tree"></i> {{ pellet_name }} @ {{ pellet_level }}% </a>
+			{% else %}
+			<a href="/pellets" class="btn btn-outline-danger btn-block shadow" role="button"><i class="fas fa-tree"></i> {{ pellet_name }} @ {{ pellet_level }}% </a>
+			{% endif %}
+			<br><br>
+			<a href="/events" class="btn btn-outline-primary btn-block shadow" role="button"><i class="fas fa-history"></i> Event Log</a>
+		</div> <!-- End of Column -->
 
-				<!-- Timer START Modal -->
-				<form name="timerstart" method="POST">
-					<div class="modal" id="timerModal">
-						<div class="modal-dialog">
-							<div class="modal-content">
-								<!-- Modal Header -->
-								<div class="modal-header">
-									<h4 class="modal-title"><i class="fas fa-clock"></i> Set Timer</h4>
-									<button type="button" class="close" data-dismiss="modal">&times;</button>
-								</div>
-								<!-- Modal body -->
-								<div class="modal-body text-center">
-										<h1><output name="hoursOutput" id="hoursOutputId">0</output> Hours</h1>
-										<input type="range" class="custom-range" min="0" max="23" value="0" id="hoursInputId" name="hoursInputRange" oninput="hoursOutputId.value = hoursInputId.value">
+		<!-- Timer START Modal -->
+		<form name="timerstart" method="POST">
+			<div class="modal" id="timerModal">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<!-- Modal Header -->
+						<div class="modal-header">
+							<h4 class="modal-title"><i class="fas fa-clock"></i> Set Timer</h4>
+							<button type="button" class="close" data-dismiss="modal">&times;</button>
+						</div>
+						<!-- Modal body -->
+						<div class="modal-body text-center">
+								<h1><output name="hoursOutput" id="hoursOutputId">0</output> Hours</h1>
+								<input type="range" class="custom-range" min="0" max="23" value="0" id="hoursInputId" name="hoursInputRange" oninput="hoursOutputId.value = hoursInputId.value">
 
-										<h1><output name="minsOutput" id="minsOutputId">0</output> Mins</h1>
-										<input type="range" class="custom-range" min="0" max="59" value="0" id="minsInputId" name="minsInputRange" oninput="minsOutputId.value = minsInputId.value">
-								</div>
-								<!-- Modal footer -->
-								<div class="modal-footer">
-									<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
-									<button type="submit" class="btn btn-danger" name="start" value="true">Start</button>
-								</div>
-							</div>
+								<h1><output name="minsOutput" id="minsOutputId">0</output> Mins</h1>
+								<input type="range" class="custom-range" min="0" max="59" value="0" id="minsInputId" name="minsInputRange" oninput="minsOutputId.value = minsInputId.value">
+						</div>
+						<!-- Modal footer -->
+						<div class="modal-footer">
+							<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+							<button type="submit" class="btn btn-danger" name="start" value="true">Start</button>
 						</div>
 					</div>
-				</form>
+				</div>
+			</div>
+		</form>
 
       </div> <!-- End of Row -->
 			<br>
 			<br>
 
-		</div> <!-- End main showcase -->
+{% endblock %}
 
+{% block postcontainer %}
 		<form name="input" action="/setmode" method="POST">
-
 		<div class="container">
 			{% if page_theme == 'dark' %}
 			<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #aaaaaa;">
@@ -358,12 +315,10 @@
 		<br>
 		<br>
 		<br>
-	<!-- Optional JavaScript -->
-	<!-- jQuery first, then Popper.js, then Bootstrap JS -->
-	<script src="{{ url_for('static', filename='js/jquery-3.4.1.js') }}"></script>
-	<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+{% endblock %}
+
+{% block scripts %}  
 	<script src="{{ url_for('static', filename='js/circliful1.js') }}"></script>
-	<script src="{{ url_for('static', filename='js/all.js') }}"></script>
 
 	<script>
 		$(document).ready(function(){
@@ -461,5 +416,4 @@
 	</script>
 {% endif %}
 
-</body>
-</html>
+{% endblock %}

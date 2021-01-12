@@ -1,39 +1,20 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+{% extends 'base.html' %} 
 
-		<!-- Redirects on Action -->
-		{% if "shutdown" in action %}
-      <meta http-equiv="refresh" content="30;url=/" />
+{% block head %}
+	<!-- Redirects on Action -->
+	{% if "shutdown" in action %}
+    <meta http-equiv="refresh" content="30;url=/" />
     {% elif "reboot" in action %}
-      <meta http-equiv="refresh" content="30;url=/" />
+    <meta http-equiv="refresh" content="30;url=/" />
     {% else %}
-      <meta http-equiv="refresh" content="3;url=/" />
+    <meta http-equiv="refresh" content="3;url=/" />
     {% endif %}
+{% endblock %}
 
-    <!-- Bootstrap CSS -->
-    {% if page_theme == 'dark' %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/dark.bootstrap.min.css') }}" type="text/css" />
-    {% else %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css" />
-    {% endif %}
+{% block title %} PiFire {% endblock %} 
 
-    <!-- Adding a Favicon -->
-     <link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon" type="image/x-icon" />
-
-    <!-- WebApp Manifest -->
-    <link rel="manifest" href="{{ url_for('manifest') }}">
-
-    <title>PiFire</title>
-
-  </head>
-	<body>
-
-    <div class="container">
-      <br>
+{% block content %}
+    <br>
       {% if "shutdown" in action %}
         <center>
           <H1>Shutting Down...</H1><br>
@@ -51,10 +32,4 @@
         <div class="spinner-border text-primary" style="width: 4rem; height: 4rem;"></div>
       </div>
     </div>
-		<!-- Optional JavaScript -->
-		<!-- jQuery first, then Popper.js, then Bootstrap JS -->
-		<script src="{{ url_for('static', filename='js/jquery-3.4.1.js') }}"></script>
-		<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
-
-  </body>
-</html>
+{% endblock %}

@@ -1,406 +1,335 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+{% extends 'base.html' %} 
 
-	<!-- Bootstrap CSS -->
-	{% if settings['page_theme'] == 'dark' %}
-	<link rel="stylesheet" href="{{ url_for('static', filename='css/dark.bootstrap.min.css') }}" type="text/css" />
-	{% else %}
-	<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css" />
+{% block title %} Admin {% endblock %} 
+
+{% block notify %}
+	<!-- Settings Success -->
+	{% if (action == "setting") %}
+	<div class="alert alert-success alert-dismissible">
+		<button type="button" class="close" data-dismiss="alert">&times;</button>
+		<b> Settings Updated.</b>
+	</div>
 	{% endif %}
+{% endblock %}
 
-    <!-- Adding a Favicon -->
-     <link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon" type="image/x-icon" />
+{% block content %}
+	<br>
+	<br>
+	<!-- Enable Debug Mode -->
+	<div class="card shadow">
+		<div class="card-header bg-secondary text-white">
+					<h5><i class="fas fa-bug"></i>&nbsp; Debug Mode</h5>
+		</div>
+		<div class="card-body">
+			<form name="input" action="/admin/setting" method="POST">
+				<!-- Enable / Disable Debug Mode -->
+				{% if debug_mode == True %}
+						<button type="submit" name="debugenabled" value="disabled" class="btn btn-success btn-block shadow">Enabled</button>
+				{% else %}
+						<button type="submit" name="debugenabled" value="enabled" class="btn btn-outline-secondary btn-block shadow">Disabled</button>
+				{% endif %}
+			</form><br>
+			<span class="badge badge-warning">NOTE:</span><i class="small"> This mode enables a debug.log to be generated with more verbose debug information provided.  May impact performance. </i>
+			<br><br>
+			<a href="/manual" class="btn btn-outline-warning btn-block shadow" role="button"><i class="fas fa-sliders-h"></i> Manual Controls</a><br>
+			<span class="badge badge-warning">NOTE:</span><i class="small"> This mode cancels current mode and will allow you to control the Auger, Fan, Igniter and Power outputs from the relay.</i>
+			<br><br>
+		</div>
+	</div>
+	<br>
 
-    <!-- WebApp Manifest -->
-    <link rel="manifest" href="{{ url_for('manifest') }}">
-
-    <title>PiFire Admin</title>
-
-  </head>
-	<body>
-
-		<!-- Navbar Header -->
-		<nav class="navbar sticky-top navbar-dark bg-dark">
-
-			<a class="navbar-brand" href="/index">
-				<img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="30" height="30" class="d-inline-block align-top" alt="">
-				<b>Pi<i class="text-danger">Fire</i></b></a>
-
-				<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-					<span class="navbar-toggler-icon"></span>
+	<!-- Reset Data Card -->
+	<div class="card shadow">
+		<div class="card-header bg-danger text-white">
+					<h5><i class="fas fa-trash-alt"></i>&nbsp; Reset Data</h5>
+		</div>
+		<div class="card-body">
+			<!-- Clear History -->
+			<form name="input" action="/admin/setting" method="POST">
+				<button type="button" class="btn btn-outline-warning btn-block text-red shadow" data-toggle="modal" data-target="#clearallhistoryModal">
+					Delete History
 				</button>
 
-				<div class="collapse navbar-collapse" id="navbarNav">
-					<ul class="nav navbar-nav mr-auto">
-						<li class="nav-item">
-							<a class="nav-link" href="/index">Dashboard</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/recipes">Recipes</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/history">History</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/events">Events</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/settings">Settings</a>
-						</li>
-						<li class="nav-item active">
-							<a class="nav-link" href="/admin">Admin  <span class="sr-only">(current)</span></a>
-						</li>
-					</ul>
+				<!-- Clear History Modal -->
+				<div class="modal" id="clearallhistoryModal">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<!-- Modal Header -->
+							<div class="modal-header">
+								<h4 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Clear History</h4>
+								<button type="button" class="close" data-dismiss="modal">&times;</button>
+							</div>
+							<!-- Modal body -->
+							<div class="modal-body text-center">
+								Are you sure that you want to permanently delete the history.log?  This operation cannot be undone.
+							</div>
+							<!-- Modal footer -->
+							<div class="modal-footer">
+								<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+								<button type="submit" class="btn btn-danger" name="clearhistory" value="true">I'm Sure.</button>
+							</div>
+						</div>
+					</div>
+				</div>
+				<br>
+
+				<!-- Clear Events Button -->
+				<button type="button" class="btn btn-outline-warning btn-block text-red shadow" data-toggle="modal" data-target="#clearalleventsModal">
+					Delete Event Log
+				</button>
+
+				<!-- Clear Events Modal -->
+				<div class="modal" id="clearalleventsModal">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<!-- Modal Header -->
+							<div class="modal-header">
+								<h4 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Clear Event Log</h4>
+								<button type="button" class="close" data-dismiss="modal">&times;</button>
+							</div>
+							<!-- Modal body -->
+							<div class="modal-body text-center">
+								Are you sure that you want to permanently delete the event.log?  This operation cannot be undone.
+							</div>
+							<!-- Modal footer -->
+							<div class="modal-footer">
+								<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+								<button type="submit" class="btn btn-danger" name="clearevents" value="true">I'm Sure.</button>
+							</div>
+						</div>
+					</div>
+				</div>
+				<br>
+
+				<!-- Clear Debug Log Button -->
+				<button type="button" class="btn btn-outline-warning btn-block text-red shadow" data-toggle="modal" data-target="#clearalldebugModal">
+					Delete Debug Log
+				</button>
+
+				<!-- Clear Events Modal -->
+				<div class="modal" id="clearalldebugModal">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<!-- Modal Header -->
+							<div class="modal-header">
+								<h4 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Clear Debug Log</h4>
+								<button type="button" class="close" data-dismiss="modal">&times;</button>
+							</div>
+							<!-- Modal body -->
+							<div class="modal-body text-center">
+								Are you sure that you want to permanently delete the debug.log?  This operation cannot be undone.
+							</div>
+							<!-- Modal footer -->
+							<div class="modal-footer">
+								<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+								<button type="submit" class="btn btn-danger" name="cleardebug" value="true">I'm Sure.</button>
+							</div>
+						</div>
+					</div>
 				</div>
 
-		</nav>
-		<br>
+				<br>
 
-		<!-- Main Body Container -->
-    <div class="container">
+				<!-- Factory Settings -->
+					<button type="button" class="btn btn-outline-danger btn-block shadow" data-toggle="modal" data-target="#factoryModal">
+						Reset to Factory Settings
+					</button>
 
-      <!-- Settings Success -->
-      {% if (action == "setting") %}
-        <div class="alert alert-success alert-dismissible">
-  				<button type="button" class="close" data-dismiss="alert">&times;</button>
-          <b> Settings Updated.</b>
-        </div>
-      {% endif %}
-      <br>
-      <br>
+					<!-- Factory Settings Modal -->
+					<div class="modal" id="factoryModal">
+						<div class="modal-dialog">
+							<div class="modal-content">
+								<!-- Modal Header -->
+								<div class="modal-header">
+									<h4 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Reset Factory Defaults</h4>
+									<button type="button" class="close" data-dismiss="modal">&times;</button>
+								</div>
+								<!-- Modal body -->
+								<div class="modal-body text-center">
+									Are you sure that you want to reset to factory defaults?<br>
+									<span class="badge badge-warning">NOTE:</span><i class="small"> Clears all settings, current controls/mode, probe profiles, and history. This operation cannot be undone.</i>
+								</div>
+								<!-- Modal footer -->
+								<div class="modal-footer">
+									<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+									<button type="submit" class="btn btn-danger" name="factorydefaults" value="true">I'm Sure.</button>
+								</div>
+							</div>
+						</div>
+					</div>
+			</form>
 
-			<!-- Enable Debug Mode -->
-			<div class="card shadow">
-				<div class="card-header bg-secondary text-white">
-							<h5><i class="fas fa-bug"></i>&nbsp; Debug Mode</h5>
-				</div>
-				<div class="card-body">
-					<form name="input" action="/admin/setting" method="POST">
-						<!-- Enable / Disable Debug Mode -->
-						{% if debug_mode == True %}
-								<button type="submit" name="debugenabled" value="disabled" class="btn btn-success btn-block shadow">Enabled</button>
-						{% else %}
-								<button type="submit" name="debugenabled" value="enabled" class="btn btn-outline-secondary btn-block shadow">Disabled</button>
-						{% endif %}
-					</form><br>
-					<span class="badge badge-warning">NOTE:</span><i class="small"> This mode enables a debug.log to be generated with more verbose debug information provided.  May impact performance. </i>
-					<br><br>
-					<a href="/manual" class="btn btn-outline-warning btn-block shadow" role="button"><i class="fas fa-sliders-h"></i> Manual Controls</a><br>
-					<span class="badge badge-warning">NOTE:</span><i class="small"> This mode cancels current mode and will allow you to control the Auger, Fan, Igniter and Power outputs from the relay.</i>
-					<br><br>
-				</div>
 			</div>
-			<br>
+		</div>
+	<br>
 
-			<!-- Reset Data Card -->
-			<div class="card shadow">
-				<div class="card-header bg-danger text-white">
-							<h5><i class="fas fa-trash-alt"></i>&nbsp; Reset Data</h5>
-				</div>
-				<div class="card-body">
-						<!-- Clear History -->
-						<form name="input" action="/admin/setting" method="POST">
-							<button type="button" class="btn btn-outline-warning btn-block text-red shadow" data-toggle="modal" data-target="#clearallhistoryModal">
-								Delete History
-							</button>
 
-							<!-- Clear History Modal -->
-							<div class="modal" id="clearallhistoryModal">
-								<div class="modal-dialog">
-									<div class="modal-content">
-										<!-- Modal Header -->
-										<div class="modal-header">
-											<h4 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Clear History</h4>
-											<button type="button" class="close" data-dismiss="modal">&times;</button>
-										</div>
-										<!-- Modal body -->
-										<div class="modal-body text-center">
-											Are you sure that you want to permanently delete the history.log?  This operation cannot be undone.
-										</div>
-										<!-- Modal footer -->
-										<div class="modal-footer">
-											<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
-											<button type="submit" class="btn btn-danger" name="clearhistory" value="true">I'm Sure.</button>
-										</div>
-									</div>
-								</div>
+    <!-- System Power Card -->
+	<div class="card shadow">
+		<div class="card-header bg-danger text-white">
+					<h5><i class="fas fa-power-off"></i>&nbsp; System Power</h5>
+		</div>
+		<div class="card-body">
+			<!-- Reboot -->
+			<form name="input" action="/admin/reboot">
+				<!-- Button trigger modal -->
+				<button type="button" class="btn btn-outline-warning btn-block shadow" data-toggle="modal" data-target="#rebootModal">
+					Reboot System
+				</button>
+
+				<!-- Reboot Modal -->
+				<div class="modal fade" id="rebootModal" tabindex="-1" role="dialog" aria-labelledby="rebootModalLabel" aria-hidden="true">
+					<div class="modal-dialog" role="document">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h5 class="modal-title" id="rebootModalLabel">Reboot</h5>
+								<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+									<span aria-hidden="true">&times;</span>
+								</button>
 							</div>
-							<br>
-
-							<!-- Clear Events Button -->
-							<button type="button" class="btn btn-outline-warning btn-block text-red shadow" data-toggle="modal" data-target="#clearalleventsModal">
-								Delete Event Log
-							</button>
-
-							<!-- Clear Events Modal -->
-							<div class="modal" id="clearalleventsModal">
-								<div class="modal-dialog">
-									<div class="modal-content">
-										<!-- Modal Header -->
-										<div class="modal-header">
-											<h4 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Clear Event Log</h4>
-											<button type="button" class="close" data-dismiss="modal">&times;</button>
-										</div>
-										<!-- Modal body -->
-										<div class="modal-body text-center">
-											Are you sure that you want to permanently delete the event.log?  This operation cannot be undone.
-										</div>
-										<!-- Modal footer -->
-										<div class="modal-footer">
-											<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
-											<button type="submit" class="btn btn-danger" name="clearevents" value="true">I'm Sure.</button>
-										</div>
-									</div>
-								</div>
+							<div class="modal-body">
+								<p>Are you sure you would like to reboot the system?
+								<br><i>Any unsaved data may be lost.</i></p>
 							</div>
-							<br>
-
-							<!-- Clear Debug Log Button -->
-							<button type="button" class="btn btn-outline-warning btn-block text-red shadow" data-toggle="modal" data-target="#clearalldebugModal">
-								Delete Debug Log
-							</button>
-
-							<!-- Clear Events Modal -->
-							<div class="modal" id="clearalldebugModal">
-								<div class="modal-dialog">
-									<div class="modal-content">
-										<!-- Modal Header -->
-										<div class="modal-header">
-											<h4 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Clear Debug Log</h4>
-											<button type="button" class="close" data-dismiss="modal">&times;</button>
-										</div>
-										<!-- Modal body -->
-										<div class="modal-body text-center">
-											Are you sure that you want to permanently delete the debug.log?  This operation cannot be undone.
-										</div>
-										<!-- Modal footer -->
-										<div class="modal-footer">
-											<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
-											<button type="submit" class="btn btn-danger" name="cleardebug" value="true">I'm Sure.</button>
-										</div>
-									</div>
-								</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+								<button type="submit" class="btn btn-primary" name="reboot" value="True">Confirm</button>
 							</div>
-
-						<br>
-
-						<!-- Factory Settings -->
-							<button type="button" class="btn btn-outline-danger btn-block shadow" data-toggle="modal" data-target="#factoryModal">
-								Reset to Factory Settings
-							</button>
-
-							<!-- Factory Settings Modal -->
-							<div class="modal" id="factoryModal">
-								<div class="modal-dialog">
-									<div class="modal-content">
-										<!-- Modal Header -->
-										<div class="modal-header">
-											<h4 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Reset Factory Defaults</h4>
-											<button type="button" class="close" data-dismiss="modal">&times;</button>
-										</div>
-										<!-- Modal body -->
-										<div class="modal-body text-center">
-											Are you sure that you want to reset to factory defaults?<br>
-											<span class="badge badge-warning">NOTE:</span><i class="small"> Clears all settings, current controls/mode, probe profiles, and history. This operation cannot be undone.</i>
-										</div>
-										<!-- Modal footer -->
-										<div class="modal-footer">
-											<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
-											<button type="submit" class="btn btn-danger" name="factorydefaults" value="true">I'm Sure.</button>
-										</div>
-									</div>
-								</div>
-							</div>
-						</form>
-
+						</div>
 					</div>
 				</div>
+
+			</form>
+
 			<br>
+			<!-- Shutdown -->
+			<form name="input" action="/admin/shutdown">
+				<!-- Button trigger modal -->
+				<button type="button" class="btn btn-outline-danger btn-block shadow" data-toggle="modal" data-target="#shutdownModal">
+					Shutdown System
+				</button>
 
-
-      <!-- System Power Card -->
-			<div class="card shadow">
-				<div class="card-header bg-danger text-white">
-							<h5><i class="fas fa-power-off"></i>&nbsp; System Power</h5>
-				</div>
-				<div class="card-body">
-						<!-- Reboot -->
-						<form name="input" action="/admin/reboot">
-							<!-- Button trigger modal -->
-							<button type="button" class="btn btn-outline-warning btn-block shadow" data-toggle="modal" data-target="#rebootModal">
-								Reboot System
-							</button>
-
-							<!-- Reboot Modal -->
-							<div class="modal fade" id="rebootModal" tabindex="-1" role="dialog" aria-labelledby="rebootModalLabel" aria-hidden="true">
-								<div class="modal-dialog" role="document">
-									<div class="modal-content">
-										<div class="modal-header">
-											<h5 class="modal-title" id="rebootModalLabel">Reboot</h5>
-											<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-												<span aria-hidden="true">&times;</span>
-											</button>
-										</div>
-										<div class="modal-body">
-											<p>Are you sure you would like to reboot the system?
-											<br><i>Any unsaved data may be lost.</i></p>
-										</div>
-										<div class="modal-footer">
-											<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-											<button type="submit" class="btn btn-primary" name="reboot" value="True">Confirm</button>
-										</div>
-									</div>
-								</div>
+				<!-- Shutdown Modal -->
+				<div class="modal fade" id="shutdownModal" tabindex="-1" role="dialog" aria-labelledby="shutdownModalLabel" aria-hidden="true">
+					<div class="modal-dialog" role="document">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h5 class="modal-title" id="shutdownModalLabel">Shutdown</h5>
+								<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+									<span aria-hidden="true">&times;</span>
+								</button>
 							</div>
-
-						</form>
-
-						<br>
-						<!-- Shutdown -->
-						<form name="input" action="/admin/shutdown">
-							<!-- Button trigger modal -->
-							<button type="button" class="btn btn-outline-danger btn-block shadow" data-toggle="modal" data-target="#shutdownModal">
-								Shutdown System
-							</button>
-
-							<!-- Shutdown Modal -->
-							<div class="modal fade" id="shutdownModal" tabindex="-1" role="dialog" aria-labelledby="shutdownModalLabel" aria-hidden="true">
-								<div class="modal-dialog" role="document">
-									<div class="modal-content">
-										<div class="modal-header">
-											<h5 class="modal-title" id="shutdownModalLabel">Shutdown</h5>
-											<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-												<span aria-hidden="true">&times;</span>
-											</button>
-										</div>
-										<div class="modal-body">
-											<p>Are you sure you would like to shutdown the system?
-											<br><i>Any unsaved data may be lost.  System must be manually started after a shutdown.</i></p>
-										</div>
-										<div class="modal-footer">
-											<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-											<button type="submit" class="btn btn-primary" name="shutdown" value="True">Confirm</button>
-										</div>
-									</div>
-								</div>
+							<div class="modal-body">
+								<p>Are you sure you would like to shutdown the system?
+								<br><i>Any unsaved data may be lost.  System must be manually started after a shutdown.</i></p>
 							</div>
-						</form>
-
+							<div class="modal-footer">
+								<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+								<button type="submit" class="btn btn-primary" name="shutdown" value="True">Confirm</button>
+							</div>
+						</div>
 					</div>
 				</div>
-			<br>
+			</form>
+		</div>
+	</div>
+	<br>
 
-			<div class="card shadow">
-				<div class="card-header bg-secondary text-white">
-							<h5><i class="fas fa-info-circle"></i>&nbsp; System Information</h5>
-				</div>
-	      <div class="card-body">
-					<b>CPU Info</b><br>
-	        {% for line in cpuinfo %}
-	          {{ line }}<br>
-	        {% endfor %}
-					<br>
-					<p><b>CPU Temperature:</b> {{ temp }}</p>
-					<br>
-					<b>Network Info</b><br>
-					{% for lines in ifconfig %}
-						{{ lines }}<br>
+	<div class="card shadow">
+		<div class="card-header bg-secondary text-white">
+					<h5><i class="fas fa-info-circle"></i>&nbsp; System Information</h5>
+		</div>
+		<div class="card-body">
+			<b>CPU Info</b><br>
+			{% for line in cpuinfo %}
+				{{ line }}<br>
+			{% endfor %}
+			<br>
+			<p><b>CPU Temperature:</b> {{ temp }}</p>
+			<br>
+			<b>Network Info</b><br>
+			{% for lines in ifconfig %}
+				{{ lines }}<br>
+			{% endfor %}
+		</div>
+	</div>
+	<br>
+			
+	<div class="card shadow">
+		<div class="card-header bg-secondary text-white">
+			<h5><i class="fas fa-info-circle"></i>&nbsp; GPIO Pin Information</h5>
+		</div>
+		<div class="card-body">
+			<table class="table">
+				<thead>
+					<tr>
+						<th>Output Name</th>
+						<th>Output Pin</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for index, data in settings['outpins'].items()|sort %}
+					<tr>
+						<td>{{ index }}</td>
+						<td>{{ settings['outpins'][index] }}</td>
+					</tr>
 					{% endfor %}
-	      </div>
-			</div>
+				</tbody>
+			</table>
 			<br>
-			<div class="card shadow">
-				<div class="card-header bg-secondary text-white">
-							<h5><i class="fas fa-info-circle"></i>&nbsp; GPIO Pin Information</h5>
-				</div>
-				<div class="card-body">
+			<table class="table">
+				<thead>
+					<tr>
+						<th>Input Name</th>
+						<th>Input Pin</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for index, data in settings['inpins'].items()|sort %}
+					<tr>
+						<td>{{ index }}</td>
+						<td>{{ settings['inpins'][index] }}</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	</div>
+	<BR>
 
-						<table class="table">
-							<thead>
-								<tr>
-									<th>Output Name</th>
-									<th>Output Pin</th>
-								</tr>
-							</thead>
-							<tbody>
-								{% for index, data in settings['outpins'].items()|sort %}
-								<tr>
-									<td>{{ index }}</td>
-									<td>{{ settings['outpins'][index] }}</td>
-								</tr>
-								{% endfor %}
-							</tbody>
-						</table>
-						<BR>
-							<table class="table">
-								<thead>
-									<tr>
-										<th>Input Name</th>
-										<th>Input Pin</th>
-									</tr>
-								</thead>
-								<tbody>
-									{% for index, data in settings['inpins'].items()|sort %}
-									<tr>
-										<td>{{ index }}</td>
-										<td>{{ settings['inpins'][index] }}</td>
-									</tr>
-									{% endfor %}
-								</tbody>
-							</table>
+	<div class="card shadow">
+		<div class="card-header bg-secondary text-white">
+					<h5><i class="fas fa-info-circle"></i>&nbsp; Uptime</h5>
+		</div>
+		<div class="card-body">
+			{{ uptime }}
+		</div>
+	</div>
+	<br>
 
+    <!-- *********** Credits *************** -->
+	<div class="card shadow">
+		<div class="card-header bg-secondary text-white">
+			<h5><i class="fas fa-info-circle"></i>&nbsp; Credits and Licenses</h5>
+		</div>
 
-				</div>
-			</div>
-
-		<BR>
-
-			<div class="card shadow">
-				<div class="card-header bg-secondary text-white">
-							<h5><i class="fas fa-info-circle"></i>&nbsp; Uptime</h5>
-				</div>
-	      <div class="card-body">
-					{{ uptime }}
-				</div>
-	    </div>
-			<br>
-
-      <!-- *********** Credits *************** -->
-				<div class="card shadow">
-					<div class="card-header bg-secondary text-white">
-								<h5><i class="fas fa-info-circle"></i>&nbsp; Credits and Licenses</h5>
-					</div>
-
-          <div class="card card-body">
+        <div class="card card-body">
             <p>Web Application created by <a href="https://parmeter.net/tech" target="blank">Ben Parmeter</a>, copyright 2020. Check out my other projects on <a href="https://github.com/nebhead" target="blank">GitHub.</a></p>
             <p><i>If you enjoy this software and feel the need to donate a cup of coffee, a frosty beer or a bottle of wine to the developer you can click <a href="https://paypal.me/benparmeter" target="blank">here.</a></i></p>
             <p><i>Of course, none of this project would be available without the wonderful and amazing folks below... </i></p><br>
             <ul class="list-group">
-							<li class="list-group-item"><b>PiSmoker</b> - The project that served as the inspiration for this project and where the PID controller is wholesale borrowed from.  Special mention to Dan for providing encouraging feedback from day one of this project.  Many thanks!  Copyright Dan Borello. (<a href="http://engineeredmusings.com/pismoker/" target="blank">engineeredmusings.com</a>)(<a href="https://github.com/DBorello/PiSmoker" target="blank">github.com</a>)</li>
-							<li class="list-group-item"><b>Circliful</b> - Beautiful Circle Guages on the dashboard. Extra special mention for Patric for providing great support to me via GitHub.  Copyright Patric Gutersohn & other contributors. (<a href="http://gutersohn.com/" target="blank">gutersohn.com</a>)(<a href="https://github.com/pguso/js-plugin-circliful" target="blank">github.com</a>)</li>
-              <li class="list-group-item"><b>Bootstrap</b> - WebUI Based on Bootstrap 4.  Bootstrap is released under the MIT license and is copyright 2018 Twitter. (<a href="http://getbootstrap.com" target="blank">getbootstrap.com</a>)</li>
-              <li class="list-group-item"><b>JQuery</b> - Required by Bootstrap. Copyright JS Foundation and other contributors. Released under MIT license. (<a href="https://jquery.org/license/" target="blank">jquery.org/license</a>)</li>
-              <li class="list-group-item"><b>Popper</b> - Required by Bootstrap. Copyright 2016, 2018 FEDERICO ZIVOLO & CONTRIBUTORS. Released under MIT license. (<a href="https://popper.js.org/" target="blank">popper.js.org</a>)</li>
-							<li class="list-group-item"><b>Chartjs</b> - For the fancy charts. Copyright 2018 Chart.js Contributors. Released under MIT license. (<a href="https://chartjs.org/" target="blank">chartjs.org</a>)</li>
-							<li class="list-group-item"><b>Luma OLED</b> - The OLED display module for Python that I use.  Copyright 2014-2020 Richard Hull and contributors. Released under MIT License. (<a href="https://luma-oled.readthedocs.io/en/latest/" target="blank">readthedocs.io</a>)(<a href="https://github.com/rm-hull/luma.oled" target="blank">github.com</a>)</li>
-							<li class="list-group-item"><b>ADS1115 Python Module</b> - Python module to support the ADS1115 16-Bit ADC. Copyright David H Hagan. (<a href="https://pypi.org/project/ADS1115/" target="blank">pypi.com</a>)(<a href="https://github.com/vincentrou/ads1115_lib" target="blank">github.com</a>)</li>
-							<li class="list-group-item"><b>FontAwesome</b> - Amazing FREE Icons that I use throughout this project.  Copyright Font Awesome.  Released under the Font Awesome Free License. (<a href="https://fontawesome.com/" target="blank">fontawesome.com</a>)(<a href="https://github.com/FortAwesome/Font-Awesome" target="blank">github.com</a>)</li>
+				<li class="list-group-item"><b>PiSmoker</b> - The project that served as the inspiration for this project and where the PID controller is wholesale borrowed from.  Special mention to Dan for providing encouraging feedback from day one of this project.  Many thanks!  Copyright Dan Borello. (<a href="http://engineeredmusings.com/pismoker/" target="blank">engineeredmusings.com</a>)(<a href="https://github.com/DBorello/PiSmoker" target="blank">github.com</a>)</li>
+				<li class="list-group-item"><b>Circliful</b> - Beautiful Circle Guages on the dashboard. Extra special mention for Patric for providing great support to me via GitHub.  Copyright Patric Gutersohn & other contributors. (<a href="http://gutersohn.com/" target="blank">gutersohn.com</a>)(<a href="https://github.com/pguso/js-plugin-circliful" target="blank">github.com</a>)</li>
+				<li class="list-group-item"><b>Bootstrap</b> - WebUI Based on Bootstrap 4.  Bootstrap is released under the MIT license and is copyright 2018 Twitter. (<a href="http://getbootstrap.com" target="blank">getbootstrap.com</a>)</li>
+				<li class="list-group-item"><b>JQuery</b> - Required by Bootstrap. Copyright JS Foundation and other contributors. Released under MIT license. (<a href="https://jquery.org/license/" target="blank">jquery.org/license</a>)</li>
+				<li class="list-group-item"><b>Popper</b> - Required by Bootstrap. Copyright 2016, 2018 FEDERICO ZIVOLO & CONTRIBUTORS. Released under MIT license. (<a href="https://popper.js.org/" target="blank">popper.js.org</a>)</li>
+				<li class="list-group-item"><b>Chartjs</b> - For the fancy charts. Copyright 2018 Chart.js Contributors. Released under MIT license. (<a href="https://chartjs.org/" target="blank">chartjs.org</a>)</li>
+				<li class="list-group-item"><b>Luma OLED</b> - The OLED display module for Python that I use.  Copyright 2014-2020 Richard Hull and contributors. Released under MIT License. (<a href="https://luma-oled.readthedocs.io/en/latest/" target="blank">readthedocs.io</a>)(<a href="https://github.com/rm-hull/luma.oled" target="blank">github.com</a>)</li>
+				<li class="list-group-item"><b>ADS1115 Python Module</b> - Python module to support the ADS1115 16-Bit ADC. Copyright David H Hagan. (<a href="https://pypi.org/project/ADS1115/" target="blank">pypi.com</a>)(<a href="https://github.com/vincentrou/ads1115_lib" target="blank">github.com</a>)</li>
+				<li class="list-group-item"><b>FontAwesome</b> - Amazing FREE Icons that I use throughout this project.  Copyright Font Awesome.  Released under the Font Awesome Free License. (<a href="https://fontawesome.com/" target="blank">fontawesome.com</a>)(<a href="https://github.com/FortAwesome/Font-Awesome" target="blank">github.com</a>)</li>
             </ul>
 
-          </div>
-				</div>
-					<br><br><br>
-
-			<!-- JavaScript -->
-			<!-- jQuery first, then Popper.js, then Bootstrap JS -->
-			<script src="{{ url_for('static', filename='js/jquery-3.4.1.js') }}"></script>
-			<script src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
-			<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
-			<script src="{{ url_for('static', filename='js/all.js') }}"></script>
-
-		</body>
-		</html>
+        </div>
+	</div>
+	<br><br><br>
+{% endblock %}

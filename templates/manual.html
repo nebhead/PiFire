@@ -1,142 +1,63 @@
-<!doctype html>
-<html lang="en">
-  <head>
-		<!-- Required meta tags -->
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+{% extends 'base.html' %} 
 
-		<!-- Bootstrap CSS -->
-		{% if settings['page_theme'] == 'dark' %}
-		<link rel="stylesheet" href="{{ url_for('static', filename='css/dark.bootstrap.min.css') }}" type="text/css" />
-		{% else %}
-		<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css" />
-		{% endif %}
-		
-		<!-- Circliful CSS -->
-		<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" type="text/css" />
+{% block title %} PiFire Manual Control {% endblock %} 
 
-		<!-- Adding a Favicon -->
-		<link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon" type="image/x-icon" />
+{% block content %}
+	<div class="row">
 
-		<!-- WebApp Manifest -->
-		<link rel="manifest" href="{{ url_for('manifest') }}">
+		<div class="col">
+			<div class="card shadow">
+			<div class="card-body">
+					<form name="ManualMode" method="POST">
+						{% if control['mode'] == 'Manual' %}
+						<button type="submit" class="btn btn-success btn-block shadow" name="setmode" value="manual">Manual Mode Selected</button>
+						{% else %}
+						<button type="submit" class="btn btn-secondary btn-block shadow" name="setmode" value="manual">Turn on Manual Mode</button>
+						{% endif %}
+					</form>
 
-    <title>PiFire Manual Control</title>
-
-  </head>
-	<body>
-
-		<!-- Navbar Header -->
-		<nav class="navbar sticky-top navbar-dark bg-dark">
-
-			<a class="navbar-brand" href="/">
-				<img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="30" height="30" class="d-inline-block align-top" alt="">
-				<b>Pi<i class="text-danger">Fire</i></b></a>
-
-				<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-					<span class="navbar-toggler-icon"></span>
-				</button>
-
-				<div class="collapse navbar-collapse" id="navbarNav">
-					<ul class="nav navbar-nav mr-auto">
-						<li class="nav-item">
-							<a class="nav-link" href="/">Dashboard</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/recipes">Recipes</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/history">History</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/events">Events</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/settings">Settings</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/admin">Admin</a>
-						</li>
-						<li class="nav-item active">
-							<a class="nav-link" href="/manual">** Manual Control **<span class="sr-only">(current)</span></a>
-						</li>
-					</ul>
-				</div>
-
-		</nav>
-
-		<br>
-
-		<div class="container theme-showcase" role="main">
-
-			<div id="Timer_Countdown"></div>
-
-			<div class="row">
-
-				<div class="col">
-					<div class="card shadow">
-				  	<div class="card-body">
-							<form name="ManualMode" method="POST">
-								{% if control['mode'] == 'Manual' %}
-								<button type="submit" class="btn btn-success btn-block shadow" name="setmode" value="manual">Manual Mode Selected</button>
-								{% else %}
-								<button type="submit" class="btn btn-secondary btn-block shadow" name="setmode" value="manual">Turn on Manual Mode</button>
-								{% endif %}
-							</form>
-
-						</div> <!-- End of card body -->
-						<div class="card-footer text-center">
-							{% if control['mode'] == 'Manual' %}
-							<form name="ChangeValues" method="POST">
-								<div class="btn-group">
-									{% if control['manual']['current']['fan'] == 0 %}
-									<button type="submit" data-toggle="tooltip" title="FAN" class="btn btn-primary" name="change_output_fan" value='off'><i class="fas fa-fan"></i></button>
-									{% else %}
-									<button type="submit" data-toggle="tooltip" title="FAN" class="btn btn-outline-primary" name="change_output_fan" value='on'><i class="fas fa-fan"></i></button>
-									{% endif %}
-
-									{% if control['manual']['current']['auger'] == 0 %}
-									<button type="submit" data-toggle="tooltip" title="AUGER" class="btn btn-primary" name="change_output_auger" value='off'><i class="fas fa-play-circle"></i></button>
-									{% else %}
-									<button type="submit" data-toggle="tooltip" title="AUGER" class="btn btn-outline-primary" name="change_output_auger" value='on'><i class="fas fa-play-circle"></i></button>
-									{% endif %}
-
-									{% if control['manual']['current']['igniter'] == 0 %}
-									<button type="submit" data-toggle="tooltip" title="IGNITER" class="btn btn-primary" name="change_output_igniter" value='off'><i class="fas fa-fire"></i></button>
-									{% else %}
-									<button type="submit" data-toggle="tooltip" title="IGNITER" class="btn btn-outline-primary" name="change_output_igniter" value='on'><i class="fas fa-fire"></i></button>
-									{% endif %}
-
-									{% if control['manual']['current']['power'] == 0 %}
-									<button type="submit" data-toggle="tooltip" title="POWER" class="btn btn-primary" name="change_output_power" value='off'><i class="fas fa-power-off"></i></button>
-									{% else %}
-									<button type="submit" data-toggle="tooltip" title="POWER" class="btn btn-outline-primary" name="change_output_power" value='on'><i class="fas fa-power-off"></i></button>
-									{% endif %}
-								</div>
-							</form>
-
+				</div> <!-- End of card body -->
+				<div class="card-footer text-center">
+					{% if control['mode'] == 'Manual' %}
+					<form name="ChangeValues" method="POST">
+						<div class="btn-group">
+							{% if control['manual']['current']['fan'] == 0 %}
+							<button type="submit" data-toggle="tooltip" title="FAN" class="btn btn-primary" name="change_output_fan" value='off'><i class="fas fa-fan"></i></button>
 							{% else %}
-							Enable Manual Mode Expose Buttons
+							<button type="submit" data-toggle="tooltip" title="FAN" class="btn btn-outline-primary" name="change_output_fan" value='on'><i class="fas fa-fan"></i></button>
 							{% endif %}
 
+							{% if control['manual']['current']['auger'] == 0 %}
+							<button type="submit" data-toggle="tooltip" title="AUGER" class="btn btn-primary" name="change_output_auger" value='off'><i class="fas fa-play-circle"></i></button>
+							{% else %}
+							<button type="submit" data-toggle="tooltip" title="AUGER" class="btn btn-outline-primary" name="change_output_auger" value='on'><i class="fas fa-play-circle"></i></button>
+							{% endif %}
+
+							{% if control['manual']['current']['igniter'] == 0 %}
+							<button type="submit" data-toggle="tooltip" title="IGNITER" class="btn btn-primary" name="change_output_igniter" value='off'><i class="fas fa-fire"></i></button>
+							{% else %}
+							<button type="submit" data-toggle="tooltip" title="IGNITER" class="btn btn-outline-primary" name="change_output_igniter" value='on'><i class="fas fa-fire"></i></button>
+							{% endif %}
+
+							{% if control['manual']['current']['power'] == 0 %}
+							<button type="submit" data-toggle="tooltip" title="POWER" class="btn btn-primary" name="change_output_power" value='off'><i class="fas fa-power-off"></i></button>
+							{% else %}
+							<button type="submit" data-toggle="tooltip" title="POWER" class="btn btn-outline-primary" name="change_output_power" value='on'><i class="fas fa-power-off"></i></button>
+							{% endif %}
 						</div>
-					</div> <!-- End of card -->
-				</div> <!-- End of Column -->
+					</form>
 
-			</div> <!-- End of Row -->
+					{% else %}
+					Enable Manual Mode Expose Buttons
+					{% endif %}
 
+				</div>
+			</div> <!-- End of card -->
+		</div> <!-- End of Column -->
 
-		</div> <!-- End of Container -->
+	</div> <!-- End of Row -->
 
-		<br>
-		<br>
-		<br>
-	<!-- Optional JavaScript -->
-	<!-- jQuery first, then Popper.js, then Bootstrap JS -->
-	<script src="{{ url_for('static', filename='js/jquery-3.4.1.js') }}"></script>
-	<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
-	<script src="{{ url_for('static', filename='js/circliful1.js') }}"></script>
-	<script src="{{ url_for('static', filename='js/all.js') }}"></script>
-
-</body>
-</html>
+	<br>
+	<br>
+	<br>
+{% endblock %}

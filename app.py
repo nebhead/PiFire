@@ -31,6 +31,12 @@ def index(action=None):
 
 	control = ReadControl()
 
+	pelletdb = ReadPelletDB() 
+
+	pellet_name = pelletdb['archive'][pelletdb['current']['pelletid']]['brand'] + ' ' + pelletdb['archive'][pelletdb['current']['pelletid']]['wood']
+
+	pellet_level = pelletdb['current']['hopper_level']
+
 	if (request.method == 'POST'):
 		response = request.form
 
@@ -165,7 +171,7 @@ def index(action=None):
 	cur_probe_temps = []
 	cur_probe_temps = ReadCurrent()
 
-	return render_template('index.html', cur_probe_temps=cur_probe_temps, probes_enabled=probes_enabled, set_points=control['setpoints'], current_mode=control['mode'], mode_status=control['status'], notify_req=control['notify_req'], control=control, page_theme=settings['page_theme'])
+	return render_template('index.html', cur_probe_temps=cur_probe_temps, probes_enabled=probes_enabled, set_points=control['setpoints'], current_mode=control['mode'], mode_status=control['status'], notify_req=control['notify_req'], control=control, pellet_name=pellet_name, pellet_level=pellet_level, page_theme=settings['page_theme'])
 
 @app.route('/data/<action>', methods=['POST','GET'])
 @app.route('/data', methods=['POST','GET'])
@@ -399,7 +405,7 @@ def tuningpage(action=None):
 				else:
 					pagectrl['refresh'] = 'on'
 	
-	return render_template('tuning.html', control=control, settings=settings, pagectrl=pagectrl)
+	return render_template('tuning.html', control=control, settings=settings, pagectrl=pagectrl, page_theme=settings['page_theme'])
 
 @app.route('/_grilltr', methods = ['GET'])
 def grilltr(action=None):
@@ -432,13 +438,140 @@ def probe2tr(action=None):
 @app.route('/events/<action>', methods=['POST','GET'])
 @app.route('/events', methods=['POST','GET'])
 def eventspage(action=None):
-
 	# Show list of logged events and debug event list
 	event_list, num_events = ReadLog()
 	debug_event_list, debug_num_events = DebugRead()
 	settings = ReadSettings()
 
 	return render_template('events.html', event_list=event_list, num_events=num_events, debug_event_list=debug_event_list, debug_num_events=debug_num_events, page_theme=settings['page_theme'])
+
+@app.route('/pellets/<action>', methods=['POST','GET'])
+@app.route('/pellets', methods=['POST','GET'])
+def pelletsspage(action=None):
+	# Pellet Management page
+	settings = ReadSettings()
+	pelletdb = ReadPelletDB()
+	
+	event = {}
+
+	event = {
+		'type' : 'none',
+		'text' : ''
+	}
+
+	if (request.method == 'POST' and action == 'loadprofile'):
+		response = request.form
+		if('load_profile' in response):
+			if(response['load_profile'] == 'true'):
+				pelletdb['current']['pelletid'] = response['load_id']
+				# TODO: Implement Hopper Level Check
+				pelletdb['current']['hopper_level'] = 100
+				now = str(datetime.datetime.now())
+				now = now[0:19] # Truncate the microseconds
+				pelletdb['current']['date_loaded'] = now 
+				pelletdb['log'][now] = response['load_id']
+				WritePelletDB(pelletdb)
+				event['type'] = 'updated'
+				event['text'] = 'Successfully loaded profile and logged.'
+	elif (request.method == 'POST' and action == 'editbrands'):
+		response = request.form
+		if('delBrand' in response):
+			delBrand = response['delBrand']
+			if(delBrand in pelletdb['brands']): 
+				pelletdb['brands'].remove(delBrand)
+				WritePelletDB(pelletdb)
+				event['type'] = 'updated'
+				event['text'] = delBrand + ' successfully deleted.'
+			else: 
+				event['type'] = 'error'
+				event['text'] = delBrand + ' not found in pellet brands.'
+		elif('newBrand' in response):
+			newBrand = response['newBrand']
+			if(newBrand in pelletdb['brands']):
+				event['type'] = 'error'
+				event['text'] = newBrand + ' already in pellet brands list.'
+			else: 
+				pelletdb['brands'].append(newBrand)
+				WritePelletDB(pelletdb)
+				event['type'] = 'updated'
+				event['text'] = newBrand + ' successfully added.'
+
+	elif (request.method == 'POST' and action == 'editwoods'):
+		response = request.form
+		if('delWood' in response):
+			delWood = response['delWood']
+			if(delWood in pelletdb['woods']): 
+				pelletdb['woods'].remove(delWood)
+				WritePelletDB(pelletdb)
+				event['type'] = 'updated'
+				event['text'] = delWood + ' successfully deleted.'
+			else: 
+				event['type'] = 'error'
+				event['text'] = delWood + ' not found in pellet wood list.'
+		elif('newWood' in response):
+			newWood = response['newWood']
+			if(newWood in pelletdb['woods']):
+				event['type'] = 'error'
+				event['text'] = newWood + ' already in pellet wood list.'
+			else: 
+				pelletdb['woods'].append(newWood)
+				WritePelletDB(pelletdb)
+				event['type'] = 'updated'
+				event['text'] = newWood + ' successfully added.'
+
+	elif (request.method == 'POST' and action == 'addprofile'):
+		response = request.form
+		if('addprofile' in response):
+			profile_id = ''.join(filter(str.isalnum, str(datetime.datetime.now())))
+
+			pelletdb['archive'][profile_id] = {
+				'id' : profile_id,
+				'brand' : response['brand_name'],
+				'wood' : response['wood_type'],
+				'rating' : int(response['rating']),
+				'comments' : response['comments']
+			}
+			event['type'] = 'updated'
+			event['text'] = 'Successfully added profile to database.'
+
+			if(response['addprofile'] == 'add_load'):
+				pelletdb['current']['pelletid'] = profile_id
+				# TODO: Implement Hopper Level Check
+				pelletdb['current']['hopper_level'] = 100
+				now = str(datetime.datetime.now())
+				now = now[0:19] # Truncate the microseconds
+				pelletdb['current']['date_loaded'] = now 
+				pelletdb['log'][now] = profile_id
+				event['text'] = 'Successfully added profile and loaded.'
+
+			WritePelletDB(pelletdb)
+
+	elif (request.method == 'POST' and action == 'editprofile'):
+		response = request.form
+		if('editprofile' in response):
+			profile_id = response['editprofile']
+			pelletdb['archive'][profile_id]['brand'] = response['brand_name']
+			pelletdb['archive'][profile_id]['wood'] = response['wood_type']
+			pelletdb['archive'][profile_id]['rating'] = int(response['rating'])
+			pelletdb['archive'][profile_id]['comments'] = response['comments']
+			WritePelletDB(pelletdb)
+			event['type'] = 'updated'
+			event['text'] = 'Successfully updated ' + response['brand_name'] + ' ' + response['wood_type'] + ' profile in database.'
+		elif('delete' in response):
+			profile_id = response['delete']
+			if(pelletdb['current']['pelletid'] == profile_id):
+				event['type'] = 'error'
+				event['text'] = 'Error: ' + response['brand_name'] + ' ' + response['wood_type'] + ' profile cannot be deleted if it is currently loaded.'
+			else: 
+				pelletdb['archive'].pop(profile_id) # Remove the profile from the archive
+				for index in pelletdb['log']:  # Remove this profile ID for the logs
+					if(pelletdb['log'][index] == profile_id):
+						pelletdb['log'][index] = 'deleted'
+				WritePelletDB(pelletdb)
+				event['type'] = 'updated'
+				event['text'] = 'Successfully deleted ' + response['brand_name'] + ' ' + response['wood_type'] + ' profile in database.'
+
+	return render_template('pellets.html', alert=event, pelletdb=pelletdb, page_theme=settings['page_theme'])
 
 
 @app.route('/recipes', methods=['POST','GET'])
@@ -722,7 +855,7 @@ def settingspage(action=None):
 
 		WriteSettings(settings)
 
-	return render_template('settings.html', settings=settings, alert=event)
+	return render_template('settings.html', settings=settings, alert=event, page_theme=settings['page_theme'])
 
 @app.route('/admin/<action>', methods=['POST','GET'])
 @app.route('/admin', methods=['POST','GET'])
@@ -794,7 +927,7 @@ def adminpage(action=None):
 
 	debug_mode = settings['debug_mode']
 
-	return render_template('admin.html', settings=settings, action=action, uptime=uptime, cpuinfo=cpuinfo, temp=temp, ifconfig=ifconfig, debug_mode=debug_mode)
+	return render_template('admin.html', settings=settings, action=action, uptime=uptime, cpuinfo=cpuinfo, temp=temp, ifconfig=ifconfig, debug_mode=debug_mode, page_theme=settings['page_theme'])
 
 @app.route('/manual/<action>', methods=['POST','GET'])
 @app.route('/manual', methods=['POST','GET'])
@@ -859,7 +992,7 @@ def manual_page(action=None):
 		time.sleep(1)
 		control = ReadControl()
 
-	return render_template('manual.html', settings=settings, control=control)
+	return render_template('manual.html', settings=settings, control=control, page_theme=settings['page_theme'])
 
 @app.route('/api/<action>', methods=['POST','GET'])
 @app.route('/api', methods=['POST','GET'])

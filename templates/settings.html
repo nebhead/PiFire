@@ -1,89 +1,33 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+{% extends 'base.html' %} 
 
-	<!-- Bootstrap CSS -->
-	{% if settings['page_theme'] == 'dark' %}
-	<link rel="stylesheet" href="{{ url_for('static', filename='css/dark.bootstrap.min.css') }}" type="text/css" />
-	{% else %}
-	<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css" />
+{% block cssextend %}
+{% endblock %}
+
+{% block title %} PiFire Settings {% endblock %} 
+
+{% block notify %}
+
+	<!-- Settings Success -->
+	{% if (alert['type'] == "updated") %}
+	<div class="alert alert-success alert-dismissible">
+			<button type="button" class="close" data-dismiss="alert">&times;</button>
+		<b><i class="far fa-check-circle"></i>&nbsp; {{ alert['text'] }}</b>
+	</div><br>
+		{% elif (alert['type'] == "warning") %}
+			<div class="alert alert-warning alert-dismissible">
+				<button type="button" class="close" data-dismiss="alert">&times;</button>
+				<b><i class="far fa-exclamation-circle"></i>&nbsp; {{ alert['text'] }}</b>
+			</div><br>
+		{% elif (alert['type'] == "error") %}
+			<div class="alert alert-danger alert-dismissible">
+				<button type="button" class="close" data-dismiss="alert">&times;</button>
+				<b><i class="fas fa-bomb"></i>&nbsp; {{ alert['text'] }}</b>
+			</div><br>
 	{% endif %}
 
-	<!-- Settings CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
+{% endblock %}
 
-    <!-- Adding a Favicon -->
-     <link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon" type="image/x-icon" />
-
-    <!-- WebApp Manifest -->
-    <link rel="manifest" href="{{ url_for('manifest') }}">
-
-    <title>PiFire Settings</title>
-
-  </head>
-	<body>
-
-		<!-- Navbar Header -->
-		<nav class="navbar sticky-top navbar-dark bg-dark">
-
-			<a class="navbar-brand" href="/index">
-				<img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="30" height="30" class="d-inline-block align-top" alt="">
-				<b>Pi<i class="text-danger">Fire</i></b></a>
-
-				<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-					<span class="navbar-toggler-icon"></span>
-				</button>
-
-				<div class="collapse navbar-collapse" id="navbarNav">
-					<ul class="nav navbar-nav mr-auto">
-						<li class="nav-item">
-							<a class="nav-link" href="/index">Dashboard</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/recipes">Recipes</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/history">History</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/events">Events</a>
-						</li>
-						<li class="nav-item active">
-							<a class="nav-link" href="#">Settings <span class="sr-only">(current)</span></a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/admin">Admin</a>
-						</li>
-					</ul>
-				</div>
-
-		</nav>
-
-		<br>
-
-		<div class="container theme-showcase" role="main">
-
-			<!-- Settings Success -->
-      {% if (alert['type'] == "updated") %}
-        <div class="alert alert-success alert-dismissible">
-  				<button type="button" class="close" data-dismiss="alert">&times;</button>
-          <b><i class="far fa-check-circle"></i>&nbsp; {{ alert['text'] }}</b>
-        </div><br>
-			{% elif (alert['type'] == "warning") %}
-				<div class="alert alert-warning alert-dismissible">
-					<button type="button" class="close" data-dismiss="alert">&times;</button>
-					<b><i class="far fa-exclamation-circle"></i>&nbsp; {{ alert['text'] }}</b>
-				</div><br>
-			{% elif (alert['type'] == "error") %}
-				<div class="alert alert-danger alert-dismissible">
-					<button type="button" class="close" data-dismiss="alert">&times;</button>
-					<b><i class="fas fa-bomb"></i>&nbsp; {{ alert['text'] }}</b>
-				</div><br>
-      {% endif %}
-
+{% block content %}
 <!-- ============================ Probe Types ========================== -->
 			<BR>
 			<div class="row">
@@ -676,17 +620,13 @@
 					</div> <!-- End of Card -->
 				</div> <!-- End of Column -->
 			</div> <!-- End of Row -->
-
-		  </div> <!-- End of Container -->
-
 		<br>
 		<br>
 		<br>
-	<!-- Optional JavaScript -->
-	<!-- jQuery first, then Popper.js, then Bootstrap JS -->
-	<script src="{{ url_for('static', filename='js/jquery-3.4.1.js') }}"></script>
-	<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
-	<script src="{{ url_for('static', filename='js/all.js') }}"></script>
+{% endblock %}
 
-</body>
-</html>
+{% block postcontainer %}
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}
