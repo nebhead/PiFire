@@ -13,25 +13,26 @@
 				</div>
 				<div class="card-body">
 					<!-- Events Go Here -->
-					<table class="table table-striped">
-						<thead>
-						<tr>
-							<th>Date</th>
-							<th>Time</th>
-							<th>Event</th>
-						</tr>
-						</thead>
-						<tbody>
-						{% for row in range(num_events) %}
-						<tr>
-							{% for column in range(3) %}
-							<td> {{ event_list[row][column] }} </td>
+					<div class="table-responsive">
+						<table class="table table-striped">
+							<thead>
+							<tr>
+								<th>Date</th>
+								<th>Time</th>
+								<th>Event</th>
+							</tr>
+							</thead>
+							<tbody>
+							{% for row in range(num_events) %}
+							<tr>
+								{% for column in range(3) %}
+								<td> {{ event_list[row][column] }} </td>
+								{% endfor %}
+							</tr>
 							{% endfor %}
-						</tr>
-						{% endfor %}
-						</tbody>
-					</table>
-
+							</tbody>
+						</table>
+					</div>
 				</div> <!-- End of card body -->
 				<div class="card-footer bg-light">
 					End of File.
@@ -49,34 +50,36 @@
 				</div>
 				<div class="card-body">
 					<!-- Events Go Here -->
-					<table class="table table-striped">
-						<thead>
-							<tr>
-								<th>Date</th>
-								<th>Time</th>
-								<th>Event</th>
-							</tr>
-						</thead>
-						<tbody>
-						{% for row in range(debug_num_events) %}
-							{% if "Script Starting" in debug_event_list[row][2] %}
-							<tr class="table-success">
-							{% elif "Mode started" in debug_event_list[row][2] %}
-							<tr class="table-info">
-							{% elif "Script ended" in debug_event_list[row][2] %}
-							<tr class="table-danger">
-							{% elif "Mode ended" in debug_event_list[row][2] %}
-							<tr class="table-warning">
-							{% else %}
-							<tr>
-							{% endif %}
-							{% for column in range(3) %}
-							<td> {{ debug_event_list[row][column] }} </td>
+					<div class="table-responsive">
+						<table class="table table-striped">
+							<thead>
+								<tr>
+									<th>Date</th>
+									<th>Time</th>
+									<th>Event</th>
+								</tr>
+							</thead>
+							<tbody>
+							{% for row in range(debug_num_events) %}
+								{% if "Script Starting" in debug_event_list[row][2] %}
+								<tr class="table-success">
+								{% elif "Mode started" in debug_event_list[row][2] %}
+								<tr class="table-info">
+								{% elif "Script ended" in debug_event_list[row][2] %}
+								<tr class="table-danger">
+								{% elif "Mode ended" in debug_event_list[row][2] %}
+								<tr class="table-warning">
+								{% else %}
+								<tr>
+								{% endif %}
+								{% for column in range(3) %}
+								<td> {{ debug_event_list[row][column] }} </td>
+								{% endfor %}
+								</tr>
 							{% endfor %}
-							</tr>
-						{% endfor %}
-						</tbody>
-					</table>
+							</tbody>
+						</table>
+					</div>
 				</div> <!-- End of card body -->
 				<div class="card-footer bg-light">
 					End of File.

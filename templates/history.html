@@ -3,7 +3,6 @@
 {% block title %} PiFire History {% endblock %} 
 
 {% block content %}
-
 {% if control['timer']['start'] != 0 %}
 			<div class="row">
 				<div class="col text-center">
@@ -24,14 +23,19 @@
 			</div>
 			<br>
 			{% endif %}
-
-			<br>
 				<div class="row">
 					<div class="col">
 						<div class="card shadow">
 							<div class="card-header bg-primary text-white">
 								<a href="/history/export" class="btn btn-primary float-right" role="button"><i class="fas fa-file-download"></i></a>
 								<button class="btn btn-primary float-right" type="button" data-toggle="modal" data-target="#clearallhistory"><i class="fas fa-trash-alt"></i></button>
+								<form name="refreshmode" method="POST">
+									{% if autorefresh == "off" %}
+									<button class="btn btn-secondary text-light float-right" type="submit" id="autorefresh" name="autorefresh" value="on"><i class="fas fa-sync-alt"></i> OFF</button>
+									{% else %}
+									<button class="btn btn-outline-primary border-white text-white float-right" type="submit" id="autorefresh" name="autorefresh" value="off"><i class="fas fa-sync-alt"></i> ON</button>
+									{% endif %}
+								</form>
 								<h5><i class="fas fa-history"></i>&nbsp; History</h5>
 							</div>
 			        <div class="card-body" {% if page_theme == 'dark' %} style="background-color: #aaaaaa;"{% endif %}>
@@ -85,33 +89,6 @@
 {% endblock %}
 
 {% block postcontainer %}
-<div class="container">
-	{% if page_theme == 'dark' %}
-	<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #aaaaaa;">
-	{% else %}
-	<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #dddddd;">
-	{% endif %}
-
-		<span class="navbar-text">
-
-			<!-- Auto-Refresh Control Section -->
-			<div class="row">
-				<div class="col text-center">
-
-					<form name="refreshmode" method="POST">
-						{% if autorefresh == "off" %}
-						<button class="btn btn-outline-success" type="submit" id="autorefresh" name="autorefresh" value="on"><i class="fas fa-sync-alt"></i> Auto Refresh: OFF</button>
-						{% else %}
-						<button class="btn btn-success" type="submit" id="autorefresh" name="autorefresh" value="off"><i class="fas fa-sync-alt"></i> Auto Refresh: ON</button>
-						{% endif %}
-					</form>
-
-				</div> <!-- End of Column -->
-			</div> <!-- End of Row -->
-
-	  </span>
-	 </nav>
-</div> <!-- End of Container -->
 {% endblock %}
 
 {% block scripts %}

@@ -39,7 +39,7 @@ def index(action=None):
 
 	if (request.method == 'POST'):
 		response = request.form
-
+		print(response)
 		if('start' in response):
 			if(response['start']=='true'):
 				control['notify_req']['timer'] = True
@@ -52,6 +52,8 @@ def index(action=None):
 						control['timer']['end'] = now + seconds
 					else:
 						control['timer']['end'] = now + 60
+					if('shutdownTimer' in response):
+						control['notify_data']['timer_shutdown'] = True 
 					DebugWrite('Timer started.  Ends at: ' + str(control['timer']['end']))
 					WriteControl(control)
 				else:	# If Timer was paused, restart with new end time.
@@ -73,6 +75,7 @@ def index(action=None):
 					control['notify_req']['timer'] = False
 					control['timer']['start'] = 0
 					control['timer']['end'] = 0
+					control['notify_data']['timer_shutdown'] = False 
 					DebugWrite('Timer cleared.')
 					WriteControl(control)
 		if('stop' in response):
@@ -80,6 +83,7 @@ def index(action=None):
 				control['notify_req']['timer'] = False
 				control['timer']['start'] = 0
 				control['timer']['end'] = 0
+				control['notify_data']['timer_shutdown'] = False 
 				DebugWrite('Timer stopped.')
 				WriteControl(control)
 
@@ -103,6 +107,8 @@ def index(action=None):
 				set_point = int(response['probe1tempInputRange'])
 				control['setpoints']['probe1'] = set_point
 				control['notify_req']['probe1'] = True
+				if('shutdownP1' in response):
+					control['notify_data']['p1_shutdown'] = True
 				WriteControl(control)
 			else:
 				control['notify_req']['probe1'] = False
@@ -113,6 +119,8 @@ def index(action=None):
 				set_point = int(response['probe2tempInputRange'])
 				control['setpoints']['probe2'] = set_point
 				control['notify_req']['probe2'] = True
+				if('shutdownP2' in response):
+					control['notify_data']['p2_shutdown'] = True
 				WriteControl(control)
 			else:
 				control['notify_req']['probe2'] = False
@@ -121,7 +129,6 @@ def index(action=None):
 	if (request.method == 'POST') and (action == 'setmode'):
 		response = request.form
 
-		print(response)
 		if('setpointtemp' in response):
 			if(response['setpointtemp']=='true'):
 				set_point = int(response['tempInputRange'])
@@ -173,7 +180,6 @@ def index(action=None):
 			else:
 				control['updated'] = True
 				control['s_plus'] = False 
-			print (control['s_plus'])
 			WriteControl(control)
 
 	probes_enabled = settings['probes_enabled']
@@ -601,6 +607,7 @@ def recipespage(action=None):
 def settingspage(action=None):
 
 	settings = ReadSettings()
+	control = ReadControl()
 
 	event = {}
 
@@ -630,21 +637,25 @@ def settingspage(action=None):
 		if('grill_probe_type' in response):
 			if(response['grill_probe_type'] != settings['probe_types']['grill0type']):
 				settings['probe_types']['grill0type'] = response['grill_probe_type']
+				control['probe_profile_update'] = True
 				event['type'] = 'updated'
 				event['text'] = 'Probe type updated. Settings saved.'
 		if('probe1_type' in response):
 			if(response['probe1_type'] != settings['probe_types']['probe1type']):
 				settings['probe_types']['probe1type'] = response['probe1_type']
+				control['probe_profile_update'] = True
 				event['type'] = 'updated'
 				event['text'] = 'Probe type updated. Settings saved.'
 		if('probe2_type' in response):
 			if(response['probe2_type'] != settings['probe_types']['probe2type']):
 				settings['probe_types']['probe2type'] = response['probe2_type']
+				control['probe_profile_update'] = True
 				event['type'] = 'updated'
 				event['text'] = 'Probe type updated. Settings saved.'
 
 		# Take all settings and write them
 		WriteSettings(settings)
+		WriteControl(control)
 
 	if (request.method == 'POST') and (action == 'notify'):
 		response = request.form
@@ -834,8 +845,6 @@ def settingspage(action=None):
 	if (request.method == 'POST') and (action == 'pagesettings'):
 		response = request.form
 
-		print(response)
-
 		if('darkmode' in response):
 			if(response['darkmode'] == 'on'):
 				settings['page_theme'] = 'dark'
@@ -917,6 +926,11 @@ def adminpage(action=None):
 			if(response['clearevents']=='true'):
 				DebugWrite('Clearing Events Log.')
 				os.system('rm /tmp/events.log')
+
+		if('clearpelletdb' in response):
+			if(response['clearpelletdb']=='true'):
+				DebugWrite('Clearing Pellet Database.')
+				os.system('rm pelletdb.json')
 
 		if('factorydefaults' in response):
 			if(response['factorydefaults']=='true'):

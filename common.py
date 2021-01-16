@@ -100,6 +100,8 @@ def DefaultControl():
 
 	control['status'] = ''
 
+	control['probe_profile_update'] = False 
+
 	control['setpoints'] = {
 		'grill' : 0,
 		'probe1' : 0,
@@ -110,13 +112,21 @@ def DefaultControl():
 		'grill' : False,
 		'probe1' : False,
 		'probe2' : False,
-		'timer' : False
+		'timer' : False,
+	}
+
+	control['notify_data'] = {
+		'hopper_low' : False,
+		'p1_shutdown' : False,
+		'p2_shutdown' : False,
+		'timer_shutdown' : False,
 	}
 
 	control['timer'] = {
 		'start' : 0,
 		'paused' : 0,
-		'end' : 0
+		'end' : 0,
+		'shutdown' : False 
 	}
 
 	control['manual'] = {
@@ -256,6 +266,40 @@ def DefaultProbeProfiles():
 	}
 	return probe_profiles
 
+def ReadControl():
+	# *****************************************
+	# Read Control From JSON File
+	# *****************************************
+	try:
+		json_data_file = os.fdopen(os.open('/tmp/control.json', os.O_RDONLY))
+		#json_data_file = open("/tmp/control.json", "r")
+		json_data_string = json_data_file.read()
+		control = json.loads(json_data_string)
+		json_data_file.close()
+	except(IOError, OSError):
+		# Issue with reading file, so create one/write new one
+		control = DefaultControl()
+		WriteControl(control)
+	except(ValueError):
+		# A ValueError Exception occurs when multiple accesses collide, this code attempts a retry.
+		event = 'Value Error Exception - JSONDecodeError reading control.json'
+		WriteLog(event)
+		json_data_file.close()
+		json_data_file = os.fdopen(os.open('/tmp/control.json', os.O_RDONLY))
+		json_data_string = json_data_file.read()
+		control = json.loads(json_data_string)
+		json_data_file.close()
+
+	return(control)
+
+def WriteControl(control):
+	# *****************************************
+	# Write all control states to JSON file
+	# *****************************************
+	json_data_string = json.dumps(control)
+	with open("/tmp/control.json", 'w') as control_file:
+		control_file.write(json_data_string)
+
 def ReadSettings():
 	# *****************************************
 	# Read Settings from file
@@ -263,7 +307,8 @@ def ReadSettings():
 
 	# Read all lines of settings.json into an list(array)
 	try:
-		json_data_file = open("settings.json", "r")
+		json_data_file = os.fdopen(os.open('settings.json', os.O_RDONLY))
+		#json_data_file = open("settings.json", "r")
 		json_data_string = json_data_file.read()
 		settings = json.loads(json_data_string)
 		json_data_file.close()
@@ -273,6 +318,15 @@ def ReadSettings():
 		settings = DefaultSettings()
 		# Issue with reading states JSON, so create one/write new one
 		WriteSettings(settings)
+	except(ValueError):
+		# A ValueError Exception occurs when multiple accesses collide, this code attempts a retry.
+		event = 'Value Error Exception - JSONDecodeError reading control.json'
+		WriteLog(event)
+		json_data_file.close()
+		json_data_file = os.fdopen(os.open('settings.json', os.O_RDONLY))
+		json_data_string = json_data_file.read()
+		settings = json.loads(json_data_string)
+		json_data_file.close()
 
 	return(settings)
 
@@ -291,7 +345,8 @@ def ReadRecipes():
 
 	# Read all lines of states.json into an list(array)
 	try:
-		json_data_file = open("recipes.json", "r")
+		json_data_file = os.fdopen(os.open('recipes.json', os.O_RDONLY))
+		#json_data_file = open("recipes.json", "r")
 		json_data_string = json_data_file.read()
 		recipes = json.loads(json_data_string)
 		json_data_file.close()
@@ -317,7 +372,8 @@ def ReadPelletDB():
 
 	# Read all lines of states.json into an list(array)
 	try:
-		json_data_file = open("pelletdb.json", "r")
+		json_data_file = os.fdopen(os.open('pelletdb.json', os.O_RDONLY))
+		#json_data_file = open("pelletdb.json", "r")
 		json_data_string = json_data_file.read()
 		pelletdb = json.loads(json_data_string)
 		json_data_file.close()
@@ -543,31 +599,6 @@ def DebugRead():
 		num_events = 10
 
 	return(event_list, num_events)
-
-def ReadControl():
-	# *****************************************
-	# Read Control From JSON File
-	# *****************************************
-
-	try:
-		json_data_file = open("/tmp/control.json", "r")
-		json_data_string = json_data_file.read()
-		control = json.loads(json_data_string)
-		json_data_file.close()
-	except(IOError, OSError):
-		# Issue with reading file, so create one/write new one
-		control = DefaultControl()
-		WriteControl(control)
-
-	return(control)
-
-def WriteControl(control):
-	# *****************************************
-	# Write all control states to JSON file
-	# *****************************************
-	json_data_string = json.dumps(control)
-	with open("/tmp/control.json", 'w') as control_file:
-		control_file.write(json_data_string)
 
 def ReadTr():
 	# *****************************************

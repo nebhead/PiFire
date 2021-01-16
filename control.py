@@ -179,199 +179,196 @@ def WorkCycle(mode, grill_platform, adc_device, display_device):
 	# Set time since toggle for auger
 	augertoggletime = starttime
 
+	# Set time since toggle for display
+	displaytoggletime = starttime 
+
+	# Initializing Start Time for Smoke Plus Mode
+	sp_cycletoggletime = starttime 
+
 	# Initialize Current Auger State Structure
 	current_output_status = {}
 
-	# Smoke Plus Mode
-	if(((mode == 'Smoke') or (mode == 'Hold')) and (control['s_plus'] == True)):
-		sp_cycletoggletime = time.time()
-		DebugWrite('Smoke Plus Mode Enabled.')
-
+	# ============ Main Work Cycle ============
 	while(status == 'Active'):
 		now = time.time()
-
-		# Reset time since toggle for cycle
-		cycletoggletime = now
-
-		while((now - cycletoggletime) < CycleTime):	# Run a Cycle
-
-			# Check for update in control status
-			control = ReadControl()
-			if (control['updated'] == True):
-				status = 'Inactive'
-				break
-
-			# Check for update in ON/OFF Switch
-			if (last != grill_platform.GetInputStatus()):
-				last = grill_platform.GetInputStatus()
-				if(last == 1):
-					status = 'Inactive'
-					event = 'Switch set to off, going to monitor mode.'
-					WriteLog(event)
-					control['updated'] = True # Change mode
-					control['mode'] = 'Stop'
-					control['status'] = 'active'
-					WriteControl(control)
-
-					break
-			
-			# Change Auger State based on Cycle Time
-			current_output_status = grill_platform.GetOutputStatus()
-
-			# If Auger is OFF and time since toggle is greater than Off Time
-			if (current_output_status['auger'] == 1) and (now - augertoggletime > CycleTime * (1-CycleRatio)):
-				grill_platform.AugerOn()
-				augertoggletime = time.time()
-				event = 'Cycle Event: Auger On'
-				DebugWrite(event)
-
-			# If Auger is ON and time since toggle is greater than On Time
-			if (current_output_status['auger'] == 0) and (now - augertoggletime > CycleTime * CycleRatio):
-				grill_platform.AugerOff()
-				augertoggletime = time.time()
-				event = 'Cycle Event: Auger Off'
-				DebugWrite(event)
-
-			# Grab current settings
-			settings = ReadSettings()
-
-			# Collect Temperature Information and Write History
-			grill0type = settings['probe_types']['grill0type']
-			probe1type = settings['probe_types']['probe1type']
-			probe2type = settings['probe_types']['probe2type']
-
-			adc_device.SetProfiles(settings['probe_profiles'][grill0type], settings['probe_profiles'][probe1type], settings['probe_profiles'][probe2type])
-
-			adc_data = {}
-			adc_data = adc_device.ReadAllPorts()
-
-			if(adc_data['GrillTemp'] != 0):
-				AvgGT = (adc_data['GrillTemp'] + AvgGT) / 2
-
-			AvgP1 = (adc_data['Probe1Temp'] + AvgP1) / 2
-			AvgP2 = (adc_data['Probe2Temp'] + AvgP2) / 2
-
-			# If in Smoke Plus Mode, Cycle the Fan
-			if(((mode == 'Smoke') or (mode == 'Hold')) and (control['s_plus'] == True)):
-				# If Temperature is > settings['smoke_plus']['max_temp'] then turn on fan
-				if(AvgGT > settings['smoke_plus']['max_temp']):
-					grill_platform.FanOn()
-				# elif Temperature is < settings['smoke_plus']['min_temp'] then turn on fan
-				elif(AvgGT < settings['smoke_plus']['min_temp']):
-					grill_platform.FanOn()
-				# elif now - sp_cycletoggletime > settings['smoke_plus']['cycle'] / 2 then toggle fan, reset cycletoggletime = now
-				elif((now - sp_cycletoggletime) > (settings['smoke_plus']['cycle']*0.5)):
-					grill_platform.FanToggle()
-					sp_cycletoggletime = time.time()
-					DebugWrite('Smoke Plus: Fan Toggled')
-
-			# Write History after 3 seconds has passed
-			if (now - temptoggletime > 3):
-				temptoggletime = time.time()
-				in_data = {}
-				in_data['GrillTemp'] = int(AvgGT)
-				in_data['GrillSetPoint'] = control['setpoints']['grill']
-				in_data['Probe1Temp'] = int(AvgP1)
-				in_data['Probe1SetPoint'] = control['setpoints']['probe1']
-				in_data['Probe2Temp'] = int(AvgP2)
-				in_data['Probe2SetPoint'] = control['setpoints']['probe2']
-				in_data['GrillTr'] = adc_data['GrillTr']
-				in_data['Probe1Tr'] = adc_data['Probe1Tr']
-				in_data['Probe2Tr'] = adc_data['Probe2Tr']
-				WriteHistory(in_data)
-				status_data = GetStatus(grill_platform, control, settings)
-				display_device.DisplayStatus(in_data, status_data)
-				RefreshControlData = CheckNotify(in_data)
-
-				# Safety Controls
-				if ((mode == 'Startup') or (mode == 'Reignite')):
-					if(RefreshControlData == True):
-						control = ReadControl()
-					control['safety']['afterstarttemp'] = AvgGT
-					WriteControl(control)
-				elif ((mode == 'Hold') or (mode == 'Smoke')):
-					if (AvgGT < control['safety']['startuptemp']):
-						if(control['safety']['reigniteretries'] == 0):
-							status = 'Inactive'
-							event = 'Grill temperature dropped below minimum startup temperature of ' + str(control['safety']['startuptemp']) + 'F! Shutting down to prevent firepot overload.'
-							DebugWrite(event)
-							WriteLog(event)
-							display_device.DisplayText('ERROR')
-							control['mode'] = 'Stop'
-							control['updated'] = True
-							WriteControl(control)
-							if(settings['ifttt']['APIKey'] != ''):
-								SendIFTTTNotification("Grill_Error_02")
-							if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
-								SendPushoverNotification("Grill_Error_02")
-						else:
-							control['safety']['reigniteretries'] -= 1
-							control['safety']['reignitelaststate'] = mode 
-							status = 'Inactive'
-							event = 'Grill temperature dropped below minimum startup temperature of ' + str(control['safety']['startuptemp']) + 'F. Starting a re-ignite attempt, per user settings.'
-							DebugWrite(event)
-							WriteLog(event)
-							display_device.DisplayText('Re-Ignite')
-							control['mode'] = 'Reignite'
-							control['updated'] = True
-							WriteControl(control)
-
-				if (AvgGT > settings['safety']['maxtemp']):
-					status = 'Inactive'
-					event = 'Grill exceed maximum temperature limit of ' + str(settings['safety']['maxtemp']) + 'F! Shutting down.'
-					DebugWrite(event)
-					WriteLog(event)
-					display_device.DisplayText('ERROR')
-					control['mode'] = 'Error'
-					control['updated'] = True
-					WriteControl(control)
-					if(settings['ifttt']['APIKey'] != ''):
-						SendIFTTTNotification("Grill_Error_01")
-					if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
-						SendPushoverNotification("Grill_Error_01")
-
-			time.sleep(0.5)
-			now = time.time()
-
-			# *********
-			# END Cycle Loop
-			# *********
-		event = 'Cycle Completed.'
-		DebugWrite(event)
-
-		# Reset Cycle Time for HOLD Mode
-		if (mode == 'Hold'):
-			CycleRatio = PIDControl.update(AvgGT)
-			CycleRatio = max(CycleRatio, settings['cycle_data']['u_min'])
-			CycleRatio = min(CycleRatio, settings['cycle_data']['u_max'])
-			OnTime = settings['cycle_data']['HoldCycleTime'] * CycleRatio
-			OffTime = settings['cycle_data']['HoldCycleTime'] * (1 - CycleRatio)
-			CycleTime = OnTime + OffTime
-			event = 'On Time = ' + str(OnTime) + ', OffTime = ' + str(OffTime) + ', CycleTime = ' + str(CycleTime) + ', CycleRatio = ' + str(CycleRatio)
-			DebugWrite(event)
 
 		# Check for update in control status
 		control = ReadControl()
 		if (control['updated'] == True):
 			status = 'Inactive'
+			break
 
+		# Check for update in ON/OFF Switch
 		if (last != grill_platform.GetInputStatus()):
 			last = grill_platform.GetInputStatus()
 			if(last == 1):
 				status = 'Inactive'
-				event = 'Switch set to off, going to stop mode.'
+				event = 'Switch set to off, going to monitor mode.'
 				WriteLog(event)
 				control['updated'] = True # Change mode
-				control['mode'] == 'Stop'
+				control['mode'] = 'Stop'
+				control['status'] = 'active'
 				WriteControl(control)
+				break
+		
+		# Change Auger State based on Cycle Time
+		current_output_status = grill_platform.GetOutputStatus()
 
+		# If Auger is OFF and time since toggle is greater than Off Time
+		if (current_output_status['auger'] == 1) and (now - augertoggletime > CycleTime * (1-CycleRatio)):
+			grill_platform.AugerOn()
+			augertoggletime = now
+			# Reset Cycle Time for HOLD Mode
+			if (mode == 'Hold'):
+				CycleRatio = PIDControl.update(AvgGT)
+				CycleRatio = max(CycleRatio, settings['cycle_data']['u_min'])
+				CycleRatio = min(CycleRatio, settings['cycle_data']['u_max'])
+				OnTime = settings['cycle_data']['HoldCycleTime'] * CycleRatio
+				OffTime = settings['cycle_data']['HoldCycleTime'] * (1 - CycleRatio)
+				CycleTime = OnTime + OffTime
+				event = 'On Time = ' + str(OnTime) + ', OffTime = ' + str(OffTime) + ', CycleTime = ' + str(CycleTime) + ', CycleRatio = ' + str(CycleRatio)
+				DebugWrite(event)
+			event = 'Cycle Event: Auger On'
+			DebugWrite(event)
+
+		# If Auger is ON and time since toggle is greater than On Time
+		if (current_output_status['auger'] == 0) and (now - augertoggletime > CycleTime * CycleRatio):
+			grill_platform.AugerOff()
+			augertoggletime = now
+			event = 'Cycle Event: Auger Off'
+			DebugWrite(event)
+
+		# Grab current probe profiles if they have changed since the last loop. 
+		if (control['probe_profile_update'] == True):
+			settings = ReadSettings()
+			control['probe_profile_update'] = False
+			WriteControl(control)
+			# Get new probe profiles
+			grill0type = settings['probe_types']['grill0type']
+			probe1type = settings['probe_types']['probe1type']
+			probe2type = settings['probe_types']['probe2type']
+			# Add new probe profiles to ADC Object
+			adc_device.SetProfiles(settings['probe_profiles'][grill0type], settings['probe_profiles'][probe1type], settings['probe_profiles'][probe2type])
+
+		# Get temperatures from all probes
+		adc_data = {}
+		adc_data = adc_device.ReadAllPorts()
+
+		# Test temperature data returned for errors (+/- 20% Temp Variance), and average the data since last reading
+		if((adc_data['GrillTemp'] != 0) and (adc_data['GrillTemp'] >= AvgGT * 0.8) and (adc_data['GrillTemp'] <= AvgGT * 1.2)):
+			AvgGT = (adc_data['GrillTemp'] + AvgGT) / 2
+
+		if((adc_data['Probe1Temp'] != 0) and (adc_data['Probe1Temp'] >= AvgP1 * 0.8) and (adc_data['Probe1Temp'] <= AvgP1 * 1.2)):
+			AvgP1 = (adc_data['Probe1Temp'] + AvgP1) / 2
+		elif(AvgP1 == 0):
+			AvgP1 = adc_data['Probe1Temp']
+		elif(adc_data['Probe1Temp'] == 0):
+			AvgP1 = 0
+
+		if((adc_data['Probe2Temp'] != 0) and (adc_data['Probe2Temp'] >= AvgP2 * 0.8) and (adc_data['Probe2Temp'] <= AvgP2 * 1.2)):
+			AvgP2 = (adc_data['Probe2Temp'] + AvgP2) / 2
+		elif(AvgP2 == 0):
+			AvgP2 = adc_data['Probe2Temp']
+		elif(adc_data['Probe2Temp'] == 0):
+			AvgP2 = 0
+
+		in_data = {}
+		in_data['GrillTemp'] = int(AvgGT)
+		in_data['GrillSetPoint'] = control['setpoints']['grill']
+		in_data['Probe1Temp'] = int(AvgP1)
+		in_data['Probe1SetPoint'] = control['setpoints']['probe1']
+		in_data['Probe2Temp'] = int(AvgP2)
+		in_data['Probe2SetPoint'] = control['setpoints']['probe2']
+		in_data['GrillTr'] = adc_data['GrillTr']  # For Temp Resistance Tuning
+		in_data['Probe1Tr'] = adc_data['Probe1Tr']  # For Temp Resistance Tuning
+		in_data['Probe2Tr'] = adc_data['Probe2Tr']  # For Temp Resistance Tuning
+
+		# Check to see if there are any pending notifications (i.e. Timer / Temperature Settings)
+		RefreshControlData = CheckNotify(in_data)
+
+		# Send Current Status / Temperature Data to Display Device every 1 second
+		if(now - displaytoggletime > 1):
+			status_data = GetStatus(grill_platform, control, settings)
+			display_device.DisplayStatus(in_data, status_data)
+			displaytoggletime = time.time() # Reset the displaytoggletime to current time
+
+		# Safety Controls
+		if ((mode == 'Startup') or (mode == 'Reignite')):
+			if(RefreshControlData == True):
+				control = ReadControl()
+			control['safety']['afterstarttemp'] = AvgGT
+			WriteControl(control)
+		elif ((mode == 'Hold') or (mode == 'Smoke')):
+			if (AvgGT < control['safety']['startuptemp']):
+				if(control['safety']['reigniteretries'] == 0):
+					status = 'Inactive'
+					event = 'Grill temperature dropped below minimum startup temperature of ' + str(control['safety']['startuptemp']) + 'F! Shutting down to prevent firepot overload.'
+					DebugWrite(event)
+					WriteLog(event)
+					display_device.DisplayText('ERROR')
+					control['mode'] = 'Stop'
+					control['updated'] = True
+					WriteControl(control)
+					if(settings['ifttt']['APIKey'] != ''):
+						SendIFTTTNotification("Grill_Error_02")
+					if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
+						SendPushoverNotification("Grill_Error_02")
+				else:
+					control['safety']['reigniteretries'] -= 1
+					control['safety']['reignitelaststate'] = mode 
+					status = 'Inactive'
+					event = 'Grill temperature dropped below minimum startup temperature of ' + str(control['safety']['startuptemp']) + 'F. Starting a re-ignite attempt, per user settings.'
+					DebugWrite(event)
+					WriteLog(event)
+					display_device.DisplayText('Re-Ignite')
+					control['mode'] = 'Reignite'
+					control['updated'] = True
+					WriteControl(control)
+
+			if (AvgGT > settings['safety']['maxtemp']):
+				status = 'Inactive'
+				event = 'Grill exceed maximum temperature limit of ' + str(settings['safety']['maxtemp']) + 'F! Shutting down.'
+				DebugWrite(event)
+				WriteLog(event)
+				display_device.DisplayText('ERROR')
+				control['mode'] = 'Error'
+				control['updated'] = True
+				WriteControl(control)
+				if(settings['ifttt']['APIKey'] != ''):
+					SendIFTTTNotification("Grill_Error_01")
+				if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
+					SendPushoverNotification("Grill_Error_01")
+
+		# If in Smoke Plus Mode, Cycle the Fan
+		if(((mode == 'Smoke') or (mode == 'Hold')) and (control['s_plus'] == True)):
+			# If Temperature is > settings['smoke_plus']['max_temp'] then turn on fan
+			if(AvgGT > settings['smoke_plus']['max_temp']):
+				grill_platform.FanOn()
+			# elif Temperature is < settings['smoke_plus']['min_temp'] then turn on fan
+			elif(AvgGT < settings['smoke_plus']['min_temp']):
+				grill_platform.FanOn()
+			# elif now - sp_cycletoggletime > settings['smoke_plus']['cycle'] / 2 then toggle fan, reset sp_cycletoggletime = now
+			elif((now - sp_cycletoggletime) > (settings['smoke_plus']['cycle']*0.5)):
+				grill_platform.FanToggle()
+				sp_cycletoggletime = now
+				DebugWrite('Smoke Plus: Fan Toggled')
+
+		# Write History after 3 seconds has passed
+		if (now - temptoggletime > 3):
+			temptoggletime = time.time()
+			WriteHistory(in_data)
+			status_data = GetStatus(grill_platform, control, settings)
+
+		# Check if 240s have elapsed since startup/reignite mode started
 		if ((mode == 'Startup') or (mode == 'Reignite')):
 			if((now - starttime) > 240):
 				status = 'Inactive'
 
+		# Check if 60s have elapsed since shutdown mode started
 		if ((mode == 'Shutdown') and ((now - starttime) > 60)):
 			status = 'Inactive'
 
+		time.sleep(0.1)
 		# *********
 		# END Mode Loop
 		# *********
@@ -434,8 +431,13 @@ def Monitor(grill_platform, adc_device, display_device):
 	AvgP1 = adc_data['Probe1Temp']
 	AvgP2 = adc_data['Probe2Temp']
 
+	now = time.time()
+
 	# Set time since toggle for temperature
-	temptoggletime = time.time()
+	temptoggletime = now
+
+	# Set time since toggle for display
+	displaytoggletime = now 
 
 	status = 'Active'
 
@@ -460,18 +462,19 @@ def Monitor(grill_platform, adc_device, display_device):
 				WriteControl(control)
 				break
 
-
 		now = time.time()
 
-		# Grab current settings
-		settings = ReadSettings()
-
-		# Collect Temperature Information and Write History
-		grill0type = settings['probe_types']['grill0type']
-		probe1type = settings['probe_types']['probe1type']
-		probe2type = settings['probe_types']['probe2type']
-
-		adc_device.SetProfiles(settings['probe_profiles'][grill0type], settings['probe_profiles'][probe1type], settings['probe_profiles'][probe2type])
+		# Grab current probe profiles if they have changed since the last loop. 
+		if (control['probe_profile_update'] == True):
+			settings = ReadSettings()
+			control['probe_profile_update'] = False
+			WriteControl(control)
+			# Get new probe profiles
+			grill0type = settings['probe_types']['grill0type']
+			probe1type = settings['probe_types']['probe1type']
+			probe2type = settings['probe_types']['probe2type']
+			# Add new probe profiles to ADC Object
+			adc_device.SetProfiles(settings['probe_profiles'][grill0type], settings['probe_profiles'][probe1type], settings['probe_profiles'][probe2type])
 
 		adc_data = {}
 		adc_data = adc_device.ReadAllPorts()
@@ -480,42 +483,46 @@ def Monitor(grill_platform, adc_device, display_device):
 		AvgP1 = (adc_data['Probe1Temp'] + AvgP1) / 2
 		AvgP2 = (adc_data['Probe2Temp'] + AvgP2) / 2
 
-		# Write History after 3 seconds has passed
-		if (now - temptoggletime > 3):
-			temptoggletime = time.time()
-			in_data = {}
-			in_data['GrillTemp'] = int(AvgGT)
-			in_data['GrillSetPoint'] = control['setpoints']['grill']
-			in_data['Probe1Temp'] = int(AvgP1)
-			in_data['Probe1SetPoint'] = control['setpoints']['probe1']
-			in_data['Probe2Temp'] = int(AvgP2)
-			in_data['Probe2SetPoint'] = control['setpoints']['probe2']
-			in_data['GrillTr'] = adc_data['GrillTr']
-			in_data['Probe1Tr'] = adc_data['Probe1Tr']
-			in_data['Probe2Tr'] = adc_data['Probe2Tr']
-			WriteHistory(in_data)
+		in_data = {}
+		in_data['GrillTemp'] = int(AvgGT)
+		in_data['GrillSetPoint'] = control['setpoints']['grill']
+		in_data['Probe1Temp'] = int(AvgP1)
+		in_data['Probe1SetPoint'] = control['setpoints']['probe1']
+		in_data['Probe2Temp'] = int(AvgP2)
+		in_data['Probe2SetPoint'] = control['setpoints']['probe2']
+		in_data['GrillTr'] = adc_data['GrillTr']
+		in_data['Probe1Tr'] = adc_data['Probe1Tr']
+		in_data['Probe2Tr'] = adc_data['Probe2Tr']
+		CheckNotify(in_data)
+
+		# Update Display Device after 1 second has passed 
+		if(now - displaytoggletime > 1):
 			status_data = GetStatus(grill_platform, control, settings)
 			display_device.DisplayStatus(in_data, status_data)
-			CheckNotify(in_data)
+			displaytoggletime = now 
 
-			# Safety Control Section
-			if (AvgGT > settings['safety']['maxtemp']):
-				status = 'Inactive'
-				event = 'Grill exceed maximum temperature limit of ' + str(settings['safety']['maxtemp']) + 'F! Shutting down.'
-				DebugWrite(event)
-				WriteLog(event)
-				display_device.DisplayText('ERROR')
-				control['mode'] = 'Error'
-				control['updated'] = True
-				control['status'] = 'monitor'
-				WriteControl(control)
-				if(settings['ifttt']['APIKey'] != ''):
-					SendIFTTTNotification("Grill_Error_01")
-				if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
-					SendPushoverNotification("Grill_Error_01")
+		# Write History after 3 seconds has passed
+		if (now - temptoggletime > 3):
+			temptoggletime = now 
+			WriteHistory(in_data)
 
+		# Safety Control Section
+		if (AvgGT > settings['safety']['maxtemp']):
+			status = 'Inactive'
+			event = 'Grill exceed maximum temperature limit of ' + str(settings['safety']['maxtemp']) + 'F! Shutting down.'
+			DebugWrite(event)
+			WriteLog(event)
+			display_device.DisplayText('ERROR')
+			control['mode'] = 'Error'
+			control['updated'] = True
+			control['status'] = 'monitor'
+			WriteControl(control)
+			if(settings['ifttt']['APIKey'] != ''):
+				SendIFTTTNotification("Grill_Error_01")
+			if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
+				SendPushoverNotification("Grill_Error_01")
 
-		time.sleep(0.5)
+		time.sleep(0.1)
 
 	event = 'Monitor mode ended.'
 	WriteLog(event)
@@ -563,8 +570,13 @@ def Manual_Mode(grill_platform, adc_device, display_device):
 	AvgP1 = adc_data['Probe1Temp']
 	AvgP2 = adc_data['Probe2Temp']
 
+	now = time.time()
+
 	# Set time since toggle for temperature
-	temptoggletime = time.time()
+	temptoggletime = now
+
+	# Set time since toggle for display
+	displaytoggletime = now 
 
 	status = 'Active'
 
@@ -619,15 +631,17 @@ def Manual_Mode(grill_platform, adc_device, display_device):
 
 		now = time.time()
 
-		# Grab current settings
-		settings = ReadSettings()
-
-		# Collect Temperature Information and Write History
-		grill0type = settings['probe_types']['grill0type']
-		probe1type = settings['probe_types']['probe1type']
-		probe2type = settings['probe_types']['probe2type']
-
-		adc_device.SetProfiles(settings['probe_profiles'][grill0type], settings['probe_profiles'][probe1type], settings['probe_profiles'][probe2type])
+		# Grab current probe profiles if they have changed since the last loop. 
+		if (control['probe_profile_update'] == True):
+			settings = ReadSettings()
+			control['probe_profile_update'] = False
+			WriteControl(control)
+			# Get new probe profiles
+			grill0type = settings['probe_types']['grill0type']
+			probe1type = settings['probe_types']['probe1type']
+			probe2type = settings['probe_types']['probe2type']
+			# Add new probe profiles to ADC Object
+			adc_device.SetProfiles(settings['probe_profiles'][grill0type], settings['probe_profiles'][probe1type], settings['probe_profiles'][probe2type])
 
 		adc_data = {}
 		adc_data = adc_device.ReadAllPorts()
@@ -636,25 +650,31 @@ def Manual_Mode(grill_platform, adc_device, display_device):
 		AvgP1 = (adc_data['Probe1Temp'] + AvgP1) / 2
 		AvgP2 = (adc_data['Probe2Temp'] + AvgP2) / 2
 
+		in_data = {}
+		in_data['GrillTemp'] = int(AvgGT)
+		in_data['GrillSetPoint'] = control['setpoints']['grill']
+		in_data['Probe1Temp'] = int(AvgP1)
+		in_data['Probe1SetPoint'] = control['setpoints']['probe1']
+		in_data['Probe2Temp'] = int(AvgP2)
+		in_data['Probe2SetPoint'] = control['setpoints']['probe2']
+		in_data['GrillTr'] = adc_data['GrillTr']
+		in_data['Probe1Tr'] = adc_data['Probe1Tr']
+		in_data['Probe2Tr'] = adc_data['Probe2Tr']
+
+		# Update Display Device after 1 second has passed 
+		if(now - displaytoggletime > 1):
+			status_data = GetStatus(grill_platform, control, settings)
+			display_device.DisplayStatus(in_data, status_data)
+			displaytoggletime = now 
+
+		CheckNotify(in_data) 
+
 		# Write History after 3 seconds has passed
 		if (now - temptoggletime > 3):
 			temptoggletime = time.time()
-			in_data = {}
-			in_data['GrillTemp'] = int(AvgGT)
-			in_data['GrillSetPoint'] = control['setpoints']['grill']
-			in_data['Probe1Temp'] = int(AvgP1)
-			in_data['Probe1SetPoint'] = control['setpoints']['probe1']
-			in_data['Probe2Temp'] = int(AvgP2)
-			in_data['Probe2SetPoint'] = control['setpoints']['probe2']
-			in_data['GrillTr'] = adc_data['GrillTr']
-			in_data['Probe1Tr'] = adc_data['Probe1Tr']
-			in_data['Probe2Tr'] = adc_data['Probe2Tr']
 			WriteHistory(in_data)
-			status_data = GetStatus(grill_platform, control, settings)
-			display_device.DisplayStatus(in_data, status_data)
-			CheckNotify(in_data) 
 
-		time.sleep(0.5)
+		time.sleep(0.1)
 
 	event = 'Manual mode ended.'
 	WriteLog(event)
@@ -818,34 +838,44 @@ def CheckNotify(in_data):
 			RefreshControlData = True
 	if (control['notify_req']['probe1']):
 		if (in_data['Probe1Temp'] >= in_data['Probe1SetPoint']):
-			control['notify_req']['probe1'] = False
-			WriteControl(control)
 			if(settings['ifttt']['APIKey'] != ''):
 				SendIFTTTNotification("Probe1_Temp_Achieved")
 			if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
 				SendPushoverNotification("Probe1_Temp_Achieved")
+			control['notify_req']['probe1'] = False
+			if(control['notify_data']['p1_shutdown'] == True)and((control['mode'] == 'Smoke')or(control['mode'] == 'Hold')or(control['mode'] == 'Startup')or(control['mode'] == 'Reignite')):
+				control['mode'] = 'Shutdown'
+				control['updated'] = True
+			WriteControl(control)
 			RefreshControlData = True
 	if (control['notify_req']['probe2']):
 		if (in_data['Probe2Temp'] >= in_data['Probe2SetPoint']):
-			control['notify_req']['probe2'] = False
-			WriteControl(control)
 			if(settings['ifttt']['APIKey'] != ''):
 				SendIFTTTNotification("Probe2_Temp_Achieved")
 			if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
 				SendPushoverNotification("Probe2_Temp_Achieved")
+			control['notify_req']['probe2'] = False
+			if(control['notify_data']['p2_shutdown'] == True)and((control['mode'] == 'Smoke')or(control['mode'] == 'Hold')or(control['mode'] == 'Startup')or(control['mode'] == 'Reignite')):
+				control['mode'] = 'Shutdown'
+				control['updated'] = True
+			WriteControl(control)
 			RefreshControlData = True
 	if (control['notify_req']['timer']):
 		if (time.time() >= control['timer']['end']):
-			control['notify_req']['timer'] = False
-			control['timer']['start'] = 0
-			control['timer']['paused'] = 0
-			control['timer']['end'] = 0
-			WriteControl(control)
 			if(settings['ifttt']['APIKey'] != ''):
 				SendIFTTTNotification("Timer_Expired")
 			if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
 				SendPushoverNotification("Timer_Expired")
 			RefreshControlData = True
+			if(control['notify_data']['timer_shutdown'] == True)and((control['mode'] == 'Smoke')or(control['mode'] == 'Hold')or(control['mode'] == 'Startup')or(control['mode'] == 'Reignite')):
+				control['mode'] = 'Shutdown'
+				control['updated'] = True
+			control['notify_req']['timer'] = False
+			control['timer']['start'] = 0
+			control['timer']['paused'] = 0
+			control['timer']['end'] = 0
+			control['notify_data']['timer_shutdown'] = False 
+			WriteControl(control)
 
 	return(RefreshControlData)
 

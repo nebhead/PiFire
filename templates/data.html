@@ -47,11 +47,12 @@
 			{% endif %}
 			
 		</div> <!-- End of Button Group -->
-
+		{% if (current_mode == 'Smoke') or (current_mode == 'Hold') %}
 		{% if s_plus == True %}
-		<button type="submit" class="btn btn-primary border border-secondary" name="setmodesmokeplus" value="false"><i class="fas fa-fan"></i></button>
+		<button type="submit" class="btn btn-success border border-secondary" name="setmodesmokeplus" value="false"><i class="fas fa-fan"></i></button>
 		{% else %}
 		<button type="submit" class="btn btn-outline-primary border border-secondary text-secondary" name="setmodesmokeplus" value="true"><i class="fas fa-fan"></i></button>
+		{% endif %}
 		{% endif %}
 	</div> <!-- End of Column -->
 </div> <!-- End of Row -->

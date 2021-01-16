@@ -18,7 +18,7 @@
 			<button type="button" class="close" data-dismiss="alert">&times;</button>
 		<b> ERROR OCCURRED. Please check the event logs for more information. </b>
 	</div>
-			<br>
+	<br>
 	{% endif %}
 {% endblock %}
 
@@ -44,11 +44,8 @@
 	</div>
 	<br>
 {% endif %}
-
-			<br>
 			<!-- Data Section -->
 			<div class="row">
-
 				<div class="col-lg-4 col-md-6 col-sm-12">
 					<div class="card shadow mt-4">
 				  	<div class="card-body text-center">
@@ -141,7 +138,8 @@
 								<a href="/settings" class="btn btn-outline-secondary" role="button"><i class="far fa-bell-slash"></i></a>
 							</div>
 						</div>
-						{% endif %}					</div> <!-- End of card -->
+						{% endif %}					
+					</div> <!-- End of card -->
 				</div> <!-- End of Column -->
 <br>
 <br>
@@ -184,6 +182,11 @@
 							<div class="modal-body text-center">
 									<h1><output name="probe1tempOutput" id="probe1tempOutputId">{{ set_points['probe1'] }}</output>°F</h1>
 									<input type="range" class="custom-range" min="0" max="300" value="{{ set_points['probe1'] }}" id="probe1tempInputId" name="probe1tempInputRange" oninput="probe1tempOutputId.value = probe1tempInputId.value">
+									<br><br>
+									<div class="custom-control custom-checkbox mb-3">
+										<input type="checkbox" class="custom-control-input" id="shutdownP1" name="shutdownP1">
+										<label class="custom-control-label" for="shutdownP1">Shutdown Grill When Probe 1 Achieves Set Point</label>
+									</div>
 							</div>
 							<!-- Modal footer -->
 							<div class="modal-footer">
@@ -206,8 +209,13 @@
 							</div>
 							<!-- Modal body -->
 							<div class="modal-body text-center">
-									<h1><output name="probe2tempOutput" id="probe2tempOutputId">{{ set_points['probe2'] }}</output>°F</h1>
-									<input type="range" class="custom-range" min="0" max="300" value="{{ set_points['probe2'] }}" id="probe2tempInputId" name="probe2tempInputRange" oninput="probe2tempOutputId.value = probe2tempInputId.value">
+								<h1><output name="probe2tempOutput" id="probe2tempOutputId">{{ set_points['probe2'] }}</output>°F</h1>
+								<input type="range" class="custom-range" min="0" max="300" value="{{ set_points['probe2'] }}" id="probe2tempInputId" name="probe2tempInputRange" oninput="probe2tempOutputId.value = probe2tempInputId.value">
+								<br><br>
+								<div class="custom-control custom-checkbox mb-3">
+									<input type="checkbox" class="custom-control-input" id="shutdownP2" name="shutdownP2">
+									<label class="custom-control-label" for="shutdownP2">Shutdown Grill When Probe 2 Achieves Set Point</label>
+								</div>
 							</div>
 							<!-- Modal footer -->
 							<div class="modal-footer">
@@ -255,7 +263,13 @@
 
 								<h1><output name="minsOutput" id="minsOutputId">0</output> Mins</h1>
 								<input type="range" class="custom-range" min="0" max="59" value="0" id="minsInputId" name="minsInputRange" oninput="minsOutputId.value = minsInputId.value">
-						</div>
+								<br><br>
+								<div class="custom-control custom-checkbox mb-3">
+									<input type="checkbox" class="custom-control-input" id="shutdownTimer" name="shutdownTimer">
+									<label class="custom-control-label" for="shutdownTimer">Shutdown Grill When Timer Expires</label>
+								</div>
+
+							</div>
 						<!-- Modal footer -->
 						<div class="modal-footer">
 							<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>

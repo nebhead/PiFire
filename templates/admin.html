@@ -127,6 +127,36 @@
 						</div>
 					</div>
 				</div>
+				<br>
+
+				<!-- Clear PelletDB Button -->
+				<button type="button" class="btn btn-outline-warning btn-block text-red shadow" data-toggle="modal" data-target="#clearallpelletModal">
+					Delete Pellet Database
+				</button>
+
+				<!-- Clear PelletDB Modal -->
+				<div class="modal" id="clearallpelletModal">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<!-- Modal Header -->
+							<div class="modal-header">
+								<h4 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Clear Pellet DB</h4>
+								<button type="button" class="close" data-dismiss="modal">&times;</button>
+							</div>
+							<!-- Modal body -->
+							<div class="modal-body text-center">
+								Are you sure that you want to permanently delete pelletdb.json?  
+								<br><br>
+								<i class="small">Removes all added/modified pellet profiles, brands, wood types and pellet log.  This operation cannot be undone.</i>
+							</div>
+							<!-- Modal footer -->
+							<div class="modal-footer">
+								<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+								<button type="submit" class="btn btn-danger" name="clearpelletdb" value="true">I'm Sure.</button>
+							</div>
+						</div>
+					</div>
+				</div>
 
 				<br>
 
