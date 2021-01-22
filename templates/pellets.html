@@ -456,29 +456,32 @@
 {% block scripts %}
 <script>
     $(document).ready(function(){
-        // Get Hopper Level on Page Load
-        req = $.ajax({
-            url : '/hopperlevel',
-            type : 'GET'
-        });
+        // Insert 1 second delay
+        
+        setTimeout(function() {  
+            // Get Hopper Level on Page Load
+            req = $.ajax({
+                url : '/hopperlevel',
+                type : 'GET'
+            });
 
-        req.done(function(data) {
-            // Update Hopper Level
-            // Returned Data: 
-            // 'data.hopper_level' 
+            req.done(function(data) {
+                // Update Hopper Level
+                // Returned Data: 
+                // 'data.hopper_level' 
 
-            if (data.hopper_level > 70) { 
-                document.getElementById("HopperStatus").className = "progress-bar progress-bar-striped bg-success";
-            } else if (data.hopper_level > 30) {
-                document.getElementById("HopperStatus").className = "progress-bar progress-bar-striped bg-warning";
-            } else {
-                document.getElementById("HopperStatus").className = "progress-bar progress-bar-striped bg-danger";
-            };
+                if (data.hopper_level > 70) { 
+                    document.getElementById("HopperStatus").className = "progress-bar progress-bar-striped bg-success";
+                } else if (data.hopper_level > 30) {
+                    document.getElementById("HopperStatus").className = "progress-bar progress-bar-striped bg-warning";
+                } else {
+                    document.getElementById("HopperStatus").className = "progress-bar progress-bar-striped bg-danger";
+                };
 
-            document.getElementById("HopperStatus").style.width = data.hopper_level + "%";
-            document.getElementById("HopperStatus").innerHTML = data.hopper_level + "%";
-        });
-
+                document.getElementById("HopperStatus").style.width = data.hopper_level + "%";
+                document.getElementById("HopperStatus").innerHTML = data.hopper_level + "%";
+            });
+        }, 1000);
 
         setInterval(function(){
             // Get Hopper Level

@@ -19,6 +19,7 @@
 
 import VL53L0X
 import time 
+from common import DebugWrite
 
 class HopperLevel:
 
@@ -53,6 +54,8 @@ class HopperLevel:
 		
 		# Convert mm to cm 
 		AvgDist = AvgDist / 10 
+		event = 'Average Distance Measured: ' + str(AvgDist) + 'cm'
+		DebugWrite(event)
 		
 		# If Average Distance is less than the empty distance, calculate percentage
 		if AvgDist <= self.empty: 
