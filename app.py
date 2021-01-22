@@ -202,6 +202,11 @@ def data_dump(action=None):
 
 	return render_template('data.html', cur_probe_temps=cur_probe_temps, probes_enabled=probes_enabled, set_points=control['setpoints'], current_mode=control['mode'], mode_status=control['status'], s_plus=control['s_plus'], page_theme=settings['page_theme'])
 
+@app.route('/hopperlevel')
+def hopper_level(action=None):
+	pelletdb = ReadPelletDB()
+	return jsonify({ 'hopper_level' : pelletdb['current']['hopper_level'] })
+
 @app.route('/history/<action>', methods=['POST','GET'])
 @app.route('/history', methods=['POST','GET'])
 def historypage(action=None):
@@ -489,6 +494,10 @@ def pelletsspage(action=None):
 				WritePelletDB(pelletdb)
 				event['type'] = 'updated'
 				event['text'] = 'Successfully loaded profile and logged.'
+	elif (request.method == 'GET' and action == 'hopperlevel'):
+		control = ReadControl()
+		control['hopper_check'] = True
+		WriteControl(control)
 	elif (request.method == 'POST' and action == 'editbrands'):
 		response = request.form
 		if('delBrand' in response):
@@ -1189,6 +1198,10 @@ def tr_to_temp(Tr, a, b, c):
         tempF = 0.0
     return int(tempF) # Return Calculated Temperature and Thermistor Value in Ohms
 
+settings = ReadSettings()
+
 if __name__ == '__main__':
-	app.run(host='0.0.0.0')
-	#app.run(host='0.0.0.0',debug=True) # Use this instead of the above line for debug mode
+	if(settings['modules']['grillplat'] == 'prototype'):
+		app.run(host='0.0.0.0',debug=True) # Use this instead of the above line for debug mode
+	else:
+		app.run(host='0.0.0.0')

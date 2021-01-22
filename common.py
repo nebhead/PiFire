@@ -82,6 +82,13 @@ def DefaultSettings():
 
 	settings['page_theme'] = 'light'
 
+	settings['modules'] = {
+		'grillplat' : 'pifire',	 	# Grill Platform (PiFire - Raspberry Pi GPIOs)
+		'adc' : 'ads1115',			# Analog to Digital Converter Default is the ADS1115
+		'display' : 'ssd1306',		# Default display is the SSD1306
+		'dist' : 'prototype'		# Default distance sensor is none
+	}
+
 	return settings
 
 def DefaultControl():
@@ -95,6 +102,8 @@ def DefaultControl():
 	control['mode'] = 'Stop'
 
 	control['s_plus'] = False # Smoke-Plus Feature Enable/Disable
+
+	control['hopper_check'] = False # Trigger an synchronous hopper level check 
 
 	control['recipe'] = ''
 
@@ -196,6 +205,8 @@ def DefaultPellets():
 		'date_loaded' : now, 		# Date that current pellets loaded
 	}
 
+	pelletdb['empty'] = 30 # Number of centimeters from the sensor that indicates empty
+
 	pelletdb['woods'] = ['Alder', 'Almond', 'Apple', 'Apricot', 'Blend', 'Competition', 'Cherry', 'Chestnut', 'Hickory', 'Lemon', 'Maple', 'Mesquite', 'Mulberry', 'Nectarine', 'Oak', 'Orange', 'Peach', 'Pear', 'Plum', 'Walnut' ]
 
 	pelletdb['brands'] = ['Generic', 'Custom']
@@ -253,7 +264,7 @@ def DefaultProbeProfiles():
 			"A": 0.04136906456,
 			"B": -0.00677987613,
 			"C": 2.760294589e-05,
-			"name": "PT-1000-Traeger-RTD"
+			"name": "PT-1000-OEM-RTD"
 	}
 
 	probe_profiles['ET73-SP'] = {

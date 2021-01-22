@@ -12,9 +12,8 @@
 #
 # *****************************************
 
-# Set this to False on Raspberry Pi Host ()
-prototype_mode = False
-#prototype_mode = True # Comment out this line to disable TEST / Prototype mode
+# Prototype Mode is now selected through modifying the module selections in the settings.json file.
+# Run 'bash modules.sh' from the command prompt to select prototype modules, for prototype mode
 
 # *****************************************
 # Imported Libraries
@@ -28,16 +27,32 @@ from common import *  # Common Library for WebUI and Control Program
 import pid as PID # Library for calculating PID setpoints
 import requests
 
-if(prototype_mode == True):
-	# Prototype Modules for Test Host (i.e. PC based testing)
-	from adc_prototype import ReadADC # Library for reading the ADC device
-	from grillplat_prototype import GrillPlatform # Library for controlling the grill platform
-	from display_prototype import Display # Library for controlling the display device
+# Read Settings to Get Modules Configuration 
+settings = ReadSettings()
+
+if(settings['modules']['grillplat'] == 'pifire'):
+	from grillplat_pifire import GrillPlatform # Library for controlling the grill platform w/Raspberry Pi GPIOs
 else:
-	# Actual Modules for RasPi
+	from grillplat_prototype import GrillPlatform # Simulated Library for controlling the grill platform
+
+if(settings['modules']['adc'] == 'ads1115'):
 	from adc_ads1115 import ReadADC # Library for reading the ADC device
-	from grillplat_traeger import GrillPlatform # Library for controlling the grill platform
+else: 
+	from adc_prototype import ReadADC # Simulated Library for reading the ADC device
+	
+if(settings['modules']['display'] == 'ssd1306'):
 	from display_ssd1306 import Display # Library for controlling the display device
+elif(settings['modules']['display'] == 'ssd1306b'):
+	from display_ssd1306b import Display # Library for controlling the display device w/button input
+else:
+	from display_prototype import Display # Simulated Library for controlling the display device
+
+if(settings['modules']['dist'] == 'vl53l0x'):
+	from distance_vl53l0x import HopperLevel # Library for reading the HopperLevel from vl53l0x TOF Sensor
+elif(settings['modules']['dist'] == 'hcsr04'):
+	from distance_hcsr04 import HopperLevel # Library for reading HopperLevel HC-SR04 Ultrasonic Sensor
+else: 
+	from distance_prototype import HopperLevel # Simulated Library for reading the HopperLevel
 
 # *****************************************
 # Function Definitions
@@ -61,7 +76,7 @@ def GetStatus(grill_platform, control, settings):
 
 	return(status_data)
 
-def WorkCycle(mode, grill_platform, adc_device, display_device):
+def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 	# *****************************************
 	# Work Cycle Function
 	# *****************************************
@@ -185,6 +200,9 @@ def WorkCycle(mode, grill_platform, adc_device, display_device):
 	# Initializing Start Time for Smoke Plus Mode
 	sp_cycletoggletime = starttime 
 
+	# Set time since toggle for hopper check
+	hoppertoggletime = starttime 
+
 	# Initialize Current Auger State Structure
 	current_output_status = {}
 
@@ -194,6 +212,19 @@ def WorkCycle(mode, grill_platform, adc_device, display_device):
 
 		# Check for update in control status
 		control = ReadControl()
+
+		if (control['hopper_check'] == True) or (now - hoppertoggletime > 300):
+			pelletdb = ReadPelletDB()
+			# Get current hopper level and save it to the current pellet information
+			pelletdb['current']['hopper_level'] = dist_device.GetLevel()
+			WritePelletDB(pelletdb)
+			hoppertoggletime = now
+			if(control['hopper_check'] == True):
+				control['hopper_check'] = False
+				WriteControl(control)
+			event = "Hopper Level Checked @ " + str(pelletdb['current']['hopper_level']) + "%"
+			DebugWrite(event)
+
 		if (control['updated'] == True):
 			status = 'Inactive'
 			break
@@ -391,10 +422,10 @@ def WorkCycle(mode, grill_platform, adc_device, display_device):
 	return()
 
 # ******************************
-# Monitor Grill Temperatures while Traeger controller is running
+# Monitor Grill Temperatures while alternative OEM controller is running
 # ******************************
 
-def Monitor(grill_platform, adc_device, display_device):
+def Monitor(grill_platform, adc_device, display_device, dist_device):
 
 	event = 'Monitor Mode started.'
 	WriteLog(event)
@@ -533,7 +564,7 @@ def Monitor(grill_platform, adc_device, display_device):
 # Manual Mode Control
 # ******************************
 
-def Manual_Mode(grill_platform, adc_device, display_device):
+def Manual_Mode(grill_platform, adc_device, display_device, dist_device):
 
 	event = 'Manual Mode started.'
 	WriteLog(event)
@@ -685,7 +716,7 @@ def Manual_Mode(grill_platform, adc_device, display_device):
 # Recipe Mode Control
 # ******************************
 
-def Recipe_Mode(grill_platform, adc_device, display_device):
+def Recipe_Mode(grill_platform, adc_device, display_device, dist_device):
 
 	event = 'Recipe Mode started.'
 	WriteLog(event)
@@ -911,6 +942,17 @@ probe2type = settings['probe_types']['probe2type']
 # Start ADC object and set profiles
 adc_device = ReadADC(settings['probe_profiles'][grill0type], settings['probe_profiles'][probe1type], settings['probe_profiles'][probe2type])
 
+pelletdb = ReadPelletDB()
+
+# Start Distance Sensor Object for Hopper
+dist_device = HopperLevel(pelletdb['empty'])
+
+# Get current hopper level and save it to the current pellet information
+pelletdb['current']['hopper_level'] = dist_device.GetLevel()
+WritePelletDB(pelletdb)
+event = "Hopper Level Checked @ " + str(pelletdb['current']['hopper_level']) + "%"
+DebugWrite(event)
+
 # Initialize Temp files
 #  Remove existing control file
 DebugWrite('Removing /tmp/control.json.')
@@ -942,6 +984,16 @@ while True:
 
 	# 1. Check control.json for commands
 	control = ReadControl()
+
+	if (control['hopper_check'] == True):
+		pelletdb = ReadPelletDB()
+		# Get current hopper level and save it to the current pellet information
+		pelletdb['current']['hopper_level'] = dist_device.GetLevel()
+		WritePelletDB(pelletdb)
+		event = "Hopper Level Checked @ " + str(pelletdb['current']['hopper_level']) + "%"
+		DebugWrite(event)
+		control['hopper_check'] = False
+		WriteControl(control)
 
 	if (control['updated'] == True):
 		event = "Updated Flag Captured."
@@ -997,35 +1049,35 @@ while True:
 				DebugWrite('Clearing History and Current Log on Startup Mode.')
 				os.system('rm /tmp/history.log')
 				os.system('rm /tmp/current.log')
-			WorkCycle('Startup', grill_platform, adc_device, display_device)
+			WorkCycle('Startup', grill_platform, adc_device, display_device, dist_device)
 			control = ReadControl()
 			if(control['mode'] == 'Startup'):
 				control['mode'] = 'Smoke' # Set status to active
 				WriteControl(control)
-				WorkCycle('Smoke', grill_platform, adc_device, display_device)
+				WorkCycle('Smoke', grill_platform, adc_device, display_device, dist_device)
 		#	Smoke (smoke cycle)
 		elif (control['mode'] == 'Smoke'):
-			WorkCycle('Smoke', grill_platform, adc_device, display_device)
+			WorkCycle('Smoke', grill_platform, adc_device, display_device, dist_device)
 		#	Hold (hold at setpoint)
 		elif (control['mode'] == 'Hold'):
-			WorkCycle('Hold', grill_platform, adc_device, display_device)
+			WorkCycle('Hold', grill_platform, adc_device, display_device, dist_device)
 		#	Shutdown (shutdown sequence)
 		elif (control['mode'] == 'Shutdown'):
-			WorkCycle('Shutdown', grill_platform, adc_device, display_device)
+			WorkCycle('Shutdown', grill_platform, adc_device, display_device, dist_device)
 			control = ReadControl()
 			if(control['mode'] == 'Shutdown'):
 				control['mode'] = 'Stop' # Set mode to Stop
 				control['updated'] = True
 				WriteControl(control)
-		#	e. Monitor (monitor the Traeger controller)
+		#	e. Monitor (monitor the OEM controller)
 		elif (control['mode'] == 'Monitor'):
 			control['status'] = 'monitor' # Set status to monitor
 			WriteControl(control)
-			Monitor(grill_platform, adc_device, display_device)
+			Monitor(grill_platform, adc_device, display_device, dist_device)
 		elif (control['mode'] == 'Manual'):
-			Manual_Mode(grill_platform, adc_device, display_device)
+			Manual_Mode(grill_platform, adc_device, display_device, dist_device)
 		elif (control['mode'] == 'Recipe'):
-			Recipe_Mode(grill_platform, adc_device, display_device)
+			Recipe_Mode(grill_platform, adc_device, display_device, dist_device)
 		#	Reignite (reignite sequence)
 		elif (control['mode'] == 'Reignite'):
 			if(grill_platform.GetInputStatus() == 1):
@@ -1033,7 +1085,7 @@ while True:
 				WriteLog(event)
 				DebugWrite(event)
 			
-			WorkCycle('Reignite', grill_platform, adc_device, display_device)
+			WorkCycle('Reignite', grill_platform, adc_device, display_device, dist_device)
 
 			control = ReadControl()
 			lastmode = control['safety']['reignitelaststate']
@@ -1044,7 +1096,7 @@ while True:
 				control['mode'] = 'Smoke' # Set status to active
 			
 			WriteControl(control)
-			WorkCycle(control['mode'], grill_platform, adc_device, display_device)
+			WorkCycle(control['mode'], grill_platform, adc_device, display_device, dist_device)
 				
 
 	time.sleep(0.5)

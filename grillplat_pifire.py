@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
 # *****************************************
-# PiFire Traeger Interface Library
+# PiFire OEM Interface Library
 # *****************************************
 #
 # Description: This library supports 
 #  controlling the PiFire Outputs, alongside 
-#  the Traeger outputs via
+#  the OEM controller outputs via
 #  Raspberry Pi GPIOs, to a 4-channel relay
 #
 # *****************************************

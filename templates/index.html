@@ -235,13 +235,7 @@
 			<br><br>
 			<button type="button" class="btn btn-outline-primary btn-block shadow" data-toggle="modal" data-target="#timerModal"><i class="fas fa-stopwatch"></i>&nbsp;Timer</button>
 			<br><br>
-			{% if pellet_level >= 70 %}
-			<a href="/pellets" class="btn btn-outline-success btn-block shadow" role="button"><i class="fas fa-tree"></i> {{ pellet_name }} @ {{ pellet_level }}% </a>
-			{% elif pellet_level > 30 %}
-			<a href="/pellets" class="btn btn-outline-warning btn-block shadow" role="button"><i class="fas fa-tree"></i> {{ pellet_name }} @ {{ pellet_level }}% </a>
-			{% else %}
-			<a href="/pellets" class="btn btn-outline-danger btn-block shadow" role="button"><i class="fas fa-tree"></i> {{ pellet_name }} @ {{ pellet_level }}% </a>
-			{% endif %}
+			<a href="/pellets" class="btn btn-outline-success btn-block shadow" id="HopperStatus" role="button"><i class="fas fa-tree"></i> {{ pellet_name }} @ <span id="HopperLevel">{{ pellet_level }}</span>% </a>
 			<br><br>
 			<a href="/events" class="btn btn-outline-primary btn-block shadow" role="button"><i class="fas fa-history"></i> Event Log</a>
 		</div> <!-- End of Column -->
@@ -337,9 +331,46 @@
 	<script>
 		$(document).ready(function(){
 			$('#refreshmedata').load("/data");
+	
 			setInterval(function(){
 				$('#refreshmedata').load("/data");
 			}, 2000);
+
+			var starting_hopper_level = {{ pellet_level }};
+
+			if (starting_hopper_level > 70) { 
+                	document.getElementById("HopperStatus").className = "btn btn-outline-success btn-block shadow";
+           		} else if (starting_hopper_level > 30) {
+                	document.getElementById("HopperStatus").className = "btn btn-outline-warning btn-block shadow";
+            	} else {
+                	document.getElementById("HopperStatus").className = "btn btn-outline-danger btn-block shadow";
+            	};
+
+			setInterval(function(){
+				// Get Hopper Level
+				req = $.ajax({
+					url : '/hopperlevel',
+					type : 'GET'
+				});
+
+				req.done(function(data) {
+					// Update Hopper Level
+					// console.log(data);  // Debug logging
+
+					// Returned Data: 
+					// 'data.hopper_level' 
+					if (data.hopper_level > 70) { 
+						document.getElementById("HopperStatus").className = "btn btn-outline-success btn-block shadow";
+					} else if (data.hopper_level > 30) {
+						document.getElementById("HopperStatus").className = "btn btn-outline-warning btn-block shadow";
+					} else {
+						document.getElementById("HopperStatus").className = "btn btn-outline-danger btn-block shadow";
+					};
+
+					document.getElementById("HopperLevel").innerHTML = data.hopper_level;
+				});
+			}, 150000);
+
 		});
 	</script>
 	<script>

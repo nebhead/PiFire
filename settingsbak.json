@@ -1,0 +1,113 @@
+{
+  "smoke_plus": {
+    "enabled": true,
+    "min_temp": 160,
+    "max_temp": 220,
+    "cycle": 10,
+    "frequency": 1,
+    "duty_cycle": 50
+  },
+  "debug_mode": true,
+  "ifttt": { "APIKey": "" },
+  "pushover": {
+    "APIKey": "agb59e725y268y4h7wa5ict1aitzyg",
+    "UserKeys": "udh5i828j363nf3r1ivf4jybwkn8ft",
+    "PublicURL": "http://pifire.local.lan"
+  },
+  "probe_types": {
+    "grill0type": "PT-1000-PiFire2",
+    "probe1type": "TWPS00",
+    "probe2type": "TWPS00"
+  },
+  "outpins": { "power": 4, "auger": 14, "fan": 15, "igniter": 18 },
+  "inpins": { "selector": 17 },
+  "probe_profiles": {
+    "TWPS00": {
+      "Vs": 3.28,
+      "Rd": 10000,
+      "A": 0.00073431401,
+      "B": 0.0002157437,
+      "C": 9.515686e-8,
+      "name": "Thermoworks-Pro-Series-HeaterMeter"
+    },
+    "ET73-HM": {
+      "Vs": 3.28,
+      "Rd": 10000,
+      "A": 0.00024723753,
+      "B": 0.00023402251,
+      "C": 1.3879768e-7,
+      "name": "ET-73-Heatermeter"
+    },
+    "iGrill-HM": {
+      "Vs": 3.28,
+      "Rd": 10000,
+      "A": 0.0007739251279,
+      "B": 0.0002088025997,
+      "C": 1.154400438e-7,
+      "name": "iGrill-Heatermeter"
+    },
+    "PT1000-00": {
+      "Vs": 3.28,
+      "Rd": 10000,
+      "A": 0.04136906456,
+      "B": -0.00677987613,
+      "C": 2.760294589e-5,
+      "name": "PT-1000-Traeger-RTD"
+    },
+    "ET73-SP": {
+      "Vs": 3.28,
+      "Rd": 10000,
+      "A": 0.00023067434,
+      "B": 0.00023696596,
+      "C": 1.2636414e-7,
+      "name": "ET-73-skyeperry1"
+    },
+    "ET-74-PF": {
+      "Vs": 3.28,
+      "Rd": 10000,
+      "A": -0.0037950975937286182,
+      "B": 0.0007362440127368629,
+      "C": -1.0352135322986162e-6,
+      "name": "Maverick ET-74 PiFire"
+    },
+    "Traeger-P-1000": {
+      "Vs": 3.28,
+      "Rd": 10000,
+      "A": 0.05753598317465608,
+      "B": -0.01005430905027864,
+      "C": 4.7383383052055925e-5,
+      "name": "Traeger-P1000-PiFire"
+    },
+    "PT-1000-PiFire2": {
+      "Vs": 3.28,
+      "Rd": 10000,
+      "A": 0.05469905897345206,
+      "B": -0.009473055040089443,
+      "C": 4.3768560703857386e-5,
+      "name": "Traeger-Grill-Probe-PiFire-2"
+    }
+  },
+  "probes_enabled": [1, 1, 1],
+  "cycle_data": {
+    "PB": 60.0,
+    "Ti": 180.0,
+    "Td": 45.0,
+    "CycleTime": 20,
+    "PMode": 2,
+    "u_min": 0.15,
+    "u_max": 1.0,
+    "SmokeCycleTime": 15,
+    "HoldCycleTime": 20
+  },
+  "minutes": 60,
+  "clearhistoryonstart": true,
+  "autorefresh": "on",
+  "datapoints": 60,
+  "safety": {
+    "minstartuptemp": 65,
+    "maxstartuptemp": 100,
+    "maxtemp": 500,
+    "reigniteretries": 2
+  },
+  "page_theme": "light"
+}

@@ -112,19 +112,13 @@
                     <!-- Hopper Level Indicator-->
                     
                     <div class="progress shadow" style="height:30px">
-                        {% if pelletdb['current']['hopper_level'] >= 70 %}
-                        <div class="progress-bar progress-bar-striped bg-success" style="width:{{ pelletdb['current']['hopper_level'] }}%;height:30px">{{ pelletdb['current']['hopper_level'] }}%</div>
-                        {% elif pelletdb['current']['hopper_level'] > 30 %}
-                        <div class="progress-bar progress-bar-striped bg-warning" style="width:{{ pelletdb['current']['hopper_level'] }}%;height:30px">{{ pelletdb['current']['hopper_level'] }}%</div>
-                        {% else %}
-                        <div class="progress-bar progress-bar-striped bg-danger" style="width:{{ pelletdb['current']['hopper_level'] }}%;height:30px">{{ pelletdb['current']['hopper_level'] }}%</div>
-                        {% endif %}
+                        <div id="HopperStatus" class="progress-bar progress-bar-striped bg-success" style="width:100%;height:30px">100%</div>
                     </div>
 
                 </div>
 
                 <div class="card-footer text-center">
-                    <a href="/pellets" class="btn btn-outline-primary" role="button">Refresh Status</a>
+                    <a href="/pellets/hopperlevel" class="btn btn-outline-primary" role="button">Refresh Status</a>
                 </div>
             </div>
         </div>
@@ -459,3 +453,58 @@
 
 {% endblock %}
 
+{% block scripts %}
+<script>
+    $(document).ready(function(){
+        // Get Hopper Level on Page Load
+        req = $.ajax({
+            url : '/hopperlevel',
+            type : 'GET'
+        });
+
+        req.done(function(data) {
+            // Update Hopper Level
+            // Returned Data: 
+            // 'data.hopper_level' 
+
+            if (data.hopper_level > 70) { 
+                document.getElementById("HopperStatus").className = "progress-bar progress-bar-striped bg-success";
+            } else if (data.hopper_level > 30) {
+                document.getElementById("HopperStatus").className = "progress-bar progress-bar-striped bg-warning";
+            } else {
+                document.getElementById("HopperStatus").className = "progress-bar progress-bar-striped bg-danger";
+            };
+
+            document.getElementById("HopperStatus").style.width = data.hopper_level + "%";
+            document.getElementById("HopperStatus").innerHTML = data.hopper_level + "%";
+        });
+
+
+        setInterval(function(){
+            // Get Hopper Level
+            req = $.ajax({
+                url : '/hopperlevel',
+                type : 'GET'
+            });
+
+            req.done(function(data) {
+                // Update Hopper Level
+                // Returned Data: 
+                // 'data.hopper_level' 
+
+                if (data.hopper_level > 70) { 
+                    document.getElementById("HopperStatus").className = "progress-bar progress-bar-striped bg-success";
+                } else if (data.hopper_level > 30) {
+                    document.getElementById("HopperStatus").className = "progress-bar progress-bar-striped bg-warning";
+                } else {
+                    document.getElementById("HopperStatus").className = "progress-bar progress-bar-striped bg-danger";
+                };
+
+                document.getElementById("HopperStatus").style.width = data.hopper_level + "%";
+                document.getElementById("HopperStatus").innerHTML = data.hopper_level + "%";
+            });
+        }, 60000);
+
+    });
+</script>
+{% endblock %}
