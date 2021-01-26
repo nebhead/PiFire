@@ -118,9 +118,9 @@ class Display:
 						draw.text((128 - font_width, 5 + (64//2 - font_height//2)), text, font=font, fill=255)
 					# Current Mode (Bottom Left)
 					font = ImageFont.truetype("trebuc.ttf", 18)
-					text = status_data['mode'] + ' Mode.'
+					text = status_data['mode'] + ' Mode'
 					(font_width, font_height) = font.getsize(text)
-					draw.text((0, 64 - font_height), text, font=font, fill=255)
+					draw.text((128//2 - font_width//2, 64 - font_height), text, font=font, fill=255)
 					# Notification Indicator (Upper Right)
 					font = ImageFont.truetype("FA-Free-Solid.otf", 24)
 					text = ' '
