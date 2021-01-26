@@ -133,7 +133,7 @@ $(document).ready(function(){
     
                 if(data.probes_enabled[1] == 1) {
                     Probe1TempCircle.update([
-                        { type: "percent", value: ((data.cur_probe_temps[1] * 100) / 600) },
+                        { type: "percent", value: ((data.cur_probe_temps[1] * 100) / 300) },
                         { type: "text", value: data.cur_probe_temps[1] + "°F" }
                     ]);
                 } else {
@@ -145,7 +145,7 @@ $(document).ready(function(){
     
                 if(data.probes_enabled[2] == 1) {
                     Probe2TempCircle.update([
-                        { type: "percent", value: ((data.cur_probe_temps[2] * 100) / 600) },
+                        { type: "percent", value: ((data.cur_probe_temps[2] * 100) / 300) },
                         { type: "text", value: data.cur_probe_temps[2] + "°F" }
                     ]);
                 } else {
