@@ -53,7 +53,7 @@
 						</div> <!-- End of card body -->
 						{% if probes_enabled[0] == 1 %}
 						<div class="card-footer text-center">
-							<form name="input" action="/setnotify" method="POST">
+							<form name="input" action="/dash/setnotify" method="POST">
 							<div class="btn-group">
 								<button type="button" class="btn btn-outline-primary"><i class="fas fa-temperature-high"></i> <b>Grill</b></button>
 								<a href="/settings" class="btn btn-outline-primary" role="button"><i class="fas fa-cog"></i></a>
@@ -85,7 +85,7 @@
 						</div> <!-- End of card body -->
 						{% if probes_enabled[1] == 1 %}
 						<div class="card-footer text-center">
-							<form name="input" action="/setnotify" method="POST">
+							<form name="input" action="/dash/setnotify" method="POST">
 							<div class="btn-group">
 								<button type="button" class="btn btn-outline-primary"><i class="fas fa-temperature-high"></i> <b>Probe 1</b></button>
 								<a href="/settings" class="btn btn-outline-primary" role="button"><i class="fas fa-cog"></i></a>
@@ -118,7 +118,7 @@
 						</div> <!-- End of card body -->
 						{% if probes_enabled[2] == 1 %}
 						<div class="card-footer text-center">
-							<form name="input" action="/setnotify" method="POST">
+							<form name="input" action="/dash/setnotify" method="POST">
 							<div class="btn-group">
 								<button type="button" class="btn btn-outline-primary"><i class="fas fa-temperature-high"></i> <b>Probe 2</b></button>
 								<a href="/settings" class="btn btn-outline-primary" role="button"><i class="fas fa-cog"></i></a>
@@ -145,7 +145,7 @@
 <br>
 			</div> <!-- End of Row -->
 
-			<form name="input" action="/setnotify" method="POST">
+			<form name="input" action="/dash/setnotify" method="POST">
 				<div class="modal" id="grillnotifyModal">
 					<div class="modal-dialog">
 						<div class="modal-content">
@@ -169,7 +169,7 @@
 				</div>
 			</form>
 
-			<form name="input" action="/setnotify" method="POST">
+			<form name="input" action="/dash/setnotify" method="POST">
 				<div class="modal" id="probe1notifyModal">
 					<div class="modal-dialog">
 						<div class="modal-content">
@@ -198,7 +198,7 @@
 				</div>
 			</form>
 
-			<form name="input" action="/setnotify" method="POST">
+			<form name="input" action="/dash/setnotify" method="POST">
 				<div class="modal" id="probe2notifyModal">
 					<div class="modal-dialog">
 						<div class="modal-content">
@@ -235,7 +235,7 @@
 			<br><br>
 			<button type="button" class="btn btn-outline-primary btn-block shadow" data-toggle="modal" data-target="#timerModal"><i class="fas fa-stopwatch"></i>&nbsp;Timer</button>
 			<br><br>
-			<a href="/pellets" class="btn btn-outline-success btn-block shadow" id="HopperStatus" role="button"><i class="fas fa-tree"></i> {{ pellet_name }} @ <span id="HopperLevel">{{ pellet_level }}</span>% </a>
+			<a href="/pellets" class="btn btn-outline-success btn-block shadow" id="HopperStatus" role="button"><i class="fas fa-tree"></i> <span id="PelletName">--</span> @ <span id="HopperLevel">--</span>% </a>
 			<br><br>
 			<a href="/events" class="btn btn-outline-primary btn-block shadow" role="button"><i class="fas fa-history"></i> Event Log</a>
 		</div> <!-- End of Column -->
@@ -281,7 +281,7 @@
 {% endblock %}
 
 {% block postcontainer %}
-		<form name="input" action="/setmode" method="POST">
+		<form name="input" action="/dash/setmode" method="POST">
 		<div class="container">
 			{% if page_theme == 'dark' %}
 			<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #aaaaaa;">
@@ -289,14 +289,31 @@
 			<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #dddddd;">
 			{% endif %}
 
-				<span class="navbar-text">
-      		<div id="refreshmedata"></div>
-			  </span>
+			<span class="navbar-text">
+				<!-- Dash Controls -->
+				<div id="inactive_group" class="btn-group shadow-lg">
+					<button type="submit" class="btn btn-outline-success border border-secondary" id="startup_btn" name="setmodestartup" value="true"><i class="fas fa-play"></i></button>
+					<button type="submit" class="btn btn-outline-secondary border border-secondary" id="monitor_btn" name="setmodemonitor" value="true"><i class="fas fa-glasses"></i></button>
+					<button type="submit" class="btn btn-outline-warning border border-secondary text-secondary" id="smoke_inactive_btn" name="setmodesmoke" value="true">Smoke</button>
+					<button type="button" class="btn btn-outline-secondary border border-secondary" id="hold_inactive_btn" data-toggle="modal" data-target="#setpointModal">Hold</button>
+					<button type="submit" class="btn btn-outline-secondary border border-secondary" id="stop_inactive_btn" name="setmodestop" value="true"><i class="fas fa-stop"></i></button>
+				</div> <!-- End of Button Group -->
+
+				<div id="active_group" class="btn-group shadow-lg">
+					<button type="submit" class="btn btn-outline-warning border border-secondary text-secondary" id="smoke_btn" name="setmodesmoke" value="true">Smoke</button>
+					<button type="button" class="btn btn-outline-secondary border border-secondary" id="hold_btn" data-toggle="modal" data-target="#setpointModal">Hold</button>
+					<button type="submit" class="btn btn-outline-secondary border border-secondary" id="stop_btn" name="setmodestop" value="true"><i class="fas fa-stop"></i></button>
+					<button type="submit" class="btn btn-outline-danger border border-secondary" id="shutdown_btn" name="setmodeshutdown" value="true"><i class="fas fa-flag-checkered"></i></button>
+				</div> <!-- End of Button Group -->
+
+				<!-- Smoke Plus -->
+				<button type="submit" class="btn btn-outline-primary border border-secondary text-secondary" id="splus_btn" name="setmodesmokeplus" value="true"><i class="fas fa-fan"></i></button>
+			</span>
  			</nav>
 		</div> <!-- End of Container -->
 		</form>
 
-		<form name="input" action="/setmode" method="POST">
+		<form name="input" action="/dash/setmode" method="POST">
 			<div class="modal" id="setpointModal">
 				<div class="modal-dialog">
 					<div class="modal-content">
@@ -327,89 +344,7 @@
 
 {% block scripts %}  
 	<script src="{{ url_for('static', filename='js/circliful1.js') }}"></script>
-
-	<script>
-		$(document).ready(function(){
-			$('#refreshmedata').load("/data");
-	
-			setInterval(function(){
-				$('#refreshmedata').load("/data");
-			}, 2000);
-
-			var starting_hopper_level = {{ pellet_level }};
-
-			if (starting_hopper_level > 70) { 
-                	document.getElementById("HopperStatus").className = "btn btn-outline-success btn-block shadow";
-           		} else if (starting_hopper_level > 30) {
-                	document.getElementById("HopperStatus").className = "btn btn-outline-warning btn-block shadow";
-            	} else {
-                	document.getElementById("HopperStatus").className = "btn btn-outline-danger btn-block shadow";
-            	};
-
-			setInterval(function(){
-				// Get Hopper Level
-				req = $.ajax({
-					url : '/hopperlevel',
-					type : 'GET'
-				});
-
-				req.done(function(data) {
-					// Update Hopper Level
-					// console.log(data);  // Debug logging
-
-					// Returned Data: 
-					// 'data.hopper_level' 
-					if (data.hopper_level > 70) { 
-						document.getElementById("HopperStatus").className = "btn btn-outline-success btn-block shadow";
-					} else if (data.hopper_level > 30) {
-						document.getElementById("HopperStatus").className = "btn btn-outline-warning btn-block shadow";
-					} else {
-						document.getElementById("HopperStatus").className = "btn btn-outline-danger btn-block shadow";
-					};
-
-					document.getElementById("HopperLevel").innerHTML = data.hopper_level;
-				});
-			}, 150000);
-
-		});
-	</script>
-	<script>
-		var GrillTempCircle = circliful.newCircle({
-		    percent: (({{ cur_probe_temps[0] }} * 100) / 600),
-		    id: 'GrillTempCircle',
-		    type: 'simple',
-		    foregroundCircleWidth: 10,
-		    startAngle: -180,
-		    backgroundCircleWidth: 10,
-		    text: '{{ cur_probe_temps[0] }}°F',
-		    textReplacesPercentage: true,
-				strokeLinecap: "round",
-		});
-
-		var Probe1TempCircle = circliful.newCircle({
-		    percent: (({{ cur_probe_temps[1] }} * 100) / 300),
-		    id: 'Probe1TempCircle',
-		    type: 'simple',
-		    foregroundCircleWidth: 10,
-		    startAngle: -180,
-		    backgroundCircleWidth: 10,
-		    text: '{{ cur_probe_temps[1] }}°F',
-		    textReplacesPercentage: true,
-				strokeLinecap: "round",
-		});
-
-		var Probe2TempCircle = circliful.newCircle({
-		    percent: (({{ cur_probe_temps[2] }} * 100) / 300),
-		    id: 'Probe2TempCircle',
-		    type: 'simple',
-		    foregroundCircleWidth: 10,
-		    startAngle: -180,
-		    backgroundCircleWidth: 10,
-		    text: '{{ cur_probe_temps[2] }}°F',
-		    textReplacesPercentage: true,
-				strokeLinecap: "round",
-		});
-	</script>
+	<script src="{{ url_for('static', filename='js/dash.js') }}"></script>
 
 {% if control['timer']['start'] != 0 %}
 	<script>

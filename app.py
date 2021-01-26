@@ -12,7 +12,7 @@
 #
 # *****************************************
 
-from flask import Flask, request, render_template, make_response, send_file, jsonify
+from flask import Flask, request, render_template, make_response, send_file, jsonify, redirect
 import time
 import os
 import json
@@ -22,24 +22,20 @@ from common import *  # Common Library for WebUI and Control Program
 
 app = Flask(__name__)
 
-@app.route('/<action>', methods=['POST','GET'])
-@app.route('/', methods=['POST','GET'])
+@app.route('/')
 def index(action=None):
+	return redirect('/dash')
 
-	# TODO:  Recipe Status
+@app.route('/dash/<action>', methods=['POST','GET'])
+@app.route('/dash', methods=['POST','GET'])
+def dash(action=None):
 	settings = ReadSettings()
 
 	control = ReadControl()
 
-	pelletdb = ReadPelletDB() 
-
-	pellet_name = pelletdb['archive'][pelletdb['current']['pelletid']]['brand'] + ' ' + pelletdb['archive'][pelletdb['current']['pelletid']]['wood']
-
-	pellet_level = pelletdb['current']['hopper_level']
-
 	if (request.method == 'POST'):
 		response = request.form
-		print(response)
+		#print(response)
 		if('start' in response):
 			if(response['start']=='true'):
 				control['notify_req']['timer'] = True
@@ -182,16 +178,10 @@ def index(action=None):
 				control['s_plus'] = False 
 			WriteControl(control)
 
-	probes_enabled = settings['probes_enabled']
+	return render_template('dash.html', set_points=control['setpoints'], notify_req=control['notify_req'], probes_enabled=settings['probes_enabled'], control=control, page_theme=settings['page_theme'])
 
-	cur_probe_temps = []
-	cur_probe_temps = ReadCurrent()
-
-	return render_template('index.html', cur_probe_temps=cur_probe_temps, probes_enabled=probes_enabled, set_points=control['setpoints'], current_mode=control['mode'], mode_status=control['status'], notify_req=control['notify_req'], control=control, pellet_name=pellet_name, pellet_level=pellet_level, page_theme=settings['page_theme'])
-
-@app.route('/data/<action>', methods=['POST','GET'])
-@app.route('/data', methods=['POST','GET'])
-def data_dump(action=None):
+@app.route('/dashdata')
+def dashdata(action=None):
 
 	control = ReadControl()
 	settings = ReadSettings()
@@ -200,12 +190,13 @@ def data_dump(action=None):
 	cur_probe_temps = []
 	cur_probe_temps = ReadCurrent()
 
-	return render_template('data.html', cur_probe_temps=cur_probe_temps, probes_enabled=probes_enabled, set_points=control['setpoints'], current_mode=control['mode'], mode_status=control['status'], s_plus=control['s_plus'], page_theme=settings['page_theme'])
+	return jsonify({ 'cur_probe_temps' : cur_probe_temps, 'probes_enabled' : probes_enabled, 'current_mode' : control['mode'], 'set_points' : control['setpoints'], 'splus' : control['s_plus'] })
 
 @app.route('/hopperlevel')
 def hopper_level(action=None):
 	pelletdb = ReadPelletDB()
-	return jsonify({ 'hopper_level' : pelletdb['current']['hopper_level'] })
+	cur_pellets_string = pelletdb['archive'][pelletdb['current']['pelletid']]['brand'] + ' ' + pelletdb['archive'][pelletdb['current']['pelletid']]['wood']
+	return jsonify({ 'hopper_level' : pelletdb['current']['hopper_level'], 'cur_pellets' : cur_pellets_string })
 
 @app.route('/history/<action>', methods=['POST','GET'])
 @app.route('/history', methods=['POST','GET'])
