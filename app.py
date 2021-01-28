@@ -178,7 +178,7 @@ def dash(action=None):
 				control['s_plus'] = False 
 			WriteControl(control)
 
-	return render_template('dash.html', set_points=control['setpoints'], notify_req=control['notify_req'], probes_enabled=settings['probes_enabled'], control=control, page_theme=settings['page_theme'])
+	return render_template('dash.html', set_points=control['setpoints'], notify_req=control['notify_req'], probes_enabled=settings['probes_enabled'], control=control, page_theme=settings['page_theme'], grill_name=settings['grill_name'])
 
 @app.route('/dashdata')
 def dashdata(action=None):
@@ -308,7 +308,7 @@ def historypage(action=None):
 	data_blob = {}
 	data_blob = prepare_data(num_items, True, settings['datapoints'])
 
-	return render_template('history.html', control=control, grill_temp_list=data_blob['grill_temp_list'], grill_settemp_list=data_blob['grill_settemp_list'], probe1_temp_list=data_blob['probe1_temp_list'], probe1_settemp_list=data_blob['probe1_settemp_list'], probe2_temp_list=data_blob['probe2_temp_list'], probe2_settemp_list=data_blob['probe2_settemp_list'], label_time_list=data_blob['label_time_list'], probes_enabled=probes_enabled, num_mins=settings['minutes'], num_datapoints=settings['datapoints'], autorefresh=settings['autorefresh'], page_theme=settings['page_theme'])
+	return render_template('history.html', control=control, grill_temp_list=data_blob['grill_temp_list'], grill_settemp_list=data_blob['grill_settemp_list'], probe1_temp_list=data_blob['probe1_temp_list'], probe1_settemp_list=data_blob['probe1_settemp_list'], probe2_temp_list=data_blob['probe2_temp_list'], probe2_settemp_list=data_blob['probe2_settemp_list'], label_time_list=data_blob['label_time_list'], probes_enabled=probes_enabled, num_mins=settings['minutes'], num_datapoints=settings['datapoints'], autorefresh=settings['autorefresh'], page_theme=settings['page_theme'], grill_name=settings['grill_name'])
     
 @app.route('/historyupdate')
 def historyupdate(action=None):
@@ -417,7 +417,7 @@ def tuningpage(action=None):
 				else:
 					pagectrl['refresh'] = 'on'
 	
-	return render_template('tuning.html', control=control, settings=settings, pagectrl=pagectrl, page_theme=settings['page_theme'])
+	return render_template('tuning.html', control=control, settings=settings, pagectrl=pagectrl, page_theme=settings['page_theme'], grill_name=settings['grill_name'])
 
 @app.route('/_grilltr', methods = ['GET'])
 def grilltr(action=None):
@@ -455,7 +455,7 @@ def eventspage(action=None):
 	debug_event_list, debug_num_events = DebugRead()
 	settings = ReadSettings()
 
-	return render_template('events.html', event_list=event_list, num_events=num_events, debug_event_list=debug_event_list, debug_num_events=debug_num_events, page_theme=settings['page_theme'])
+	return render_template('events.html', event_list=event_list, num_events=num_events, debug_event_list=debug_event_list, debug_num_events=debug_num_events, page_theme=settings['page_theme'], grill_name=settings['grill_name'])
 
 @app.route('/pellets/<action>', methods=['POST','GET'])
 @app.route('/pellets', methods=['POST','GET'])
@@ -587,7 +587,7 @@ def pelletsspage(action=None):
 				event['type'] = 'updated'
 				event['text'] = 'Successfully deleted ' + response['brand_name'] + ' ' + response['wood_type'] + ' profile in database.'
 
-	return render_template('pellets.html', alert=event, pelletdb=pelletdb, page_theme=settings['page_theme'])
+	return render_template('pellets.html', alert=event, pelletdb=pelletdb, page_theme=settings['page_theme'], grill_name=settings['grill_name'])
 
 
 @app.route('/recipes', methods=['POST','GET'])
@@ -600,7 +600,7 @@ def recipespage(action=None):
 	# Run a Recipe
 	settings = ReadSettings()
 
-	return render_template('recipes.html', page_theme=settings['page_theme'])
+	return render_template('recipes.html', page_theme=settings['page_theme'], grill_name=settings['grill_name'])
 
 @app.route('/settings/<action>', methods=['POST','GET'])
 @app.route('/settings', methods=['POST','GET'])
@@ -877,7 +877,15 @@ def settingspage(action=None):
 
 		WriteSettings(settings)
 
-	return render_template('settings.html', settings=settings, alert=event, page_theme=settings['page_theme'])
+	if (request.method == 'POST') and (action == 'grillname'):
+		response = request.form
+
+		if('grill_name' in response):
+			settings['grill_name'] = response['grill_name']
+
+		WriteSettings(settings)
+
+	return render_template('settings.html', settings=settings, alert=event, page_theme=settings['page_theme'], grill_name=settings['grill_name'])
 
 @app.route('/admin/<action>', methods=['POST','GET'])
 @app.route('/admin', methods=['POST','GET'])
@@ -954,7 +962,7 @@ def adminpage(action=None):
 
 	debug_mode = settings['debug_mode']
 
-	return render_template('admin.html', settings=settings, action=action, uptime=uptime, cpuinfo=cpuinfo, temp=temp, ifconfig=ifconfig, debug_mode=debug_mode, page_theme=settings['page_theme'])
+	return render_template('admin.html', settings=settings, action=action, uptime=uptime, cpuinfo=cpuinfo, temp=temp, ifconfig=ifconfig, debug_mode=debug_mode, page_theme=settings['page_theme'], grill_name=settings['grill_name'])
 
 @app.route('/manual/<action>', methods=['POST','GET'])
 @app.route('/manual', methods=['POST','GET'])
@@ -1019,7 +1027,7 @@ def manual_page(action=None):
 		time.sleep(1)
 		control = ReadControl()
 
-	return render_template('manual.html', settings=settings, control=control, page_theme=settings['page_theme'])
+	return render_template('manual.html', settings=settings, control=control, page_theme=settings['page_theme'], grill_name=settings['grill_name'])
 
 @app.route('/api/<action>', methods=['POST','GET'])
 @app.route('/api', methods=['POST','GET'])

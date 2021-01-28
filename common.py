@@ -8,6 +8,8 @@ debugMode = True
 def DefaultSettings():
 	settings = {}
 
+	settings['grill_name'] = ''
+
 	settings['debug_mode'] = False
 
 	settings['ifttt'] = {

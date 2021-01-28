@@ -3,7 +3,7 @@
 {% block cssextend %}
 {% endblock %}
 
-{% block title %} PiFire Settings {% endblock %} 
+{% block title %}Settings{% endblock %} 
 
 {% block notify %}
 
@@ -309,6 +309,30 @@
 					</div> <!-- End of Column -->
 			</div> <!-- End of Row -->
 
+			<br>
+			<!-- ============================ Grill Name ========================== -->
+			<div class="row">
+				<div class="col">
+					<div class="card shadow">
+
+						<form name="GrillName" action="/settings/grillname" method="POST">
+
+							<div class="card-header bg-primary text-white"><h5><i class="fas fa-file-signature"></i>&nbsp; Grill Name</h5></div>
+							<div class="card-body">
+								<div class="input-group mb-3">
+									<div class="input-group-prepend">
+										<span class="input-group-text" data-toggle="tooltip" title="Choose a name for your grill!"><i class="fas fa-user-ninja"></i>&nbsp; Grill Name</span>
+									</div>
+									<input id="grill_name" type="text" class="form-control" placeholder="{{ settings['grill_name'] }}" value="{{ settings['grill_name'] }}" name="grill_name">
+								</div>
+							</div>
+							<div class="card-footer bg-light">
+								<button type="submit" class="btn btn-outline-primary">Save</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
 			<br>
 			<!-- ============================ Cycle Settings ========================== -->
 			<div class="row">

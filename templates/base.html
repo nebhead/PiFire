@@ -21,7 +21,7 @@
         <!-- WebApp Manifest -->
         <link rel="manifest" href="{{ url_for('manifest') }}">
 
-        <title>{% block title %} {% endblock %}</title>
+        <title>{% block title %}{% endblock %}{% if grill_name != '' %} | {{ grill_name }}{% endif %}</title>
 
     </head>
     <body>
@@ -30,7 +30,7 @@
 
 			<a class="navbar-brand" href="/">
 				<img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="30" height="30" class="d-inline-block align-top" alt="">
-				<b>Pi<i class="text-danger">Fire</i></b></a>
+				<b>Pi<i class="text-danger">Fire</i></b>{% if grill_name != '' %} | {{ grill_name }}{% endif %}</a>
 
 				<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
 					<span class="navbar-toggler-icon"></span>
