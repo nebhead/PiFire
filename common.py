@@ -283,6 +283,7 @@ def ReadControl():
 	# *****************************************
 	# Read Control From JSON File
 	# *****************************************
+
 	try:
 		json_data_file = os.fdopen(os.open('/tmp/control.json', os.O_RDONLY))
 		#json_data_file = open("/tmp/control.json", "r")
@@ -293,15 +294,14 @@ def ReadControl():
 		# Issue with reading file, so create one/write new one
 		control = DefaultControl()
 		WriteControl(control)
+		return(control)
 	except(ValueError):
 		# A ValueError Exception occurs when multiple accesses collide, this code attempts a retry.
-		event = 'Value Error Exception - JSONDecodeError reading control.json'
+		event = 'ERROR: Value Error Exception - JSONDecodeError reading control.json'
 		WriteLog(event)
 		json_data_file.close()
-		json_data_file = os.fdopen(os.open('/tmp/control.json', os.O_RDONLY))
-		json_data_string = json_data_file.read()
-		control = json.loads(json_data_string)
-		json_data_file.close()
+		# Retry Reading Control 
+		control = ReadControl() 
 
 	return(control)
 
@@ -318,12 +318,14 @@ def ReadSettings():
 	# Read Settings from file
 	# *****************************************
 
-	# Read all lines of settings.json into an list(array)
+	# Get latest settings format
+	settings = DefaultSettings()
+
 	try:
 		json_data_file = os.fdopen(os.open('settings.json', os.O_RDONLY))
 		#json_data_file = open("settings.json", "r")
 		json_data_string = json_data_file.read()
-		settings = json.loads(json_data_string)
+		settings_struct = json.loads(json_data_string)
 		json_data_file.close()
 
 	except(IOError, OSError):
@@ -331,15 +333,23 @@ def ReadSettings():
 		settings = DefaultSettings()
 		# Issue with reading states JSON, so create one/write new one
 		WriteSettings(settings)
+		return(settings)
 	except(ValueError):
 		# A ValueError Exception occurs when multiple accesses collide, this code attempts a retry.
-		event = 'Value Error Exception - JSONDecodeError reading control.json'
+		event = 'ERROR: Value Error Exception - JSONDecodeError reading control.json'
 		WriteLog(event)
 		json_data_file.close()
-		json_data_file = os.fdopen(os.open('settings.json', os.O_RDONLY))
-		json_data_string = json_data_file.read()
-		settings = json.loads(json_data_string)
-		json_data_file.close()
+		# Retry Reading Settings
+		settings_struct = ReadSettings() 
+
+	# Overlay the read values over the top of the default settings
+	#  This ensures that any NEW fields are captured.  
+	for key in settings.keys():
+		if(type(settings[key]) == bool) or (type(settings[key]) == str) or (type(settings[key]) == int) or (type(settings[key]) == list):
+			if key in settings_struct: 
+				settings[key] = settings_struct[key]
+		else:
+			settings[key].update(settings_struct.get(key, {}))
 
 	return(settings)
 
