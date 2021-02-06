@@ -167,7 +167,7 @@ if [[ $ADC = "PROTOTYPE" ]];then
     python3 settings.py -a prototype
 fi
 
-DISPLAY=$(whiptail --title "Select your Display module to use." --radiolist "Select display type (and input) module for PiFire to use.  Some displays may also have menu button functions indicated by a B appended to the name." 20 78 3 "SSD1306" "OLED Display (128x64) <- DEFAULT" ON "SSD1306B" "OLED Display (128x64) w/Button Input" OFF "PROTOTYPE" "Prototype/Console Output (for test only)" OFF 3>&1 1>&2 2>&3)
+DISPLAY=$(whiptail --title "Select your Display module to use." --radiolist "Select display type (and input) module for PiFire to use.  Some displays may also have menu button functions indicated by a B appended to the name." 20 78 5 "SSD1306" "OLED Display (128x64) <- DEFAULT" ON "SSD1306B" "OLED Display (128x64) w/Button Input" OFF "ST7789P" "IPS/TFT SPI Display (240x240) P => Pimoroni Library" OFF "PROTOTYPE" "Prototype/Console Output (for test only)" OFF "PYGAME" "Prototype/PyGame Desktop Output (for test only)" OFF 3>&1 1>&2 2>&3)
 
 if [[ $DISPLAY = "SSD1306" ]];then
     python3 settings.py -d ssd1306
@@ -179,8 +179,20 @@ if [[ $DISPLAY = "SSD1306B" ]];then
     $SUDO pip3 install luma.oled
 fi
 
+if [[ $DISPLAY = "ST7789P" ]];then
+    python3 settings.py -d st7789p
+    echo "dtparam=spi=on" | sudo tee -a /boot/config.txt > /dev/null
+    $SUDO apt install python3-rpi.gpio python3-spidev python3-pip python3-pil python3-numpy
+    $SUDO pip3 install st7789
+fi
+
 if [[ $DISPLAY = "PROTOTYPE" ]];then
     python3 settings.py -d prototype
+fi
+
+if [[ $DISPLAY = "PYGAME" ]];then
+    python3 settings.py -d pygame
+    $SUDO pip3 install pygame 
 fi
 
 DIST=$(whiptail --title "Select your Range module to use." --radiolist "Optional distance sensor for hopper/pellet level reporting.  Default is prototype/none, which is equivalent to no attached sensor." 20 78 3 "PROTOTYPE" "Prototype/None <- DEFAULT" ON "VL53L0X" "Time of Flight Light Range Sensor" OFF "HCSR04" "Ultrasonic Range Sensor" OFF 3>&1 1>&2 2>&3)

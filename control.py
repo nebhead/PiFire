@@ -44,6 +44,10 @@ if(settings['modules']['display'] == 'ssd1306'):
 	from display_ssd1306 import Display # Library for controlling the display device
 elif(settings['modules']['display'] == 'ssd1306b'):
 	from display_ssd1306b import Display # Library for controlling the display device w/button input
+elif(settings['modules']['display'] == 'st7789p'):
+	from display_st7789p import Display # Library for controlling the display device
+elif(settings['modules']['display'] == 'pygame'):
+	from display_pygame import Display # Library for controlling the display device
 else:
 	from display_prototype import Display # Simulated Library for controlling the display device
 

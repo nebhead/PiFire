@@ -67,6 +67,8 @@
 								<tr class="table-info">
 								{% elif "Script ended" in debug_event_list[row][2] %}
 								<tr class="table-danger">
+								{% elif "ERROR" in debug_event_list[row][2] %}
+								<tr class="table-danger">
 								{% elif "Mode ended" in debug_event_list[row][2] %}
 								<tr class="table-warning">
 								{% else %}
