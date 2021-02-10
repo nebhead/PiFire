@@ -48,7 +48,7 @@ class Display:
 		print(' |_|   |_||_|    |_||_|  \___|  ')
 
 	def ClearDisplay(self):
-		print('Clear Display Command Sent')
+		print('[Display] Clear Display Command Sent')
 
 	def DisplayText(self, text):
 		print('====[Display]=====')

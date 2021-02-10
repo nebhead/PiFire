@@ -77,27 +77,33 @@ $(document).ready(function(){
             $("#active_group").hide();
             $("#smoke_inactive_btn").hide();
             $("#hold_inactive_btn").hide();
+            $("#error_btn").hide();
         } else if (data.current_mode == 'Monitor') {
             document.getElementById("monitor_btn").className = "btn btn-secondary border border-secondary";
             $("#active_group").hide();
             $("#smoke_inactive_btn").hide();
             $("#hold_inactive_btn").hide();
+            $("#error_btn").hide();
         } else if ((data.current_mode == 'Startup') || (data.current_mode == 'Reignite')) {
             document.getElementById("startup_btn").className = "btn btn-success border border-secondary";
             $("#active_group").hide();
             $("#monitor_btn").hide();
+            $("#error_btn").hide();
         } else if (data.current_mode == 'Smoke') {
             document.getElementById("smoke_btn").className = "btn btn-warning border border-secondary";
             $("#inactive_group").hide();
             $("#stop_btn").hide();
+            $("#error_btn").hide();
         } else if (data.current_mode == 'Hold') {
             document.getElementById("hold_btn").className = "btn btn-secondary border border-secondary text-white";
             document.getElementById("hold_btn").innerHTML = data.set_points['grill'] + "°F";
             $("#inactive_group").hide();
             $("#stop_btn").hide();
+            $("#error_btn").hide();
         } else if (data.current_mode == 'Shutdown') {
             document.getElementById("shutdown_btn").className = "btn btn-danger border border-secondary";
             $("#inactive_group").hide();
+            $("#error_btn").hide();
         };
 
         if ((data.current_mode == 'Smoke') || (data.current_mode == 'Hold')) {
@@ -186,6 +192,7 @@ $(document).ready(function(){
                         $("#hold_inactive_btn").hide();
                         $("#inactive_group").show();
                         $("#monitor_btn").show();
+                        $("#error_btn").hide();
                     } else if (data.current_mode == 'Monitor') {
                         document.getElementById("monitor_btn").className = "btn btn-secondary border border-secondary";
                         $("#active_group").hide();
@@ -193,6 +200,7 @@ $(document).ready(function(){
                         $("#inactive_group").show();
                         $("#smoke_inactive_btn").hide();
                         $("#hold_inactive_btn").hide();
+                        $("#error_btn").hide();
                     } else if ((data.current_mode == 'Startup') || (data.current_mode == 'Reignite')) {
                         document.getElementById("startup_btn").className = "btn btn-success border border-secondary";
                         $("#active_group").hide();
@@ -201,25 +209,54 @@ $(document).ready(function(){
                         $("#smoke_inactive_btn").show();
                         $("#hold_inactive_btn").show();
                         $("#monitor_btn").hide();
+                        $("#error_btn").hide();
                     } else if (data.current_mode == 'Smoke') {
                         document.getElementById("smoke_btn").className = "btn btn-warning border border-secondary";
                         $("#inactive_group").hide();
                         $("#active_group").show();
                         $("#stop_btn").hide();
                         $("#splus_btn").show();
+                        // This is required when automatically transitioning from another mode to this mode
+                        if(data.splus == true) {
+                            document.getElementById("splus_btn").className = "btn btn-success border border-secondary";
+                            document.getElementById("splus_btn").value = "false";
+                        } else {
+                            document.getElementById("splus_btn").className = "btn btn-outline-primary border border-secondary text-secondary";
+                            document.getElementById("splus_btn").value = "true";
+                        };
+                        $("#error_btn").hide();
                     } else if (data.current_mode == 'Hold') {
                         $("#inactive_group").hide();
                         $("#active_group").show();
                         $("#splus_btn").show();
+                        // This is required when automatically transitioning from another mode to this mode
+                        if(data.splus == true) {
+                            document.getElementById("splus_btn").className = "btn btn-success border border-secondary";
+                            document.getElementById("splus_btn").value = "false";
+                        } else {
+                            document.getElementById("splus_btn").className = "btn btn-outline-primary border border-secondary text-secondary";
+                            document.getElementById("splus_btn").value = "true";
+                        };
                         document.getElementById("hold_btn").className = "btn btn-secondary border border-secondary text-white";
                         document.getElementById("hold_btn").innerHTML = data.set_points['grill'] + "°F";
                         $("#stop_btn").hide();
+                        $("#error_btn").hide();
                     } else if (data.current_mode == 'Shutdown') {
                         $("#inactive_group").hide();
                         $("#splus_btn").hide();
                         $("#active_group").show();
                         $("#stop_btn").show();
+                        $("#error_btn").hide();
                         document.getElementById("shutdown_btn").className = "btn btn-danger border border-secondary";
+                    } else if (data.current_mode == "Error") {
+                        document.getElementById("stop_inactive_btn").className = "btn btn-danger border border-secondary";
+                        $("#active_group").hide();
+                        $("#splus_btn").hide();
+                        $("#smoke_inactive_btn").hide();
+                        $("#hold_inactive_btn").hide();
+                        $("#inactive_group").show();
+                        $("#monitor_btn").show();
+                        $("#error_btn").show();
                     };
             
                 }

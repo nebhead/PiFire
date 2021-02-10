@@ -50,14 +50,14 @@ def dash(action=None):
 						control['timer']['end'] = now + 60
 					if('shutdownTimer' in response):
 						control['notify_data']['timer_shutdown'] = True 
-					DebugWrite('Timer started.  Ends at: ' + str(control['timer']['end']))
+					WriteLog('Timer started.  Ends at: ' + str(control['timer']['end']))
 					WriteControl(control)
 				else:	# If Timer was paused, restart with new end time.
 					now = time.time()
 					control['timer']['end'] = (control['timer']['end'] - control['timer']['paused']) + now
 					control['timer']['start'] = now
 					control['timer']['paused'] = 0
-					DebugWrite('Timer unpaused.  Ends at: ' + str(control['timer']['end']))
+					WriteLog('Timer unpaused.  Ends at: ' + str(control['timer']['end']))
 					WriteControl(control)
 		if('pause' in response):
 			if(response['pause']=='true'):
@@ -65,14 +65,14 @@ def dash(action=None):
 					control['notify_req']['timer'] = False
 					now = time.time()
 					control['timer']['paused'] = now
-					DebugWrite('Timer paused.')
+					WriteLog('Timer paused.')
 					WriteControl(control)
 				else:
 					control['notify_req']['timer'] = False
 					control['timer']['start'] = 0
 					control['timer']['end'] = 0
 					control['notify_data']['timer_shutdown'] = False 
-					DebugWrite('Timer cleared.')
+					WriteLog('Timer cleared.')
 					WriteControl(control)
 		if('stop' in response):
 			if(response['stop']=='true'):
@@ -80,7 +80,7 @@ def dash(action=None):
 				control['timer']['start'] = 0
 				control['timer']['end'] = 0
 				control['notify_data']['timer_shutdown'] = False 
-				DebugWrite('Timer stopped.')
+				WriteLog('Timer stopped.')
 				WriteControl(control)
 
 	if (request.method == 'POST') and (action == 'setnotify'):
@@ -178,14 +178,14 @@ def dash(action=None):
 				control['s_plus'] = False 
 			WriteControl(control)
 
-	return render_template('dash.html', set_points=control['setpoints'], notify_req=control['notify_req'], probes_enabled=settings['probes_enabled'], control=control, page_theme=settings['page_theme'], grill_name=settings['grill_name'])
+	return render_template('dash.html', set_points=control['setpoints'], notify_req=control['notify_req'], probes_enabled=settings['probe_settings']['probes_enabled'], control=control, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
 
 @app.route('/dashdata')
 def dashdata(action=None):
 
 	control = ReadControl()
 	settings = ReadSettings()
-	probes_enabled = settings['probes_enabled']
+	probes_enabled = settings['probe_settings']['probes_enabled']
 
 	cur_probe_temps = []
 	cur_probe_temps = ReadCurrent()
@@ -220,14 +220,14 @@ def historypage(action=None):
 						control['timer']['end'] = now + seconds
 					else:
 						control['timer']['end'] = now + 60
-					DebugWrite('Timer started.  Ends at: ' + str(control['timer']['end']))
+					WriteLog('Timer started.  Ends at: ' + str(control['timer']['end']))
 					WriteControl(control)
 				else:	# If Timer was paused, restart with new end time.
 					now = time.time()
 					control['timer']['end'] = (control['timer']['end'] - control['timer']['paused']) + now
 					control['timer']['start'] = now
 					control['timer']['paused'] = 0
-					DebugWrite('Timer unpaused.  Ends at: ' + str(control['timer']['end']))
+					WriteLog('Timer unpaused.  Ends at: ' + str(control['timer']['end']))
 					WriteControl(control)
 		if('pause' in response):
 			if(response['pause']=='true'):
@@ -235,48 +235,48 @@ def historypage(action=None):
 					control['notify_req']['timer'] = False
 					now = time.time()
 					control['timer']['paused'] = now
-					DebugWrite('Timer paused.')
+					WriteLog('Timer paused.')
 					WriteControl(control)
 				else:
 					control['notify_req']['timer'] = False
 					control['timer']['start'] = 0
 					control['timer']['end'] = 0
-					DebugWrite('Timer cleared.')
+					WriteLog('Timer cleared.')
 					WriteControl(control)
 		if('stop' in response):
 			if(response['stop']=='true'):
 				control['notify_req']['timer'] = False
 				control['timer']['start'] = 0
 				control['timer']['end'] = 0
-				DebugWrite('Timer stopped.')
+				WriteLog('Timer stopped.')
 				WriteControl(control)
 
 	if (request.method == 'POST'):
 		response = request.form
 		if('autorefresh' in response):
 			if(response['autorefresh'] == 'on'):
-				settings['autorefresh'] = 'on'
+				settings['history_page']['autorefresh'] = 'on'
 				WriteSettings(settings)
 			else:
-				settings['autorefresh'] = 'off'
+				settings['history_page']['autorefresh'] = 'off'
 				WriteSettings(settings)
 
 		if(action == 'setmins'):
 			if('minutes' in response):
 				if(response['minutes'] != ''):
 					num_items = int(response['minutes']) * 20
-					settings['minutes'] = int(response['minutes'])
+					settings['history_page']['minutes'] = int(response['minutes'])
 					WriteSettings(settings)
 
 		elif(action == 'clear'):
 			if('clearhistory' in response):
 				if(response['clearhistory'] == 'true'):
-					DebugWrite('Clearing History Log.')
+					WriteLog('Clearing History Log.')
 					os.system('rm /tmp/history.log')
 					os.system('rm /tmp/current.log')
 
 	elif (request.method == 'GET') and (action == 'export'):
-		data_list = ReadHistory((settings['minutes'] * 20))
+		data_list = ReadHistory((settings['history_page']['minutes'] * 20))
 
 		exportfilename = "export.csv"
 		csvfile = open('/tmp/'+exportfilename, "w")
@@ -302,13 +302,13 @@ def historypage(action=None):
 
 		return send_file('/tmp/'+exportfilename, as_attachment=True, cache_timeout=0)
 
-	num_items = settings['minutes'] * 20
-	probes_enabled = settings['probes_enabled']
+	num_items = settings['history_page']['minutes'] * 20
+	probes_enabled = settings['probe_settings']['probes_enabled']
 
 	data_blob = {}
-	data_blob = prepare_data(num_items, True, settings['datapoints'])
+	data_blob = prepare_data(num_items, True, settings['history_page']['datapoints'])
 
-	return render_template('history.html', control=control, grill_temp_list=data_blob['grill_temp_list'], grill_settemp_list=data_blob['grill_settemp_list'], probe1_temp_list=data_blob['probe1_temp_list'], probe1_settemp_list=data_blob['probe1_settemp_list'], probe2_temp_list=data_blob['probe2_temp_list'], probe2_settemp_list=data_blob['probe2_settemp_list'], label_time_list=data_blob['label_time_list'], probes_enabled=probes_enabled, num_mins=settings['minutes'], num_datapoints=settings['datapoints'], autorefresh=settings['autorefresh'], page_theme=settings['page_theme'], grill_name=settings['grill_name'])
+	return render_template('history.html', control=control, grill_temp_list=data_blob['grill_temp_list'], grill_settemp_list=data_blob['grill_settemp_list'], probe1_temp_list=data_blob['probe1_temp_list'], probe1_settemp_list=data_blob['probe1_settemp_list'], probe2_temp_list=data_blob['probe2_temp_list'], probe2_settemp_list=data_blob['probe2_settemp_list'], label_time_list=data_blob['label_time_list'], probes_enabled=probes_enabled, num_mins=settings['history_page']['minutes'], num_datapoints=settings['history_page']['datapoints'], autorefresh=settings['history_page']['autorefresh'], page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
     
 @app.route('/historyupdate')
 def historyupdate(action=None):
@@ -316,8 +316,8 @@ def historyupdate(action=None):
 	settings = ReadSettings()
 
 	data_blob = {}
-	num_items = settings['minutes'] * 20
-	data_blob = prepare_data(num_items, True, settings['datapoints'])
+	num_items = settings['history_page']['minutes'] * 20
+	data_blob = prepare_data(num_items, True, settings['history_page']['datapoints'])
 
 	return jsonify({ 'grill_temp_list' : data_blob['grill_temp_list'], 'grill_settemp_list' : data_blob['grill_settemp_list'], 'probe1_temp_list' : data_blob['probe1_temp_list'], 'probe1_settemp_list' : data_blob['probe1_settemp_list'], 'probe2_temp_list' : data_blob['probe2_temp_list'], 'probe2_settemp_list' : data_blob['probe2_settemp_list'], 'label_time_list' : data_blob['label_time_list'] })
 
@@ -417,7 +417,7 @@ def tuningpage(action=None):
 				else:
 					pagectrl['refresh'] = 'on'
 	
-	return render_template('tuning.html', control=control, settings=settings, pagectrl=pagectrl, page_theme=settings['page_theme'], grill_name=settings['grill_name'])
+	return render_template('tuning.html', control=control, settings=settings, pagectrl=pagectrl, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
 
 @app.route('/_grilltr', methods = ['GET'])
 def grilltr(action=None):
@@ -452,10 +452,9 @@ def probe2tr(action=None):
 def eventspage(action=None):
 	# Show list of logged events and debug event list
 	event_list, num_events = ReadLog()
-	debug_event_list, debug_num_events = DebugRead()
 	settings = ReadSettings()
 
-	return render_template('events.html', event_list=event_list, num_events=num_events, debug_event_list=debug_event_list, debug_num_events=debug_num_events, page_theme=settings['page_theme'], grill_name=settings['grill_name'])
+	return render_template('events.html', event_list=event_list, num_events=num_events, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
 
 @app.route('/pellets/<action>', methods=['POST','GET'])
 @app.route('/pellets', methods=['POST','GET'])
@@ -587,7 +586,7 @@ def pelletsspage(action=None):
 				event['type'] = 'updated'
 				event['text'] = 'Successfully deleted ' + response['brand_name'] + ' ' + response['wood_type'] + ' profile in database.'
 
-	return render_template('pellets.html', alert=event, pelletdb=pelletdb, page_theme=settings['page_theme'], grill_name=settings['grill_name'])
+	return render_template('pellets.html', alert=event, pelletdb=pelletdb, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
 
 
 @app.route('/recipes', methods=['POST','GET'])
@@ -600,7 +599,7 @@ def recipespage(action=None):
 	# Run a Recipe
 	settings = ReadSettings()
 
-	return render_template('recipes.html', page_theme=settings['page_theme'], grill_name=settings['grill_name'])
+	return render_template('recipes.html', page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
 
 @app.route('/settings/<action>', methods=['POST','GET'])
 @app.route('/settings', methods=['POST','GET'])
@@ -621,19 +620,19 @@ def settingspage(action=None):
 
 		if('grill0enable' in response):
 			if(response['grill0enable'] == "0"):
-				settings['probes_enabled'][0] = 0
+				settings['probe_settings']['probes_enabled'][0] = 0
 			else:
-				settings['probes_enabled'][0] = 1
+				settings['probe_settings']['probes_enabled'][0] = 1
 		if('probe1enable' in response):
 			if(response['probe1enable'] == "0"):
-				settings['probes_enabled'][1] = 0
+				settings['probe_settings']['probes_enabled'][1] = 0
 			else:
-				settings['probes_enabled'][1] = 1
+				settings['probe_settings']['probes_enabled'][1] = 1
 		if('probe2enable' in response):
 			if(response['probe2enable'] == "0"):
-				settings['probes_enabled'][2] = 0
+				settings['probe_settings']['probes_enabled'][2] = 0
 			else:
-				settings['probes_enabled'][2] = 1
+				settings['probe_settings']['probes_enabled'][2] = 1
 		if('grill_probe_type' in response):
 			if(response['grill_probe_type'] != settings['probe_types']['grill0type']):
 				settings['probe_types']['grill0type'] = response['grill_probe_type']
@@ -709,7 +708,7 @@ def settingspage(action=None):
 		if('delete' in response):
 			UniqueID = response['delete'] # Get the string of the UniqueID
 			try:
-				settings['probe_profiles'].pop(UniqueID)
+				settings['probe_settings']['probe_profiles'].pop(UniqueID)
 				WriteSettings(settings)
 				event['type'] = 'updated'
 				event['text'] = 'Successfully removed ' + response['Name_' + UniqueID] + ' profile.'
@@ -722,7 +721,7 @@ def settingspage(action=None):
 				# Try to convert input values
 				try:
 					UniqueID = response['editprofile'] # Get the string of the UniqueID
-					settings['probe_profiles'][UniqueID] = {
+					settings['probe_settings']['probe_profiles'][UniqueID] = {
 						'Vs' : float(response['Vs_' + UniqueID]),
 						'Rd' : int(response['Rd_' + UniqueID]),
 						'A' : float(response['A_' + UniqueID]),
@@ -733,9 +732,9 @@ def settingspage(action=None):
 
 					if (response['UniqueID_' + UniqueID] != UniqueID):
 						# Copy Old Profile to New Profile
-						settings['probe_profiles'][response['UniqueID_' + UniqueID]] = settings['probe_profiles'][UniqueID]
+						settings['probe_settings']['probe_profiles'][response['UniqueID_' + UniqueID]] = settings['probe_settings']['probe_profiles'][UniqueID]
 						# Remove the Old Profile
-						settings['probe_profiles'].pop(UniqueID)
+						settings['probe_settings']['probe_profiles'].pop(UniqueID)
 					event['type'] = 'updated'
 					event['text'] = 'Successfully added ' + response['Name_' + UniqueID] + ' profile.'
 					# Write the new probe profile to disk
@@ -753,7 +752,7 @@ def settingspage(action=None):
 		if(response['UniqueID'] != '') and (response['Name'] != '') and (response['Vs'] != '') and (response['Rd'] != '') and (response['A'] != '') and (response['B'] != '') and (response['C'] != ''):
 			# Try to convert input values
 			try:
-				settings['probe_profiles'][response['UniqueID']] = {
+				settings['probe_settings']['probe_profiles'][response['UniqueID']] = {
 					'Vs' : float(response['Vs']),
 					'Rd' : int(response['Rd']),
 					'A' : float(response['A']),
@@ -819,23 +818,23 @@ def settingspage(action=None):
 
 		if('historymins' in response):
 			if(response['historymins'] != ''):
-				settings['minutes'] = int(response['historymins'])
+				settings['history_page']['minutes'] = int(response['historymins'])
 
 		if('clearhistorystartup' in response):
 			if(response['clearhistorystartup'] == 'on'):
-				settings['clearhistoryonstart'] = True
+				settings['history_page']['clearhistoryonstart'] = True
 		else:
-			settings['clearhistoryonstart'] = False
+			settings['history_page']['clearhistoryonstart'] = False
 
 		if('historyautorefresh' in response):
 			if(response['historyautorefresh'] == 'on'):
-				settings['autorefresh'] = 'on'
+				settings['history_page']['autorefresh'] = 'on'
 		else:
-			settings['autorefresh'] = 'off'
+			settings['history_page']['autorefresh'] = 'off'
 
 		if('datapoints' in response):
 			if(response['datapoints'] != ''):
-				settings['datapoints'] = int(response['datapoints'])
+				settings['history_page']['datapoints'] = int(response['datapoints'])
 
 		event['type'] = 'updated'
 		event['text'] = 'Successfully updated history settings.'
@@ -847,9 +846,9 @@ def settingspage(action=None):
 
 		if('darkmode' in response):
 			if(response['darkmode'] == 'on'):
-				settings['page_theme'] = 'dark'
+				settings['globals']['page_theme'] = 'dark'
 		else:
-			settings['page_theme'] = 'light'
+			settings['globals']['page_theme'] = 'light'
 
 		event['type'] = 'updated'
 		event['text'] = 'Successfully updated page settings.'
@@ -881,11 +880,11 @@ def settingspage(action=None):
 		response = request.form
 
 		if('grill_name' in response):
-			settings['grill_name'] = response['grill_name']
+			settings['globals']['grill_name'] = response['grill_name']
 
 		WriteSettings(settings)
 
-	return render_template('settings.html', settings=settings, alert=event, page_theme=settings['page_theme'], grill_name=settings['grill_name'])
+	return render_template('settings.html', settings=settings, alert=event, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
 
 @app.route('/admin/<action>', methods=['POST','GET'])
 @app.route('/admin', methods=['POST','GET'])
@@ -896,53 +895,47 @@ def adminpage(action=None):
 	if action == 'reboot':
 		event = "Admin: Reboot"
 		WriteLog(event)
-		DebugWrite(event)
 		os.system("sleep 3 && sudo reboot &")
-		return render_template('shutdown.html', action=action, page_theme=settings['page_theme'])
+		return render_template('shutdown.html', action=action, page_theme=settings['globals']['page_theme'])
 
 	elif action == 'shutdown':
 		event = "Admin: Shutdown"
 		WriteLog(event)
-		DebugWrite(event)
 		os.system("sleep 3 && sudo shutdown -h now &")
-		return render_template('shutdown.html', action=action, page_theme=settings['page_theme'])
+		return render_template('shutdown.html', action=action, page_theme=settings['globals']['page_theme'])
 
 	if (request.method == 'POST') and (action == 'setting'):
 		response = request.form
 
 		if('debugenabled' in response):
 			if(response['debugenabled']=='disabled'):
-				DebugWrite('Debug Mode Disabled.')
-				settings['debug_mode'] = False
+				WriteLog('Debug Mode Disabled.')
+				settings['globals']['debug_mode'] = False
 				WriteSettings(settings)
 			else:
-				settings['debug_mode'] = True
+				settings['globals']['debug_mode'] = True
 				WriteSettings(settings)
-				DebugWrite('Debug Mode Enabled.')
+				WriteLog('Debug Mode Enabled.')
 
 		if('clearhistory' in response):
 			if(response['clearhistory']=='true'):
-				DebugWrite('Clearing History Log.')
+				WriteLog('Clearing History Log.')
 				os.system('rm /tmp/history.log')
 				os.system('rm /tmp/current.log')
 
-		if('cleardebug' in response):
-			if(response['cleardebug']=='true'):
-				os.system('rm /tmp/debug.log')
-
 		if('clearevents' in response):
 			if(response['clearevents']=='true'):
-				DebugWrite('Clearing Events Log.')
+				WriteLog('Clearing Events Log.')
 				os.system('rm /tmp/events.log')
 
 		if('clearpelletdb' in response):
 			if(response['clearpelletdb']=='true'):
-				DebugWrite('Clearing Pellet Database.')
+				WriteLog('Clearing Pellet Database.')
 				os.system('rm pelletdb.json')
 
 		if('factorydefaults' in response):
 			if(response['factorydefaults']=='true'):
-				DebugWrite('Resetting Settings, Control, History to factory defaults.')
+				WriteLog('Resetting Settings, Control, History to factory defaults.')
 				os.system('rm /tmp/history.log')
 				os.system('rm /tmp/current.log')
 				os.system('rm settings.json')
@@ -960,9 +953,9 @@ def adminpage(action=None):
 
 	temp = checkcputemp()
 
-	debug_mode = settings['debug_mode']
+	debug_mode = settings['globals']['debug_mode']
 
-	return render_template('admin.html', settings=settings, action=action, uptime=uptime, cpuinfo=cpuinfo, temp=temp, ifconfig=ifconfig, debug_mode=debug_mode, page_theme=settings['page_theme'], grill_name=settings['grill_name'])
+	return render_template('admin.html', settings=settings, action=action, uptime=uptime, cpuinfo=cpuinfo, temp=temp, ifconfig=ifconfig, debug_mode=debug_mode, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
 
 @app.route('/manual/<action>', methods=['POST','GET'])
 @app.route('/manual', methods=['POST','GET'])
@@ -1027,7 +1020,7 @@ def manual_page(action=None):
 		time.sleep(1)
 		control = ReadControl()
 
-	return render_template('manual.html', settings=settings, control=control, page_theme=settings['page_theme'], grill_name=settings['grill_name'])
+	return render_template('manual.html', settings=settings, control=control, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
 
 @app.route('/api/<action>', methods=['POST','GET'])
 @app.route('/api', methods=['POST','GET'])

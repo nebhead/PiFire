@@ -49,7 +49,7 @@
 								</div>
 
 								<select class="form-control" name="grill_probe_type" id="grill_probe_type" onchange="this.form.submit()">
-									{% for index, data in settings['probe_profiles'].items()|sort %}
+									{% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %}
 										{% if index == settings['probe_types']['grill0type'] %}
 											<option value="{{ index }}" selected>{{ data['name'] }}</option>
 										{% else %}
@@ -59,7 +59,7 @@
 						  	</select>
 
 							  <div class="input-group-append">
-									{% if settings['probes_enabled'][0] == 1  %}
+									{% if settings['probe_settings']['probes_enabled'][0] == 1  %}
 										<button type="submit" name="grill0enable" value="0" class="btn btn-success btn-sm float-right" disabled><i class="fas fa-eye"></i></button>
 									{% else %}
 										<button type="submit" name="grill0enable" value="1" class="btn btn-outline-secondary btn-sm float-right"><i class="fas fa-eye-slash"></i></button>
@@ -76,7 +76,7 @@
 							  </div>
 
 								<select class="form-control" name="probe1_type" id="probe1_type" onchange="this.form.submit()">
-									{% for index, data in settings['probe_profiles'].items()|sort %}
+									{% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %}
 										{% if index == settings['probe_types']['probe1type'] %}
 											<option value="{{ index }}" selected>{{ data['name'] }}</option>
 										{% else %}
@@ -86,7 +86,7 @@
 						  	</select>
 
 							  <div class="input-group-append">
-									{% if settings['probes_enabled'][1] == 1  %}
+									{% if settings['probe_settings']['probes_enabled'][1] == 1  %}
 										<button type="submit" name="probe1enable" value="0" class="btn btn-success btn-sm float-right"><i class="fas fa-eye"></i></button>
 									{% else %}
 										<button type="submit" name="probe1enable" value="1" class="btn btn-outline-secondary btn-sm float-right"><i class="fas fa-eye-slash"></i></button>
@@ -103,7 +103,7 @@
 							  </div>
 
 								<select class="form-control" name="probe2_type" id="probe2_type" onchange="this.form.submit()">
-									{% for index, data in settings['probe_profiles'].items()|sort %}
+									{% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %}
 										{% if index == settings['probe_types']['probe2type'] %}
 											<option value="{{ index }}" selected>{{ data['name'] }}</option>
 										{% else %}
@@ -113,7 +113,7 @@
 						  	</select>
 
 							  <div class="input-group-append">
-									{% if settings['probes_enabled'][2] == 1  %}
+									{% if settings['probe_settings']['probes_enabled'][2] == 1  %}
 										<button type="submit" name="probe2enable" value="0" class="btn btn-success btn-sm float-right"><i class="fas fa-eye"></i></button>
 									{% else %}
 										<button type="submit" name="probe2enable" value="1" class="btn btn-outline-secondary btn-sm float-right"><i class="fas fa-eye-slash"></i></button>
@@ -139,7 +139,7 @@
 
 							<div class="card-body">
 
-								{% for index, data in settings['probe_profiles'].items()|sort %}
+								{% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %}
 
 								<div class="card shadow">
 									<form name="editprofile" action="/settings/editprofile" method="POST">
@@ -323,7 +323,7 @@
 									<div class="input-group-prepend">
 										<span class="input-group-text" data-toggle="tooltip" title="Choose a name for your grill!"><i class="fas fa-user-ninja"></i>&nbsp; Grill Name</span>
 									</div>
-									<input id="grill_name" type="text" class="form-control" placeholder="{{ settings['grill_name'] }}" value="{{ settings['grill_name'] }}" name="grill_name">
+									<input id="grill_name" type="text" class="form-control" placeholder="{{ settings['globals']['grill_name'] }}" value="{{ settings['globals']['grill_name'] }}" name="grill_name">
 								</div>
 							</div>
 							<div class="card-footer bg-light">
@@ -463,23 +463,23 @@
 								<div class="input-group-prepend">
 									<span class="input-group-text" data-toggle="tooltip" title="Amount of history to display on the history page (minutes). [Default = 60]"><i class="far fa-clock"></i>&nbsp; History to Display (mins)</span>
 								</div>
-								<input id="historymins" type="number" min="1" class="form-control" placeholder="{{ settings['minutes'] }}" value="{{ settings['minutes'] }}" name="historymins">
+								<input id="historymins" type="number" min="1" class="form-control" placeholder="{{ settings['history_page']['minutes'] }}" value="{{ settings['history_page']['minutes'] }}" name="historymins">
 							</div>
 
 							<div class="input-group mb-3">
 								<div class="input-group-prepend">
 									<span class="input-group-text" data-toggle="tooltip" title="Number of datapoints to display per page."><i class="far fa-clock"></i>&nbsp; Datapoints to Display</span>
 								</div>
-								<input id="datapoints" type="number" min="10" class="form-control" placeholder="{{ settings['datapoints'] }}" value="{{ settings['datapoints'] }}" name="datapoints">
+								<input id="datapoints" type="number" min="10" class="form-control" placeholder="{{ settings['history_page']['datapoints'] }}" value="{{ settings['history_page']['datapoints'] }}" name="datapoints">
 							</div>
 
 							<div class="custom-control custom-switch">
-								<input type="checkbox" class="custom-control-input" id="clearhistorystartup" name="clearhistorystartup" {% if settings['clearhistoryonstart'] == True %}checked{% endif %}>
+								<input type="checkbox" class="custom-control-input" id="clearhistorystartup" name="clearhistorystartup" {% if settings['history_page']['clearhistoryonstart'] == True %}checked{% endif %}>
 						    <label class="custom-control-label" for="clearhistorystartup">Clear History on Startup</label>
 						  </div>
 							<br>
 							<div class="custom-control custom-switch">
-								<input type="checkbox" class="custom-control-input" id="historyautorefresh" name="historyautorefresh" {% if settings['autorefresh'] == 'on' %}checked{% endif %}>
+								<input type="checkbox" class="custom-control-input" id="historyautorefresh" name="historyautorefresh" {% if settings['history_page']['autorefresh'] == 'on' %}checked{% endif %}>
 								<label class="custom-control-label" for="historyautorefresh">History Auto-Refresh</label>
 							</div>
 							<br>
@@ -551,7 +551,7 @@
 						<div class="card-header bg-primary text-white"><h5><i class="fas fa-tools"></i>&nbsp; Page Settings</h5></div>
 						<div class="card-body">
 							<div class="custom-control custom-switch">
-								<input type="checkbox" class="custom-control-input" id="darkmode" name="darkmode" {% if settings['page_theme'] == 'dark' %}checked{% endif %}>
+								<input type="checkbox" class="custom-control-input" id="darkmode" name="darkmode" {% if settings['globals']['page_theme'] == 'dark' %}checked{% endif %}>
 						    <label class="custom-control-label" for="darkmode">Enable Dark Mode</label>
 						  </div>
 						<br>

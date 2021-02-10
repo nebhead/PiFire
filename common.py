@@ -3,14 +3,26 @@ import datetime
 import os
 import json
 
-debugMode = True
-
 def DefaultSettings():
 	settings = {}
 
-	settings['grill_name'] = ''
+	settings['history_page'] = {
+		'minutes' : 60, # Sets default number of items to show in history
+		'clearhistoryonstart' : True, # Clear history when StartUp Mode selected
+		'autorefresh' : 'on', # Sets history graph to autorefresh ('live' graph)
+		'datapoints' : 60 # Number of datapoints to show on the history chart
+	}
 
-	settings['debug_mode'] = False
+	settings['probe_settings'] = {
+		'probe_profiles' :  DefaultProbeProfiles(), 
+		'probes_enabled' : [1,1,1]
+	}
+
+	settings['globals'] = {
+		'grill_name' : '',
+		'debug_mode' : False,
+		'page_theme' : 'light', 
+	}
 
 	settings['ifttt'] = {
 		'APIKey': '', # API Key for WebMaker IFTTT App notification
@@ -36,10 +48,6 @@ def DefaultSettings():
 	}
 
 	settings['inpins'] = { 'selector' : 17 }
-
-	settings['probe_profiles'] = DefaultProbeProfiles()
-
-	settings['probes_enabled'] = [1,1,1]
 
 	#PID controller based on proportional band in standard PID form https://en.wikipedia.org/wiki/PID_controller#Ideal_versus_standard_PID_form
 	# u = Kp (e(t)+ 1/Ti INT + Td de/dt)
@@ -67,22 +75,12 @@ def DefaultSettings():
 		'duty_cycle' : 50 # For PWM, if implemented (Currently not used)
 	}
 
-	settings['minutes'] = 60 # Sets default number of items to show in history
-
-	settings['clearhistoryonstart'] = True # Clear history when StartUp Mode selected
-
-	settings['autorefresh'] = 'on' # Sets history graph to autorefresh ('live' graph)
-
-	settings['datapoints'] = 60 # Number of datapoints to show on the history chart
-
 	settings['safety'] = {
 		'minstartuptemp' : 75, # User Defined. Minimum temperature allowed for startup.
 		'maxstartuptemp' : 100, # User Defined. Take this value if the startup temp is higher than maxstartuptemp
 		'maxtemp' : 500, # User Defined. If temp exceeds this value in any mode, shut off.  (including monitor mode)
 		'reigniteretries' : 1, # Number of tries to reignite the grill if it has gone below the safe temperature (set to 0 to disable)
 	}
-
-	settings['page_theme'] = 'light'
 
 	settings['modules'] = {
 		'grillplat' : 'pifire',	 	# Grill Platform (PiFire - Raspberry Pi GPIOs)
@@ -103,7 +101,10 @@ def DefaultControl():
 
 	control['mode'] = 'Stop'
 
-	control['s_plus'] = False # Smoke-Plus Feature Enable/Disable
+	if(settings['smoke_plus']['enabled'] == True):
+		control['s_plus'] = True # Smoke-Plus Feature Enable/Disable
+	else: 
+		control['s_plus'] = False # Smoke-Plus Feature Enable/Disable
 
 	control['hopper_check'] = False # Trigger an synchronous hopper level check 
 
@@ -345,11 +346,7 @@ def ReadSettings():
 	# Overlay the read values over the top of the default settings
 	#  This ensures that any NEW fields are captured.  
 	for key in settings.keys():
-		if(type(settings[key]) == bool) or (type(settings[key]) == str) or (type(settings[key]) == int) or (type(settings[key]) == list):
-			if key in settings_struct: 
-				settings[key] = settings_struct[key]
-		else:
-			settings[key].update(settings_struct.get(key, {}))
+		settings[key].update(settings_struct.get(key, {}))
 
 	return(settings)
 
@@ -489,10 +486,8 @@ def ReadHistory(num_items=0):
 
 	# If file not found error, then create history.log file
 	except(IOError, OSError):
-
 		data_list = []
-		DebugWrite('Issue reading /tmp/history.log')
-
+		WriteLog('WARNING: Issue reading /tmp/history.log')
 		return(data_list)
 
 	# Initialize data list
@@ -520,7 +515,13 @@ def ReadCurrent():
 	# If file not found error, then return 0'd data
 	except(IOError, OSError):
 		cur_probe_temps = [0,0,0]
-		DebugWrite('Issue reading /tmp/current.log')
+		WriteLog('WARNING: Issue reading /tmp/current.log')
+		
+		timenow = datetime.datetime.now()
+		timestr = timenow.strftime('%H:%M:%S') # Truncate the microseconds
+		curfile = open("/tmp/current.log", "w") # Write current data to current.log file
+		curfile.write(timestr + ' 0 0 0 0 0 0' )
+		curfile.close()
 
 		return(cur_probe_temps)
 
@@ -573,56 +574,6 @@ def WriteHistory(TempStruct, maxsizelines=28800):
 		os.system('tail -n ' + str(maxsizelines - 1200) + ' /tmp/history.log > /tmp/history.bak')
 		os.system('rm /tmp/history.log && mv /tmp/history.bak /tmp/history.log')
 
-def DebugWrite(event):
-	# Is Debug Mode enabled
-	settings = ReadSettings()
-
-	if(settings['debug_mode'] == True):
-		now = str(datetime.datetime.now())
-		now = now[0:19] # Truncate the microseconds
-		event = now + ' ' + event + '\n'
-		print(event) # Print event to console
-		logfile = open("/tmp/debug.log", "a")
-		logfile.write(event) # Write event to debug.log
-		logfile.close()
-
-def DebugRead():
-	# *****************************************
-	# Function: DebugRead
-	# Input: none
-	# Output:
-	# Description: Read debug.log and populate
-	#  an array of events.
-	# *****************************************
-
-	# Read all lines of events.log into an list(array)
-	try:
-		with open('/tmp/debug.log') as event_file:
-			event_lines = event_file.readlines()
-			event_file.close()
-	# If file not found error, then create events.log file
-	except(IOError, OSError):
-		event_file = open('/tmp/debug.log', "w")
-		event_file.close()
-		event_lines = []
-
-	# Initialize event_list list
-	event_list = []
-
-	# Get number of events
-	num_events = len(event_lines)
-
-	for x in range(num_events):
-		event_list.append(event_lines[x].split(" ",2))
-
-	# Error handling if number of events is less than 10, fill array with empty
-	if (num_events < 10):
-		for line in range((10-num_events)):
-			event_list.append(["--------","--:--:--","---"])
-		num_events = 10
-
-	return(event_list, num_events)
-
 def ReadTr():
 	# *****************************************
 	# Function: ReadTr
@@ -639,7 +590,7 @@ def ReadTr():
 	# If file not found error, then return 0'd data
 	except(IOError, OSError):
 		cur_probe_tr = [0,0,0]
-		DebugWrite('Issue reading /tmp/tr.log')
+		WriteLog('WARNING: Issue reading /tmp/tr.log')
 
 		return(cur_probe_tr)
 
