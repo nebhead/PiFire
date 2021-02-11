@@ -190,7 +190,7 @@ def dashdata(action=None):
 	cur_probe_temps = []
 	cur_probe_temps = ReadCurrent()
 
-	return jsonify({ 'cur_probe_temps' : cur_probe_temps, 'probes_enabled' : probes_enabled, 'current_mode' : control['mode'], 'set_points' : control['setpoints'], 'splus' : control['s_plus'] })
+	return jsonify({ 'cur_probe_temps' : cur_probe_temps, 'probes_enabled' : probes_enabled, 'current_mode' : control['mode'], 'set_points' : control['setpoints'], 'notify_req' : control['notify_req'], 'splus' : control['s_plus'] })
 
 @app.route('/hopperlevel')
 def hopper_level(action=None):

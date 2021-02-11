@@ -11,6 +11,8 @@ $(document).ready(function(){
         //  data.cur_probe_temps[]
         //  data.probes_enabled[]
         //  data.current_mode
+        //  data.notify_req
+        //  data.splus
 
         // console.log(data);
 
@@ -28,6 +30,23 @@ $(document).ready(function(){
                 strokeLinecap: "round",
         });
         
+        var notify_req_last = {};
+        notify_req_last['grill'] = data.notify_req['grill']; 
+        notify_req_last['probe1'] = data.notify_req['probe1'];
+        notify_req_last['probe2'] = data.notify_req['probe2'];
+
+        if(data.notify_req['grill']) { 
+            // If notify request is active, change the button highlighting
+            document.getElementById("grill_notify_btn").className = "btn btn-primary";
+            // Change the text to indicate setpoint
+            document.getElementById("grill_notify_btn").innerHTML = "<i class=\"fas fa-bell\"></i> " + data.set_points['grill'] + "°F";
+        } else {
+            // If notify request is not active, change the button highlighting
+            document.getElementById("grill_notify_btn").className = "btn btn-outline-primary";
+            // Change the text to show bell with slash
+            document.getElementById("grill_notify_btn").innerHTML = "<i class=\"far fa-bell-slash\"></i>";
+        };
+
         var probe1_temp = 0;
         var probe1_text = 'OFF';
         var probe2_temp = 0;
@@ -36,11 +55,33 @@ $(document).ready(function(){
         if(data.probes_enabled[1] == 1) {
             probe1_temp = data.cur_probe_temps[1];
             probe1_text = probe1_temp + '°F';
+            if(data.notify_req['probe1']) { 
+                // If notify request is active, change the button highlighting
+                document.getElementById("probe1_notify_btn").className = "btn btn-primary";
+                // Change the text to indicate setpoint
+                document.getElementById("probe1_notify_btn").innerHTML = "<i class=\"fas fa-bell\"></i> " + data.set_points['probe1'] + "°F";
+            } else {
+                // If notify request is not active, change the button highlighting
+                document.getElementById("probe1_notify_btn").className = "btn btn-outline-primary";
+                // Change the text to show bell with slash
+                document.getElementById("probe1_notify_btn").innerHTML = "<i class=\"far fa-bell-slash\"></i>";
+            };
         };
 
         if(data.probes_enabled[2] == 1) {
             probe2_temp = data.cur_probe_temps[2];
             probe2_text = probe2_temp + '°F';
+            if(data.notify_req['probe2']) { 
+                // If notify request is active, change the button highlighting
+                document.getElementById("probe2_notify_btn").className = "btn btn-primary";
+                // Change the text to indicate setpoint
+                document.getElementById("probe2_notify_btn").innerHTML = "<i class=\"fas fa-bell\"></i> " + data.set_points['probe2'] + "°F";
+            } else {
+                // If notify request is not active, change the button highlighting
+                document.getElementById("probe2_notify_btn").className = "btn btn-outline-primary";
+                // Change the text to show bell with slash
+                document.getElementById("probe2_notify_btn").innerHTML = "<i class=\"far fa-bell-slash\"></i>";
+            };
         };
 
         var Probe1TempCircle = circliful.newCircle({
@@ -161,9 +202,55 @@ $(document).ready(function(){
                     ]);
                 };
     
-                // Update Buttons
+                // Update notify buttons if state changes
 
-                // If mode changed
+                if(notify_req_last['grill'] != data.notify_req['grill']) { 
+                    notify_req_last['grill'] = data.notify_req['grill']; 
+                    if(data.notify_req['grill']) { 
+                        // If notify request is active, change the button highlighting
+                        document.getElementById("grill_notify_btn").className = "btn btn-primary";
+                        // Change the text to indicate setpoint
+                        document.getElementById("grill_notify_btn").innerHTML = "<i class=\"fas fa-bell\"></i> " + data.set_points['grill'] + "°F";
+                    } else {
+                        // If notify request is not active, change the button highlighting
+                        document.getElementById("grill_notify_btn").className = "btn btn-outline-primary";
+                        // Change the text to show bell with slash
+                        document.getElementById("grill_notify_btn").innerHTML = "<i class=\"far fa-bell-slash\"></i>";
+                    };
+                };
+
+                if(notify_req_last['probe1'] != data.notify_req['probe1']) { 
+                    notify_req_last['probe1'] = data.notify_req['probe1']; 
+                    if(data.notify_req['probe1']) { 
+                        // If notify request is active, change the button highlighting
+                        document.getElementById("probe1_notify_btn").className = "btn btn-primary";
+                        // Change the text to indicate setpoint
+                        document.getElementById("probe1_notify_btn").innerHTML = "<i class=\"fas fa-bell\"></i> " + data.set_points['probe1'] + "°F";
+                    } else {
+                        // If notify request is not active, change the button highlighting
+                        document.getElementById("probe1_notify_btn").className = "btn btn-outline-primary";
+                        // Change the text to show bell with slash
+                        document.getElementById("probe1_notify_btn").innerHTML = "<i class=\"far fa-bell-slash\"></i>";
+                    };
+                };
+
+                if(notify_req_last['probe2'] != data.notify_req['probe2']) { 
+                    notify_req_last['probe2'] = data.notify_req['probe2']; 
+                    if(data.notify_req['probe2']) { 
+                        // If notify request is active, change the button highlighting
+                        document.getElementById("probe2_notify_btn").className = "btn btn-primary";
+                        // Change the text to indicate setpoint
+                        document.getElementById("probe2_notify_btn").innerHTML = "<i class=\"fas fa-bell\"></i> " + data.set_points['probe2'] + "°F";
+                    } else {
+                        // If notify request is not active, change the button highlighting
+                        document.getElementById("probe2_notify_btn").className = "btn btn-outline-primary";
+                        // Change the text to show bell with slash
+                        document.getElementById("probe2_notify_btn").innerHTML = "<i class=\"far fa-bell-slash\"></i>";
+                    };
+                };
+    
+
+                // Update dock buttons if mode changed
                 if(data.current_mode != last_mode) {
                     // Dim relavant button for last_mode
                     if(last_mode == 'Startup') {

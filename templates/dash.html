@@ -57,11 +57,7 @@
 							<div class="btn-group">
 								<button type="button" class="btn btn-outline-primary"><i class="fas fa-temperature-high"></i> <b>Grill</b></button>
 								<a href="/settings" class="btn btn-outline-primary" role="button"><i class="fas fa-cog"></i></a>
-								{% if notify_req['grill'] %}
-  									<button type="submit" class="btn btn-primary" name="grillnotify" value="false"><i class="fas fa-bell"></i> {{ set_points['grill'] }}°F</button>
-								{% else %}
-									<button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#grillnotifyModal"><i class="far fa-bell-slash"></i></button>
-								{% endif %}
+								<button type="button" class="btn btn-outline-primary" id="grill_notify_btn" data-toggle="modal" data-target="#grillnotifyModal"><i class="far fa-bell-slash"></i></button>
 							</div>
 							</form>
 						</div>
@@ -89,12 +85,8 @@
 							<div class="btn-group">
 								<button type="button" class="btn btn-outline-primary"><i class="fas fa-temperature-high"></i> <b>Probe 1</b></button>
 								<a href="/settings" class="btn btn-outline-primary" role="button"><i class="fas fa-cog"></i></a>
-								{% if notify_req['probe1'] %}
-  									<button type="submit" class="btn btn-primary" name="probe1notify" value="false"><i class="fas fa-bell"></i> {{ set_points['probe1'] }}°F</button>
-								{% else %}
-									<button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#probe1notifyModal"><i class="far fa-bell-slash"></i></button>
-								{% endif %}
-							</div>
+								<button type="button" class="btn btn-outline-primary" id="probe1_notify_btn" data-toggle="modal" data-target="#probe1notifyModal"><i class="far fa-bell-slash"></i></button>
+								</div>
 							</form>
 						</div>
 						{% else %}
@@ -122,11 +114,7 @@
 							<div class="btn-group">
 								<button type="button" class="btn btn-outline-primary"><i class="fas fa-temperature-high"></i> <b>Probe 2</b></button>
 								<a href="/settings" class="btn btn-outline-primary" role="button"><i class="fas fa-cog"></i></a>
-								{% if notify_req['probe2'] %}
-  									<button type="submit" class="btn btn-primary" name="probe2notify" value="false"><i class="fas fa-bell"></i> {{ set_points['probe2'] }}°F</button>
-								{% else %}
-									<button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#probe2notifyModal"><i class="far fa-bell-slash"></i></button>
-								{% endif %}
+								<button type="button" class="btn btn-outline-primary" id="probe2_notify_btn" data-toggle="modal" data-target="#probe2notifyModal"><i class="far fa-bell-slash"></i></button>
 							</div>
 							</form>
 						</div>
@@ -161,7 +149,7 @@
 							</div>
 							<!-- Modal footer -->
 							<div class="modal-footer">
-								<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+								<button type="submit" class="btn btn-warning" name="grillnotify" value="false">Cancel</button>
 								<button type="submit" class="btn btn-danger" name="grillnotify" value="true">Set</button>
 							</div>
 						</div>
@@ -190,7 +178,7 @@
 							</div>
 							<!-- Modal footer -->
 							<div class="modal-footer">
-								<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+								<button type="submit" class="btn btn-warning" name="probe1notify" value="false">Cancel</button>
 								<button type="submit" class="btn btn-danger" name="probe1notify" value="true">Set</button>
 							</div>
 						</div>
@@ -219,7 +207,7 @@
 							</div>
 							<!-- Modal footer -->
 							<div class="modal-footer">
-								<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+								<button type="submit" class="btn btn-warning" name="probe2notify" value="false">Cancel</button>
 								<button type="submit" class="btn btn-danger" name="probe2notify" value="true">Set</button>
 							</div>
 						</div>
