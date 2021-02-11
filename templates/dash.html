@@ -279,25 +279,25 @@
 
 			<span class="navbar-text">
 				<!-- Dash Controls -->
-				<div id="inactive_group" class="btn-group shadow-lg">
+				<div id="inactive_group" class="btn-group shadow-lg" style="display:none">
 					<button type="submit" class="btn btn-outline-success border border-secondary" id="startup_btn" name="setmodestartup" value="true"><i class="fas fa-play"></i></button>
 					<button type="submit" class="btn btn-outline-secondary border border-secondary" id="monitor_btn" name="setmodemonitor" value="true"><i class="fas fa-glasses"></i></button>
-					<button type="submit" class="btn btn-outline-warning border border-secondary text-secondary" id="smoke_inactive_btn" name="setmodesmoke" value="true">Smoke</button>
-					<button type="button" class="btn btn-outline-secondary border border-secondary" id="hold_inactive_btn" data-toggle="modal" data-target="#setpointModal">Hold</button>
-					<button type="submit" class="btn btn-outline-secondary border border-secondary" id="stop_inactive_btn" name="setmodestop" value="true"><i class="fas fa-stop"></i></button>
+					<button type="submit" class="btn btn-outline-warning border border-secondary text-secondary" id="smoke_inactive_btn" name="setmodesmoke" value="true" >Smoke</button>
+					<button type="button" class="btn btn-outline-secondary border border-secondary" id="hold_inactive_btn" data-toggle="modal" data-target="#setpointModal" >Hold</button>
+					<button type="submit" class="btn btn-outline-secondary border border-secondary" id="stop_inactive_btn" name="setmodestop" value="true" ><i class="fas fa-stop"></i></button>
 				</div> <!-- End of Button Group -->
 
-				<div id="active_group" class="btn-group shadow-lg">
-					<button type="submit" class="btn btn-outline-warning border border-secondary text-secondary" id="smoke_btn" name="setmodesmoke" value="true">Smoke</button>
-					<button type="button" class="btn btn-outline-secondary border border-secondary" id="hold_btn" data-toggle="modal" data-target="#setpointModal">Hold</button>
-					<button type="submit" class="btn btn-outline-secondary border border-secondary" id="stop_btn" name="setmodestop" value="true"><i class="fas fa-stop"></i></button>
-					<button type="submit" class="btn btn-outline-danger border border-secondary" id="shutdown_btn" name="setmodeshutdown" value="true"><i class="fas fa-flag-checkered"></i></button>
+				<div id="active_group" class="btn-group shadow-lg" style="display:none">
+					<button type="submit" class="btn btn-outline-warning border border-secondary text-secondary" id="smoke_btn" name="setmodesmoke" value="true" >Smoke</button>
+					<button type="button" class="btn btn-outline-secondary border border-secondary" id="hold_btn" data-toggle="modal" data-target="#setpointModal" >Hold</button>
+					<button type="submit" class="btn btn-outline-secondary border border-secondary" id="stop_btn" name="setmodestop" value="true"><i class="fas fa-stop" ></i></button>
+					<button type="submit" class="btn btn-outline-danger border border-secondary" id="shutdown_btn" name="setmodeshutdown" value="true" ><i class="fas fa-flag-checkered"></i></button>
 				</div> <!-- End of Button Group -->
 
 				<!-- Smoke Plus -->
-				<button type="submit" class="btn btn-outline-primary border border-secondary text-secondary" id="splus_btn" name="setmodesmokeplus" value="true"><i class="fas fa-fan"></i></button>
+				<button type="submit" class="btn btn-outline-primary border border-secondary text-secondary" id="splus_btn" name="setmodesmokeplus" value="true" style="display:none"><i class="fas fa-fan"></i></button>
 				<!-- ERROR Button Indicator -->
-				<button type="button" class="btn btn-danger border border-warning text-warning" id="error_btn" name="error_btn" value="true"><i class="fas fa-exclamation-triangle"></i></button>
+				<button type="button" class="btn text-white" id="error_btn" name="error_btn" value="true" style="display:none"><i class="fas fa-exclamation-triangle"></i></button>
 			</span>
  			</nav>
 		</div> <!-- End of Container -->

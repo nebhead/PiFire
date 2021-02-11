@@ -116,42 +116,50 @@ $(document).ready(function(){
         if (data.current_mode == "Stop") {
             document.getElementById("stop_inactive_btn").className = "btn btn-danger border border-secondary";
             $("#active_group").hide();
+            $("#inactive_group").show();
             $("#smoke_inactive_btn").hide();
             $("#hold_inactive_btn").hide();
             $("#error_btn").hide();
         } else if (data.current_mode == 'Monitor') {
             document.getElementById("monitor_btn").className = "btn btn-secondary border border-secondary";
             $("#active_group").hide();
+            $("#inactive_group").show();
             $("#smoke_inactive_btn").hide();
             $("#hold_inactive_btn").hide();
             $("#error_btn").hide();
         } else if ((data.current_mode == 'Startup') || (data.current_mode == 'Reignite')) {
             document.getElementById("startup_btn").className = "btn btn-success border border-secondary";
             $("#active_group").hide();
+            $("#inactive_group").show();
             $("#monitor_btn").hide();
             $("#error_btn").hide();
         } else if (data.current_mode == 'Smoke') {
             document.getElementById("smoke_btn").className = "btn btn-warning border border-secondary";
             $("#inactive_group").hide();
+            $("#active_group").show();
             $("#stop_btn").hide();
             $("#error_btn").hide();
         } else if (data.current_mode == 'Hold') {
             document.getElementById("hold_btn").className = "btn btn-secondary border border-secondary text-white";
             document.getElementById("hold_btn").innerHTML = data.set_points['grill'] + "°F";
             $("#inactive_group").hide();
+            $("#active_group").show();
             $("#stop_btn").hide();
             $("#error_btn").hide();
         } else if (data.current_mode == 'Shutdown') {
             document.getElementById("shutdown_btn").className = "btn btn-danger border border-secondary";
             $("#inactive_group").hide();
+            $("#active_group").show();
             $("#error_btn").hide();
         };
 
         if ((data.current_mode == 'Smoke') || (data.current_mode == 'Hold')) {
             if(data.splus == true) {
+                $("#splus_btn").show();
                 document.getElementById("splus_btn").className = "btn btn-success border border-secondary";
                 document.getElementById("splus_btn").value = "false";
             } else {
+                $("#splus_btn").show();
                 document.getElementById("splus_btn").className = "btn btn-outline-primary border border-secondary text-secondary";
                 document.getElementById("splus_btn").value = "true";
             };
@@ -344,15 +352,18 @@ $(document).ready(function(){
                         $("#inactive_group").show();
                         $("#monitor_btn").show();
                         $("#error_btn").show();
+                        document.getElementById("error_btn").className = "btn btn-danger border border-warning text-warning";
                     };
             
                 }
                 if ((data.current_mode == 'Smoke') || (data.current_mode == 'Hold')) {
                     if (last_splus != data.splus) {
                         if(data.splus == true) {
+                            $("#splus_btn").show();
                             document.getElementById("splus_btn").className = "btn btn-success border border-secondary";
                             document.getElementById("splus_btn").value = "false";
                         } else {
+                            $("#splus_btn").show();
                             document.getElementById("splus_btn").className = "btn btn-outline-primary border border-secondary text-secondary";
                             document.getElementById("splus_btn").value = "true";
                         };
