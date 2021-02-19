@@ -48,6 +48,10 @@ elif(settings['modules']['display'] == 'st7789p'):
 	from display_st7789p import Display # Library for controlling the display device
 elif(settings['modules']['display'] == 'pygame'):
 	from display_pygame import Display # Library for controlling the display device
+elif(settings['modules']['display'] == 'pygame_240x320'):
+	from display_pygame_240x320 import Display # Library for controlling the display device
+elif(settings['modules']['display'] == 'ili9341'):
+	from display_ili9341 import Display # Library for controlling the display device
 else:
 	from display_prototype import Display # Simulated Library for controlling the display device
 
@@ -62,7 +66,7 @@ else:
 # Function Definitions
 # *****************************************
 
-def GetStatus(grill_platform, control, settings):
+def GetStatus(grill_platform, control, settings, pelletdb):
 	# *****************************************
 	# Get Status Details for Display Function
 	# *****************************************
@@ -77,6 +81,8 @@ def GetStatus(grill_platform, control, settings):
 	status_data['notify_req'] = control['notify_req'] # Get any flagged notificiations
 	status_data['timer'] = control['timer'] # Get the timer information
 	status_data['ipaddress'] = '192.168.10.43' # Future implementation (TODO)
+	status_data['s_plus'] = control['s_plus']
+	status_data['hopper_level'] = pelletdb['current']['hopper_level']
 
 	return(status_data)
 
@@ -90,6 +96,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 	# Setup Cycle Parameters
 	settings = ReadSettings()
 	control = ReadControl()
+	pelletdb = ReadPelletDB()
 
 	# Get ON/OFF Switch state and set as last state
 	last = grill_platform.GetInputStatus()
@@ -350,7 +357,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 
 		# Send Current Status / Temperature Data to Display Device every 1 second
 		if(now - displaytoggletime > 1):
-			status_data = GetStatus(grill_platform, control, settings)
+			status_data = GetStatus(grill_platform, control, settings, pelletdb)
 			display_device.DisplayStatus(in_data, status_data)
 			displaytoggletime = time.time() # Reset the displaytoggletime to current time
 
@@ -419,7 +426,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 		if (now - temptoggletime > 3):
 			temptoggletime = time.time()
 			WriteHistory(in_data)
-			status_data = GetStatus(grill_platform, control, settings)
+			#status_data = GetStatus(grill_platform, control, settings, pelletdb) # Does this need to be here? 
 
 		# Check if 240s have elapsed since startup/reignite mode started
 		if ((mode == 'Startup') or (mode == 'Reignite')):
@@ -484,6 +491,7 @@ def Monitor(grill_platform, adc_device, display_device, dist_device):
 	# Setup Cycle Parameters
 	settings = ReadSettings()
 	control = ReadControl()
+	pelletdb = ReadPelletDB()
 
 	# Collect Initial Temperature Information
 	# Get Probe Types From Settings
@@ -594,7 +602,7 @@ def Monitor(grill_platform, adc_device, display_device, dist_device):
 
 		# Update Display Device after 1 second has passed 
 		if(now - displaytoggletime > 1):
-			status_data = GetStatus(grill_platform, control, settings)
+			status_data = GetStatus(grill_platform, control, settings, pelletdb)
 			display_device.DisplayStatus(in_data, status_data)
 			displaytoggletime = now 
 
@@ -634,6 +642,7 @@ def Manual_Mode(grill_platform, adc_device, display_device, dist_device):
 	# Setup Cycle Parameters
 	settings = ReadSettings()
 	control = ReadControl()
+	pelletdb = ReadPelletDB()
 
 	event = 'Manual Mode started.'
 	WriteLog(event)
@@ -767,7 +776,7 @@ def Manual_Mode(grill_platform, adc_device, display_device, dist_device):
 
 		# Update Display Device after 1 second has passed 
 		if(now - displaytoggletime > 1):
-			status_data = GetStatus(grill_platform, control, settings)
+			status_data = GetStatus(grill_platform, control, settings, pelletdb)
 			display_device.DisplayStatus(in_data, status_data)
 			displaytoggletime = now 
 

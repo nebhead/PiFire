@@ -167,7 +167,7 @@ if [[ $ADC = "PROTOTYPE" ]];then
     python3 settings.py -a prototype
 fi
 
-DISPLAY=$(whiptail --title "Select your Display module to use." --radiolist "Select display type (and input) module for PiFire to use.  Some displays may also have menu button functions indicated by a B appended to the name." 20 78 5 "SSD1306" "OLED Display (128x64) <- DEFAULT" ON "SSD1306B" "OLED Display (128x64) w/Button Input" OFF "ST7789P" "IPS/TFT SPI Display (240x240) P => Pimoroni Library" OFF "PROTOTYPE" "Prototype/Console Output (for test only)" OFF "PYGAME" "Prototype/PyGame Desktop Output (for test only)" OFF 3>&1 1>&2 2>&3)
+DISPLAY=$(whiptail --title "Select your Display module to use." --radiolist "Select display type (and input) module for PiFire to use.  Some displays may also have menu button functions indicated by a B appended to the name." 20 78 5 "SSD1306" "OLED Display (128x64) <- DEFAULT" ON "SSD1306B" "OLED Display (128x64) w/Button Input" OFF "ST7789P" "IPS/TFT SPI Display (240x240) P => Pimoroni Library" OFF "ILI9341" "TFT Color Display (240x320)" OFF "PROTOTYPE" "Prototype/Console Output (for test only)" OFF "PYGAME" "Prototype/PyGame Desktop Output (for test only)" OFF "PYGAME240320" "Prototype/PyGame Desktop Output (240x320) (for test only)" OFF 3>&1 1>&2 2>&3)
 
 if [[ $DISPLAY = "SSD1306" ]];then
     python3 settings.py -d ssd1306
@@ -186,12 +186,23 @@ if [[ $DISPLAY = "ST7789P" ]];then
     $SUDO pip3 install st7789
 fi
 
+if [[ $DISPLAY = "ILI9341" ]];then
+    python3 settings.py -d ili9341
+    echo "dtparam=spi=on" | sudo tee -a /boot/config.txt > /dev/null
+    $SUDO pip3 install luma.lcd
+fi
+
 if [[ $DISPLAY = "PROTOTYPE" ]];then
     python3 settings.py -d prototype
 fi
 
 if [[ $DISPLAY = "PYGAME" ]];then
     python3 settings.py -d pygame
+    $SUDO pip3 install pygame 
+fi
+
+if [[ $DISPLAY = "PYGAME240320" ]];then
+    python3 settings.py -d pygame_240x320
     $SUDO pip3 install pygame 
 fi
 
