@@ -52,6 +52,8 @@ elif(settings['modules']['display'] == 'pygame_240x320'):
 	from display_pygame_240x320 import Display # Library for controlling the display device
 elif(settings['modules']['display'] == 'ili9341'):
 	from display_ili9341 import Display # Library for controlling the display device
+elif(settings['modules']['display'] == 'ili9341b'):
+	from display_ili9341b import Display # Library for controlling the display device
 else:
 	from display_prototype import Display # Simulated Library for controlling the display device
 
