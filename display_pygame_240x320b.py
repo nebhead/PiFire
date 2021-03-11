@@ -47,6 +47,7 @@ class Display:
 		time.sleep(0.5) # Keep the splash up for three seconds on boot-up - you can certainly disable this if you want 
 
 		# ==== Menu Setup =====
+		self.displayactive = False
 		self.menuactive = False
 		self.menutime = 0
 		self.menuitem = ''
@@ -109,6 +110,7 @@ class Display:
 
 
 	def DisplayStatus(self, in_data, status_data):
+		self.displayactive = True
 		# Create canvas
 		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
 
@@ -302,6 +304,7 @@ class Display:
 
 
 	def DisplaySplash(self):
+		self.displayactive = True
 		# Create canvas
 		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
 
@@ -333,12 +336,14 @@ class Display:
 
 
 	def ClearDisplay(self):
+		self.displayactive = False
 		# Fill with black
 		self.display_surface.fill((0,0,0))
 		pygame.display.update() 
 
 
 	def DisplayText(self, text):
+		self.displayactive = True
 		# Create canvas
 		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
 
@@ -372,6 +377,20 @@ class Display:
 		return(draw)
 
 	# ====================== Menu Code ========================
+
+	def EventDetect(self):
+		keys = pygame.key.get_pressed()  # This will give us a dictonary where each key has a value of 1 or 0. Where 1 is pressed and 0 is not pressed.
+		if(keys[pygame.K_UP]):
+			print('Up pressed.')
+			self.UpCallback(16)
+		if(keys[pygame.K_DOWN]):
+			print('Down pressed.')
+			self.DownCallback(20)
+		if(keys[pygame.K_RETURN]):
+			print('Enter pressed.')
+			self.EnterCallback(21)
+		if(self.displayactive == False) and (self.menutime > 10):
+			self.ClearDisplay()
 
 	def UpCallback(self, pin):
 		self.menuactive = True

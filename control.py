@@ -50,6 +50,8 @@ elif(settings['modules']['display'] == 'pygame'):
 	from display_pygame import Display # Library for controlling the display device
 elif(settings['modules']['display'] == 'pygame_240x320'):
 	from display_pygame_240x320 import Display # Library for controlling the display device
+elif(settings['modules']['display'] == 'pygame_240x320b'):
+	from display_pygame_240x320b import Display # Library for controlling the display device
 elif(settings['modules']['display'] == 'ili9341'):
 	from display_ili9341 import Display # Library for controlling the display device
 elif(settings['modules']['display'] == 'ili9341b'):
@@ -235,6 +237,9 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 	while(status == 'Active'):
 		now = time.time()
 
+		# Check for button input event
+		display_device.EventDetect()
+
 		# Check for update in control status every 0.5 seconds 
 		if (now - controlchecktime > 0.5):
 			control = ReadControl()
@@ -357,6 +362,9 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 		# Check to see if there are any pending notifications (i.e. Timer / Temperature Settings)
 		control = CheckNotify(in_data, control, settings)
 
+		# Check for button input event
+		display_device.EventDetect()
+		
 		# Send Current Status / Temperature Data to Display Device every 1 second
 		if(now - displaytoggletime > 1):
 			status_data = GetStatus(grill_platform, control, settings, pelletdb)
@@ -439,7 +447,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 		if ((mode == 'Shutdown') and ((now - starttime) > 60)):
 			status = 'Inactive'
 
-		time.sleep(0.1)
+		time.sleep(0.05)
 		# *********
 		# END Mode Loop
 		# *********
@@ -602,6 +610,9 @@ def Monitor(grill_platform, adc_device, display_device, dist_device):
 		
 		control = CheckNotify(in_data, control, settings)
 
+		# Check for button input event
+		display_device.EventDetect()
+
 		# Update Display Device after 1 second has passed 
 		if(now - displaytoggletime > 1):
 			status_data = GetStatus(grill_platform, control, settings, pelletdb)
@@ -629,7 +640,7 @@ def Monitor(grill_platform, adc_device, display_device, dist_device):
 			if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
 				SendPushoverNotification("Grill_Error_01", control, settings)
 
-		time.sleep(0.1)
+		time.sleep(0.05)
 
 	event = 'Monitor mode ended.'
 	WriteLog(event)
@@ -1071,6 +1082,8 @@ while True:
 			control['mode'] == 'Stop'
 			WriteControl(control)
 
+	display_device.EventDetect()
+
 	# 1. Check control.json for commands
 	control = ReadControl()
 
@@ -1189,7 +1202,7 @@ while True:
 			WriteControl(control)
 			WorkCycle(control['mode'], grill_platform, adc_device, display_device, dist_device)
 
-	time.sleep(0.5)
+	time.sleep(0.1)
 	# ===================
 	# End of Main Loop
 	# ===================

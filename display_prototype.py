@@ -54,3 +54,6 @@ class Display:
 		print('====[Display]=====')
 		print('* Text: ' + str(text))
 		print('==================')
+
+	def EventDetect(self):
+		return()

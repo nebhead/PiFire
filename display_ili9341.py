@@ -280,3 +280,6 @@ class Display:
 		draw.pieslice([ (x0, y1 - rad * 2), (x0 + rad * 2, y1) ], 90, 180, fill=fill)
 		draw.pieslice([ (x1 - rad * 2, y0), (x1, y0 + rad * 2) ], 270, 360, fill=fill)
 		return(draw)
+
+	def EventDetect(self):
+		return()

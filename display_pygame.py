@@ -160,3 +160,6 @@ class Display:
 		self.display_surface.blit(self.display_image, (0, 0))
 
 		pygame.display.update() 
+
+	def EventDetect(self):
+		return()

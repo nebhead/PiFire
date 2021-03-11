@@ -34,13 +34,13 @@ class Display:
 		self.enter = 21 # ENTER - GPIO21 
 
 		GPIO.setmode(GPIO.BCM)
-		GPIO.setup(self.up, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-		GPIO.setup(self.down, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-		GPIO.setup(self.enter, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+		GPIO.setup(self.up, GPIO.IN)
+		GPIO.setup(self.down, GPIO.IN)
+		GPIO.setup(self.enter, GPIO.IN)
 
-		GPIO.add_event_detect(self.up, GPIO.FALLING, callback=self.UpCallback, bouncetime=300)  
-		GPIO.add_event_detect(self.down, GPIO.FALLING, callback=self.DownCallback, bouncetime=300) 
-		GPIO.add_event_detect(self.enter, GPIO.FALLING, callback=self.EnterCallback, bouncetime=300) 
+		#GPIO.add_event_detect(self.up, GPIO.FALLING, callback=self.UpCallback, bouncetime=300)  
+		#GPIO.add_event_detect(self.down, GPIO.FALLING, callback=self.DownCallback, bouncetime=300) 
+		#GPIO.add_event_detect(self.enter, GPIO.FALLING, callback=self.EnterCallback, bouncetime=300) 
 
 		self.menu = {}
 
@@ -173,6 +173,16 @@ class Display:
 				print(str(now) + ' Error displaying text.')
 
 	# OnScreen Menu Controls
+
+	def EventDetect(self):
+		if(GPIO.input(self.up) == 1):
+			self.UpCallback(self.up)
+
+		if(GPIO.input(self.down) == 1):
+			self.DownCallback(self.down)
+
+		if(GPIO.input(self.enter) == 1):
+			self.EnterCallback(self.enter)
 
 	def UpCallback(self, pin):
 		self.menuactive = True

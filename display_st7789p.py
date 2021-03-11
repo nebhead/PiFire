@@ -147,3 +147,6 @@ class Display:
 			now = str(datetime.datetime.now())
 			now = now[0:19] # Truncate the microseconds
 			print(str(now) + ' Error displaying text.')
+
+	def EventDetect(self):
+		return()

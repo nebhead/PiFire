@@ -38,8 +38,22 @@ class Display:
 		# Init Device
 		self.serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25)
 		self.device = ili9341(self.serial, active_low=False, width=self.WIDTH, height=self.HEIGHT, gpio_LIGHT=5)
+		# Init GPIO for button input, setup callbacks: Uncomment to utilize GPIO input
+		self.up = 16 	# UP - GPIO16
+		self.down = 20	# DOWN - GPIO20
+		self.enter = 21 # ENTER - GPIO21 
+
+		GPIO.setmode(GPIO.BCM)
+		GPIO.setup(self.up, GPIO.IN)
+		GPIO.setup(self.down, GPIO.IN)
+		GPIO.setup(self.enter, GPIO.IN)
+
+		#GPIO.add_event_detect(self.up, GPIO.FALLING, callback=self.UpCallback, bouncetime=300)  
+		#GPIO.add_event_detect(self.down, GPIO.FALLING, callback=self.DownCallback, bouncetime=300) 
+		#GPIO.add_event_detect(self.enter, GPIO.FALLING, callback=self.EnterCallback, bouncetime=300) 
 
 		# ==== Menu Setup =====
+		self.displayactive = False
 		self.menuactive = False
 		self.menutime = 0
 		self.menuitem = ''
@@ -86,20 +100,6 @@ class Display:
 		self.menu['current']['mode'] = 'none'	# Current Menu Mode (inactive, active)
 		self.menu['current']['option'] = 0 # Current option in current mode 
 
-		# Init GPIO for button input, setup callbacks: Uncomment to utilize GPIO input
-		self.up = 16 	# UP - GPIO16
-		self.down = 20	# DOWN - GPIO20
-		self.enter = 21 # ENTER - GPIO21 
-
-		GPIO.setmode(GPIO.BCM)
-		GPIO.setup(self.up, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-		GPIO.setup(self.down, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-		GPIO.setup(self.enter, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-
-		GPIO.add_event_detect(self.up, GPIO.FALLING, callback=self.UpCallback, bouncetime=300)  
-		GPIO.add_event_detect(self.down, GPIO.FALLING, callback=self.DownCallback, bouncetime=300) 
-		GPIO.add_event_detect(self.enter, GPIO.FALLING, callback=self.EnterCallback, bouncetime=300) 
-
 		# Display Splash Screen 
 		self.DisplaySplash()
 		time.sleep(0.5) # Delay for splash screen on boot-up - you can certainly disable this if you want 
@@ -108,6 +108,8 @@ class Display:
 		self.ClearDisplay()
 
 	def DisplayStatus(self, in_data, status_data):
+		self.displayactive = True
+
 		if (self.menuactive == True) and (time.time() - self.menutime > 5):
 			self.menuactive = False
 			self.menu['current']['mode'] = 'none'
@@ -301,6 +303,8 @@ class Display:
 			self.device.display(img)
 
 	def DisplaySplash(self):
+		self.displayactive = True
+
 		# Create canvas
 		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
 
@@ -325,12 +329,14 @@ class Display:
 		self.device.display(img)
 
 	def ClearDisplay(self):
+		self.displayactive = False
 		self.device.clear()
 		self.device.backlight(False)
 		self.device.hide()
 		# Kill the backlight to the display
 
 	def DisplayText(self, text):
+		self.displayactive = True
 		# Create canvas
 		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
 
@@ -357,6 +363,23 @@ class Display:
 		return(draw)
 
 	# ====================== Menu Code ========================
+
+	def EventDetect(self):
+		if(GPIO.input(self.up) == 1):
+			self.UpCallback(self.up)
+
+		if(GPIO.input(self.down) == 1):
+			self.DownCallback(self.down)
+
+		if(GPIO.input(self.enter) == 1):
+			self.EnterCallback(self.enter)
+
+		if(self.displayactive == False) and (time.time() - self.menutime > 5) and (self.menuactive == True):
+			self.menuactive = False
+			self.menu['current']['mode'] = 'none'
+			self.menu['current']['option'] = 0
+			print('Menu Inactive')
+			self.ClearDisplay()
 
 	def UpCallback(self, pin):
 		self.menuactive = True
