@@ -78,8 +78,13 @@ def GetStatus(grill_platform, control, settings, pelletdb):
 	status_data['outpins'] = {}
 
 	current = grill_platform.GetOutputStatus()	# Get current pin settings
-	for item in settings['outpins']:
-		status_data['outpins'][item] = current[item]
+	
+	if settings['globals']['triggerlevel'] == 'LOW':
+		for item in settings['outpins']:
+			status_data['outpins'][item] = current[item]
+	else:
+		for item in settings['outpins']:
+			status_data['outpins'][item] = not current[item] # Reverse Logic
 	
 	status_data['mode'] = control['mode'] # Get current mode
 	status_data['notify_req'] = control['notify_req'] # Get any flagged notificiations
@@ -284,7 +289,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 		current_output_status = grill_platform.GetOutputStatus()
 
 		# If Auger is OFF and time since toggle is greater than Off Time
-		if (current_output_status['auger'] == 1) and (now - augertoggletime > CycleTime * (1-CycleRatio)):
+		if (current_output_status['auger'] == AUGEROFF) and (now - augertoggletime > CycleTime * (1-CycleRatio)):
 			grill_platform.AugerOn()
 			augertoggletime = now
 			# Reset Cycle Time for HOLD Mode
@@ -305,7 +310,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 				WriteLog(event)
 
 		# If Auger is ON and time since toggle is greater than On Time
-		if (current_output_status['auger'] == 0) and (now - augertoggletime > CycleTime * CycleRatio):
+		if (current_output_status['auger'] == AUGERON) and (now - augertoggletime > CycleTime * CycleRatio):
 			grill_platform.AugerOff()
 			augertoggletime = now
 			if(settings['globals']['debug_mode'] == True):
@@ -753,7 +758,7 @@ def Manual_Mode(grill_platform, adc_device, display_device, dist_device):
 			WriteControl(control)
 
 		#control = ReadControl()  # Read Modify Write
-		control['manual']['current'] = grill_platform.GetOutputStatus()
+		control['manual']['current'] = not grill_platform.GetOutputStatus()
 
 		WriteControl(control)
 
@@ -1014,9 +1019,17 @@ settings = ReadSettings()
 
 outpins = settings['outpins']
 inpins = settings['inpins']
+triggerlevel = settings['globals']['triggerlevel']
+
+if triggerlevel == 'LOW':
+	AUGERON = 0
+	AUGEROFF = 1
+else:
+	AUGERON = 1
+	AUGEROFF = 0
 
 # Initialize Grill Platform Object
-grill_platform = GrillPlatform(outpins, inpins)
+grill_platform = GrillPlatform(outpins, inpins, triggerlevel)
 
 # If powering on, check the on/off switch and set grill power appropriately.
 last = grill_platform.GetInputStatus()

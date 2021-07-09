@@ -1,7 +1,25 @@
+#!/usr/bin/env python3
+
+# *****************************************
+# PiFire Common Library
+# *****************************************
+#
+# Description: This library provides functions that are common to 
+#  both app.py and control.py
+#
+# *****************************************
+
+# *****************************************
+# Imported Libraries
+# *****************************************
 import time
 import datetime
 import os
 import json
+
+# *****************************************
+# Functions
+# *****************************************
 
 def DefaultSettings():
 	settings = {}
@@ -21,7 +39,10 @@ def DefaultSettings():
 	settings['globals'] = {
 		'grill_name' : '',
 		'debug_mode' : False,
-		'page_theme' : 'light', 
+		'page_theme' : 'light',
+		'triggerlevel' : 'LOW',
+		'units' : 'F', 
+		'version' : 1, # Version of settings file 
 	}
 
 	settings['ifttt'] = {
