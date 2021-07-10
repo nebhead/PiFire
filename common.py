@@ -41,8 +41,7 @@ def DefaultSettings():
 		'debug_mode' : False,
 		'page_theme' : 'light',
 		'triggerlevel' : 'LOW',
-		'units' : 'F', 
-		'version' : 1, # Version of settings file 
+		'units' : 'F'
 	}
 
 	settings['ifttt'] = {
@@ -99,7 +98,7 @@ def DefaultSettings():
 	settings['safety'] = {
 		'minstartuptemp' : 75, # User Defined. Minimum temperature allowed for startup.
 		'maxstartuptemp' : 100, # User Defined. Take this value if the startup temp is higher than maxstartuptemp
-		'maxtemp' : 500, # User Defined. If temp exceeds this value in any mode, shut off.  (including monitor mode)
+		'maxtemp' : 550, # User Defined. If temp exceeds this value in any mode, shut off.  (including monitor mode)
 		'reigniteretries' : 1, # Number of tries to reignite the grill if it has gone below the safe temperature (set to 0 to disable)
 	}
 
@@ -366,9 +365,21 @@ def ReadSettings():
 
 	# Overlay the read values over the top of the default settings
 	#  This ensures that any NEW fields are captured.  
-	for key in settings.keys():
-		settings[key].update(settings_struct.get(key, {}))
+	update_settings = False # set flag in case an update needs to be written back
 
+	for key in settings.keys():
+		if key in settings_struct.keys():
+			for subkey in settings[key].keys():
+				if subkey not in settings_struct[key].keys():
+					update_settings = True
+			settings[key].update(settings_struct.get(key, {}))
+		else: 
+			update_settings = True 
+
+	if update_settings: # If any of the keys were added, then write back the changes 
+		WriteSettings(settings)
+		#print('key mismatch - update flag set')
+	
 	return(settings)
 
 def WriteSettings(settings):
