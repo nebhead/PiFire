@@ -48,11 +48,11 @@ class Display:
 
 		# ==== Buttons Setup =====
 		if buttonslevel == 'HIGH':
-				# Defines for input buttons level HIGH
-				self.BUTTON_INPUT = 0
+			# Defines for input buttons level HIGH
+			self.BUTTON_INPUT = 0
 		else:
-				# Defines for input buttons level LOW
-				self.BUTTON_INPUT = 1 
+			# Defines for input buttons level LOW
+			self.BUTTON_INPUT = 1
 
 		# ==== Menu Setup =====
 		self.displayactive = False
