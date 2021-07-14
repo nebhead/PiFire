@@ -41,6 +41,7 @@ def DefaultSettings():
 		'debug_mode' : False,
 		'page_theme' : 'light',
 		'triggerlevel' : 'LOW',
+		'buttonslevel' : 'HIGH',
 		'units' : 'F'
 	}
 

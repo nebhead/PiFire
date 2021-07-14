@@ -1020,6 +1020,7 @@ settings = ReadSettings()
 outpins = settings['outpins']
 inpins = settings['inpins']
 triggerlevel = settings['globals']['triggerlevel']
+buttonslevel = settings['globals']['buttonslevel']
 
 if triggerlevel == 'LOW':
 	AUGERON = 0
@@ -1040,7 +1041,10 @@ else:
 	grill_platform.PowerOff()
 
 # Start display device object and display splash
-display_device = Display()
+if(str(settings['modules']['display']).endswith('b')):	
+	display_device = Display(buttonslevel)
+else:
+	display_device = Display()
 
 grill0type = settings['probe_types']['grill0type']
 probe1type = settings['probe_types']['probe1type']
