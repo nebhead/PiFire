@@ -30,7 +30,7 @@ from common import ReadControl, WriteControl  # Common Library for WebUI and Con
 
 class Display:
 
-	def __init__(self):
+	def __init__(self, buttonslevel='HIGH'):
 		# Set Display Width and Height.  Modify for your needs.   
 		self.WIDTH = 320
 		self.HEIGHT = 240
@@ -44,7 +44,15 @@ class Display:
 		pygame.display.set_caption('PiFire Device Display')
 
 		self.DisplaySplash()
-		time.sleep(0.5) # Keep the splash up for three seconds on boot-up - you can certainly disable this if you want 
+		time.sleep(0.5) # Keep the splash up for three seconds on boot-up - you can certainly disable this if you want
+
+		# ==== Buttons Setup =====
+		if buttonslevel == 'HIGH':
+			# Defines for input buttons level HIGH
+			self.BUTTON_INPUT = 0
+		else:
+			# Defines for input buttons level LOW
+			self.BUTTON_INPUT = 1
 
 		# ==== Menu Setup =====
 		self.displayactive = False

@@ -22,7 +22,7 @@ from common import ReadControl, WriteControl  # Common Library for WebUI and Con
 
 class Display:
 
-	def __init__(self):
+	def __init__(self, buttonslevel='HIGH'):
 		self.serial = i2c(port=1, address=0x3C)
 		self.device = ssd1306(self.serial)
 		self.menuactive = False
@@ -40,7 +40,15 @@ class Display:
 
 		#GPIO.add_event_detect(self.up, GPIO.FALLING, callback=self.UpCallback, bouncetime=300)  
 		#GPIO.add_event_detect(self.down, GPIO.FALLING, callback=self.DownCallback, bouncetime=300) 
-		#GPIO.add_event_detect(self.enter, GPIO.FALLING, callback=self.EnterCallback, bouncetime=300) 
+		#GPIO.add_event_detect(self.enter, GPIO.FALLING, callback=self.EnterCallback, bouncetime=300)
+
+		# ==== Buttons Setup =====
+		if buttonslevel == 'HIGH':
+			# Defines for input buttons level HIGH
+			self.BUTTON_INPUT = 0
+		else:
+			# Defines for input buttons level LOW
+			self.BUTTON_INPUT = 1
 
 		self.menu = {}
 
@@ -175,13 +183,13 @@ class Display:
 	# OnScreen Menu Controls
 
 	def EventDetect(self):
-		if(GPIO.input(self.up) == 1):
+		if(GPIO.input(self.up) == self.BUTTON_INPUT):
 			self.UpCallback(self.up)
 
-		if(GPIO.input(self.down) == 1):
+		if(GPIO.input(self.down) == self.BUTTON_INPUT):
 			self.DownCallback(self.down)
 
-		if(GPIO.input(self.enter) == 1):
+		if(GPIO.input(self.enter) == self.BUTTON_INPUT):
 			self.EnterCallback(self.enter)
 
 	def UpCallback(self, pin):
