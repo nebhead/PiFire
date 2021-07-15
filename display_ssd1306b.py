@@ -11,6 +11,7 @@
 # *****************************************
 # Imported Libraries
 # *****************************************
+from display_ili9341b import BUTTON_INPUT
 from luma.core.interface.serial import i2c
 from luma.core.render import canvas
 from luma.oled.device import ssd1306
@@ -19,6 +20,14 @@ import datetime
 import time
 from RPi import GPIO
 from common import ReadControl, WriteControl  # Common Library for WebUI and Control Program
+
+# Defines for button wiring types, pull ups or pull downs
+
+# High Buttons
+BUTTON_INPUT = 0
+
+# Low Buttons
+#BUTTON_INPUT = 1
 
 class Display:
 
@@ -175,13 +184,13 @@ class Display:
 	# OnScreen Menu Controls
 
 	def EventDetect(self):
-		if(GPIO.input(self.up) == 1):
+		if(GPIO.input(self.up) == BUTTON_INPUT):
 			self.UpCallback(self.up)
 
-		if(GPIO.input(self.down) == 1):
+		if(GPIO.input(self.down) == BUTTON_INPUT):
 			self.DownCallback(self.down)
 
-		if(GPIO.input(self.enter) == 1):
+		if(GPIO.input(self.enter) == BUTTON_INPUT):
 			self.EnterCallback(self.enter)
 
 	def UpCallback(self, pin):

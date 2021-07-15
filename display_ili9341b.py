@@ -29,6 +29,14 @@ from PIL import Image, ImageDraw, ImageFont
 import time
 from common import ReadControl, WriteControl  # Common Library for WebUI and Control Program
 
+# Defines for button wiring types, pull ups or pull downs
+
+# High Buttons
+BUTTON_INPUT = 0
+
+# Low Buttons
+#BUTTON_INPUT = 1
+
 class Display:
 
 	def __init__(self):
@@ -365,13 +373,13 @@ class Display:
 	# ====================== Menu Code ========================
 
 	def EventDetect(self):
-		if(GPIO.input(self.up) == 1):
+		if(GPIO.input(self.up) == BUTTON_INPUT):
 			self.UpCallback(self.up)
 
-		if(GPIO.input(self.down) == 1):
+		if(GPIO.input(self.down) == BUTTON_INPUT):
 			self.DownCallback(self.down)
 
-		if(GPIO.input(self.enter) == 1):
+		if(GPIO.input(self.enter) == BUTTON_INPUT):
 			self.EnterCallback(self.enter)
 
 		if(self.displayactive == False) and (time.time() - self.menutime > 5) and (self.menuactive == True):
