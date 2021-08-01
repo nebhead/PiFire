@@ -645,6 +645,43 @@
 									
 								</div> <!-- End of card body -->
 							</div> <!-- End of Card -->
+							<div class="card shadow-sm">
+								<div class="card-header bg-light text-dark"><h5>Pushbullet</h5></div>
+								<div class="card-body">
+
+									<form name="notify" action="/settings/notify" method="POST">
+
+									  <div class="input-group mb-3">
+									    <div class="input-group-prepend">
+									      <span class="input-group-text"><i class="fas fa-key"></i>&nbsp; API Key</span>
+									    </div>
+
+											<input id="pushbullet_apikey" type="text" class="form-control" name="pushbullet_apikey" value="{{settings['pushbullet']['APIKey']}}">
+
+											<div class="input-group-append">
+													<button type="submit" class="btn btn-success btn-sm float-right"><i class="far fa-save"></i></button>
+											</div>
+
+									  </div>
+
+										<span class="badge badge-warning">NOTE:</span><i class="small"> URL to be added to Pushbullet notifications.</i>
+										<div class="input-group mb-3">
+											<div class="input-group-prepend">
+												<span class="input-group-text"><i class="fas fa-link"></i>&nbsp; Public URL</span>
+											</div>
+
+											<input id="pushbullet_publicurl" type="text" class="form-control" name="pushbullet_publicurl" value="{{settings['pushbullet']['PublicURL']}}">
+
+											<div class="input-group-append">
+													<button type="submit" class="btn btn-success btn-sm float-right"><i class="far fa-save"></i></button>
+											</div>
+										</div>
+										
+
+									</form>
+									
+								</div> <!-- End of card body -->
+							</div> <!-- End of Card -->
 
 							<BR>
 						</div> <!-- End of card body -->

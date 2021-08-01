@@ -699,6 +699,26 @@ def settingspage(action=None):
 				event['type'] = 'updated'
 				event['text'] = 'PushOver Public URL updated. Settings saved.'
 
+		if('pushbullet_apikey' in response):
+			if((response['pushbullet_apikey'] == "0") or (response['pushbullet_apikey'] == '')) and (settings['pushbullet']['APIKey'] != ''):
+				settings['pushbullet']['APIKey'] = ''
+				event['type'] = 'warning'
+				event['text'] = 'PushBullet API Key removed. Settings saved.'
+			elif(response['pushbullet_apikey'] != settings['pushbullet']['APIKey']):
+				settings['pushbullet']['APIKey'] = response['pushbullet_apikey']
+				event['type'] = 'updated'
+				event['text'] = 'PushBullet API Key updated. Settings saved.'
+		
+		if('pushbullet_publicurl' in response):
+			if((response['pushbullet_publicurl'] == "0") or (response['pushbullet_publicurl'] == '')) and (settings['pushbullet']['PublicURL'] != ''):
+				settings['pushbullet']['PublicURL'] = ''
+				event['type'] = 'warning'
+				event['text'] = 'PushBullet Public URL removed. Settings saved.'
+			elif(response['pushbullet_publicurl'] != settings['pushbullet']['PublicURL']):
+				settings['pushbullet']['PublicURL'] = response['pushbullet_publicurl']
+				event['type'] = 'updated'
+				event['text'] = 'PushBullet Public URL updated. Settings saved.'
+
 		# Take all settings and write them
 		WriteSettings(settings)
 

@@ -24,6 +24,7 @@ import os
 import json
 import datetime
 from common import *  # Common Library for WebUI and Control Program
+from pushbullet import Pushbullet # Pushbullet Import
 import pid as PID # Library for calculating PID setpoints
 import requests
 
@@ -200,6 +201,8 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 				WriteControl(control)
 				if(settings['ifttt']['APIKey'] != ''):
 					SendIFTTTNotification("Grill_Error_02", control, settings)
+				if(settings['pushbullet']['APIKey'] != ''):
+					SendPushBulletNotification("Grill_Error_02", control, settings)
 				if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
 					SendPushoverNotification("Grill_Error_02", control, settings)
 			else:
@@ -392,6 +395,8 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 					WriteControl(control)
 					if(settings['ifttt']['APIKey'] != ''):
 						SendIFTTTNotification("Grill_Error_02", control, settings)
+					if(settings['pushbullet']['APIKey'] != ''):
+						SendPushBulletNotification("Grill_Error_02", control, settings)
 					if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
 						SendPushoverNotification("Grill_Error_02", control, settings)
 				else:
@@ -417,6 +422,8 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 				WriteControl(control)
 				if(settings['ifttt']['APIKey'] != ''):
 					SendIFTTTNotification("Grill_Error_01", control, settings)
+				if(settings['pushbullet']['APIKey'] != ''):
+					SendPushBulletNotification("Grill_Error_01", control, settings)
 				if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
 					SendPushoverNotification("Grill_Error_01", control, settings)
 
@@ -642,6 +649,8 @@ def Monitor(grill_platform, adc_device, display_device, dist_device):
 			WriteControl(control)
 			if(settings['ifttt']['APIKey'] != ''):
 				SendIFTTTNotification("Grill_Error_01", control, settings)
+			if(settings['pushbullet']['APIKey'] != ''):
+				SendPushBulletNotification("Grill_Error_01", control, settings)
 			if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
 				SendPushoverNotification("Grill_Error_01", control, settings)
 
@@ -912,6 +921,51 @@ def SendPushoverNotification(notifyevent, control, settings):
 			WriteLog("WARNING: Pushover Notification to %s failed for unknown reason." % (user))
 
 # ******************************
+# Send Pushbullet Notifications
+# ******************************
+
+def SendPushBulletNotification(notifyevent, control, settings):
+	now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
+
+	if "Grill_Temp_Achieved" in notifyevent:
+		notifymessage = "The Grill setpoint of " + str(control['setpoints']['grill']) + "F was achieved at " + str(now)
+		subjectmessage = "Grill at " + str(control['setpoints']['grill']) + "F at " + str(now)
+	elif "Probe1_Temp_Achieved" in notifyevent:
+		notifymessage = "The Probe 1 setpoint of " + str(control['setpoints']['probe1']) + "F was achieved at " + str(now)
+		subjectmessage = "Probe 1 at " + str(control['setpoints']['probe1']) + "F at " + str(now)
+	elif "Probe2_Temp_Achieved" in notifyevent:
+		notifymessage = "The Probe 2 setpoint of " + str(control['setpoints']['probe2']) + "F was achieved at " + str(now)
+		subjectmessage = "Probe 2 at " + str(control['setpoints']['probe2']) + "F at " + str(now)
+	elif "Timer_Expired" in notifyevent:
+		notifymessage = "Your grill timer has expired, time to check your cook!"
+		subjectmessage = "Grill Timer Complete: " + str(now)
+	elif "Grill_Error_00" in notifyevent:
+		notifymessage = "Your grill has experienced an error and will shutdown now. " + str(now)
+		subjectmessage = "Grill Error!"
+	elif "Grill_Error_01" in notifyevent:
+		notifymessage = "Grill exceed maximum temperature limit of " + str(settings['safety']['maxtemp']) + "F! Shutting down." + str(now)
+		subjectmessage = "Grill Error!"
+	elif "Grill_Error_02" in notifyevent:
+		notifymessage = "Grill temperature dropped below minimum startup temperature of " + str(control['safety']['startuptemp']) + "F! Shutting down to prevent firepot overload." + str(now)
+		subjectmessage = "Grill Error!"
+	elif "Grill_Warning" in notifyevent:
+		notifymessage = "Your grill has experienced a warning condition.  Please check the logs."  + str(now)
+		subjectmessage = "Grill Warning!"
+	else:
+		notifymessage = "Whoops! PiFire had the following unhandled notify event: " + notifyevent + " at " + now
+		subjectmessage = "PiFire: Unknown Notification at " + str(now)
+
+	api_key = settings['pushbullet']['APIKey']
+	pushbullet_link = settings['pushbullet']['PublicURL']
+
+	try:
+		pb = Pushbullet(api_key)
+		push = pb.push_link(subjectmessage, pushbullet_link, notifymessage)
+		WriteLog("Pushbullet Notification Success: " + subjectmessage)
+	except:
+		WriteLog("Pushbullet Notification Failed: " + subjectmessage)
+
+# ******************************
 # Send IFTTT Notifications
 # ******************************
 
@@ -961,6 +1015,8 @@ def CheckNotify(in_data, control, settings):
 			WriteControl(control)
 			if(settings['ifttt']['APIKey'] != ''):
 				SendIFTTTNotification("Grill_Temp_Achieved", control, settings)
+			if(settings['pushbullet']['APIKey'] != ''):
+				SendPushBulletNotification("Grill_Temp_Achieved", control, settings)
 			if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
 				SendPushoverNotification("Grill_Temp_Achieved", control, settings)
 
@@ -968,6 +1024,8 @@ def CheckNotify(in_data, control, settings):
 		if (in_data['Probe1Temp'] >= control['setpoints']['probe1']):
 			if(settings['ifttt']['APIKey'] != ''):
 				SendIFTTTNotification("Probe1_Temp_Achieved", control, settings)
+			if(settings['pushbullet']['APIKey'] != ''):
+				SendPushBulletNotification("Probe1_Temp_Achieved", control, settings)
 			if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
 				SendPushoverNotification("Probe1_Temp_Achieved", control, settings)
 			#control = ReadControl()  # Read Modify Write
@@ -981,6 +1039,8 @@ def CheckNotify(in_data, control, settings):
 		if (in_data['Probe2Temp'] >= control['setpoints']['probe2']):
 			if(settings['ifttt']['APIKey'] != ''):
 				SendIFTTTNotification("Probe2_Temp_Achieved", control, settings)
+			if(settings['pushbullet']['APIKey'] != ''):
+				SendPushBulletNotification("Probe2_Temp_Achieved", control, settings)
 			if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
 				SendPushoverNotification("Probe2_Temp_Achieved", control, settings)
 			#control = ReadControl()  # Read Modify Write
@@ -994,6 +1054,8 @@ def CheckNotify(in_data, control, settings):
 		if (time.time() >= control['timer']['end']):
 			if(settings['ifttt']['APIKey'] != ''):
 				SendIFTTTNotification("Timer_Expired", control, settings)
+			if(settings['pushbullet']['APIKey'] != ''):
+				SendPushBulletNotification("Timer_Expired", control, settings)
 			if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
 				SendPushoverNotification("Timer_Expired", control, settings)
 			#control = ReadControl()  # Read Modify Write

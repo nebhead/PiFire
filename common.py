@@ -48,6 +48,11 @@ def DefaultSettings():
 		'APIKey': '', # API Key for WebMaker IFTTT App notification
 	}
 
+	settings['pushbullet'] = {
+		'APIKey': '', # API Key for Pushbullet notifications
+		'PublicURL': '', # Used in Pushbullet notifications
+	}
+
 	settings['pushover'] = {
 		'APIKey': '', # API Key for Pushover notifications
 		'UserKeys': '', # Comma-separated list of user keys
