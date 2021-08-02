@@ -42,6 +42,7 @@ def DefaultSettings():
 		'page_theme' : 'light',
 		'triggerlevel' : 'LOW',
 		'buttonslevel' : 'HIGH',
+		'shutdown_timer' : 60,
 		'units' : 'F'
 	}
 
