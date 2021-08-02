@@ -31,7 +31,7 @@ from common import ReadControl, WriteControl  # Common Library for WebUI and Con
 
 class Display:
 
-	def __init__(self):
+	def __init__(self, buttonslevel='HIGH'):
 		# Set Display Width and Height.  Modify for your needs.   
 		self.WIDTH = 320
 		self.HEIGHT = 240
@@ -50,7 +50,15 @@ class Display:
 
 		#GPIO.add_event_detect(self.up, GPIO.FALLING, callback=self.UpCallback, bouncetime=300)  
 		#GPIO.add_event_detect(self.down, GPIO.FALLING, callback=self.DownCallback, bouncetime=300) 
-		#GPIO.add_event_detect(self.enter, GPIO.FALLING, callback=self.EnterCallback, bouncetime=300) 
+		#GPIO.add_event_detect(self.enter, GPIO.FALLING, callback=self.EnterCallback, bouncetime=300)
+
+		# ==== Buttons Setup =====
+		if buttonslevel == 'HIGH':
+			# Defines for input buttons level HIGH
+			self.BUTTON_INPUT = 0
+		else:
+			# Defines for input buttons level LOW
+			self.BUTTON_INPUT = 1
 
 		# ==== Menu Setup =====
 		self.displayactive = False
@@ -365,13 +373,13 @@ class Display:
 	# ====================== Menu Code ========================
 
 	def EventDetect(self):
-		if(GPIO.input(self.up) == 1):
+		if(GPIO.input(self.up) == self.BUTTON_INPUT):
 			self.UpCallback(self.up)
 
-		if(GPIO.input(self.down) == 1):
+		if(GPIO.input(self.down) == self.BUTTON_INPUT):
 			self.DownCallback(self.down)
 
-		if(GPIO.input(self.enter) == 1):
+		if(GPIO.input(self.enter) == self.BUTTON_INPUT):
 			self.EnterCallback(self.enter)
 
 		if(self.displayactive == False) and (time.time() - self.menutime > 5) and (self.menuactive == True):
