@@ -455,8 +455,8 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 			if((now - starttime) > 240):
 				status = 'Inactive'
 
-		# Check if 60s have elapsed since shutdown mode started
-		if ((mode == 'Shutdown') and ((now - starttime) > 60)):
+		# Check if shutdown time has elapsed since shutdown mode started
+		if ((mode == 'Shutdown') and ((now - starttime) > settings['globals']['shutdown_timer'])):
 			status = 'Inactive'
 
 		time.sleep(0.05)

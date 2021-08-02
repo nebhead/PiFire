@@ -833,6 +833,18 @@ def settingspage(action=None):
 
 		WriteSettings(settings)
 
+	if (request.method == 'POST') and (action == 'shutdown'):
+		response = request.form
+
+		if('shutdown_timer' in response):
+			if(response['shutdown_timer'] != ''):
+				settings['globals']['shutdown_timer'] = int(response['shutdown_timer'])
+
+		event['type'] = 'updated'
+		event['text'] = 'Successfully updated shutdown settings.'
+
+		WriteSettings(settings)
+
 	if (request.method == 'POST') and (action == 'history'):
 		response = request.form
 
