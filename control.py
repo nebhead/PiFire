@@ -1118,7 +1118,7 @@ adc_device = ReadADC(settings['probe_settings']['probe_profiles'][grill0type], s
 pelletdb = ReadPelletDB()
 
 # Start Distance Sensor Object for Hopper
-dist_device = HopperLevel(pelletdb['empty'])
+dist_device = HopperLevel(pelletdb['empty'], pelletdb['full'])
 
 # Get current hopper level and save it to the current pellet information
 pelletdb['current']['hopper_level'] = dist_device.GetLevel()

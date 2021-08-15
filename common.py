@@ -62,7 +62,7 @@ def DefaultSettings():
 	}
 
 	settings['probe_types'] = {
-		'grill0type' : 'PT1000-00',
+		'grill0type' : 'PT-1000-OEM',
 		'probe1type' : 'TWPS00',
 		'probe2type' : 'TWPS00',
 	}
@@ -235,7 +235,8 @@ def DefaultPellets():
 		'date_loaded' : now, 		# Date that current pellets loaded
 	}
 
-	pelletdb['empty'] = 30 # Number of centimeters from the sensor that indicates empty
+	pelletdb['empty'] = 22 # Number of centimeters from the sensor that indicates empty
+	pelletdb['full'] = 4 # Number of centimeters from the sensor that indicates full 
 
 	pelletdb['woods'] = ['Alder', 'Almond', 'Apple', 'Apricot', 'Blend', 'Competition', 'Cherry', 'Chestnut', 'Hickory', 'Lemon', 'Maple', 'Mesquite', 'Mulberry', 'Nectarine', 'Oak', 'Orange', 'Peach', 'Pear', 'Plum', 'Walnut' ]
 
@@ -288,13 +289,22 @@ def DefaultProbeProfiles():
 			'name' : 'iGrill-Heatermeter'
 	}
 
-	probe_profiles["PT1000-00"] = {
+	probe_profiles["PT-1000-OEM"] = {
 			"Vs": 3.28,
 			"Rd": 10000,
 			"A": 0.04136906456,
 			"B": -0.00677987613,
 			"C": 2.760294589e-05,
-			"name": "PT-1000-OEM-RTD"
+			"name": "PT-1000-Grill-Probe-OEM" # This profile was for the original probe on my Traeger
+	}
+
+	probe_profiles["PT-1000-PiFire"] = {
+			"Vs": 3.28,
+			"Rd": 10000,
+			"A": 0.05469905897345206,
+			"B": -0.009473055040089443,
+			"C": 4.3768560703857386e-5,
+			"name": "PT-1000-Grill-Probe-PiFire" # This profile is for a replacement PT-1000 grill probe
 	}
 
 	probe_profiles['ET73-SP'] = {

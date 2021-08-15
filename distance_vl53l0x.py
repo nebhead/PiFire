@@ -23,10 +23,18 @@ from common import WriteLog
 
 class HopperLevel:
 
-	def __init__(self, empty=30):
+	def __init__(self, empty=22, full=4):
 		# Create a VL53L0X object as tof (time-of-flight)
 		self.tof = VL53L0X.VL53L0X(i2c_bus=1,i2c_address=0x29)
 		self.empty = empty # Empty is greater than 30cm distance measured
+		self.full = full # Full is less than or equal to the minimum full distance.
+		
+		if self.empty <= self.full:
+			event = 'ERROR: Invalid Hopper Level Configuration Empty Level <= Full Level (forcing defaults)'
+			WriteLog(event)
+			# Set defaults that are valid
+			self.empty = 22
+			self.full = 4
 		# Open Sensor
 		self.tof.open()
 		# Start ranging
@@ -57,9 +65,15 @@ class HopperLevel:
 		event = 'Average Distance Measured: ' + str(AvgDist) + 'cm'
 		WriteLog(event)
 		
+		# If Average Distance is less than the full distance, we are at 100%
+		if AvgDist <= self.full: 
+			level = 100
 		# If Average Distance is less than the empty distance, calculate percentage
-		if AvgDist <= self.empty: 
-			level = 100 * (1 - (AvgDist / self.empty))  
+		elif AvgDist <= self.empty:
+			capacity = self.empty - self.full
+			adjusted_ratio = (self.empty / capacity) * 100 
+			level = adjusted_ratio * (1 - (AvgDist / self.empty))  
+		# If Average Distance is higher than empty distance, report 0 level
 		else:
 			level = 0
 

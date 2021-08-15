@@ -568,6 +568,40 @@
 		</div> <!-- End of Column -->
 </div> <!-- End of Row -->
 
+	<!-- ============================ Pellet Settings ========================== -->
+	<br>
+	<div class="row">
+		<div class="col">
+			<div class="card shadow">
+
+				<form name="pelletsettings" action="/settings/pellets" method="POST">
+
+					<div class="card-header bg-primary text-white"><h5><i class="fas fa-tools"></i>&nbsp; Pellet Settings</h5></div>
+					<div class="card-body">
+						<div class="input-group mb-3">
+							<div class="input-group-prepend">
+								<span class="input-group-text" data-toggle="tooltip" title="Distance (cm) measured when the hopper is full."><i class="fas fa-level-up-alt"></i>&nbsp; Hopper Full Distance (cm) </span>
+							</div>
+							<input id="full" type="number" min="0" max="100" class="form-control" placeholder="{{ pelletdb['full'] }}" value="{{ pelletdb['full'] }}" name="full">
+						</div>
+						<div class="input-group mb-3">
+							<div class="input-group-prepend">
+								<span class="input-group-text" data-toggle="tooltip" title="Distance (cm) measured when the hopper is empty."><i class="fas fa-level-down-alt"></i>&nbsp; Hopper Empty Distance (cm) </span>
+							</div>
+							<input id="empty" type="number" min="1" max="100" class="form-control" placeholder="{{ pelletdb['empty'] }}" value="{{ pelletdb['empty'] }}" name="empty">
+						</div>
+						<br>
+						<span class="badge badge-warning">NOTE:</span><i class="small"> The distance value for full must be smaller than the value for empty. </i><br>
+					</div> <!-- End of card body -->
+					<div class="card-footer bg-light">
+							<button type="submit" class="btn btn-outline-primary">Save</button>
+					</div>
+				</form>
+			</div> <!-- End of Card -->
+		</div> <!-- End of Column -->
+</div> <!-- End of Row -->
+
+
 		<!-- ============================ Page Settings ========================== -->
 		<br>
 		<div class="row">
