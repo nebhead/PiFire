@@ -13,6 +13,10 @@
 # *****************************************
 
 from flask import Flask, request, render_template, make_response, send_file, jsonify, redirect
+from flask_socketio import SocketIO
+from flask_qrcode import QRcode
+from threading import Thread, Event
+from datetime import timedelta
 import time
 import os
 import json
@@ -21,6 +25,13 @@ import math
 from common import *  # Common Library for WebUI and Control Program
 
 app = Flask(__name__)
+socketio = SocketIO(app, cors_allowed_origins="*")
+QRcode(app)
+
+thread = Thread()
+thread_stop_event = Event()
+
+clients = 0
 
 @app.route('/')
 def index(action=None):
@@ -55,7 +66,7 @@ def dash(action=None):
 				else:	# If Timer was paused, restart with new end time.
 					now = time.time()
 					control['timer']['end'] = (control['timer']['end'] - control['timer']['paused']) + now
-					control['timer']['start'] = now
+					#control['timer']['start'] = now
 					control['timer']['paused'] = 0
 					WriteLog('Timer unpaused.  Ends at: ' + str(control['timer']['end']))
 					WriteControl(control)
@@ -108,6 +119,7 @@ def dash(action=None):
 				WriteControl(control)
 			else:
 				control['notify_req']['probe1'] = False
+				control['setpoints']['probe1'] = 0
 				WriteControl(control)
 
 		if('probe2notify' in response):
@@ -120,6 +132,7 @@ def dash(action=None):
 				WriteControl(control)
 			else:
 				control['notify_req']['probe2'] = False
+				control['setpoints']['probe2'] = 0
 				WriteControl(control)
 
 	if (request.method == 'POST') and (action == 'setmode'):
@@ -272,8 +285,7 @@ def historypage(action=None):
 			if('clearhistory' in response):
 				if(response['clearhistory'] == 'true'):
 					WriteLog('Clearing History Log.')
-					os.system('rm /tmp/history.log')
-					os.system('rm /tmp/current.log')
+					ReadHistory(0, flushhistory=True)
 
 	elif (request.method == 'GET') and (action == 'export'):
 		data_list = ReadHistory((settings['history_page']['minutes'] * 20))
@@ -659,65 +671,74 @@ def settingspage(action=None):
 	if (request.method == 'POST') and (action == 'notify'):
 		response = request.form
 
+		if('ifttt_enabled' in response):
+			if(response['ifttt_enabled'] == 'on'):
+				settings['ifttt']['enabled'] = True
+		else:
+			settings['ifttt']['enabled'] = False
+
+		if('pushbullet_enabled' in response):
+			if(response['pushbullet_enabled'] == 'on'):
+				settings['pushbullet']['enabled'] = True
+		else:
+			settings['pushbullet']['enabled'] = False
+
+		if('pushover_enabled' in response):
+			if(response['pushover_enabled'] == 'on'):
+				settings['pushover']['enabled'] = True
+		else:
+			settings['pushover']['enabled'] = False
+
+		if('firebase_enabled' in response):
+			if(response['firebase_enabled'] == 'on'):
+				settings['firebase']['enabled'] = True
+		else:
+			settings['firebase']['enabled'] = False
+
 		if('iftttapi' in response):
 			if(response['iftttapi'] == "0") or (response['iftttapi'] == ''):
 				settings['ifttt']['APIKey'] = ''
-				event['type'] = 'warning'
-				event['text'] = 'IFTTT API Key removed. Settings saved.'
 			else:
 				settings['ifttt']['APIKey'] = response['iftttapi']
-				event['type'] = 'updated'
-				event['text'] = 'IFTTT API Key updated. Settings saved.'
 
 		if('pushover_apikey' in response):
 			if((response['pushover_apikey'] == "0") or (response['pushover_apikey'] == '')) and (settings['pushover']['APIKey'] != ''):
 				settings['pushover']['APIKey'] = ''
-				event['type'] = 'warning'
-				event['text'] = 'Pushover API Key removed. Settings saved.'
 			elif(response['pushover_apikey'] != settings['pushover']['APIKey']):
 				settings['pushover']['APIKey'] = response['pushover_apikey']
-				event['type'] = 'updated'
-				event['text'] = 'PushOver API Key updated. Settings saved.'
 
 		if('pushover_userkeys' in response):
 			if((response['pushover_userkeys'] == "0") or (response['pushover_userkeys'] == '')) and (settings['pushover']['UserKeys'] != ''):
 				settings['pushover']['UserKeys'] = ''
-				event['type'] = 'warning'
-				event['text'] = 'Pushover User Keys removed. Settings saved.'
 			elif(response['pushover_userkeys'] != settings['pushover']['UserKeys']):
 				settings['pushover']['UserKeys'] = response['pushover_userkeys']
-				event['type'] = 'updated'
-				event['text'] = 'PushOver User Keys updated. Settings saved.'
 		
 		if('pushover_publicurl' in response):
 			if((response['pushover_publicurl'] == "0") or (response['pushover_publicurl'] == '')) and (settings['pushover']['PublicURL'] != ''):
 				settings['pushover']['PublicURL'] = ''
-				event['type'] = 'warning'
-				event['text'] = 'Pushover Public URL removed. Settings saved.'
 			elif(response['pushover_publicurl'] != settings['pushover']['PublicURL']):
 				settings['pushover']['PublicURL'] = response['pushover_publicurl']
-				event['type'] = 'updated'
-				event['text'] = 'PushOver Public URL updated. Settings saved.'
 
 		if('pushbullet_apikey' in response):
 			if((response['pushbullet_apikey'] == "0") or (response['pushbullet_apikey'] == '')) and (settings['pushbullet']['APIKey'] != ''):
 				settings['pushbullet']['APIKey'] = ''
-				event['type'] = 'warning'
-				event['text'] = 'PushBullet API Key removed. Settings saved.'
 			elif(response['pushbullet_apikey'] != settings['pushbullet']['APIKey']):
 				settings['pushbullet']['APIKey'] = response['pushbullet_apikey']
-				event['type'] = 'updated'
-				event['text'] = 'PushBullet API Key updated. Settings saved.'
 		
 		if('pushbullet_publicurl' in response):
 			if((response['pushbullet_publicurl'] == "0") or (response['pushbullet_publicurl'] == '')) and (settings['pushbullet']['PublicURL'] != ''):
 				settings['pushbullet']['PublicURL'] = ''
-				event['type'] = 'warning'
-				event['text'] = 'PushBullet Public URL removed. Settings saved.'
 			elif(response['pushbullet_publicurl'] != settings['pushbullet']['PublicURL']):
 				settings['pushbullet']['PublicURL'] = response['pushbullet_publicurl']
-				event['type'] = 'updated'
-				event['text'] = 'PushBullet Public URL updated. Settings saved.'
+
+		if('firebase_serverkey' in response):
+			if(response['firebase_serverkey'] == "0") or (response['firebase_serverkey'] == ''):
+				settings['firebase']['ServerKey'] = ''
+			else:
+				settings['firebase']['ServerKey'] = response['firebase_serverkey']
+
+		event['type'] = 'updated'
+		event['text'] = 'Successfully updated notification settings.'
 
 		# Take all settings and write them
 		WriteSettings(settings)
@@ -825,8 +846,8 @@ def settingspage(action=None):
 		if('defaultsmokeplus' in response):
 			if(response['defaultsmokeplus'] == 'on'):
 				settings['smoke_plus']['enabled'] = True 
-			else:
-				settings['smoke_plus']['enabled'] = False
+		else:
+			settings['smoke_plus']['enabled'] = False
 				
 		event['type'] = 'updated'
 		event['text'] = 'Successfully updated cycle settings.'
@@ -913,6 +934,22 @@ def settingspage(action=None):
 
 		if('grill_name' in response):
 			settings['globals']['grill_name'] = response['grill_name']
+			event['type'] = 'updated'
+			event['text'] = 'Successfully updated grill name.'
+
+		WriteSettings(settings)
+
+	if (request.method == 'POST') and (action == 'pellets'):
+		response = request.form
+
+		if('empty' in response):
+			settings['pelletlevel']['empty'] = int(response['empty'])
+
+		if('full' in response):
+			settings['pelletlevel']['full'] = int(response['full'])
+
+		event['type'] = 'updated'
+		event['text'] = 'Successfully updated pellet settings.'
 
 		WriteSettings(settings)
 
@@ -923,6 +960,7 @@ def settingspage(action=None):
 def adminpage(action=None):
 
 	settings = ReadSettings()
+	pelletdb = ReadPelletDB()
 
 	if action == 'reboot':
 		event = "Admin: Reboot"
@@ -952,8 +990,7 @@ def adminpage(action=None):
 		if('clearhistory' in response):
 			if(response['clearhistory']=='true'):
 				WriteLog('Clearing History Log.')
-				os.system('rm /tmp/history.log')
-				os.system('rm /tmp/current.log')
+				ReadHistory(0, flushhistory=True)
 
 		if('clearevents' in response):
 			if(response['clearevents']=='true'):
@@ -965,13 +1002,18 @@ def adminpage(action=None):
 				WriteLog('Clearing Pellet Database.')
 				os.system('rm pelletdb.json')
 
+		if('clearpelletdblog' in response):
+			if(response['clearpelletdblog']=='true'):
+				WriteLog('Clearing Pellet Database Log.')
+				pelletdb['log'].clear()
+				WritePelletDB(pelletdb)
+
 		if('factorydefaults' in response):
 			if(response['factorydefaults']=='true'):
 				WriteLog('Resetting Settings, Control, History to factory defaults.')
-				os.system('rm /tmp/history.log')
-				os.system('rm /tmp/current.log')
+				ReadHistory(0, flushhistory=True)
+				ReadControl(flush=True)
 				os.system('rm settings.json')
-				os.system('rm /tmp/control.json')
 				settings = DefaultSettings()
 				control = DefaultControl()
 				WriteSettings(settings)
@@ -987,7 +1029,9 @@ def adminpage(action=None):
 
 	debug_mode = settings['globals']['debug_mode']
 
-	return render_template('admin.html', settings=settings, action=action, uptime=uptime, cpuinfo=cpuinfo, temp=temp, ifconfig=ifconfig, debug_mode=debug_mode, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
+	url = request.url_root
+
+	return render_template('admin.html', settings=settings, action=action, uptime=uptime, cpuinfo=cpuinfo, temp=temp, ifconfig=ifconfig, debug_mode=debug_mode, qr_content=url, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
 
 @app.route('/manual/<action>', methods=['POST','GET'])
 @app.route('/manual', methods=['POST','GET'])
@@ -1135,10 +1179,10 @@ def prepare_data(num_items=10, reduce=True, datapoints=60):
 			data_blob['probe2_temp_list'].append(int(data_list[index][5]))
 			data_blob['probe2_settemp_list'].append(int(data_list[index][6]))
 	else:
-		now = str(datetime.datetime.now())
-		now = now[0:19] # Truncate the microseconds
+		now = datetime.datetime.now()
+		timestr = now.strftime('%H:%M:%S')
 		for index in range(num_items):
-			data_blob['label_time_list'].append(str(now)) 
+			data_blob['label_time_list'].append(str(timestr)) 
 			data_blob['grill_temp_list'].append(0)
 			data_blob['grill_settemp_list'].append(0)
 			data_blob['probe1_temp_list'].append(0)
@@ -1222,10 +1266,726 @@ def tr_to_temp(Tr, a, b, c):
         tempF = 0.0
     return int(tempF) # Return Calculated Temperature and Thermistor Value in Ohms
 
+def str_td(td):
+    s = str(td).split(", ", 1)
+    a = s[-1]
+    if a[1] == ':':
+        a = "0" + a
+    s2 = s[:-1] + [a]
+    return ", ".join(s2)
+
+@socketio.on("connect")
+def connect():
+	global clients
+	clients += 1
+	print(clients, 'Client(s) connected')
+
+@socketio.on("disconnect")
+def disconnect():
+	global thread
+	global clients
+	clients -= 1
+	if(clients <= 0):
+		thread_stop_event.set()
+		
+	if(clients == 0):
+		print('All clients disconnected')
+	else:
+		print(clients, 'Client(s) connected')
+
+@socketio.on('request_grill_data')
+def request_grill_data():
+	settings = ReadSettings()
+	if(settings['modules']['grillplat'] == 'prototype'):
+		print('Client requesting grill data')
+
+	global thread
+
+	if not thread.isAlive():
+		thread = socketio.start_background_task(emitGrillData())
+
+def emitGrillData():
+	global clients
+	previous_data = ''
+
+	while (clients > 0):
+		control = ReadControl()
+		settings = ReadSettings()
+		pelletdb = ReadPelletDB()
+
+		global forceupdate
+		
+		probes_enabled = settings['probe_settings']['probes_enabled']
+		
+		cur_probe_temps = []
+		cur_probe_temps = ReadCurrent()
+		
+		current_temps = {
+				'grill_temp' : cur_probe_temps[0],
+				'probe1_temp' : cur_probe_temps[1],
+				'probe2_temp' : cur_probe_temps[2]
+			}
+			
+		enabled_probes = {
+				'grill' : bool(probes_enabled[0]),
+				'probe1' : bool(probes_enabled[1]),
+				'probe2' : bool(probes_enabled[2])
+			}
+
+		now = time.time()
+
+		if(control['timer']['end'] - now > 0):
+			now = time.time()
+			endtime = control['timer']['end']
+			maxtime = endtime - control['timer']['start']
+			
+			if(control['timer']['paused'] == 0):
+				distance = endtime - now
+			else:
+				distance = endtime - control['timer']['paused']
+
+			td_str = str_td(timedelta(seconds=distance + 60))
+			td_str_split = td_str.split(':')
+			timer_time = td_str_split[0] + ':' + td_str_split[1]
+			
+			timer_info = {
+				'timer_max' : math.floor(maxtime // 60),
+				'timer_current' : math.floor(distance // 60 + 1),
+				'timer_time' : timer_time,
+				'timer_paused' : bool(control['timer']['paused']),
+				'timer_finished' : bool(distance < 0)
+			}
+		else:
+			timer_info = {
+				'timer_max' : '0',
+				'timer_current' : '0',
+				'timer_time' : '00:00',
+				'timer_paused' : 'false',
+				'timer_finished' : 'true'
+			}
+        
+		current_data = { 
+			'cur_probe_temps' : current_temps, 
+			'probes_enabled' : enabled_probes, 
+			'set_points' : control['setpoints'], 
+			'notify_req' : control['notify_req'],
+			'timer_info' : timer_info, 
+			'current_mode' : control['mode'], 
+			'smoke_plus' : control['s_plus'], 
+			'hopper_level' : pelletdb['current']['hopper_level']
+			}
+		
+		if(previous_data != current_data):
+			if(settings['modules']['grillplat'] == 'prototype'):
+				print('Sending updated grill data')
+			socketio.emit('grill_control_data', current_data, broadcast=True)
+			previous_data = current_data
+			socketio.sleep(2)
+		else:
+			socketio.sleep(2)
+
+@socketio.on('request_pellet_data')
+def request_pellet_data():
+	settings = ReadSettings()
+	if(settings['modules']['grillplat'] == 'prototype'):
+		print('Client requesting pellet data')
+		
+	pelletdb = ReadPelletDB()
+
+	return pelletdb
+
+@socketio.on('request_history_data')
+def request_history_data():
+	settings = ReadSettings()
+
+	if(settings['modules']['grillplat'] == 'prototype'):
+		print('Client requesting history data')
+
+	data_blob = {}
+	num_items = settings['history_page']['minutes'] * 20
+	data_blob = prepare_data(num_items, True, settings['history_page']['datapoints'])
+
+	return ({ 'grill_temp_list' : data_blob['grill_temp_list'], 'grill_settemp_list' : data_blob['grill_settemp_list'], 'probe1_temp_list' : data_blob['probe1_temp_list'], 'probe1_settemp_list' : data_blob['probe1_settemp_list'], 'probe2_temp_list' : data_blob['probe2_temp_list'], 'probe2_settemp_list' : data_blob['probe2_settemp_list'], 'label_time_list' : data_blob['label_time_list'] })
+
+@socketio.on('request_event_data')
+def request_event_data():
+	settings = ReadSettings()
+
+	if(settings['modules']['grillplat'] == 'prototype'):
+		print('Client requesting event data')
+		
+	event_list, num_events = ReadLog()
+
+	event_list.reverse()
+
+	events_list = {
+		'events_list' : event_list
+	}
+
+	return events_list
+
+@socketio.on('request_settings_data')
+def request_settings_data():
+	settings = ReadSettings()
+
+	if(settings['modules']['grillplat'] == 'prototype'):
+		print('Client requesting settings data')
+
+	return settings
+
+@socketio.on('request_info_data')
+def request_info_data():
+	settings = ReadSettings()
+
+	if(settings['modules']['grillplat'] == 'prototype'):
+		print('Client requesting info data')
+
+	uptime = os.popen('uptime').readline()
+
+	cpuinfo = os.popen('cat /proc/cpuinfo').readlines()
+
+	ifconfig = os.popen('ifconfig').readlines()
+
+	temp = checkcputemp()
+
+	info_list = {
+		'uptime' : uptime,
+		'cpuinfo' : cpuinfo,
+		'ifconfig' : ifconfig,
+		'temp' : temp,
+		'outpins' : settings['outpins'],
+		'inpins' : settings['inpins']
+	}
+
+	return info_list
+		
+@socketio.on('update_control_data')
+def update_control(json_data):
+	control = ReadControl()
+	settings = ReadSettings()
+
+	if(settings['modules']['grillplat'] == 'prototype'):
+				print('Client requesting control update ' + str(json_data))
+
+	data = json.loads(json_data)
+	if('timer' in data):
+		if('start' in data['timer']):
+			if(data['timer']['start']=='true'):
+				control['notify_req']['timer'] = True
+				if(control['timer']['paused'] == 0):
+					now = time.time()
+					control['timer']['start'] = now
+					if(('hoursInputRange' in data['timer']) and ('minsInputRange' in data['timer'])):
+						seconds = int(data['timer']['hoursInputRange']) * 60 * 60
+						seconds = seconds + int(data['timer']['minsInputRange']) * 60
+						control['timer']['end'] = now + seconds
+					#if('endtime' in data['timer']):
+						#control['timer']['end'] = int(round(now + 1000)) + data['timer']['endtime']
+					else:
+						control['timer']['end'] = now + 60
+						###### TODO - Need to implement this
+					if('shutdownTimer' in data['timer']):
+						control['notify_data']['timer_shutdown'] = True 
+					WriteLog('Timer started.  Ends at: ' + str(control['timer']['end']))
+					WriteControl(control)
+				else:	# If Timer was paused, restart with new end time.
+					now = time.time()
+					control['timer']['end'] = (control['timer']['end'] - control['timer']['paused']) + now
+					#control['timer']['start'] = now
+					control['timer']['paused'] = 0
+					WriteLog('Timer unpaused.  Ends at: ' + str(control['timer']['end']))
+					WriteControl(control)
+		if('pause' in data['timer']):
+			if(data['timer']['pause']=='true'):
+				if(control['timer']['start'] != 0):
+					control['notify_req']['timer'] = False
+					now = time.time()
+					control['timer']['paused'] = now
+					WriteLog('Timer paused.')
+					WriteControl(control)
+				else:
+					control['notify_req']['timer'] = False
+					control['timer']['start'] = 0
+					control['timer']['end'] = 0
+					control['notify_data']['timer_shutdown'] = False 
+					WriteLog('Timer cleared.')
+					WriteControl(control)
+		if('stop' in data['timer']):
+			if(data['timer']['stop']=='true'):
+				control['notify_req']['timer'] = False
+				control['timer']['start'] = 0
+				control['timer']['end'] = 0
+				control['notify_data']['timer_shutdown'] = False 
+				WriteLog('Timer stopped.')
+				WriteControl(control)
+
+	if('notify' in data):
+		if('grillnotify' in data['notify']):
+			if(data['notify']['grillnotify']=='true'):
+				set_point = int(data['notify']['grilltempInputRange'])
+				control['setpoints']['grill'] = set_point
+				if (control['mode'] == 'Hold'):
+					control['updated'] = True
+				control['notify_req']['grill'] = True
+				WriteControl(control)
+			else:
+				control['notify_req']['grill'] = False
+				WriteControl(control)
+
+		if('probe1notify' in data['notify']):
+			if(data['notify']['probe1notify']=='true'):
+				set_point = int(data['notify']['probe1tempInputRange'])
+				control['setpoints']['probe1'] = set_point
+				control['notify_req']['probe1'] = True
+				if('shutdownP1' in data['notify']):
+					control['notify_data']['p1_shutdown'] = True
+				WriteControl(control)
+			else:
+				control['notify_req']['probe1'] = False
+				control['setpoints']['probe1'] = 0
+				WriteControl(control)
+
+		if('probe2notify' in data['notify']):
+			if(data['notify']['probe2notify']=='true'):
+				set_point = int(data['notify']['probe2tempInputRange'])
+				control['setpoints']['probe2'] = set_point
+				control['notify_req']['probe2'] = True
+				if('shutdownP2' in data['notify']):
+					control['notify_data']['p2_shutdown'] = True
+				WriteControl(control)
+			else:
+				control['notify_req']['probe2'] = False
+				control['setpoints']['probe2'] = 0
+				WriteControl(control)
+
+	if('setmode' in data):
+		if('setpointtemp' in data['setmode']):
+			if(data['setmode']['setpointtemp']=='true'):
+				set_point = int(data['setmode']['tempInputRange'])
+				control['setpoints']['grill'] = set_point
+				control['updated'] = True
+				control['mode'] = 'Hold'
+				if(settings['smoke_plus']['enabled'] == True):
+					control['s_plus'] = True
+				else: 
+					control['s_plus'] = False 
+				WriteControl(control)
+		if('setmodestartup' in data['setmode']):
+			if(data['setmode']['setmodestartup']=='true'):
+				control['updated'] = True
+				control['mode'] = 'Startup'
+				WriteControl(control)
+		if('setmodesmoke' in data['setmode']):
+			if(data['setmode']['setmodesmoke']=='true'):
+				control['updated'] = True
+				control['mode'] = 'Smoke'
+				if(settings['smoke_plus']['enabled'] == True):
+					control['s_plus'] = True
+				else: 
+					control['s_plus'] = False 
+				WriteControl(control)
+		if('setmodeshutdown' in data['setmode']):
+			if(data['setmode']['setmodeshutdown']=='true'):
+				control['updated'] = True
+				control['mode'] = 'Shutdown'
+				WriteControl(control)
+		if('setmodemonitor' in data['setmode']):
+			if(data['setmode']['setmodemonitor']=='true'):
+				control['updated'] = True
+				control['mode'] = 'Monitor'
+				WriteControl(control)
+		if('setmodestop' in data['setmode']):
+			if(data['setmode']['setmodestop']=='true'):
+				control['updated'] = True
+				control['mode'] = 'Stop'
+				WriteControl(control)
+		if('setmodesmoke' in data['setmode']):
+			if(data['setmode']['setmodesmoke']=='true'):
+				control['updated'] = True
+				control['mode'] = 'Smoke'
+		if('setmodesmokeplus' in data['setmode']):
+			if(data['setmode']['setmodesmokeplus']=='true'):
+				control['updated'] = True
+				control['s_plus'] = True
+			else:
+				control['updated'] = True
+				control['s_plus'] = False 
+			WriteControl(control)
+
+@socketio.on('update_settings_data')
+def update_settings(json_data):
+	control = ReadControl()
+	settings = ReadSettings()
+
+	if(settings['modules']['grillplat'] == 'prototype'):
+		print('Client requesting settings update ' + str(json_data))
+
+	data = json.loads(json_data)
+	if ('setmodesmoke' in data):
+		if (data['setmodesmoke'] == 'true'):
+			print('Setting Smoke Mode')
+			control['updated'] = True
+			control['mode'] = 'Smoke'
+			if(settings['smoke_plus']['enabled'] == True):
+				control['s_plus'] = True
+			else: 
+				control['s_plus'] = False
+			WriteControl(control)
+
+	if('probes' in data):
+		if('grill0enable' in data['probes']):
+			if(data['probes']['grill0enable']=='true'):
+				settings['probe_settings']['probes_enabled'][0] = 1
+			else:
+				settings['probe_settings']['probes_enabled'][0] = 0
+		if('probe1enable' in data['probes']):
+			if(data['probes']['probe1enable']=='true'):
+				settings['probe_settings']['probes_enabled'][1] = 1
+			else:
+				settings['probe_settings']['probes_enabled'][1] = 0
+		if('probe2enable' in data['probes']):
+			if(data['probes']['probe2enable']=='true'):
+				settings['probe_settings']['probes_enabled'][2] = 1
+			else:
+				settings['probe_settings']['probes_enabled'][2] = 0
+		if('grill_probe_type' in data['probes']):
+			if(data['probes']['grill_probe_type'] != settings['probe_types']['grill0type']):
+				settings['probe_types']['grill0type'] = data['probes']['grill_probe_type']
+				control['probe_profile_update'] = True
+		if('probe1_type' in data['probes']):
+			if(data['probes']['probe1_type'] != settings['probe_types']['probe1type']):
+				settings['probe_types']['probe1type'] = data['probes']['probe1_type']
+				control['probe_profile_update'] = True
+		if('probe2_type' in data['probes']):
+			if(data['probes']['probe2_type'] != settings['probe_types']['probe2type']):
+				settings['probe_types']['probe2type'] = data['probes']['probe2_type']
+				control['probe_profile_update'] = True
+
+		WriteControl(control)
+
+	if('notifications' in data):
+		if('ifttt_enabled' in data['notifications']):
+			if(data['notifications']['ifttt_enabled'] == 'true'):
+				settings['ifttt']['enabled'] = True
+			else:
+				settings['ifttt']['enabled'] = False
+
+		if('pushbullet_enabled' in data['notifications']):
+			if(data['notifications']['pushbullet_enabled'] == 'true'):
+				settings['pushbullet']['enabled'] = True
+			else:
+				settings['pushbullet']['enabled'] = False
+
+		if('pushover_enabled' in data['notifications']):
+			if(data['notifications']['pushover_enabled'] == 'true'):
+				settings['pushover']['enabled'] = True
+			else:
+				settings['pushover']['enabled'] = False
+
+		if('firebase_enabled' in data['notifications']):
+			if(data['notifications']['firebase_enabled'] == 'true'):
+				settings['firebase']['enabled'] = True
+			else:
+				settings['firebase']['enabled'] = False
+
+		if('iftttapi' in data['notifications']):
+			if(data['notifications']['iftttapi'] == "0") or (data['notifications']['iftttapi'] == ''):
+				settings['ifttt']['APIKey'] = ''
+			else:
+				settings['ifttt']['APIKey'] = data['notifications']['iftttapi']
+
+		if('pushover_apikey' in data['notifications']):
+			if((data['notifications']['pushover_apikey'] == "0") or (data['notifications']['pushover_apikey'] == '')) and (settings['pushover']['APIKey'] != ''):
+				settings['pushover']['APIKey'] = ''
+			elif(data['notifications']['pushover_apikey'] != settings['pushover']['APIKey']):
+				settings['pushover']['APIKey'] = data['notifications']['pushover_apikey']
+
+		if('pushover_userkeys' in data['notifications']):
+			if((data['notifications']['pushover_userkeys'] == "0") or (data['notifications']['pushover_userkeys'] == '')) and (settings['pushover']['UserKeys'] != ''):
+				settings['pushover']['UserKeys'] = ''
+			elif(data['notifications']['pushover_userkeys'] != settings['pushover']['UserKeys']):
+				settings['pushover']['UserKeys'] = data['notifications']['pushover_userkeys']
+		
+		if('pushover_publicurl' in data['notifications']):
+			if((data['notifications']['pushover_publicurl'] == "0") or (data['notifications']['pushover_publicurl'] == '')) and (settings['pushover']['PublicURL'] != ''):
+				settings['pushover']['PublicURL'] = ''
+			elif(data['notifications']['pushover_publicurl'] != settings['pushover']['PublicURL']):
+				settings['pushover']['PublicURL'] = data['notifications']['pushover_publicurl']
+
+		if('pushbullet_apikey' in data['notifications']):
+			if((data['notifications']['pushbullet_apikey'] == "0") or (data['notifications']['pushbullet_apikey'] == '')) and (settings['pushbullet']['APIKey'] != ''):
+				settings['pushbullet']['APIKey'] = ''
+			elif(data['notifications']['pushbullet_apikey'] != settings['pushbullet']['APIKey']):
+				settings['pushbullet']['APIKey'] = data['notifications']['pushbullet_apikey']
+		
+		if('pushbullet_publicurl' in data['notifications']):
+			if((data['notifications']['pushbullet_publicurl'] == "0") or (data['notifications']['pushbullet_publicurl'] == '')) and (settings['pushbullet']['PublicURL'] != ''):
+				settings['pushbullet']['PublicURL'] = ''
+			elif(data['notifications']['pushbullet_publicurl'] != settings['pushbullet']['PublicURL']):
+				settings['pushbullet']['PublicURL'] = data['notifications']['pushbullet_publicurl']
+
+		if('firebase_serverkey' in data['notifications']):
+			if(data['notifications']['firebase_serverkey'] == "0") or (data['notifications']['firebase_serverkey'] == ''):
+				settings['firebase']['ServerKey'] = ''
+			else:
+				settings['firebase']['ServerKey'] = data['notifications']['firebase_serverkey']
+
+	if('cycle' in data):
+		if('pmode' in data['cycle']):
+			if(data['cycle']['pmode'] != ''):
+				settings['cycle_data']['PMode'] = int(data['cycle']['pmode'])
+		if('holdcycletime' in data['cycle']):
+			if(data['cycle']['holdcycletime'] != ''):
+				settings['cycle_data']['HoldCycleTime'] = int(data['cycle']['holdcycletime'])
+		if('smokecycletime' in data['cycle']):
+			if(data['cycle']['smokecycletime'] != ''):
+				settings['cycle_data']['SmokeCycleTime'] = int(data['cycle']['smokecycletime'])
+		if('propband' in data['cycle']):
+			if(data['cycle']['propband'] != ''):
+				settings['cycle_data']['PB'] = float(data['cycle']['propband'])
+		if('integraltime' in data['cycle']):
+			if(data['cycle']['integraltime'] != ''):
+				settings['cycle_data']['Ti'] = float(data['cycle']['integraltime'])
+		if('derivtime' in data['cycle']):
+			if(data['cycle']['derivtime'] != ''):
+				settings['cycle_data']['Td'] = float(data['cycle']['derivtime'])
+		if('sp_cycle' in data['cycle']):
+			if(data['cycle']['sp_cycle'] != ''):
+				settings['smoke_plus']['cycle'] = int(data['cycle']['sp_cycle'])
+		if('minsptemp' in data['cycle']):
+			if(data['cycle']['minsptemp'] != ''):
+				settings['smoke_plus']['min_temp'] = int(data['cycle']['minsptemp'])
+		if('maxsptemp' in data['cycle']):
+			if(data['cycle']['maxsptemp'] != ''):
+				settings['smoke_plus']['max_temp'] = int(data['cycle']['maxsptemp'])
+		if('defaultsmokeplus' in data['cycle']):
+			if(data['cycle']['defaultsmokeplus'] == 'true'):
+				settings['smoke_plus']['enabled'] = True 
+			else:
+				settings['smoke_plus']['enabled'] = False
+
+	if('shutdown' in data):
+		if('shutdown_timer' in data['shutdown']):
+			if(data['shutdown']['shutdown_timer'] != ''):
+				settings['globals']['shutdown_timer'] = int(data['shutdown']['shutdown_timer'])
+
+	if('history' in data):
+		if('historymins' in data['history']):
+			if(data['history']['historymins'] != ''):
+				settings['history_page']['minutes'] = int(data['history']['historymins'])
+
+		if('clearhistorystartup' in data['history']):
+			if(data['history']['clearhistorystartup'] == 'true'):
+				settings['history_page']['clearhistoryonstart'] = True
+			else:
+				settings['history_page']['clearhistoryonstart'] = False
+
+		if('historyautorefresh' in data['history']):
+			if(data['history']['historyautorefresh'] == 'true'):
+				settings['history_page']['autorefresh'] = 'on'
+			else:
+				settings['history_page']['autorefresh'] = 'off'
+
+		if('datapoints' in data['history']):
+			if(data['history']['datapoints'] != ''):
+				settings['history_page']['datapoints'] = int(data['history']['datapoints'])
+
+		if('clearhistory' in  data['history']):
+				if( data['history']['clearhistory'] == 'true'):
+					WriteLog('Clearing History Log.')
+					ReadHistory(0, flushhistory=True)
+
+	if('safety' in data):
+		if('minstartuptemp' in data['safety']):
+			if(data['safety']['minstartuptemp'] != ''):
+				settings['safety']['minstartuptemp'] = int(data['safety']['minstartuptemp'])
+		if('maxstartuptemp' in data['safety']):
+			if(data['safety']['maxstartuptemp'] != ''):
+				settings['safety']['maxstartuptemp'] = int(data['safety']['maxstartuptemp'])
+		if('reigniteretries' in data['safety']):
+			if(data['safety']['reigniteretries'] != ''):
+				settings['safety']['reigniteretries'] = int(data['safety']['reigniteretries'])
+		if('maxtemp' in data['safety']):
+			if(data['safety']['maxtemp'] != ''):
+				settings['safety']['maxtemp'] = int(data['safety']['maxtemp'])
+
+	if('grillname' in data):
+		if('grill_name' in data['grillname']):
+			settings['globals']['grill_name'] = data['grillname']['grill_name']
+
+	if ('pellets' in data):
+		if('empty' in data['pellets']):
+			settings['pelletlevel']['empty'] = int(data['pellets']['empty'])
+
+		if('full' in data['pellets']):
+			settings['pelletlevel']['full'] = int(data['pellets']['full'])
+
+	# Take all settings and write them
+	WriteSettings(settings)
+
+
+@socketio.on('update_pellet_data')
+def update_pellet_data(json_data):
+	settings = ReadSettings()
+	pelletdb = ReadPelletDB()
+
+	if(settings['modules']['grillplat'] == 'prototype'):
+		print('Client requesting pellets update ' + str(json_data))
+
+	data = json.loads(json_data)
+
+	if('loadprofile' in data):
+		if('profile' in data['loadprofile']):
+			pelletdb['current']['pelletid'] = data['loadprofile']['profile']
+			pelletdb['current']['hopper_level'] = 100
+			now = str(datetime.datetime.now())
+			now = now[0:19] # Truncate the microseconds
+			pelletdb['current']['date_loaded'] = now 
+			pelletdb['log'][now] = data['loadprofile']['profile']
+
+	if ('editbrands' in data):
+		if('delBrand' in data['editbrands']):
+			delBrand = data['editbrands']['delBrand']
+			if(delBrand in pelletdb['brands']): 
+				pelletdb['brands'].remove(delBrand)
+		elif('newBrand' in data['editbrands']):
+			newBrand = data['editbrands']['newBrand']
+			if(newBrand not in pelletdb['brands']):
+				pelletdb['brands'].append(newBrand)
+
+	if ('editwoods' in data):
+		if('delWood' in data['editwoods']):
+			delWood = data['editwoods']['delWood']
+			if(delWood in pelletdb['woods']): 
+				pelletdb['woods'].remove(delWood)
+
+		elif('newWood' in data['editwoods']):
+			newWood = data['editwoods']['newWood']
+			if(newWood not in pelletdb['woods']):
+				pelletdb['woods'].append(newWood)
+
+	if('addprofile' in data):
+		profile_id = ''.join(filter(str.isalnum, str(datetime.datetime.now())))
+
+		pelletdb['archive'][profile_id] = {
+			'id' : profile_id,
+			'brand' : data['addprofile']['brand_name'],
+			'wood' : data['addprofile']['wood_type'],
+			'rating' : int(data['addprofile']['rating']),
+			'comments' : data['addprofile']['comments']
+		}
+
+	if('addprofileload' in data):
+		profile_id = ''.join(filter(str.isalnum, str(datetime.datetime.now())))
+
+		pelletdb['archive'][profile_id] = {
+			'id' : profile_id,
+			'brand' : data['addprofileload']['brand_name'],
+			'wood' : data['addprofileload']['wood_type'],
+			'rating' : int(data['addprofileload']['rating']),
+			'comments' : data['addprofileload']['comments']
+		}
+
+		pelletdb['current']['pelletid'] = profile_id
+		pelletdb['current']['hopper_level'] = 100
+		now = str(datetime.datetime.now())
+		now = now[0:19] # Truncate the microseconds
+		pelletdb['current']['date_loaded'] = now 
+		pelletdb['log'][now] = profile_id
+
+	if('editprofile' in data):
+		if('profile' in data['editprofile']):
+			profile_id = data['editprofile']['profile']
+			pelletdb['archive'][profile_id]['brand'] = data['editprofile']['brand_name']
+			pelletdb['archive'][profile_id]['wood'] = data['editprofile']['wood_type']
+			pelletdb['archive'][profile_id]['rating'] = int(data['editprofile']['rating'])
+			pelletdb['archive'][profile_id]['comments'] = data['editprofile']['comments']
+
+	if('deleteprofile' in data):
+		if('profile' in data['deleteprofile']):
+			profile_id = data['deleteprofile']['profile']
+			if(pelletdb['current']['pelletid'] == profile_id):
+				print('Error cannot delete current profile')
+			else: 
+				pelletdb['archive'].pop(profile_id) # Remove the profile from the archive
+				for index in pelletdb['log']:  # Remove this profile ID for the logs
+					if(pelletdb['log'][index] == profile_id):
+						pelletdb['log'][index] = 'deleted'
+
+	# Take all pelletdb changes and write them
+	WritePelletDB(pelletdb)
+
+
+@socketio.on('update_admin_data')
+def update_admin_data(json_data):
+	settings = ReadSettings()
+	pelletdb = ReadPelletDB()
+
+	if(settings['modules']['grillplat'] == 'prototype'):
+		print('Client requesting admin update ' + str(json_data))
+
+	data = json.loads(json_data)
+
+	if('admin' in data):
+		if('debugenabled' in data['admin']):
+			if(data['admin']['debugenabled'] == 'true'):
+				settings['globals']['debug_mode'] = True
+				WriteSettings(settings)
+				WriteLog('Debug Mode Enabled.')
+			else:
+				WriteLog('Debug Mode Disabled.')
+				settings['globals']['debug_mode'] = False
+				WriteSettings(settings)
+
+		if('clearhistory' in data['admin']):
+			if(data['admin']['clearhistory'] == 'true'):
+				WriteLog('Clearing History Log.')
+				ReadHistory(0, flushhistory=True)
+
+		if('clearevents' in data['admin']):
+			if(data['admin']['clearevents'] == 'true'):
+				WriteLog('Clearing Events Log.')
+				os.system('rm /tmp/events.log')
+
+		if('clearpelletdb' in data['admin']):
+			if(data['admin']['clearpelletdb'] == 'true'):
+				WriteLog('Clearing Pellet Database.')
+				os.system('rm pelletdb.json')
+
+		if('clearpelletdblog' in data['admin']):
+			if(data['admin']['clearpelletdblog'] == 'true'):
+				WriteLog('Clearing Pellet Database Log.')
+				pelletdb['log'].clear()
+				WritePelletDB(pelletdb)
+
+		if('factorydefaults' in data['admin']):
+			if(data['admin']['factorydefaults'] == 'true'):
+				WriteLog('Resetting Settings, Control, History to factory defaults.')
+				ReadHistory(0, flushhistory=True)
+				ReadControl(flush=True)
+				os.system('rm settings.json')
+				settings = DefaultSettings()
+				control = DefaultControl()
+				WriteSettings(settings)
+				WriteControl(control)
+
+		if('reboot' in data['admin']):
+			if(data['admin']['reboot'] == 'true'):
+				event = "Admin: Reboot"
+				WriteLog(event)
+				os.system("sleep 3 && sudo reboot &")
+
+		if('shutdown' in data['admin']):
+			if(data['admin']['shutdown'] == 'true'):
+				event = "Admin: Shutdown"
+				WriteLog(event)
+				os.system("sleep 3 && sudo shutdown -h now &")
+	
+
 settings = ReadSettings()
 
 if __name__ == '__main__':
 	if(settings['modules']['grillplat'] == 'prototype'):
-		app.run(host='0.0.0.0',debug=True) # Use this instead of the above line for debug mode
+		socketio.run(app, host='0.0.0.0', debug=True)
 	else:
-		app.run(host='0.0.0.0')
+		socketio.run(app, host='0.0.0.0')

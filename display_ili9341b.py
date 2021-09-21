@@ -21,12 +21,14 @@
 # *****************************************
 # Imported Libraries
 # *****************************************
-from RPi import GPIO
+from gpiozero import Button
 from luma.core.interface.serial import spi
 from luma.core.render import canvas
 from luma.lcd.device import ili9341
 from PIL import Image, ImageDraw, ImageFont
 import time
+import socket
+import qrcode
 from common import ReadControl, WriteControl  # Common Library for WebUI and Control Program
 
 class Display:
@@ -41,24 +43,19 @@ class Display:
 		# Init GPIO for button input, setup callbacks: Uncomment to utilize GPIO input
 		self.up = 16 	# UP - GPIO16
 		self.down = 20	# DOWN - GPIO20
-		self.enter = 21 # ENTER - GPIO21 
-
-		GPIO.setmode(GPIO.BCM)
-		GPIO.setup(self.up, GPIO.IN)
-		GPIO.setup(self.down, GPIO.IN)
-		GPIO.setup(self.enter, GPIO.IN)
-
-		#GPIO.add_event_detect(self.up, GPIO.FALLING, callback=self.UpCallback, bouncetime=300)  
-		#GPIO.add_event_detect(self.down, GPIO.FALLING, callback=self.DownCallback, bouncetime=300) 
-		#GPIO.add_event_detect(self.enter, GPIO.FALLING, callback=self.EnterCallback, bouncetime=300)
+		self.enter = 21 # ENTER - GPIO21
 
 		# ==== Buttons Setup =====
 		if buttonslevel == 'HIGH':
 			# Defines for input buttons level HIGH
-			self.BUTTON_INPUT = 0
+			self.BUTTON_INPUT = True
 		else:
 			# Defines for input buttons level LOW
-			self.BUTTON_INPUT = 1
+			self.BUTTON_INPUT = False
+
+		self.upButton = Button(pin=self.up, pull_up=self.BUTTON_INPUT)
+		self.downButton = Button(pin=self.down, pull_up=self.BUTTON_INPUT, hold_time=2) 
+		self.enterButton = Button(pin=self.enter, pull_up=self.BUTTON_INPUT)
 
 		# ==== Menu Setup =====
 		self.displayactive = False
@@ -359,6 +356,46 @@ class Display:
 		self.device.backlight(True)
 		self.device.show()
 		self.device.display(img)
+
+	def DisplayNetwork(self):
+		self.displayactive = True
+
+		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		s.connect(("8.8.8.8", 80))
+		networkip = s.getsockname()[0]
+
+		if (networkip != ''):
+			# Create canvas
+			img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(255, 255, 255))
+
+			img_qr = qrcode.make('http://' + networkip)
+
+			img_qr_width, img_qr_height = img_qr.size
+			img_qr_width *= 2
+			img_qr_height *= 2
+
+			new_image = img_qr.resize((self.WIDTH, self.HEIGHT))
+
+			#position = ((self.WIDTH - img_qr_width)//2, (self.HEIGHT - img_qr_height)//2)
+
+			position = (0,0)
+
+			img.paste(new_image, position)
+
+			# Display Image
+			self.device.backlight(True)
+			self.device.show()
+			self.device.display(img)
+
+			time.sleep(30)
+
+			# Clear display after timeout	
+			self.ClearDisplay()
+		else:
+			self.DisplayText("No IP Found")
+			time.sleep(10)
+			# Clear display	after timeout	
+			self.ClearDisplay()
 	
 	def rounded_rectangle(self, draw, xy, rad, fill=None):
 		x0, y0, x1, y1 = xy
@@ -373,13 +410,17 @@ class Display:
 	# ====================== Menu Code ========================
 
 	def EventDetect(self):
-		if(GPIO.input(self.up) == self.BUTTON_INPUT):
+
+		if(self.downButton.is_held):
+			self.HoldCallback(self.down)
+
+		if(self.upButton.is_pressed):
 			self.UpCallback(self.up)
 
-		if(GPIO.input(self.down) == self.BUTTON_INPUT):
+		if(self.downButton.is_pressed):
 			self.DownCallback(self.down)
 
-		if(GPIO.input(self.enter) == self.BUTTON_INPUT):
+		if(self.enterButton.is_pressed):
 			self.EnterCallback(self.enter)
 
 		if(self.displayactive == False) and (time.time() - self.menutime > 5) and (self.menuactive == True):
@@ -403,6 +444,11 @@ class Display:
 		self.menuactive = True
 		self.menutime = time.time()
 		self.MenuDisplay('enter')
+
+	def HoldCallback(self, pin):
+		self.menuactive = True
+		self.menutime = time.time()
+		self.DisplayNetwork()
 
 	def MenuDisplay(self, action):
 		# If menu is not currently being displayed, check mode and draw menu
@@ -632,4 +678,3 @@ class Display:
 		self.device.backlight(True)
 		self.device.show()
 		self.device.display(img)
-

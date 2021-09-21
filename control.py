@@ -183,9 +183,9 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 	# Safety Controls
 	if ((mode == 'Startup') or (mode == 'Reignite')):
 		#control = ReadControl()  # Read Modify Write
-		control['safety']['startuptemp'] = max((GrillTemp*0.9), settings['safety']['minstartuptemp'])
-		control['safety']['startuptemp'] = min(control['safety']['startuptemp'], settings['safety']['maxstartuptemp'])
-		control['safety']['afterstarttemp'] = GrillTemp
+		control['safety']['startuptemp'] = int(max((GrillTemp*0.9), settings['safety']['minstartuptemp']))
+		control['safety']['startuptemp'] = int(min(control['safety']['startuptemp'], settings['safety']['maxstartuptemp']))
+		control['safety']['afterstarttemp'] = int(GrillTemp)
 		WriteControl(control)
 	# Check if the temperature of the grill dropped below the startuptemperature 
 	elif ((mode == 'Hold') or (mode == 'Smoke')):
@@ -199,12 +199,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 				control['mode'] = 'Error'
 				control['updated'] = True
 				WriteControl(control)
-				if(settings['ifttt']['APIKey'] != ''):
-					SendIFTTTNotification("Grill_Error_02", control, settings)
-				if(settings['pushbullet']['APIKey'] != ''):
-					SendPushBulletNotification("Grill_Error_02", control, settings)
-				if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
-					SendPushoverNotification("Grill_Error_02", control, settings)
+				SendNotifications("Grill_Error_02", control, settings)
 			else:
 				#control = ReadControl()  # Read Modify Write
 				control['safety']['reigniteretries'] -= 1
@@ -236,7 +231,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 	hoppertoggletime = starttime 
 
 	# Set time since last control check
-	controlchecktime = starttime 
+	controlchecktime = starttime
 
 	# Initialize Current Auger State Structure
 	current_output_status = {}
@@ -251,7 +246,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 		# Check for update in control status every 0.5 seconds 
 		if (now - controlchecktime > 0.5):
 			control = ReadControl()
-			controlchecktime = now 
+			controlchecktime = now
 
 		# Check if new mode has been requested 
 		if (control['updated'] == True):
@@ -373,15 +368,15 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 		# Check for button input event
 		display_device.EventDetect()
 		
-		# Send Current Status / Temperature Data to Display Device every 1 second
-		if(now - displaytoggletime > 1):
+		# Send Current Status / Temperature Data to Display Device every 0.5 second (Display Refresh)
+		if(now - displaytoggletime > 0.5):
 			status_data = GetStatus(grill_platform, control, settings, pelletdb)
 			display_device.DisplayStatus(in_data, status_data)
 			displaytoggletime = time.time() # Reset the displaytoggletime to current time
 
 		# Safety Controls
 		if ((mode == 'Startup') or (mode == 'Reignite')):
-			control['safety']['afterstarttemp'] = AvgGT
+			control['safety']['afterstarttemp'] = int(AvgGT)
 		elif ((mode == 'Hold') or (mode == 'Smoke')):
 			if (AvgGT < control['safety']['startuptemp']):
 				if(control['safety']['reigniteretries'] == 0):
@@ -393,12 +388,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 					control['mode'] = 'Error'
 					control['updated'] = True
 					WriteControl(control)
-					if(settings['ifttt']['APIKey'] != ''):
-						SendIFTTTNotification("Grill_Error_02", control, settings)
-					if(settings['pushbullet']['APIKey'] != ''):
-						SendPushBulletNotification("Grill_Error_02", control, settings)
-					if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
-						SendPushoverNotification("Grill_Error_02", control, settings)
+					SendNotifications("Grill_Error_02", control, settings)
 				else:
 					control['safety']['reigniteretries'] -= 1
 					control['safety']['reignitelaststate'] = mode 
@@ -420,12 +410,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 				control['mode'] = 'Error'
 				control['updated'] = True
 				WriteControl(control)
-				if(settings['ifttt']['APIKey'] != ''):
-					SendIFTTTNotification("Grill_Error_01", control, settings)
-				if(settings['pushbullet']['APIKey'] != ''):
-					SendPushBulletNotification("Grill_Error_01", control, settings)
-				if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
-					SendPushoverNotification("Grill_Error_01", control, settings)
+				SendNotifications("Grill_Error_01", control, settings)
 
 		# If in Smoke Plus Mode, Cycle the Fan
 		if(((mode == 'Smoke') or (mode == 'Hold')) and (control['s_plus'] == True)):
@@ -481,7 +466,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 			WriteLog(event)
 	if ((mode == 'Startup') or (mode == 'Reignite')):
 		#control = ReadControl()  # Read Modify Write
-		control['safety']['afterstarttemp'] = AvgGT
+		control['safety']['afterstarttemp'] = int(AvgGT)
 		WriteControl(control)
 	event = mode + ' mode ended.'
 	WriteLog(event)
@@ -542,7 +527,7 @@ def Monitor(grill_platform, adc_device, display_device, dist_device):
 	hoppertoggletime = now 
 
 	# Set time since last control check
-	controlchecktime = now 
+	controlchecktime = now
 
 	status = 'Active'
 
@@ -647,12 +632,7 @@ def Monitor(grill_platform, adc_device, display_device, dist_device):
 			control['updated'] = True
 			control['status'] = 'monitor'
 			WriteControl(control)
-			if(settings['ifttt']['APIKey'] != ''):
-				SendIFTTTNotification("Grill_Error_01", control, settings)
-			if(settings['pushbullet']['APIKey'] != ''):
-				SendPushBulletNotification("Grill_Error_01", control, settings)
-			if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
-				SendPushoverNotification("Grill_Error_01", control, settings)
+			SendNotifications("Grill_Error_01", control, settings)
 
 		time.sleep(0.05)
 
@@ -960,10 +940,77 @@ def SendPushBulletNotification(notifyevent, control, settings):
 
 	try:
 		pb = Pushbullet(api_key)
-		push = pb.push_link(subjectmessage, pushbullet_link, notifymessage)
+		pb.push_link(subjectmessage, pushbullet_link, notifymessage)
 		WriteLog("Pushbullet Notification Success: " + subjectmessage)
 	except:
 		WriteLog("Pushbullet Notification Failed: " + subjectmessage)
+
+# ******************************
+# Send Firebase Notifications
+# ******************************
+
+def SendFirebaseNotification(notifyevent, control, settings):
+	date = datetime.datetime.now()
+	now = date.strftime('%m-%d %H:%M')
+	time = date.strftime('%H:%M')
+	day = date.strftime('%m/%d')
+
+	if "Grill_Temp_Achieved" in notifyevent:
+		titlemessage = "Grill Setpoint Achieved"
+		bodymessage = "Grill setpoint of " + str(control['setpoints']['grill']) + "F achieved at " + str(time) + " on " + str(day)
+	elif "Probe1_Temp_Achieved" in notifyevent:
+		titlemessage = "Probe 1 Setpoint Achieved"
+		bodymessage = "Probe 1 setpoint of " + str(control['setpoints']['probe1']) + "F achieved at " + str(time) + " on " + str(day)
+	elif "Probe2_Temp_Achieved" in notifyevent:
+		titlemessage = "Probe 2 Setpoint Achieved"
+		bodymessage = "Probe 2 setpoint of " + str(control['setpoints']['probe2']) + "F achieved at " + str(time) + " on " + str(day)
+	elif "Timer_Expired" in notifyevent:
+		titlemessage = "Grill Timer Complete"
+		bodymessage = "Your grill timer has expired, time to check your cook!"
+	elif "Grill_Error_00" in notifyevent:
+		titlemessage = "Grill Error!"
+		bodymessage = "Your grill has experienced an error and will shutdown now. " + str(now)
+	elif "Grill_Error_01" in notifyevent:
+		titlemessage = "Grill Error!"
+		bodymessage = "Grill exceded maximum temperature limit of " + str(settings['safety']['maxtemp']) + "F! Shutting down." + str(now)
+	elif "Grill_Error_02" in notifyevent:
+		titlemessage = "Grill Error!"
+		bodymessage = "Grill temperature dropped below minimum startup temperature of " + str(control['safety']['startuptemp']) + "F! Shutting down to prevent firepot overload." + str(now)
+	elif "Grill_Warning" in notifyevent:
+		titlemessage = "Grill Warning!"
+		bodymessage = "Your grill has experienced a warning condition. Please check the logs."  + str(now)
+	else:
+		titlemessage = "PiFire: Unknown Notification issue"
+		bodymessage = "Whoops! PiFire had the following unhandled notify event: " + notifyevent + " at " + str(now)
+
+	serverToken = settings['firebase']['ServerKey']
+	topic = settings['firebase']['topic']
+
+	headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'key=' + serverToken,
+      }
+
+	body = {
+		'notification': {'title': titlemessage,
+                            'body': bodymessage
+                            },
+          'to':
+              '/topics/' + topic,
+          'priority': 'high',
+        #   'data': dataPayLoad,
+        }
+		
+	response = requests.post("https://fcm.googleapis.com/fcm/send", headers = headers, data=json.dumps(body))
+
+	if(response.status_code == 200):
+		WriteLog("Firebase Notification Success: " + titlemessage)
+	else:
+		WriteLog("FirebaseNotification Failed: " + titlemessage)
+
+	if(settings['modules']['grillplat'] == 'prototype'):
+		print(response.status_code)
+		print(response.json())
 
 # ******************************
 # Send IFTTT Notifications
@@ -1003,6 +1050,21 @@ def SendIFTTTNotification(notifyevent, control, settings):
 		WriteLog("IFTTT Notification Failed: " + r.text)
 
 # ******************************
+# Send Notifications
+# ******************************
+
+def SendNotifications(notifyevent, control, settings):
+
+	if(settings['ifttt']['APIKey'] != '' and settings['ifttt']['enabled'] == True):
+		SendIFTTTNotification(notifyevent, control, settings)
+	if(settings['pushbullet']['APIKey'] != '' and settings['pushbullet']['enabled'] == True):
+		SendPushBulletNotification(notifyevent, control, settings)
+	if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != '' and settings['pushover']['enabled'] == True):
+		SendPushoverNotification(notifyevent, control, settings)
+	if(settings['firebase']['ServerKey'] != '' and settings['firebase']['enabled'] == True):
+		SendFirebaseNotification(notifyevent, control, settings)
+
+# ******************************
 # Check for any pending notifications
 # ******************************
 
@@ -1013,21 +1075,11 @@ def CheckNotify(in_data, control, settings):
 			#control = ReadControl()  # Read Modify Write
 			control['notify_req']['grill'] = False
 			WriteControl(control)
-			if(settings['ifttt']['APIKey'] != ''):
-				SendIFTTTNotification("Grill_Temp_Achieved", control, settings)
-			if(settings['pushbullet']['APIKey'] != ''):
-				SendPushBulletNotification("Grill_Temp_Achieved", control, settings)
-			if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
-				SendPushoverNotification("Grill_Temp_Achieved", control, settings)
+			SendNotifications("Grill_Temp_Achieved", control, settings)
 
 	if (control['notify_req']['probe1']):
 		if (in_data['Probe1Temp'] >= control['setpoints']['probe1']):
-			if(settings['ifttt']['APIKey'] != ''):
-				SendIFTTTNotification("Probe1_Temp_Achieved", control, settings)
-			if(settings['pushbullet']['APIKey'] != ''):
-				SendPushBulletNotification("Probe1_Temp_Achieved", control, settings)
-			if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
-				SendPushoverNotification("Probe1_Temp_Achieved", control, settings)
+			SendNotifications("Probe1_Temp_Achieved", control, settings)
 			#control = ReadControl()  # Read Modify Write
 			control['notify_req']['probe1'] = False
 			if(control['notify_data']['p1_shutdown'] == True)and((control['mode'] == 'Smoke')or(control['mode'] == 'Hold')or(control['mode'] == 'Startup')or(control['mode'] == 'Reignite')):
@@ -1037,12 +1089,7 @@ def CheckNotify(in_data, control, settings):
 
 	if (control['notify_req']['probe2']):
 		if (in_data['Probe2Temp'] >= control['setpoints']['probe2']):
-			if(settings['ifttt']['APIKey'] != ''):
-				SendIFTTTNotification("Probe2_Temp_Achieved", control, settings)
-			if(settings['pushbullet']['APIKey'] != ''):
-				SendPushBulletNotification("Probe2_Temp_Achieved", control, settings)
-			if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
-				SendPushoverNotification("Probe2_Temp_Achieved", control, settings)
+			SendNotifications("Probe2_Temp_Achieved", control, settings)
 			#control = ReadControl()  # Read Modify Write
 			control['notify_req']['probe2'] = False
 			if(control['notify_data']['p2_shutdown'] == True)and((control['mode'] == 'Smoke')or(control['mode'] == 'Hold')or(control['mode'] == 'Startup')or(control['mode'] == 'Reignite')):
@@ -1052,12 +1099,7 @@ def CheckNotify(in_data, control, settings):
 
 	if (control['notify_req']['timer']):
 		if (time.time() >= control['timer']['end']):
-			if(settings['ifttt']['APIKey'] != ''):
-				SendIFTTTNotification("Timer_Expired", control, settings)
-			if(settings['pushbullet']['APIKey'] != ''):
-				SendPushBulletNotification("Timer_Expired", control, settings)
-			if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != ''):
-				SendPushoverNotification("Timer_Expired", control, settings)
+			SendNotifications("Timer_Expired", control, settings)
 			#control = ReadControl()  # Read Modify Write
 			if(control['notify_data']['timer_shutdown'] == True)and((control['mode'] == 'Smoke')or(control['mode'] == 'Hold')or(control['mode'] == 'Startup')or(control['mode'] == 'Reignite')):
 				control['mode'] = 'Shutdown'
@@ -1118,7 +1160,7 @@ adc_device = ReadADC(settings['probe_settings']['probe_profiles'][grill0type], s
 pelletdb = ReadPelletDB()
 
 # Start Distance Sensor Object for Hopper
-dist_device = HopperLevel(pelletdb['empty'])
+dist_device = HopperLevel(settings['pelletlevel']['empty'], settings['pelletlevel']['full'])
 
 # Get current hopper level and save it to the current pellet information
 pelletdb['current']['hopper_level'] = dist_device.GetLevel()
@@ -1128,16 +1170,12 @@ if(settings['globals']['debug_mode'] == True):
 	print(event)
 	WriteLog(event)
 
-# Initialize Temp files
-#  Remove existing control file
-if(settings['globals']['debug_mode'] == True):
-	event = '* Removing /tmp/control.json.'
-	print(event)
-	WriteLog(event)
-os.system('rm /tmp/control.json')
-
-#  Create /tmp/control.json file
-control = ReadControl()
+#  Flush Redis DB and create JSON structure
+control = ReadControl(flush=True)
+#  Delete Redis DB for history / current
+ReadHistory(0, flushhistory=True)
+event = 'Flushing Redis DB and creating new control structure'
+WriteLog(event)
 
 #  Create /logs/event.log file
 event = 'Control Script Starting Up.'
@@ -1206,7 +1244,7 @@ while True:
 				control['status'] = 'inactive'
 				event = "Stop Mode Started."
 				# Reset Control to Defaults
-				control = DefaultControl()
+				control = ReadControl(flush=True)
 				control['updated'] = False
 				WriteControl(control)
 			else:
@@ -1218,9 +1256,8 @@ while True:
 				control['updated'] = False
 				WriteControl(control)
 
-			curfile = open("/tmp/current.log", "w") # Write current data to current.log file
-			curfile.write('00:00:0 0 0 0 0 0 0')
-			curfile.close()
+			ReadCurrent(zero_out=True)  # Zero out the current values
+
 			WriteLog(event)
 
 		#	Startup (startup sequence)
@@ -1228,14 +1265,13 @@ while True:
 			if(grill_platform.GetInputStatus() == 1):
 				event = "Warning: PiFire is set to OFF. This doesn't prevent startup, but this means the switch won't behave as normal."
 				WriteLog(event)
-			#settings = ReadSettings()
+			settings = ReadSettings()
 			if(settings['history_page']['clearhistoryonstart'] == True):
 				if(settings['globals']['debug_mode'] == True):
 					event = '* Clearing History and Current Log on Startup Mode.'
 					print(event)
 					WriteLog(event)
-				os.system('rm /tmp/history.log')
-				os.system('rm /tmp/current.log')
+				ReadHistory(0, flushhistory=True)  # Clear all history 
 			WorkCycle('Startup', grill_platform, adc_device, display_device, dist_device)
 			control = ReadControl()
 			# If mode is Startup, then assume you can transition into smoke mode
