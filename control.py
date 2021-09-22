@@ -1162,6 +1162,7 @@ pelletdb = ReadPelletDB()
 # Start Distance Sensor Object for Hopper
 dist_device = HopperLevel(settings['pelletlevel']['empty'], settings['pelletlevel']['full'])
 
+
 # Get current hopper level and save it to the current pellet information
 pelletdb['current']['hopper_level'] = dist_device.GetLevel()
 WritePelletDB(pelletdb)

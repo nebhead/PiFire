@@ -55,6 +55,9 @@ class HopperLevel:
 		if AvgDist <= self.full: 
 			level = 100
 		
+		# If Average Distance is less than the full distance, we are at 100%
+		if AvgDist <= self.full: 
+			level = 100
 		# If Average Distance is less than the empty distance, calculate percentage
 		elif AvgDist <= self.empty:
 			capacity = self.empty - self.full
@@ -63,5 +66,5 @@ class HopperLevel:
 		# If Average Distance is higher than empty distance, report 0 level
 		else:
 			level = 0
-
+			
 		return(int(level))

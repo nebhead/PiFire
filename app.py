@@ -619,6 +619,7 @@ def settingspage(action=None):
 
 	settings = ReadSettings()
 	control = ReadControl()
+	pelletdb = ReadPelletDB()
 
 	event = {}
 
@@ -937,6 +938,7 @@ def settingspage(action=None):
 			event['type'] = 'updated'
 			event['text'] = 'Successfully updated grill name.'
 
+
 		WriteSettings(settings)
 
 	if (request.method == 'POST') and (action == 'pellets'):
@@ -953,7 +955,21 @@ def settingspage(action=None):
 
 		WriteSettings(settings)
 
-	return render_template('settings.html', settings=settings, alert=event, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
+	if (request.method == 'POST') and (action == 'pellets'):
+		response = request.form
+
+		if('empty' in response):
+			pelletdb['empty'] = int(response['empty'])
+		
+		if('full' in response):
+			pelletdb['full'] = int(response['full'])
+
+		event['type'] = 'updated'
+		event['text'] = 'Successfully updated pellet settings.'
+
+		WritePelletDB(pelletdb)
+
+	return render_template('settings.html', settings=settings, alert=event, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'], pelletdb=pelletdb)
 
 @app.route('/admin/<action>', methods=['POST','GET'])
 @app.route('/admin', methods=['POST','GET'])
