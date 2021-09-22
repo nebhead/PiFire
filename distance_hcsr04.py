@@ -50,6 +50,10 @@ class HopperLevel:
 
 	def GetLevel(self):
 		AvgDist = self.ultrasonic.raw_distance()  # Average Distance in cm
+
+		# If Average Distance is less than the full distance, we are at 100%
+		if AvgDist <= self.full: 
+			level = 100
 		
 		# If Average Distance is less than the full distance, we are at 100%
 		if AvgDist <= self.full: 

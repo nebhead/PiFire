@@ -24,8 +24,6 @@ from common import WriteLog
 class HopperLevel:
 
 	def __init__(self, empty=22, full=4):
-		# Create a VL53L0X object as tof (time-of-flight)
-		self.tof = VL53L0X.VL53L0X(i2c_bus=1,i2c_address=0x29)
 		self.empty = empty # Empty is greater than 30cm distance measured
 		self.full = full # Full is less than or equal to the minimum full distance.
 		
@@ -35,10 +33,19 @@ class HopperLevel:
 			# Set defaults that are valid
 			self.empty = 22
 			self.full = 4
+		self.__startsensor()
+
+	def __startsensor(self):
+		# Create a VL53L0X object as tof (time-of-flight)
+		self.tof = VL53L0X.VL53L0X(i2c_bus=1,i2c_address=0x29)
 		# Open Sensor
 		self.tof.open()
 		# Start ranging
 		self.tof.start_ranging(VL53L0X.Vl53l0xAccuracyMode.BETTER)
+
+	def __stopsensor(self):
+		self.tof.stop_ranging()
+		self.tof.close()
 
 	def SetLevel(self, level=100):
 		# Do nothing
@@ -51,6 +58,8 @@ class HopperLevel:
 
 		# Read the sensor multiple times and average the result
 		AvgDist = 0
+		start_time = time.time()
+
 		for reading in range(3):
 			distance = self.tof.get_distance()
 			if distance > 0:
@@ -63,8 +72,8 @@ class HopperLevel:
 		# Convert mm to cm 
 		AvgDist = AvgDist / 10 
 		event = 'Average Distance Measured: ' + str(AvgDist) + 'cm'
-		WriteLog(event)
-		
+		WriteLog(event)	
+
 		# If Average Distance is less than the full distance, we are at 100%
 		if AvgDist <= self.full: 
 			level = 100
@@ -77,7 +86,10 @@ class HopperLevel:
 		else:
 			level = 0
 
-		#self.tof.stop_ranging()
-		#self.tof.close()
-		
+		# If it took a long time to get sensor data, then the sensor might be having issues
+		if(time.time() - start_time > 0.5):
+			self.__startsensor()  # Attempt re-init of sensor
+			event = 'Warning: The TOF sensor took longer than normal to get a reading.  Re-initializing the sensor.'
+			WriteLog(event)	
+	
 		return(int(level))

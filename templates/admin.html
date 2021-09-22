@@ -101,6 +101,34 @@
 				</div>
 				<br>
 
+				<!-- Clear Pellets Log Button -->
+				<button type="button" class="btn btn-outline-warning btn-block text-red shadow" data-toggle="modal" data-target="#clearpelletbdlogModal">
+					Delete Pellets Log
+				</button>
+
+				<!-- Clear Pellet Log Modal -->
+				<div class="modal" id="clearpelletbdlogModal">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<!-- Modal Header -->
+							<div class="modal-header">
+								<h4 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Clear Pellets Log</h4>
+								<button type="button" class="close" data-dismiss="modal">&times;</button>
+							</div>
+							<!-- Modal body -->
+							<div class="modal-body text-center">
+								Are you sure that you want to permanently delete the pellets log?  This operation cannot be undone.
+							</div>
+							<!-- Modal footer -->
+							<div class="modal-footer">
+								<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+								<button type="submit" class="btn btn-danger" name="clearpelletdblog" value="true">I'm Sure.</button>
+							</div>
+						</div>
+					</div>
+				</div>
+				<br>
+
 				<!-- Clear PelletDB Button -->
 				<button type="button" class="btn btn-outline-warning btn-block text-red shadow" data-toggle="modal" data-target="#clearallpelletModal">
 					Delete Pellet Database
@@ -164,7 +192,6 @@
 			</div>
 		</div>
 	<br>
-
 
     <!-- System Power Card -->
 	<div class="card shadow">
@@ -233,6 +260,47 @@
 					</div>
 				</div>
 			</form>
+		</div>
+	</div>
+	<br>
+
+	<!-- QR Code Card -->
+	<div class="card shadow">
+		<div class="card-header bg-secondary text-white">
+			<h5><i class="fas fa-qrcode"></i>&nbsp; QR Code</h5>
+		</div>
+		<div class="card-body">
+	
+			<!-- QR Code -->
+			<button type="button" class="btn btn-outline-secondary btn-block shadow" data-toggle="modal" data-target="#qrModal">
+					Generate QR Code
+			</button>
+	
+			<!-- Factory Settings Modal -->
+				<div class="modal" id="qrModal">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<!-- Modal Header -->
+							<div class="modal-header">
+								<h4 class="modal-title"><i class="fas fa-qrcode"></i> QR Code</h4>
+								<button type="button" class="close" data-dismiss="modal">&times;</button>
+							</div>
+							<!-- Modal body -->
+							<div class="modal-body text-center">
+								Scan QR Code to setup application
+								<br>
+								<br>
+								{{ qr_content }}
+								<br>
+								<img src="{{ qrcode(qr_content) }}">
+							</div>
+							<!-- Modal footer -->
+							<div class="modal-footer">
+								<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
+							</div>
+						</div>
+					</div>
+				</div>
 		</div>
 	</div>
 	<br>

@@ -371,7 +371,7 @@ $(document).ready(function(){
                     };
                 };
             });
-        }, 2000);
+        }, 1000); // Update every 1 second 
         
     });
 
