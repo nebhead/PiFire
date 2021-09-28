@@ -47,6 +47,7 @@ def DefaultSettings():
 		'triggerlevel' : 'LOW',
 		'buttonslevel' : 'HIGH',
 		'shutdown_timer' : 60,
+		'four_probes' : False,
 		'units' : 'F'
 	}
 

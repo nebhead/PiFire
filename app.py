@@ -15,7 +15,8 @@
 from flask import Flask, request, render_template, make_response, send_file, jsonify, redirect
 from flask_socketio import SocketIO
 from flask_qrcode import QRcode
-from threading import Thread, Event
+import threading
+from threading import Thread
 from datetime import timedelta
 import time
 import os
@@ -29,7 +30,7 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 QRcode(app)
 
 thread = Thread()
-thread_stop_event = Event()
+thread_lock = threading.Lock()
 
 clients = 0
 
@@ -1301,8 +1302,6 @@ def disconnect():
 	global thread
 	global clients
 	clients -= 1
-	if(clients <= 0):
-		thread_stop_event.set()
 		
 	if(clients == 0):
 		print('All clients disconnected')
@@ -1310,18 +1309,22 @@ def disconnect():
 		print(clients, 'Client(s) connected')
 
 @socketio.on('request_grill_data')
-def request_grill_data():
+def request_grill_data(force=False):
 	settings = ReadSettings()
 	if(settings['modules']['grillplat'] == 'prototype'):
 		print('Client requesting grill data')
 
 	global thread
+	global force_refresh
+	force_refresh = force
 
-	if not thread.isAlive():
-		thread = socketio.start_background_task(emitGrillData())
+	with thread_lock:
+		if not thread.isAlive():
+			thread = socketio.start_background_task(emitGrillData)
 
 def emitGrillData():
 	global clients
+	global force_refresh
 	previous_data = ''
 
 	while (clients > 0):
@@ -1391,7 +1394,13 @@ def emitGrillData():
 			'hopper_level' : pelletdb['current']['hopper_level']
 			}
 		
-		if(previous_data != current_data):
+		if(force_refresh):
+			if(settings['modules']['grillplat'] == 'prototype'):
+				print('Sending forced grill data')
+			socketio.emit('grill_control_data', current_data, broadcast=True)
+			force_refresh=False
+			socketio.sleep(2)
+		elif(previous_data != current_data):
 			if(settings['modules']['grillplat'] == 'prototype'):
 				print('Sending updated grill data')
 			socketio.emit('grill_control_data', current_data, broadcast=True)
