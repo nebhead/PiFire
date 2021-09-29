@@ -1628,10 +1628,8 @@ def update_control(json_data):
 				control['mode'] = 'Smoke'
 		if('setmodesmokeplus' in data['setmode']):
 			if(data['setmode']['setmodesmokeplus']=='true'):
-				control['updated'] = True
 				control['s_plus'] = True
 			else:
-				control['updated'] = True
 				control['s_plus'] = False 
 			WriteControl(control)
 
