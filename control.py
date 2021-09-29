@@ -236,6 +236,9 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 	# Initialize Current Auger State Structure
 	current_output_status = {}
 
+	# Set Hold Mode Target Temp Boolean
+	target_temp_achieved = False
+
 	# ============ Main Work Cycle ============
 	while(status == 'Active'):
 		now = time.time()
@@ -412,8 +415,12 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 				WriteControl(control)
 				SendNotifications("Grill_Error_01", control, settings)
 
+		# Check if target temperature has been achieved before utilizing Smoke Plus Mode
+		if((mode == 'Hold') and (AvgGT >= control['setpoints']['grill']) and (target_temp_achieved==False)):
+			target_temp_achieved = True
+			
 		# If in Smoke Plus Mode, Cycle the Fan
-		if(((mode == 'Smoke') or (mode == 'Hold')) and (control['s_plus'] == True)):
+		if(((mode == 'Smoke') or ((mode == 'Hold') and (target_temp_achieved))) and (control['s_plus'] == True)):
 			# If Temperature is > settings['smoke_plus']['max_temp'] then turn on fan
 			if(AvgGT > settings['smoke_plus']['max_temp']):
 				grill_platform.FanOn()
