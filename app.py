@@ -185,10 +185,8 @@ def dash(action=None):
 				control['mode'] = 'Smoke'
 		if('setmodesmokeplus' in response):
 			if(response['setmodesmokeplus']=='true'):
-				control['updated'] = True
 				control['s_plus'] = True
 			else:
-				control['updated'] = True
 				control['s_plus'] = False 
 			WriteControl(control)
 

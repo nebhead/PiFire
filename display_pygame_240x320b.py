@@ -556,7 +556,6 @@ class Display:
 						control['s_plus'] = False
 					else:
 						control['s_plus'] = True
-					control['updated'] = True
 					WriteControl(control)
 
 		# Create canvas

@@ -243,8 +243,8 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 		# Check for button input event
 		display_device.EventDetect()
 
-		# Check for update in control status every 0.5 seconds 
-		if (now - controlchecktime > 0.5):
+		# Check for update in control status every 0.1 seconds 
+		if (now - controlchecktime > 0.1):
 			control = ReadControl()
 			controlchecktime = now
 

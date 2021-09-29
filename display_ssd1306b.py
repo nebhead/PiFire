@@ -348,7 +348,6 @@ class Display:
 						control['s_plus'] = False
 					else:
 						control['s_plus'] = True
-					control['updated'] = True
 					WriteControl(control)
 
 		if(self.menu['current']['mode'] == 'grill_hold_value'):
