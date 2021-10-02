@@ -62,14 +62,14 @@ def dash(action=None):
 						control['timer']['end'] = now + 60
 					if('shutdownTimer' in response):
 						control['notify_data']['timer_shutdown'] = True 
-					WriteLog('Timer started.  Ends at: ' + str(control['timer']['end']))
+					WriteLog('Timer started.  Ends at: ' + epoch_to_time(control['timer']['end']))
 					WriteControl(control)
 				else:	# If Timer was paused, restart with new end time.
 					now = time.time()
 					control['timer']['end'] = (control['timer']['end'] - control['timer']['paused']) + now
 					#control['timer']['start'] = now
 					control['timer']['paused'] = 0
-					WriteLog('Timer unpaused.  Ends at: ' + str(control['timer']['end']))
+					WriteLog('Timer unpaused.  Ends at: ' + epoch_to_time(control['timer']['end']))
 					WriteControl(control)
 		if('pause' in response):
 			if(response['pause']=='true'):
@@ -232,14 +232,14 @@ def historypage(action=None):
 						control['timer']['end'] = now + seconds
 					else:
 						control['timer']['end'] = now + 60
-					WriteLog('Timer started.  Ends at: ' + str(control['timer']['end']))
+					WriteLog('Timer started.  Ends at: ' + epoch_to_time(control['timer']['end']))
 					WriteControl(control)
 				else:	# If Timer was paused, restart with new end time.
 					now = time.time()
 					control['timer']['end'] = (control['timer']['end'] - control['timer']['paused']) + now
 					control['timer']['start'] = now
 					control['timer']['paused'] = 0
-					WriteLog('Timer unpaused.  Ends at: ' + str(control['timer']['end']))
+					WriteLog('Timer unpaused.  Ends at: ' + epoch_to_time(control['timer']['end']))
 					WriteControl(control)
 		if('pause' in response):
 			if(response['pause']=='true'):
@@ -1289,6 +1289,10 @@ def str_td(td):
     s2 = s[:-1] + [a]
     return ", ".join(s2)
 
+def epoch_to_time(epoch):
+	end_time =  datetime.datetime.fromtimestamp(epoch)
+	return end_time.strftime("%H:%M:%S")
+
 @socketio.on("connect")
 def connect():
 	global clients
@@ -1439,8 +1443,6 @@ def request_event_data():
 		
 	event_list, num_events = ReadLog()
 
-	event_list.reverse()
-
 	events_list = {
 		'events_list' : event_list
 	}
@@ -1509,14 +1511,14 @@ def update_control(json_data):
 						###### TODO - Need to implement this
 					if('shutdownTimer' in data['timer']):
 						control['notify_data']['timer_shutdown'] = True 
-					WriteLog('Timer started.  Ends at: ' + str(control['timer']['end']))
+					WriteLog('Timer started.  Ends at: ' + epoch_to_time(control['timer']['end']))
 					WriteControl(control)
 				else:	# If Timer was paused, restart with new end time.
 					now = time.time()
 					control['timer']['end'] = (control['timer']['end'] - control['timer']['paused']) + now
 					#control['timer']['start'] = now
 					control['timer']['paused'] = 0
-					WriteLog('Timer unpaused.  Ends at: ' + str(control['timer']['end']))
+					WriteLog('Timer unpaused.  Ends at: ' + epoch_to_time(control['timer']['end']))
 					WriteControl(control)
 		if('pause' in data['timer']):
 			if(data['timer']['pause']=='true'):

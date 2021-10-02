@@ -504,7 +504,7 @@ def ReadLog():
 	num_events = len(event_lines)
 
 	for x in range(num_events):
-		event_list.append(event_lines[x].split(" ",2))
+		event_list.insert(0, event_lines[x].split(" ",2))
 
 	# Error handling if number of events is less than 10, fill array with empty
 	if (num_events < 10):
