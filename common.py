@@ -561,8 +561,22 @@ def ReadHistory(num_items=0, flushhistory=False):
 			for index in range(len(data)):
 				data_list.append(data[index].split(' ', 6))  # Splits out each of the values into seperate list items 
 		else:
-			event = 'WARNING: History data is not present in database.'
+			event = 'WARNING: History data is not present in database. Creating Data Structure.'
 			WriteLog(event)
+			# Create Entry in Database
+			TempStruct = {
+				'GrillTemp': 0, 
+				'GrillSetPoint': 0,
+				'Probe1Temp': 0, 
+				'Probe1SetPoint': 0, 
+				'Probe2Temp': 0, 
+				'Probe2SetPoint': 0,
+				'GrillTr': 0,
+				'Probe1Tr': 0,
+				'Probe2Tr': 0
+			}
+			WriteHistory(TempStruct)
+			data_list = ReadHistory()
 
 	return(data_list)
 
