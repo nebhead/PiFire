@@ -1092,6 +1092,7 @@ def CheckNotify(in_data, control, settings):
 			if(control['notify_data']['p1_shutdown'] == True)and((control['mode'] == 'Smoke')or(control['mode'] == 'Hold')or(control['mode'] == 'Startup')or(control['mode'] == 'Reignite')):
 				control['mode'] = 'Shutdown'
 				control['updated'] = True
+				control['notify_data']['p1_shutdown'] = False
 			WriteControl(control)
 
 	if (control['notify_req']['probe2']):
@@ -1102,6 +1103,7 @@ def CheckNotify(in_data, control, settings):
 			if(control['notify_data']['p2_shutdown'] == True)and((control['mode'] == 'Smoke')or(control['mode'] == 'Hold')or(control['mode'] == 'Startup')or(control['mode'] == 'Reignite')):
 				control['mode'] = 'Shutdown'
 				control['updated'] = True
+				control['notify_data']['p2_shutdown'] = False
 			WriteControl(control)
 
 	if (control['notify_req']['timer']):
