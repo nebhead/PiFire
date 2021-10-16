@@ -387,6 +387,20 @@
                         </div>
                         <input id="derivtime" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['Td'] }}" value="{{ settings['cycle_data']['Td'] }}" name="derivtime">
                     </div>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" data-toggle="tooltip" title="Min Cycle Ratio [Default=0.15]">
+                                <i class="far fa-clock"></i>&nbsp; Min Cycle Ratio</span>
+                        </div>
+                        <input id="u_min" type="number" min="0.05" class="form-control" placeholder="{{ settings['cycle_data']['u_min'] }}" value="{{ settings['cycle_data']['u_min'] }}" name="u_min">
+                    </div>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" data-toggle="tooltip" title="Cycle Ratio Max [Default=1.0]">
+                                <i class="far fa-clock"></i>&nbsp; Max Cycle Ratio</span>
+                        </div>
+                        <input id="u_max" type="number" min="0.1" class="form-control" placeholder="{{ settings['cycle_data']['u_max'] }}" value="{{ settings['cycle_data']['u_max'] }}" name="u_max">
+                    </div>
                 </div>
                 <!-- End of card body -->
                 <div class="card-footer bg-light">

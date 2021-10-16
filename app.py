@@ -838,6 +838,12 @@ def settingspage(action=None):
 		if('derivtime' in response):
 			if(response['derivtime'] != ''):
 				settings['cycle_data']['Td'] = float(response['derivtime'])
+		if('u_min' in response):
+			if(response['u_min'] != ''):
+				settings['cycle_data']['u_min'] = float(response['u_min'])
+		if('u_max' in response):
+			if(response['u_max'] != ''):
+				settings['cycle_data']['u_max'] = float(response['u_max'])
 		if('sp_cycle' in response):
 			if(response['sp_cycle'] != ''):
 				settings['smoke_plus']['cycle'] = int(response['sp_cycle'])
@@ -1764,6 +1770,12 @@ def update_settings(json_data):
 		if('derivtime' in data['cycle']):
 			if(data['cycle']['derivtime'] != ''):
 				settings['cycle_data']['Td'] = float(data['cycle']['derivtime'])
+		if('u_min' in data['cycle']):
+			if(data['cycle']['u_min'] != ''):
+				settings['cycle_data']['u_min'] = float(data['cycle']['u_min'])
+		if('u_max' in data['cycle']):
+			if(data['cycle']['u_max'] != ''):
+				settings['cycle_data']['u_max'] = float(data['cycle']['u_max'])
 		if('sp_cycle' in data['cycle']):
 			if(data['cycle']['sp_cycle'] != ''):
 				settings['smoke_plus']['cycle'] = int(data['cycle']['sp_cycle'])
