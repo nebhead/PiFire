@@ -1870,6 +1870,12 @@ def update_pellet_data(json_data):
 			pelletdb['current']['date_loaded'] = now 
 			pelletdb['log'][now] = data['loadprofile']['profile']
 
+	if ('hoppercheck' in data):
+		if(data['hoppercheck']['hopperlevel'] == 'true'):
+			control = ReadControl()
+			control['hopper_check'] = True
+			WriteControl(control)
+
 	if ('editbrands' in data):
 		if('delBrand' in data['editbrands']):
 			delBrand = data['editbrands']['delBrand']
