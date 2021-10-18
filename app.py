@@ -67,7 +67,6 @@ def dash(action=None):
 				else:	# If Timer was paused, restart with new end time.
 					now = time.time()
 					control['timer']['end'] = (control['timer']['end'] - control['timer']['paused']) + now
-					#control['timer']['start'] = now
 					control['timer']['paused'] = 0
 					WriteLog('Timer unpaused.  Ends at: ' + epoch_to_time(control['timer']['end']))
 					WriteControl(control)
@@ -83,6 +82,7 @@ def dash(action=None):
 					control['notify_req']['timer'] = False
 					control['timer']['start'] = 0
 					control['timer']['end'] = 0
+					control['timer']['paused'] = 0
 					control['notify_data']['timer_shutdown'] = False 
 					WriteLog('Timer cleared.')
 					WriteControl(control)
@@ -91,6 +91,7 @@ def dash(action=None):
 				control['notify_req']['timer'] = False
 				control['timer']['start'] = 0
 				control['timer']['end'] = 0
+				control['timer']['paused'] = 0
 				control['notify_data']['timer_shutdown'] = False 
 				WriteLog('Timer stopped.')
 				WriteControl(control)
@@ -120,6 +121,7 @@ def dash(action=None):
 				WriteControl(control)
 			else:
 				control['notify_req']['probe1'] = False
+				control['notify_data']['p1_shutdown'] = False
 				control['setpoints']['probe1'] = 0
 				WriteControl(control)
 
@@ -133,6 +135,7 @@ def dash(action=None):
 				WriteControl(control)
 			else:
 				control['notify_req']['probe2'] = False
+				control['notify_data']['p2_shutdown'] = False
 				control['setpoints']['probe2'] = 0
 				WriteControl(control)
 
@@ -237,7 +240,6 @@ def historypage(action=None):
 				else:	# If Timer was paused, restart with new end time.
 					now = time.time()
 					control['timer']['end'] = (control['timer']['end'] - control['timer']['paused']) + now
-					control['timer']['start'] = now
 					control['timer']['paused'] = 0
 					WriteLog('Timer unpaused.  Ends at: ' + epoch_to_time(control['timer']['end']))
 					WriteControl(control)
@@ -253,6 +255,7 @@ def historypage(action=None):
 					control['notify_req']['timer'] = False
 					control['timer']['start'] = 0
 					control['timer']['end'] = 0
+					control['timer']['paused'] = 0
 					WriteLog('Timer cleared.')
 					WriteControl(control)
 		if('stop' in response):
@@ -260,6 +263,7 @@ def historypage(action=None):
 				control['notify_req']['timer'] = False
 				control['timer']['start'] = 0
 				control['timer']['end'] = 0
+				control['timer']['paused'] = 0
 				WriteLog('Timer stopped.')
 				WriteControl(control)
 
@@ -834,6 +838,12 @@ def settingspage(action=None):
 		if('derivtime' in response):
 			if(response['derivtime'] != ''):
 				settings['cycle_data']['Td'] = float(response['derivtime'])
+		if('u_min' in response):
+			if(response['u_min'] != ''):
+				settings['cycle_data']['u_min'] = float(response['u_min'])
+		if('u_max' in response):
+			if(response['u_max'] != ''):
+				settings['cycle_data']['u_max'] = float(response['u_max'])
 		if('sp_cycle' in response):
 			if(response['sp_cycle'] != ''):
 				settings['smoke_plus']['cycle'] = int(response['sp_cycle'])
@@ -1355,34 +1365,21 @@ def emitGrillData():
 
 		now = time.time()
 
-		if(control['timer']['end'] - now > 0):
-			now = time.time()
-			endtime = control['timer']['end']
-			maxtime = endtime - control['timer']['start']
-			
-			if(control['timer']['paused'] == 0):
-				distance = endtime - now
-			else:
-				distance = endtime - control['timer']['paused']
-
-			td_str = str_td(timedelta(seconds=distance + 60))
-			td_str_split = td_str.split(':')
-			timer_time = td_str_split[0] + ':' + td_str_split[1]
-			
+		if(control['timer']['end'] - now > 0 or bool(control['timer']['paused'])):
 			timer_info = {
-				'timer_max' : math.floor(maxtime // 60),
-				'timer_current' : math.floor(distance // 60 + 1),
-				'timer_time' : timer_time,
 				'timer_paused' : bool(control['timer']['paused']),
-				'timer_finished' : bool(distance < 0)
+				'timer_start_time' : math.trunc(control['timer']['start']),
+				'timer_end_time' : math.trunc(control['timer']['end']),
+				'timer_paused_time' : math.trunc(control['timer']['paused']),
+				'timer_active' : 'true'
 			}
 		else:
 			timer_info = {
-				'timer_max' : '0',
-				'timer_current' : '0',
-				'timer_time' : '00:00',
 				'timer_paused' : 'false',
-				'timer_finished' : 'true'
+				'timer_start_time' : '0',
+				'timer_end_time' : '0',
+				'timer_paused_time' : '0',
+				'timer_active' : 'false'
 			}
         
 		current_data = { 
@@ -1390,6 +1387,7 @@ def emitGrillData():
 			'probes_enabled' : enabled_probes, 
 			'set_points' : control['setpoints'], 
 			'notify_req' : control['notify_req'],
+			'notify_data' : control['notify_data'],
 			'timer_info' : timer_info, 
 			'current_mode' : control['mode'], 
 			'smoke_plus' : control['s_plus'], 
@@ -1504,11 +1502,8 @@ def update_control(json_data):
 						seconds = int(data['timer']['hoursInputRange']) * 60 * 60
 						seconds = seconds + int(data['timer']['minsInputRange']) * 60
 						control['timer']['end'] = now + seconds
-					#if('endtime' in data['timer']):
-						#control['timer']['end'] = int(round(now + 1000)) + data['timer']['endtime']
 					else:
 						control['timer']['end'] = now + 60
-						###### TODO - Need to implement this
 					if('shutdownTimer' in data['timer']):
 						control['notify_data']['timer_shutdown'] = True 
 					WriteLog('Timer started.  Ends at: ' + epoch_to_time(control['timer']['end']))
@@ -1516,7 +1511,6 @@ def update_control(json_data):
 				else:	# If Timer was paused, restart with new end time.
 					now = time.time()
 					control['timer']['end'] = (control['timer']['end'] - control['timer']['paused']) + now
-					#control['timer']['start'] = now
 					control['timer']['paused'] = 0
 					WriteLog('Timer unpaused.  Ends at: ' + epoch_to_time(control['timer']['end']))
 					WriteControl(control)
@@ -1532,6 +1526,7 @@ def update_control(json_data):
 					control['notify_req']['timer'] = False
 					control['timer']['start'] = 0
 					control['timer']['end'] = 0
+					control['timer']['paused'] = 0
 					control['notify_data']['timer_shutdown'] = False 
 					WriteLog('Timer cleared.')
 					WriteControl(control)
@@ -1540,6 +1535,7 @@ def update_control(json_data):
 				control['notify_req']['timer'] = False
 				control['timer']['start'] = 0
 				control['timer']['end'] = 0
+				control['timer']['paused'] = 0
 				control['notify_data']['timer_shutdown'] = False 
 				WriteLog('Timer stopped.')
 				WriteControl(control)
@@ -1567,6 +1563,7 @@ def update_control(json_data):
 				WriteControl(control)
 			else:
 				control['notify_req']['probe1'] = False
+				control['notify_data']['p1_shutdown'] = False
 				control['setpoints']['probe1'] = 0
 				WriteControl(control)
 
@@ -1580,6 +1577,7 @@ def update_control(json_data):
 				WriteControl(control)
 			else:
 				control['notify_req']['probe2'] = False
+				control['notify_data']['p2_shutdown'] = False
 				control['setpoints']['probe2'] = 0
 				WriteControl(control)
 
@@ -1772,6 +1770,12 @@ def update_settings(json_data):
 		if('derivtime' in data['cycle']):
 			if(data['cycle']['derivtime'] != ''):
 				settings['cycle_data']['Td'] = float(data['cycle']['derivtime'])
+		if('u_min' in data['cycle']):
+			if(data['cycle']['u_min'] != ''):
+				settings['cycle_data']['u_min'] = float(data['cycle']['u_min'])
+		if('u_max' in data['cycle']):
+			if(data['cycle']['u_max'] != ''):
+				settings['cycle_data']['u_max'] = float(data['cycle']['u_max'])
 		if('sp_cycle' in data['cycle']):
 			if(data['cycle']['sp_cycle'] != ''):
 				settings['smoke_plus']['cycle'] = int(data['cycle']['sp_cycle'])
@@ -1865,6 +1869,12 @@ def update_pellet_data(json_data):
 			now = now[0:19] # Truncate the microseconds
 			pelletdb['current']['date_loaded'] = now 
 			pelletdb['log'][now] = data['loadprofile']['profile']
+
+	if ('hoppercheck' in data):
+		if(data['hoppercheck']['hopperlevel'] == 'true'):
+			control = ReadControl()
+			control['hopper_check'] = True
+			WriteControl(control)
 
 	if ('editbrands' in data):
 		if('delBrand' in data['editbrands']):

@@ -965,30 +965,48 @@ def SendFirebaseNotification(notifyevent, control, settings):
 	if "Grill_Temp_Achieved" in notifyevent:
 		titlemessage = "Grill Setpoint Achieved"
 		bodymessage = "Grill setpoint of " + str(control['setpoints']['grill']) + "F achieved at " + str(time) + " on " + str(day)
+		sound = 'temp_achieved'
+		channel = 'pifire_temp_alerts'
 	elif "Probe1_Temp_Achieved" in notifyevent:
 		titlemessage = "Probe 1 Setpoint Achieved"
 		bodymessage = "Probe 1 setpoint of " + str(control['setpoints']['probe1']) + "F achieved at " + str(time) + " on " + str(day)
+		sound = 'temp_achieved'
+		channel = 'pifire_temp_alerts'
 	elif "Probe2_Temp_Achieved" in notifyevent:
 		titlemessage = "Probe 2 Setpoint Achieved"
 		bodymessage = "Probe 2 setpoint of " + str(control['setpoints']['probe2']) + "F achieved at " + str(time) + " on " + str(day)
+		sound = 'temp_achieved'
+		channel = 'pifire_temp_alerts'
 	elif "Timer_Expired" in notifyevent:
 		titlemessage = "Grill Timer Complete"
 		bodymessage = "Your grill timer has expired, time to check your cook!"
+		sound = 'timer_alarm'
+		channel = 'pifire_timer_alerts'
 	elif "Grill_Error_00" in notifyevent:
 		titlemessage = "Grill Error!"
 		bodymessage = "Your grill has experienced an error and will shutdown now. " + str(now)
+		sound = 'grill_error'
+		channel = 'pifire_error_alerts'
 	elif "Grill_Error_01" in notifyevent:
 		titlemessage = "Grill Error!"
 		bodymessage = "Grill exceded maximum temperature limit of " + str(settings['safety']['maxtemp']) + "F! Shutting down." + str(now)
+		sound = 'grill_error'
+		channel = 'pifire_error_alerts'
 	elif "Grill_Error_02" in notifyevent:
 		titlemessage = "Grill Error!"
 		bodymessage = "Grill temperature dropped below minimum startup temperature of " + str(control['safety']['startuptemp']) + "F! Shutting down to prevent firepot overload." + str(now)
+		sound = 'grill_error'
+		channel = 'pifire_error_alerts'
 	elif "Grill_Warning" in notifyevent:
 		titlemessage = "Grill Warning!"
 		bodymessage = "Your grill has experienced a warning condition. Please check the logs."  + str(now)
+		sound = 'grill_error'
+		channel = 'pifire_error_alerts'
 	else:
 		titlemessage = "PiFire: Unknown Notification issue"
 		bodymessage = "Whoops! PiFire had the following unhandled notify event: " + notifyevent + " at " + str(now)
+		sound = 'default'
+		channel = 'default'
 
 	serverToken = settings['firebase']['ServerKey']
 	topic = settings['firebase']['topic']
@@ -999,13 +1017,15 @@ def SendFirebaseNotification(notifyevent, control, settings):
       }
 
 	body = {
-		'notification': {'title': titlemessage,
-                            'body': bodymessage
-                            },
+		'notification': {
+			'title': titlemessage,
+            'body': bodymessage,
+			'sound' : sound,
+			'android_channel_id' : channel
+            },
           'to':
               '/topics/' + topic,
-          'priority': 'high',
-        #   'data': dataPayLoad,
+          'priority': 'high'
         }
 		
 	response = requests.post("https://fcm.googleapis.com/fcm/send", headers = headers, data=json.dumps(body))
@@ -1092,6 +1112,7 @@ def CheckNotify(in_data, control, settings):
 			if(control['notify_data']['p1_shutdown'] == True)and((control['mode'] == 'Smoke')or(control['mode'] == 'Hold')or(control['mode'] == 'Startup')or(control['mode'] == 'Reignite')):
 				control['mode'] = 'Shutdown'
 				control['updated'] = True
+				control['notify_data']['p1_shutdown'] = False
 			WriteControl(control)
 
 	if (control['notify_req']['probe2']):
@@ -1102,6 +1123,7 @@ def CheckNotify(in_data, control, settings):
 			if(control['notify_data']['p2_shutdown'] == True)and((control['mode'] == 'Smoke')or(control['mode'] == 'Hold')or(control['mode'] == 'Startup')or(control['mode'] == 'Reignite')):
 				control['mode'] = 'Shutdown'
 				control['updated'] = True
+				control['notify_data']['p2_shutdown'] = False
 			WriteControl(control)
 
 	if (control['notify_req']['timer']):

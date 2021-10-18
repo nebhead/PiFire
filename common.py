@@ -28,6 +28,11 @@ cmdsts = redis.StrictRedis('localhost', 6379, charset="utf-8", decode_responses=
 def DefaultSettings():
 	settings = {}
 
+	settings['versions'] = { 
+		'android' : 4,
+		'server' : 1
+	}
+
 	settings['history_page'] = {
 		'minutes' : 60, # Sets default number of items to show in history
 		'clearhistoryonstart' : True, # Clear history when StartUp Mode selected
