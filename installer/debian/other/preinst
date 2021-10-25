@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Stop supervisor if it is installed
+if [ -f "/etc/supervisor/supervisord.conf" ]; then
+   service supervisor stop
+fi
+
+# Setting /tmp to RAM based storage in /etc/fstab
+if ! grep -q 'tmpfs /tmp  tmpfs defaults,noatime 0 0' /etc/fstab ; then
+    echo "tmpfs /tmp  tmpfs defaults,noatime 0 0" | sudo tee -a /etc/fstab > /dev/null
+fi
+
+exit 0

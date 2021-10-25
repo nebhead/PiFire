@@ -1,0 +1,75 @@
+#!/bin/bash
+
+### Check if this is a fresh install or upgrade
+if [ -f "/usr/local/bin/pifire/firstinstall" ]; then
+  echo "PiFire has been upgraded"
+  echo "Starting Supervisor"
+  service supervisor start
+  exit 0
+fi
+
+# Find the rows and columns. Will default to 80x24 if it can not be detected.
+screen_size=$(stty size 2>/dev/null || echo 24 80)
+rows=$(echo $screen_size | awk '{print $1}')
+columns=$(echo $screen_size | awk '{print $2}')
+
+# Divide by two so the dialogs take up half of the screen.
+r=$((rows / 2))
+c=$((columns / 2))
+# If the screen is small, modify defaults
+r=$((r < 20 ? 20 : r))
+c=$((c < 70 ? 70 : c))
+
+# Display the welcome dialog
+whiptail --msgbox --backtitle "Welcome" --title "PiFire Automated Installer" "This installer will transform your Raspberry Pi into a connected Smoker Controller.  NOTE: This installer is intended to be run on a fresh install of Raspbian Lite Stretch +.  This script is currently in Alpha testing so there may be bugs." ${r} ${c}
+
+# Install dependencies
+
+sudo -H pip3 install flask
+sudo -H pip3 install pushbullet.py
+sudo -H pip3 install flask_qrcode
+sudo -H pip3 install flask-socketio
+sudo -H pip3 install eventlet==0.30.2
+sudo -H pip3 install redis
+
+### Setup nginx to proxy to gunicorn
+
+# Delete default configuration
+rm /etc/nginx/sites-enabled/default
+
+# Create link in sites-enabled
+ln -s /etc/nginx/sites-available/pifire /etc/nginx/sites-enabled
+
+# Restart nginx
+service nginx restart
+
+### Setup Supervisor to Start Apps on Boot / Restart on Failures
+
+SVISOR=$(whiptail --title "Would you like to enable the supervisor WebUI?" --radiolist "This allows you to check the status of the supervised processes via a web browser, and also allows those processes to be restarted directly from this interface. (Recommended)" 20 78 2 "ENABLE_SVISOR" "Enable the WebUI" ON "DISABLE_SVISOR" "Disable the WebUI" OFF 3>&1 1>&2 2>&3)
+
+if [[ $SVISOR == "ENABLE_SVISOR" ]]; then
+  if grep -q 'inet_http_server' /etc/supervisor/supervisord.conf; then
+    whiptail --msgbox --backtitle "Supervisor WebUI Setup" --title "Already Setup" "Appears the WebUI has already been setup reusing exiting settings" ${r} ${c}
+  else
+    echo " " | sudo tee -a /etc/supervisor/supervisord.conf >/dev/null
+    echo "[inet_http_server]" | sudo tee -a /etc/supervisor/supervisord.conf >/dev/null
+    echo "port = 9001" | sudo tee -a /etc/supervisor/supervisord.conf >/dev/null
+    USERNAME=$(whiptail --inputbox "Choose a username [default: user]" 8 78 user --title "Choose Username" 3>&1 1>&2 2>&3)
+    echo "username = " $USERNAME | sudo tee -a /etc/supervisor/supervisord.conf >/dev/null
+    PASSWORD=$(whiptail --passwordbox "Enter your password" 8 78 --title "Choose Password" 3>&1 1>&2 2>&3)
+    echo "password = " $PASSWORD | sudo tee -a /etc/supervisor/supervisord.conf >/dev/null
+    whiptail --msgbox --backtitle "Supervisor WebUI Setup" --title "Setup Completed" "You now should be able to access the Supervisor WebUI at http://your.ip.address.here:9001 with the username and password you have chosen." ${r} ${c}
+  fi
+else
+  echo "No WebUI Setup."
+fi
+
+# If supervisor isn't already running, startup Supervisor
+service supervisor restart
+
+echo " " | sudo tee -a /usr/local/bin/pifire/firstinstall >/dev/null
+
+# Finish
+whiptail --msgbox --backtitle "Install Complete / Reboot Required" --title "Installation Completed" "Congratulations, the installation is complete.  At this time, you should reboot your system to complete the installation.  You should be able to access your application by opening a browser on your PC or other device and using the IP address for this device  Enjoy!" ${r} ${c}
+
+exit 0

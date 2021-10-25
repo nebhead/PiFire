@@ -356,9 +356,6 @@
                     </div>
                     <br>
                     <h5>PID Settings (HOLD Mode)</h5>
-                    <span class="badge badge-warning">NOTE:</span>
-                    <i class="small"> If you are in hold mode currently, you will need to change to another mode and back into hold mode for this to take effect. More information on the PID control settings can be found <a href="http://engineeredmusings.com/pismoker/" target="blank">here.</a>
-                    </i>
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
                             <span class="input-group-text" data-toggle="tooltip" title="Cycle Time for PID Controller (seconds)[Default=20]">
@@ -401,6 +398,9 @@
                         </div>
                         <input id="u_max" type="number" min="0.1" step="0.01" class="form-control" placeholder="{{ settings['cycle_data']['u_max'] }}" value="{{ settings['cycle_data']['u_max'] }}" name="u_max">
                     </div>
+                    <span class="badge badge-warning">NOTE:</span>
+                    <i class="small"> If you are in hold mode currently, you will need to change to another mode and back into hold mode for this to take effect. More information on the PID control settings can be found <a href="http://engineeredmusings.com/pismoker/" target="blank">here.</a>
+                    </i>
                 </div>
                 <!-- End of card body -->
                 <div class="card-footer bg-light">
@@ -425,10 +425,6 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <h5>Shutdown Setting</h5>
-                    <span class="badge badge-warning">NOTE:</span>
-                    <i class="small"> Amount of time fan will run after shutdown is selected </a>
-                    </i>
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
                             <span class="input-group-text" data-toggle="tooltip" title="Shutdown timer (in seconds) (seconds)[Default=60]">
@@ -436,6 +432,8 @@
                         </div>
                         <input id="shutdown_timer" type="number" min="1" class="form-control" placeholder="{{ settings['globals']['shutdown_timer'] }}" value="{{ settings['globals']['shutdown_timer'] }}" name="shutdown_timer">
                     </div>
+                    <span class="badge badge-warning">NOTE:</span>
+                    <i class="small"> Amount of time fan will run after shutdown is selected </i>
                 </div>
                 <!-- End of card body -->
                 <div class="card-footer bg-light">
@@ -536,7 +534,6 @@
                         </div>
                         <input id="maxtemp" type="number" min="1" class="form-control" placeholder="{{ settings['safety']['maxtemp'] }}" value="{{ settings['safety']['mintemp'] }}" name="maxtemp">
                     </div>
-                    <br>
                     <span class="badge badge-warning">NOTE:</span>
                     <i class="small"> In an error condition (temp too low, temp too high) the grill will immediately shutdown and log the error in the events log. Notifications of an error will be sent if enabled. The Max Temp safety setting is also enabled in Monitor mode.</i>
                     <br>
@@ -566,6 +563,22 @@
                     </h5>
                 </div>
                 <div class="card-body">
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" id="pelletwarning" name="pelletwarning" {% if settings['pelletlevel']['warning_enabled'] == True %}checked{% endif %}>
+                        <label class="custom-control-label" for="pelletwarning">Pellet Level Warning<</label>
+                    </div>
+                    <br>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" data-toggle="tooltip" title="Low pellet level warning percent">
+                                <i class="fas fa-exclamation-triangle"></i>&nbsp; Level Warning %</span>
+                        </div>
+                        <input id="warninglevel" type="number" min="0" max="100" class="form-control" placeholder="{{ settings['pelletlevel']['warning_level'] }}" value="{{ settings['pelletlevel']['warning_level'] }}" name="warninglevel">
+                    </div>
+                    <span class="badge badge-warning">NOTE:</span>
+                    <i class="small"> Pellet levels below the input number will receive notifications every 20 minutes during a cook</i>
+                    <br>
+                    <br>
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
                             <span class="input-group-text" data-toggle="tooltip" title="Distance (cm) measured when the hopper is full.">
@@ -580,7 +593,6 @@
                         </div>
                         <input id="empty" type="number" min="1" max="100" class="form-control" placeholder="{{ settings['pelletlevel']['empty'] }}" value="{{ settings['pelletlevel']['empty'] }}" name="empty">
                     </div>
-                    <br>
                     <span class="badge badge-warning">NOTE:</span>
                     <i class="small"> The distance value for full must be smaller than the value for empty. </i>
                     <br>
@@ -660,7 +672,7 @@
                         <!-- End of card body -->
                     </div>
                     <!-- End of Card -->
-                    <BR>
+                    <br>
                     <div class="card shadow-sm">
                         <div class="card-header bg-light text-dark">
                             <h5>PushOver</h5>
@@ -700,7 +712,7 @@
                         <!-- End of card body -->
                     </div>
                     <!-- End of Card -->
-                    <BR>
+                    <br>
                     <div class="card shadow-sm">
                         <div class="card-header bg-light text-dark">
                             <h5>Pushbullet</h5>
@@ -731,7 +743,7 @@
                         <!-- End of card body -->
                     </div>
                     <!-- End of Card -->
-                    <BR>
+                    <br>
                     <div class="card shadow-sm">
                         <div class="card-header bg-light text-dark">
                             <h5>Firebase</h5>
@@ -753,7 +765,7 @@
                         <!-- End of card body -->
                     </div>
                     <!-- End of Card -->
-                    <BR>
+                    <br>
                 </div>
                 <!-- End of card body -->
                 <div class="card-footer bg-light">

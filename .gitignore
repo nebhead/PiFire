@@ -1,4 +1,6 @@
 
+generated/
+
 *.pyc
 
 control.err.log
@@ -18,6 +20,10 @@ test-working.json
 .vs/
 
 .vscode/
+
+.idea/
+
+venv/
 
 *.code-workspace
 
