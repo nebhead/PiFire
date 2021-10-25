@@ -436,6 +436,9 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 					print(event)
 					WriteLog(event)
 
+		elif((current_output_status['fan'] == FANOFF) and (control['s_plus'] == False)):
+			grill_platform.FanOn()
+
 		# Write History after 3 seconds has passed
 		if (now - temptoggletime > 3):
 			temptoggletime = time.time()
@@ -1158,9 +1161,11 @@ buttonslevel = settings['globals']['buttonslevel']
 if triggerlevel == 'LOW':
 	AUGERON = 0
 	AUGEROFF = 1
+	FANOFF = 1
 else:
 	AUGERON = 1
 	AUGEROFF = 0
+	FANOFF = 0
 
 # Initialize Grill Platform Object
 grill_platform = GrillPlatform(outpins, inpins, triggerlevel)
