@@ -6,7 +6,7 @@
 #
 # Description: This library supports getting the hopper level from the distance sensor
 #
-# Install Dependancies: 
+# Install Dependencies:
 #
 #    sudo apt install python3-smbus
 #    sudo pip3 install git+https://github.com/pimoroni/VL53L0X-python.git
@@ -19,7 +19,7 @@
 
 import VL53L0X
 import time 
-from common import WriteLog
+from common import WriteLog, ReadSettings
 
 class HopperLevel:
 
@@ -70,9 +70,13 @@ class HopperLevel:
 			time.sleep(timing/1000000.00)
 		
 		# Convert mm to cm 
-		AvgDist = AvgDist / 10 
-		event = 'Average Distance Measured: ' + str(AvgDist) + 'cm'
-		WriteLog(event)	
+		AvgDist = AvgDist / 10
+
+		settings = ReadSettings()
+
+		if(settings['globals']['debug_mode'] == True):
+			event = 'Average Distance Measured: ' + str(AvgDist) + 'cm'
+			WriteLog(event)
 
 		# If Average Distance is less than the full distance, we are at 100%
 		if AvgDist <= self.full: 

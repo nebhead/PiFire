@@ -1,0 +1,162 @@
+<project name="pifire-deb" default="dist" basedir=".">
+    <description>
+        Build Debian binary packages for PiFire.
+    
+        The binary archives are constructed "by hand", so the task can be
+         accomplished on platforms that don't provide Debian package tooling. -->
+    </description>
+
+    <!-- These properties isolate us from ant file location -->
+    <property name="supervisor" location="../supervisor"/>
+    <property name="root" location="../.."/>
+    <property name="output-dir" location="../../.."/>
+    <property name="nginx-configs" location="../nginx-configs"/>
+    
+    <!-- These should be inherited from invoking task;
+         these definitions are only backups -->
+    <property name="release-series" value="development-build"/>
+    <property name="git-rev-count" value=""/>
+    <property name="git-dirty" value=""/>
+
+    <property name="deb-label"
+              value="pifire_{release-series}-${git-rev-count}${git-dirty}-${DSTAMP}"/>
+
+    <property name="deb-rpi-label"
+              value="pifire-rpi_${release-series}-${git-rev-count}${git-dirty}-${DSTAMP}"/>
+    <property name="deb-other-label"
+              value="pifire-other_${release-series}-${git-rev-count}${git-dirty}-${DSTAMP}"/>
+
+    <!-- debian-root is where we assemble the files we intend to install on the
+         destination system -->
+    <property name="debian-root"
+              location="pifire_${release-series}-${git-rev-count}${git-dirty}"/>
+
+    <!-- debian-stage is where we assemble the very specific files that get
+         archived into the final deb file. -->
+    <property name="debian-stage" location="debian-stage"/>
+
+    <target name="debian-stage">
+        <mkdir dir="${debian-root}/usr/local/bin/pifire"/>
+        <copy todir="${debian-root}/usr/local/bin/pifire" overwrite="true">
+            <fileset dir="${root}">
+                <include name="**"/>
+                <exclude name="generated/**"/>
+                <exclude name="supervisor/**"/>
+                <exclude name="installer/**"/>
+                <exclude name="venv/**"/>
+                <exclude name="docs/**"/>
+                <exclude name="auto-install/**"/>
+                <exclude name=".gitignore"/>
+                <exclude name="build.xml"/>
+                <exclude name="*.nginx"/>
+                <exclude name="*.json"/>
+            </fileset>
+        </copy>
+        <mkdir dir="${debian-root}/etc/supervisor/conf.d"/>
+        <copy todir="${debian-root}/etc/supervisor/conf.d" overwrite="true">
+            <fileset dir="${supervisor}">
+                <include name="**"/>
+            </fileset>
+        </copy>
+        <mkdir dir="${debian-root}/etc/nginx/sites-available"/>
+        <copy todir="${debian-root}/etc/nginx/sites-available">
+            <fileset dir="${nginx-configs}/sites-available">
+                <include name="**"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="debian-other" depends="debian-stage">
+        <mkdir dir="${debian-stage}"/>
+        <tar destfile="${debian-stage}/data.tar.gz" compression="gzip">
+            <tarfileset dir="${debian-root}">
+                <include name="etc/supervisor/conf.d/**"/>
+                <include name="etc/nginx/sites-available/**"/>
+                <!-- /usr/local/bin reliably exists on the target, but
+                     usr/local/bin/pifire has to be created explicitly.  The "**"
+                     entry that follows will only try to create the final
+                     .../docs directory. -->
+                <include name="usr/local/bin/pifire/**"/>
+            </tarfileset>
+        </tar>
+
+        <copy file="./other/control" tofile="${debian-stage}/control">
+            <filterchain>
+                <replacetokens>
+                    <token key="BUILD" value="${git-rev-count}"/>
+                </replacetokens>
+            </filterchain>
+        </copy>
+        <tar destfile="${debian-stage}/control.tar.gz" compression="gzip">
+            <tarfileset file="./other/conffiles"/>
+            <tarfileset file="${debian-stage}/control"/>
+            <tarfileset file="./other/postinst" filemode="755"/>
+            <tarfileset file="./other/prerm" filemode="755"/>
+            <tarfileset file="./other/preinst" filemode="755"/>
+            <tarfileset file="./other/postrm" filemode="755"/>
+        </tar>
+        <delete file="${debian-stage}/control" failonerror="false" quiet="true"/>
+
+        <echo file="${debian-stage}/debian-binary">2.0&#10;</echo>
+
+        <delete file="${output-dir}/${deb-other-label}.deb" failonerror="false" quiet="true"/>
+        <exec executable="ar">
+            <arg value="-q"/>
+            <arg value="${output-dir}/${deb-other-label}.deb"/>
+            <arg value="${debian-stage}/debian-binary"/>
+            <arg value="${debian-stage}/control.tar.gz"/>
+            <arg value="${debian-stage}/data.tar.gz"/>
+        </exec>
+
+        <delete dir="${debian-stage}"/>
+    </target>
+
+    <target name="debian-rpi" depends="debian-stage">
+        <mkdir dir="${debian-stage}"/>
+        <tar destfile="${debian-stage}/data.tar.gz" compression="gzip">
+            <tarfileset dir="${debian-root}">
+                <include name="etc/supervisor/conf.d/**"/>
+                <include name="etc/nginx/sites-available/**"/>
+                <!-- /usr/local/bin reliably exists on the target, but
+                     usr/local/bin/pifire has to be created explicitly.  The "**"
+                     entry that follows will only try to create the final
+                     .../docs directory. -->
+                <include name="usr/local/bin/pifire/**"/>
+            </tarfileset>
+        </tar>
+
+        <copy file="./rpi/control" tofile="${debian-stage}/control">
+            <filterchain>
+                <replacetokens>
+                    <token key="BUILD" value="${git-rev-count}"/>
+                </replacetokens>
+            </filterchain>
+        </copy>
+        <tar destfile="${debian-stage}/control.tar.gz" compression="gzip">
+            <tarfileset file="./rpi/conffiles"/>
+            <tarfileset file="${debian-stage}/control"/>
+            <tarfileset file="./rpi/postinst" filemode="755"/>
+            <tarfileset file="./rpi/prerm" filemode="755"/>
+            <tarfileset file="./rpi/preinst" filemode="755"/>
+            <tarfileset file="./rpi/postrm" filemode="755"/>
+        </tar>
+        <delete file="${debian-stage}/control" failonerror="false" quiet="true"/>
+
+        <echo file="${debian-stage}/debian-binary">2.0&#10;</echo>
+
+        <delete file="${output-dir}/${deb-rpi-label}.deb" failonerror="false" quiet="true"/>
+        <exec executable="ar">
+            <arg value="-q"/>
+            <arg value="${output-dir}/${deb-rpi-label}.deb"/>
+            <arg value="${debian-stage}/debian-binary"/>
+            <arg value="${debian-stage}/control.tar.gz"/>
+            <arg value="${debian-stage}/data.tar.gz"/>
+        </exec>
+
+        <delete dir="${debian-stage}"/>
+    </target>
+
+    <target name="dist" depends="debian-other, debian-rpi">
+        <delete dir="${debian-root}"/>
+    </target>
+</project>

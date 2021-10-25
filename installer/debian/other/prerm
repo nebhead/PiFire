@@ -1,0 +1,15 @@
+#!/bin/bash
+
+echo "Stopping Supervisor"
+# Stop Supervisor so configs can be removed
+service supervisor stop
+
+if [ $1 = "remove" ] ; then
+   echo "Cleaning up logs and removing pycache"
+   rm /usr/local/bin/pifire/logs/*.log
+   if [ -d "/usr/local/bin/pifire/__pycache__" ] ; then
+      rm -R /usr/local/bin/pifire/__pycache__
+   fi
+fi
+
+exit 0

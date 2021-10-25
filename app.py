@@ -967,6 +967,15 @@ def settingspage(action=None):
 	if (request.method == 'POST') and (action == 'pellets'):
 		response = request.form
 
+		if('pelletwarning' in response):
+			if('pelletwarning' == 'on'):
+				settings['pelletlevel']['warning_enabled'] = True
+		else:
+			settings['pelletlevel']['warning_enabled'] = False
+
+		if('warninglevel' in response):
+			settings['pelletlevel']['warning_level'] = int(response['warninglevel'])
+
 		if('empty' in response):
 			pelletdb['empty'] = int(response['empty'])
 		
@@ -1841,6 +1850,15 @@ def update_settings(json_data):
 			settings['globals']['grill_name'] = data['grillname']['grill_name']
 
 	if ('pellets' in data):
+		if('pelletwarning' in data['pellets']):
+			if(data['pellets']['pelletwarning'] == 'true'):
+				settings['pelletlevel']['warning_enabled'] = True
+			else:
+				settings['pelletlevel']['warning_enabled'] = False
+
+		if('warninglevel' in data['pellets']):
+			settings['pelletlevel']['warning_level'] = int(data['pellets']['warninglevel'])
+
 		if('empty' in data['pellets']):
 			settings['pelletlevel']['empty'] = int(data['pellets']['empty'])
 

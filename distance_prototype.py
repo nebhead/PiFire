@@ -8,6 +8,9 @@
 #
 # *****************************************
 
+from common import WriteLog
+import random
+
 class HopperLevel:
 
 	def __init__(self, empty=22, full=4):
@@ -22,7 +25,8 @@ class HopperLevel:
 		self.SetLevel()
 	
 	def SetLevel(self, level=100):
-		self.level = int(level) 
+		# Do nothing
+		return()
 
 	def GetLevel(self):
-		return(self.level)
+		return random.randint(10, 100)

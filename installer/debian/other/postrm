@@ -1,0 +1,36 @@
+#!/bin/bash
+
+if [ $1 = "remove" ];then
+   echo "Cleaning up tmp files"
+   if [ -f "/tmp/events.log" ];then
+      rm /tmp/events.log
+   fi
+   if [ -f "/tmp/tr.log" ]; then
+      rm /tmp/tr.log
+   fi
+
+   # Remove firstinstall file on remove command
+   if [ -f "/usr/local/bin/pifire/firstinstall" ]; then
+      rm /usr/local/bin/pifire/firstinstall
+   fi
+
+   # Remove python packages
+   echo "Removing python packages"
+   sudo -H pip3 uninstall flask -y
+   sudo -H pip3 uninstall pushbullet.py -y
+   sudo -H pip3 uninstall flask_qrcode -y
+   sudo -H pip3 uninstall flask-socketio -y
+   sudo -H pip3 uninstall eventlet -y
+   sudo -H pip3 uninstall redis -y
+
+   echo "Removing pifire site from nginx and restoring default site"
+   # Remove PiFire site link
+   rm /etc/nginx/sites-enabled/pifire
+
+   # Return original link in sites-enabled
+   ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled
+
+   echo "PiFire has been removed"
+fi
+
+exit 0

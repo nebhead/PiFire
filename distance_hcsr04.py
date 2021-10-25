@@ -17,7 +17,8 @@
 # *****************************************
 
 from hcsr04sensor import sensor
-import time 
+import time
+from common import WriteLog
 
 class HopperLevel:
 

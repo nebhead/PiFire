@@ -129,16 +129,26 @@ def DefaultSettings():
 	}
 
 	settings['pelletlevel'] = {
+		'warning_enabled' : True,
+		'warning_level' : 25,
 		'empty' : 22, # Number of centimeters from the sensor that indicates empty
 		'full' : 4  # Number of centimeters from the sensor that indicates full
 	}
 
-	settings['modules'] = {
-		'grillplat' : 'pifire',	 	# Grill Platform (PiFire - Raspberry Pi GPIOs)
-		'adc' : 'ads1115',			# Analog to Digital Converter Default is the ADS1115
-		'display' : 'ssd1306',		# Default display is the SSD1306
-		'dist' : 'prototype'		# Default distance sensor is none
-	}
+	if isRaspberryPi():
+		settings['modules'] = {
+			'grillplat' : 'pifire',	 	# Grill Platform (PiFire - Raspberry Pi GPIOs)
+			'adc' : 'ads1115',			# Analog to Digital Converter Default is the ADS1115
+			'display' : 'ssd1306',		# Default display is the SSD1306
+			'dist' : 'prototype'		# Default distance sensor is none
+		}
+	else:
+		settings['modules'] = {
+			'grillplat' : 'prototype',
+			'adc' : 'prototype',
+			'display' : 'prototype',
+			'dist' : 'prototype'
+		}
 
 	settings['lastupdated'] = {
 		'time' : math.trunc(time.time())
@@ -346,6 +356,14 @@ def DefaultProbeProfiles():
 	}
 	return probe_profiles
 
+def isRaspberryPi():
+	try:
+		from RPi import GPIO
+		return True
+	except(ImportError, RuntimeError):
+		return False
+
+
 def ReadControl(flush=False):
 	global cmdsts
 
@@ -424,9 +442,9 @@ def WriteSettings(settings):
 	# *****************************************
 	settings['lastupdated']['time'] = math.trunc(time.time())
 
-	json_data_string = json.dumps(settings)
+	json_data_string = json.dumps(settings, indent=2, sort_keys=True)
 	with open("settings.json", 'w') as settings_file:
-	    settings_file.write(json_data_string)
+		settings_file.write(json_data_string)
 
 def ReadRecipes():
 	# *****************************************

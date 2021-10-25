@@ -42,7 +42,7 @@ if [[ $ADC = "PROTOTYPE" ]];then
     python3 settings.py -a prototype
 fi
 
-DISPLAY=$(whiptail --title "Select your Display module to use." --radiolist "Select display type (and input) module for PiFire to use.  Some displays may also have menu button functions indicated by a B appended to the name." 20 78 8 "SSD1306" "OLED Display (128x64) <- DEFAULT" ON "SSD1306B" "OLED Display (128x64) w/Button Input" OFF "ST7789P" "IPS/TFT SPI Display (240x240)P-Pimoroni Libs" OFF "ILI9341" "TFT Color Display (240x320)" OFF "ILI9341B" "TFT Color Display (240x320) w/Buttons" OFF "PROTOTYPE" "Prototype/Console Output (for test only)" OFF "PYGAME" "Prototype/PyGame Desktop Output (for test only)" OFF "PYGAME240320" "Prototype/PyGame (240x320) (for test only)" OFF 3>&1 1>&2 2>&3)
+DISPLAY=$(whiptail --title "Select your Display module to use." --radiolist "Select display type (and input) module for PiFire to use.  Some displays may also have menu button functions indicated by a B appended to the name." 20 78 8 "SSD1306" "OLED Display (128x64) <- DEFAULT" ON "SSD1306B" "OLED Display (128x64) w/Button Input" OFF "ST7789P" "IPS/TFT SPI Display (240x240)P-Pimoroni Libs" OFF "ILI9341" "TFT Color Display (240x320)" OFF "ILI9341B" "TFT Color Display (240x320) w/Buttons" OFF "PROTOTYPE" "Prototype/Console Output (for test only)" OFF "PYGAME" "Prototype/PyGame Desktop Output (for test only)" OFF "PYGAME240320" "Prototype/PyGame (240x320) (for test only)" OFF "PYGAME240320B" "Prototype/PyGame B(240x320) (for test only)" OFF 3>&1 1>&2 2>&3)
 
 if [[ $DISPLAY = "SSD1306" ]];then
     python3 settings.py -d ssd1306
@@ -74,6 +74,10 @@ fi
 
 if [[ $DISPLAY = "PYGAME240320" ]];then
     python3 settings.py -d pygame_240x320
+fi
+
+if [[ $DISPLAY = "PYGAME240320B" ]];then
+    python3 settings.py -d pygame_240x320b
 fi
 
 DIST=$(whiptail --title "Select your Range module to use." --radiolist "Optional distance sensor for hopper/pellet level reporting.  Default is prototype/none, which is equivalent to no attached sensor." 20 78 3 "PROTOTYPE" "Prototype/None <- DEFAULT" ON "VL53L0X" "Time of Flight Light Range Sensor" OFF "HCSR04" "Ultrasonic Range Sensor" OFF 3>&1 1>&2 2>&3)
