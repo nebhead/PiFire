@@ -27,6 +27,7 @@ from common import *  # Common Library for WebUI and Control Program
 from pushbullet import Pushbullet # Pushbullet Import
 import pid as PID # Library for calculating PID setpoints
 import requests
+from temp_queue import TempQueue
 
 # Read Settings to Get Modules Configuration 
 settings = ReadSettings()
@@ -159,9 +160,9 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 			WriteLog(event)
 
 	# Initialize all temperature variables
-	GrillTemp = 0
-	Probe1Temp = 0
-	Probe2Temp = 0
+	AvgGT = TempQueue()
+	AvgP1 = TempQueue()
+	AvgP2 = TempQueue()
 
 	# Check pellets level notification upon starting cycle
 	CheckNotifyPellets(control, settings, pelletdb)
@@ -177,18 +178,18 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 	adc_data = {}
 	adc_data = adc_device.ReadAllPorts()
 
-	AvgGT = adc_data['GrillTemp']
-	AvgP1 = adc_data['Probe1Temp']
-	AvgP2 = adc_data['Probe2Temp']
+	AvgGT.enqueue(adc_data['GrillTemp'])
+	AvgP1.enqueue(adc_data['Probe1Temp'])
+	AvgP2.enqueue(adc_data['Probe2Temp'])
 
 	status = 'Active'
 
 	# Safety Controls
 	if ((mode == 'Startup') or (mode == 'Reignite')):
 		#control = ReadControl()  # Read Modify Write
-		control['safety']['startuptemp'] = int(max((GrillTemp*0.9), settings['safety']['minstartuptemp']))
+		control['safety']['startuptemp'] = int(max((AvgGT.average()*0.9), settings['safety']['minstartuptemp']))
 		control['safety']['startuptemp'] = int(min(control['safety']['startuptemp'], settings['safety']['maxstartuptemp']))
-		control['safety']['afterstarttemp'] = int(GrillTemp)
+		control['safety']['afterstarttemp'] = int(AvgGT.average())
 		WriteControl(control)
 	# Check if the temperature of the grill dropped below the startuptemperature 
 	elif ((mode == 'Hold') or (mode == 'Smoke')):
@@ -306,7 +307,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 			augertoggletime = now
 			# Reset Cycle Time for HOLD Mode
 			if (mode == 'Hold'):
-				CycleRatio = PIDControl.update(AvgGT)
+				CycleRatio = PIDControl.update(AvgGT.average())
 				CycleRatio = max(CycleRatio, settings['cycle_data']['u_min'])
 				CycleRatio = min(CycleRatio, settings['cycle_data']['u_max'])
 				OnTime = settings['cycle_data']['HoldCycleTime'] * CycleRatio
@@ -348,29 +349,16 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 		adc_data = adc_device.ReadAllPorts()
 
 		# Test temperature data returned for errors (+/- 20% Temp Variance), and average the data since last reading
-		if((adc_data['GrillTemp'] != 0) and (adc_data['GrillTemp'] >= AvgGT * 0.8) and (adc_data['GrillTemp'] <= AvgGT * 1.2)):
-			AvgGT = (adc_data['GrillTemp'] + AvgGT) / 2
-
-		if((adc_data['Probe1Temp'] != 0) and (adc_data['Probe1Temp'] >= AvgP1 * 0.8) and (adc_data['Probe1Temp'] <= AvgP1 * 1.2)):
-			AvgP1 = (adc_data['Probe1Temp'] + AvgP1) / 2
-		elif(AvgP1 == 0):
-			AvgP1 = adc_data['Probe1Temp']
-		elif(adc_data['Probe1Temp'] == 0):
-			AvgP1 = 0
-
-		if((adc_data['Probe2Temp'] != 0) and (adc_data['Probe2Temp'] >= AvgP2 * 0.8) and (adc_data['Probe2Temp'] <= AvgP2 * 1.2)):
-			AvgP2 = (adc_data['Probe2Temp'] + AvgP2) / 2
-		elif(AvgP2 == 0):
-			AvgP2 = adc_data['Probe2Temp']
-		elif(adc_data['Probe2Temp'] == 0):
-			AvgP2 = 0
+		AvgGT.enqueue(adc_data['GrillTemp'])
+		AvgP1.enqueue(adc_data['Probe1Temp'])
+		AvgP2.enqueue(adc_data['Probe2Temp'])
 
 		in_data = {}
-		in_data['GrillTemp'] = int(AvgGT)
+		in_data['GrillTemp'] = int(AvgGT.average())
 		in_data['GrillSetPoint'] = control['setpoints']['grill']
-		in_data['Probe1Temp'] = int(AvgP1)
+		in_data['Probe1Temp'] = int(AvgP1.average())
 		in_data['Probe1SetPoint'] = control['setpoints']['probe1']
-		in_data['Probe2Temp'] = int(AvgP2)
+		in_data['Probe2Temp'] = int(AvgP2.average())
 		in_data['Probe2SetPoint'] = control['setpoints']['probe2']
 		in_data['GrillTr'] = adc_data['GrillTr']  # For Temp Resistance Tuning
 		in_data['Probe1Tr'] = adc_data['Probe1Tr']  # For Temp Resistance Tuning
@@ -390,9 +378,9 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 
 		# Safety Controls
 		if ((mode == 'Startup') or (mode == 'Reignite')):
-			control['safety']['afterstarttemp'] = int(AvgGT)
+			control['safety']['afterstarttemp'] = int(AvgGT.average())
 		elif ((mode == 'Hold') or (mode == 'Smoke')):
-			if (AvgGT < control['safety']['startuptemp']):
+			if (AvgGT.average() < control['safety']['startuptemp']):
 				if(control['safety']['reigniteretries'] == 0):
 					status = 'Inactive'
 					event = 'ERROR: Grill temperature dropped below minimum startup temperature of ' + str(control['safety']['startuptemp']) + 'F! Shutting down to prevent firepot overload.'
@@ -415,7 +403,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 					control['updated'] = True
 					WriteControl(control)
 
-			if (AvgGT > settings['safety']['maxtemp']):
+			if (AvgGT.average() > settings['safety']['maxtemp']):
 				status = 'Inactive'
 				event = 'ERROR: Grill exceed maximum temperature limit of ' + str(settings['safety']['maxtemp']) + 'F! Shutting down.'
 				WriteLog(event)
@@ -427,16 +415,16 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 				SendNotifications("Grill_Error_01", control, settings, pelletdb)
 
 		# Check if target temperature has been achieved before utilizing Smoke Plus Mode
-		if((mode == 'Hold') and (AvgGT >= control['setpoints']['grill']) and (target_temp_achieved==False)):
+		if((mode == 'Hold') and (AvgGT.average() >= control['setpoints']['grill']) and (target_temp_achieved==False)):
 			target_temp_achieved = True
 			
 		# If in Smoke Plus Mode, Cycle the Fan
 		if(((mode == 'Smoke') or ((mode == 'Hold') and (target_temp_achieved))) and (control['s_plus'] == True)):
 			# If Temperature is > settings['smoke_plus']['max_temp'] then turn on fan
-			if(AvgGT > settings['smoke_plus']['max_temp']):
+			if(AvgGT.average() > settings['smoke_plus']['max_temp']):
 				grill_platform.FanOn()
 			# elif Temperature is < settings['smoke_plus']['min_temp'] then turn on fan
-			elif(AvgGT < settings['smoke_plus']['min_temp']):
+			elif(AvgGT.average() < settings['smoke_plus']['min_temp']):
 				grill_platform.FanOn()
 			# elif now - sp_cycletoggletime > settings['smoke_plus']['cycle'] / 2 then toggle fan, reset sp_cycletoggletime = now
 			elif((now - sp_cycletoggletime) > (settings['smoke_plus']['cycle']*0.5)):
@@ -487,7 +475,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 			WriteLog(event)
 	if ((mode == 'Startup') or (mode == 'Reignite')):
 		#control = ReadControl()  # Read Modify Write
-		control['safety']['afterstarttemp'] = int(AvgGT)
+		control['safety']['afterstarttemp'] = int(AvgGT.average())
 		WriteControl(control)
 	event = mode + ' mode ended.'
 	WriteLog(event)
@@ -511,10 +499,10 @@ def Monitor(grill_platform, adc_device, display_device, dist_device):
 	grill_platform.FanOff()
 	grill_platform.PowerOff()
 
-	# Initialize all temperature variables
-	GrillTemp = 0
-	Probe1Temp = 0
-	Probe2Temp = 0
+	# Initialize all temperature objects
+	AvgGT = TempQueue()
+	AvgP1 = TempQueue()
+	AvgP2 = TempQueue()
 
 	# Setup Cycle Parameters
 	settings = ReadSettings()
@@ -535,9 +523,9 @@ def Monitor(grill_platform, adc_device, display_device, dist_device):
 	adc_data = {}
 	adc_data = adc_device.ReadAllPorts()
 
-	AvgGT = adc_data['GrillTemp']
-	AvgP1 = adc_data['Probe1Temp']
-	AvgP2 = adc_data['Probe2Temp']
+	AvgGT.enqueue(adc_data['GrillTemp'])
+	AvgP1.enqueue(adc_data['Probe1Temp'])
+	AvgP2.enqueue(adc_data['Probe2Temp'])
 
 	now = time.time()
 
@@ -622,22 +610,21 @@ def Monitor(grill_platform, adc_device, display_device, dist_device):
 		adc_data = {}
 		adc_data = adc_device.ReadAllPorts()
 
-		AvgGT = (adc_data['GrillTemp'] + AvgGT) / 2
-		AvgP1 = (adc_data['Probe1Temp'] + AvgP1) / 2
-		AvgP2 = (adc_data['Probe2Temp'] + AvgP2) / 2
+		# Test temperature data returned for errors (+/- 20% Temp Variance), and average the data since last reading
+		AvgGT.enqueue(adc_data['GrillTemp'])
+		AvgP1.enqueue(adc_data['Probe1Temp'])
+		AvgP2.enqueue(adc_data['Probe2Temp'])
 
 		in_data = {}
-		in_data['GrillTemp'] = int(AvgGT)
+		in_data['GrillTemp'] = int(AvgGT.average())
 		in_data['GrillSetPoint'] = control['setpoints']['grill']
-		in_data['Probe1Temp'] = int(AvgP1)
+		in_data['Probe1Temp'] = int(AvgP1.average())
 		in_data['Probe1SetPoint'] = control['setpoints']['probe1']
-		in_data['Probe2Temp'] = int(AvgP2)
+		in_data['Probe2Temp'] = int(AvgP2.average())
 		in_data['Probe2SetPoint'] = control['setpoints']['probe2']
-		in_data['GrillTr'] = adc_data['GrillTr']
-		in_data['Probe1Tr'] = adc_data['Probe1Tr']
-		in_data['Probe2Tr'] = adc_data['Probe2Tr']
-		
-		control = CheckNotify(in_data, control, settings, pelletdb)
+		in_data['GrillTr'] = adc_data['GrillTr']  # For Temp Resistance Tuning
+		in_data['Probe1Tr'] = adc_data['Probe1Tr']  # For Temp Resistance Tuning
+		in_data['Probe2Tr'] = adc_data['Probe2Tr']  # For Temp Resistance Tuning
 
 		# Check for button input event
 		display_device.EventDetect()
@@ -654,7 +641,7 @@ def Monitor(grill_platform, adc_device, display_device, dist_device):
 			WriteHistory(in_data)
 
 		# Safety Control Section
-		if (AvgGT > settings['safety']['maxtemp']):
+		if (AvgGT.average() > settings['safety']['maxtemp']):
 			status = 'Inactive'
 			event = 'ERROR: Grill exceed maximum temperature limit of ' + str(settings['safety']['maxtemp']) + 'F! Shutting down.'
 			WriteLog(event)
@@ -695,9 +682,9 @@ def Manual_Mode(grill_platform, adc_device, display_device, dist_device):
 	grill_platform.PowerOff()
 
 	# Initialize all temperature variables
-	GrillTemp = 0
-	Probe1Temp = 0
-	Probe2Temp = 0
+	AvgGT = TempQueue()
+	AvgP1 = TempQueue()
+	AvgP2 = TempQueue()
 
 	# Collect Initial Temperature Information
 	# Get Probe Types From Settings
@@ -710,9 +697,9 @@ def Manual_Mode(grill_platform, adc_device, display_device, dist_device):
 	adc_data = {}
 	adc_data = adc_device.ReadAllPorts()
 
-	AvgGT = adc_data['GrillTemp']
-	AvgP1 = adc_data['Probe1Temp']
-	AvgP2 = adc_data['Probe2Temp']
+	AvgGT.enqueue(adc_data['GrillTemp'])
+	AvgP1.enqueue(adc_data['Probe1Temp'])
+	AvgP2.enqueue(adc_data['Probe2Temp'])
 
 	now = time.time()
 
@@ -798,20 +785,21 @@ def Manual_Mode(grill_platform, adc_device, display_device, dist_device):
 		adc_data = {}
 		adc_data = adc_device.ReadAllPorts()
 
-		AvgGT = (adc_data['GrillTemp'] + AvgGT) / 2
-		AvgP1 = (adc_data['Probe1Temp'] + AvgP1) / 2
-		AvgP2 = (adc_data['Probe2Temp'] + AvgP2) / 2
+		# Test temperature data returned for errors (+/- 20% Temp Variance), and average the data since last reading
+		AvgGT.enqueue(adc_data['GrillTemp'])
+		AvgP1.enqueue(adc_data['Probe1Temp'])
+		AvgP2.enqueue(adc_data['Probe2Temp'])
 
 		in_data = {}
-		in_data['GrillTemp'] = int(AvgGT)
+		in_data['GrillTemp'] = int(AvgGT.average())
 		in_data['GrillSetPoint'] = control['setpoints']['grill']
-		in_data['Probe1Temp'] = int(AvgP1)
+		in_data['Probe1Temp'] = int(AvgP1.average())
 		in_data['Probe1SetPoint'] = control['setpoints']['probe1']
-		in_data['Probe2Temp'] = int(AvgP2)
+		in_data['Probe2Temp'] = int(AvgP2.average())
 		in_data['Probe2SetPoint'] = control['setpoints']['probe2']
-		in_data['GrillTr'] = adc_data['GrillTr']
-		in_data['Probe1Tr'] = adc_data['Probe1Tr']
-		in_data['Probe2Tr'] = adc_data['Probe2Tr']
+		in_data['GrillTr'] = adc_data['GrillTr']  # For Temp Resistance Tuning
+		in_data['Probe1Tr'] = adc_data['Probe1Tr']  # For Temp Resistance Tuning
+		in_data['Probe2Tr'] = adc_data['Probe2Tr']  # For Temp Resistance Tuning
 
 		# Update Display Device after 1 second has passed 
 		if(now - displaytoggletime > 1):

@@ -1,0 +1,51 @@
+import statistics
+
+'''
+Class to track temperature averages coming from the ADC and 
+handle errors gracefully (hopefully).  
+'''
+
+class TempQueue():
+	def __init__(self, qlength=10, scale='F'):
+		self.queue = []
+		
+		if(qlength < 2):
+			self.qlength = 2 # Set minimum qlength to 2
+		else: 
+			self.qlength = qlength
+		
+		if(scale == 'F'):
+			self.stdev_max = 4.75  # Standard Deviation Maximum for degrees F
+		else:
+			self.stdev_max = 2.25  # Standard Deviation Maximum for degrees C
+		self.last_average = 0
+
+	def enqueue(self, value):
+		while (len(self.queue) < (self.qlength + 1)):
+			self.queue.insert(0, value)
+		self.queue.pop()
+		return(self.average())
+
+	def average(self):
+		if(len(self.queue) < self.qlength):
+			# Handle case if queue isn't full 
+			self.last_average = 0
+			return(0)
+		elif(self.last_average == 0):
+			# Handle case if lastaverage isn't initialized
+			average = (sum(self.queue) / self.qlength)
+			self.last_average = average
+			return(average)
+		else:
+			# Handle normal case
+			# Get standard deviation from temperatures in the queue
+			stdev = statistics.stdev(self.queue)
+			if(stdev < self.stdev_max):
+				# If the standard deviation is less than the max deviation, calculate the average temperature as normal
+				average = (sum(self.queue) / self.qlength)
+				self.last_average = average
+			else:
+				# If the standard deviation exceeds the max deviation, keep the last average value
+				average = self.last_average
+			
+			return(average)
