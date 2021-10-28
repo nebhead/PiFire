@@ -457,7 +457,7 @@ def probe2tr(action=None):
 
 	cur_probe_tr = ReadTr()
 	tr = {}
-	tr['trohms'] = cur_probe_tr[1]
+	tr['trohms'] = cur_probe_tr[2]
 
 	return json.dumps(tr)
 
@@ -601,6 +601,19 @@ def pelletsspage(action=None):
 				event['type'] = 'updated'
 				event['text'] = 'Successfully deleted ' + response['brand_name'] + ' ' + response['wood_type'] + ' profile in database.'
 
+	elif (request.method == 'POST' and action == 'deletelog'):
+		response = request.form
+		if('delLog' in response):
+			delLog = response['delLog']
+			if(delLog in pelletdb['log']):
+				pelletdb['log'].pop(delLog)
+				WritePelletDB(pelletdb)
+				event['type'] = 'updated'
+				event['text'] = 'Log successfully deleted.'
+			else:
+				event['type'] = 'error'
+				event['text'] = 'Item not found in pellet log.'
+
 	return render_template('pellets.html', alert=event, pelletdb=pelletdb, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
 
 
@@ -734,12 +747,6 @@ def settingspage(action=None):
 				settings['pushbullet']['PublicURL'] = ''
 			elif(response['pushbullet_publicurl'] != settings['pushbullet']['PublicURL']):
 				settings['pushbullet']['PublicURL'] = response['pushbullet_publicurl']
-
-		if('firebase_serverkey' in response):
-			if(response['firebase_serverkey'] == "0") or (response['firebase_serverkey'] == ''):
-				settings['firebase']['ServerKey'] = ''
-			else:
-				settings['firebase']['ServerKey'] = response['firebase_serverkey']
 
 		event['type'] = 'updated'
 		event['text'] = 'Successfully updated notification settings.'
@@ -1486,7 +1493,8 @@ def request_info_data():
 		'ifconfig' : ifconfig,
 		'temp' : temp,
 		'outpins' : settings['outpins'],
-		'inpins' : settings['inpins']
+		'inpins' : settings['inpins'],
+		'server_version' : settings['versions']['server']
 	}
 
 	return info_list
@@ -1754,11 +1762,11 @@ def update_settings(json_data):
 			elif(data['notifications']['pushbullet_publicurl'] != settings['pushbullet']['PublicURL']):
 				settings['pushbullet']['PublicURL'] = data['notifications']['pushbullet_publicurl']
 
-		if('firebase_serverkey' in data['notifications']):
-			if(data['notifications']['firebase_serverkey'] == "0") or (data['notifications']['firebase_serverkey'] == ''):
-				settings['firebase']['ServerKey'] = ''
-			else:
-				settings['firebase']['ServerKey'] = data['notifications']['firebase_serverkey']
+		if('firebase_serverurl' in data['notifications']):
+			if(data['notifications']['firebase_serverurl'] == "0") or (data['notifications']['firebase_serverurl'] == ''):
+				settings['firebase']['ServerUrl'] = ''
+			elif(settings['firebase']['ServerUrl'] != data['notifications']['firebase_serverurl']):
+				settings['firebase']['ServerUrl'] = data['notifications']['firebase_serverurl']
 
 	if('cycle' in data):
 		if('pmode' in data['cycle']):
@@ -1963,6 +1971,12 @@ def update_pellet_data(json_data):
 					if(pelletdb['log'][index] == profile_id):
 						pelletdb['log'][index] = 'deleted'
 
+	if('deletelog' in data):
+		if('delLog' in data['deletelog']):
+			delLog = data['deletelog']['delLog']
+			if(delLog in pelletdb['log']):
+				pelletdb['log'].pop(delLog)
+
 	# Take all pelletdb changes and write them
 	WritePelletDB(pelletdb)
 
@@ -2031,7 +2045,68 @@ def update_admin_data(json_data):
 				event = "Admin: Shutdown"
 				WriteLog(event)
 				os.system("sleep 3 && sudo shutdown -h now &")
-	
+
+@socketio.on('update_manual_data')
+def update_manual_data(json_data):
+	settings = ReadSettings()
+	control = ReadControl()
+
+	if(settings['modules']['grillplat'] == 'prototype'):
+		print('Client requesting manual update ' + str(json_data))
+
+	data = json.loads(json_data)
+
+	if ('manual' in data):
+		if('setmode' in data['manual']):
+			if(data['manual']['setmode'] == 'true'):
+				control['updated'] = True
+				control['mode'] = 'Manual'
+			else:
+				control['updated'] = True
+				control['mode'] = 'Stop'
+
+		if('change_output_fan' in data['manual']):
+			if(data['manual']['change_output_fan']=='true'):
+				control['manual']['change'] = True
+				control['manual']['output'] = 'fan'
+				control['manual']['state'] = 'on'
+			elif(data['manual']['change_output_fan']=='false'):
+				control['manual']['change'] = True
+				control['manual']['output'] = 'fan'
+				control['manual']['state'] = 'off'
+
+		if('change_output_auger' in data['manual']):
+			if(data['manual']['change_output_auger']=='true'):
+				control['manual']['change'] = True
+				control['manual']['output'] = 'auger'
+				control['manual']['state'] = 'on'
+			elif(data['manual']['change_output_auger']=='false'):
+				control['manual']['change'] = True
+				control['manual']['output'] = 'auger'
+				control['manual']['state'] = 'off'
+
+		if('change_output_igniter' in data['manual']):
+			if(data['manual']['change_output_igniter']=='true'):
+				control['manual']['change'] = True
+				control['manual']['output'] = 'igniter'
+				control['manual']['state'] = 'on'
+			elif(data['manual']['change_output_igniter']=='false'):
+				control['manual']['change'] = True
+				control['manual']['output'] = 'igniter'
+				control['manual']['state'] = 'off'
+
+		if('change_output_power' in data['manual']):
+			if(data['manual']['change_output_power']=='true'):
+				control['manual']['change'] = True
+				control['manual']['output'] = 'power'
+				control['manual']['state'] = 'on'
+			elif(data['manual']['change_output_power']=='false'):
+				control['manual']['change'] = True
+				control['manual']['output'] = 'power'
+				control['manual']['state'] = 'off'
+
+		WriteControl(control)
+
 
 settings = ReadSettings()
 

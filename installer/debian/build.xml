@@ -15,6 +15,7 @@
     <!-- These should be inherited from invoking task;
          these definitions are only backups -->
     <property name="release-series" value="development-build"/>
+    <property name="server.version" value=""/>
     <property name="git-rev-count" value=""/>
     <property name="git-dirty" value=""/>
 
@@ -60,9 +61,10 @@
         </copy>
         <mkdir dir="${debian-root}/etc/nginx/sites-available"/>
         <copy todir="${debian-root}/etc/nginx/sites-available">
-            <fileset dir="${nginx-configs}/sites-available">
+            <fileset dir="${nginx-configs}">
                 <include name="**"/>
             </fileset>
+            <globmapper from="*.nginx" to="*"/>
         </copy>
     </target>
 
@@ -77,20 +79,32 @@
                      entry that follows will only try to create the final
                      .../docs directory. -->
                 <include name="usr/local/bin/pifire/**"/>
+                <exclude name="usr/local/bin/pifire/*.sh"/>
+            </tarfileset>
+            <tarfileset dir="${debian-root}" filemode="755">
+                <include name="usr/local/bin/pifire/*.sh"/>
             </tarfileset>
         </tar>
 
         <copy file="./other/control" tofile="${debian-stage}/control">
             <filterchain>
                 <replacetokens>
+                    <token key="VERSION" value="${server.version}"/>
                     <token key="BUILD" value="${git-rev-count}"/>
+                </replacetokens>
+            </filterchain>
+        </copy>
+        <copy file="./other/postinst" tofile="${debian-stage}/postinst">
+            <filterchain>
+                <replacetokens>
+                    <token key="VERSION" value="${server.version}"/>
                 </replacetokens>
             </filterchain>
         </copy>
         <tar destfile="${debian-stage}/control.tar.gz" compression="gzip">
             <tarfileset file="./other/conffiles"/>
             <tarfileset file="${debian-stage}/control"/>
-            <tarfileset file="./other/postinst" filemode="755"/>
+            <tarfileset file="${debian-stage}/postinst" filemode="755"/>
             <tarfileset file="./other/prerm" filemode="755"/>
             <tarfileset file="./other/preinst" filemode="755"/>
             <tarfileset file="./other/postrm" filemode="755"/>
@@ -122,20 +136,32 @@
                      entry that follows will only try to create the final
                      .../docs directory. -->
                 <include name="usr/local/bin/pifire/**"/>
+                <exclude name="usr/local/bin/pifire/*.sh"/>
+            </tarfileset>
+            <tarfileset dir="${debian-root}" filemode="755">
+                <include name="usr/local/bin/pifire/*.sh"/>
             </tarfileset>
         </tar>
 
         <copy file="./rpi/control" tofile="${debian-stage}/control">
             <filterchain>
                 <replacetokens>
+                    <token key="VERSION" value="${server.version}"/>
                     <token key="BUILD" value="${git-rev-count}"/>
+                </replacetokens>
+            </filterchain>
+        </copy>
+        <copy file="./rpi/postinst" tofile="${debian-stage}/postinst">
+            <filterchain>
+                <replacetokens>
+                    <token key="VERSION" value="${server.version}"/>
                 </replacetokens>
             </filterchain>
         </copy>
         <tar destfile="${debian-stage}/control.tar.gz" compression="gzip">
             <tarfileset file="./rpi/conffiles"/>
             <tarfileset file="${debian-stage}/control"/>
-            <tarfileset file="./rpi/postinst" filemode="755"/>
+            <tarfileset file="${debian-stage}/postinst" filemode="755"/>
             <tarfileset file="./rpi/prerm" filemode="755"/>
             <tarfileset file="./rpi/preinst" filemode="755"/>
             <tarfileset file="./rpi/postrm" filemode="755"/>

@@ -20,7 +20,8 @@ import argparse
 #  GrillPlatform - Update Grill Platform
 #  ADC - Update ADC 
 #  Display - Update Display
-#  Range - Update Distance 
+#  Range - Update Distance
+#  Version - Update Server Version
 
 #==============================================================================
 #                                   Main Program
@@ -34,6 +35,7 @@ parser.add_argument('-g','--grillplat',type=str, help='Update the grill platform
 parser.add_argument('-a','--adc',type=str, help='Update the ADC platform module setting.',required=False)
 parser.add_argument('-d','--display',type=str, help='Update the Display platform module setting.',required=False)
 parser.add_argument('-r','--range',type=str, help='Update the Range platform module setting.',required=False)
+parser.add_argument('-v','--version',type=str, help='Update the server version.',required=False)
 
 args = parser.parse_args()
 
@@ -61,6 +63,12 @@ if(args.range):
     range = args.range
     print(f"\n * Modifying Range Sensor from {settings['modules']['dist']} to {range}")
     settings['modules']['dist'] = range 
+    WriteSettings(settings)
+
+if(args.version):
+    version = args.version
+    print(f"\nModifying Server Version {settings['versions']['server']} to {version}")
+    settings['versions']['server'] = version
     WriteSettings(settings)
 
 print('\nDone.\n')

@@ -75,7 +75,7 @@ class HopperLevel:
 		settings = ReadSettings()
 
 		if(settings['globals']['debug_mode'] == True):
-			event = 'Average Distance Measured: ' + str(AvgDist) + 'cm'
+			event = '* Average Distance Measured: ' + str(AvgDist) + 'cm'
 			WriteLog(event)
 
 		# If Average Distance is less than the full distance, we are at 100%
