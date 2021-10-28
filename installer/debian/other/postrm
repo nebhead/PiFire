@@ -9,9 +9,9 @@ if [ $1 = "remove" ];then
       rm /tmp/tr.log
    fi
 
-   # Remove firstinstall file on remove command
-   if [ -f "/usr/local/bin/pifire/firstinstall" ]; then
-      rm /usr/local/bin/pifire/firstinstall
+   # Remove upgradecheck file on remove command
+   if [ -f "/usr/local/bin/pifire/upgradecheck" ]; then
+      rm /usr/local/bin/pifire/upgradecheck
    fi
 
    # Remove python packages

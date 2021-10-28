@@ -18,6 +18,9 @@ import os
 import json
 import math
 import redis
+import uuid
+import random
+from uuid import getnode
 
 # *****************************************
 # Functions
@@ -29,7 +32,7 @@ def DefaultSettings():
 	settings = {}
 
 	settings['versions'] = { 
-		'android' : 4,
+		'android' : 5,
 		'server' : 1
 	}
 
@@ -76,14 +79,14 @@ def DefaultSettings():
 
 	settings['firebase'] = {
 		'enabled': False,
-		'ServerKey': '', # Server Key for Firebase notifications
-		'topic' : 'GrillAlerts' # Topic the device will subscribe to
+		'uuid' : generateUUID(),
+		'ServerUrl' : ''
 	}
 
 	settings['probe_types'] = {
 		'grill0type' : 'PT-1000-OEM',
 		'probe1type' : 'TWPS00',
-		'probe2type' : 'TWPS00',
+		'probe2type' : 'TWPS00'
 	}
 
 	settings['outpins'] = {
@@ -195,14 +198,14 @@ def DefaultControl():
 		'grill' : False,
 		'probe1' : False,
 		'probe2' : False,
-		'timer' : False,
+		'timer' : False
 	}
 
 	control['notify_data'] = {
 		'hopper_low' : False,
 		'p1_shutdown' : False,
 		'p2_shutdown' : False,
-		'timer_shutdown' : False,
+		'timer_shutdown' : False
 	}
 
 	control['timer'] = {
@@ -215,7 +218,7 @@ def DefaultControl():
 	control['manual'] = {
 		'change' : False,
 		'output' : '',
-		'state' : '',
+		'state' : ''
 	}
 
 	control['manual']['current'] = {
@@ -355,6 +358,13 @@ def DefaultProbeProfiles():
 			'name' : 'ET-73-skyeperry1'
 	}
 	return probe_profiles
+
+def generateUUID():
+	node = uuid.getnode()
+	rand_int = random.randint(100, 200)
+	generated_uuid = uuid.uuid1(node + rand_int)
+
+	return str(generated_uuid)
 
 def isRaspberryPi():
 	try:
@@ -496,7 +506,7 @@ def WritePelletDB(pelletdb):
 	# *****************************************
 	# Write Pellet DataBase to JSON file
 	# *****************************************
-	json_data_string = json.dumps(pelletdb)
+	json_data_string = json.dumps(pelletdb, indent=2, sort_keys=True)
 	with open("pelletdb.json", 'w') as json_file:
 		json_file.write(json_data_string)
 

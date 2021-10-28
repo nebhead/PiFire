@@ -750,17 +750,17 @@
                         </div>
                         <div class="card-body">
                             <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="firebase_enabled" name="firebase_enabled" {% if settings['firebase']['enabled'] == True %}checked{% endif %}>
+                                <input type="checkbox" class="custom-control-input" id="firebase_enabled" name="firebase_enabled" {% if settings['firebase']['enabled'] == True %}checked{% endif %} {% if settings['firebase']['ServerUrl'] == '' %} disabled {% endif %}>
                                 <label class="custom-control-label" for="firebase_enabled">Firebase Enabled</label>
                             </div>
                             <br>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-key"></i>&nbsp; Server Key </span>
-                                </div>
-                                <input id="firebase_serverkey" type="text" class="form-control" name="firebase_serverkey" value="{{settings['firebase']['ServerKey']}}">
-                            </div>
+                            {% if settings['firebase']['ServerUrl'] == '' %}
+                            <span class="badge badge-warning">NOTE:</span>
+                            <i class="small"> You must enable this option for the first time from the Android client. </i>
+                            {% else %}
+                            <span class="badge badge-warning">NOTE:</span>
+                            <i class="small"> When this option is enabled Firebase notifications will be enabled for all clients that connect to this server.</i>
+                            {% endif %}
                         </div>
                         <!-- End of card body -->
                     </div>

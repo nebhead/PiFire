@@ -10,6 +10,7 @@
                 <filename name="generated-version.inc"/>
                 <filename name="generated-build-date.inc"/>
                 <filename name="generated-commit-hash.inc"/>
+                <filename name="generated-server-version.inc"/>
             </fileset>
         </delete>
     </target>
@@ -19,7 +20,8 @@
 
     <target name="generated" depends="generated-version.inc,
                     generated-build-date.inc,
-                    release-series, generated-commit-hash.inc"
+                    release-series, generated-commit-hash.inc,
+                    generated-server-version.inc"
             description="Build generated files">
     </target>
 
@@ -84,6 +86,14 @@
                 <replaceregex pattern="master" replace="dev" flags="s"/>
             </filterchain>
         </loadresource>
+    </target>
+
+    <target name="generated-server-version.inc">
+        <xmlproperty file="version.xml" collapseAttributes="true"/>
+
+        <concat destfile="generated/generated-server-version.inc">
+            <propertyresource name="server.version"/>
+        </concat>
     </target>
 
     <target name="dist.debian" depends="generated"

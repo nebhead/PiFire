@@ -1,7 +1,10 @@
 #!/bin/bash
 
 ### Check if this is a fresh install or upgrade
-if [ -f "/usr/local/bin/pifire/firstinstall" ]; then
+if [ -f "/usr/local/bin/pifire/upgradecheck" ]; then
+  ## Update settings server version
+  cd /usr/local/bin/pifire || exit 1 # Change dir to where the settings.py application is (and common.py)
+  python3 settings.py -v @VERSION@
   echo "PiFire has been upgraded"
   echo "Starting Supervisor"
   service supervisor start
@@ -24,16 +27,15 @@ c=$((c < 70 ? 70 : c))
 whiptail --msgbox --backtitle "Welcome" --title "PiFire Automated Installer" "This installer will transform your Raspberry Pi into a connected Smoker Controller.  NOTE: This installer is intended to be run on a fresh install of Raspbian Lite Stretch +.  This script is currently in Alpha testing so there may be bugs." ${r} ${c}
 
 # Install dependencies
-
 sudo -H pip3 install flask
 sudo -H pip3 install pushbullet.py
 sudo -H pip3 install flask_qrcode
 sudo -H pip3 install flask-socketio
 sudo -H pip3 install eventlet==0.30.2
 sudo -H pip3 install redis
+sudo -H pip3 install uuid
 
 ### Setup nginx to proxy to gunicorn
-
 # Delete default configuration
 rm /etc/nginx/sites-enabled/default
 
@@ -67,7 +69,11 @@ fi
 # If supervisor isn't already running, startup Supervisor
 service supervisor restart
 
-echo " " | sudo tee -a /usr/local/bin/pifire/firstinstall >/dev/null
+## Update settings server version
+cd /usr/local/bin/pifire || exit 1 # Change dir to where the settings.py application is (and common.py)
+python3 settings.py -v @VERSION@
+
+echo " " | sudo tee -a /usr/local/bin/pifire/upgradecheck >/dev/null
 
 # Finish
 whiptail --msgbox --backtitle "Install Complete / Reboot Required" --title "Installation Completed" "Congratulations, the installation is complete.  At this time, you should reboot your system to complete the installation.  You should be able to access your application by opening a browser on your PC or other device and using the IP address for this device  Enjoy!" ${r} ${c}

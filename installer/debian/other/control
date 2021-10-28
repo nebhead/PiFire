@@ -1,6 +1,6 @@
 Package: pifire
 Maintainer: Ben Parmeter
-Version: 1.1-@BUILD@
+Version: @VERSION@-@BUILD@
 Priority: optional
 Architecture: all
 Depends: nginx,

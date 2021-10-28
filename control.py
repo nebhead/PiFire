@@ -1032,27 +1032,24 @@ def SendFirebaseNotification(notifyevent, control, settings, pelletdb):
 		sound = 'default'
 		channel = 'default'
 
-	serverToken = settings['firebase']['ServerKey']
-	topic = settings['firebase']['topic']
+	server_url = settings['firebase']['ServerUrl']
+	device_uuid = settings['firebase']['uuid']
 
 	headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'key=' + serverToken,
+        'Content-Type': 'application/json'
       }
 
 	body = {
-		'notification': {
-			'title': titlemessage,
-            'body': bodymessage,
-			'sound' : sound,
-			'android_channel_id' : channel
-            },
-          'to':
-              '/topics/' + topic,
-          'priority': 'high'
-        }
-		
-	response = requests.post("https://fcm.googleapis.com/fcm/send", headers = headers, data=json.dumps(body))
+		'uuid': device_uuid,
+		'title': titlemessage,
+		'message': bodymessage,
+		'sound': sound,
+		'channel': channel,
+		'priority': 'high',
+		'ttl': 3600
+	}
+
+	response = requests.post(server_url, headers=headers, data=json.dumps(body))
 
 	if(response.status_code == 200):
 		WriteLog("Firebase Notification Success: " + titlemessage)
@@ -1068,8 +1065,6 @@ def SendFirebaseNotification(notifyevent, control, settings, pelletdb):
 # ******************************
 
 def SendIFTTTNotification(notifyevent, control, settings, pelletdb):
-
-	now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
 
 	if "Grill_Temp_Achieved" in notifyevent:
 		query_args = { "value1" : str(control['setpoints']['grill']) }
@@ -1114,7 +1109,7 @@ def SendNotifications(notifyevent, control, settings, pelletdb):
 		SendPushBulletNotification(notifyevent, control, settings, pelletdb)
 	if(settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != '' and settings['pushover']['enabled'] == True):
 		SendPushoverNotification(notifyevent, control, settings, pelletdb)
-	if(settings['firebase']['ServerKey'] != '' and settings['firebase']['enabled'] == True):
+	if(settings['firebase']['ServerUrl'] != '' and settings['firebase']['enabled'] == True):
 		SendFirebaseNotification(notifyevent, control, settings, pelletdb)
 
 # ******************************
@@ -1129,6 +1124,8 @@ def CheckNotify(in_data, control, settings, pelletdb):
 			control['notify_req']['grill'] = False
 			WriteControl(control)
 			SendNotifications("Grill_Temp_Achieved", control, settings, pelletdb)
+			notify_event = "Grill Temp of " + str(control['setpoints']['grill']) + settings['globals']['units'] + " Achieved"
+			WriteLog(notify_event)
 
 	if (control['notify_req']['probe1']):
 		if (in_data['Probe1Temp'] >= control['setpoints']['probe1']):
@@ -1140,6 +1137,8 @@ def CheckNotify(in_data, control, settings, pelletdb):
 				control['updated'] = True
 				control['notify_data']['p1_shutdown'] = False
 			WriteControl(control)
+			notify_event = "Probe 1 Temp of " + str(control['setpoints']['probe1']) + settings['globals']['units'] + " Achieved"
+			WriteLog(notify_event)
 
 	if (control['notify_req']['probe2']):
 		if (in_data['Probe2Temp'] >= control['setpoints']['probe2']):
@@ -1151,6 +1150,8 @@ def CheckNotify(in_data, control, settings, pelletdb):
 				control['updated'] = True
 				control['notify_data']['p2_shutdown'] = False
 			WriteControl(control)
+			notify_event = "Probe 2 Temp of " + str(control['setpoints']['probe2']) + settings['globals']['units'] + " Achieved"
+			WriteLog(notify_event)
 
 	if (control['notify_req']['timer']):
 		if (time.time() >= control['timer']['end']):

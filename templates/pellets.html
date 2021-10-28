@@ -422,12 +422,14 @@
                                     <table class="table table-striped">
                                         <thead class="table-light">
                                           <tr>
-                                            <th>Date / Time</th>
-                                            <th>Pellets</th>
-                                            <th>Rating</th>
+                                              <th>Date / Time</th>
+                                              <th>Pellets</th>
+                                              <th>Rating</th>
+                                              <th>Action</th>
                                           </tr>
                                         </thead>
                                         <tbody>
+                                        <form name="deletelog" action="/pellets/deletelog" method="POST">
                                             {% for index, data in pelletdb['log'].items()|sort %}
                                             <tr>
                                                 <td>{{ index }}</td>
@@ -440,9 +442,15 @@
                                                     <i class="fas fa-star text-warning"></i>
                                                     {% endfor %}
                                                 </td>
+                                                <td>
+                                                    <button type="submit" class="btn text-danger" data-toggle="tooltip" title="Delete Log Entry" name="delLog" value="{{ index }}">
+                                                        <i class="far fa-trash-alt"></i>
+                                                    </button>
+                                                </td>
                                                 {% endif %}
                                             </tr>
                                             {% endfor %}
+                                        </form>
                                         </tbody>
                                 </table>
                                 </div>

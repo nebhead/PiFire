@@ -79,6 +79,7 @@ $SUDO pip3 install flask-socketio
 $SUDO pip3 install eventlet==0.30.2
 $SUDO pip3 install gpiozero
 $SUDO pip3 install redis
+$SUDO pip3 install uuid
 
 # Grab project files
 clear
