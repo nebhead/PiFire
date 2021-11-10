@@ -47,6 +47,7 @@
                 <exclude name="venv/**"/>
                 <exclude name="docs/**"/>
                 <exclude name="auto-install/**"/>
+                <exclude name=".idea/**"/>
                 <exclude name=".gitignore"/>
                 <exclude name="build.xml"/>
                 <exclude name="*.nginx"/>
