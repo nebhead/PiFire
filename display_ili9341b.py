@@ -38,7 +38,7 @@ class Display:
 		self.WIDTH = 320
 		self.HEIGHT = 240
 		# Init Device
-		self.serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25)
+		self.serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25, bus_speed_hz=32000000, reset_hold_time=0.2, reset_release_time=0.2)
 		self.device = ili9341(self.serial, active_low=False, width=self.WIDTH, height=self.HEIGHT, gpio_LIGHT=5)
 		# Init GPIO for button input, setup callbacks: Uncomment to utilize GPIO input
 		self.up = 16 	# UP - GPIO16
