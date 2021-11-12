@@ -31,9 +31,8 @@ cmdsts = redis.StrictRedis('localhost', 6379, charset="utf-8", decode_responses=
 def DefaultSettings():
 	settings = {}
 
-	settings['versions'] = { 
-		'android' : 5,
-		'server' : 1
+	settings['versions'] = {
+		'server' : "1.0.0"
 	}
 
 	settings['history_page'] = {
@@ -217,16 +216,11 @@ def DefaultControl():
 
 	control['manual'] = {
 		'change' : False,
-		'output' : '',
-		'state' : ''
+		'fan' : False,
+		'auger' : False,
+		'igniter' : False,
+		'power' : False
 	}
-
-	control['manual']['current'] = {
-			'fan' : 1,
-			'auger' : 1,
-			'igniter' : 1,
-			'power' : 1
-		}
 
 	return(control)
 

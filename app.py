@@ -1088,52 +1088,41 @@ def manual_page(action=None):
 			if(response['setmode']=='manual'):
 				control['updated'] = True
 				control['mode'] = 'Manual'
-				WriteControl(control)
+			else:
+				control['updated'] = True
+				control['mode'] = 'Stop'
 
 		if('change_output_fan' in response):
 			if(response['change_output_fan']=='on'):
 				control['manual']['change'] = True
-				control['manual']['output'] = 'fan'
-				control['manual']['state'] = 'on'
-				WriteControl(control)
+				control['manual']['fan'] = True
 			elif(response['change_output_fan']=='off'):
 				control['manual']['change'] = True
-				control['manual']['output'] = 'fan'
-				control['manual']['state'] = 'off'
-				WriteControl(control)
+				control['manual']['fan'] = False
 		elif('change_output_auger' in response):
 			if(response['change_output_auger']=='on'):
 				control['manual']['change'] = True
-				control['manual']['output'] = 'auger'
-				control['manual']['state'] = 'on'
-				WriteControl(control)
+				control['manual']['auger'] = True
 			elif(response['change_output_auger']=='off'):
 				control['manual']['change'] = True
-				control['manual']['output'] = 'auger'
-				control['manual']['state'] = 'off'
-				WriteControl(control)
+				control['manual']['auger'] = False
 		elif('change_output_igniter' in response):
 			if(response['change_output_igniter']=='on'):
 				control['manual']['change'] = True
-				control['manual']['output'] = 'igniter'
-				control['manual']['state'] = 'on'
-				WriteControl(control)
+				control['manual']['igniter'] = True
 			elif(response['change_output_igniter']=='off'):
 				control['manual']['change'] = True
-				control['manual']['output'] = 'igniter'
-				control['manual']['state'] = 'off'
-				WriteControl(control)
+				control['manual']['igniter'] = False
 		elif('change_output_power' in response):
 			if(response['change_output_power']=='on'):
 				control['manual']['change'] = True
-				control['manual']['output'] = 'power'
-				control['manual']['state'] = 'on'
-				WriteControl(control)
+				control['manual']['power'] = True
 			elif(response['change_output_power']=='off'):
 				control['manual']['change'] = True
-				control['manual']['output'] = 'power'
-				control['manual']['state'] = 'off'
-				WriteControl(control)
+				control['manual']['power'] = False
+
+		WriteControl(control)
+
 		time.sleep(1)
 		control = ReadControl()
 
@@ -1498,6 +1487,24 @@ def request_info_data():
 	}
 
 	return info_list
+
+@socketio.on('request_manual_data')
+def request_manual_data():
+	settings = ReadSettings()
+	control = ReadControl()
+
+	if(settings['modules']['grillplat'] == 'prototype'):
+		print('Client requesting manual data')
+
+	manual = control['manual']
+	mode = control['mode']
+
+	manual_list = {
+		'manual' : manual,
+		'mode' : mode
+	}
+
+	return manual_list
 		
 @socketio.on('update_control_data')
 def update_control(json_data):
@@ -2068,42 +2075,34 @@ def update_manual_data(json_data):
 		if('change_output_fan' in data['manual']):
 			if(data['manual']['change_output_fan']=='true'):
 				control['manual']['change'] = True
-				control['manual']['output'] = 'fan'
-				control['manual']['state'] = 'on'
+				control['manual']['fan'] = True
 			elif(data['manual']['change_output_fan']=='false'):
 				control['manual']['change'] = True
-				control['manual']['output'] = 'fan'
-				control['manual']['state'] = 'off'
+				control['manual']['fan'] = False
 
 		if('change_output_auger' in data['manual']):
 			if(data['manual']['change_output_auger']=='true'):
 				control['manual']['change'] = True
-				control['manual']['output'] = 'auger'
-				control['manual']['state'] = 'on'
+				control['manual']['auger'] = True
 			elif(data['manual']['change_output_auger']=='false'):
 				control['manual']['change'] = True
-				control['manual']['output'] = 'auger'
-				control['manual']['state'] = 'off'
+				control['manual']['auger'] = False
 
 		if('change_output_igniter' in data['manual']):
 			if(data['manual']['change_output_igniter']=='true'):
 				control['manual']['change'] = True
-				control['manual']['output'] = 'igniter'
-				control['manual']['state'] = 'on'
+				control['manual']['igniter'] = True
 			elif(data['manual']['change_output_igniter']=='false'):
 				control['manual']['change'] = True
-				control['manual']['output'] = 'igniter'
-				control['manual']['state'] = 'off'
+				control['manual']['igniter'] = False
 
 		if('change_output_power' in data['manual']):
 			if(data['manual']['change_output_power']=='true'):
 				control['manual']['change'] = True
-				control['manual']['output'] = 'power'
-				control['manual']['state'] = 'on'
+				control['manual']['power'] = True
 			elif(data['manual']['change_output_power']=='false'):
 				control['manual']['change'] = True
-				control['manual']['output'] = 'power'
-				control['manual']['state'] = 'off'
+				control['manual']['power'] = False
 
 		WriteControl(control)
 

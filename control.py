@@ -740,35 +740,33 @@ def Manual_Mode(grill_platform, adc_device, display_device, dist_device):
 				WriteControl(control)
 				break
 
-		if (control['manual']['change'] == True):
-			if (control['manual']['output'] == 'fan'):
-				if (control['manual']['state'] == 'on'):
-					grill_platform.FanOn()
-				else:
-					grill_platform.FanOff()
-			if (control['manual']['output'] == 'auger'):
-				if (control['manual']['state'] == 'on'):
-					grill_platform.AugerOn()
-				else:
-					grill_platform.AugerOff()
-			if (control['manual']['output'] == 'igniter'):
-				if (control['manual']['state'] == 'on'):
-					grill_platform.IgniterOn()
-				else:
-					grill_platform.IgniterOff()
-			if (control['manual']['output'] == 'power'):
-				if (control['manual']['state'] == 'on'):
-					grill_platform.PowerOn()
-				else:
-					grill_platform.PowerOff()
+		# Get current grill output status
+		current_output_status = grill_platform.GetOutputStatus()
+
+		if(control['manual']['change'] == True):
+			if(control['manual']['fan'] == True) and (current_output_status['fan'] == FANOFF):
+				grill_platform.FanOn()
+			elif(control['manual']['fan'] == False) and (current_output_status['fan'] == FANON):
+				grill_platform.FanOff()
+
+			if(control['manual']['auger'] == True) and (current_output_status['auger'] == AUGEROFF):
+				grill_platform.AugerOn()
+			elif(control['manual']['auger'] == False) and (current_output_status['auger'] == AUGERON):
+				grill_platform.AugerOff()
+
+			if(control['manual']['igniter'] == True) and (current_output_status['igniter'] == IGNITEROFF):
+				grill_platform.IgniterOn()
+			elif(control['manual']['igniter'] == False) and (current_output_status['igniter'] == IGNITERON):
+				grill_platform.IgniterOff()
+
+			if(control['manual']['power'] == True) and (current_output_status['power'] == POWEROFF):
+				grill_platform.PowerOn()
+			elif(control['manual']['power'] == False) and (current_output_status['power'] == POWERON):
+				grill_platform.PowerOff()
+
 			#control = ReadControl()  # Read Modify Write
 			control['manual']['change'] = False
 			WriteControl(control)
-
-		#control = ReadControl()  # Read Modify Write
-		control['manual']['current'] = not grill_platform.GetOutputStatus()
-
-		WriteControl(control)
 
 		# Grab current probe profiles if they have changed since the last loop. 
 		if (control['probe_profile_update'] == True):
@@ -814,7 +812,13 @@ def Manual_Mode(grill_platform, adc_device, display_device, dist_device):
 			temptoggletime = time.time()
 			WriteHistory(in_data)
 
-		time.sleep(0.1)
+		time.sleep(0.2)
+
+	# Clean-up and Exit
+	grill_platform.AugerOff()
+	grill_platform.IgniterOff()
+	grill_platform.FanOff()
+	grill_platform.PowerOff()
 
 	event = 'Manual mode ended.'
 	WriteLog(event)
@@ -1195,11 +1199,21 @@ buttonslevel = settings['globals']['buttonslevel']
 if triggerlevel == 'LOW':
 	AUGERON = 0
 	AUGEROFF = 1
+	FANON = 0
 	FANOFF = 1
+	IGNITERON = 0
+	IGNITEROFF = 1
+	POWERON = 0
+	POWEROFF = 1
 else:
 	AUGERON = 1
 	AUGEROFF = 0
+	FANON = 1
 	FANOFF = 0
+	IGNITERON = 1
+	IGNITEROFF = 0
+	POWERON = 1
+	POWEROFF = 0
 
 # Initialize Grill Platform Object
 grill_platform = GrillPlatform(outpins, inpins, triggerlevel)

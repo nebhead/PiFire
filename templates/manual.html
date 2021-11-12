@@ -1,6 +1,6 @@
-{% extends 'base.html' %} 
+{% extends 'base.html' %}
 
-{% block title %}Manual Control{% endblock %} 
+{% block title %}Manual Control{% endblock %}
 
 {% block content %}
 	<div class="row">
@@ -10,7 +10,7 @@
 			<div class="card-body">
 					<form name="ManualMode" method="POST">
 						{% if control['mode'] == 'Manual' %}
-						<button type="submit" class="btn btn-success btn-block shadow" name="setmode" value="manual">Manual Mode Selected</button>
+						<button type="submit" class="btn btn-success btn-block shadow" name="setmode" value="stop">Manual Mode Selected</button>
 						{% else %}
 						<button type="submit" class="btn btn-secondary btn-block shadow" name="setmode" value="manual">Turn on Manual Mode</button>
 						{% endif %}
@@ -21,28 +21,28 @@
 					{% if control['mode'] == 'Manual' %}
 					<form name="ChangeValues" method="POST">
 						<div class="btn-group">
-							{% if control['manual']['current']['fan'] == 0 %}
-							<button type="submit" data-toggle="tooltip" title="FAN" class="btn btn-primary" name="change_output_fan" value='off'><i class="fas fa-fan"></i></button>
-							{% else %}
+							{% if control['manual']['fan'] == False %}
 							<button type="submit" data-toggle="tooltip" title="FAN" class="btn btn-outline-primary" name="change_output_fan" value='on'><i class="fas fa-fan"></i></button>
+							{% else %}
+							<button type="submit" data-toggle="tooltip" title="FAN" class="btn btn-primary" name="change_output_fan" value='off'><i class="fas fa-fan"></i></button>
 							{% endif %}
 
-							{% if control['manual']['current']['auger'] == 0 %}
-							<button type="submit" data-toggle="tooltip" title="AUGER" class="btn btn-primary" name="change_output_auger" value='off'><i class="fas fa-play-circle"></i></button>
-							{% else %}
+							{% if control['manual']['auger'] == False %}
 							<button type="submit" data-toggle="tooltip" title="AUGER" class="btn btn-outline-primary" name="change_output_auger" value='on'><i class="fas fa-play-circle"></i></button>
+							{% else %}
+							<button type="submit" data-toggle="tooltip" title="AUGER" class="btn btn-primary" name="change_output_auger" value='off'><i class="fas fa-play-circle"></i></button>
 							{% endif %}
 
-							{% if control['manual']['current']['igniter'] == 0 %}
-							<button type="submit" data-toggle="tooltip" title="IGNITER" class="btn btn-primary" name="change_output_igniter" value='off'><i class="fas fa-fire"></i></button>
-							{% else %}
+							{% if control['manual']['igniter'] == False %}
 							<button type="submit" data-toggle="tooltip" title="IGNITER" class="btn btn-outline-primary" name="change_output_igniter" value='on'><i class="fas fa-fire"></i></button>
+							{% else %}
+							<button type="submit" data-toggle="tooltip" title="IGNITER" class="btn btn-primary" name="change_output_igniter" value='off'><i class="fas fa-fire"></i></button>
 							{% endif %}
 
-							{% if control['manual']['current']['power'] == 0 %}
-							<button type="submit" data-toggle="tooltip" title="POWER" class="btn btn-primary" name="change_output_power" value='off'><i class="fas fa-power-off"></i></button>
-							{% else %}
+							{% if control['manual']['power'] == False %}
 							<button type="submit" data-toggle="tooltip" title="POWER" class="btn btn-outline-primary" name="change_output_power" value='on'><i class="fas fa-power-off"></i></button>
+							{% else %}
+							<button type="submit" data-toggle="tooltip" title="POWER" class="btn btn-primary" name="change_output_power" value='off'><i class="fas fa-power-off"></i></button>
 							{% endif %}
 						</div>
 					</form>
