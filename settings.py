@@ -22,6 +22,8 @@ import argparse
 #  Display - Update Display
 #  Range - Update Distance
 #  Version - Update Server Version
+#  Triggerlevel - Update Trigger Level
+#  Buttonslevel - Update Buttons Level
 
 #==============================================================================
 #                                   Main Program
@@ -36,6 +38,8 @@ parser.add_argument('-a','--adc',type=str, help='Update the ADC platform module 
 parser.add_argument('-d','--display',type=str, help='Update the Display platform module setting.',required=False)
 parser.add_argument('-r','--range',type=str, help='Update the Range platform module setting.',required=False)
 parser.add_argument('-v','--version',type=str, help='Update the server version.',required=False)
+parser.add_argument('-t','--triggerlevel',type=str, help='Update the Trigger-Level setting for different types of relays.',required=False)
+parser.add_argument('-b','--buttonslevel',type=str, help='Update the Button-Level setting for either pull-ups or pull-downs on the button inputs.',required=False)
 
 args = parser.parse_args()
 
@@ -70,5 +74,17 @@ if(args.version):
     print(f"\nModifying Server Version {settings['versions']['server']} to {version}")
     settings['versions']['server'] = version
     WriteSettings(settings)
+
+if(args.triggerlevel):
+	triggerlevel = args.triggerlevel 
+	print(f"\n * Modifying Trigger Level from {settings['globals']['triggerlevel']} to {triggerlevel}")
+	settings['globals']['triggerlevel'] = triggerlevel
+	WriteSettings(settings)
+
+if(args.buttonslevel):
+	buttonslevel = args.buttonslevel 
+	print(f"\n * Modifying Buttons Level from {settings['globals']['buttonslevel']} to {buttonslevel}")
+	settings['globals']['buttonslevel'] = buttonslevel
+	WriteSettings(settings)
 
 print('\nDone.\n')
