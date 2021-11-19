@@ -88,7 +88,11 @@ echo "**                                                                     **"
 echo "**      Cloning PiFire from GitHub...                                  **"
 echo "**                                                                     **"
 echo "*************************************************************************"
-git clone https://github.com/nebhead/pifire
+cd ~
+# Use a shallow clone to reduce download size
+git clone --depth 1 https://github.com/nebhead/pifire
+# Replace the below command to fetch development branch
+#git clone --depth 1 --branch development https://github.com/nebhead/pifire
 
 ### Setup nginx to proxy to gunicorn
 clear

@@ -4,10 +4,15 @@
 
 {% block notify %}
 	<!-- Settings Success -->
-	{% if (action == "setting") %}
+	{% if (notify == "success") %}
 	<div class="alert alert-success alert-dismissible">
 		<button type="button" class="close" data-dismiss="alert">&times;</button>
-		<b> Settings Updated.</b>
+		<b> Changes Successfully Applied.</b>
+	</div>
+	{% elif notify == "error" %}
+	<div class="alert alert-danger alert-dismissible">
+		<button type="button" class="close" data-dismiss="alert">&times;</button>
+		<b> There was an error with the attempted action.</b>
 	</div>
 	{% endif %}
 {% endblock %}
@@ -38,14 +43,38 @@
 	</div>
 	<br>
 
-	<!-- Reset Data Card -->
+	<!-- Data Management Card -->
 	<div class="card shadow">
 		<div class="card-header bg-danger text-white">
-					<h5><i class="fas fa-trash-alt"></i>&nbsp; Reset Data</h5>
+					<h5><i class="fas fa-database"></i>&nbsp; Data Management</h5>
 		</div>
 		<div class="card-body">
-			<!-- Clear History -->
 			<form name="input" action="/admin/setting" method="POST">
+			<!-- Backup Settings -->
+				<button type="submit" class="btn btn-outline-success btn-block shadow" name="backupsettings" value="true">
+					Backup Settings
+				</button>
+				<br>
+
+			<!-- Restore Settings -->
+				<button type="button" class="btn btn-outline-primary btn-block shadow" data-toggle="modal" data-target="#restoresettingsModal">
+					Restore Settings
+				</button>
+				<br>
+
+			<!-- Backup PelletDB -->
+				<button type="submit" class="btn btn-outline-success btn-block shadow" name="backuppelletdb" value="true">
+					Backup Pellet Database
+				</button>
+				<br>
+
+			<!-- Restore PelletDB -->
+				<button type="button" class="btn btn-outline-primary btn-block shadow" data-toggle="modal" data-target="#restorepelletdbModal">
+					Restore Pellet Database
+				</button>
+				<br>
+
+			<!-- Clear History -->
 				<button type="button" class="btn btn-outline-warning btn-block text-red shadow" data-toggle="modal" data-target="#clearallhistoryModal">
 					Delete History
 				</button>
@@ -188,10 +217,159 @@
 						</div>
 					</div>
 			</form>
-
+			
 			</div>
 		</div>
 	<br>
+	
+	<!-- Restore Settings Modal -->
+	<form method="POST" action="/admin/setting" enctype="multipart/form-data">
+		<div class="modal" id="restoresettingsModal">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<!-- Modal Header -->
+					<div class="modal-header">
+						<h4 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Restore Settings from Backup</h4>
+						<button type="button" class="close" data-dismiss="modal">&times;</button>
+					</div>
+					<!-- Modal body -->
+					<div class="modal-body text-center">
+						<div class="accordion" id="localremoteaccordian">
+							<div class="card">
+								<div class="card-header" id="localfiles">
+								  <h2 class="mb-0">
+									<button class="btn btn-block text-left" type="button" data-toggle="collapse" data-target="#collapseLocal" aria-expanded="false" aria-controls="collapseLocal">
+										<i class="far fa-folder-open"></i>&nbsp; Restore from Local Backups
+									</button>
+								  </h2>
+								</div>
+							
+								<div id="collapseLocal" class="collapse" aria-labelledby="localfiles" data-parent="#localremoteaccordian">
+								  <div class="card-body">
+									<!-- Choose Local File -->
+									<div class="form-group">
+										<label for="localfile">Choose a Local Settings Backup File:</label>
+										<select class="form-control" id="localfile" name="localfile">
+											{% if files != [] %}
+											<option value="none">Select a file...</option>
+											{% for file in files %}
+											<option value="{{ file }}">{{ file }}</option>
+												{% endfor %}
+											{% else %}
+											<option value="none">No Local Backups Available</option>
+											{% endif %}
+										</select>
+									</div>
+								  </div>
+								</div>
+							</div>
+
+							<div class="card">
+								<div class="card-header" id="remotefiles">
+								  <h2 class="mb-0">
+									<button class="btn btn-block text-left" type="button" data-toggle="collapse" data-target="#collapseRemote" aria-expanded="false" aria-controls="collapseRemote">
+										<i class="fas fa-file-upload"></i>&nbsp; Restore from Remote Backups
+									</button>
+								  </h2>
+								</div>
+							
+								<div id="collapseRemote" class="collapse" aria-labelledby="remotefiles" data-parent="#localremoteaccordian">
+								  <div class="card-body">
+									<!-- Upload Remote File -->
+									<div class="form-group">
+										<label for="remotefile">Upload a Settings Backup File:</label>
+										<input type="file" class="form-control-file" id="remotefile" name="uploadfile" accept=".json">
+									</div>
+								  </div>
+								</div>
+							</div>						
+						</div>
+
+					</div>
+					<!-- Modal footer -->
+					<div class="modal-footer">
+						<button type="button" class="btn btn-warning" data-dismiss="modal">Cancel</button>
+						<button type="submit" class="btn btn-danger" name="restoresettings" value="true">Restore</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+
+	<!-- Restore PelletDB Modal -->
+	<form method="POST" action="/admin/setting" enctype="multipart/form-data">
+		<div class="modal" id="restorepelletdbModal">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<!-- Modal Header -->
+					<div class="modal-header">
+						<h4 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Restore PelletDB from Backup</h4>
+						<button type="button" class="close" data-dismiss="modal">&times;</button>
+					</div>
+					<!-- Modal body -->
+					<div class="modal-body text-center">
+						<div class="accordion" id="localremoteaccordian">
+							<div class="card">
+								<div class="card-header" id="localfiles">
+								  <h2 class="mb-0">
+									<button class="btn btn-block text-left" type="button" data-toggle="collapse" data-target="#collapseLocal" aria-expanded="false" aria-controls="collapseLocal">
+										<i class="far fa-folder-open"></i>&nbsp; Restore from Local Backups
+									</button>
+								  </h2>
+								</div>
+							
+								<div id="collapseLocal" class="collapse" aria-labelledby="localfiles" data-parent="#localremoteaccordian">
+								  <div class="card-body">
+									<!-- Choose Local File -->
+									<div class="form-group">
+										<label for="localfile">Choose a Local PelletDB Backup File:</label>
+										<select class="form-control" id="localfile" name="localfile">
+											{% if files != [] %}
+											<option value="none">Select a file...</option>
+											{% for file in files %}
+											<option value="{{ file }}">{{ file }}</option>
+												{% endfor %}
+											{% else %}
+											<option value="none">No Local Backups Available</option>
+											{% endif %}
+										</select>
+									</div>
+								  </div>
+								</div>
+							</div>
+
+							<div class="card">
+								<div class="card-header" id="remotefiles">
+								  <h2 class="mb-0">
+									<button class="btn btn-block text-left" type="button" data-toggle="collapse" data-target="#collapseRemote" aria-expanded="false" aria-controls="collapseRemote">
+										<i class="fas fa-file-upload"></i>&nbsp; Restore from Remote Backups
+									</button>
+								  </h2>
+								</div>
+							
+								<div id="collapseRemote" class="collapse" aria-labelledby="remotefiles" data-parent="#localremoteaccordian">
+								  <div class="card-body">
+									<!-- Upload Remote File -->
+									<div class="form-group">
+										<label for="remotefile">Upload a PelletDB Backup File:</label>
+										<input type="file" class="form-control-file" id="remotefile" name="uploadfile" accept=".json">
+									</div>
+								  </div>
+								</div>
+							</div>						
+						</div>
+
+					</div>
+					<!-- Modal footer -->
+					<div class="modal-footer">
+						<button type="button" class="btn btn-warning" data-dismiss="modal">Cancel</button>
+						<button type="submit" class="btn btn-danger" name="restorepelletdb" value="true">Restore</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+
 
     <!-- System Power Card -->
 	<div class="card shadow">

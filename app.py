@@ -15,6 +15,7 @@
 from flask import Flask, request, render_template, make_response, send_file, jsonify, redirect
 from flask_socketio import SocketIO
 from flask_qrcode import QRcode
+from werkzeug.utils import secure_filename
 import threading
 from threading import Thread
 from datetime import timedelta
@@ -25,9 +26,14 @@ import datetime
 import math
 from common import *  # Common Library for WebUI and Control Program
 
+BACKUPPATH = './backups/'  # Path to backups of settings.json, pelletdb.json
+UPLOAD_FOLDER = BACKUPPATH  # Point uploads to the backup path
+ALLOWED_EXTENSIONS = {'json'}
+
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
 QRcode(app)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 thread = Thread()
 thread_lock = threading.Lock()
@@ -315,7 +321,7 @@ def historypage(action=None):
 
 		csvfile.close()
 
-		return send_file('/tmp/'+exportfilename, as_attachment=True, cache_timeout=0)
+		return send_file('/tmp/'+exportfilename, as_attachment=True, max_age=0)
 
 	num_items = settings['history_page']['minutes'] * 20
 	probes_enabled = settings['probe_settings']['probes_enabled']
@@ -1002,6 +1008,15 @@ def adminpage(action=None):
 
 	settings = ReadSettings()
 	pelletdb = ReadPelletDB()
+	notify = ''
+	files = os.listdir(BACKUPPATH)
+	for file in files:
+		if not allowed_file(file):
+			files.remove(file)
+
+	print(f'Files List: {files}')
+	print(f'Request Form: {request.form}')
+	print(f'Request Files: {request.files}')
 
 	if action == 'reboot':
 		event = "Admin: Reboot"
@@ -1055,10 +1070,81 @@ def adminpage(action=None):
 				ReadHistory(0, flushhistory=True)
 				ReadControl(flush=True)
 				os.system('rm settings.json')
+				os.system('rm pelletdb.json')
 				settings = DefaultSettings()
 				control = DefaultControl()
 				WriteSettings(settings)
 				WriteControl(control)
+		
+		if('backupsettings' in response):
+			print('Backing up settings... ')
+			timenow = datetime.datetime.now()
+			timestr = timenow.strftime('%m-%d-%y_%H%M%S') # Truncate the microseconds
+			backupfile = BACKUPPATH + 'PiFire_' + timestr + '.json'
+			os.system(f'cp settings.json {backupfile}')
+			return send_file(backupfile, as_attachment=True, max_age=0)
+
+		if('restoresettings' in response):
+			print('Restoring settings...')
+			# Assume we have request.files and localfile in response
+			remotefile = request.files['uploadfile']
+			localfile = request.form['localfile']
+			
+			if (localfile != 'none'):
+				print(f'Selected local file: {BACKUPPATH+localfile}')
+				settings = ReadSettings(filename=BACKUPPATH+localfile)
+				notify = "success"
+			elif (remotefile.filename != ''):
+				print(f'Selected remote file: {remotefile.filename}')
+				# If the user does not select a file, the browser submits an
+				# empty file without a filename.
+				if remotefile and allowed_file(remotefile.filename):
+					filename = secure_filename(remotefile.filename)
+					remotefile.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+					print(f'{filename} saved to {BACKUPPATH}')
+					notify = "success"
+					settings = ReadSettings(filename=BACKUPPATH+filename)
+				else:
+					notify = "error"
+					print('Disallowed File Upload.')
+			else:
+				notify = "error"
+				print('No file in request.')
+
+		if('backuppelletdb' in response):
+			print('Backing up pelletdb... ')
+			timenow = datetime.datetime.now()
+			timestr = timenow.strftime('%m-%d-%y_%H%M%S') # Truncate the microseconds
+			backupfile = BACKUPPATH + 'PelletDB_' + timestr + '.json'
+			os.system(f'cp pelletdb.json {backupfile}')
+			return send_file(backupfile, as_attachment=True, max_age=0)
+
+		if('restorepelletdb' in response):
+			print('Restoring pelletdb... ')
+			# Assume we have request.files and localfile in response
+			remotefile = request.files['uploadfile']
+			localfile = request.form['localfile']
+			
+			if (localfile != 'none'):
+				print(f'Selected local file: {BACKUPPATH+localfile}')
+				pelletdb = ReadPelletDB(filename=BACKUPPATH+localfile)
+				notify = "success"
+			elif (remotefile.filename != ''):
+				print(f'Selected remote file: {remotefile.filename}')
+				# If the user does not select a file, the browser submits an
+				# empty file without a filename.
+				if remotefile and allowed_file(remotefile.filename):
+					filename = secure_filename(remotefile.filename)
+					remotefile.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+					print(f'{filename} saved to {BACKUPPATH}')
+					notify = "success"
+					pelletdb = ReadPelletDB(filename=BACKUPPATH+filename)
+				else:
+					notify = "error"
+					print('Disallowed File Upload.')
+			else:
+				notify = "error"
+				print('No file in request.')
 
 	uptime = os.popen('uptime').readline()
 
@@ -1072,7 +1158,7 @@ def adminpage(action=None):
 
 	url = request.url_root
 
-	return render_template('admin.html', settings=settings, action=action, uptime=uptime, cpuinfo=cpuinfo, temp=temp, ifconfig=ifconfig, debug_mode=debug_mode, qr_content=url, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
+	return render_template('admin.html', settings=settings, notify=notify, uptime=uptime, cpuinfo=cpuinfo, temp=temp, ifconfig=ifconfig, debug_mode=debug_mode, qr_content=url, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'], files=files)
 
 @app.route('/manual/<action>', methods=['POST','GET'])
 @app.route('/manual', methods=['POST','GET'])
@@ -1167,6 +1253,10 @@ def manifest():
     res = make_response(render_template('manifest.json'), 200)
     res.headers["Content-Type"] = "text/cache-manifest"
     return res
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def checkcputemp():
 	temp = os.popen('vcgencmd measure_temp').readline()

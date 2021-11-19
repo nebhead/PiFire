@@ -32,3 +32,5 @@ test.json
 *.bak
 
 *.bak2
+
+pelletdb.json

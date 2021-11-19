@@ -1,5 +1,5 @@
 # ![Dashboard](static/img/launcher-icon-1x.png) PiFire
-## Raspberry Pi Zero W based Smoker Grill Controller using Python 3 and Flask/Gunicorn/nginx
+## Raspberry Pi Zero (2) W based Smoker Grill Controller using Python 3 and Flask/Gunicorn/nginx
 *Also uses Bootstrap 4 (http://getbootstrap.com/) w/jQuery and Popper support*
 
 ***Note:*** *This project is continuously evolving, and thus this readme will likely be improved over time, as I find the inspiration to make adjustments.  That being said, I'm sure there will be many errors that I have overlooked or sections that I haven't updated. This project is something I've done for both fun and for self-education.  If you decide to implement this project for yourself, and run into issues/challenges, feel free to submit an issue here on GitHub.  However, I would highly encourage you to dig in and debug the issue as much as you can on your own for the sake of growing your own knowledge.  Also, I have a very demanding day job, a family, and lots of barbeque to make - so please have patience with me.*
@@ -11,11 +11,42 @@
 ### Introduction
 This project was inspired by user dborello and his excellent PiSmoker project (http://engineeredmusings.com/pismoker/ and https://github.com/DBorello/PiSmoker).  I encourage you to check it out and get a rough idea of how this all works.  This particular project was built around a Traeger Texas smoker grill platform, but should work for most older Traeger models (or other brands with similar parts like the older Pit Boss) built with similar parts (fan, auger, and igniter).  I've built the code in a way to be somewhat modular & extensible such that you can replace the grill platform with your own specific platform instead.  Newer Traeger grills with their newer wifi enabled controllers have DC components (instead of the AC Fan / Auger) and aren't covered by this project.  
 
-Just as with the PiSmoker project, I had a few goals in mind.  I also wanted to have tighter temperature controls, wireless control, and plotting of the grill / meat temperatures.  In addition, I wanted to design this project such that original smoker controller could be used if needed.  This way, if I wanted to, I could use my controller as a monitoring device for temperatures instead of controlling the temperature and leave that up to the original controller.  Basically, it was my fallback plan in case my project didn't work out, or if I wanted to do a quick cook on the Traeger without using the fancy GUI.  
+Just as with the PiSmoker project, I had a few goals in mind.  I also wanted to have tighter temperature controls, wireless control, and plotting of the grill / meat temperatures.  In addition, I wanted to design this project such that original smoker controller could be used if needed.  This way, if I wanted to, I could use my controller as a monitoring device for temperatures instead of controlling the temperature and leave that up to the original controller.  Basically, it was my fallback plan in case my project didn't work out, or if I wanted to do a quick cook on the Traeger without using the fancy GUI.  **UPDATE (11/2021)** After spending lots of time with PiFire, I've finally removed the original controller in favor of using PiFire exclusivesly.  However, this doesn't mean that you can't still retain your original controller if you want.  Both modes work fine. 
+
+### Features
+
+* WiFi Enabled Access & Control (WebUI) via computer, phone or tablet
+* Multiple Cook Modes
+	* _Startup Mode_ (fixed auger on times with igniter on)
+	* _Smoke Mode_ (fixed auger on times)
+	* _Hold Mode_ (variable auger on times) using PID for higher accuracy
+	* _Shutdown Mode_ (auger off, fan on) to burn off pellets after cook is completed
+	* _Monitor Mode_ - See temperatures of grill / probes and get notifications if using another controller or if just checking the temperatures any time.  
+	* _Manual Mode_ - Control fan, auger and igniter manually.  
+* Supports several different OLED and LCD screens
+	* SSD1306 OLED Display
+	* ST7789 TFT Display
+	* ILI9341 TFT Display
+* Physical Button Input / Control (depending on the display, three button inputs)
+* One (1) Grill Probe and Two (2) Food Probes
+	* Tunable probe inputs to allow for many different probe manufacturers
+	* Probe tuning tool to help develop probe profiles
+* Cook Timer
+* Notifications (Grill / Food Probes / Timer)
+	* Supports IFTTT, Pushover, and Pushbullet Notification Services 
+* Smoke Plus Feature to deliver more smoke during Smoke / Hold modes
+* Safety settings to prevent over-temp, startup failure, or firepot flameout (and overload)
+* Temperature History for all probes / set points
+* Wood Pellet Tracking Manager
+* Pellet Level Sensor Support
+	* VL53L0X Time of Flight Sensor
+	* HCSR04 Ultrasonic Sensor
+* Socket IO for Android Application Support _(GitHub User [@weberbox](https://github.com/weberbox) has made a Android client app under development here: [https://github.com/weberbox/PiFire-Android](https://github.com/weberbox/PiFire-Android))_
+* ...And much more!  
 
 ### Screenshots & Videos
 
-The dashboard is where most of your key information and controls are at.  This is the screen that greets you when you access the PiFire WebUI on your PC, Mac or Tablet in a browser.
+The dashboard is where most of your key information and controls are at.  This is the screen that greets you when you access the PiFire WebUI on your computer, smart phone or tablet in a browser.
 
 ![Dashboard](docs/webui/PiFire-Dashboard-00.png)
 
@@ -23,86 +54,51 @@ For those of us who like to see the data, PiFire allows you to graph and save yo
 
 ![History](docs/webui/PiFire-History-00.png)
 
-This is what PiFire looks like on your mobile device.
+PiFire also provides an optional Pellet Manager which can help you track your pellet usage, store ratings, check your pellet level if you have a pellet sensor equipped.  
+
+![Pellet Manager](docs/webui/PiFire-PelletManager-00.png)
+
+This is what PiFire looks like on your mobile device.  And in these screen shots you'll notice that we have dark mode enabled.  This helps for viewing at night, or just if you like the dark theme better.  Personally I think it looks pretty slick.  
 
 ![Mobile Dashboard](docs/webui/PiFire-Mobile-00.jpg)
 
 ![Mobile History](docs/webui/PiFire-Mobile-01.jpg)
 
-Example comparison that I did on a real cook of the Traeger controller attempting to hold 275F and the PiFire holding at the same temperature.  The difference is very impressive.  The Traeger swings massively up to 25F over and under the set temperature.  However the PID in from PiSmoker does a great job holding roughly +-7 degrees.  And this is without any extra tuning. 
+Below is an example comparison that I did on a real cook of the Traeger controller attempting to hold 275F and the PiFire holding at the same temperature.  The difference is very impressive.  The Traeger swings massively up to 25F over and under the set temperature.  However the PID in from PiSmoker does a great job holding roughly +-7 degrees.  And this is without any extra tuning. 
 
 ![Performance](docs/photos/SW-Performance.jpg)
 
 Here's a brief YouTube video giving a basic overview of the PiFire web interfaces.
 
-##### PiFire Demo Video
+### PiFire Overview Video
 
-[![YouTube Demo](http://img.youtube.com/vi/ni4YX5BMBWQ/0.jpg)](http://www.youtube.com/watch?v=ni4YX5BMBWQ)
+I recommend at least taking a peek at the PiFire overview video below.  It covers the basics of operation, settings and control.  
 
-A shot of the splash screen on the display when booting up.  
+[![YouTube Demo](docs/photos/Video-Link-Image-sm.png)](https://youtu.be/_sIkpIFP5qA)
 
-![Splash](docs/photos/HW-Splash.jpg)
+Here's a picture of my version 1.0 hardware w/OLED screen in a waterproof project box.    
 
-Typical temperature display for the grill. [Edit: The display has been enhanced to show status for the fan, auger, igniter, mode and notifications]
+![Hardware v1](docs/photos/HW-V1-Display.jpg)
 
-![Display Temp](docs/photos/HW-Display-Temp.jpg)
+Here is a the latest version 2.0 of the hardware w/TFT screen and hardware buttons in a custom 3D printed enclosure. We've come a long way since v1.0.
 
+![Hardware v2](docs/photos/HW-V2-Display.jpg)
+
+And if you're interested in seeing more builds from other users, we have a discussions thread [here](https://github.com/nebhead/PiFire/discussions/28) where others have posted pictures of their unique builds.  
 
 ## Full Documentation / Hardware and Software Installation
 
 The full documentation has been moved to a GitHub page here: [https://nebhead.github.io/PiFire/](https://nebhead.github.io/PiFire/)
 
-### Future Ideas To Be (possibly) Implemented  
-
-In this section, I'm going to keep a running list of ideas for possible upgrades for PiFire in the future.  No guarantees that these will be implemented, but it gives you some idea of what I have planned for the future.  
-
-```
-Known Issues
-	* Issue where sometimes temperature readings from the ADC fail.  Not sure if this is an i2c bus problem or something else.  Does not effect overall functionality, but can be annoying when looking at the history data.  
-	* Issue where if the history page is left open too long the auto-refresh may eventually cause the tab to crash with out of memory errors.  
-
-Ideas for WebUI / App
-	Dashboard
-		New: Smoke+ Mode (Toggle Fan On/Off) - Experimental feature to increase smoke output by modulating the fan on/off time. This will require some experimentation.
-
-	History
-		New: Annotation when mode changes?
-
-	Recipes Page
-		New: Custom Programs (or Recipes)
-			Event Triggers (Pit Temp, Probe Temp, Timer) w/Notifications
-
-	Debug interface for prototype testing
-		New: Prototype Increase Temp, Decrease Temperature (Turn on/off outputs, inputs)
-
-	Settings
-		New: Name your Smoker (give your install a unique name)
-
-	Admin
-		New: Check for Updates / Pull latest updates from GitHub
-
-	API
-		New: API interface to control functions and return JSON data structures for status/history (could be used to develop an Android or iPhone native app) (partially implemented - read status only)
-
-Ideas for Control process
-	New: Smart Probe Enable (i.e. enable when plugged in, disable when unplugged)
-	New: Physical Buttons / Control Dial for grill control while you are standing in front of it.  
-
-Ideas for display
-	New: Display Probe Temperature
-	New: Display Not Connected to Internet Symbol if not connected
-	New: Display IP Address (or QR Code?) https://pypi.org/project/qrcode/
-	New: Larger display with more display capabilities
-```
-
 ### Updates
 
-* 9/2020 Initial Release
-* 12/2020 Moved documentation to [https://nebhead.github.io/PiFire/](https://nebhead.github.io/PiFire/)
+* 9/2020 - Initial Release
+* 12/2020 - Moved documentation to [https://nebhead.github.io/PiFire/](https://nebhead.github.io/PiFire/)
+* **11/2021 Massive Update!** - Many new features, bug fixes, and improvements.  New hardware support etc. which have been in incorporated over the last year, have been mreged from the development branch
 
 ### Credits
 
-Web Application created by Ben Parmeter, copyright 2020. Check out my other projects on [github](https://github.com/nebhead). If you enjoy this software and feel the need to donate a cup of coffee, a frosty beer or a bottle of wine to the developer you can click [here](https://paypal.me/benparmeter).
+Web Application created by Ben Parmeter, copyright 2020, 2021. Check out my other projects on [github](https://github.com/nebhead). If you enjoy this software and feel the need to donate a cup of coffee, a frosty beer or a bottle of wine to the developer you can click [here](https://paypal.me/benparmeter).
 
 Of course, none of this project would be available without the wonderful and amazing folks below.  If I forgot anyone please don't hesitate to let me know.  
 
@@ -131,7 +127,7 @@ This project is licensed under the MIT license.
 ```
 MIT License
 
-Copyright (c) 2020 Ben Parmeter
+Copyright (c) 2020, 2021 Ben Parmeter and Contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
