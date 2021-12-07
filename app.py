@@ -1595,6 +1595,107 @@ def request_manual_data():
 	}
 
 	return manual_list
+
+@socketio.on('request_backup_list')
+def request_backup_list(type='settings'):
+	settings = ReadSettings()
+
+	if (settings['modules']['grillplat'] == 'prototype'):
+		print('Client requesting restore file list')
+
+	files = os.listdir(BACKUPPATH)
+	for file in files[:]:
+		if not allowed_file(file):
+			files.remove(file)
+
+	print(f'Files List: {files}')
+
+	if (type == 'settings'):
+		for file in files[:]:
+			if not file.startswith('PiFire_'):
+				files.remove(file)
+
+		return json.dumps(files)
+
+	if (type == 'pelletdb'):
+		for file in files[:]:
+			if not file.startswith('PelletDB_'):
+				files.remove(file)
+
+		return json.dumps(files)
+
+@socketio.on('request_backup_data')
+def request_backup_data(type='settings'):
+	settings = ReadSettings()
+	pelletdb = ReadPelletDB()
+
+	if (settings['modules']['grillplat'] == 'prototype'):
+		print('Client requesting backup data')
+
+	timenow = datetime.datetime.now()
+	timestr = timenow.strftime('%m-%d-%y_%H%M%S') # Truncate the microseconds
+
+	if (type == 'settings'):
+		print('Backing up settings... ')
+		backupfile = BACKUPPATH + 'PiFire_' + timestr + '.json'
+		os.system(f'cp settings.json {backupfile}')
+		return settings
+
+	if (type == 'pelletdb'):
+		print('Backing up pelletdb... ')
+		backupfile = BACKUPPATH + 'PelletDB_' + timestr + '.json'
+		os.system(f'cp pelletdb.json {backupfile}')
+		return pelletdb
+
+@socketio.on('update_restore_data')
+def update_restore_data(type='settings', filename='none', json_data=None):
+	settings = ReadSettings()
+
+	if (settings['modules']['grillplat'] == 'prototype'):
+		print('Client requesting data restore')
+
+	timenow = datetime.datetime.now()
+	timestr = timenow.strftime('%m-%d-%y_%H%M%S') # Truncate the microseconds
+
+	if(type == 'settings'):
+		print('Restoring settings...')
+
+		if (filename != 'none'):
+			print(f'Selected local file: {BACKUPPATH+filename}')
+			settings = ReadSettings(filename=BACKUPPATH+filename)
+			return "success"
+		elif (json_data is not None):
+			print(f'Restoring remote settings json')
+			data = json.loads(json_data)
+			backupfile = BACKUPPATH + 'PiFire_' + timestr + '.json'
+			json_data_string = json.dumps(data, indent=2, sort_keys=True)
+			with open(backupfile, 'w') as settings_file:
+				settings_file.write(json_data_string)
+			settings = ReadSettings(filename=backupfile)
+			return "success"
+		else:
+			print('No filename in request.')
+			return "error"
+
+	if(type == 'pelletdb'):
+		print('Restoring pelletdb...')
+
+		if (filename != 'none'):
+			print(f'Selected local file: {BACKUPPATH+filename}')
+			settings = ReadPelletDB(filename=BACKUPPATH+filename)
+			return "success"
+		elif (json_data is not None):
+			print(f'Restoring remote pelletdb json')
+			data = json.loads(json_data)
+			backupfile = BACKUPPATH + 'PelletDB_' + timestr + '.json'
+			json_data_string = json.dumps(data, indent=2, sort_keys=True)
+			with open(backupfile, 'w') as pelletdb_file:
+				pelletdb_file.write(json_data_string)
+			settings = ReadPelletDB(filename=backupfile)
+			return "success"
+		else:
+			print('No filename in request.')
+			return "error"
 		
 @socketio.on('update_control_data')
 def update_control(json_data):
