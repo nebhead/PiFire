@@ -17,15 +17,25 @@ $(document).ready(function(){
         // console.log(data);
 
         // Setup Dash Circles 
+		if(data.cur_probe_temps[0] < 0) {
+			// if negative temperature, then don't display circle temp bar
+			var grillPercent = 0;
+		} else if(units == 'F'){
+			// if units are F, adjust circle temp bar where max is 600F
+			var grillPercent = ((data.cur_probe_temps[0] * 100) / 600);
+		} else {
+			// if units are C, adjust circle temp bar where max is 300C
+			var grillPercent = ((data.cur_probe_temps[0] * 100) / 300);
+		};
 
         var GrillTempCircle = circliful.newCircle({
-            percent: ((data.cur_probe_temps[0] * 100) / 600),
+            percent: grillPercent,
             id: 'GrillTempCircle',
             type: 'simple',
             foregroundCircleWidth: 10,
             startAngle: -180,
             backgroundCircleWidth: 10,
-            text: data.cur_probe_temps[0] + '°F',
+            text: data.cur_probe_temps[0] + "°" + units,
             textReplacesPercentage: true,
                 strokeLinecap: "round",
         });
@@ -39,7 +49,7 @@ $(document).ready(function(){
             // If notify request is active, change the button highlighting
             document.getElementById("grill_notify_btn").className = "btn btn-primary";
             // Change the text to indicate setpoint
-            document.getElementById("grill_notify_btn").innerHTML = "<i class=\"fas fa-bell\"></i> " + data.set_points['grill'] + "°F";
+            document.getElementById("grill_notify_btn").innerHTML = "<i class=\"fas fa-bell\"></i> " + data.set_points['grill'] + "°" + units;
         } else {
             // If notify request is not active, change the button highlighting
             document.getElementById("grill_notify_btn").className = "btn btn-outline-primary";
@@ -54,12 +64,12 @@ $(document).ready(function(){
 
         if(data.probes_enabled[1] == 1) {
             probe1_temp = data.cur_probe_temps[1];
-            probe1_text = probe1_temp + '°F';
+            probe1_text = probe1_temp + "°" + units;
             if(data.notify_req['probe1']) { 
                 // If notify request is active, change the button highlighting
                 document.getElementById("probe1_notify_btn").className = "btn btn-primary";
                 // Change the text to indicate setpoint
-                document.getElementById("probe1_notify_btn").innerHTML = "<i class=\"fas fa-bell\"></i> " + data.set_points['probe1'] + "°F";
+                document.getElementById("probe1_notify_btn").innerHTML = "<i class=\"fas fa-bell\"></i> " + data.set_points['probe1'] + "°" + units;
             } else {
                 // If notify request is not active, change the button highlighting
                 document.getElementById("probe1_notify_btn").className = "btn btn-outline-primary";
@@ -70,12 +80,12 @@ $(document).ready(function(){
 
         if(data.probes_enabled[2] == 1) {
             probe2_temp = data.cur_probe_temps[2];
-            probe2_text = probe2_temp + '°F';
+            probe2_text = probe2_temp + "°" + units;
             if(data.notify_req['probe2']) { 
                 // If notify request is active, change the button highlighting
                 document.getElementById("probe2_notify_btn").className = "btn btn-primary";
                 // Change the text to indicate setpoint
-                document.getElementById("probe2_notify_btn").innerHTML = "<i class=\"fas fa-bell\"></i> " + data.set_points['probe2'] + "°F";
+                document.getElementById("probe2_notify_btn").innerHTML = "<i class=\"fas fa-bell\"></i> " + data.set_points['probe2'] + "°" + units;
             } else {
                 // If notify request is not active, change the button highlighting
                 document.getElementById("probe2_notify_btn").className = "btn btn-outline-primary";
@@ -84,8 +94,19 @@ $(document).ready(function(){
             };
         };
 
+		if(probe1_temp < 0) {
+			// if negative temperature, then don't display circle temp bar
+			var probe1Percent = 0;
+		} else if(units == 'F'){
+			// if units are F, adjust circle temp bar where max is 300F
+			var probe1Percent = ((probe1_temp * 100) / 300);
+		} else {
+			// if units are C, adjust circle temp bar where max is 150C
+			var probe1Percent = ((probe1_temp * 100) / 150);
+		};
+
         var Probe1TempCircle = circliful.newCircle({
-            percent: ((probe1_temp * 100) / 300),
+            percent: probe1Percent,
             id: 'Probe1TempCircle',
             type: 'simple',
             foregroundCircleWidth: 10,
@@ -96,8 +117,19 @@ $(document).ready(function(){
                 strokeLinecap: "round",
         });
         
+		if(probe2_temp < 0) {
+			// if negative temperature, then don't display circle temp bar
+			var probe2Percent = 0;
+		} else if(units == 'F'){
+			// if units are F, adjust circle temp bar where max is 300F
+			var probe2Percent = ((probe2_temp * 100) / 300);
+		} else {
+			// if units are C, adjust circle temp bar where max is 150C
+			var probe2Percent = ((probe2_temp * 100) / 150);
+		};
+
         var Probe2TempCircle = circliful.newCircle({
-            percent: ((probe2_temp * 100) / 300),
+            percent: probe2Percent,
             id: 'Probe2TempCircle',
             type: 'simple',
             foregroundCircleWidth: 10,
@@ -141,7 +173,7 @@ $(document).ready(function(){
             $("#error_btn").hide();
         } else if (data.current_mode == 'Hold') {
             document.getElementById("hold_btn").className = "btn btn-secondary border border-secondary text-white";
-            document.getElementById("hold_btn").innerHTML = data.set_points['grill'] + "°F";
+            document.getElementById("hold_btn").innerHTML = data.set_points['grill'] + "°" + units;
             $("#inactive_group").hide();
             $("#active_group").show();
             $("#stop_btn").hide();
@@ -189,15 +221,37 @@ $(document).ready(function(){
                 //console.log("Last Mode = " + last_mode);
     
                 // Update Circles
-                GrillTempCircle.update([
-                    { type: "percent", value: ((data.cur_probe_temps[0] * 100) / 600) },
-                    { type: "text", value: data.cur_probe_temps[0] + "°F" }
+
+				if(data.cur_probe_temps[0] < 0) {
+					// if negative temperature, then don't display circle temp bar
+					var grillPercent = 0;
+				} else if(units == 'F'){
+					// if units are F, adjust circle temp bar where max is 600F
+					var grillPercent = ((data.cur_probe_temps[0] * 100) / 600);
+				} else {
+					// if units are C, adjust circle temp bar where max is 300C
+					var grillPercent = ((data.cur_probe_temps[0] * 100) / 300);
+				};
+
+				GrillTempCircle.update([
+                    { type: "percent", value: grillPercent },
+                    { type: "text", value: data.cur_probe_temps[0] + "°" + units }
                 ]);
     
                 if(data.probes_enabled[1] == 1) {
-                    Probe1TempCircle.update([
-                        { type: "percent", value: ((data.cur_probe_temps[1] * 100) / 300) },
-                        { type: "text", value: data.cur_probe_temps[1] + "°F" }
+					if(data.cur_probe_temps[1] < 0) {
+						// if negative temperature, then don't display circle temp bar
+						var probe1Percent = 0;
+					} else if(units == 'F'){
+						// if units are F, adjust circle temp bar where max is 300F
+						var probe1Percent = ((data.cur_probe_temps[1] * 100) / 300);
+					} else {
+						// if units are C, adjust circle temp bar where max is 150C
+						var probe1Percent = ((data.cur_probe_temps[1] * 100) / 150);
+					};
+					Probe1TempCircle.update([
+                        { type: "percent", value: probe1Percent },
+                        { type: "text", value: data.cur_probe_temps[1] + "°" + units }
                     ]);
                 } else {
                     Probe1TempCircle.update([
@@ -207,9 +261,19 @@ $(document).ready(function(){
                 };
     
                 if(data.probes_enabled[2] == 1) {
-                    Probe2TempCircle.update([
-                        { type: "percent", value: ((data.cur_probe_temps[2] * 100) / 300) },
-                        { type: "text", value: data.cur_probe_temps[2] + "°F" }
+					if(data.cur_probe_temps[2] < 0) {
+						// if negative temperature, then don't display circle temp bar
+						var probe2Percent = 0;
+					} else if(units == 'F'){
+						// if units are F, adjust circle temp bar where max is 300F
+						var probe2Percent = ((data.cur_probe_temps[2] * 100) / 300);
+					} else {
+						// if units are C, adjust circle temp bar where max is 150C
+						var probe2Percent = ((data.cur_probe_temps[2] * 100) / 150);
+					};
+					Probe2TempCircle.update([
+                        { type: "percent", value: probe2Percent },
+                        { type: "text", value: data.cur_probe_temps[2] + "°" + units }
                     ]);
                 } else {
                     Probe2TempCircle.update([
@@ -226,7 +290,7 @@ $(document).ready(function(){
                         // If notify request is active, change the button highlighting
                         document.getElementById("grill_notify_btn").className = "btn btn-primary";
                         // Change the text to indicate setpoint
-                        document.getElementById("grill_notify_btn").innerHTML = "<i class=\"fas fa-bell\"></i> " + data.set_points['grill'] + "°F";
+                        document.getElementById("grill_notify_btn").innerHTML = "<i class=\"fas fa-bell\"></i> " + data.set_points['grill'] + "°" + units;
                     } else {
                         // If notify request is not active, change the button highlighting
                         document.getElementById("grill_notify_btn").className = "btn btn-outline-primary";
@@ -241,7 +305,7 @@ $(document).ready(function(){
                         // If notify request is active, change the button highlighting
                         document.getElementById("probe1_notify_btn").className = "btn btn-primary";
                         // Change the text to indicate setpoint
-                        document.getElementById("probe1_notify_btn").innerHTML = "<i class=\"fas fa-bell\"></i> " + data.set_points['probe1'] + "°F";
+                        document.getElementById("probe1_notify_btn").innerHTML = "<i class=\"fas fa-bell\"></i> " + data.set_points['probe1'] + "°" + units;
                     } else {
                         // If notify request is not active, change the button highlighting
                         document.getElementById("probe1_notify_btn").className = "btn btn-outline-primary";
@@ -256,7 +320,7 @@ $(document).ready(function(){
                         // If notify request is active, change the button highlighting
                         document.getElementById("probe2_notify_btn").className = "btn btn-primary";
                         // Change the text to indicate setpoint
-                        document.getElementById("probe2_notify_btn").innerHTML = "<i class=\"fas fa-bell\"></i> " + data.set_points['probe2'] + "°F";
+                        document.getElementById("probe2_notify_btn").innerHTML = "<i class=\"fas fa-bell\"></i> " + data.set_points['probe2'] + "°" + units;
                     } else {
                         // If notify request is not active, change the button highlighting
                         document.getElementById("probe2_notify_btn").className = "btn btn-outline-primary";
@@ -341,7 +405,7 @@ $(document).ready(function(){
                             document.getElementById("splus_btn").value = "true";
                         };
                         document.getElementById("hold_btn").className = "btn btn-secondary border border-secondary text-white";
-                        document.getElementById("hold_btn").innerHTML = data.set_points['grill'] + "°F";
+                        document.getElementById("hold_btn").innerHTML = data.set_points['grill'] + "°" + units;
                         $("#stop_btn").hide();
                         $("#error_btn").hide();
                     } else if (data.current_mode == 'Shutdown') {

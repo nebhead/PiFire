@@ -199,7 +199,7 @@ def dash(action=None):
 				control['s_plus'] = False 
 			WriteControl(control)
 
-	return render_template('dash.html', set_points=control['setpoints'], notify_req=control['notify_req'], probes_enabled=settings['probe_settings']['probes_enabled'], control=control, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
+	return render_template('dash.html', set_points=control['setpoints'], notify_req=control['notify_req'], probes_enabled=settings['probe_settings']['probes_enabled'], control=control, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'], units=settings['globals']['units'])
 
 @app.route('/dashdata')
 def dashdata(action=None):
@@ -349,6 +349,11 @@ def tuningpage(action=None):
 	settings = ReadSettings()
 	control = ReadControl()
 
+	if(control['mode'] == 'Stop'): 
+		alert = 'Warning!  Grill must be in an active mode to perform tuning (i.e. Monitor Mode, Smoke Mode, Hold Mode, etc.)'
+	else: 
+		alert = ''
+
 	pagectrl = {}
 
 	pagectrl['refresh'] = 'off'
@@ -366,6 +371,9 @@ def tuningpage(action=None):
 		if('probe_select' in response):
 			pagectrl['selected'] = response['probe_select']
 			pagectrl['refresh'] = 'on'
+			control['tuning_mode'] = True  # Enable tuning mode
+			WriteControl(control)
+
 			if(('pause' in response)):
 				if(response['low_trvalue'] != ''):
 					pagectrl['low_trvalue'] = response['low_trvalue']
@@ -382,6 +390,8 @@ def tuningpage(action=None):
 					pagectrl['high_tempvalue'] = response['high_tempvalue']
 
 				pagectrl['refresh'] = 'off'	
+				control['tuning_mode'] = False  # Disable tuning mode while paused
+				WriteControl(control)
 
 			elif(('save' in response)):
 				if(response['low_trvalue'] != ''):
@@ -400,6 +410,8 @@ def tuningpage(action=None):
 
 				if(pagectrl['low_tempvalue'] != '') and (pagectrl['med_tempvalue'] != '') and (pagectrl['high_tempvalue'] != ''):
 					pagectrl['refresh'] = 'off'
+					control['tuning_mode'] = False  # Disable tuning mode when complete
+					WriteControl(control)
 					pagectrl['showcalc'] = 'true'
 					a, b, c = calc_shh_coefficients(int(pagectrl['low_tempvalue']), int(pagectrl['med_tempvalue']), int(pagectrl['high_tempvalue']), int(pagectrl['low_trvalue']), int(pagectrl['med_trvalue']), int(pagectrl['high_trvalue']))
 					pagectrl['a'] = a
@@ -437,8 +449,10 @@ def tuningpage(action=None):
 								pagectrl['templist'] += ', ' + str(tr_to_temp(index, a, b, c))
 				else:
 					pagectrl['refresh'] = 'on'
+					control['tuning_mode'] = True  # Enaable tuning mode
+					WriteControl(control)
 	
-	return render_template('tuning.html', control=control, settings=settings, pagectrl=pagectrl, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
+	return render_template('tuning.html', control=control, settings=settings, pagectrl=pagectrl, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'], alert=alert)
 
 @app.route('/_grilltr', methods = ['GET'])
 def grilltr(action=None):
@@ -1000,6 +1014,29 @@ def settingspage(action=None):
 
 		WritePelletDB(pelletdb)
 
+	if (request.method == 'POST') and (action == 'units'):
+		response = request.form
+
+		if('units' in response):
+			if(response['units'] == 'C') and (settings['globals']['units'] == 'F'):
+				settings = convert_settings_units('C', settings)
+				WriteSettings(settings)
+				event['type'] = 'updated'
+				event['text'] = 'Successfully updated units to Celsius.'
+				control = ReadControl()
+				control['updated'] = True
+				control['units_change'] = True 
+				WriteControl(control)
+			elif(response['units'] == 'F') and (settings['globals']['units'] == 'C'):
+				settings = convert_settings_units('F', settings)
+				WriteSettings(settings)
+				event['type'] = 'updated'
+				event['text'] = 'Successfully updated units to Fahrenheit.'
+				control = ReadControl()
+				control['updated'] = True
+				control['units_change'] = True 
+				WriteControl(control)
+
 	return render_template('settings.html', settings=settings, alert=event, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'], pelletdb=pelletdb)
 
 @app.route('/admin/<action>', methods=['POST','GET'])
@@ -1263,8 +1300,9 @@ def checkcputemp():
 	return temp.replace("temp=","")
 
 def prepare_data(num_items=10, reduce=True, datapoints=60):
-
 	# num_items: Number of items to store in the data blob
+	global settings
+	units = settings['globals']['units']
 
 	data_list = ReadHistory(num_items)
 
@@ -1291,13 +1329,22 @@ def prepare_data(num_items=10, reduce=True, datapoints=60):
 	if(list_length > 0):
 		# Build all lists from file data
 		for index in range(list_length - num_items, list_length, step):
-			data_blob['label_time_list'].append(data_list[index][0]) 
-			data_blob['grill_temp_list'].append(int(data_list[index][1]))
-			data_blob['grill_settemp_list'].append(int(data_list[index][2]))
-			data_blob['probe1_temp_list'].append(int(data_list[index][3]))
-			data_blob['probe1_settemp_list'].append(int(data_list[index][4]))
-			data_blob['probe2_temp_list'].append(int(data_list[index][5]))
-			data_blob['probe2_settemp_list'].append(int(data_list[index][6]))
+			if(units == 'F'):
+				data_blob['label_time_list'].append(data_list[index][0]) 
+				data_blob['grill_temp_list'].append(int(data_list[index][1]))
+				data_blob['grill_settemp_list'].append(int(data_list[index][2]))
+				data_blob['probe1_temp_list'].append(int(data_list[index][3]))
+				data_blob['probe1_settemp_list'].append(int(data_list[index][4]))
+				data_blob['probe2_temp_list'].append(int(data_list[index][5]))
+				data_blob['probe2_settemp_list'].append(int(data_list[index][6]))
+			else: 
+				data_blob['label_time_list'].append(data_list[index][0]) 
+				data_blob['grill_temp_list'].append(float(data_list[index][1]))
+				data_blob['grill_settemp_list'].append(float(data_list[index][2]))
+				data_blob['probe1_temp_list'].append(float(data_list[index][3]))
+				data_blob['probe1_settemp_list'].append(float(data_list[index][4]))
+				data_blob['probe2_temp_list'].append(float(data_list[index][5]))
+				data_blob['probe2_settemp_list'].append(float(data_list[index][6]))
 	else:
 		now = datetime.datetime.now()
 		timestr = now.strftime('%H:%M:%S')

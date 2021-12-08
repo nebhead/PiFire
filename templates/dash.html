@@ -144,8 +144,12 @@
 							</div>
 							<!-- Modal body -->
 							<div class="modal-body text-center">
-									<h1><output name="grilltempOutput" id="grilltempOutputId">{{ set_points['grill'] }}</output>°F</h1>
+									<h1><output name="grilltempOutput" id="grilltempOutputId">{{ set_points['grill'] }}</output>°{{ units }}</h1>
+									{% if units == 'F' %}
 									<input type="range" class="custom-range" min="125" max="500" value="{{ set_points['grill'] }}" id="grilltempInputId" name="grilltempInputRange" oninput="grilltempOutputId.value = grilltempInputId.value">
+									{% else %} 
+									<input type="range" class="custom-range" min="50" max="260" value="{{ set_points['grill'] }}" id="grilltempInputId" name="grilltempInputRange" oninput="grilltempOutputId.value = grilltempInputId.value">
+									{% endif %}	 
 							</div>
 							<!-- Modal footer -->
 							<div class="modal-footer">
@@ -168,8 +172,12 @@
 							</div>
 							<!-- Modal body -->
 							<div class="modal-body text-center">
-									<h1><output name="probe1tempOutput" id="probe1tempOutputId">{{ set_points['probe1'] }}</output>°F</h1>
+									<h1><output name="probe1tempOutput" id="probe1tempOutputId">{{ set_points['probe1'] }}</output>°{{ units }}</h1>
+									{% if units == 'F' %}
 									<input type="range" class="custom-range" min="0" max="300" value="{{ set_points['probe1'] }}" id="probe1tempInputId" name="probe1tempInputRange" oninput="probe1tempOutputId.value = probe1tempInputId.value">
+									{% else %} 
+									<input type="range" class="custom-range" min="-15" max="150" value="{{ set_points['probe1'] }}" id="probe1tempInputId" name="probe1tempInputRange" oninput="probe1tempOutputId.value = probe1tempInputId.value">
+									{% endif %}
 									<br><br>
 									<div class="custom-control custom-checkbox mb-3">
 										<input type="checkbox" class="custom-control-input" id="shutdownP1" name="shutdownP1">
@@ -197,8 +205,12 @@
 							</div>
 							<!-- Modal body -->
 							<div class="modal-body text-center">
-								<h1><output name="probe2tempOutput" id="probe2tempOutputId">{{ set_points['probe2'] }}</output>°F</h1>
+								<h1><output name="probe2tempOutput" id="probe2tempOutputId">{{ set_points['probe2'] }}</output>°{{ units }}</h1>
+								{% if units == 'F' %}
 								<input type="range" class="custom-range" min="0" max="300" value="{{ set_points['probe2'] }}" id="probe2tempInputId" name="probe2tempInputRange" oninput="probe2tempOutputId.value = probe2tempInputId.value">
+								{% else %} 
+								<input type="range" class="custom-range" min="-15" max="150" value="{{ set_points['probe2'] }}" id="probe2tempInputId" name="probe2tempInputRange" oninput="probe2tempOutputId.value = probe2tempInputId.value">
+								{% endif %}
 								<br><br>
 								<div class="custom-control custom-checkbox mb-3">
 									<input type="checkbox" class="custom-control-input" id="shutdownP2" name="shutdownP2">
@@ -314,9 +326,13 @@
 						</div>
 						<!-- Modal body -->
 						<div class="modal-body text-center">
-								<h1><output name="tempOutput" id="tempOutputId">{{ set_points['grill'] }}</output>°F</h1>
+								<h1><output name="tempOutput" id="tempOutputId">{{ set_points['grill'] }}</output>°{{ units }}</h1>
+								{% if units == 'F' %}
 								<input type="range" class="custom-range" min="125" max="500" value="{{ set_points['grill'] }}" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
-						</div>
+								{% else %}
+								<input type="range" class="custom-range" min="50" max="260" value="{{ set_points['grill'] }}" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
+								{% endif %}
+							</div>
 						<!-- Modal footer -->
 						<div class="modal-footer">
 							<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
@@ -332,7 +348,10 @@
 		<br>
 {% endblock %}
 
-{% block scripts %}  
+{% block scripts %}
+	<script> 
+	var units = '{{ units }}'; 
+	</script>
 	<script src="{{ url_for('static', filename='js/circliful1.js') }}"></script>
 	<script src="{{ url_for('static', filename='js/dash.js') }}"></script>
 
@@ -363,7 +382,7 @@
 		if (hours < 10) {
 			var display = "0"
 		}
-		var display = display + hours + " : " ;
+		var display = display + hours + " : ";
 		if (minutes < 10) {
 			var display = display + "0"
 		}

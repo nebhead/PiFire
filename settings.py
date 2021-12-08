@@ -13,7 +13,7 @@
 # Imported Libraries
 # *****************************************
 
-from common import ReadSettings, WriteSettings  # Common Library for writing settings
+from common import ReadSettings, WriteSettings, convert_settings_units, convert_temp  # Common Library for writing settings
 import argparse 
 
 # Options
@@ -40,6 +40,7 @@ parser.add_argument('-r','--range',type=str, help='Update the Range platform mod
 parser.add_argument('-v','--version',type=str, help='Update the server version.',required=False)
 parser.add_argument('-t','--triggerlevel',type=str, help='Update the Trigger-Level setting for different types of relays.',required=False)
 parser.add_argument('-b','--buttonslevel',type=str, help='Update the Button-Level setting for either pull-ups or pull-downs on the button inputs.',required=False)
+parser.add_argument('-u','--units',type=str, help='Update the units to be used for PiFire (F = Fahrenheit or C = Celsius)',required=False)
 
 args = parser.parse_args()
 
@@ -86,5 +87,20 @@ if(args.buttonslevel):
 	print(f"\n * Modifying Buttons Level from {settings['globals']['buttonslevel']} to {buttonslevel}")
 	settings['globals']['buttonslevel'] = buttonslevel
 	WriteSettings(settings)
+
+if(args.units):
+	units = args.units 
+	if(units == 'C') and (settings['globals']['units'] == 'F'):
+		print(f"\n * Modifying temperature units from {settings['globals']['units']} to {units}")
+		settings = convert_settings_units('C', settings)
+		WriteSettings(settings)
+	elif(units == 'F') and (settings['globals']['units'] == 'C'):
+		print(f"\n * Modifying temperature units from {settings['globals']['units']} to {units}")
+		settings = convert_settings_units('F', settings)
+		WriteSettings(settings)
+	elif(units == settings['globals']['units']):
+		print(f"\n * Temperature units already set to {settings['globals']['units']}. No action taken.")
+	else: 
+		print(f"\n * Temperature units {units} not recognized. No action taken.")
 
 print('\nDone.\n')

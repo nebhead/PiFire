@@ -253,6 +253,38 @@
 </div>
 <!-- End of Row -->
 <br>
+<!-- ============================ Select Units ========================== -->
+<div class="row">
+    <div class="col">
+        <div class="card shadow">
+            <form name="Units" action="/settings/units" method="POST">
+                <div class="card-header bg-primary text-white">
+                    <h5>
+                        <i class="fas fa-temperature-low"></i>&nbsp; Select Units
+                    </h5>
+                </div>
+                <div class="card-body">
+                    
+                    <div class="form-group">
+                        <label for="selectUnits">Select temperature units to be used globally:</label>
+                        <select class="form-control" id="selectUnits" name="units">
+                          <option value="F" {% if settings['globals']['units'] == 'F' %}selected{% endif %}>Fahrenheit (F)</option>
+                          <option value="C" {% if settings['globals']['units'] == 'C' %}selected{% endif %}>Celsius (C)</option>
+                        </select>
+                    </div>
+                    <span class="badge badge-warning">NOTE:</span>
+                    <i class="small"> Changing the scale/units will restart the grill controller (stopping any currently running modes) and automatically erase history. </i>
+
+                </div>
+                <div class="card-footer bg-light">
+                    <button type="submit" class="btn btn-outline-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<br>
+
 <!-- ============================ Grill Name ========================== -->
 <div class="row">
     <div class="col">
@@ -342,15 +374,15 @@
                     </div>
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Lowest temperature for Smoke Plus to operate. (F) [Default: 160]">
-                                <i class="fas fa-temperature-high"></i>&nbsp; Min Oprerational Temp (F) </span>
+                            <span class="input-group-text" data-toggle="tooltip" title="Lowest temperature for Smoke Plus to operate. ({{settings['globals']['units']}}) [Default: 160F/71C]">
+                                <i class="fas fa-temperature-high"></i>&nbsp; Min Oprerational Temp ({{settings['globals']['units']}}) </span>
                         </div>
                         <input id="minsptemp" type="number" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['min_temp'] }}" value="{{ settings['smoke_plus']['min_temp'] }}" name="minsptemp">
                     </div>
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Highest temperature for Smoke Plus to operate. (F) [Default: 220]">
-                                <i class="fas fa-temperature-high"></i>&nbsp; Max Oprerational Temp (F) </span>
+                            <span class="input-group-text" data-toggle="tooltip" title="Highest temperature for Smoke Plus to operate. ({{settings['globals']['units']}}) [Default: 220F/104C]">
+                                <i class="fas fa-temperature-high"></i>&nbsp; Max Oprerational Temp ({{settings['globals']['units']}}) </span>
                         </div>
                         <input id="maxsptemp" type="number" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['max_temp'] }}" value="{{ settings['smoke_plus']['max_temp'] }}" name="maxsptemp">
                     </div>
@@ -509,14 +541,14 @@
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
                             <span class="input-group-text" data-toggle="tooltip" title="Lowest temperature after startup allowed.  Shut down grill to prevent firepot overload.">
-                                <i class="fas fa-temperature-high"></i>&nbsp; Min Startup Temp (F) </span>
+                                <i class="fas fa-temperature-high"></i>&nbsp; Min Startup Temp ({{settings['globals']['units']}}) </span>
                         </div>
                         <input id="minstartuptemp" type="number" min="1" class="form-control" placeholder="{{ settings['safety']['minstartuptemp'] }}" value="{{ settings['safety']['minstartuptemp'] }}" name="minstartuptemp">
                     </div>
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Lowest temperature after startup allowed if startup goes beyond 120F.  Shut down grill to prevent firepot overload.">
-                                <i class="fas fa-temperature-high"></i>&nbsp; Max Startup Temp </span>
+                            <span class="input-group-text" data-toggle="tooltip" title="Lowest allowed operational temperature, after startup has completed.  Shut down grill to prevent firepot overload.">
+                                <i class="fas fa-temperature-high"></i>&nbsp; Max Startup Temp ({{settings['globals']['units']}})</span>
                         </div>
                         <input id="maxstartuptemp" type="number" min="1" class="form-control" placeholder="{{ settings['safety']['maxstartuptemp'] }}" value="{{ settings['safety']['maxstartuptemp'] }}" name="maxstartuptemp">
                     </div>
@@ -530,7 +562,7 @@
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
                             <span class="input-group-text" data-toggle="tooltip" title="Maximum allowable temperature.  Shut down grill to prevent potential damage.">
-                                <i class="fas fa-temperature-high"></i>&nbsp; Max Operational Temp (F) </span>
+                                <i class="fas fa-temperature-high"></i>&nbsp; Max Operational Temp ({{settings['globals']['units']}}) </span>
                         </div>
                         <input id="maxtemp" type="number" min="1" class="form-control" placeholder="{{ settings['safety']['maxtemp'] }}" value="{{ settings['safety']['mintemp'] }}" name="maxtemp">
                     </div>

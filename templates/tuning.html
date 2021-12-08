@@ -6,6 +6,14 @@
 {% block title %}Probe Tuning{% endblock %} 
 
 {% block notify %}
+{% if alert !='' %}
+<div class="alert alert-warning alert-dismissible fade show" role="alert">
+	<strong>Warning!</strong> {{ alert }}
+	<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+	  <span aria-hidden="true">&times;</span>
+	</button>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -33,7 +41,7 @@
 								<tr>
 									<th>Phase</th>
 									<th>Thermistor R(&#8486)</th>
-									<th>Temperature (F)</th>
+									<th>Temperature ({{ settings['globals']['units'] }})</th>
 									<th></th>
 								</tr>
 								</thead>
@@ -56,7 +64,7 @@
 										<div class="input-group mb-3">
 											<input name="low_tempvalue" type="number" class="form-control" value="{{ pagectrl['low_tempvalue'] }}" min="1">
 											<div class="input-group-append">
-											<span class="input-group-text">&deg;F</span>
+											<span class="input-group-text">&deg;{{ settings['globals']['units'] }}</span>
 											</div>
 										</div> 
 									</td>
@@ -87,7 +95,7 @@
 										<div class="input-group mb-3">
 											<input name="med_tempvalue" type="number" class="form-control" value="{{ pagectrl['med_tempvalue'] }}" min="1">
 											<div class="input-group-append">
-											<span class="input-group-text">&deg;F</span>
+											<span class="input-group-text">&deg;{{ settings['globals']['units'] }}</span>
 											</div>
 										</div> 
 									</td>
@@ -118,7 +126,7 @@
 										<div class="input-group mb-3">
 											<input name="high_tempvalue" type="number" class="form-control" value="{{ pagectrl['high_tempvalue'] }}" min="1">
 											<div class="input-group-append">
-											<span class="input-group-text">&deg;F</span>
+											<span class="input-group-text">&deg;{{ settings['globals']['units'] }}</span>
 											</div>
 										</div> 
 									</td>
@@ -338,7 +346,7 @@
 					display: true,	
 					scaleLabel: {
 						display: true,
-						labelString: 'Temperature (F)'
+						labelString: 'Temperature ({{ settings['globals']['units'] }})'
 					},
 				}]
 			},

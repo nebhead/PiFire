@@ -180,6 +180,10 @@ def DefaultControl():
 
 	control['probe_profile_update'] = False
 
+	control['units_change'] = False  # Used to indicate that a units change has been requested 
+
+	control['tuning_mode'] = False  # Used to indicate tuning mode is enabled so that Tr values should be recorded (False by default)
+
 	control['safety'] = {
 		'startuptemp' : 0, # Set by control function at startup
 		'afterstarttemp' : 0, # Set by control function during startup
@@ -624,7 +628,7 @@ def ReadHistory(num_items=0, flushhistory=False):
 
 	return(data_list)
 
-def WriteHistory(TempStruct, maxsizelines=28800):
+def WriteHistory(TempStruct, maxsizelines=28800, tuning_mode=False):
 	# *****************************************
 	# Function: WriteHistory
 	# Input: TempStruct
@@ -635,7 +639,7 @@ def WriteHistory(TempStruct, maxsizelines=28800):
 
 	timenow = datetime.datetime.now()
 	timestr = timenow.strftime('%H:%M:%S') # Truncate the microseconds
-	datastring = timestr + ' ' + str(int(TempStruct['GrillTemp'])) + ' ' + str(TempStruct['GrillSetPoint']) + ' ' + str(int(TempStruct['Probe1Temp'])) + ' ' + str(TempStruct['Probe1SetPoint']) + ' ' + str(int(TempStruct['Probe2Temp'])) + ' ' + str(TempStruct['Probe2SetPoint'])
+	datastring = timestr + ' ' + str(TempStruct['GrillTemp']) + ' ' + str(TempStruct['GrillSetPoint']) + ' ' + str(TempStruct['Probe1Temp']) + ' ' + str(TempStruct['Probe1SetPoint']) + ' ' + str(TempStruct['Probe2Temp']) + ' ' + str(TempStruct['Probe2SetPoint'])
 	# Push data string to the list in the last position
 	cmdsts.rpush('control:history', datastring)
 
@@ -644,15 +648,14 @@ def WriteHistory(TempStruct, maxsizelines=28800):
 		cmdsts.lpop('control:history')
 
 	# Set current values in the control:current hash
-	cmdsts.hset('control:current', 'GrillTemp', int(TempStruct['GrillTemp']))
-	cmdsts.hset('control:current', 'Probe1Temp', int(TempStruct['Probe1Temp']))
-	cmdsts.hset('control:current', 'Probe2Temp', int(TempStruct['Probe2Temp']))
+	cmdsts.hset('control:current', 'GrillTemp', TempStruct['GrillTemp'])
+	cmdsts.hset('control:current', 'Probe1Temp', TempStruct['Probe1Temp'])
+	cmdsts.hset('control:current', 'Probe2Temp', TempStruct['Probe2Temp'])
 
-	# Store tr values for probe tuning (TODO: Create a switch so this isn't constantly running)
-	tr_values = str(int(TempStruct['GrillTr'])) + ' ' + str(int(TempStruct['Probe1Tr'])) + ' ' + str(int(TempStruct['Probe2Tr']))
-	trfile = open("/tmp/tr.log", "w") # Write current data to current.log file
-	trfile.write(tr_values)
-	trfile.close()
+	# If in tuning mode, populate the Tr data in the database 
+	if(tuning_mode):
+		tr_values = str(int(TempStruct['GrillTr'])) + ' ' + str(int(TempStruct['Probe1Tr'])) + ' ' + str(int(TempStruct['Probe2Tr']))
+		cmdsts.set('control:tuning', tr_values)
 
 def ReadCurrent(zero_out=False):
 	# *****************************************
@@ -685,18 +688,33 @@ def ReadTr():
 	# Description: Read tr.log and populate
 	#  a list of data
 	# *****************************************
-
+	global cmdsts
 	try:
-		with open('/tmp/tr.log') as tr_file:
-			tr_line = tr_file.readline()
-			tr_file.close()
-	# If file not found error, then return 0'd data
-	except(IOError, OSError):
+		tr_data = cmdsts.get('control:tuning')
+	except:
 		cur_probe_tr = [0,0,0]
-		WriteLog('WARNING: Issue reading /tmp/tr.log')
-
+		WriteLog('WARNING: Issue reading tr data from database.')
 		return(cur_probe_tr)
 
-	cur_probe_tr = tr_line.split(' ',2) # Splits out each of the values into seperate list items
+	if tr_data != None: 
+		cur_probe_tr = tr_data.split(' ',2) # Splits out each of the values into seperate list items
+	else: 
+		cur_probe_tr = [0,0,0]  # If data isn't available from database yet, output 0's
 
 	return(cur_probe_tr)
+
+def convert_temp(units, temp):
+	if units == 'F':
+		temp_out = int(temp * (9/5) + 32) # Celsius to Fahrenheit
+	else:
+		temp_out = round((temp - 32) * (5/9), 1) # Fahrenheit to Celcius 
+	return(temp_out)
+
+def convert_settings_units(units, settings):
+	settings['globals']['units'] = units 
+	settings['safety']['maxstartuptemp'] = convert_temp(units, settings['safety']['maxstartuptemp'])
+	settings['safety']['maxtemp'] = convert_temp(units, settings['safety']['maxtemp'])
+	settings['safety']['minstartuptemp'] = convert_temp(units, settings['safety']['minstartuptemp'])
+	settings['smoke_plus']['max_temp'] = convert_temp(units, settings['smoke_plus']['max_temp'])
+	settings['smoke_plus']['min_temp'] = convert_temp(units, settings['smoke_plus']['min_temp'])
+	return(settings)

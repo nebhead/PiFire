@@ -33,7 +33,7 @@ from common import ReadControl, WriteControl  # Common Library for WebUI and Con
 
 class Display:
 
-	def __init__(self, buttonslevel='HIGH'):
+	def __init__(self, buttonslevel='HIGH', units='F'):
 		# Set Display Width and Height.  Modify for your needs.   
 		self.WIDTH = 320
 		self.HEIGHT = 240
@@ -52,6 +52,8 @@ class Display:
 		else:
 			# Defines for input buttons level LOW
 			self.BUTTON_INPUT = False
+
+		self.units = units
 
 		self.upButton = Button(pin=self.up, pull_up=self.BUTTON_INPUT)
 		self.downButton = Button(pin=self.down, pull_up=self.BUTTON_INPUT, hold_time=2) 
@@ -113,6 +115,7 @@ class Display:
 		self.ClearDisplay()
 
 	def DisplayStatus(self, in_data, status_data):
+		self.units = status_data['units']  # Update units in case there was a change since instantiation
 		self.displayactive = True
 
 		if (self.menuactive == True) and (time.time() - self.menutime > 5):
@@ -142,10 +145,18 @@ class Display:
 
 			# Grill Temp Circle
 			draw.ellipse((80, 10, 240, 170), fill=(50, 50, 50)) # Grey Background Circle
-			endpoint = ((360*in_data['GrillTemp']) // 600) + 90
+			if in_data['GrillTemp'] < 0:
+				endpoint = 0
+			elif self.units == 'F':
+				endpoint = ((360*in_data['GrillTemp']) // 600) + 90
+			else:
+				endpoint = ((360*in_data['GrillTemp']) // 300) + 90
 			draw.pieslice((80, 10, 240, 170), start=90, end=endpoint, fill=(200, 0, 0)) # Red Arc for Temperature
 			if (in_data['GrillSetPoint'] > 0):
-				setpoint = ((360*in_data['GrillSetPoint']) // 600) + 90
+				if self.units == 'F':
+					setpoint = ((360*in_data['GrillSetPoint']) // 600) + 90
+				else:
+					setpoint = ((360*in_data['GrillSetPoint']) // 300) + 90
 				draw.pieslice((80, 10, 240, 170), start=setpoint-2, end=setpoint+2, fill=(255, 255, 0)) # Yellow Arc for SetPoint
 			draw.ellipse((90, 20, 230, 160), fill=(0, 0, 0)) # Black Circle for Center
 
@@ -163,23 +174,37 @@ class Display:
 				draw.text((self.WIDTH//2 - font_width//2, 45 - font_height//2), text, font=font, fill=(0,200,255))
 
 			# Grill Temperature (Large Centered) 
-			font = ImageFont.truetype("trebuc.ttf", 80)
-			text = str(in_data['GrillTemp'])[:5]
-			(font_width, font_height) = font.getsize(text)
-			draw.text((self.WIDTH//2 - font_width//2,40), text, font=font, fill=(255,255,255))
+			if(self.units == 'F'):
+				font = ImageFont.truetype("trebuc.ttf", 80)
+				text = str(in_data['GrillTemp'])[:5]
+				(font_width, font_height) = font.getsize(text)
+				draw.text((self.WIDTH//2 - font_width//2,40), text, font=font, fill=(255,255,255))
+			else: 
+				font = ImageFont.truetype("trebuc.ttf", 55)
+				text = str(in_data['GrillTemp'])[:5]
+				(font_width, font_height) = font.getsize(text)
+				draw.text((self.WIDTH//2 - font_width//2,56), text, font=font, fill=(255,255,255))
 
 			# Draw Grill Temp Scale Label
-			text = "°F"
+			text = "°" + self.units
 			font = ImageFont.truetype("trebuc.ttf", 24)
 			(font_width, font_height) = font.getsize(text)
 			draw.text((self.WIDTH//2 - font_width//2, self.HEIGHT//2 - font_height//2 + 10), text, font=font, fill=(255, 255, 255))
 
 			# PROBE1 Temp Circle
 			draw.ellipse((10, self.HEIGHT//2 + 10, 110, self.HEIGHT//2 + 110), fill=(50, 50, 50))
-			endpoint = ((360*in_data['Probe1Temp']) // 300) + 90
+			if in_data['Probe1Temp'] < 0:
+				endpoint = 0
+			elif self.units == 'F':
+				endpoint = ((360*in_data['Probe1Temp']) // 300) + 90
+			else:
+				endpoint = ((360*in_data['Probe1Temp']) // 150) + 90			
 			draw.pieslice((10, self.HEIGHT//2 + 10, 110, self.HEIGHT//2 + 110), start=90, end=endpoint, fill=(3, 161, 252))
 			if (in_data['Probe1SetPoint'] > 0):
-				setpoint = ((360*in_data['Probe1SetPoint']) // 300) + 90
+				if self.units == 'F':
+					setpoint = ((360*in_data['Probe1SetPoint']) // 300) + 90
+				else: 
+					setpoint = ((360*in_data['Probe1SetPoint']) // 150) + 90
 				draw.pieslice((10, self.HEIGHT//2 + 10, 110, self.HEIGHT//2 + 110), start=setpoint-2, end=setpoint+2, fill=(255, 255, 0)) # Yellow Arc for SetPoint
 			draw.ellipse((20, self.HEIGHT//2 + 20, 100, self.HEIGHT//2 + 100), fill=(0, 0, 0))
 
@@ -190,7 +215,10 @@ class Display:
 			draw.text((60 - font_width//2, self.HEIGHT//2 + 40 - font_height//2), text, font=font, fill=(255,255,255))
 
 			# PROBE1 Temperature (Large Centered) 
-			font = ImageFont.truetype("trebuc.ttf", 36)
+			if(self.units == 'F'):
+				font = ImageFont.truetype("trebuc.ttf", 36)
+			else:
+				font = ImageFont.truetype("trebuc.ttf", 30)
 			text = str(in_data['Probe1Temp'])[:5]
 			(font_width, font_height) = font.getsize(text)
 			draw.text((60 - font_width//2, self.HEIGHT//2 + 60 - font_height//2), text, font=font, fill=(255,255,255))
@@ -204,10 +232,18 @@ class Display:
 
 			# PROBE2 Temp Circle
 			draw.ellipse((self.WIDTH - 110, self.HEIGHT//2 + 10, self.WIDTH - 10, self.HEIGHT//2 + 110), fill=(50, 50, 50))
-			endpoint = ((360*in_data['Probe2Temp']) // 300) + 90
+			if in_data['Probe2Temp'] < 0:
+				endpoint = 0
+			elif self.units == 'F':
+				endpoint = ((360*in_data['Probe2Temp']) // 300) + 90
+			else:
+				endpoint = ((360*in_data['Probe2Temp']) // 150) + 90
 			draw.pieslice((self.WIDTH - 110, self.HEIGHT//2 + 10, self.WIDTH - 10, self.HEIGHT//2 + 110), start=90, end=endpoint, fill=(3, 161, 252))
 			if (in_data['Probe2SetPoint'] > 0):
-				setpoint = ((360*in_data['Probe2SetPoint']) // 300) + 90
+				if self.units == 'F':
+					setpoint = ((360*in_data['Probe2SetPoint']) // 300) + 90
+				else: 
+					setpoint = ((360*in_data['Probe2SetPoint']) // 150) + 90
 				draw.pieslice((self.WIDTH - 110, self.HEIGHT//2 + 10, self.WIDTH - 10, self.HEIGHT//2 + 110), start=setpoint-2, end=setpoint+2, fill=(255, 255, 0)) # Yellow Arc for SetPoint
 			draw.ellipse((self.WIDTH - 100, self.HEIGHT//2 + 20, self.WIDTH - 20, self.HEIGHT//2 + 100), fill=(0, 0, 0))
 
@@ -218,7 +254,10 @@ class Display:
 			draw.text((self.WIDTH - 60 - font_width//2, self.HEIGHT//2 + 40 - font_height//2), text, font=font, fill=(255,255,255))
 
 			# PROBE2 Temperature (Large Centered) 
-			font = ImageFont.truetype("trebuc.ttf", 36)
+			if(self.units == 'F'):
+				font = ImageFont.truetype("trebuc.ttf", 36)
+			else:
+				font = ImageFont.truetype("trebuc.ttf", 30)
 			text = str(in_data['Probe2Temp'])[:5]
 			(font_width, font_height) = font.getsize(text)
 			draw.text((self.WIDTH - 60 - font_width//2, self.HEIGHT//2 + 60 - font_height//2), text, font=font, fill=(255,255,255))
@@ -462,14 +501,22 @@ class Display:
 			print('Menu Active')
 		# If selecting the 'grill_hold_value', take action based on button press was
 		elif(self.menu['current']['mode'] == 'grill_hold_value'):
+			if(self.units == 'F'):
+				stepValue = 5  # change in temp each time button pressed 
+				minTemp = 120 # minimum temperature set for hold
+				maxTemp = 500 # maximum temperature set for hold
+			else:
+				stepValue = 2  # change in temp each time button pressed 
+				minTemp = 50 # minimum temperature set for hold
+				maxTemp = 260 # maximum temperature set for hold
 			if(action == 'down'):
-				self.menu['current']['option'] -= 5	# Step up by 5 degrees
-				if(self.menu['current']['option'] <= 120):
-					self.menu['current']['option'] = 500 # Roll over to 500F if you go less than 120. 
+				self.menu['current']['option'] -= stepValue	# Step down by stepValue degrees
+				if(self.menu['current']['option'] <= minTemp):
+					self.menu['current']['option'] = maxTemp # Roll over to maxTemp if you go less than 120. 
 			elif(action == 'up'):
-				self.menu['current']['option'] += 5	# Step up by 5 degrees
-				if(self.menu['current']['option'] > 500):
-					self.menu['current']['option'] = 120 # Roll over to 120F if you go greater than 500. 
+				self.menu['current']['option'] += stepValue	# Step up by stepValue degrees
+				if(self.menu['current']['option'] > maxTemp):
+					self.menu['current']['option'] = minTemp # Roll over to minTemp if you go greater than 500. 
 			elif(action == 'enter'):
 				control = ReadControl()
 				control['setpoints']['grill'] = self.menu['current']['option']
@@ -567,7 +614,10 @@ class Display:
 				elif(selected == 'Hold'):
 					print('Hold Selected')
 					self.menu['current']['mode'] = 'grill_hold_value'
-					self.menu['current']['option'] = 225
+					if(self.units == 'F'):
+						self.menu['current']['option'] = 225  # start at 225 for F
+					else: 
+						self.menu['current']['option'] = 100  # start at 100 for C
 				elif(selected == 'Smoke'):
 					print('Smoke Selected')
 					self.menu['current']['mode'] = 'none'

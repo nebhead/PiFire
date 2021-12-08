@@ -24,7 +24,7 @@ import time
 
 class Display:
 
-	def __init__(self):
+	def __init__(self, units='F'):
 		self.device = ST7789.ST7789(
 			port=0,
 			cs=0, 
@@ -35,6 +35,8 @@ class Display:
 			spi_speed_hz=80 * 1000 * 1000
 		)
 
+		self.units = units 
+		
 		self.WIDTH = self.device.width
 		self.HEIGHT = self.device.height
 
@@ -42,6 +44,7 @@ class Display:
 		time.sleep(3) # Keep the splash up for three seconds on boot-up - you can certainly disable this if you want 
 
 	def DisplayStatus(self, in_data, status_data):
+		self.units = status_data['units']
 		# Turn on Backlight (just in case it was off)
 		self.device.set_backlight(1)
 
@@ -52,8 +55,10 @@ class Display:
 		draw = ImageDraw.Draw(img)
 
 		# Grill Temperature (Large Centered) 
-		#font = ImageFont.truetype("impact.ttf", 100)
-		font = ImageFont.truetype("trebuc.ttf", 128)
+		if(self.units == 'F'):
+			font = ImageFont.truetype("trebuc.ttf", 128)
+		else:
+			font = ImageFont.truetype("trebuc.ttf", 80)
 		text = str(in_data['GrillTemp'])[:5]
 		(font_width, font_height) = font.getsize(text)
 		draw.text((self.WIDTH//2 - font_width//2,0), text, font=font, fill=(255,255,255))
