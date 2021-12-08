@@ -6,15 +6,16 @@ handle errors gracefully (hopefully).
 '''
 
 class TempQueue():
-	def __init__(self, qlength=10, scale='F'):
+	def __init__(self, qlength=10, units='F'):
 		self.queue = []
-		
+		self.units = units
+
 		if(qlength < 2):
 			self.qlength = 2 # Set minimum qlength to 2
 		else: 
 			self.qlength = qlength
 		
-		if(scale == 'F'):
+		if(units == 'F'):
 			self.stdev_max = 4.75  # Standard Deviation Maximum for degrees F
 		else:
 			self.stdev_max = 2.25  # Standard Deviation Maximum for degrees C
@@ -35,7 +36,10 @@ class TempQueue():
 			# Handle case if lastaverage isn't initialized
 			average = (sum(self.queue) / self.qlength)
 			self.last_average = average
-			return(average)
+			if(self.units == 'F'):
+				return(int(average))  # Give integer for F units
+			else: 
+				return(round(average, 1))  # Give one digit of decimal for C units
 		else:
 			# Handle normal case
 			# Get standard deviation from temperatures in the queue
@@ -47,5 +51,9 @@ class TempQueue():
 			else:
 				# If the standard deviation exceeds the max deviation, keep the last average value
 				average = self.last_average
-			
-			return(average)
+
+			if(self.units == 'F'):
+				return(int(average))  # Give integer for F units
+			else: 
+				return(round(average, 1))  # Give one digit of decimal for C units
+

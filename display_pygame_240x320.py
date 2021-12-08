@@ -27,10 +27,11 @@ import time
 
 class Display:
 
-	def __init__(self):
+	def __init__(self, units='F'):
 		# Set Display Width and Height.  Modify for your needs.   
 		self.WIDTH = 320
 		self.HEIGHT = 240
+		self.units = units
 		# Activate PyGame
 		pygame.init()
 
@@ -45,6 +46,7 @@ class Display:
 
 
 	def DisplayStatus(self, in_data, status_data):
+		self.units = status_data['units']  # Update units in case there was a change since instantiation
 		# Create canvas
 		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
 
@@ -64,10 +66,18 @@ class Display:
 
 		# Grill Temp Circle
 		draw.ellipse((80, 10, 240, 170), fill=(50, 50, 50)) # Grey Background Circle
-		endpoint = ((360*in_data['GrillTemp']) // 600) + 90
+		if in_data['GrillTemp'] < 0:
+			endpoint = 0
+		elif self.units == 'F':
+			endpoint = ((360*in_data['GrillTemp']) // 600) + 90
+		else:
+			endpoint = ((360*in_data['GrillTemp']) // 300) + 90
 		draw.pieslice((80, 10, 240, 170), start=90, end=endpoint, fill=(200, 0, 0)) # Red Arc for Temperature
 		if (in_data['GrillSetPoint'] > 0):
-			setpoint = ((360*in_data['GrillSetPoint']) // 600) + 90
+			if self.units == 'F':
+				setpoint = ((360*in_data['GrillSetPoint']) // 600) + 90
+			else:
+				setpoint = ((360*in_data['GrillSetPoint']) // 300) + 90
 			draw.pieslice((80, 10, 240, 170), start=setpoint-2, end=setpoint+2, fill=(255, 255, 0)) # Yellow Arc for SetPoint
 		draw.ellipse((90, 20, 230, 160), fill=(0, 0, 0)) # Black Circle for Center
 
@@ -85,23 +95,37 @@ class Display:
 			draw.text((self.WIDTH//2 - font_width//2, 45 - font_height//2), text, font=font, fill=(0,200,255))
 
 		# Grill Temperature (Large Centered) 
-		font = ImageFont.truetype("trebuc.ttf", 80)
-		text = str(in_data['GrillTemp'])[:5]
-		(font_width, font_height) = font.getsize(text)
-		draw.text((self.WIDTH//2 - font_width//2,40), text, font=font, fill=(255,255,255))
+		if(self.units == 'F'):
+			font = ImageFont.truetype("trebuc.ttf", 80)
+			text = str(in_data['GrillTemp'])[:5]
+			(font_width, font_height) = font.getsize(text)
+			draw.text((self.WIDTH//2 - font_width//2,40), text, font=font, fill=(255,255,255))
+		else: 
+			font = ImageFont.truetype("trebuc.ttf", 55)
+			text = str(in_data['GrillTemp'])[:5]
+			(font_width, font_height) = font.getsize(text)
+			draw.text((self.WIDTH//2 - font_width//2,56), text, font=font, fill=(255,255,255))
 
 		# Draw Grill Temp Scale Label
-		text = "°F"
+		text = "°" + self.units
 		font = ImageFont.truetype("trebuc.ttf", 24)
 		(font_width, font_height) = font.getsize(text)
 		draw.text((self.WIDTH//2 - font_width//2, self.HEIGHT//2 - font_height//2 + 10), text, font=font, fill=(255, 255, 255))
 
 		# PROBE1 Temp Circle
 		draw.ellipse((10, self.HEIGHT//2 + 10, 110, self.HEIGHT//2 + 110), fill=(50, 50, 50))
-		endpoint = ((360*in_data['Probe1Temp']) // 300) + 90
+		if in_data['Probe1Temp'] < 0:
+			endpoint = 0
+		elif self.units == 'F':
+			endpoint = ((360*in_data['Probe1Temp']) // 300) + 90
+		else:
+			endpoint = ((360*in_data['Probe1Temp']) // 150) + 90
 		draw.pieslice((10, self.HEIGHT//2 + 10, 110, self.HEIGHT//2 + 110), start=90, end=endpoint, fill=(3, 161, 252))
 		if (in_data['Probe1SetPoint'] > 0):
-			setpoint = ((360*in_data['Probe1SetPoint']) // 300) + 90
+			if self.units == 'F':
+				setpoint = ((360*in_data['Probe1SetPoint']) // 300) + 90
+			else: 
+				setpoint = ((360*in_data['Probe1SetPoint']) // 150) + 90
 			draw.pieslice((10, self.HEIGHT//2 + 10, 110, self.HEIGHT//2 + 110), start=setpoint-2, end=setpoint+2, fill=(255, 255, 0)) # Yellow Arc for SetPoint
 		draw.ellipse((20, self.HEIGHT//2 + 20, 100, self.HEIGHT//2 + 100), fill=(0, 0, 0))
 
@@ -112,7 +136,10 @@ class Display:
 		draw.text((60 - font_width//2, self.HEIGHT//2 + 40 - font_height//2), text, font=font, fill=(255,255,255))
 
 		# PROBE1 Temperature (Large Centered) 
-		font = ImageFont.truetype("trebuc.ttf", 36)
+		if(self.units == 'F'):
+			font = ImageFont.truetype("trebuc.ttf", 36)
+		else:
+			font = ImageFont.truetype("trebuc.ttf", 30)
 		text = str(in_data['Probe1Temp'])[:5]
 		(font_width, font_height) = font.getsize(text)
 		draw.text((60 - font_width//2, self.HEIGHT//2 + 60 - font_height//2), text, font=font, fill=(255,255,255))
@@ -126,10 +153,18 @@ class Display:
 
 		# PROBE2 Temp Circle
 		draw.ellipse((self.WIDTH - 110, self.HEIGHT//2 + 10, self.WIDTH - 10, self.HEIGHT//2 + 110), fill=(50, 50, 50))
-		endpoint = ((360*in_data['Probe2Temp']) // 300) + 90
+		if in_data['Probe2Temp'] < 0:
+			endpoint = 0
+		elif self.units == 'F':
+			endpoint = ((360*in_data['Probe2Temp']) // 300) + 90
+		else:
+			endpoint = ((360*in_data['Probe2Temp']) // 150) + 90
 		draw.pieslice((self.WIDTH - 110, self.HEIGHT//2 + 10, self.WIDTH - 10, self.HEIGHT//2 + 110), start=90, end=endpoint, fill=(3, 161, 252))
 		if (in_data['Probe2SetPoint'] > 0):
-			setpoint = ((360*in_data['Probe2SetPoint']) // 300) + 90
+			if self.units == 'F':
+				setpoint = ((360*in_data['Probe2SetPoint']) // 300) + 90
+			else: 
+				setpoint = ((360*in_data['Probe2SetPoint']) // 150) + 90
 			draw.pieslice((self.WIDTH - 110, self.HEIGHT//2 + 10, self.WIDTH - 10, self.HEIGHT//2 + 110), start=setpoint-2, end=setpoint+2, fill=(255, 255, 0)) # Yellow Arc for SetPoint
 		draw.ellipse((self.WIDTH - 100, self.HEIGHT//2 + 20, self.WIDTH - 20, self.HEIGHT//2 + 100), fill=(0, 0, 0))
 
@@ -140,7 +175,10 @@ class Display:
 		draw.text((self.WIDTH - 60 - font_width//2, self.HEIGHT//2 + 40 - font_height//2), text, font=font, fill=(255,255,255))
 
 		# PROBE2 Temperature (Large Centered) 
-		font = ImageFont.truetype("trebuc.ttf", 36)
+		if(self.units == 'F'):
+			font = ImageFont.truetype("trebuc.ttf", 36)
+		else:
+			font = ImageFont.truetype("trebuc.ttf", 30)
 		text = str(in_data['Probe2Temp'])[:5]
 		(font_width, font_height) = font.getsize(text)
 		draw.text((self.WIDTH - 60 - font_width//2, self.HEIGHT//2 + 60 - font_height//2), text, font=font, fill=(255,255,255))

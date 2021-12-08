@@ -20,17 +20,27 @@ import time
 
 class Display:
 
-	def __init__(self):
+	def __init__(self, units='F'):
 		self.serial = i2c(port=1, address=0x3C)
 		self.device = ssd1306(self.serial)
+		# Set Display Width and Height.  Modify for your needs.   
+		self.WIDTH = 128
+		self.HEIGHT = 64
+		# Set Temperature Units
+		self.units = units
+		
 		self.DisplaySplash()
 		time.sleep(3) # Keep the splash up for three seconds on boot-up - you can certainly disable this if you want 
 
 	def DisplayStatus(self, in_data, status_data):
+		self.units = status_data['units']
 		with canvas(self.device) as draw:
 			try:
 				# Grill Temperature (Large Centered) 
-				font = ImageFont.truetype("impact.ttf", 42)
+				if(self.units == 'F'):
+					font = ImageFont.truetype("impact.ttf", 42)
+				else:
+					font = ImageFont.truetype("impact.ttf", 38)
 				text = str(in_data['GrillTemp'])[:5]
 				(font_width, font_height) = font.getsize(text)
 				draw.text((128//2 - font_width//2,0), text, font=font, fill=255)
@@ -67,8 +77,9 @@ class Display:
 				print(str(now) + ' Error displaying status.')
 
 	def DisplaySplash(self):
+		# Create canvas
 		frameSize = (128, 64)
-		screen = Image.new('1', (frameSize), color=0)
+		screen = Image.new('1', (self.WIDTH, self.HEIGHT), color=0)
 		splash = Image.open('color-boot-splash.png') \
 			.transform(self.device.size, Image.AFFINE, (1, 0, 0, 0, 1, 0), Image.BILINEAR) \
 			.convert("L") \
