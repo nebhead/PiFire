@@ -871,6 +871,9 @@ def settingspage(action=None):
 		if('u_max' in response):
 			if(response['u_max'] != ''):
 				settings['cycle_data']['u_max'] = float(response['u_max'])
+		if('center' in response):
+			if(response['center'] != ''):
+				settings['cycle_data']['center'] = float(response['center'])
 		if('sp_cycle' in response):
 			if(response['sp_cycle'] != ''):
 				settings['smoke_plus']['cycle'] = int(response['sp_cycle'])
@@ -2038,6 +2041,9 @@ def update_settings(json_data):
 		if('u_max' in data['cycle']):
 			if(data['cycle']['u_max'] != ''):
 				settings['cycle_data']['u_max'] = float(data['cycle']['u_max'])
+		if('center' in data['cycle']):
+			if(data['cycle']['center'] != ''):
+				settings['cycle_data']['center'] = float(data['cycle']['center'])
 		if('sp_cycle' in data['cycle']):
 			if(data['cycle']['sp_cycle'] != ''):
 				settings['smoke_plus']['cycle'] = int(data['cycle']['sp_cycle'])
@@ -2117,6 +2123,23 @@ def update_settings(json_data):
 
 		if('full' in data['pellets']):
 			settings['pelletlevel']['full'] = int(data['pellets']['full'])
+
+	if ('units' in data):
+		if('temp_units' in data['units']):
+			if(data['units']['temp_units'] == 'C') and (settings['globals']['units'] == 'F'):
+				settings = convert_settings_units('C', settings)
+				WriteSettings(settings)
+				control = ReadControl()
+				control['updated'] = True
+				control['units_change'] = True
+				WriteControl(control)
+			elif(data['units']['temp_units'] == 'F') and (settings['globals']['units'] == 'C'):
+				settings = convert_settings_units('F', settings)
+				WriteSettings(settings)
+				control = ReadControl()
+				control['updated'] = True
+				control['units_change'] = True
+				WriteControl(control)
 
 	# Take all settings and write them
 	WriteSettings(settings)
