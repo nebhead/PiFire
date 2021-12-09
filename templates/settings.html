@@ -430,6 +430,13 @@
                         </div>
                         <input id="u_max" type="number" min="0.1" step="0.01" class="form-control" placeholder="{{ settings['cycle_data']['u_max'] }}" value="{{ settings['cycle_data']['u_max'] }}" name="u_max">
                     </div>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" data-toggle="tooltip" title="Center Ratio [Default=0.5]">
+                                <i class="far fa-clock"></i>&nbsp; Center Ratio</span>
+                        </div>
+                        <input id="center" type="number" min="0.1" step="0.01" class="form-control" placeholder="{{ settings['cycle_data']['center'] }}" value="{{ settings['cycle_data']['center'] }}" name="center">
+                    </div>
                     <span class="badge badge-warning">NOTE:</span>
                     <i class="small"> If you are in hold mode currently, you will need to change to another mode and back into hold mode for this to take effect. More information on the PID control settings can be found <a href="http://engineeredmusings.com/pismoker/" target="blank">here.</a>
                     </i>

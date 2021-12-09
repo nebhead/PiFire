@@ -24,6 +24,7 @@
 # Imported Libraries
 # *****************************************
 import time
+from common import ReadSettings
 
 # *****************************************
 # Class Definition
@@ -37,9 +38,12 @@ class PID:
 		self.D = 0.0
 		self.u = 0
 
+		settings = ReadSettings()
+		self.Center = settings['cycle_data']['center']
+
 		self.Derv = 0.0
 		self.Inter = 0.0
-		self.Inter_max = abs(0.5/self.Ki)
+		self.Inter_max = abs(self.Center/self.Ki)
 
 		self.Last = 150
 
@@ -53,7 +57,7 @@ class PID:
 	def update(self, Current):
 		#P
 		error = Current - self.setPoint
-		self.P = self.Kp*error + 0.5 #P = 1 for PB/2 under setPoint, P = 0 for PB/2 over setPoint
+		self.P = self.Kp*error + self.Center #P = 1 for PB/2 under setPoint, P = 0 for PB/2 over setPoint
 
 		#I
 		dT = time.time() - self.LastUpdate
@@ -87,7 +91,7 @@ class PID:
 
 	def setGains(self, PB, Ti, Td):
 		self.CalculateGains(PB,Ti,Td)
-		self.Inter_max = abs(0.5/self.Ki)
+		self.Inter_max = abs(self.Center/self.Ki)
 
 	def getK(self):
 		return self.Kp, self.Ki, self.Kd

@@ -8,7 +8,7 @@
 #
 # *****************************************
 
-from common import WriteLog
+from common import WriteLog, ReadSettings
 import random
 
 class HopperLevel:
@@ -29,4 +29,8 @@ class HopperLevel:
 		return()
 
 	def GetLevel(self):
-		return random.randint(10, 100)
+		settings = ReadSettings()
+		if(settings['modules']['grillplat'] == 'prototype'):
+			return random.randint(10, 100)
+		else:
+			return (100)

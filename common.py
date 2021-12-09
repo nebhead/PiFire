@@ -32,7 +32,7 @@ def DefaultSettings():
 	settings = {}
 
 	settings['versions'] = {
-		'server' : "1.0.0"
+		'server' : "1.2.2"
 	}
 
 	settings['history_page'] = {
@@ -111,7 +111,8 @@ def DefaultSettings():
 		'SmokeCycleTime' : 15,
 		'PMode' : 2,  # http://tipsforbbq.com/Definition/Traeger-P-Setting
 		'u_min' : 0.15,
-		'u_max' : 1.0
+		'u_max' : 1.0,
+		'center' : 0.5
 	}
 
 	settings['smoke_plus'] = {

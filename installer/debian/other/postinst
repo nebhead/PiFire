@@ -73,7 +73,7 @@ service supervisor restart
 cd /usr/local/bin/pifire || exit 1 # Change dir to where the settings.py application is (and common.py)
 python3 settings.py -v @VERSION@
 
-echo " " | sudo tee -a /usr/local/bin/pifire/upgradecheck >/dev/null
+echo " " | sudo tee -a upgradecheck >/dev/null
 
 # Finish
 whiptail --msgbox --backtitle "Install Complete / Reboot Required" --title "Installation Completed" "Congratulations, the installation is complete.  At this time, you should reboot your system to complete the installation.  You should be able to access your application by opening a browser on your PC or other device and using the IP address for this device  Enjoy!" ${r} ${c}
