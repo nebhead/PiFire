@@ -708,7 +708,7 @@ def convert_temp(units, temp):
 	if units == 'F':
 		temp_out = int(temp * (9/5) + 32) # Celsius to Fahrenheit
 	else:
-		temp_out = round((temp - 32) * (5/9), 1) # Fahrenheit to Celcius 
+		temp_out = int((temp - 32) * (5/9)) # Fahrenheit to Celcius 
 	return(temp_out)
 
 def convert_settings_units(units, settings):

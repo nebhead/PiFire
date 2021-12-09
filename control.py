@@ -1250,8 +1250,11 @@ adc_device = ReadADC(settings['probe_settings']['probe_profiles'][grill0type], s
 pelletdb = ReadPelletDB()
 
 # Start Distance Sensor Object for Hopper
-dist_device = HopperLevel(settings['pelletlevel']['empty'], settings['pelletlevel']['full'])
-
+if(settings['modules']['grillplat'] == 'prototype') and (settings['modules']['dist'] == 'prototype'):
+	# If in prototype mode, enable test reading (i.e. random values from proto distance sensor)
+	dist_device = HopperLevel(settings['pelletlevel']['empty'], settings['pelletlevel']['full'], test=True)
+else:
+	dist_device = HopperLevel(settings['pelletlevel']['empty'], settings['pelletlevel']['full'])
 
 # Get current hopper level and save it to the current pellet information
 pelletdb['current']['hopper_level'] = dist_device.GetLevel()
