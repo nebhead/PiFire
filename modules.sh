@@ -75,7 +75,20 @@ if [[ $UNITS = "C" ]];then
     $SUDO python3 settings.py -u C
 fi
 
-DISPLAY=$(whiptail --title "Select your Display module to use." --radiolist "Select display type (and input) module for PiFire to use.  Some displays may also have menu button functions indicated by a B appended to the name." 20 78 8 "SSD1306" "OLED Display (128x64) <- DEFAULT" ON "SSD1306B" "OLED Display (128x64) w/Button Input" OFF "ST7789P" "IPS/TFT SPI Display (240x240)P-Pimoroni Libs" OFF "ILI9341" "TFT Color Display (240x320)" OFF "ILI9341B" "TFT Color Display (240x320) w/Buttons" OFF "PROTOTYPE" "Prototype/Console Output (for test only)" OFF "PYGAME" "Prototype/PyGame Desktop Output (for test only)" OFF "PYGAME240320" "Prototype/PyGame (240x320) (for test only)" OFF "PYGAME240320B" "Prototype/PyGame B(240x320) (for test only)" OFF "PYGAME64128" "Prototype/PyGame (64x128) (for test only)" OFF 3>&1 1>&2 2>&3)
+DISPLAY=$(whiptail --title "Select your Display module to use." \
+                   --radiolist "Select display type (and input) module for PiFire to use.  Some displays may also have menu button functions indicated by a B appended to the name." 20 78 8 \
+                   "SSD1306" "OLED Display (128x64) <- DEFAULT" ON \
+                   "SSD1306B" "OLED Display (128x64) w/Button Input" OFF \
+                   "ST7789P" "IPS/TFT SPI Display (240x240)P-Pimoroni Libs" OFF \
+                   "ILI9341" "TFT Color Display (240x320)" OFF \
+                   "ILI9341B" "TFT Color Display (240x320) w/Buttons" OFF \
+                   "ILI9341_encoder" "TFT Color Display (240x320) w/Encoder (KY040)" OFF \
+                   "PROTOTYPE" "Prototype/Console Output (for test only)" OFF \
+                   "PYGAME" "Prototype/PyGame Desktop Output (for test only)" OFF \
+                   "PYGAME240320" "Prototype/PyGame (240x320) (for test only)" OFF \
+                   "PYGAME240320B" "Prototype/PyGame B(240x320) (for test only)" OFF \
+                   "PYGAME64128" "Prototype/PyGame (64x128) (for test only)" OFF \
+                   3>&1 1>&2 2>&3)
 
 if [[ $DISPLAY = "SSD1306" ]];then
     $SUDO python3 settings.py -d ssd1306
@@ -105,6 +118,12 @@ if [[ $DISPLAY = "ILI9341" ]];then
     $SUDO python3 settings.py -d ili9341
 	echo "dtparam=spi=on" | sudo tee -a /boot/config.txt > /dev/null
     $SUDO pip3 install luma.lcd
+fi
+
+if [[ $DISPLAY = "ILI9341_encoder" ]];then
+    $SUDO python3 settings.py -d ili9341_encoder
+	echo "dtparam=spi=on" | sudo tee -a /boot/config.txt > /dev/null
+    $SUDO pip3 install pyky040==0.1.4
 fi
 
 if [[ $DISPLAY = "ILI9341B" ]];then
