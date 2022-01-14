@@ -74,7 +74,9 @@ for probe_source in settings['probe_settings']['probe_sources']:
     # if any of the probes uses max31865 then load the library
     if 'max31865' in probe_source:
         from probe_max31865 import probe_max31865_read
+
         break
+
 
 # *****************************************
 # Function Definitions
@@ -406,7 +408,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
         in_data['Probe2Tr'] = adc_data['Probe2Tr']  # For Temp Resistance Tuning
 
         # Check to see if there are any pending notifications (i.e. Timer / Temperature Settings)
-        control = CheckNotify(in_data, control, settings, pelletdb)
+        control = CheckNotify(in_data, control, settings, pelletdb, grill_platform)
 
         # Check for button input event
         display_device.EventDetect()
@@ -850,7 +852,7 @@ def Monitor(grill_platform, adc_device, display_device, dist_device):
         in_data['Probe2Tr'] = adc_data['Probe2Tr']  # For Temp Resistance Tuning
 
         # Check to see if there are any pending notifications (i.e. Timer / Temperature Settings)
-        control = CheckNotify(in_data, control, settings, pelletdb)
+        control = CheckNotify(in_data, control, settings, pelletdb, grill_platform)
 
         # Check for button input event
         display_device.EventDetect()
@@ -1036,7 +1038,7 @@ def Manual_Mode(grill_platform, adc_device, display_device, dist_device):
             display_device.DisplayStatus(in_data, status_data)
             displaytoggletime = now
 
-        control = CheckNotify(in_data, control, settings, pelletdb)
+        control = CheckNotify(in_data, control, settings, pelletdb, grill_platform)
 
         # Write History after 3 seconds has passed
         if now - temptoggletime > 3:
@@ -1354,11 +1356,28 @@ def SendIFTTTNotification(notifyevent, control, settings, pelletdb):
     except:
         WriteLog("IFTTT Notification Failed: " + url)
 
+
+# ******************************
+# Send influxdb Notifications
+# ******************************
+
+
+influx_handler = None
+
+
+def SendInfluxDbNotification(notifyevent, control, settings, pelletdb, in_data, grill_platform):
+    global influx_handler
+    if not influx_handler:
+        from notification_handlers import InfluxNotificationHandler
+        influx_handler = InfluxNotificationHandler(settings)
+    influx_handler.notify(notifyevent, control, settings, pelletdb, in_data, grill_platform)
+
+
 # ******************************
 # Send Notifications
 # ******************************
 
-def SendNotifications(notifyevent, control, settings, pelletdb):
+def SendNotifications(notifyevent, control, settings, pelletdb, in_data=None, grill_platform=None):
     if settings['ifttt']['APIKey'] != '' and settings['ifttt']['enabled'] == True:
         SendIFTTTNotification(notifyevent, control, settings, pelletdb)
     if settings['pushbullet']['APIKey'] != '' and settings['pushbullet']['enabled'] == True:
@@ -1368,13 +1387,17 @@ def SendNotifications(notifyevent, control, settings, pelletdb):
         SendPushoverNotification(notifyevent, control, settings, pelletdb)
     if settings['firebase']['ServerUrl'] != '' and settings['firebase']['enabled'] == True:
         SendFirebaseNotification(notifyevent, control, settings, pelletdb)
+    if settings['influxdb']['url'] != '' and settings['influxdb']['enabled']:
+        SendInfluxDbNotification(notifyevent, control, settings, pelletdb, in_data, grill_platform)
 
 
 # ******************************
 # Check for any pending notifications
 # ******************************
 
-def CheckNotify(in_data, control, settings, pelletdb):
+def CheckNotify(in_data, control, settings, pelletdb, grill_platform):
+    SendNotifications('GRILL_STATE', control, settings, pelletdb, in_data, grill_platform)
+
     if control['notify_req']['grill']:
         if in_data['GrillTemp'] >= control['setpoints']['grill']:
             # control = ReadControl()  # Read Modify Write

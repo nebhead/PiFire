@@ -80,6 +80,7 @@ $SUDO pip3 install eventlet==0.30.2
 $SUDO pip3 install gpiozero
 $SUDO pip3 install redis
 $SUDO pip3 install uuid
+$SUDO pip3 install influxdb-client[ciso]
 
 # Grab project files
 clear

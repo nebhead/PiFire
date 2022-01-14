@@ -768,6 +768,17 @@ def settingspage(action=None):
 			elif(response['pushbullet_publicurl'] != settings['pushbullet']['PublicURL']):
 				settings['pushbullet']['PublicURL'] = response['pushbullet_publicurl']
 
+		if 'influxdb_enabled' in response:
+			settings['influxdb']['enabled'] = response['influxdb_enabled'] == 'on'
+		if 'influxdb_url' in response:
+			settings['influxdb']['url'] = response['influxdb_url']
+		if 'influxdb_token' in response:
+			settings['influxdb']['token'] = response['influxdb_token']
+		if 'influxdb_org' in response:
+			settings['influxdb']['org'] = response['influxdb_org']
+		if 'influxdb_bucket' in response:
+			settings['influxdb']['bucket'] = response['influxdb_bucket']
+
 		event['type'] = 'updated'
 		event['text'] = 'Successfully updated notification settings.'
 
