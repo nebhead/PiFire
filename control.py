@@ -24,6 +24,7 @@ from pushbullet import Pushbullet  # Pushbullet Import
 
 import pid as PID  # Library for calculating PID setpoints
 from common import *  # Common Library for WebUI and Control Program
+
 from temp_queue import TempQueue
 
 # Read Settings to Get Modules Configuration 
@@ -69,10 +70,36 @@ elif settings['modules']['dist'] == 'hcsr04':
 else:
     from distance_prototype import HopperLevel  # Simulated Library for reading the HopperLevel
 
+for probe_source in settings['probe_settings']['probe_sources']:
+    # if any of the probes uses max31865 then load the library
+    if 'max31865' in probe_source:
+        from probe_max31865 import probe_max31865_read
+        break
 
 # *****************************************
 # Function Definitions
 # *****************************************
+def ReadProbes(settings, adc_device, units):
+    adc_data = adc_device.ReadAllPorts()
+
+    prob_data = {}
+
+    probe_ids = ['Grill', 'Probe1', 'Probe2']
+    adc_properties = ['Temp', 'Tr']
+    adc_probe_indices = ['Grill', 'Probe1', 'Probe2']
+    for idx, probe_source in enumerate(settings['probe_settings']['probe_sources']):
+        if 'ADC' in probe_source and len(probe_source) > 3:
+            # map ADC proves to the output probes. i.e ADC0 is adc_probe_indices[0] => 'Grill' so if this is defined
+            # for first source map Grill to Grill. If ADC1 in first source map it to Probe1
+            source_index = int(probe_source[3:])
+            for p in adc_properties:
+                prob_data[probe_ids[idx] + p] = adc_data[adc_probe_indices[source_index] + p]
+        elif 'max31865' in probe_source:
+            temperature, resistance = probe_max31865_read(units=units)
+            prob_data[probe_ids[idx] + adc_properties[0]] = temperature
+            prob_data[probe_ids[idx] + adc_properties[1]] = resistance
+
+    return prob_data
 
 
 def GetStatus(grill_platform, control, settings, pelletdb):
@@ -183,8 +210,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
                            settings['probe_settings']['probe_profiles'][probe1type],
                            settings['probe_settings']['probe_profiles'][probe2type])
 
-    adc_data = {}
-    adc_data = adc_device.ReadAllPorts()
+    adc_data = ReadProbes(settings, adc_device, units)
 
     AvgGT.enqueue(adc_data['GrillTemp'])
     AvgP1.enqueue(adc_data['Probe1Temp'])
@@ -361,8 +387,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
                                    settings['probe_settings']['probe_profiles'][probe2type])
 
         # Get temperatures from all probes
-        adc_data = {}
-        adc_data = adc_device.ReadAllPorts()
+        adc_data = ReadProbes(settings, adc_device, units)
 
         # Test temperature data returned for errors (+/- 20% Temp Variance), and average the data since last reading
         AvgGT.enqueue(adc_data['GrillTemp'])
@@ -543,8 +568,7 @@ def Monitor(grill_platform, adc_device, display_device, dist_device):
                            settings['probe_settings']['probe_profiles'][probe1type],
                            settings['probe_settings']['probe_profiles'][probe2type])
 
-    adc_data = {}
-    adc_data = adc_device.ReadAllPorts()
+    adc_data = ReadProbes(settings, adc_device, units)
 
     AvgGT.enqueue(adc_data['GrillTemp'])
     AvgP1.enqueue(adc_data['Probe1Temp'])
@@ -632,8 +656,7 @@ def Monitor(grill_platform, adc_device, display_device, dist_device):
                                    settings['probe_settings']['probe_profiles'][probe1type],
                                    settings['probe_settings']['probe_profiles'][probe2type])
 
-        adc_data = {}
-        adc_data = adc_device.ReadAllPorts()
+        adc_data = ReadProbes(settings, adc_device, units)
 
         # Test temperature data returned for errors (+/- 20% Temp Variance), and average the data since last reading
         AvgGT.enqueue(adc_data['GrillTemp'])
@@ -720,8 +743,7 @@ def Monitor(grill_platform, adc_device, display_device, dist_device):
                            settings['probe_settings']['probe_profiles'][probe1type],
                            settings['probe_settings']['probe_profiles'][probe2type])
 
-    adc_data = {}
-    adc_data = adc_device.ReadAllPorts()
+    adc_data = ReadProbes(settings, adc_device, units)
 
     AvgGT.enqueue(adc_data['GrillTemp'])
     AvgP1.enqueue(adc_data['Probe1Temp'])
@@ -809,8 +831,7 @@ def Monitor(grill_platform, adc_device, display_device, dist_device):
                                    settings['probe_settings']['probe_profiles'][probe1type],
                                    settings['probe_settings']['probe_profiles'][probe2type])
 
-        adc_data = {}
-        adc_data = adc_device.ReadAllPorts()
+        adc_data = ReadProbes(settings, adc_device, units)
 
         # Test temperature data returned for errors (+/- 20% Temp Variance), and average the data since last reading
         AvgGT.enqueue(adc_data['GrillTemp'])
@@ -903,8 +924,7 @@ def Manual_Mode(grill_platform, adc_device, display_device, dist_device):
                            settings['probe_settings']['probe_profiles'][probe1type],
                            settings['probe_settings']['probe_profiles'][probe2type])
 
-    adc_data = {}
-    adc_data = adc_device.ReadAllPorts()
+    adc_data = ReadProbes(settings, adc_device, units)
 
     AvgGT.enqueue(adc_data['GrillTemp'])
     AvgP1.enqueue(adc_data['Probe1Temp'])
@@ -1666,5 +1686,3 @@ while True:
 # ===================
 # End of Main Loop
 # ===================
-
-

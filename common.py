@@ -44,7 +44,9 @@ def DefaultSettings():
 
 	settings['probe_settings'] = {
 		'probe_profiles' :  DefaultProbeProfiles(),
-		'probes_enabled' : [1,1,1]
+		'probes_enabled' : [1,1,1],
+		# probe sources can be ADC0-3 or max31865
+		'probe_sources'  : ['ADC0', 'ADC1', 'ADC2']
 	}
 
 	settings['globals'] = {
