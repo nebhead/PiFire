@@ -58,6 +58,8 @@ elif(settings['modules']['display'] == 'pygame_64x128'):
 	from display_pygame_64x128 import Display # Library for controlling the display device
 elif(settings['modules']['display'] == 'ili9341'):
 	from display_ili9341 import Display # Library for controlling the display device
+elif(settings['modules']['display'] == 'ili9341_encoder'):
+	from display_ili9341_encoder import Display # Library for controlling the display device
 elif(settings['modules']['display'] == 'ili9341b'):
 	from display_ili9341b import Display # Library for controlling the display device
 else:
