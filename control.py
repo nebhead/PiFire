@@ -1111,7 +1111,7 @@ def SendIFTTTNotification(notifyevent, control, settings, pelletdb):
 		r = requests.post(url, data=query_args)
 		WriteLog("IFTTT Notification Success: " + r.text)
 	except:
-		WriteLog("IFTTT Notification Failed: " + r.text)
+		WriteLog("IFTTT Notification Failed: " + url)
 
 # ******************************
 # Send Notifications
