@@ -30,7 +30,7 @@ class ReadADC:
 		self.probe_02_profile = probe_02_profile
 
 	def adctotemp(self, adc_value, probe_profile):
-		if(adc_value > 0) and (adc_value < (probe_profile['Vs'] * 1000)):
+		if(adc_value > 0) and (adc_value < (probe_profile['Vs'] * 1000) * 0.99):
 			# Voltage at the divider (i.e. input to the ADC)
 			Vo = (adc_value / 1000) # mV to V of ADC (at the divider)
 
