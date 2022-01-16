@@ -84,6 +84,14 @@ def DefaultSettings():
 		'ServerUrl' : ''
 	}
 
+	settings['influxdb'] = {
+		'enabled': False,
+		'url': '',
+		'token': '',
+		'org': '',
+		'bucket': ''
+	}
+
 	settings['probe_types'] = {
 		'grill0type' : 'PT-1000-OEM',
 		'probe1type' : 'TWPS00',

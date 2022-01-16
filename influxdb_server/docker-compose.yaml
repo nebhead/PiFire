@@ -1,0 +1,12 @@
+version: "3.8"
+
+services:
+  influxdb:
+    container_name: influxdb
+    image: influxdb:2.1.1-alpine
+    env_file:
+      # BE SURE TO CHANGE THIS LINE BEFORE GOING TO PRODUCTION
+      - ./influx2.env
+    ports:
+      - 8886:8086
+    restart: unless-stopped

@@ -805,6 +805,50 @@
                     </div>
                     <!-- End of Card -->
                     <br>
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-light text-dark">
+                            <h5>InfluxDB</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="influxdb_enabled" name="influxdb_enabled" {% if settings['influxdb']['enabled'] == True %}checked{% endif %}>
+                                <label class="custom-control-label" for="influxdb_enabled">InfluxDB Enabled</label>
+                            </div>
+                            <br>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-key"></i>&nbsp; URL </span>
+                                </div>
+                                <input id="influxdb_url" type="text" class="form-control" name="influxdb_url" value="{{settings['influxdb']['url']}}">
+                            </div>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-key"></i>&nbsp; token </span>
+                                </div>
+                                <input id="influxdb_token" type="text" class="form-control" name="influxdb_token" value="{{settings['influxdb']['token']}}">
+                            </div>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-key"></i>&nbsp; org </span>
+                                </div>
+                                <input id="influxdb_org" type="text" class="form-control" name="influxdb_org" value="{{settings['influxdb']['org']}}">
+                            </div>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-key"></i>&nbsp; bucket </span>
+                                </div>
+                                <input id="influxdb_bucket" type="text" class="form-control" name="influxdb_bucket" value="{{settings['influxdb']['bucket']}}">
+                            </div>
+
+                        </div>
+                        <!-- End of card body -->
+                    </div>
+                    <!-- End of Card -->
+                    <br>
                 </div>
                 <!-- End of card body -->
                 <div class="card-footer bg-light">
