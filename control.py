@@ -1378,25 +1378,27 @@ def SendInfluxDbNotification(notifyevent, control, settings, pelletdb, in_data, 
 # ******************************
 
 def SendNotifications(notifyevent, control, settings, pelletdb, in_data=None, grill_platform=None):
-    if settings['ifttt']['APIKey'] != '' and settings['ifttt']['enabled'] == True:
-        SendIFTTTNotification(notifyevent, control, settings, pelletdb)
-    if settings['pushbullet']['APIKey'] != '' and settings['pushbullet']['enabled'] == True:
-        SendPushBulletNotification(notifyevent, control, settings, pelletdb)
-    if (settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != '' and settings['pushover'][
-        'enabled'] == True):
-        SendPushoverNotification(notifyevent, control, settings, pelletdb)
-    if settings['firebase']['ServerUrl'] != '' and settings['firebase']['enabled'] == True:
-        SendFirebaseNotification(notifyevent, control, settings, pelletdb)
-    if settings['influxdb']['url'] != '' and settings['influxdb']['enabled']:
-        SendInfluxDbNotification(notifyevent, control, settings, pelletdb, in_data, grill_platform)
-
+    if notifyevent != 'GRILL_STATE':
+        if settings['ifttt']['APIKey'] != '' and settings['ifttt']['enabled'] == True:
+            SendIFTTTNotification(notifyevent, control, settings, pelletdb)
+        if settings['pushbullet']['APIKey'] != '' and settings['pushbullet']['enabled'] == True:
+            SendPushBulletNotification(notifyevent, control, settings, pelletdb)
+        if (settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != '' and settings['pushover'][
+            'enabled'] == True):
+            SendPushoverNotification(notifyevent, control, settings, pelletdb)
+        if settings['firebase']['ServerUrl'] != '' and settings['firebase']['enabled'] == True:
+            SendFirebaseNotification(notifyevent, control, settings, pelletdb)
+    else:
+        if settings['influxdb']['url'] != '' and settings['influxdb']['enabled']:
+            SendInfluxDbNotification(notifyevent, control, settings, pelletdb, in_data, grill_platform)
 
 # ******************************
 # Check for any pending notifications
 # ******************************
 
 def CheckNotify(in_data, control, settings, pelletdb, grill_platform):
-    SendNotifications('GRILL_STATE', control, settings, pelletdb, in_data, grill_platform)
+    if settings['influxdb']['url'] != '' and settings['influxdb']['enabled']:
+        SendNotifications('GRILL_STATE', control, settings, pelletdb, in_data, grill_platform)
 
     if control['notify_req']['grill']:
         if in_data['GrillTemp'] >= control['setpoints']['grill']:
