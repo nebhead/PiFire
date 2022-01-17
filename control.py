@@ -287,6 +287,16 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
     # Set Hold Mode Target Temp Boolean
     target_temp_achieved = False
 
+    metrics = ReadMetrics()
+    if mode == 'Startup':
+        metrics['starttime'] = starttime 
+        metrics['endtime'] = 0
+        metrics['augerontime'] = 0
+        WriteMetrics(metrics)
+    elif mode == 'Shutdown':
+        metrics['endtime'] = starttime 
+        WriteMetrics(metrics)
+
     # ============ Main Work Cycle ============
     while status == 'Active':
         now = time.time()
@@ -367,6 +377,10 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
         # If Auger is ON and time since toggle is greater than On Time
         if (current_output_status['auger'] == AUGERON) and (now - augertoggletime > CycleTime * CycleRatio):
             grill_platform.AugerOff()
+            # Add auger ON time to the metrics
+            metrics['augerontime'] += now - augertoggletime
+            WriteMetrics(metrics)
+            # Set current last toggle time to now
             augertoggletime = now
             if settings['globals']['debug_mode']:
                 event = '* Cycle Event: Auger Off'
@@ -1551,6 +1565,9 @@ if settings['globals']['debug_mode']:
 control = ReadControl(flush=True)
 #  Delete Redis DB for history / current
 ReadHistory(0, flushhistory=True)
+#  Create metrics DB for tracking certain metrics
+metrics = ReadMetrics(flush=True)
+
 event = 'Flushing Redis DB and creating new control structure'
 WriteLog(event)
 
