@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block head %}
+	<!-- If restart(supervisor restart) then delay 30seconds before refreshing. -->
+	{% if "restart" in action %}
+	<meta http-equiv="refresh" content="30;url=/update" />
+	<!-- If reboot(system restart) then delay 60seconds before refreshing. -->
+	{% elif "reboot" in action %}
+	<meta http-equiv="refresh" content="60;url=/update" />
+	{% endif %}
+
+{% endblock %}
+
+{% block title %}Updater Output{% endblock %}
+
+{% block content %}
+    <div class="container">
+
+	<!-- Output Window/Textbox -->
+	<div class="card shadow">
+		<div class="card-header bg-info">
+			<i class="fas fa-desktop"></i>&nbsp; Output Window
+		</div>
+		<div class="card-body">
+			<div class="alert alert-secondary" role="alert" style="font-family:courier;" id="output_window">
+				{{ output_html|safe }} <br><br>
+				{% if "restart" in action %} 
+				Delaying <b id="countdown"></b> seconds for server reload...
+				{% elif "reboot" in action %}
+				Delaying <b id="countdown"></b> seconds for server reboot...
+				{% endif %}
+			</div>
+		</div>
+		<div class="card-footer">
+			<a href="/update" class="btn btn-info shadow" role="button" id="return_button" style="display:none">Return to Update Page</a>
+		</div>
+	</div>
+	<br>
+
+{% endblock %}
+
+{% block scripts %} 
+
+	{% if action=='restart' or action=='reboot' %}
+		{% if action=='restart' %}
+		<script>
+			var countdown = 30;
+		</script>
+		{% elif action=='reboot' %}
+		<script>
+			var countdown = 60;
+		</script>
+		{% endif %}
+
+		<script>
+		$(document).ready(function(){
+			countdownTimer = setInterval(function(){
+				if(countdown <= 0){
+					clearInterval(countdownTimer);
+					$('#return_button').show();
+				};
+				$('#countdown').text(countdown);
+				countdown -= 1;
+			}, 1000);
+		});
+		</script>
+	{% else %} 
+	<script>
+		$('#return_button').show();
+	</script>
+	{% endif %}
+
+{% endblock %} 

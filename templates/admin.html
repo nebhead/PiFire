@@ -20,6 +20,48 @@
 {% block content %}
 	<br>
 	<br>
+
+	<!-- Updater Card -->
+	<div class="card shadow">
+		<div class="card-header bg-secondary text-white">
+			<h5><i class="far fa-arrow-alt-circle-up"></i>&nbsp; System Update <i>(Current Version: {{ settings['versions']['server'] }})</i></h5>
+		</div>
+
+		<div class="card-body text-center">
+			<div id="update_checking">Checking for update... <br> 
+				<div class="spinner-border text-primary" role="status" id="update_status_spinner">
+					<span class="sr-only">Loading...</span>
+				</div>
+			</div>
+			<div id="update_available" style="display:none">
+				<form method="POST" action=/update>
+					<a href="/update" class="btn btn-success btn-block shadow">
+						<h1><i class="fas fa-cloud-download-alt"></i></h1>
+						<h4><strong>An update is available!</strong></h4>
+						You are currently <i id="commits_behind"></i> changes behind the latest on this branch. <br>
+						Click Here to go to the Updater
+					</a>
+					<button type="submit" class="btn btn-outline-success btn-block shadow" name="show_log" id="show_log" value="true">Show Changes</button>
+				</form>
+			</div>
+			<div id="update_failed" style="display:none">
+				<div class="alert alert-danger fade show" role="alert">
+					<h1><i class="fas fa-exclamation-triangle"></i></h1>
+					<strong>Error!</strong> The update check failed for some reason. Check your logs.
+				</div>
+				<a href="/update" class="btn btn-outline-danger btn-block shadow" role="button">Go to the Updater</a>
+			</div>
+			<div id="update_current" style="display:none">
+				<div class="alert alert-info fade show" role="alert">
+					<h1><i class="far fa-check-circle"></i></h1>
+					<strong>You are up to date!</strong>
+				</div>
+				<a href="/update" class="btn btn-outline-info btn-block shadow" role="button">Go to the Updater</a>
+			</div>
+		</div>
+	</div>
+	<br>
+
 	<!-- Enable Debug Mode -->
 	<div class="card shadow">
 		<div class="card-header bg-secondary text-white">
@@ -370,7 +412,6 @@
 		</div>
 	</form>
 
-
     <!-- System Power Card -->
 	<div class="card shadow">
 		<div class="card-header bg-danger text-white">
@@ -590,4 +631,34 @@
         </div>
 	</div>
 	<br><br><br>
+{% endblock %}
+
+{% block scripts %} 
+<!-- Updater Script -->
+<script> 
+	$(document).ready(function(){
+		req = $.ajax({
+			url : '/checkupdate',
+			type : 'GET'
+		});
+		req.done(function(data) {
+			if(data['result'] != 'success') {
+				//console.log(data)
+				$('#update_checking').hide();
+				$('#update_failed').show();
+			} else {
+				//console.log(data)
+				if(data['behind'] != 0) {
+					$('#update_checking').hide();
+					$('#commits_behind').html(data['behind']);
+					$('#show_log').val(data['behind']);
+					$('#update_available').show();
+				} else {
+					$('#update_checking').hide();
+					$('#update_current').show();
+				}
+			};
+		});
+	  });
+</script>
 {% endblock %}

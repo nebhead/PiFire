@@ -15,6 +15,7 @@
 import time
 import datetime
 import os
+import io
 import json
 import math
 import redis
@@ -32,7 +33,7 @@ def DefaultSettings():
 	settings = {}
 
 	settings['versions'] = {
-		'server' : "1.2.2"
+		'server' : "1.2.3"
 	}
 
 	settings['history_page'] = {
@@ -386,14 +387,6 @@ def generateUUID():
 
 	return str(generated_uuid)
 
-def isRaspberryPi():
-	try:
-		from RPi import GPIO
-		return True
-	except(ImportError, RuntimeError):
-		return False
-
-
 def ReadControl(flush=False):
 	global cmdsts
 
@@ -472,6 +465,16 @@ def ReadSettings(filename='settings.json'):
 	# Overlay the read values over the top of the default settings
 	#  This ensures that any NEW fields are captured.  
 	update_settings = False # set flag in case an update needs to be written back
+
+	# If default version is different from what is currently saved, update version in saved settings
+	if('versions' not in settings_struct.keys()):
+		settings_struct['versions'] = {
+			'server' : settings['versions']['server']
+		}
+		update_settings = True
+	elif(settings_struct['versions']['server'] != settings['versions']['server']):
+		settings_struct['versions']['server'] = settings['versions']['server']
+		update_settings = True	
 
 	for key in settings.keys():
 		if key in settings_struct.keys():
@@ -762,3 +765,20 @@ def convert_settings_units(units, settings):
 	settings['smoke_plus']['max_temp'] = convert_temp(units, settings['smoke_plus']['max_temp'])
 	settings['smoke_plus']['min_temp'] = convert_temp(units, settings['smoke_plus']['min_temp'])
 	return(settings)
+
+'''
+is_raspberrypi() function borrowed from user https://raspberrypi.stackexchange.com/users/126953/chris
+  in post: https://raspberrypi.stackexchange.com/questions/5100/detect-that-a-python-program-is-running-on-the-pi
+'''
+def isRaspberryPi():
+	try:
+		with io.open('/sys/firmware/devicetree/base/model', 'r') as m:
+			if 'raspberry pi' in m.read().lower(): return True
+	except Exception: pass
+	return False
+
+def restart_scripts():
+	print('[DEBUG MSG] Restarting Scripts... ')
+	command = "sleep 3 && sudo service supervisor restart &"
+	if(isRaspberryPi()):
+		os.popen(command)

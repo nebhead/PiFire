@@ -25,6 +25,7 @@ import json
 import datetime
 import math
 from common import *  # Common Library for WebUI and Control Program
+from updater import *  # Library for doing project updates from GitHub
 
 BACKUPPATH = './backups/'  # Path to backups of settings.json, pelletdb.json
 UPLOAD_FOLDER = BACKUPPATH  # Point uploads to the backup path
@@ -1336,6 +1337,92 @@ def manifest():
     res = make_response(render_template('manifest.json'), 200)
     res.headers["Content-Type"] = "text/cache-manifest"
     return res
+
+'''
+Updater Function Routes
+'''
+@app.route('/checkupdate', methods=['GET'])
+def checkupdate(action=None):
+	global settings
+	update_data = {}
+	update_data['version'] = settings['versions']['server']
+
+	avail_updates_struct = get_available_updates()
+
+	if(avail_updates_struct['success']): 
+		commits_behind = avail_updates_struct['commits_behind']
+	else:
+		event = avail_updates_struct['message']
+		WriteLog(event)
+		return jsonify({'result' : 'failure', 'message' : avail_updates_struct['message'] })
+
+	return jsonify({'result' : 'success', 'current' : update_data['version'], 'behind' : commits_behind})
+
+@app.route('/update', methods=['POST','GET'])
+def update_page(action=None):
+	global settings
+
+	# Populate Update Data Structure
+	update_data = {}
+	update_data['version'] = settings['versions']['server']
+	update_data['branch_target'] = get_branch()
+	update_data['branches'] = get_available_branches()
+	update_data['remote_url'] = get_remote_url()
+	update_data['remote_version'] = get_remote_version()
+
+	# Create Alert Structure for Alert Notification
+	alert = { 
+		'type' : '', 
+		'text' : ''
+		}
+
+	if(request.method == 'POST'):
+		r = request.form 
+
+		if('change_branch' in r):
+			if(update_data['branch_target'] in r['branch_target']):
+				alert = { 
+					'type' : 'success', 
+					'text' : f'Current branch {update_data["branch_target"]} already set to {r["branch_target"]}'
+				}
+				return render_template('updater.html', alert=alert, settings=settings, page_theme=settings['globals']['page_theme'], update_data=update_data, grill_name=settings['globals']['grill_name'])
+			else: 
+				action = 'restart'
+				result = set_branch(r['branch_target'])
+				output_html = f'*** Changing from current branch {update_data["branch_target"]} to {r["branch_target"]} ***<br><br>'
+				for line in result:
+					output_html += line.replace('\n', '<br>')
+				restart_scripts()
+				return render_template('updater_out.html', settings=settings, page_theme=settings['globals']['page_theme'], action=action, output_html=output_html, grill_name=settings['globals']['grill_name'])				
+
+		if('do_update' in r):
+			action='restart'
+			result = do_update() 
+			output_html = f'*** Attempting an update on {update_data["branch_target"]} ***<br><br>' 
+			for line in result:
+				output_html += line.replace('\n', '<br>')
+			restart_scripts()
+			return render_template('updater_out.html', settings=settings, page_theme=settings['globals']['page_theme'], action=action, output_html=output_html, grill_name=settings['globals']['grill_name'])
+
+		if('show_log' in r):
+			if(r['show_log'].isnumeric()):
+				action='log'
+				result = get_log(num_commits=int(r['show_log']))
+				output_html = f'*** Getting latest updates from origin/{update_data["branch_target"]} ***<br><br>' 
+				for line in result:
+					if('fatal' in line): 
+						output_html += 'Fatal Error: Issue with getting log information from remote branch.'
+					output_html += line.replace('\n', '<br>')
+				return render_template('updater_out.html', settings=settings, page_theme=settings['globals']['page_theme'], action=action, output_html=output_html, grill_name=settings['globals']['grill_name'])
+
+	return render_template('updater.html', alert=alert, settings=settings, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'], update_data=update_data)
+'''
+End Updater Section
+'''
+
+'''
+Supporting Functions
+'''
 
 def allowed_file(filename):
     return '.' in filename and \
