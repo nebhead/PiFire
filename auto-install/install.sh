@@ -95,6 +95,11 @@ git clone --depth 1 https://github.com/nebhead/pifire
 # Replace the below command to fetch development branch
 #git clone --depth 1 --branch development https://github.com/nebhead/pifire
 
+# After doing a shallow clone, to be able to checkout other branches from remote,
+# git remote set-branches origin '*'
+# git fetch -v
+# git checkout development
+
 ### Setup nginx to proxy to gunicorn
 clear
 echo "*************************************************************************"
