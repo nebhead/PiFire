@@ -77,31 +77,6 @@ def dash(action=None):
 					control['timer']['paused'] = 0
 					WriteLog('Timer unpaused.  Ends at: ' + epoch_to_time(control['timer']['end']))
 					WriteControl(control)
-		if('pause' in response):
-			if(response['pause']=='true'):
-				if(control['timer']['start'] != 0):
-					control['notify_req']['timer'] = False
-					now = time.time()
-					control['timer']['paused'] = now
-					WriteLog('Timer paused.')
-					WriteControl(control)
-				else:
-					control['notify_req']['timer'] = False
-					control['timer']['start'] = 0
-					control['timer']['end'] = 0
-					control['timer']['paused'] = 0
-					control['notify_data']['timer_shutdown'] = False 
-					WriteLog('Timer cleared.')
-					WriteControl(control)
-		if('stop' in response):
-			if(response['stop']=='true'):
-				control['notify_req']['timer'] = False
-				control['timer']['start'] = 0
-				control['timer']['end'] = 0
-				control['timer']['paused'] = 0
-				control['notify_data']['timer_shutdown'] = False 
-				WriteLog('Timer stopped.')
-				WriteControl(control)
 
 	if (request.method == 'POST') and (action == 'setnotify'):
 		response = request.form
@@ -220,28 +195,29 @@ def hopper_level(action=None):
 	cur_pellets_string = pelletdb['archive'][pelletdb['current']['pelletid']]['brand'] + ' ' + pelletdb['archive'][pelletdb['current']['pelletid']]['wood']
 	return jsonify({ 'hopper_level' : pelletdb['current']['hopper_level'], 'cur_pellets' : cur_pellets_string })
 
-@app.route('/history/<action>', methods=['POST','GET'])
-@app.route('/history', methods=['POST','GET'])
-def historypage(action=None):
+@app.route('/timer', methods=['POST','GET'])
+def timer(action=None):
+	global settings 
+	control = ReadControl() 
 
-	global settings
-	control = ReadControl()
-
-	if (request.method == 'POST'):
-		response = request.form
-
-		if('start' in response):
-			if(response['start']=='true'):
+	if request.method == "GET":
+		return jsonify({ 'start' : control['timer']['start'], 'paused' : control['timer']['paused'], 'end' : control['timer']['end'], 'shutdown': control['timer']['shutdown']})
+	elif request.method == "POST": 
+		if 'input' in request.form:
+			if 'timer_start' == request.form['input']:
 				control['notify_req']['timer'] = True
-				if(control['timer']['paused'] == 0):
+				# If starting new timer
+				if control['timer']['paused'] == 0:
 					now = time.time()
 					control['timer']['start'] = now
-					if(('hoursInputRange' in response) and ('minsInputRange' in response)):
-						seconds = int(response['hoursInputRange']) * 60 * 60
-						seconds = seconds + int(response['minsInputRange']) * 60
+					if(('hoursInputRange' in request.form) and ('minsInputRange' in request.form)):
+						seconds = int(request.form['hoursInputRange']) * 60 * 60
+						seconds = seconds + int(request.form['minsInputRange']) * 60
 						control['timer']['end'] = now + seconds
 					else:
 						control['timer']['end'] = now + 60
+					if('shutdownTimer' in request.form):
+						control['notify_data']['timer_shutdown'] = True 
 					WriteLog('Timer started.  Ends at: ' + epoch_to_time(control['timer']['end']))
 					WriteControl(control)
 				else:	# If Timer was paused, restart with new end time.
@@ -250,9 +226,8 @@ def historypage(action=None):
 					control['timer']['paused'] = 0
 					WriteLog('Timer unpaused.  Ends at: ' + epoch_to_time(control['timer']['end']))
 					WriteControl(control)
-		if('pause' in response):
-			if(response['pause']=='true'):
-				if(control['timer']['start'] != 0):
+			elif 'timer_pause' == request.form['input']:
+				if control['timer']['start'] != 0:
 					control['notify_req']['timer'] = False
 					now = time.time()
 					control['timer']['paused'] = now
@@ -263,16 +238,25 @@ def historypage(action=None):
 					control['timer']['start'] = 0
 					control['timer']['end'] = 0
 					control['timer']['paused'] = 0
+					control['notify_data']['timer_shutdown'] = False 
 					WriteLog('Timer cleared.')
 					WriteControl(control)
-		if('stop' in response):
-			if(response['stop']=='true'):
+			elif 'timer_stop' == request.form['input']:
 				control['notify_req']['timer'] = False
 				control['timer']['start'] = 0
 				control['timer']['end'] = 0
 				control['timer']['paused'] = 0
+				control['notify_data']['timer_shutdown'] = False 
 				WriteLog('Timer stopped.')
 				WriteControl(control)
+		return jsonify({'result':'success'})
+
+@app.route('/history/<action>', methods=['POST','GET'])
+@app.route('/history', methods=['POST','GET'])
+def historypage(action=None):
+
+	global settings
+	control = ReadControl()
 
 	if (request.method == 'POST'):
 		response = request.form

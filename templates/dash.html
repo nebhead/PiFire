@@ -23,27 +23,6 @@
 {% endblock %}
 
 {% block content %}
-
-{% if control['timer']['start'] != 0 %}
-	<div class="row">
-		<div class="col text-center">
-			<!--<div class="card text-center bg-warning shadow">-->
-				<form name="ChangeValues" method="POST">
-					<div class="btn-group shadow">
-						<button type="button" class="btn btn-warning btn-lg"><i class="fas fa-stopwatch"></i>&nbsp; <i id="Timer_Countdown"></i></button>
-						{% if control['timer']['paused'] != 0 %}
-						<button type="submit" data-toggle="tooltip" title="Start the timer" class="btn btn-outline-success border-warning btn-lg" name="start" value='true'><i class="fas fa-play-circle"></i></button>
-						{% else %}
-						<button type="submit" data-toggle="tooltip" title="Pause the timer" class="btn btn-outline-warning btn-lg" name="pause" value='true'><i class="fas fa-pause-circle"></i></button>
-						{% endif %}
-						<button type="submit" data-toggle="tooltip" title="Stop the timer" class="btn btn-outline-danger border-warning btn-lg" name="stop" value='true'><i class="fas fa-stop-circle"></i></button>
-					</div>
-				</form>
-			<!--</div>-->
-		</div>
-	</div>
-	<br>
-{% endif %}
 			<!-- Data Section -->
 			<div class="row">
 				<div class="col-lg-4 col-md-6 col-sm-12">
@@ -354,55 +333,4 @@
 	</script>
 	<script src="{{ url_for('static', filename='js/circliful1.js') }}"></script>
 	<script src="{{ url_for('static', filename='js/dash.js') }}"></script>
-
-{% if control['timer']['start'] != 0 %}
-	<script>
-	// Set the date we're counting down to
-	var countDownDate = {{ control['timer']['end'] }} * 1000;
-	// Update the count down every 1 second
-	var x = setInterval(function() {
-
-	  // Get today's date and time
-	  var now = new Date().getTime();
-
-	  // Find the distance between now and the count down date
-		{% if control['timer']['paused'] == 0 %}
-	  var distance = countDownDate - now;
-		{% else %}
-		var distance = countDownDate - ( {{ control['timer']['paused'] }} * 1000 );
-		{% endif %}
-
-	  // Time calculations for days, hours, minutes and seconds
-	  var days = Math.floor(distance / (1000 * 60 * 60 * 24));
-	  var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-	  var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-	  var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-	  // Display the result in the element with id="demo"
-		if (hours < 10) {
-			var display = "0"
-		}
-		var display = display + hours + " : ";
-		if (minutes < 10) {
-			var display = display + "0"
-		}
-		var display = display + minutes + " : ";
-		if (seconds < 10) {
-			var display = display + "0"
-		}
-		var display = display + seconds;
-
-	  document.getElementById("Timer_Countdown").innerHTML = display;
-
-	  // If the count down is finished, write some text
-	  if (distance < 0) {
-	    clearInterval(x);
-			var display = " Finished ";
-			document.getElementById("Timer_Countdown").innerHTML = display;
-	  }
-
-	}, 1000);
-	</script>
-{% endif %}
-
 {% endblock %}

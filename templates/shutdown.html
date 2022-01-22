@@ -12,15 +12,17 @@
 {% endblock %}
 
 {% block title %}
-{% if "shutdown" in action %}
-Shutting Down
-{% elif "reboot" in action %}
-Rebooting
-{% else %}
-PiFire
-{% endif %}
-
+	{% if "shutdown" in action %}
+	Shutting Down
+	{% elif "reboot" in action %}
+	Rebooting
+	{% else %}
+	PiFire
+	{% endif %}
 {% endblock %} 
+
+{% block timer_bar %} 
+{% endblock %}
 
 {% block content %}
     <br>
