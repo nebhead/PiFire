@@ -58,8 +58,9 @@
 						</li>
 					</ul>
 				</div>
-		{% block timer_bar %}
 		</nav>
+
+		{% block timer_bar %}
 		<nav class="navbar navbar-light bg-light justify-content-center" id="timer_bar" style="display:none">
 			<div class="btn-group shadow" id="timer_btn_grp">
 				<button type="button" class="btn btn-warning"><i class="fas fa-stopwatch"></i>&nbsp; <i id="timer_time_remaining">--:--:--</i></button>
@@ -71,6 +72,7 @@
 			<button type="button" data-toggle="tooltip" title="Hide the timer" class="btn btn-light btn-sm" id="timer_hide"><i class="far fa-eye-slash"></i></button>
 
 		</nav>
+		
 		{% endblock %}
         <div class="container theme-showcase" role="main">
 		{% block notify %} {% endblock %}<br>
