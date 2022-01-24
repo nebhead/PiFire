@@ -204,7 +204,7 @@ def timer(action=None):
 		return jsonify({ 'start' : control['timer']['start'], 'paused' : control['timer']['paused'], 'end' : control['timer']['end'], 'shutdown': control['timer']['shutdown']})
 	elif request.method == "POST": 
 		if 'input' in request.form:
-			if 'timer_start' == request.form['input']:
+			if 'timer_start' == request.form['input']: 
 				control['notify_req']['timer'] = True
 				# If starting new timer
 				if control['timer']['paused'] == 0:
@@ -217,7 +217,10 @@ def timer(action=None):
 					else:
 						control['timer']['end'] = now + 60
 					if('shutdownTimer' in request.form):
-						control['notify_data']['timer_shutdown'] = True 
+						if(request.form['shutdownTimer'] == 'true'):
+							control['notify_data']['timer_shutdown'] = True
+						else: 
+							control['notify_data']['timer_shutdown'] = False
 					WriteLog('Timer started.  Ends at: ' + epoch_to_time(control['timer']['end']))
 					WriteControl(control)
 				else:	# If Timer was paused, restart with new end time.

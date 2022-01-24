@@ -2,39 +2,42 @@
 // Puts timer status in the top-bar
 
 function countdown(timerEnd, timerPaused) {
-	// Set the date we're counting down to
+	// Set the time we're counting down to
 	var countDownDate = timerEnd * 1000;
 
-	// Get today's date and time
+	// Get time now
 	var now = new Date().getTime();
     
-	// Find the distance between now and the count down date
+	// Find the distance between now and the count down time
 	if(timerPaused == 0) {
 		var distance = countDownDate - now;
 	} else {
 		var distance = countDownDate - ( timerPaused * 1000 );
 	};
 
-	// Time calculations for days, hours, minutes and seconds
-	var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+	// Time calculations for hours, minutes and seconds
 	var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
 	var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
 	var seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
 	var display = "";
-	// Display the result in the element with id="demo"
-	if (hours < 10) {
-		display += "0";
-	}
-	display += hours + " : ";
-	if (minutes < 10) {
-		display += "0"
-	}
-	display += minutes + " : ";
-	if (seconds < 10) {
-		display += "0"
-	}
-	display += seconds;
+
+	if ((hours < 0) || (minutes < 0) || (seconds < 0)) {
+		display = "--:--:--";
+	} else {
+		if (hours < 10) {
+			display += "0";
+		}
+		display += hours + " : ";
+		if (minutes < 10) {
+			display += "0"
+		}
+		display += minutes + " : ";
+		if (seconds < 10) {
+			display += "0"
+		}
+		display += seconds;
+	};
 
 	$("#timer_time_remaining").html(display);
 
@@ -158,5 +161,42 @@ $(document).ready(function(){
 			$("#timer_bar").slideDown();
 			timerSetup();
 		}
+	});
+});
+
+// Launch a timer 
+$("#timer_launch").click(function(){
+	var timerHours = $("#hoursInputId").val();
+	var timerMins = $("#minsInputId").val();
+	var timerShutdown = false;
+	if ($('#shutdownTimer').is(":checked"))
+		{
+		timerShutdown = true;
+		}
+	// For Debug
+	//console.log("Hours: " + timerHours);
+	//console.log("Mins: " + timerMins);
+	//console.log("Shutdown: " + timerShutdown);
+	req = $.ajax({
+		url : '/timer',
+		type : 'POST',
+		data : { 'input' : 'timer_start',  
+				'hoursInputRange' : timerHours,
+				'minsInputRange' : timerMins, 
+				'shutdownTimer' : timerShutdown,
+		}
+	});
+	req.done(function(data) {
+		$("#timer_bar").slideUp();
+		$("#timer_btn_grp").html("\
+			<button type=\"button\" class=\"btn btn-warning\"><i class=\"fas fa-stopwatch\"></i>&nbsp; <i id=\"timer_time_remaining\">--:--:--</i></button>\
+			<button type=\"button\" data-toggle=\"tooltip\" title=\"Start the timer\" class=\"btn btn-outline-success border-warning\" id=\"timer_start\"><i class=\"fas fa-play-circle\"></i></button>\
+			<button type=\"button\" data-toggle=\"tooltip\" title=\"Pause the timer\" class=\"btn btn-outline-warning\" id=\"timer_pause\"><i class=\"fas fa-pause-circle\"></i></button>\
+			<button type=\"button\" data-toggle=\"tooltip\" title=\"Stop the timer\" class=\"btn btn-outline-danger border-warning\" id=\"timer_stop\"><i class=\"fas fa-stop-circle\"></i></button>\
+		");
+		$("#timer_pause").hide();
+		$("#timer_start").hide();
+		$("#timer_bar").slideDown();
+		timerSetup();
 	});
 });

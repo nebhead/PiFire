@@ -220,38 +220,37 @@
 		</div> <!-- End of Column -->
 
 		<!-- Timer START Modal -->
-		<form name="timerstart" method="POST">
-			<div class="modal" id="timerModal">
-				<div class="modal-dialog">
-					<div class="modal-content">
-						<!-- Modal Header -->
-						<div class="modal-header">
-							<h4 class="modal-title"><i class="fas fa-clock"></i> Set Timer</h4>
-							<button type="button" class="close" data-dismiss="modal">&times;</button>
-						</div>
-						<!-- Modal body -->
-						<div class="modal-body text-center">
-								<h1><output name="hoursOutput" id="hoursOutputId">0</output> Hours</h1>
-								<input type="range" class="custom-range" min="0" max="23" value="0" id="hoursInputId" name="hoursInputRange" oninput="hoursOutputId.value = hoursInputId.value">
+		<div class="modal" id="timerModal">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<!-- Modal Header -->
+					<div class="modal-header">
+						<h4 class="modal-title"><i class="fas fa-clock"></i> Set Timer</h4>
+						<button type="button" class="close" data-dismiss="modal">&times;</button>
+					</div>
+					<!-- Modal body -->
+					<div class="modal-body text-center">
+							<h1><output name="hoursOutput" id="hoursOutputId">0</output> Hours</h1>
+							<input type="range" class="custom-range" min="0" max="23" value="0" id="hoursInputId" name="hoursInputRange" oninput="hoursOutputId.value = hoursInputId.value">
 
-								<h1><output name="minsOutput" id="minsOutputId">0</output> Mins</h1>
-								<input type="range" class="custom-range" min="0" max="59" value="0" id="minsInputId" name="minsInputRange" oninput="minsOutputId.value = minsInputId.value">
-								<br><br>
-								<div class="custom-control custom-checkbox mb-3">
-									<input type="checkbox" class="custom-control-input" id="shutdownTimer" name="shutdownTimer">
-									<label class="custom-control-label" for="shutdownTimer">Shutdown Grill When Timer Expires</label>
-								</div>
-
+							<h1><output name="minsOutput" id="minsOutputId">0</output> Mins</h1>
+							<input type="range" class="custom-range" min="0" max="59" value="0" id="minsInputId" name="minsInputRange" oninput="minsOutputId.value = minsInputId.value">
+							<br><br>
+							<div class="custom-control custom-checkbox mb-3">
+								<input type="checkbox" class="custom-control-input" id="shutdownTimer" name="shutdownTimer">
+								<label class="custom-control-label" for="shutdownTimer">Shutdown Grill When Timer Expires</label>
 							</div>
-						<!-- Modal footer -->
-						<div class="modal-footer">
-							<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
-							<button type="submit" class="btn btn-danger" name="start" value="true">Start</button>
+
 						</div>
+					<!-- Modal footer -->
+					<div class="modal-footer">
+						<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+						<button type="button" class="btn btn-danger" data-dismiss="modal" id="timer_launch" name="start" value="true">Start</button>
 					</div>
 				</div>
 			</div>
-		</form>
+		</div>
+
 
       </div> <!-- End of Row -->
 			<br>
