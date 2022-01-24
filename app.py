@@ -52,32 +52,6 @@ def dash(action=None):
 
 	control = ReadControl()
 
-	if (request.method == 'POST'):
-		response = request.form
-		#print(response)
-		if('start' in response):
-			if(response['start']=='true'):
-				control['notify_req']['timer'] = True
-				if(control['timer']['paused'] == 0):
-					now = time.time()
-					control['timer']['start'] = now
-					if(('hoursInputRange' in response) and ('minsInputRange' in response)):
-						seconds = int(response['hoursInputRange']) * 60 * 60
-						seconds = seconds + int(response['minsInputRange']) * 60
-						control['timer']['end'] = now + seconds
-					else:
-						control['timer']['end'] = now + 60
-					if('shutdownTimer' in response):
-						control['notify_data']['timer_shutdown'] = True 
-					WriteLog('Timer started.  Ends at: ' + epoch_to_time(control['timer']['end']))
-					WriteControl(control)
-				else:	# If Timer was paused, restart with new end time.
-					now = time.time()
-					control['timer']['end'] = (control['timer']['end'] - control['timer']['paused']) + now
-					control['timer']['paused'] = 0
-					WriteLog('Timer unpaused.  Ends at: ' + epoch_to_time(control['timer']['end']))
-					WriteControl(control)
-
 	if (request.method == 'POST') and (action == 'setnotify'):
 		response = request.form
 
