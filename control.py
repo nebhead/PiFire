@@ -1597,6 +1597,17 @@ while True:
     # 1. Check control.json for commands
     control = ReadControl()
 
+	# Check if there is a timer running, see if it has expired, send notification and reset
+    if control['notify_req']['timer']:
+        if time.time() >= control['timer']['end']:
+            SendNotifications("Timer_Expired", control, settings, pelletdb)
+            control['notify_req']['timer'] = False
+            control['timer']['start'] = 0
+            control['timer']['paused'] = 0
+            control['timer']['end'] = 0
+            control['notify_data']['timer_shutdown'] = False
+            WriteControl(control)
+
     if control['hopper_check']:
         pelletdb = ReadPelletDB()
         # Get current hopper level and save it to the current pellet information
