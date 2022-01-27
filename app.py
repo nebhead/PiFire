@@ -42,135 +42,35 @@ thread_lock = threading.Lock()
 clients = 0
 
 @app.route('/')
-def index(action=None):
+def index():
 	return redirect('/dash')
 
-@app.route('/dash/<action>', methods=['POST','GET'])
-@app.route('/dash', methods=['POST','GET'])
-def dash(action=None):
+@app.route('/dash')
+def dash():
 	global settings
-
 	control = ReadControl()
-
-	if (request.method == 'POST') and (action == 'setnotify'):
-		response = request.form
-
-		if('grillnotify' in response):
-			if(response['grillnotify']=='true'):
-				set_point = int(response['grilltempInputRange'])
-				control['setpoints']['grill'] = set_point
-				if (control['mode'] == 'Hold'):
-					control['updated'] = True
-				control['notify_req']['grill'] = True
-				WriteControl(control)
-			else:
-				control['notify_req']['grill'] = False
-				WriteControl(control)
-
-		if('probe1notify' in response):
-			if(response['probe1notify']=='true'):
-				set_point = int(response['probe1tempInputRange'])
-				control['setpoints']['probe1'] = set_point
-				control['notify_req']['probe1'] = True
-				if('shutdownP1' in response):
-					control['notify_data']['p1_shutdown'] = True
-				WriteControl(control)
-			else:
-				control['notify_req']['probe1'] = False
-				control['notify_data']['p1_shutdown'] = False
-				control['setpoints']['probe1'] = 0
-				WriteControl(control)
-
-		if('probe2notify' in response):
-			if(response['probe2notify']=='true'):
-				set_point = int(response['probe2tempInputRange'])
-				control['setpoints']['probe2'] = set_point
-				control['notify_req']['probe2'] = True
-				if('shutdownP2' in response):
-					control['notify_data']['p2_shutdown'] = True
-				WriteControl(control)
-			else:
-				control['notify_req']['probe2'] = False
-				control['notify_data']['p2_shutdown'] = False
-				control['setpoints']['probe2'] = 0
-				WriteControl(control)
-
-	if (request.method == 'POST') and (action == 'setmode'):
-		response = request.form
-
-		if('setpointtemp' in response):
-			if(response['setpointtemp']=='true'):
-				set_point = int(response['tempInputRange'])
-				control['setpoints']['grill'] = set_point
-				control['updated'] = True
-				control['mode'] = 'Hold'
-				if(settings['smoke_plus']['enabled'] == True):
-					control['s_plus'] = True
-				else: 
-					control['s_plus'] = False 
-				WriteControl(control)
-		if('setmodestartup' in response):
-			if(response['setmodestartup']=='true'):
-				control['updated'] = True
-				control['mode'] = 'Startup'
-				WriteControl(control)
-		if('setmodesmoke' in response):
-			if(response['setmodesmoke']=='true'):
-				control['updated'] = True
-				control['mode'] = 'Smoke'
-				if(settings['smoke_plus']['enabled'] == True):
-					control['s_plus'] = True
-				else: 
-					control['s_plus'] = False 
-				WriteControl(control)
-		if('setmodeshutdown' in response):
-			if(response['setmodeshutdown']=='true'):
-				control['updated'] = True
-				control['mode'] = 'Shutdown'
-				WriteControl(control)
-		if('setmodemonitor' in response):
-			if(response['setmodemonitor']=='true'):
-				control['updated'] = True
-				control['mode'] = 'Monitor'
-				WriteControl(control)
-		if('setmodestop' in response):
-			if(response['setmodestop']=='true'):
-				control['updated'] = True
-				control['mode'] = 'Stop'
-				WriteControl(control)
-		if('setmodesmoke' in response):
-			if(response['setmodesmoke']=='true'):
-				control['updated'] = True
-				control['mode'] = 'Smoke'
-		if('setmodesmokeplus' in response):
-			if(response['setmodesmokeplus']=='true'):
-				control['s_plus'] = True
-			else:
-				control['s_plus'] = False 
-			WriteControl(control)
 
 	return render_template('dash.html', set_points=control['setpoints'], notify_req=control['notify_req'], probes_enabled=settings['probe_settings']['probes_enabled'], control=control, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'], units=settings['globals']['units'])
 
 @app.route('/dashdata')
-def dashdata(action=None):
-
-	control = ReadControl()
+def dashdata():
 	global settings
-	probes_enabled = settings['probe_settings']['probes_enabled']
+	control = ReadControl()
 
+	probes_enabled = settings['probe_settings']['probes_enabled']
 	cur_probe_temps = []
 	cur_probe_temps = ReadCurrent()
 
-	return jsonify({ 'cur_probe_temps' : cur_probe_temps, 'probes_enabled' : probes_enabled, 'current_mode' : control['mode'], 'set_points' : control['setpoints'], 'notify_req' : control['notify_req'], 'splus' : control['s_plus'] })
+	return jsonify({ 'cur_probe_temps' : cur_probe_temps, 'probes_enabled' : probes_enabled, 'current_mode' : control['mode'], 'set_points' : control['setpoints'], 'notify_req' : control['notify_req'], 'splus' : control['s_plus'], 'splus_default' : settings['smoke_plus']['enabled'] })
 
 @app.route('/hopperlevel')
-def hopper_level(action=None):
+def hopper_level():
 	pelletdb = ReadPelletDB()
 	cur_pellets_string = pelletdb['archive'][pelletdb['current']['pelletid']]['brand'] + ' ' + pelletdb['archive'][pelletdb['current']['pelletid']]['wood']
 	return jsonify({ 'hopper_level' : pelletdb['current']['hopper_level'], 'cur_pellets' : cur_pellets_string })
 
 @app.route('/timer', methods=['POST','GET'])
-def timer(action=None):
+def timer():
 	global settings 
 	control = ReadControl() 
 
@@ -294,8 +194,7 @@ def historypage(action=None):
 	return render_template('history.html', control=control, grill_temp_list=data_blob['grill_temp_list'], grill_settemp_list=data_blob['grill_settemp_list'], probe1_temp_list=data_blob['probe1_temp_list'], probe1_settemp_list=data_blob['probe1_settemp_list'], probe2_temp_list=data_blob['probe2_temp_list'], probe2_settemp_list=data_blob['probe2_settemp_list'], label_time_list=data_blob['label_time_list'], probes_enabled=probes_enabled, num_mins=settings['history_page']['minutes'], num_datapoints=settings['history_page']['datapoints'], autorefresh=settings['history_page']['autorefresh'], page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
     
 @app.route('/historyupdate')
-def historyupdate(action=None):
-
+def historyupdate():
 	global settings
 
 	data_blob = {}
@@ -417,7 +316,7 @@ def tuningpage(action=None):
 	return render_template('tuning.html', control=control, settings=settings, pagectrl=pagectrl, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'], alert=alert)
 
 @app.route('/_grilltr', methods = ['GET'])
-def grilltr(action=None):
+def grilltr():
 
 	cur_probe_tr = ReadTr()
 	tr = {}
@@ -426,7 +325,7 @@ def grilltr(action=None):
 	return json.dumps(tr)
 
 @app.route('/_probe1tr', methods = ['GET'])
-def probe1tr(action=None):
+def probe1tr():
 
 	cur_probe_tr = ReadTr()
 	tr = {}
@@ -435,7 +334,7 @@ def probe1tr(action=None):
 	return json.dumps(tr)
 
 @app.route('/_probe2tr', methods = ['GET'])
-def probe2tr(action=None):
+def probe2tr():
 
 	cur_probe_tr = ReadTr()
 	tr = {}
@@ -1268,7 +1167,6 @@ def api_page(action=None):
 			abort(400)
 		else:
 			requestjson = request.json 
-			#print(f'requestjson = {requestjson}')
 			if(action == 'settings'):
 				for key in settings.keys():
 					if key in requestjson.keys():
@@ -1292,7 +1190,9 @@ def api_page(action=None):
 	else:
 		return jsonify({'Error':'Recieved undefined/unsupported request.'}), 404
 	#return jsonify({'settings':settings,'control':control, 'current':current_temps}), 201
-
+'''
+Manifest Route for Web Application Integration
+'''
 @app.route('/manifest')
 def manifest():
     res = make_response(render_template('manifest.json'), 200)
@@ -1538,6 +1438,10 @@ def str_td(td):
 def epoch_to_time(epoch):
 	end_time =  datetime.datetime.fromtimestamp(epoch)
 	return end_time.strftime("%H:%M:%S")
+
+'''
+Socket IO for Android Functionality
+'''
 
 @socketio.on("connect")
 def connect():
@@ -2458,6 +2362,10 @@ def update_manual_data(json_data):
 
 		WriteControl(control)
 
+
+'''
+Main Program Start
+'''
 settings = ReadSettings()
 
 if __name__ == '__main__':

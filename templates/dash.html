@@ -23,307 +23,303 @@
 {% endblock %}
 
 {% block content %}
-			<!-- Data Section -->
-			<div class="row">
-				<div class="col-lg-4 col-md-6 col-sm-12">
-					<div class="card shadow mt-4">
-				  	<div class="card-body text-center">
-								<div id="GrillTempCircle"></div>
-						</div> <!-- End of card body -->
-						{% if probes_enabled[0] == 1 %}
-						<div class="card-footer text-center">
-							<form name="input" action="/dash/setnotify" method="POST">
-							<div class="btn-group">
-								<button type="button" class="btn btn-outline-primary"><i class="fas fa-temperature-high"></i> <b>Grill</b></button>
-								<a href="/settings" class="btn btn-outline-primary" role="button"><i class="fas fa-cog"></i></a>
-								<button type="button" class="btn btn-outline-primary" id="grill_notify_btn" data-toggle="modal" data-target="#grillnotifyModal"><i class="far fa-bell-slash"></i></button>
-							</div>
-							</form>
-						</div>
-						{% else %}
-						<div class="card-footer text-center">
-							<div class="btn-group">
-								<button type="button" class="btn btn-outline-secondary"><i class="fas fa-temperature-high"></i> Grill Off</button>
-								<a href="/settings" class="btn btn-outline-secondary" role="button"><i class="fas fa-cog"></i></a>
-								<a href="/settings" class="btn btn-outline-secondary" role="button"><i class="far fa-bell-slash"></i></a>
-							</div>
-						</div>
-						{% endif %}					</div> <!-- End of card -->
-				</div> <!-- End of Column -->
-				<br>
-				<br>
+<!-- Data Section -->
 
-				<div class="col-lg-4 col-md-6 col-sm-12">
-					<div class="card shadow mt-4">
-						<div class="card-body text-center">
-							<div id="Probe1TempCircle"></div>
-						</div> <!-- End of card body -->
-						{% if probes_enabled[1] == 1 %}
-						<div class="card-footer text-center">
-							<form name="input" action="/dash/setnotify" method="POST">
-							<div class="btn-group">
-								<button type="button" class="btn btn-outline-primary"><i class="fas fa-temperature-high"></i> <b>Probe 1</b></button>
-								<a href="/settings" class="btn btn-outline-primary" role="button"><i class="fas fa-cog"></i></a>
-								<button type="button" class="btn btn-outline-primary" id="probe1_notify_btn" data-toggle="modal" data-target="#probe1notifyModal"><i class="far fa-bell-slash"></i></button>
-								</div>
-							</form>
-						</div>
-						{% else %}
-						<div class="card-footer text-center">
-							<div class="btn-group">
-								<button type="button" class="btn btn-outline-secondary"><i class="fas fa-temperature-high"></i> Probe 1 Off</button>
-								<a href="/settings" class="btn btn-outline-secondary" role="button"><i class="fas fa-cog"></i></a>
-								<a href="/settings" class="btn btn-outline-secondary" role="button"><i class="far fa-bell-slash"></i></a>
-							</div>
-						</div>
-						{% endif %}
-					</div> <!-- End of card -->
-				</div> <!-- End of Column -->
-				<br>
-				<br>
-
-				<div class="col-lg-4 col-md-6 col-sm-12">
-					<div class="card shadow mt-4">
-						<div class="card-body text-center">
-							<div id="Probe2TempCircle"></div>
-						</div> <!-- End of card body -->
-						{% if probes_enabled[2] == 1 %}
-						<div class="card-footer text-center">
-							<form name="input" action="/dash/setnotify" method="POST">
-							<div class="btn-group">
-								<button type="button" class="btn btn-outline-primary"><i class="fas fa-temperature-high"></i> <b>Probe 2</b></button>
-								<a href="/settings" class="btn btn-outline-primary" role="button"><i class="fas fa-cog"></i></a>
-								<button type="button" class="btn btn-outline-primary" id="probe2_notify_btn" data-toggle="modal" data-target="#probe2notifyModal"><i class="far fa-bell-slash"></i></button>
-							</div>
-							</form>
-						</div>
-						{% else %}
-						<div class="card-footer text-center">
-							<div class="btn-group">
-								<button type="button" class="btn btn-outline-secondary"><i class="fas fa-temperature-high"></i> Probe 2 Off</button>
-								<a href="/settings" class="btn btn-outline-secondary" role="button"><i class="fas fa-cog"></i></a>
-								<a href="/settings" class="btn btn-outline-secondary" role="button"><i class="far fa-bell-slash"></i></a>
-							</div>
-						</div>
-						{% endif %}					
-					</div> <!-- End of card -->
-				</div> <!-- End of Column -->
+<div class="row">
+	<!-- Grill Probe Card -->
+	<div class="col-lg-4 col-md-6 col-sm-12">
+		<div class="card shadow mt-4">
+			<div class="card-body text-center">
+				<div id="GrillTempCircle"></div>
+			</div> <!-- End of card body -->
+			{% if probes_enabled[0] == 1 %}
+				<div class="card-footer text-center">
+					<form name="input" action="/dash/setnotify" method="POST">
+					<div class="btn-group">
+						<button type="button" class="btn btn-outline-primary"><i class="fas fa-temperature-high"></i> <b>Grill</b></button>
+						<a href="/settings" class="btn btn-outline-primary" role="button"><i class="fas fa-cog"></i></a>
+						<button type="button" class="btn btn-outline-primary" id="grill_notify_btn" data-toggle="modal" data-target="#grillnotifyModal"><i class="far fa-bell-slash"></i></button>
+					</div>
+					</form>
+				</div>
+			{% else %}
+				<div class="card-footer text-center">
+					<div class="btn-group">
+						<button type="button" class="btn btn-outline-secondary"><i class="fas fa-temperature-high"></i> Grill Off</button>
+						<a href="/settings" class="btn btn-outline-secondary" role="button"><i class="fas fa-cog"></i></a>
+						<a href="/settings" class="btn btn-outline-secondary" role="button"><i class="far fa-bell-slash"></i></a>
+					</div>
+				</div>
+			{% endif %}
+		</div> <!-- End of card -->
+	</div> <!-- End of Column -->
 <br>
 <br>
-			</div> <!-- End of Row -->
-
-			<form name="input" action="/dash/setnotify" method="POST">
-				<div class="modal" id="grillnotifyModal">
-					<div class="modal-dialog">
-						<div class="modal-content">
-							<!-- Modal Header -->
-							<div class="modal-header">
-								<h4 class="modal-title"><i class="fas fa-temperature-high"></i> Set Point Temperature</h4>
-								<button type="button" class="close" data-dismiss="modal">&times;</button>
-							</div>
-							<!-- Modal body -->
-							<div class="modal-body text-center">
-									<h1><output name="grilltempOutput" id="grilltempOutputId">{{ set_points['grill'] }}</output>°{{ units }}</h1>
-									{% if units == 'F' %}
-									<input type="range" class="custom-range" min="125" max="500" value="{{ set_points['grill'] }}" id="grilltempInputId" name="grilltempInputRange" oninput="grilltempOutputId.value = grilltempInputId.value">
-									{% else %} 
-									<input type="range" class="custom-range" min="50" max="260" value="{{ set_points['grill'] }}" id="grilltempInputId" name="grilltempInputRange" oninput="grilltempOutputId.value = grilltempInputId.value">
-									{% endif %}	 
-							</div>
-							<!-- Modal footer -->
-							<div class="modal-footer">
-								<button type="submit" class="btn btn-warning" name="grillnotify" value="false">Cancel</button>
-								<button type="submit" class="btn btn-danger" name="grillnotify" value="true">Set</button>
-							</div>
-						</div>
+	<!-- Probe 1 Card -->
+	<div class="col-lg-4 col-md-6 col-sm-12">
+		<div class="card shadow mt-4">
+			<div class="card-body text-center">
+				<div id="Probe1TempCircle"></div>
+			</div> <!-- End of card body -->
+			{% if probes_enabled[1] == 1 %}
+			<div class="card-footer text-center">
+				<form name="input" action="/dash/setnotify" method="POST">
+				<div class="btn-group">
+					<button type="button" class="btn btn-outline-primary"><i class="fas fa-temperature-high"></i> <b>Probe 1</b></button>
+					<a href="/settings" class="btn btn-outline-primary" role="button"><i class="fas fa-cog"></i></a>
+					<button type="button" class="btn btn-outline-primary" id="probe1_notify_btn" data-toggle="modal" data-target="#probe1notifyModal"><i class="far fa-bell-slash"></i></button>
 					</div>
+				</form>
+			</div>
+			{% else %}
+			<div class="card-footer text-center">
+				<div class="btn-group">
+					<button type="button" class="btn btn-outline-secondary"><i class="fas fa-temperature-high"></i> Probe 1 Off</button>
+					<a href="/settings" class="btn btn-outline-secondary" role="button"><i class="fas fa-cog"></i></a>
+					<a href="/settings" class="btn btn-outline-secondary" role="button"><i class="far fa-bell-slash"></i></a>
 				</div>
-			</form>
-
-			<form name="input" action="/dash/setnotify" method="POST">
-				<div class="modal" id="probe1notifyModal">
-					<div class="modal-dialog">
-						<div class="modal-content">
-							<!-- Modal Header -->
-							<div class="modal-header">
-								<h4 class="modal-title"><i class="fas fa-temperature-high"></i> Set Point Temperature</h4>
-								<button type="button" class="close" data-dismiss="modal">&times;</button>
-							</div>
-							<!-- Modal body -->
-							<div class="modal-body text-center">
-									<h1><output name="probe1tempOutput" id="probe1tempOutputId">{{ set_points['probe1'] }}</output>°{{ units }}</h1>
-									{% if units == 'F' %}
-									<input type="range" class="custom-range" min="0" max="300" value="{{ set_points['probe1'] }}" id="probe1tempInputId" name="probe1tempInputRange" oninput="probe1tempOutputId.value = probe1tempInputId.value">
-									{% else %} 
-									<input type="range" class="custom-range" min="-15" max="150" value="{{ set_points['probe1'] }}" id="probe1tempInputId" name="probe1tempInputRange" oninput="probe1tempOutputId.value = probe1tempInputId.value">
-									{% endif %}
-									<br><br>
-									<div class="custom-control custom-checkbox mb-3">
-										<input type="checkbox" class="custom-control-input" id="shutdownP1" name="shutdownP1">
-										<label class="custom-control-label" for="shutdownP1">Shutdown Grill When Probe 1 Achieves Set Point</label>
-									</div>
-							</div>
-							<!-- Modal footer -->
-							<div class="modal-footer">
-								<button type="submit" class="btn btn-warning" name="probe1notify" value="false">Cancel</button>
-								<button type="submit" class="btn btn-danger" name="probe1notify" value="true">Set</button>
-							</div>
-						</div>
-					</div>
+			</div>
+			{% endif %}
+		</div> <!-- End of card -->
+	</div> <!-- End of Column -->
+<br>
+<br>
+	<!-- Probe 2 Card -->
+	<div class="col-lg-4 col-md-6 col-sm-12">
+		<div class="card shadow mt-4">
+			<div class="card-body text-center">
+				<div id="Probe2TempCircle"></div>
+			</div> <!-- End of card body -->
+			{% if probes_enabled[2] == 1 %}
+			<div class="card-footer text-center">
+				<form name="input" action="/dash/setnotify" method="POST">
+				<div class="btn-group">
+					<button type="button" class="btn btn-outline-primary"><i class="fas fa-temperature-high"></i> <b>Probe 2</b></button>
+					<a href="/settings" class="btn btn-outline-primary" role="button"><i class="fas fa-cog"></i></a>
+					<button type="button" class="btn btn-outline-primary" id="probe2_notify_btn" data-toggle="modal" data-target="#probe2notifyModal"><i class="far fa-bell-slash"></i></button>
 				</div>
-			</form>
-
-			<form name="input" action="/dash/setnotify" method="POST">
-				<div class="modal" id="probe2notifyModal">
-					<div class="modal-dialog">
-						<div class="modal-content">
-							<!-- Modal Header -->
-							<div class="modal-header">
-								<h4 class="modal-title"><i class="fas fa-temperature-high"></i> Set Point Temperature</h4>
-								<button type="button" class="close" data-dismiss="modal">&times;</button>
-							</div>
-							<!-- Modal body -->
-							<div class="modal-body text-center">
-								<h1><output name="probe2tempOutput" id="probe2tempOutputId">{{ set_points['probe2'] }}</output>°{{ units }}</h1>
-								{% if units == 'F' %}
-								<input type="range" class="custom-range" min="0" max="300" value="{{ set_points['probe2'] }}" id="probe2tempInputId" name="probe2tempInputRange" oninput="probe2tempOutputId.value = probe2tempInputId.value">
-								{% else %} 
-								<input type="range" class="custom-range" min="-15" max="150" value="{{ set_points['probe2'] }}" id="probe2tempInputId" name="probe2tempInputRange" oninput="probe2tempOutputId.value = probe2tempInputId.value">
-								{% endif %}
-								<br><br>
-								<div class="custom-control custom-checkbox mb-3">
-									<input type="checkbox" class="custom-control-input" id="shutdownP2" name="shutdownP2">
-									<label class="custom-control-label" for="shutdownP2">Shutdown Grill When Probe 2 Achieves Set Point</label>
-								</div>
-							</div>
-							<!-- Modal footer -->
-							<div class="modal-footer">
-								<button type="submit" class="btn btn-warning" name="probe2notify" value="false">Cancel</button>
-								<button type="submit" class="btn btn-danger" name="probe2notify" value="true">Set</button>
-							</div>
-						</div>
-					</div>
+				</form>
+			</div>
+			{% else %}
+			<div class="card-footer text-center">
+				<div class="btn-group">
+					<button type="button" class="btn btn-outline-secondary"><i class="fas fa-temperature-high"></i> Probe 2 Off</button>
+					<a href="/settings" class="btn btn-outline-secondary" role="button"><i class="fas fa-cog"></i></a>
+					<a href="/settings" class="btn btn-outline-secondary" role="button"><i class="far fa-bell-slash"></i></a>
 				</div>
-			</form>
+			</div>
+			{% endif %}					
+		</div> <!-- End of card -->
+	</div> <!-- End of Column -->
+<br>
+<br>
+</div> <!-- End of Row -->
 
-			<br><br>
+<!-- Grill Notify Modal -->
+<div class="modal" id="grillnotifyModal">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<!-- Modal Header -->
+			<div class="modal-header">
+				<h4 class="modal-title"><i class="fas fa-temperature-high"></i> Set Point Temperature</h4>
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+			</div>
+			<!-- Modal body -->
+			<div class="modal-body text-center">
+					<h1><output name="grilltempOutput" id="grilltempOutputId">{{ set_points['grill'] }}</output>°{{ units }}</h1>
+					{% if units == 'F' %}
+					<input type="range" class="custom-range" min="125" max="500" value="{{ set_points['grill'] }}" id="grilltempInputId" name="grilltempInputRange" oninput="grilltempOutputId.value = grilltempInputId.value">
+					{% else %} 
+					<input type="range" class="custom-range" min="50" max="260" value="{{ set_points['grill'] }}" id="grilltempInputId" name="grilltempInputRange" oninput="grilltempOutputId.value = grilltempInputId.value">
+					{% endif %}	 
+			</div>
+			<!-- Modal footer -->
+			<div class="modal-footer">
+				<button type="button" class="btn btn-warning" id="grill_notify_disable" data-dismiss="modal">Cancel</button>
+				<button type="button" class="btn btn-danger" id="grill_notify_enable" data-dismiss="modal">Set</button>
+			</div>
+		</div>
+	</div>
+</div>
 
-      <div class="row">
-        <div class="col">
-   			<a href="/history" class="btn btn-outline-primary btn-block shadow" role="button"><i class="fas fa-chart-line"></i> History Graph</a>
-			<br><br>
-			<button type="button" class="btn btn-outline-primary btn-block shadow" data-toggle="modal" data-target="#timerModal"><i class="fas fa-stopwatch"></i>&nbsp;Timer</button>
-			<br><br>
-			<a href="/pellets" class="btn btn-outline-success btn-block shadow" id="HopperStatus" role="button"><i class="fas fa-tree"></i> <span id="PelletName">--</span> @ <span id="HopperLevel">--</span>% </a>
-			<br><br>
-			<a href="/events" class="btn btn-outline-primary btn-block shadow" role="button"><i class="fas fa-history"></i> Event Log</a>
-		</div> <!-- End of Column -->
 
-		<!-- Timer START Modal -->
-		<div class="modal" id="timerModal">
-			<div class="modal-dialog">
-				<div class="modal-content">
-					<!-- Modal Header -->
-					<div class="modal-header">
-						<h4 class="modal-title"><i class="fas fa-clock"></i> Set Timer</h4>
-						<button type="button" class="close" data-dismiss="modal">&times;</button>
+<!-- Probe 1 Notify Modal -->
+<div class="modal" id="probe1notifyModal">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<!-- Modal Header -->
+			<div class="modal-header">
+				<h4 class="modal-title"><i class="fas fa-temperature-high"></i> Set Point Temperature</h4>
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+			</div>
+			<!-- Modal body -->
+			<div class="modal-body text-center">
+					<h1><output name="probe1tempOutput" id="probe1tempOutputId">{{ set_points['probe1'] }}</output>°{{ units }}</h1>
+					{% if units == 'F' %}
+					<input type="range" class="custom-range" min="0" max="300" value="{{ set_points['probe1'] }}" id="probe1tempInputId" name="probe1tempInputRange" oninput="probe1tempOutputId.value = probe1tempInputId.value">
+					{% else %} 
+					<input type="range" class="custom-range" min="-15" max="150" value="{{ set_points['probe1'] }}" id="probe1tempInputId" name="probe1tempInputRange" oninput="probe1tempOutputId.value = probe1tempInputId.value">
+					{% endif %}
+					<br><br>
+					<div class="custom-control custom-checkbox mb-3">
+						<input type="checkbox" class="custom-control-input" id="shutdownP1" name="shutdownP1">
+						<label class="custom-control-label" for="shutdownP1">Shutdown Grill When Probe 1 Achieves Set Point</label>
 					</div>
-					<!-- Modal body -->
-					<div class="modal-body text-center">
-							<h1><output name="hoursOutput" id="hoursOutputId">0</output> Hours</h1>
-							<input type="range" class="custom-range" min="0" max="23" value="0" id="hoursInputId" name="hoursInputRange" oninput="hoursOutputId.value = hoursInputId.value">
+			</div>
+			<!-- Modal footer -->
+			<div class="modal-footer">
+				<button type="button" class="btn btn-warning" id="p1_notify_disable" data-dismiss="modal">Cancel</button>
+				<button type="button" class="btn btn-danger" id="p1_notify_enable" data-dismiss="modal">Set</button>
+			</div>
+		</div>
+	</div>
+</div>
 
-							<h1><output name="minsOutput" id="minsOutputId">0</output> Mins</h1>
-							<input type="range" class="custom-range" min="0" max="59" value="0" id="minsInputId" name="minsInputRange" oninput="minsOutputId.value = minsInputId.value">
-							<br><br>
-							<div class="custom-control custom-checkbox mb-3">
-								<input type="checkbox" class="custom-control-input" id="shutdownTimer" name="shutdownTimer">
-								<label class="custom-control-label" for="shutdownTimer">Shutdown Grill When Timer Expires</label>
-							</div>
+<!-- Probe 2 Notify Modal -->
+<div class="modal" id="probe2notifyModal">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<!-- Modal Header -->
+			<div class="modal-header">
+				<h4 class="modal-title"><i class="fas fa-temperature-high"></i> Set Point Temperature</h4>
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+			</div>
+			<!-- Modal body -->
+			<div class="modal-body text-center">
+				<h1><output name="probe2tempOutput" id="probe2tempOutputId">{{ set_points['probe2'] }}</output>°{{ units }}</h1>
+				{% if units == 'F' %}
+				<input type="range" class="custom-range" min="0" max="300" value="{{ set_points['probe2'] }}" id="probe2tempInputId" name="probe2tempInputRange" oninput="probe2tempOutputId.value = probe2tempInputId.value">
+				{% else %} 
+				<input type="range" class="custom-range" min="-15" max="150" value="{{ set_points['probe2'] }}" id="probe2tempInputId" name="probe2tempInputRange" oninput="probe2tempOutputId.value = probe2tempInputId.value">
+				{% endif %}
+				<br><br>
+				<div class="custom-control custom-checkbox mb-3">
+					<input type="checkbox" class="custom-control-input" id="shutdownP2" name="shutdownP2">
+					<label class="custom-control-label" for="shutdownP2">Shutdown Grill When Probe 2 Achieves Set Point</label>
+				</div>
+			</div>
+			<!-- Modal footer -->
+			<div class="modal-footer">
+				<button type="button" class="btn btn-warning" id="p2_notify_disable" data-dismiss="modal">Cancel</button>
+				<button type="button" class="btn btn-danger" id="p2_notify_enable" data-dismiss="modal">Set</button>
+			</div>
+		</div>
+	</div>
+</div>
 
+<br>
+<br>
+<!-- Navigation Button Row -->
+<div class="row">
+	<div class="col">
+		<a href="/history" class="btn btn-outline-primary btn-block shadow" role="button"><i class="fas fa-chart-line"></i> History Graph</a>
+		<br><br>
+		<button type="button" class="btn btn-outline-primary btn-block shadow" data-toggle="modal" data-target="#timerModal"><i class="fas fa-stopwatch"></i>&nbsp;Timer</button>
+		<br><br>
+		<a href="/pellets" class="btn btn-outline-success btn-block shadow" id="HopperStatus" role="button"><i class="fas fa-tree"></i> <span id="PelletName">--</span> @ <span id="HopperLevel">--</span>% </a>
+		<br><br>
+		<a href="/events" class="btn btn-outline-primary btn-block shadow" role="button"><i class="fas fa-history"></i> Event Log</a>
+	</div> <!-- End of Column -->
+
+	<!-- Timer START Modal -->
+	<div class="modal" id="timerModal">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<!-- Modal Header -->
+				<div class="modal-header">
+					<h4 class="modal-title"><i class="fas fa-clock"></i> Set Timer</h4>
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+				</div>
+				<!-- Modal body -->
+				<div class="modal-body text-center">
+						<h1><output name="hoursOutput" id="hoursOutputId">0</output> Hours</h1>
+						<input type="range" class="custom-range" min="0" max="23" value="0" id="hoursInputId" name="hoursInputRange" oninput="hoursOutputId.value = hoursInputId.value">
+
+						<h1><output name="minsOutput" id="minsOutputId">0</output> Mins</h1>
+						<input type="range" class="custom-range" min="0" max="59" value="0" id="minsInputId" name="minsInputRange" oninput="minsOutputId.value = minsInputId.value">
+						<br><br>
+						<div class="custom-control custom-checkbox mb-3">
+							<input type="checkbox" class="custom-control-input" id="shutdownTimer" name="shutdownTimer">
+							<label class="custom-control-label" for="shutdownTimer">Shutdown Grill When Timer Expires</label>
 						</div>
-					<!-- Modal footer -->
-					<div class="modal-footer">
-						<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
-						<button type="button" class="btn btn-danger" data-dismiss="modal" id="timer_launch" name="start" value="true">Start</button>
+
 					</div>
+				<!-- Modal footer -->
+				<div class="modal-footer">
+					<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+					<button type="button" class="btn btn-danger" data-dismiss="modal" id="timer_launch" name="start" value="true">Start</button>
 				</div>
 			</div>
 		</div>
+	</div> <!-- End of Timer START Modal -->
 
-
-      </div> <!-- End of Row -->
-			<br>
-			<br>
-
+</div> <!-- End of Row -->
+<br>
+<br>
+<br>
+<br>
 {% endblock %}
 
 {% block postcontainer %}
-		<form name="input" action="/dash/setmode" method="POST">
-		<div class="container">
-			{% if page_theme == 'dark' %}
-			<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #aaaaaa;">
-			{% else %}
-			<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #dddddd;">
-			{% endif %}
+<!-- Dashboard Controls -->
+<div class="container">
+	{% if page_theme == 'dark' %}
+	<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #aaaaaa;">
+	{% else %}
+	<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #dddddd;">
+	{% endif %}
 
-			<span class="navbar-text">
-				<!-- Dash Controls -->
-				<div id="inactive_group" class="btn-group shadow-lg" style="display:none">
-					<button type="submit" class="btn btn-outline-success border border-secondary" id="startup_btn" name="setmodestartup" value="true"><i class="fas fa-play"></i></button>
-					<button type="submit" class="btn btn-outline-secondary border border-secondary" id="monitor_btn" name="setmodemonitor" value="true"><i class="fas fa-glasses"></i></button>
-					<button type="submit" class="btn btn-outline-warning border border-secondary text-secondary" id="smoke_inactive_btn" name="setmodesmoke" value="true" >Smoke</button>
-					<button type="button" class="btn btn-outline-secondary border border-secondary" id="hold_inactive_btn" data-toggle="modal" data-target="#setpointModal" >Hold</button>
-					<button type="submit" class="btn btn-outline-secondary border border-secondary" id="stop_inactive_btn" name="setmodestop" value="true" ><i class="fas fa-stop"></i></button>
-				</div> <!-- End of Button Group -->
+	<span class="navbar-text">
+		<!-- Dash Controls -->
+		<div id="inactive_group" class="btn-group shadow" style="display:none">
+			<button type="button" data-toggle="tooltip" title="Startup" class="btn btn-outline-success border border-secondary" id="startup_btn" name="setmodestartup" value="true"><i class="fas fa-play"></i></button>
+			<button type="button" data-toggle="tooltip" title="Monitor" class="btn btn-outline-secondary border border-secondary" id="monitor_btn" name="setmodemonitor" value="true"><i class="fas fa-glasses"></i></button>
+			<button type="button" data-toggle="tooltip" title="Smoke Mode" class="btn btn-outline-warning border border-secondary text-secondary" id="smoke_inactive_btn" name="setmodesmoke" value="true" ><i class="fas fa-cloud"></i></button>
+			<button type="button" class="btn btn-outline-secondary border border-secondary" id="hold_inactive_btn" data-toggle="modal" data-target="#setpointModal" ><i class="fas fa-crosshairs"></i></button>
+			<button type="button" data-toggle="tooltip" title="Stop" class="btn btn-outline-secondary border border-secondary" id="stop_inactive_btn" name="setmodestop" value="true" ><i class="fas fa-stop"></i></button>
+		</div> <!-- End of Button Group -->
 
-				<div id="active_group" class="btn-group shadow-lg" style="display:none">
-					<button type="submit" class="btn btn-outline-warning border border-secondary text-secondary" id="smoke_btn" name="setmodesmoke" value="true" >Smoke</button>
-					<button type="button" class="btn btn-outline-secondary border border-secondary" id="hold_btn" data-toggle="modal" data-target="#setpointModal" >Hold</button>
-					<button type="submit" class="btn btn-outline-secondary border border-secondary" id="stop_btn" name="setmodestop" value="true"><i class="fas fa-stop" ></i></button>
-					<button type="submit" class="btn btn-outline-danger border border-secondary" id="shutdown_btn" name="setmodeshutdown" value="true" ><i class="fas fa-flag-checkered"></i></button>
-				</div> <!-- End of Button Group -->
+		<div id="active_group" class="btn-group shadow" style="display:none">
+			<button type="button" data-toggle="tooltip" title="Smoke Mode" class="btn btn-outline-warning border border-secondary text-secondary" id="smoke_btn" name="setmodesmoke" value="true" ><i class="fas fa-cloud"></i></button>
+			<button type="button" class="btn btn-outline-secondary border border-secondary" id="hold_btn" data-toggle="modal" data-target="#setpointModal" ><i class="fas fa-crosshairs"></i></button>
+			<button type="button" data-toggle="tooltip" title="Stop" class="btn btn-outline-secondary border border-secondary" id="stop_btn" name="setmodestop" value="true"><i class="fas fa-stop" ></i></button>
+			<button type="button" data-toggle="tooltip" title="Shutdown" class="btn btn-outline-danger border border-secondary" id="shutdown_btn" name="setmodeshutdown" value="true" ><i class="fas fa-flag-checkered"></i></button>
+		</div> <!-- End of Button Group -->
 
-				<!-- Smoke Plus -->
-				<button type="submit" class="btn btn-outline-primary border border-secondary text-secondary" id="splus_btn" name="setmodesmokeplus" value="true" style="display:none"><i class="fas fa-fan"></i></button>
-				<!-- ERROR Button Indicator -->
-				<button type="button" class="btn text-white" id="error_btn" name="error_btn" value="true" style="display:none"><i class="fas fa-exclamation-triangle"></i></button>
-			</span>
- 			</nav>
-		</div> <!-- End of Container -->
-		</form>
+		<!-- Smoke Plus -->
+		<button type="button" data-toggle="tooltip" title="Smoke Plus" class="btn btn-outline-primary border border-secondary text-secondary" id="splus_btn" name="setmodesmokeplus" value="true" style="display:none"><i class="fas fa-fan"></i></button>
+		<!-- ERROR Button Indicator -->
+		<button type="button" data-toggle="tooltip" title="Error!" class="btn text-white" id="error_btn" name="error_btn" value="true" style="display:none"><i class="fas fa-exclamation-triangle"></i></button>
+	</span>
+	</nav>
+</div> <!-- End of Container -->
 
-		<form name="input" action="/dash/setmode" method="POST">
-			<div class="modal" id="setpointModal">
-				<div class="modal-dialog">
-					<div class="modal-content">
-						<!-- Modal Header -->
-						<div class="modal-header">
-							<h4 class="modal-title"><i class="fas fa-temperature-high"></i> Set Point Temperature</h4>
-							<button type="button" class="close" data-dismiss="modal">&times;</button>
-						</div>
-						<!-- Modal body -->
-						<div class="modal-body text-center">
-								<h1><output name="tempOutput" id="tempOutputId">{{ set_points['grill'] }}</output>°{{ units }}</h1>
-								{% if units == 'F' %}
-								<input type="range" class="custom-range" min="125" max="500" value="{{ set_points['grill'] }}" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
-								{% else %}
-								<input type="range" class="custom-range" min="50" max="260" value="{{ set_points['grill'] }}" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
-								{% endif %}
-							</div>
-						<!-- Modal footer -->
-						<div class="modal-footer">
-							<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
-							<button type="submit" class="btn btn-danger" name="setpointtemp" value="true">Set</button>
-						</div>
-					</div>
-				</div>
+<!-- Hold Mode Setpoint Modal -->
+<div class="modal" id="setpointModal">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<!-- Modal Header -->
+			<div class="modal-header">
+				<h4 class="modal-title"><i class="fas fa-temperature-high"></i> Set Point Temperature</h4>
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
 			</div>
-		</form>
-
-		<br>
-		<br>
-		<br>
+			<!-- Modal body -->
+			<div class="modal-body text-center">
+					<h1><output name="tempOutput" id="tempOutputId">{{ set_points['grill'] }}</output>°{{ units }}</h1>
+					{% if units == 'F' %}
+					<input type="range" class="custom-range" min="125" max="500" value="{{ set_points['grill'] }}" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
+					{% else %}
+					<input type="range" class="custom-range" min="50" max="260" value="{{ set_points['grill'] }}" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
+					{% endif %}
+				</div>
+			<!-- Modal footer -->
+			<div class="modal-footer">
+				<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+				<button type="button" class="btn btn-danger" id="hold_modal_btn" data-dismiss="modal">Set</button>
+			</div>
+		</div>
+	</div>
+</div>
 {% endblock %}
 
 {% block scripts %}
