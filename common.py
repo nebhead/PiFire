@@ -104,7 +104,8 @@ def DefaultSettings():
 		'power' : 4,
 		'auger' : 14,
 		'fan' : 15,
-		'igniter' : 18
+		'igniter' : 18,
+		'dcfan' : 26
 	}
 
 	settings['inpins'] = { 'selector' : 17 }
