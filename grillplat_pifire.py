@@ -70,6 +70,7 @@ class GrillPlatform:
         GPIO.output(self.outpins['auger'], self.RELAY_OFF)
 
     def VarFanOn(self):
+        GPIO.output(self.outpins['fan'], self.RELAY_ON)
         WAIT_TIME = 1  # [s] Time to wait between each refresh
         MIN_TEMP = 65
         MAX_TEMP = 400
