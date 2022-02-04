@@ -103,8 +103,9 @@ def DefaultSettings():
 	settings['outpins'] = {
 		'power' : 4,
 		'auger' : 14,
-		'fan' : 15,
+		'fan' : 13,
 		'igniter' : 18,
+		'psu' : 15,
 		'dcfan' : 26
 	}
 
