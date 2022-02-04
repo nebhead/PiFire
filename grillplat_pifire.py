@@ -22,10 +22,10 @@ from common import ReadCurrent
 class GrillPlatform:
 
     def __init__(self, outpins, inpins, triggerlevel='LOW'):
-        self.outpins = outpins # { 'power' : 4, 'auger' : 14, 'fan' : 15, 'igniter' : 18 }
+        self.outpins = outpins # { 'power' : 4, 'auger' : 14, 'fan' : 13, 'igniter' : 18 }
         self.inpins = inpins # { 'selector' : 17 }
         frequency = 1000
-        self.duty = 50
+        self.duty = 70
         
         
         if triggerlevel == 'LOW': 
@@ -47,38 +47,36 @@ class GrillPlatform:
             GPIO.setup(self.outpins['power'], GPIO.OUT, initial=self.RELAY_ON)
             GPIO.setup(self.outpins['igniter'], GPIO.OUT, initial=self.RELAY_OFF)
             GPIO.setup(self.outpins['fan'], GPIO.OUT, initial=self.RELAY_OFF)
+            GPIO.setup(self.outpins['psu'], GPIO.OUT, initial=self.RELAY_OFF)
+            GPIO.setup(self.outpins['auger'], GPIO.OUT, initial=self.RELAY_OFF)
             GPIO.setup(self.outpins['dcfan'], GPIO.OUT)
             self.pi_pwm = GPIO.PWM(self.outpins['dcfan'], frequency)		#create PWM instance with frequency
             self.pi_pwm.start(0)
-            GPIO.setup(self.outpins['auger'], GPIO.OUT, initial=self.RELAY_OFF)
         else:
             GPIO.setup(self.outpins['power'], GPIO.OUT, initial=self.RELAY_OFF)
             GPIO.setup(self.outpins['igniter'], GPIO.OUT, initial=self.RELAY_OFF)
             GPIO.setup(self.outpins['fan'], GPIO.OUT, initial=self.RELAY_OFF)
             GPIO.setup(self.outpins['dcfan'], GPIO.OUT)
+            GPIO.setup(self.outpins['auger'], GPIO.OUT, initial=self.RELAY_OFF)
+            GPIO.setup(self.outpins['psu'], GPIO.OUT, initial=self.RELAY_OFF)
             self.pi_pwm = GPIO.PWM(self.outpins['dcfan'], frequency)		#create PWM instance with frequency
             self.pi_pwm.start(0)
-            GPIO.setup(self.outpins['auger'], GPIO.OUT, initial=self.RELAY_OFF)
-
-    def GetTemp(self, current_GT):
-        self.current_GT = self.WorkCycle['AvgGT']
-
+           
     def AugerOn(self):
         GPIO.output(self.outpins['auger'], self.RELAY_ON)
 
     def AugerOff(self):
         GPIO.output(self.outpins['auger'], self.RELAY_OFF)
 
-    def VarFanOn(self):
-        GPIO.output(self.outpins['fan'], self.RELAY_ON)
+    def FanOn(self):
         WAIT_TIME = 1  # [s] Time to wait between each refresh
-        MIN_TEMP = 65
+        MIN_TEMP = 70
         MAX_TEMP = 400
         FAN_LOW = 10
-        FAN_HIGH = 50
+        FAN_HIGH = 45
         FAN_OFF = 0
-        FAN_MAX = 50
-        setFanSpeed = 10
+        FAN_MAX = 45
+        setFanSpeed = 0
         current_temps = ReadCurrent()
         temp = float(current_temps[0])
         #temp = float(self.current_temp)
@@ -96,15 +94,18 @@ class GrillPlatform:
             setFanSpeed = (FAN_LOW + ( round(temp) * step ))
             self.duty = setFanSpeed
             self.pi_pwm.start(setFanSpeed)
-            #print(FAN_LOW + ( round(temp) * step )) # Uncomment for testing
+            print(FAN_LOW + ( round(temp) * step )) # Uncomment for testing
+            GPIO.output(self.outpins['psu'], self.RELAY_ON)
         return ()
         
-    def FanOn(self):
+    def tFanOn(self):
         GPIO.output(self.outpins['fan'], self.RELAY_ON)
+        GPIO.output(self.outpins['psu'], self.RELAY_ON)
         self.pi_pwm.start(self.duty)
 
     def FanOff(self):
         GPIO.output(self.outpins['fan'], self.RELAY_OFF)
+        GPIO.output(self.outpins['psu'], self.RELAY_OFF)
         self.pi_pwm.start(0)
 
     def FanToggle(self):
@@ -112,6 +113,12 @@ class GrillPlatform:
             GPIO.output(self.outpins['fan'], self.RELAY_OFF)
         else:
             GPIO.output(self.outpins['fan'], self.RELAY_ON)
+
+    def DCFanToggle(self):
+        if(GPIO.input(self.outpins['psu']) == self.RELAY_ON):
+            GPIO.output(self.outpins['psu'], self.RELAY_OFF)
+        else:
+            GPIO.output(self.outpins['psu'], self.RELAY_ON)
 
     def IgniterOn(self):
         GPIO.output(self.outpins['igniter'], self.RELAY_ON)
@@ -135,6 +142,7 @@ class GrillPlatform:
         return self.current
 
     def FanRamp(self):
+        GPIO.output(self.outpins['psu'], self.RELAY_ON)
         self.pi_pwm.start(0)
         for duty in range(0,40,1):
             self.pi_pwm.ChangeDutyCycle(duty) #provide duty cycle in the range 0-100
