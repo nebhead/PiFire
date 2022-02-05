@@ -862,20 +862,6 @@ def settingspage(action=None):
 	if (request.method == 'POST') and (action == 'pellets'):
 		response = request.form
 
-		if('empty' in response):
-			settings['pelletlevel']['empty'] = int(response['empty'])
-
-		if('full' in response):
-			settings['pelletlevel']['full'] = int(response['full'])
-
-		event['type'] = 'updated'
-		event['text'] = 'Successfully updated pellet settings.'
-
-		WriteSettings(settings)
-
-	if (request.method == 'POST') and (action == 'pellets'):
-		response = request.form
-
 		if('pelletwarning' in response):
 			if('pelletwarning' == 'on'):
 				settings['pelletlevel']['warning_enabled'] = True
@@ -886,10 +872,10 @@ def settingspage(action=None):
 			settings['pelletlevel']['warning_level'] = int(response['warninglevel'])
 
 		if('empty' in response):
-			pelletdb['empty'] = int(response['empty'])
-		
+			settings['pelletlevel']['empty'] = int(response['empty'])
+
 		if('full' in response):
-			pelletdb['full'] = int(response['full'])
+			settings['pelletlevel']['full'] = int(response['full'])
 
 		event['type'] = 'updated'
 		event['text'] = 'Successfully updated pellet settings.'
@@ -1743,16 +1729,20 @@ def post_app_data(action=None, type=None, json_data=None):
 	elif action == 'units_action':
 		if type == 'f_units' and settings['globals']['units'] == 'C':
 			settings = convert_settings_units('F', settings)
+			WriteSettings(settings)
 			control = ReadControl()
 			control['updated'] = True
 			control['units_change'] = True
+			WriteControl(control)
 			WriteLog("Changed units to Fahrenheit")
 			return {'response': {'result':'success'}}
 		elif type == 'c_units' and settings['globals']['units'] == 'F':
 			settings = convert_settings_units('C', settings)
+			WriteSettings(settings)
 			control = ReadControl()
 			control['updated'] = True
 			control['units_change'] = True
+			WriteControl(control)
 			WriteLog("Changed units to Celsius")
 			return {'response': {'result':'success'}}
 		else:
@@ -1764,7 +1754,8 @@ def post_app_data(action=None, type=None, json_data=None):
 				device = request['onesignal_device']['onesignal_player_id']
 				if device in settings['onesignal']['devices']:
 					settings['onesignal']['devices'].pop(device)
-					return {'response': {'result':'success'}}
+				WriteSettings(settings)
+				return {'response': {'result':'success'}}
 			else:
 				return {'response': {'result':'error', 'message':'Error: Device not specified'}}
 		else:
@@ -1796,16 +1787,16 @@ def post_app_data(action=None, type=None, json_data=None):
 				delBrand = request['pellets_action']['delete_brand']
 				if delBrand in pelletdb['brands']:
 					pelletdb['brands'].remove(delBrand)
-					return {'response': {'result':'success'}}
+				WritePelletDB(pelletdb)
+				return {'response': {'result':'success'}}
 			elif 'new_brand' in request['pellets_action']:
 				newBrand = request['pellets_action']['new_brand']
 				if newBrand not in pelletdb['brands']:
 					pelletdb['brands'].append(newBrand)
-					return {'response': {'result':'success'}}
+				WritePelletDB(pelletdb)
+				return {'response': {'result':'success'}}
 			else:
 				return {'response': {'result':'error', 'message':'Error: Function not specified'}}
-			WritePelletDB(pelletdb)
-			return {'response': {'result':'success'}}
 		elif type == 'edit_woods':
 			if 'delete_wood' in request['pellets_action']:
 				delWood = request['pellets_action']['delete_wood']
@@ -1866,6 +1857,8 @@ def post_app_data(action=None, type=None, json_data=None):
 							pelletdb['log'][index] = 'deleted'
 				WritePelletDB(pelletdb)
 				return {'response': {'result':'success'}}
+			else:
+				return {'response': {'result':'error', 'message':'Error: Profile not included in request'}}
 		elif type == 'delete_log':
 			if 'log_item' in request['pellets_action']:
 				delLog = request['pellets_action']['log_item']
@@ -1873,6 +1866,8 @@ def post_app_data(action=None, type=None, json_data=None):
 					pelletdb['log'].pop(delLog)
 				WritePelletDB(pelletdb)
 				return {'response': {'result':'success'}}
+			else:
+				return {'response': {'result':'error', 'message':'Error: Function not specified'}}
 		else:
 			return {'response': {'result':'error', 'message':'Error: Recieved request without valid type'}}
 
