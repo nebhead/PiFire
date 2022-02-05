@@ -766,15 +766,19 @@ def settingspage(action=None):
 
 		WriteSettings(settings)
 
-	if (request.method == 'POST') and (action == 'shutdown'):
+	if (request.method == 'POST') and (action == 'timers'):
 		response = request.form
 
 		if('shutdown_timer' in response):
 			if(response['shutdown_timer'] != ''):
 				settings['globals']['shutdown_timer'] = int(response['shutdown_timer'])
 
+		if('startup_timer' in response):
+			if(response['startup_timer'] != ''):
+				settings['globals']['startup_timer'] = int(response['startup_timer'])
+
 		event['type'] = 'updated'
-		event['text'] = 'Successfully updated shutdown settings.'
+		event['text'] = 'Successfully updated startup/shutdown settings.'
 
 		WriteSettings(settings)
 

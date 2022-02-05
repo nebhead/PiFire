@@ -506,9 +506,9 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
             temptoggletime = time.time()
             WriteHistory(in_data, tuning_mode=control['tuning_mode'])
 
-        # Check if 240s have elapsed since startup/reignite mode started
+        # Check if startup time has elapsed since startup/reignite mode started
         if (mode == 'Startup') or (mode == 'Reignite'):
-            if (now - starttime) > 240:
+            if (now - starttime) > settings['globals']['startup_timer']:
                 status = 'Inactive'
 
         # Check if shutdown time has elapsed since shutdown mode started

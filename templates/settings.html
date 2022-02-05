@@ -457,10 +457,10 @@
 <div class="row">
     <div class="col">
         <div class="card shadow">
-            <form name="shutdownsettings" action="/settings/shutdown" method="POST">
+            <form name="startshutdowntimers" action="/settings/timers" method="POST">
                 <div class="card-header bg-primary text-white">
                     <h5>
-                        <i class="fas fa-tools"></i>&nbsp; Shutdown Settings
+                        <i class="fas fa-tools"></i>&nbsp; Startup & Shutdown Settings
                     </h5>
                 </div>
                 <div class="card-body">
@@ -473,6 +473,17 @@
                     </div>
                     <span class="badge badge-warning">NOTE:</span>
                     <i class="small"> Amount of time fan will run after shutdown is selected </i>
+                </div>
+                <div class="card-body">
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" data-toggle="tooltip" title="Startup timer (in seconds) (seconds)[Default=240]">
+                                <i class="far fa-clock"></i>&nbsp; Startup Timer (seconds) </span>
+                        </div>
+                        <input id="startup_timer" type="number" min="1" class="form-control" placeholder="{{ settings['globals']['startup_timer'] }}" value="{{ settings['globals']['startup_timer'] }}" name="startup_timer">
+                    </div>
+                    <span class="badge badge-warning">NOTE:</span>
+                    <i class="small"> Amount of time for startup before transitioning to smoke or attempting a reignite</i>
                 </div>
                 <!-- End of card body -->
                 <div class="card-footer bg-light">
