@@ -81,10 +81,11 @@ def DefaultSettings():
 		'PublicURL': '' # Used in Pushover notifications
 	}
 
-	settings['firebase'] = {
+	settings['onesignal'] = {
 		'enabled': False,
 		'uuid' : generateUUID(),
-		'ServerUrl' : ''
+		'app_id' : '',
+		'devices' : {}
 	}
 
 	settings['influxdb'] = {
