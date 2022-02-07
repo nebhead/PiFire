@@ -690,6 +690,9 @@ def Monitor(grill_platform, adc_device, display_device, dist_device):
         in_data['Probe1Tr'] = adc_data['Probe1Tr']  # For Temp Resistance Tuning
         in_data['Probe2Tr'] = adc_data['Probe2Tr']  # For Temp Resistance Tuning
 
+        # Check to see if there are any pending notifications (i.e. Timer / Temperature Settings)
+        control = CheckNotify(in_data, control, settings, pelletdb, grill_platform)
+
         # Check for button input event
         display_device.EventDetect()
 
