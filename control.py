@@ -506,9 +506,9 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
             temptoggletime = time.time()
             WriteHistory(in_data, tuning_mode=control['tuning_mode'])
 
-        # Check if 240s have elapsed since startup/reignite mode started
+        # Check if startup time has elapsed since startup/reignite mode started
         if (mode == 'Startup') or (mode == 'Reignite'):
-            if (now - starttime) > 240:
+            if (now - starttime) > settings['globals']['startup_timer']:
                 status = 'Inactive'
 
         # Check if shutdown time has elapsed since shutdown mode started
@@ -1237,11 +1237,11 @@ def SendPushBulletNotification(notifyevent, control, settings, pelletdb):
         WriteLog("Pushbullet Notification Failed: " + subjectmessage)
 
 
-# ******************************
-# Send Firebase Notifications
-# ******************************
+# *********************************
+# Send OneSignal Push Notification
+# *********************************
 
-def SendFirebaseNotification(notifyevent, control, settings, pelletdb):
+def SendOneSignalNotification(notifyevent, control, settings, pelletdb):
     date = datetime.datetime.now()
     now = date.strftime('%m-%d %H:%M')
     time = date.strftime('%H:%M')
@@ -1253,86 +1253,83 @@ def SendFirebaseNotification(notifyevent, control, settings, pelletdb):
         titlemessage = "Grill Setpoint Achieved"
         bodymessage = "Grill setpoint of " + str(control['setpoints']['grill']) + unit + " achieved at " + str(
             time) + " on " + str(day)
-        sound = 'temp_achieved'
         channel = 'pifire_temp_alerts'
     elif "Probe1_Temp_Achieved" in notifyevent:
         titlemessage = "Probe 1 Setpoint Achieved"
         bodymessage = "Probe 1 setpoint of " + str(control['setpoints']['probe1']) + unit + " achieved at " + str(
             time) + " on " + str(day)
-        sound = 'temp_achieved'
         channel = 'pifire_temp_alerts'
     elif "Probe2_Temp_Achieved" in notifyevent:
         titlemessage = "Probe 2 Setpoint Achieved"
         bodymessage = "Probe 2 setpoint of " + str(control['setpoints']['probe2']) + unit + " achieved at " + str(
             time) + " on " + str(day)
-        sound = 'temp_achieved'
         channel = 'pifire_temp_alerts'
     elif "Timer_Expired" in notifyevent:
         titlemessage = "Grill Timer Complete"
         bodymessage = "Your grill timer has expired, time to check your cook!"
-        sound = 'timer_alarm'
         channel = 'pifire_timer_alerts'
     elif "Pellet_Level_Low" in notifyevent:
         titlemessage = "Low Pellet Level"
         bodymessage = "Your pellet level is currently at " + str(pelletdb['current']['hopper_level']) + "%"
-        sound = 'pellet_alarm'
         channel = 'pifire_pellet_alerts'
     elif "Grill_Error_00" in notifyevent:
         titlemessage = "Grill Error!"
         bodymessage = "Your grill has experienced an error and will shutdown now. " + str(now)
-        sound = 'grill_error'
         channel = 'pifire_error_alerts'
     elif "Grill_Error_01" in notifyevent:
         titlemessage = "Grill Error!"
         bodymessage = "Grill exceded maximum temperature limit of " + str(
-            settings['safety']['maxtemp']) + "F! Shutting down." + str(now)
-        sound = 'grill_error'
+            settings['safety']['maxtemp']) + unit + "! Shutting down." + str(now)
         channel = 'pifire_error_alerts'
     elif "Grill_Error_02" in notifyevent:
         titlemessage = "Grill Error!"
         bodymessage = "Grill temperature dropped below minimum startup temperature of " + str(
             control['safety']['startuptemp']) + unit + "! Shutting down to prevent firepot overload." + str(now)
-        sound = 'grill_error'
         channel = 'pifire_error_alerts'
     elif "Grill_Warning" in notifyevent:
         titlemessage = "Grill Warning!"
-        bodymessage = "Your grill has experienced a warning condition. Please check the logs." + str(now)
-        sound = 'grill_error'
+        bodymessage = "Your grill has experienced a warning condition. Please check the logs."  + str(now)
         channel = 'pifire_error_alerts'
     else:
         titlemessage = "PiFire: Unknown Notification issue"
         bodymessage = "Whoops! PiFire had the following unhandled notify event: " + notifyevent + " at " + str(now)
-        sound = 'default'
         channel = 'default'
 
-    server_url = settings['firebase']['ServerUrl']
-    device_uuid = settings['firebase']['uuid']
+    app_id = settings['onesignal']['app_id']
+    devices = settings['onesignal']['devices']
+    player_ids = []
 
-    headers = {
-        'Content-Type': 'application/json'
-    }
+    for key in devices.keys():
+        player_ids.append(key)
 
-    body = {
-        'uuid': device_uuid,
-        'title': titlemessage,
-        'message': bodymessage,
-        'sound': sound,
-        'channel': channel,
-        'priority': 'high',
-        'ttl': 3600
-    }
+    if player_ids:
+        headers = {"Content-Type": "application/json; charset=utf-8"}
+        payload = {"app_id": app_id,
+                   "include_player_ids": player_ids,
+                   "headings": {"en": titlemessage},
+                   "contents": {"en": bodymessage},
+                   "priority": 10,
+                   "existing_android_channel_id": channel,
+                   "ttl" : 3600 }
 
-    response = requests.post(server_url, headers=headers, data=json.dumps(body))
+        response = requests.post("https://onesignal.com/api/v1/notifications", headers=headers, data=json.dumps(payload))
 
-    if response.status_code == 200:
-        WriteLog("Firebase Notification Success: " + titlemessage)
+        if response.status_code == 200:
+            WriteLog("OneSignal Notification Success: " + titlemessage)
+        else:
+            WriteLog("OneSignal Notification Failed: " + titlemessage)
+
+        json_response = response.json()
+        if 'errors' in json_response:
+            if 'invalid_player_ids' in json_response['errors']:
+                for device in json_response['errors']['invalid_player_ids']:
+                    if device in settings['onesignal']['devices']:
+                        WriteLog("OneSignal: " + settings['onesignal']['devices'][device]['device_name'] +
+                                 " has an invalid id and has been removed")
+                        settings['onesignal']['devices'].pop(device)
+                        WriteSettings(settings)
     else:
-        WriteLog("FirebaseNotification Failed: " + titlemessage)
-
-    if settings['modules']['grillplat'] == 'prototype':
-        print(response.status_code)
-        print(response.json())
-
+        WriteLog("OneSignal Notification Failed No Devices Registered")
 
 # ******************************
 # Send IFTTT Notifications
@@ -1400,8 +1397,8 @@ def SendNotifications(notifyevent, control, settings, pelletdb, in_data=None, gr
         if (settings['pushover']['APIKey'] != '' and settings['pushover']['UserKeys'] != '' and settings['pushover'][
             'enabled'] == True):
             SendPushoverNotification(notifyevent, control, settings, pelletdb)
-        if settings['firebase']['ServerUrl'] != '' and settings['firebase']['enabled'] == True:
-            SendFirebaseNotification(notifyevent, control, settings, pelletdb)
+        if settings['onesignal']['app_id'] != '' and settings['onesignal']['enabled'] == True:
+            SendOneSignalNotification(notifyevent, control, settings, pelletdb)
     else:
         if settings['influxdb']['url'] != '' and settings['influxdb']['enabled']:
             SendInfluxDbNotification(notifyevent, control, settings, pelletdb, in_data, grill_platform)

@@ -457,10 +457,10 @@
 <div class="row">
     <div class="col">
         <div class="card shadow">
-            <form name="shutdownsettings" action="/settings/shutdown" method="POST">
+            <form name="startshutdowntimers" action="/settings/timers" method="POST">
                 <div class="card-header bg-primary text-white">
                     <h5>
-                        <i class="fas fa-tools"></i>&nbsp; Shutdown Settings
+                        <i class="fas fa-tools"></i>&nbsp; Startup & Shutdown Settings
                     </h5>
                 </div>
                 <div class="card-body">
@@ -473,6 +473,17 @@
                     </div>
                     <span class="badge badge-warning">NOTE:</span>
                     <i class="small"> Amount of time fan will run after shutdown is selected </i>
+                </div>
+                <div class="card-body">
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" data-toggle="tooltip" title="Startup timer (in seconds) (seconds)[Default=240]">
+                                <i class="far fa-clock"></i>&nbsp; Startup Timer (seconds) </span>
+                        </div>
+                        <input id="startup_timer" type="number" min="1" class="form-control" placeholder="{{ settings['globals']['startup_timer'] }}" value="{{ settings['globals']['startup_timer'] }}" name="startup_timer">
+                    </div>
+                    <span class="badge badge-warning">NOTE:</span>
+                    <i class="small"> Amount of time for startup before transitioning to smoke or attempting a reignite</i>
                 </div>
                 <!-- End of card body -->
                 <div class="card-footer bg-light">
@@ -785,21 +796,96 @@
                     <br>
                     <div class="card shadow-sm">
                         <div class="card-header bg-light text-dark">
-                            <h5>Firebase</h5>
+                            <h5>Android Push Notifications</h5>
                         </div>
                         <div class="card-body">
                             <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="firebase_enabled" name="firebase_enabled" {% if settings['firebase']['enabled'] == True %}checked{% endif %} {% if settings['firebase']['ServerUrl'] == '' %} disabled {% endif %}>
-                                <label class="custom-control-label" for="firebase_enabled">Firebase Enabled</label>
+                                <input type="checkbox" class="custom-control-input" id="onesignal_enabled" name="onesignal_enabled" {% if settings['onesignal']['enabled'] == True %}checked{% endif %}>
+                                <label class="custom-control-label" for="onesignal_enabled">OneSignal Enabled</label>
                             </div>
                             <br>
-                            {% if settings['firebase']['ServerUrl'] == '' %}
+                            {% for index, data in settings['onesignal']['devices'].items()|sort %}
+                            <div class="card shadow">
+                                <div class="card-header bg-light text-dark">
+                                    <h5>
+                                        <a href="#edit_device{{ index }}" data-toggle="collapse">
+                                            {% if data['friendly_name']  == '' %}
+                                            <i class="far fa-caret-square-down"></i>&nbsp; {{ data['device_name'] }}
+                                            {% else %}
+                                            <i class="far fa-caret-square-down"></i>&nbsp; {{ data['friendly_name'] }}
+                                            {% endif %}
+                                        </a>
+                                    </h5>
+                                </div>
+                                <div id="edit_device{{ index }}" class="collapse">
+                                    <div class="card-body">
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="Human readable name for device used to display above.">
+                                                    <i class="fas fa-user-circle"></i>&nbsp; Friendly Name </span>
+                                            </div>
+                                            <input id="FriendlyName_{{ index }}" type="text" class="form-control" name="FriendlyName_{{ index }}" value="{{ data['friendly_name'] }}">
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="The factory device name">
+                                                    <i class="fas fa-user-circle"></i>&nbsp; Device Name </span>
+                                            </div>
+                                            <input id="DeviceName_{{ index }}" type="text" class="form-control" name="DeviceName_{{ index }}" value="{{ data['device_name'] }}" readonly>
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="Android app version">
+                                                    <i class="fas fa-info-circle"></i>&nbsp; App Version </span>
+                                            </div>
+                                            <input id="AppVersion_{{ index }}" type="text" class="form-control" name="AppVersion_{{ index }}" value="{{ data['app_version'] }}" readonly>
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="The OneSignal device ID">
+                                                    <i class="fas fa-fingerprint"></i>&nbsp; OneSignal Device ID </span>
+                                            </div>
+                                            <input id="DeviceID_{{ index }}" type="text" class="form-control" name="DeviceID_{{ index }}" value="{{ index }}" disabled>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer bg-light">
+                                        <button type="submit" class="btn btn-primary" name="edit_device" value="{{ index }}">Save</button>
+                                        <!-- Button to Open the Modal -->
+                                        <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#DeleteDeviceModal{{ index }}">Delete</button>
+                                        <!-- The Modal -->
+                                        <div class="modal" id="DeleteDeviceModal{{ index }}">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <!-- Modal Header -->
+                                                    <div class="modal-header">
+                                                        {% if data['friendly_name']  == '' %}
+                                                        <h4 class="modal-title">Delete Device {{ data['device_name'] }}</h4>
+                                                        {% else %}
+                                                        <h4 class="modal-title">Delete Device {{ data['friendly_name'] }}</h4>
+                                                        {% endif %}
+                                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                    </div>
+                                                    <!-- Modal body -->
+                                                    {% if data['friendly_name']  == '' %}
+                                                    <div class="modal-body"> Are you sure you want to delete the {{ data['device_name'] }} device? </div>
+                                                    {% else %}
+                                                    <div class="modal-body"> Are you sure you want to delete the {{ data['friendly_name'] }} device? </div>
+                                                    {% endif %}
+                                                    <!-- Modal footer -->
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                                        <button type="submit" class="btn btn-danger" name="delete_device" value="{{ index }}">Delete</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <br> {% endfor %}
                             <span class="badge badge-warning">NOTE:</span>
-                            <i class="small"> You must enable this option for the first time from the Android client. </i>
-                            {% else %}
-                            <span class="badge badge-warning">NOTE:</span>
-                            <i class="small"> When this option is enabled Firebase notifications will be enabled for all clients that connect to this server.</i>
-                            {% endif %}
+                            <i class="small"> You can download the Android application from <a href="https://github.com/weberbox/PiFire-Android" target="blank">Github</a> </i>
+                            <br>
                         </div>
                         <!-- End of card body -->
                     </div>
