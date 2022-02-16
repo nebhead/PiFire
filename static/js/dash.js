@@ -500,6 +500,7 @@ $(document).ready(function(){
             traditional: true,
             success: function (data) {
                 console.log('Hold Mode Requested. ' + setPoint + units);
+				$("#hold_btn").html(setPoint + "°" + units);
             }
 		});
 	});
