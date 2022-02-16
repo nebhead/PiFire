@@ -774,6 +774,7 @@ def convert_settings_units(units, settings):
 	settings['safety']['minstartuptemp'] = convert_temp(units, settings['safety']['minstartuptemp'])
 	settings['smoke_plus']['max_temp'] = convert_temp(units, settings['smoke_plus']['max_temp'])
 	settings['smoke_plus']['min_temp'] = convert_temp(units, settings['smoke_plus']['min_temp'])
+	settings['keep_warm']['temp'] = convert_temp(units, settings['keep_warm']['temp'])
 	return(settings)
 
 '''

@@ -367,7 +367,7 @@
                     <br>
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Fan Cycle Time (seconds) [Default: 6]">
+                            <span class="input-group-text" data-toggle="tooltip" title="Fan Cycle Time (seconds) [Default: 10]">
                                 <i class="far fa-clock"></i>&nbsp; Fan Cycle Time (s) </span>
                         </div>
                         <input id="sp_cycle" type="number" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['cycle'] }}" value="{{ settings['smoke_plus']['cycle'] }}" name="sp_cycle">
@@ -451,8 +451,8 @@
                     <br>
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Keep Warm Temperature [Default=165]">
-                                <i class="fas fa-temperature-high"></i>&nbsp; Keep Warm Temp</span>
+                            <span class="input-group-text" data-toggle="tooltip" title="Keep Warm Temperature ({{settings['globals']['units']}}) [Default: 165F/74C]">
+                                <i class="fas fa-temperature-high"></i>&nbsp; Keep Warm Temp ({{settings['globals']['units']}}) </span>
                         </div>
                         <input id="keep_warm_temp" type="number" min="1" class="form-control" placeholder="{{ settings['keep_warm']['temp'] }}" value="{{ settings['keep_warm']['temp'] }}" name="keep_warm_temp">
                     </div>
