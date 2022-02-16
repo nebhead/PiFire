@@ -154,17 +154,22 @@
 			</div>
 			<!-- Modal body -->
 			<div class="modal-body text-center">
-					<h1><output name="probe1tempOutput" id="probe1tempOutputId">{{ set_points['probe1'] }}</output>°{{ units }}</h1>
-					{% if units == 'F' %}
-					<input type="range" class="custom-range" min="0" max="300" value="{{ set_points['probe1'] }}" id="probe1tempInputId" name="probe1tempInputRange" oninput="probe1tempOutputId.value = probe1tempInputId.value">
-					{% else %} 
-					<input type="range" class="custom-range" min="-15" max="150" value="{{ set_points['probe1'] }}" id="probe1tempInputId" name="probe1tempInputRange" oninput="probe1tempOutputId.value = probe1tempInputId.value">
-					{% endif %}
-					<br><br>
-					<div class="custom-control custom-checkbox mb-3">
-						<input type="checkbox" class="custom-control-input" id="shutdownP1" name="shutdownP1">
-						<label class="custom-control-label" for="shutdownP1">Shutdown Grill When Probe 1 Achieves Set Point</label>
-					</div>
+				<h1><output name="probe1tempOutput" id="probe1tempOutputId">{{ set_points['probe1'] }}</output>°{{ units }}</h1>
+				{% if units == 'F' %}
+				<input type="range" class="custom-range" min="0" max="300" value="{{ set_points['probe1'] }}" id="probe1tempInputId" name="probe1tempInputRange" oninput="probe1tempOutputId.value = probe1tempInputId.value">
+				{% else %}
+				<input type="range" class="custom-range" min="-15" max="150" value="{{ set_points['probe1'] }}" id="probe1tempInputId" name="probe1tempInputRange" oninput="probe1tempOutputId.value = probe1tempInputId.value">
+				{% endif %}
+				<br><br>
+				<p>When Probe 1 Achieves Set Point:</p>
+				<div class="custom-control custom-checkbox mb-3">
+					<input type="checkbox" class="custom-control-input" id="shutdownP1" name="shutdownP1">
+					<label class="custom-control-label" for="shutdownP1">Shutdown Grill</label>
+				</div>
+				<div class="custom-control custom-checkbox mb-3">
+					<input type="checkbox" class="custom-control-input" id="keepWarmP1" name="keepWarmP1">
+					<label class="custom-control-label" for="keepWarmP1">Start Keep Warm</label>
+				</div>
 			</div>
 			<!-- Modal footer -->
 			<div class="modal-footer">
@@ -193,9 +198,14 @@
 				<input type="range" class="custom-range" min="-15" max="150" value="{{ set_points['probe2'] }}" id="probe2tempInputId" name="probe2tempInputRange" oninput="probe2tempOutputId.value = probe2tempInputId.value">
 				{% endif %}
 				<br><br>
+				<p>When Probe 2 Achieves Set Point:</p>
 				<div class="custom-control custom-checkbox mb-3">
 					<input type="checkbox" class="custom-control-input" id="shutdownP2" name="shutdownP2">
-					<label class="custom-control-label" for="shutdownP2">Shutdown Grill When Probe 2 Achieves Set Point</label>
+					<label class="custom-control-label" for="shutdownP2">Shutdown Grill</label>
+				</div>
+				<div class="custom-control custom-checkbox mb-3">
+					<input type="checkbox" class="custom-control-input" id="keepWarmP2" name="keepWarmP2">
+					<label class="custom-control-label" for="keepWarmP2">Start Keep Warm</label>
 				</div>
 			</div>
 			<!-- Modal footer -->
@@ -232,17 +242,21 @@
 				</div>
 				<!-- Modal body -->
 				<div class="modal-body text-center">
-						<h1><output name="hoursOutput" id="hoursOutputId">0</output> Hours</h1>
-						<input type="range" class="custom-range" min="0" max="23" value="0" id="hoursInputId" name="hoursInputRange" oninput="hoursOutputId.value = hoursInputId.value">
+					<h1><output name="hoursOutput" id="hoursOutputId">0</output> Hours</h1>
+					<input type="range" class="custom-range" min="0" max="23" value="0" id="hoursInputId" name="hoursInputRange" oninput="hoursOutputId.value = hoursInputId.value">
 
-						<h1><output name="minsOutput" id="minsOutputId">0</output> Mins</h1>
-						<input type="range" class="custom-range" min="0" max="59" value="0" id="minsInputId" name="minsInputRange" oninput="minsOutputId.value = minsInputId.value">
-						<br><br>
-						<div class="custom-control custom-checkbox mb-3">
-							<input type="checkbox" class="custom-control-input" id="shutdownTimer" name="shutdownTimer">
-							<label class="custom-control-label" for="shutdownTimer">Shutdown Grill When Timer Expires</label>
-						</div>
-
+					<h1><output name="minsOutput" id="minsOutputId">0</output> Mins</h1>
+					<input type="range" class="custom-range" min="0" max="59" value="0" id="minsInputId" name="minsInputRange" oninput="minsOutputId.value = minsInputId.value">
+					<br><br>
+					<p>When Timer Expires:</p>
+					<div class="custom-control custom-checkbox mb-3">
+						<input type="checkbox" class="custom-control-input" id="shutdownTimer" name="shutdownTimer">
+						<label class="custom-control-label" for="shutdownTimer">Shutdown Grill</label>
+					</div>
+					<div class="custom-control custom-checkbox mb-3">
+						<input type="checkbox" class="custom-control-input" id="keepWarmTimer" name="keepWarmTimer">
+						<label class="custom-control-label" for="keepWarmTimer">Start Keep Warm</label>
+					</div>
 					</div>
 				<!-- Modal footer -->
 				<div class="modal-footer">

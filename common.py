@@ -129,6 +129,11 @@ def DefaultSettings():
 		'center' : 0.5
 	}
 
+	settings['keep_warm'] = {
+		'temp' : 165,
+		's_plus' : False
+	}
+
 	settings['smoke_plus'] = {
 		'enabled' : False, # Sets default Enable/Disable (True = Enabled, False = Disabled)
 		'min_temp' : 160, # Minimum temperature to cycle fan on/off
@@ -223,7 +228,10 @@ def DefaultControl():
 		'hopper_low' : False,
 		'p1_shutdown' : False,
 		'p2_shutdown' : False,
-		'timer_shutdown' : False
+		'timer_shutdown' : False,
+		'p1_keep_warm' : False,
+		'p2_keep_warm' : False,
+		'timer_keep_warm' : False
 	}
 
 	control['timer'] = {
