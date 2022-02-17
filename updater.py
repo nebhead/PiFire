@@ -96,7 +96,7 @@ def get_available_updates(branch=''):
 			result['message'] = 'ERROR Getting Revision List: ' + revlist.stderr.replace('\n', ' ') + revlist.stdout.replace('\n', ' ')
 	else:
 		result['success'] = False 
-		result['message'] = 'ERROR Getting Remote or Branch: ' + error_msg1 + ' ' + error_msg2
+		result['message'] = 'ERROR Getting Remote or Branch: ' + error_msg1.replace('\n', ' ') + ' ' + error_msg2.replace('\n', ' ')
 	return(result)
 
 def do_update():
