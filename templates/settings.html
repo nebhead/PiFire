@@ -367,7 +367,7 @@
                     <br>
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Fan Cycle Time (seconds) [Default: 6]">
+                            <span class="input-group-text" data-toggle="tooltip" title="Fan Cycle Time (seconds) [Default: 10]">
                                 <i class="far fa-clock"></i>&nbsp; Fan Cycle Time (s) </span>
                         </div>
                         <input id="sp_cycle" type="number" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['cycle'] }}" value="{{ settings['smoke_plus']['cycle'] }}" name="sp_cycle">
@@ -438,8 +438,24 @@
                         <input id="center" type="number" min="0.1" step="0.01" class="form-control" placeholder="{{ settings['cycle_data']['center'] }}" value="{{ settings['cycle_data']['center'] }}" name="center">
                     </div>
                     <span class="badge badge-warning">NOTE:</span>
-                    <i class="small"> If you are in hold mode currently, you will need to change to another mode and back into hold mode for this to take effect. More information on the PID control settings can be found <a href="http://engineeredmusings.com/pismoker/" target="blank">here.</a>
-                    </i>
+                    <i class="small"> If you are in hold mode currently, you will need to change to another mode and back into hold mode for this to take effect. More information on the PID control settings can be found <a href="http://engineeredmusings.com/pismoker/" target="blank">here.</a></i>
+                    <br><br>
+                    <h5>Keep Warm Settings</h5>
+                    <span class="badge badge-warning">NOTE:</span>
+                    <i class="small">The Keep Warm option will be activated when selected once a probe set point has been achieved or the set timer has expired. The Grill will exit the currently running mode then switch to Hold Mode and attempt to maintain the temperature set below. You can also enable or disable the Smoke Plus feature during Keep Warm.</i>
+                    <br><br>
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" id="keep_warm_s_plus" name="keep_warm_s_plus" {% if settings['keep_warm']['s_plus'] == True %}checked{% endif %}>
+                        <label class="custom-control-label" for="keep_warm_s_plus">Smoke Plus Enabled</label>
+                    </div>
+                    <br>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" data-toggle="tooltip" title="Keep Warm Temperature ({{settings['globals']['units']}}) [Default: 165F/74C]">
+                                <i class="fas fa-temperature-high"></i>&nbsp; Keep Warm Temp ({{settings['globals']['units']}}) </span>
+                        </div>
+                        <input id="keep_warm_temp" type="number" min="1" class="form-control" placeholder="{{ settings['keep_warm']['temp'] }}" value="{{ settings['keep_warm']['temp'] }}" name="keep_warm_temp">
+                    </div>
                 </div>
                 <!-- End of card body -->
                 <div class="card-footer bg-light">

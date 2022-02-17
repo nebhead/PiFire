@@ -972,14 +972,14 @@ def SendPushoverNotification(notifyevent, control, settings, pelletdb):
         subjectmessage = "Grill Error!"
     elif "Grill_Error_01" in notifyevent:
         notifymessage = "Grill exceed maximum temperature limit of " + str(
-            settings['safety']['maxtemp']) + unit + "! Shutting down." + str(now)
+            settings['safety']['maxtemp']) + unit + "! Shutting down. " + str(now)
         subjectmessage = "Grill Error!"
     elif "Grill_Error_02" in notifyevent:
         notifymessage = "Grill temperature dropped below minimum startup temperature of " + str(
-            control['safety']['startuptemp']) + unit + "! Shutting down to prevent firepot overload." + str(now)
+            control['safety']['startuptemp']) + unit + "! Shutting down to prevent firepot overload. " + str(now)
         subjectmessage = "Grill Error!"
     elif "Grill_Warning" in notifyevent:
-        notifymessage = "Your grill has experienced a warning condition.  Please check the logs." + str(now)
+        notifymessage = "Your grill has experienced a warning condition.  Please check the logs. " + str(now)
         subjectmessage = "Grill Warning!"
     else:
         notifymessage = "Whoops! PiFire had the following unhandled notify event: " + notifyevent + " at " + now
@@ -1038,14 +1038,14 @@ def SendPushBulletNotification(notifyevent, control, settings, pelletdb):
         subjectmessage = "Grill Error!"
     elif "Grill_Error_01" in notifyevent:
         notifymessage = "Grill exceed maximum temperature limit of " + str(
-            settings['safety']['maxtemp']) + unit + "! Shutting down." + str(now)
+            settings['safety']['maxtemp']) + unit + "! Shutting down. " + str(now)
         subjectmessage = "Grill Error!"
     elif "Grill_Error_02" in notifyevent:
         notifymessage = "Grill temperature dropped below minimum startup temperature of " + str(
-            control['safety']['startuptemp']) + unit + "! Shutting down to prevent firepot overload." + str(now)
+            control['safety']['startuptemp']) + unit + "! Shutting down to prevent firepot overload. " + str(now)
         subjectmessage = "Grill Error!"
     elif "Grill_Warning" in notifyevent:
-        notifymessage = "Your grill has experienced a warning condition.  Please check the logs." + str(now)
+        notifymessage = "Your grill has experienced a warning condition.  Please check the logs. " + str(now)
         subjectmessage = "Grill Warning!"
     else:
         notifymessage = "Whoops! PiFire had the following unhandled notify event: " + notifyevent + " at " + now
@@ -1104,16 +1104,16 @@ def SendOneSignalNotification(notifyevent, control, settings, pelletdb):
     elif "Grill_Error_01" in notifyevent:
         titlemessage = "Grill Error!"
         bodymessage = "Grill exceded maximum temperature limit of " + str(
-            settings['safety']['maxtemp']) + unit + "! Shutting down." + str(now)
+            settings['safety']['maxtemp']) + unit + "! Shutting down. " + str(now)
         channel = 'pifire_error_alerts'
     elif "Grill_Error_02" in notifyevent:
         titlemessage = "Grill Error!"
         bodymessage = "Grill temperature dropped below minimum startup temperature of " + str(
-            control['safety']['startuptemp']) + unit + "! Shutting down to prevent firepot overload." + str(now)
+            control['safety']['startuptemp']) + unit + "! Shutting down to prevent firepot overload. " + str(now)
         channel = 'pifire_error_alerts'
     elif "Grill_Warning" in notifyevent:
         titlemessage = "Grill Warning!"
-        bodymessage = "Your grill has experienced a warning condition. Please check the logs."  + str(now)
+        bodymessage = "Your grill has experienced a warning condition. Please check the logs. "  + str(now)
         channel = 'pifire_error_alerts'
     else:
         titlemessage = "PiFire: Unknown Notification issue"
@@ -1256,7 +1256,14 @@ def CheckNotify(in_data, control, settings, pelletdb, grill_platform):
                     control['mode'] == 'Reignite')):
                 control['mode'] = 'Shutdown'
                 control['updated'] = True
-                control['notify_data']['p1_shutdown'] = False
+            if (control['notify_data']['p1_keep_warm'] == True) and (
+                    (control['mode'] == 'Smoke') or (control['mode'] == 'Hold')):
+                control['mode'] = 'Hold'
+                control['setpoints']['grill'] = settings['keep_warm']['temp']
+                control['s_plus'] = settings['keep_warm']['s_plus']
+                control['updated'] = True
+            control['notify_data']['p1_shutdown'] = False
+            control['notify_data']['p1_keep_warm'] = False
             WriteControl(control)
             notify_event = "Probe 1 Temp of " + str(control['setpoints']['probe1']) + settings['globals'][
                 'units'] + " Achieved"
@@ -1272,7 +1279,14 @@ def CheckNotify(in_data, control, settings, pelletdb, grill_platform):
                     control['mode'] == 'Reignite')):
                 control['mode'] = 'Shutdown'
                 control['updated'] = True
-                control['notify_data']['p2_shutdown'] = False
+            if (control['notify_data']['p2_keep_warm'] == True) and (
+                    (control['mode'] == 'Smoke') or (control['mode'] == 'Hold')):
+                control['mode'] = 'Hold'
+                control['setpoints']['grill'] = settings['keep_warm']['temp']
+                control['s_plus'] = settings['keep_warm']['s_plus']
+                control['updated'] = True
+            control['notify_data']['p2_shutdown'] = False
+            control['notify_data']['p2_keep_warm'] = False
             WriteControl(control)
             notify_event = "Probe 2 Temp of " + str(control['setpoints']['probe2']) + settings['globals'][
                 'units'] + " Achieved"
@@ -1287,11 +1301,18 @@ def CheckNotify(in_data, control, settings, pelletdb, grill_platform):
                     control['mode'] == 'Reignite')):
                 control['mode'] = 'Shutdown'
                 control['updated'] = True
+            if (control['notify_data']['timer_keep_warm'] == True) and (
+                    (control['mode'] == 'Smoke') or (control['mode'] == 'Hold')):
+                control['mode'] = 'Hold'
+                control['setpoints']['grill'] = settings['keep_warm']['temp']
+                control['s_plus'] = settings['keep_warm']['s_plus']
+                control['updated'] = True
             control['notify_req']['timer'] = False
             control['timer']['start'] = 0
             control['timer']['paused'] = 0
             control['timer']['end'] = 0
             control['notify_data']['timer_shutdown'] = False
+            control['notify_data']['timer_keep_warm'] = False
             WriteControl(control)
 
     return control
@@ -1428,6 +1449,7 @@ while True:
             control['timer']['paused'] = 0
             control['timer']['end'] = 0
             control['notify_data']['timer_shutdown'] = False
+            control['notify_data']['timer_keep_warm'] = False
             WriteControl(control)
 
     if control['hopper_check']:

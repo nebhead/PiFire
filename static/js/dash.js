@@ -255,6 +255,14 @@ function updateDashButtons(data) {
 			$("#monitor_btn").show();
 			$("#error_btn").show();
 			document.getElementById("error_btn").className = "btn btn-danger border border-warning text-warning";
+		} else if (data.current_mode == 'Manual') {
+			$("#active_group").hide();
+			$("#inactive_group").hide();
+			$("#splus_btn").hide();
+			$("#smoke_inactive_btn").hide();
+			$("#hold_inactive_btn").hide();
+			$("#monitor_btn").hide();
+			$("#error_btn").hide();
 		};
 
         if ((data.current_mode == 'Smoke') || (data.current_mode == 'Hold')) {
@@ -548,8 +556,12 @@ $(document).ready(function(){
 	$("#p1_notify_enable").click(function(){
 		var setPoint = parseInt($("#probe1tempInputId").val());
 		var shutdown = false;
+		var keepWarm = false;
 		if ($('#shutdownP1').is(":checked")){
 			shutdown = true;
+		};
+		if ($('#keepWarmP1').is(":checked")){
+			keepWarm = true;
 		};
 		var postdata = { 
 			'setpoints' : {
@@ -559,7 +571,8 @@ $(document).ready(function(){
 				'probe1' : true
 			},
 			'notify_data' : {
-				'p1_shutdown' : shutdown
+				'p1_shutdown' : shutdown,
+				'p1_keep_warm' : keepWarm
 			} 	
 		};
 		req = $.ajax({
@@ -580,7 +593,8 @@ $(document).ready(function(){
 				'probe1' : false
 			},
 			'notify_data' : {
-				'p1_shutdown' : false
+				'p1_shutdown' : false,
+				'p1_keep_warm' : false
 			} 	
 		};
 		req = $.ajax({
@@ -598,8 +612,12 @@ $(document).ready(function(){
 	$("#p2_notify_enable").click(function(){
 		var setPoint = parseInt($("#probe2tempInputId").val());
 		var shutdown = false;
+		var keepWarm = false;
 		if ($('#shutdownP2').is(":checked")){
 			shutdown = true;
+		};
+		if ($('#keepWarmP2').is(":checked")){
+			keepWarm = true;
 		};
 		var postdata = { 
 			'setpoints' : {
@@ -609,7 +627,8 @@ $(document).ready(function(){
 				'probe2' : true
 			},
 			'notify_data' : {
-				'p2_shutdown' : shutdown
+				'p2_shutdown' : shutdown,
+				'p2_keep_warm' : keepWarm
 			} 	
 		};
 		req = $.ajax({
@@ -630,7 +649,8 @@ $(document).ready(function(){
 				'probe2' : false
 			},
 			'notify_data' : {
-				'p2_shutdown' : false
+				'p2_shutdown' : false,
+				'p2_keep_warm' : false
 			} 	
 		};
 		req = $.ajax({
@@ -645,5 +665,56 @@ $(document).ready(function(){
 		});
 	});
 
+	// ******************
+	// Checkbox Listeners
+	// ******************
+
+	$("#shutdownP1").click(function(){
+		if($(this).is(':checked')){
+			document.getElementById("keepWarmP1").disabled = true;
+		} else {
+			document.getElementById("keepWarmP1").disabled = false;
+		}
+	});
+
+	$("#keepWarmP1").click(function(){
+		if($(this).is(':checked')){
+			document.getElementById("shutdownP1").disabled = true;
+		} else {
+			document.getElementById("shutdownP1").disabled = false;
+		}
+	});
+
+	$("#shutdownP2").click(function(){
+		if($(this).is(':checked')){
+			document.getElementById("keepWarmP2").disabled = true;
+		} else {
+			document.getElementById("keepWarmP2").disabled = false;
+		}
+	});
+
+	$("#keepWarmP2").click(function(){
+		if($(this).is(':checked')){
+			document.getElementById("shutdownP2").disabled = true;
+		} else {
+			document.getElementById("shutdownP2").disabled = false;
+		}
+	});
+
+	$("#shutdownTimer").click(function(){
+		if($(this).is(':checked')){
+			document.getElementById("keepWarmTimer").disabled = true;
+		} else {
+			document.getElementById("keepWarmTimer").disabled = false;
+		}
+	});
+
+	$("#keepWarmTimer").click(function(){
+		if($(this).is(':checked')){
+			document.getElementById("shutdownTimer").disabled = true;
+		} else {
+			document.getElementById("shutdownTimer").disabled = false;
+		}
+	});
 
 }); // End of Document Ready Function
