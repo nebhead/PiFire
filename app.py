@@ -531,11 +531,16 @@ def settingspage(action=None):
 	if (request.method == 'POST') and (action == 'probes'):
 		response = request.form
 
-		if('grill0enable' in response):
-			if(response['grill0enable'] == "0"):
-				settings['probe_settings']['probes_enabled'][0] = 0
+		if('grill1enable' in response):
+			if(response['grill1enable'] == "0"):
+				settings['probe_settings']['grill_probe_enabled'][0] = 0
 			else:
-				settings['probe_settings']['probes_enabled'][0] = 1
+				settings['probe_settings']['grill_probe_enabled'][0] = 1
+		if('grill2enable' in response):
+			if(response['grill2enable'] == "0"):
+				settings['probe_settings']['grill_probe_enabled'][1] = 0
+			else:
+				settings['probe_settings']['grill_probe_enabled'][1] = 1
 		if('probe1enable' in response):
 			if(response['probe1enable'] == "0"):
 				settings['probe_settings']['probes_enabled'][1] = 0
@@ -546,9 +551,37 @@ def settingspage(action=None):
 				settings['probe_settings']['probes_enabled'][2] = 0
 			else:
 				settings['probe_settings']['probes_enabled'][2] = 1
-		if('grill_probe_type' in response):
-			if(response['grill_probe_type'] != settings['probe_types']['grill0type']):
-				settings['probe_types']['grill0type'] = response['grill_probe_type']
+		if('grill_probes' in response):
+			if(response['grill_probes'] == 'grill_probe1'):
+				settings['grill_probe_settings']['grill_probe_enabled'][0] = 1
+				settings['grill_probe_settings']['grill_probe_enabled'][1] = 0
+				settings['grill_probe_settings']['grill_probe_enabled'][2] = 0
+				settings['grill_probe_settings']['grill_probe'] = response['grill_probes']
+				event['type'] = 'updated'
+				event['text'] = 'Grill Probe selection updated. Settings saved.'
+			elif(response['grill_probes'] == 'grill_probe2'):
+				settings['grill_probe_settings']['grill_probe_enabled'][0] = 0
+				settings['grill_probe_settings']['grill_probe_enabled'][1] = 1
+				settings['grill_probe_settings']['grill_probe_enabled'][2] = 0
+				settings['grill_probe_settings']['grill_probe'] = response['grill_probes']
+				event['type'] = 'updated'
+				event['text'] = 'Grill Probe selection updated. Settings saved.'
+			elif(response['grill_probes'] == 'grill_probe3'):
+				settings['grill_probe_settings']['grill_probe_enabled'][0] = 0
+				settings['grill_probe_settings']['grill_probe_enabled'][1] = 0
+				settings['grill_probe_settings']['grill_probe_enabled'][2] = 1
+				settings['grill_probe_settings']['grill_probe'] = response['grill_probes']
+				event['type'] = 'updated'
+				event['text'] = 'Grill Probe selection updated. Settings saved.'
+		if('grill_probe1_type' in response):
+			if(response['grill_probe1_type'] != settings['probe_types']['grill1type']):
+				settings['probe_types']['grill1type'] = response['grill_probe1_type']
+				control['probe_profile_update'] = True
+				event['type'] = 'updated'
+				event['text'] = 'Probe type updated. Settings saved.'
+		if('grill_probe2_type' in response):
+			if(response['grill_probe2_type'] != settings['probe_types']['grill2type']):
+				settings['probe_types']['grill2type'] = response['grill_probe2_type']
 				control['probe_profile_update'] = True
 				event['type'] = 'updated'
 				event['text'] = 'Probe type updated. Settings saved.'

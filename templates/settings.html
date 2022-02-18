@@ -32,18 +32,45 @@
             <div class="card-body">
                 <!-- Probe Settings Form Start -->
                 <form name="probe_input" id="probe_form" action="/settings/probes" method="POST">
-                    <!-- Grill Probe Settings -->
+                    <!-- Grill Probe Selection -->
+                    {% if settings['globals']['four_probes'] == True %}
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
-                            <span class="input-group-text">Grill Type</span>
+                            <span class="input-group-text">Grill Probe Selection</span>
                         </div>
-                        <select class="form-control" name="grill_probe_type" id="grill_probe_type" onchange="this.form.submit()"> {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %} {% if index == settings['probe_types']['grill0type'] %} <option value="{{ index }}" selected>{{ data['name'] }}</option> {% else %} <option value="{{ index }}">{{ data['name'] }}</option> {% endif %} {% endfor %} </select>
-                        <div class="input-group-append"> {% if settings['probe_settings']['probes_enabled'][0] == 1  %} <button type="submit" name="grill0enable" value="0" class="btn btn-success btn-sm float-right" disabled>
-                                <i class="fas fa-eye"></i>
-                            </button> {% else %} <button type="submit" name="grill0enable" value="1" class="btn btn-outline-secondary btn-sm float-right">
-                                <i class="fas fa-eye-slash"></i>
-                            </button> {% endif %} </div>
+                        <select class="form-control" name="grill_probes" id="grill_probes" onchange="this.form.submit()"> {% for index, data in settings['grill_probe_settings']['grill_probes'].items()|sort %} {% if index == settings['grill_probe_settings']['grill_probe'] %} <option value="{{ index }}" selected>{{ data['name'] }}</option> {% else %} <option value="{{ index }}">{{ data['name'] }}</option> {% endif %} {% endfor %} </select>
                     </div>
+                    <!-- Grill Probe 1 Settings -->
+                    {% endif %}
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            {% if settings['globals']['four_probes'] == True %}
+                            <span class="input-group-text">Grill Probe 1 Type</span>
+                            {% else %}
+                            <span class="input-group-text">Grill Probe Type</span>
+                            {% endif %}
+                        </div>
+                        <select class="form-control" name="grill_probe1_type" id="grill_probe1_type" onchange="this.form.submit()"> {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %} {% if index == settings['probe_types']['grill1type'] %} <option value="{{ index }}" selected>{{ data['name'] }}</option> {% else %} <option value="{{ index }}">{{ data['name'] }}</option> {% endif %} {% endfor %} </select>
+                        <div class="input-group-append"> {% if settings['grill_probe_settings']['grill_probe_enabled'][0] == 1 or settings['grill_probe_settings']['grill_probe_enabled'][2] == 1 %} <button type="submit" name="grill1enable" value="0" class="btn btn-success btn-sm float-right" disabled>
+                            <i class="fas fa-eye"></i>
+                        </button> {% else %} <button type="submit" name="grill1enable" value="1" class="btn btn-outline-secondary btn-sm float-right" disabled>
+                            <i class="fas fa-eye-slash"></i>
+                        </button> {% endif %} </div>
+                    </div>
+                    <!-- Grill Probe 2 Settings -->
+                    {% if settings['globals']['four_probes'] == True %}
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Grill Probe 2 Type</span>
+                        </div>
+                        <select class="form-control" name="grill_probe2_type" id="grill_probe2_type" onchange="this.form.submit()"> {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %} {% if index == settings['probe_types']['grill2type'] %} <option value="{{ index }}" selected>{{ data['name'] }}</option> {% else %} <option value="{{ index }}">{{ data['name'] }}</option> {% endif %} {% endfor %} </select>
+                        <div class="input-group-append"> {% if settings['grill_probe_settings']['grill_probe_enabled'][1] == 1 or settings['grill_probe_settings']['grill_probe_enabled'][2] == 1 %} <button type="submit" name="grill2enable" value="0" class="btn btn-success btn-sm float-right" disabled>
+                            <i class="fas fa-eye"></i>
+                        </button> {% else %} <button type="submit" name="grill2enable" value="1" class="btn btn-outline-secondary btn-sm float-right" disabled>
+                            <i class="fas fa-eye-slash"></i>
+                        </button> {% endif %} </div>
+                    </div>
+                    {% endif %}
                     <!-- Probe 1 Settings -->
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
