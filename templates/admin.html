@@ -412,12 +412,55 @@
 		</div>
 	</form>
 
+	<!-- Launch Wizard Card -->
+	<div class="card shadow">
+		<div class="card-header bg-primary text-white">
+			<h5><i class="fas fa-hat-wizard"></i>&nbsp; PiFire Configuration Wizard</h5>
+		</div>
+		<div class="card-body">
+			<a href="/wizard" class="btn btn-outline-primary btn-block shadow">Launch PiFire Configuration Wizard</a>
+		</div>
+	</div><br>
+
     <!-- System Power Card -->
 	<div class="card shadow">
 		<div class="card-header bg-danger text-white">
 					<h5><i class="fas fa-power-off"></i>&nbsp; System Power</h5>
 		</div>
 		<div class="card-body">
+			<!-- Reboot -->
+			<form name="input" action="/admin/restart">
+				<!-- Button trigger modal -->
+				<button type="button" class="btn btn-outline-warning btn-block shadow" data-toggle="modal" data-target="#restartModal">
+					Restart Server (No Reboot)
+				</button>
+
+				<!-- Reboot Modal -->
+				<div class="modal fade" id="restartModal" tabindex="-1" role="dialog" aria-labelledby="restartModalLabel" aria-hidden="true">
+					<div class="modal-dialog" role="document">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h5 class="modal-title" id="restartModalLabel">Restart Server</h5>
+								<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+									<span aria-hidden="true">&times;</span>
+								</button>
+							</div>
+							<div class="modal-body">
+								<p>Are you sure you would like to restart the server (not a system reboot)?
+								<br><i>Any unsaved data may be lost.</i></p>
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+								<button type="submit" class="btn btn-primary" name="restart" value="True">Confirm</button>
+							</div>
+						</div>
+					</div>
+				</div>
+
+			</form>
+
+			<br>
+			
 			<!-- Reboot -->
 			<form name="input" action="/admin/reboot">
 				<!-- Button trigger modal -->
@@ -495,7 +538,7 @@
 					Generate QR Code
 			</button>
 	
-			<!-- Factory Settings Modal -->
+			<!-- QR Modal -->
 				<div class="modal" id="qrModal">
 					<div class="modal-dialog">
 						<div class="modal-content">

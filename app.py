@@ -39,7 +39,12 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 @app.route('/')
 def index():
-	return redirect('/dash')
+	global settings
+	
+	if settings['globals']['first_time_setup']:
+		return redirect('/wizard/welcome')
+	else: 
+		return redirect('/dash')
 
 @app.route('/dash')
 def dash():
@@ -919,21 +924,25 @@ def adminpage(action=None):
 		if not allowed_file(file):
 			files.remove(file)
 
-	#print(f'Files List: {files}')
-	#print(f'Request Form: {request.form}')
-	#print(f'Request Files: {request.files}')
-
 	if action == 'reboot':
 		event = "Admin: Reboot"
 		WriteLog(event)
-		os.system("sleep 3 && sudo reboot &")
-		return render_template('shutdown.html', action=action, page_theme=settings['globals']['page_theme'])
+		if(isRaspberryPi()):
+			os.system("sleep 3 && sudo reboot &")
+		return render_template('shutdown.html', action=action, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
 
 	elif action == 'shutdown':
 		event = "Admin: Shutdown"
 		WriteLog(event)
-		os.system("sleep 3 && sudo shutdown -h now &")
-		return render_template('shutdown.html', action=action, page_theme=settings['globals']['page_theme'])
+		if(isRaspberryPi()):
+			os.system("sleep 3 && sudo shutdown -h now &")
+		return render_template('shutdown.html', action=action, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
+
+	elif action == 'restart':
+		event = "Admin: Restart Server"
+		WriteLog(event)
+		restart_scripts()
+		return render_template('shutdown.html', action=action, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
 
 	if (request.method == 'POST') and (action == 'setting'):
 		response = request.form
@@ -1057,7 +1066,10 @@ def adminpage(action=None):
 
 	ifconfig = os.popen('ifconfig').readlines()
 
-	temp = checkcputemp()
+	if(isRaspberryPi()):
+		temp = checkcputemp()
+	else:
+		temp = '---'
 
 	debug_mode = settings['globals']['debug_mode']
 
@@ -1183,6 +1195,81 @@ def api_page(action=None):
 	else:
 		return jsonify({'Error':'Recieved undefined/unsupported request.'}), 404
 	#return jsonify({'settings':settings,'control':control, 'current':current_temps}), 201
+
+'''
+Wizard Route for PiFire Setup
+'''
+@app.route('/wizard/<action>', methods=['POST','GET'])
+@app.route('/wizard', methods=['GET', 'POST'])
+def wizard(action=None):
+	global settings
+
+	wizardData = ReadWizard()
+
+	if(request.method == 'GET'):
+		if(action=='welcome'):
+			return render_template('wizard.html', settings=settings, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'], wizardData=wizardData)
+		elif(action=='installstatus'):
+			percent, status, output = GetWizardInstallStatus()
+			return jsonify({'percent' : percent, 'status' : status, 'output' : output}) 
+	elif(request.method == 'POST'):
+		r = request.form
+		if(action=='cancel'):
+			settings['globals']['first_time_setup'] = False
+			WriteSettings(settings)
+			return redirect('/')
+		if(action=='finish'):
+			print(f'Finishing. \n Form Data: {r}')
+			wizardInstallInfo = prepare_wizard_data(r)
+			StoreWizardInstallInfo(wizardInstallInfo)
+			SetWizardInstallStatus(0, 'Starting Install...', '')
+			os.system('python3 wizard.py &')	# Kickoff Installation
+			return render_template('wizard-finish.html', page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'], wizardData=wizardData)
+		if(action=='modulecard'):
+			module = r['module']
+			section = r['section']
+			if section in ['grillplatform', 'probes', 'display', 'distance']:
+				moduleData = wizardData['modules'][section][module]
+			else:
+				return '<strong color="red">No Data</strong>'
+			return render_template('wizard-card.html', moduleData=moduleData, moduleSection=section)	
+
+	return render_template('wizard.html', settings=settings, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'], wizardData=wizardData)
+
+def prepare_wizard_data(formdata): 
+	wizardData = ReadWizard()
+	
+	wizardInstallInfo = {}
+	wizardInstallInfo['modules'] = {
+		'grillplatform' : {
+			'module_selected' : formdata['grillplatformSelect'],
+			'settings' : {}
+		}, 
+		'probes' : {
+			'module_selected' : formdata['probesSelect'],
+			'settings' : {}
+		}, 
+		'display' : {
+			'module_selected' : formdata['displaySelect'],
+			'settings' : {}
+		}, 
+		'distance' : {
+			'module_selected' : formdata['distanceSelect'],
+			'settings' : {}
+		}, 
+	}
+
+	for module in ['grillplatform', 'probes', 'display', 'distance']:
+		module_ = module + '_'
+		moduleSelect = module + 'Select'
+		selected = formdata[moduleSelect]
+		for setting in wizardData['modules'][module][selected]['settings_dependencies']:
+			settingName = module_ + setting
+			if(settingName in formdata):
+				wizardInstallInfo['modules'][module]['settings'][setting] = formdata[settingName]
+
+	return(wizardInstallInfo)
+
 '''
 Manifest Route for Web Application Integration
 '''

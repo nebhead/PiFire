@@ -1,0 +1,72 @@
+{% extends 'base.html' %} 
+
+{% block title %}Wizard Configuration Install{% endblock %} 
+
+{% block timer_bar %}{% endblock %}
+
+{% block content %}
+<div class="container">
+
+	<!-- Output Window/Textbox -->
+	<div class="card shadow">
+		<div class="card-body text-center">
+			<br><br><br>
+			<H2 id="status">Starting Install...</H2>
+			<br>
+			<div class="progress">
+				<div id="percent" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="2" aria-valuemin="0" aria-valuemax="100" style="height: 40px; width: 0%"></div>
+			</div>
+			<br><br><br>
+			<i style="font:small">This operation may take several minutes.</i>
+			<br> 
+			<button class="btn btn-outline-primary" type="button" data-toggle="collapse" data-target="#collapseOutput" aria-expanded="false" aria-controls="collapseOutput">
+				<i class="fas fa-angle-down"></i>&nbsp; Show Output
+			</button>
+		</div>
+	</div>
+	<br>
+	<br>
+	<div class="collapse" id="collapseOutput">
+		<div class="card card-body" style="font-family:courier;">
+			<div class="form-group">
+				<textarea class="form-control" id="installOutput" rows="10" readonly></textarea>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %} 
+
+{% block scripts %} 
+<script>
+
+// On Document Ready
+$(document).ready(function() {
+	var output = "";
+	installStatus = setInterval(function(){
+		// Get Dash Data
+			req = $.ajax({
+				url : '/wizard/installstatus',
+				type : 'GET'
+			});
+
+			req.done(function(data) {
+				// Update Status
+				$('#status').html(data.status);
+				document.getElementById("percent").style.width = data.percent + "%";
+				if(output != data.output) {
+					var textArea = document.getElementById("installOutput");
+					textArea.value +=  data.output + '\r\n';
+					//$('#installOutput').append(data.output);
+					output = data.output;
+				}
+				if (data.percent > 100) {
+					clearInterval(installStatus);
+					setTimeout(function() {console.log('Done!')}, 5000);  // 2-second delay
+					location.href = '/admin/restart';  // Server Restart
+				};
+			});
+		}, 250); // Update every 0.25 second
+});
+
+</script>
+{% endblock %}
