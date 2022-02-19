@@ -33,7 +33,7 @@ def DefaultSettings():
 	settings = {}
 
 	settings['versions'] = {
-		'server' : "1.2.8"
+		'server' : "1.2.9"
 	}
 
 	settings['history_page'] = {
@@ -60,7 +60,8 @@ def DefaultSettings():
 		'startup_timer' : 240,
 		'four_probes' : False,
 		'units' : 'F',
-		'augerrate' : 0.3 # (grams per second) default auger load rate is 10 grams / 30 seconds
+		'augerrate' : 0.3,  # (grams per second) default auger load rate is 10 grams / 30 seconds
+		'first_time_setup' : True  # Set to True on first setup, to run wizard on load 
 	}
 
 	settings['ifttt'] = {
@@ -157,20 +158,12 @@ def DefaultSettings():
 		'full' : 4  # Number of centimeters from the sensor that indicates full
 	}
 
-	if isRaspberryPi():
-		settings['modules'] = {
-			'grillplat' : 'pifire',	 	# Grill Platform (PiFire - Raspberry Pi GPIOs)
-			'adc' : 'ads1115',			# Analog to Digital Converter Default is the ADS1115
-			'display' : 'ssd1306',		# Default display is the SSD1306
-			'dist' : 'prototype'		# Default distance sensor is none
-		}
-	else:
-		settings['modules'] = {
+	settings['modules'] = {
 			'grillplat' : 'prototype',
 			'adc' : 'prototype',
 			'display' : 'prototype',
 			'dist' : 'prototype'
-		}
+	}
 
 	settings['lastupdated'] = {
 		'time' : math.trunc(time.time())
@@ -484,7 +477,13 @@ def ReadSettings(filename='settings.json'):
 		update_settings = True
 	elif(settings_struct['versions']['server'] != settings['versions']['server']):
 		settings_struct['versions']['server'] = settings['versions']['server']
-		update_settings = True	
+		update_settings = True
+
+	# Prevent the wizard from popping up on existing installations
+	if('first_time_setup' not in settings_struct['globals'].keys()):
+		settings_struct['globals']['first_time_setup'] = False
+		update_settings = True
+		print(' ===  DEBUG: Setting First Time Setup to False!! ')
 
 	for key in settings.keys():
 		if key in settings_struct.keys():
@@ -792,4 +791,53 @@ def restart_scripts():
 	print('[DEBUG MSG] Restarting Scripts... ')
 	command = "sleep 3 && sudo service supervisor restart &"
 	if(isRaspberryPi()):
-		os.popen(command)
+		os.system(command)
+
+def ReadWizard(filename='wizard/wizard_manifest.json'):
+	'''
+		Read Wizard Manifest Data from file
+	'''
+	try:
+		json_data_file = os.fdopen(os.open(filename, os.O_RDONLY))
+		json_data_string = json_data_file.read()
+		wizard = json.loads(json_data_string)
+		json_data_file.close()
+	except(IOError, OSError):
+		event = 'ERROR: Could not read from wizard manifest.'
+		WriteLog(event)
+		wizard = {
+			"modules" : {}
+		}
+		return(wizard)
+	except(ValueError):
+		# A ValueError Exception occurs when multiple accesses collide, this code attempts a retry.
+		event = 'ERROR: Value Error Exception - JSONDecodeError reading settings.json'
+		WriteLog(event)
+		json_data_file.close()
+		# Retry Reading Settings
+		wizard = ReadWizard(filename=filename) 
+
+	return(wizard)
+
+def LoadWizardInstallInfo():
+	global cmdsts
+	wizardInstallInfo = json.loads(cmdsts.get('wizard:install'))
+	return(wizardInstallInfo)
+
+def StoreWizardInstallInfo(wizardInstallInfo):
+	global cmdsts
+	cmdsts.set('wizard:install', json.dumps(wizardInstallInfo))
+
+def GetWizardInstallStatus():
+	global cmdsts 
+	percent = cmdsts.get('wizard:percent')
+	status = cmdsts.get('wizard:status')
+	output = cmdsts.get('wizard:output')
+	return(percent, status, output)
+
+def SetWizardInstallStatus(percent, status, output):
+	global cmdsts 
+	cmdsts.set('wizard:percent', percent)
+	cmdsts.set('wizard:status', status)
+	cmdsts.set('wizard:output', output)
+

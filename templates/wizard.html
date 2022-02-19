@@ -1,0 +1,304 @@
+{% extends 'base.html' %} 
+
+{% block title %}Setup Wizard{% endblock %} 
+
+{% block timer_bar %}{% endblock %}
+
+{% block content %}
+
+
+<div class="row">
+	<div class="col-3">
+	  <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+		<a class="nav-link active" id="v-pills-start-tab" data-toggle="pill" href="#v-pills-start" role="tab" aria-controls="v-pills-start" aria-selected="true">Start</a>
+		<a class="nav-link" id="v-pills-platform-tab" data-toggle="pill" href="#v-pills-platform" role="tab" aria-controls="v-pills-platform" aria-selected="false">Platform</a>
+		<a class="nav-link" id="v-pills-probes-tab" data-toggle="pill" href="#v-pills-probes" role="tab" aria-controls="v-pills-probes" aria-selected="false">Probe Input</a>
+		<a class="nav-link" id="v-pills-display-tab" data-toggle="pill" href="#v-pills-display" role="tab" aria-controls="v-pills-display" aria-selected="false">Display</a>
+		<a class="nav-link" id="v-pills-distance-tab" data-toggle="pill" href="#v-pills-distance" role="tab" aria-controls="v-pills-distance" aria-selected="false">Hopper Sensor</a>
+		<a class="nav-link" id="v-pills-finish-tab" data-toggle="pill" href="#v-pills-finish" role="tab" aria-controls="v-pills-finish" aria-selected="false">Finish</a>
+	  </div>
+	</div>
+	<div class="col-9">
+		<form action="/wizard/finish" id="wizardForm" method="POST" onsubmit="if (!finished) {event.preventDefault();};">
+		<div class="tab-content" id="v-pills-tabContent">
+		<div class="tab-pane fade show active" id="v-pills-start" role="tabpanel" aria-labelledby="v-pills-start-tab">
+			<div class="card shadow">
+				<div class="card-header bg-primary text-white"> 
+					<i class="fas fa-hat-wizard"></i>&nbsp; <strong>Welcome!</strong> 
+				</div>
+				<div class="card-body">
+					<strong>Welcome to the configuration wizard for PiFire!</strong><br><br>
+					This wizard will help you configure PiFire packages for your hardware.  The tabs on the left indicate the areas
+					of customization available.  Apply settings by going to the "Finish" tab and clicking "Save & Apply Configuration".  <br>
+					<br>To get started, click next.<br>
+					<br>To dismiss this wizard, click cancel. <i>(You can come back to this wizard from the Admin menu)</i>
+				</div>
+				<div class="card-footer">
+					<div class="btn-toolbar float-right">
+						<button class="btn-warning btn mr-2" id="cancelBtn" data-toggle="modal" data-target="#cancelModal">Cancel</button>
+						<button class="btn-primary btn mr-2" id="platformBtn">Next...</button>
+				 	</div>
+				</div>
+			</div>
+		</div>
+		<div class="tab-pane fade" id="v-pills-platform" role="tabpanel" aria-labelledby="v-pills-platform-tab">
+			<div class="card shadow">
+				<div class="card-header bg-primary text-white"> 
+				<strong>Platform Module</strong> 
+				</div>
+				<div class="card-body">
+					<strong>Select a Platform Module for PiFire.</strong><br><br>
+					By default, this project runs on a Raspberry Pi Zero W and the default platform is PiFire.  The prototype platform should only be selected for testing/debug purposes. <br>
+					<br>
+					<!-- Select Drop Down -->
+					<div class="form-group">
+						<select class="form-control" id="grillplatformSelect" name="grillplatformSelect">
+							{% for module in wizardData['modules']['grillplatform'] %}
+								<option value="{{ module }}"{% if wizardData['modules']['grillplatform'][module]['default'] == True %} selected {% endif %}>{{ wizardData['modules']['grillplatform'][module]['friendly_name'] }}</option>
+							{% endfor %}
+						</select>
+					</div>
+					<!-- Module Card -->
+					<div id="grillplatformCard"></div>
+					<!-- End of Card -->
+					<br>
+					<br>Once finished, click next to continue on to the probe input selection.<br>
+				</div>
+				<div class="card-footer">
+					<button class="btn btn-primary float-right" id="probesBtn">Next...</button>
+				</div>
+			</div>
+		</div>
+		<div class="tab-pane fade" id="v-pills-probes" role="tabpanel" aria-labelledby="v-pills-probes-tab">
+			<div class="card shadow">
+				<div class="card-header bg-primary text-white"> 
+				<strong>Probes Input Module</strong> 
+				</div>
+				<div class="card-body">
+					<strong>Select a Probes Module for PiFire.</strong><br><br>
+					By default, this project uses the ADS1115 ADC module for probe input.  The prototype platform should only be selected for testing/debug purposes. <br>
+					<!-- Select Drop Down -->
+					<div class="form-group">
+						<select class="form-control" id="probesSelect" name="probesSelect">
+							{% for module in wizardData['modules']['probes'] %}
+								<option value="{{ module }}"{% if wizardData['modules']['probes'][module]['default'] == True %} selected {% endif %}>{{ wizardData['modules']['probes'][module]['friendly_name'] }}</option>
+							{% endfor %}
+						</select>
+					</div>
+					<!-- Module Card -->
+					<div id="probesCard"></div>
+					<!-- End of Card -->
+					<br>
+					<br>Once finished, click next to continue on to the display selection.<br>
+				</div>
+				<div class="card-footer">
+					<button class="btn btn-primary float-right" id="displayBtn">Next...</button>
+				</div>
+			</div>
+		</div>
+		<div class="tab-pane fade" id="v-pills-display" role="tabpanel" aria-labelledby="v-pills-display-tab">
+			<div class="card shadow">
+				<div class="card-header bg-primary text-white"> 
+				<strong>Display Module</strong> 
+				</div>
+				<div class="card-body">
+					<strong>Select a Display Module for PiFire.</strong><br><br>
+					A display is not required by PiFire, but is extremely useful.  The default display is the ILI9341 240x120 Color LCD.  The prototype platform should only be selected for testing/debug purposes. <br>
+					<!-- Select Drop Down -->
+					<div class="form-group">
+						<select class="form-control" id="displaySelect" name="displaySelect">
+							{% for module in wizardData['modules']['display'] %}
+								<option value="{{ module }}"{% if wizardData['modules']['display'][module]['default'] == True %} selected {% endif %}>
+									{{ wizardData['modules']['display'][module]['friendly_name'] }}
+								</option>
+							{% endfor %}
+						</select>
+					</div>
+					<!-- Module Card -->
+					<div id="displayCard"></div>
+					<!-- End of Card -->
+					<br>
+					<br>Once finished, click next to continue on to the hopper sensor selection.<br>
+				</div>
+				<div class="card-footer">
+					<button class="btn btn-primary float-right" id="distanceBtn">Next...</button>
+				</div>
+			</div>
+		</div>
+		<div class="tab-pane fade" id="v-pills-distance" role="tabpanel" aria-labelledby="v-pills-distance-tab">
+			<div class="card shadow">
+				<div class="card-header bg-primary text-white"> 
+				<strong>Hopper Level Sensor Module</strong> 
+				</div>
+				<div class="card-body">
+					<strong>Select a Hopper Level Sensor for PiFire.</strong><br><br>
+					A hopper level sensor is optional.  The prototype platform can be selected if you don't currently use a hopper level sensor. <br>
+					<!-- Select Drop Down -->
+					<div class="form-group">
+						<select class="form-control" id="distanceSelect" name="distanceSelect">
+							{% for module in wizardData['modules']['distance'] %}
+								<option value="{{ module }}"{% if wizardData['modules']['distance'][module]['default'] == True %} selected {% endif %}>
+									{{ wizardData['modules']['distance'][module]['friendly_name'] }}
+								</option>
+							{% endfor %}
+						</select>
+					</div>
+					<!-- Module Card -->
+					<div id="distanceCard"></div>
+					<!-- End of Card -->
+					<br>
+					<br>Once finished, click next to continue to the next tab to confirm your settings.<br>
+				</div>
+				<div class="card-footer">
+					<button class="btn btn-primary float-right" id="finishtabBtn">Next...</button>
+				</div>
+			</div>
+		</div>
+		<div class="tab-pane fade" id="v-pills-finish" role="tabpanel" aria-labelledby="v-pills-finish-tab">
+			<div class="card shadow">
+				<div class="card-header bg-primary text-white"> 
+				<strong>Confirm Settings</strong> 
+				</div>
+				<div class="card-body">
+					<strong>Congratulations!</strong> You've finished configuring the inital PiFire settings.  To apply these settings and
+					finish the installation of modules and dependencies, click the 'Confirm & Install' button below. 
+					<br><br>
+					<table class="table">
+						<thead>
+						  <tr>
+							<th scope="col">Module Type</th>
+							<th scope="col">Selected Module</th>
+						  </tr>
+						</thead>
+						<tbody>
+						  <tr>
+							<td>Platform</td>
+							<td id="grillplatformConfirm">-</td>
+						  </tr>
+						  <tr>
+							<td>Probe Input</td>
+							<td id="probesConfirm">-</td>
+						  </tr>
+						  <tr>
+							<td>Display</td>
+							<td id="displayConfirm">-</td>
+						  </tr>
+						  <tr>
+							<td>Hopper Sensor</td>
+							<td id="distanceConfirm">-</td>
+						  </tr>
+						</tbody>
+					  </table>
+					<span class="badge badge-warning">NOTE:</span><strong> This process may take several minutes depending on the items that need to be installed so please be patient.</strong>
+					<br><br>The system will restart the PiFire server software after installing the needed items.  This may take several seconds while the system comes back up.  
+					If you need to revisit this wizard at any time in the future, you can launch it from the admin menu.
+					<br> 
+				</div>
+				<div class="card-footer">
+					<div class="btn-toolbar float-right">
+						<button class="btn-warning btn mr-2" id="cancelBtn2" data-toggle="modal" data-target="#cancelModal">Cancel</button>
+						<button class="btn btn-success" id="finishBtn">Confirm & Install</button>
+				 	</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	</form>
+	</div>
+</div>
+
+<!-- Cancel Modal -->
+<form action="/wizard/cancel" method="POST">
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+	  <div class="modal-content">
+		<div class="modal-header">
+		  <h5 class="modal-title" id="cancelModalLabel">Cancel Configuration Wizard?</h5>
+		  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		  </button>
+		</div>
+		<div class="modal-body">
+			<strong>Are you sure that you want to cancel the Configuration Wizard?</strong><br>
+			When cancelled, this wizard won't appear again, but can be launched again from the Admin panel. 
+		</div>
+		<div class="modal-footer">
+		  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+		  <button type="submit" class="btn btn-warning" name="cancelwizard" value="true">Yes, Cancel the Wizard</button>
+		</div>
+	  </div>
+	</div>
+  </div>
+</form>
+
+{% endblock %} 
+
+{% block scripts %} 
+<script>
+var finished = false;
+// On Document Ready
+$(document).ready(function() {
+	$("#platformBtn").click(function() {
+		$("#v-pills-platform-tab").trigger('click');
+	});
+	$("#probesBtn").click(function() {
+		$("#v-pills-probes-tab").trigger('click');
+	});
+	$("#displayBtn").click(function() {
+		$("#v-pills-display-tab").trigger('click');
+	});
+	$("#distanceBtn").click(function() {
+		$("#v-pills-distance-tab").trigger('click');
+	});
+	$("#finishtabBtn").click(function() {
+		$("#v-pills-finish-tab").trigger('click');
+	});
+	$("#finishBtn").click(function() {
+		finished = true;
+		$('#wizardForm').submit();
+	});
+
+	// Function for Calling Card Info
+	var selection = $('#grillplatformSelect').val(); 
+	$('#grillplatformCard').load("/wizard/modulecard", {"section" : "grillplatform", "module" : selection});
+	$('#grillplatformConfirm').html(selection);
+
+	var selection = $('#probesSelect').val(); 
+	$('#probesCard').load("/wizard/modulecard", {"section" : "probes", "module" : selection});
+	$('#probesConfirm').html(selection);
+
+	var selection = $('#displaySelect').val(); 
+	$('#displayCard').load("/wizard/modulecard", {"section" : "display", "module" : selection});
+	$('#displayConfirm').html(selection);
+
+	var selection = $('#distanceSelect').val(); 
+	$('#distanceCard').load("/wizard/modulecard", {"section" : "distance", "module" : selection});
+	$('#distanceConfirm').html(selection);
+
+	// Setup listeners for selection boxes
+	$('#grillplatformSelect').change(function () {
+		var selection = $('#grillplatformSelect').val(); 
+		$('#grillplatformCard').load("/wizard/modulecard", {"section" : "grillplatform", "module" : selection});
+		$('#grillplatformConfirm').html(selection);
+	});
+	$('#probesSelect').change(function () {
+		var selection = $('#probesSelect').val(); 
+		$('#probesCard').load("/wizard/modulecard", {"section" : "probes", "module" : selection});
+		$('#probesConfirm').html(selection);
+	});
+	$('#displaySelect').change(function () {
+		var selection = $('#displaySelect').val(); 
+		$('#displayCard').load("/wizard/modulecard", {"section" : "display", "module" : selection});
+		$('#displayConfirm').html(selection);
+	});
+	$('#distanceSelect').change(function () {
+		var selection = $('#distanceSelect').val(); 
+		$('#distanceCard').load("/wizard/modulecard", {"section" : "distance", "module" : selection});
+		$('#distanceConfirm').html(selection);
+	});
+
+});
+
+</script>
+
+{% endblock %}
