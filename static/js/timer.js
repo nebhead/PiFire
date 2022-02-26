@@ -169,6 +169,7 @@ $("#timer_launch").click(function(){
 	var timerHours = $("#hoursInputId").val();
 	var timerMins = $("#minsInputId").val();
 	var timerShutdown = false;
+	var timerKeepWarm = false;
 	if ($('#shutdownTimer').is(":checked")){
 		timerShutdown = true;
 	}
