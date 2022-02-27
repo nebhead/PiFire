@@ -301,6 +301,7 @@ $(document).ready(function(){
 		last_mode = data.current_mode;
         splusState = data.splus;
 		splusDefault = data.splus_default;
+		last_grill_setpoint = data.set_points['grill'];
 
 		updateCards(data, init);
 
@@ -342,6 +343,11 @@ $(document).ready(function(){
 					splusDefault = data.splus_default;
 					updateDashButtons(data);
 				};
+				if((data.current_mode == 'Hold') && (data.set_points['grill'] != last_grill_setpoint)) {
+					console.log('Update hold temp.')
+					$("#hold_btn").html(data.set_points['grill'] + "°" + units);
+					last_grill_setpoint = data.set_points['grill'];
+				}; 
 
             });
         }, 1000); // Update every 1 second 
