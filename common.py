@@ -61,7 +61,7 @@ def DefaultSettings():
 		'four_probes' : False,
 		'units' : 'F',
 		'augerrate' : 0.3,  # (grams per second) default auger load rate is 10 grams / 30 seconds
-		'first_time_setup' : True  # Set to True on first setup, to run wizard on load 
+		'first_time_setup' : True,  # Set to True on first setup, to run wizard on load 
 	}
 
 	settings['ifttt'] = {
@@ -242,6 +242,8 @@ def DefaultControl():
 		'power' : False
 	}
 
+	control['errors'] = []
+
 	return(control)
 
 def DefaultMetrics():
@@ -393,18 +395,21 @@ def generateUUID():
 def ReadControl(flush=False):
 	global cmdsts
 
-	if flush:
-		# Remove all control structures in Redis DB (not history or current)
-		cmdsts.delete('control:general')
+	try:
+		if flush:
+			# Remove all control structures in Redis DB (not history or current)
+			cmdsts.delete('control:general')
 
-		# The following set's no persistence so that we don't get writes to the disk / SDCard 
-		cmdsts.config_set('appendonly', 'no')
-		cmdsts.config_set('save', '')
+			# The following set's no persistence so that we don't get writes to the disk / SDCard 
+			cmdsts.config_set('appendonly', 'no')
+			cmdsts.config_set('save', '')
 
+			control = DefaultControl()
+			WriteControl(control)
+		else: 
+			control = json.loads(cmdsts.get('control:general'))
+	except:
 		control = DefaultControl()
-		WriteControl(control)
-	else: 
-		control = json.loads(cmdsts.get('control:general'))
 
 	return(control)
 
@@ -412,6 +417,28 @@ def WriteControl(control):
 	global cmdsts
 
 	cmdsts.set('control:general', json.dumps(control))
+
+def ReadErrors(flush=False):
+	global cmdsts
+
+	try:
+		if flush:
+			# Remove all control structures in Redis DB (not history or current)
+			cmdsts.delete('errors')
+
+			errors = []
+			WriteErrors(errors)
+		else: 
+			errors = json.loads(cmdsts.get('errors'))
+	except:
+		errors = ['Unable to reach Redis database.  You may need to reinstall PiFire or enable redis-server.']
+
+	return(errors)
+
+def WriteErrors(errors):
+	global cmdsts
+
+	cmdsts.set('errors', json.dumps(errors))
 
 def ReadMetrics(flush=False):
 	global cmdsts

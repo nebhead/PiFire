@@ -39,7 +39,7 @@ output = ' - Adding selected modules to the settings.json file. '
 SetWizardInstallStatus(percent, status, output)
 time.sleep(2)
 
-settings['modules']['grill_plat'] = WizardInstallInfo['modules']['grillplatform']['module_selected']		
+settings['modules']['grillplat'] = WizardInstallInfo['modules']['grillplatform']['module_selected']		
 settings['modules']['adc'] = WizardInstallInfo['modules']['probes']['module_selected']		
 settings['modules']['display'] = WizardInstallInfo['modules']['display']['module_selected']		
 settings['modules']['dist'] = WizardInstallInfo['modules']['distance']['module_selected']		

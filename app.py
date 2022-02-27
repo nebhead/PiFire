@@ -50,8 +50,9 @@ def index():
 def dash():
 	global settings
 	control = ReadControl()
+	errors = ReadErrors()
 
-	return render_template('dash.html', set_points=control['setpoints'], notify_req=control['notify_req'], probes_enabled=settings['probe_settings']['probes_enabled'], control=control, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'], units=settings['globals']['units'])
+	return render_template('dash.html', set_points=control['setpoints'], notify_req=control['notify_req'], probes_enabled=settings['probe_settings']['probes_enabled'], control=control, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'], units=settings['globals']['units'], errors=errors)
 
 @app.route('/dashdata')
 def dashdata():
@@ -2083,7 +2084,7 @@ Main Program Start
 settings = ReadSettings()
 
 if __name__ == '__main__':
-	if(settings['modules']['grillplat'] == 'prototype'):
-		socketio.run(app, host='0.0.0.0', debug=True)
-	else:
+	if(isRaspberryPi()):
 		socketio.run(app, host='0.0.0.0')
+	else:
+		socketio.run(app, host='0.0.0.0', debug=True)

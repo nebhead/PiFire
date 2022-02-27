@@ -75,8 +75,22 @@
 
 		<div class="container theme-showcase" role="main">
 
-		{% block notify %} {% endblock %}<br>
-		{% block content %} {% endblock %}<br>
+		{% block notify %}
+			<!-- Begin Error Notification Section -->
+			{% if errors != [] %}
+				<br>
+				{% for error in errors %}
+					<div class="alert alert-danger alert-dismissible">
+						<button type="button" class="close" data-dismiss="alert">&times;</button>
+						<b><i class="fas fa-exclamation-triangle"></i>&nbsp; ERROR:</b> <i>{{ error }}</i>
+					</div>
+				{% endfor %}
+			{% endif %}
+			<!-- End Error Notification Section -->
+		{% endblock %}
+
+		{% block content %} {% endblock %}
+		<br>
 		</div>
 		{% block postcontainer %}{% endblock %}
 
