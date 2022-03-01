@@ -1826,6 +1826,10 @@ def post_app_data(action=None, type=None, json_data=None):
 			WriteLog("Admin: Shutdown")
 			os.system("sleep 3 && sudo shutdown -h now &")
 			return {'response': {'result':'success'}}
+		elif type == 'restart':
+			WriteLog("Admin: Restart Server")
+			restart_scripts()
+			return {'response': {'result':'success'}}
 		else:
 			return {'response': {'result':'error', 'message':'Error: Recieved request without valid type'}}
 
