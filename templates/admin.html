@@ -567,6 +567,7 @@
 	</div>
 	<br>
 
+	<!-- System Card -->
 	<div class="card shadow">
 		<div class="card-header bg-secondary text-white">
 					<h5><i class="fas fa-info-circle"></i>&nbsp; System Information</h5>
@@ -586,7 +587,8 @@
 		</div>
 	</div>
 	<br>
-			
+
+	<!-- GPIO Card -->
 	<div class="card shadow">
 		<div class="card-header bg-secondary text-white">
 			<h5><i class="fas fa-info-circle"></i>&nbsp; GPIO Pin Information</h5>
@@ -629,6 +631,43 @@
 	</div>
 	<BR>
 
+	<!-- Modules Card -->
+	<div class="card shadow">
+		<div class="card-header bg-secondary text-white">
+			<h5><i class="fas fa-info-circle"></i>&nbsp; Modules</h5>
+		</div>
+		<div class="card-body">
+			<table class="table">
+				<thead>
+				<tr>
+					<th>Module</th>
+					<th>Configured</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr>
+					<td>Platform</td>
+					<td>{{ settings['modules']['grillplat'] }}</td>
+				</tr>
+				<tr>
+					<td>ADC</td>
+					<td>{{ settings['modules']['adc'] }}</td>
+				</tr>
+				<tr>
+					<td>Display</td>
+					<td>{{ settings['modules']['display'] }}</td>
+				</tr>
+				<tr>
+					<td>Distance</td>
+					<td>{{ settings['modules']['dist'] }}</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+	<BR>
+
+	<!-- Uptime Card -->
 	<div class="card shadow">
 		<div class="card-header bg-secondary text-white">
 					<h5><i class="fas fa-info-circle"></i>&nbsp; Uptime</h5>
@@ -639,6 +678,7 @@
 	</div>
 	<br>
 
+	<!-- Server Version Card -->
 	<div class="card shadow">
 		<div class="card-header bg-secondary text-white">
 			<h5><i class="fas fa-info-circle"></i>&nbsp; PiFire Info</h5>
@@ -649,7 +689,7 @@
 	</div>
 	<br>
 
-    <!-- *********** Credits *************** -->
+	<!-- Credits Card -->
 	<div class="card shadow">
 		<div class="card-header bg-secondary text-white">
 			<h5><i class="fas fa-info-circle"></i>&nbsp; Credits and Licenses</h5>
