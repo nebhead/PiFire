@@ -82,6 +82,19 @@ $SUDO pip3 install redis
 $SUDO pip3 install uuid
 $SUDO pip3 install influxdb-client[ciso]
 
+# Setup config.txt to enable busses 
+clear
+echo "*************************************************************************"
+echo "**                                                                     **"
+echo "**      Configuring config.txt                                         **"
+echo "**                                                                     **"
+echo "*************************************************************************"
+
+# Enable SPI - Needed for some displays
+echo "dtparam=spi=on" | $SUDO tee -a /boot/config.txt > /dev/null
+# Enable I2C - Needed for some displays, ADCs, distance sensors
+echo "dtparam=i2c_arm=on" | $SUDO tee -a /boot/config.txt > /dev/null
+
 # Grab project files
 clear
 echo "*************************************************************************"
@@ -154,18 +167,7 @@ fi
 # If supervisor isn't already running, startup Supervisor
 $SUDO service supervisor start
 
-clear
-echo "*************************************************************************"
-echo "**                                                                     **"
-echo "**      Configuring Modules...                                         **"
-echo "**                                                                     **"
-echo "*************************************************************************"
-
-cd ~/pifire # Change dir to where the settings.py application is (and common.py)
-
-$SUDO bash modules.sh
-
 # Rebooting
-whiptail --msgbox --backtitle "Install Complete / Reboot Required" --title "Installation Completed - Rebooting" "Congratulations, the installation is complete.  At this time, we will perform a reboot and your application should be ready.  You should be able to access your application by opening a browser on your PC or other device and using the IP address for this Pi.  Enjoy!" ${r} ${c}
+whiptail --msgbox --backtitle "Install Complete / Reboot Required" --title "Installation Completed - Rebooting" "Congratulations, the installation is complete.  At this time, we will perform a reboot and your application should be ready.  On first boot, the wizard will guide you through the remaining setup steps.  You should be able to access your application by opening a browser on your PC or other device and using the IP address for this Pi.  Enjoy!" ${r} ${c}
 clear
 $SUDO reboot

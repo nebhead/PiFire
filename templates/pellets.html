@@ -436,6 +436,7 @@
                                                 {% if data == 'deleted' %}
                                                 <td>User Deleted Profile</td>
                                                 <td>-</td>
+                                                <td>-</td>
                                                 {% else %}
                                                 <td><a href="#edit_{{ data }}" data-toggle="collapse">{{ pelletdb['archive'][data]['brand'] }} {{ pelletdb['archive'][data]['wood'] }}</a></td>
                                                 <td>{% for star in range(pelletdb['archive'][data]['rating']) %}

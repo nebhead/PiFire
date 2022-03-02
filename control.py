@@ -16,59 +16,140 @@
 # Run 'bash modules.sh' from the command prompt to select prototype modules, for prototype mode
 
 # *****************************************
-# Imported Libraries
+# Base Imported Libraries
 # *****************************************
-
+import importlib
 import requests
 from pushbullet import Pushbullet  # Pushbullet Import
-
 import pid as PID  # Library for calculating PID setpoints
 from common import *  # Common Library for WebUI and Control Program
-
 from temp_queue import TempQueue
 
-# Read Settings to Get Modules Configuration 
+'''
+Read and initialize Settings, Control, History, Metrics, and Error Data
+'''
+# Read Settings & Wizard Manifest to Get Modules Configuration 
 settings = ReadSettings()
+wizardData = ReadWizard()
 
-if settings['modules']['grillplat'] == 'pifire':
-    from grillplat_pifire import GrillPlatform  # Library for controlling the grill platform w/Raspberry Pi GPIOs
+# Flush Redis DB and create JSON structure
+control = ReadControl(flush=True)
+# Delete Redis DB for history / current
+ReadHistory(0, flushhistory=True)
+# Create metrics DB for tracking certain metrics
+metrics = ReadMetrics(flush=True)
+# Create errors log 
+errors = ReadErrors(flush=True)
+
+event = 'Flushing Redis DB and creating new control structure'
+WriteLog(event)
+
+'''
+Set up GrillPlatform Module
+'''
+try: 
+    grillplatform = settings['modules']['grillplat']
+    filename = 'grillplat_' + wizardData['modules']['grillplatform'][grillplatform]['filename']
+    GrillPlatModule = importlib.import_module(filename)
+
+except:
+    GrillPlatModule = importlib.import_module('grillplat_prototype')
+    error_event = f'An error occured loading the [{settings["modules"]["grillplat"]}] platform module.  The prototype module has been loaded instead.  This sometimes means that the hardware is not connected properly, or the module is not configured.  Please run the configuration wizard again from the admin panel to fix this issue.'
+    errors.append(error_event)
+    WriteErrors(errors)
+    WriteLog(error_event)
+    if settings['globals']['debug_mode']:
+        raise
+
+outpins = settings['outpins']
+inpins = settings['inpins']
+triggerlevel = settings['globals']['triggerlevel']
+buttonslevel = settings['globals']['buttonslevel']
+units = settings['globals']['units']
+
+if triggerlevel == 'LOW':
+    AUGERON = 0
+    AUGEROFF = 1
+    FANON = 0
+    FANOFF = 1
+    IGNITERON = 0
+    IGNITEROFF = 1
+    POWERON = 0
+    POWEROFF = 1
 else:
+    AUGERON = 1
+    AUGEROFF = 0
+    FANON = 1
+    FANOFF = 0
+    IGNITERON = 1
+    IGNITEROFF = 0
+    POWERON = 1
+    POWEROFF = 0
+
+try:
+    grill_platform = GrillPlatModule.GrillPlatform(outpins, inpins, triggerlevel)
+except:
     from grillplat_prototype import GrillPlatform  # Simulated Library for controlling the grill platform
+    grill_platform = GrillPlatform(outpins, inpins, triggerlevel)
+    error_event = f'An error occured configuring the [{settings["modules"]["grillplat"]}] platform object.  The prototype module has been loaded instead.  This sometimes means that the hardware is not connected properly, or the module is not configured.  Please run the configuration wizard again from the admin panel to fix this issue.'
+    errors.append(error_event)
+    WriteErrors(errors)
+    WriteLog(error_event)
+    if settings['globals']['debug_mode']:
+        raise
 
-if settings['modules']['adc'] == 'ads1115':
-    from adc_ads1115 import ReadADC  # Library for reading the ADC device
-else:
-    from adc_prototype import ReadADC  # Simulated Library for reading the ADC device
+# If powering on, check the on/off switch and set grill power appropriately.
+last = grill_platform.GetInputStatus()
 
-if settings['modules']['display'] == 'ssd1306':
-    from display_ssd1306 import Display  # Library for controlling the display device
-elif settings['modules']['display'] == 'ssd1306b':
-    from display_ssd1306b import Display  # Library for controlling the display device w/button input
-elif settings['modules']['display'] == 'st7789p':
-    from display_st7789p import Display  # Library for controlling the display device
-elif settings['modules']['display'] == 'pygame':
-    from display_pygame import Display  # Library for controlling the display device
-elif settings['modules']['display'] == 'pygame_240x320':
-    from display_pygame_240x320 import Display  # Library for controlling the display device
-elif settings['modules']['display'] == 'pygame_240x320b':
-    from display_pygame_240x320b import Display  # Library for controlling the display device
-elif settings['modules']['display'] == 'pygame_64x128':
-    from display_pygame_64x128 import Display  # Library for controlling the display device
-elif settings['modules']['display'] == 'ili9341':
-    from display_ili9341 import Display  # Library for controlling the display device
-elif settings['modules']['display'] == 'ili9341_encoder':
-    from display_ili9341_encoder import Display  # Library for controlling the display device
-elif settings['modules']['display'] == 'ili9341b':
-    from display_ili9341b import Display  # Library for controlling the display device
+if last == 0:
+    grill_platform.PowerOn()
 else:
-    from display_prototype import Display  # Simulated Library for controlling the display device
+    grill_platform.PowerOff()
 
-if settings['modules']['dist'] == 'vl53l0x':
-    from distance_vl53l0x import HopperLevel  # Library for reading the HopperLevel from vl53l0x TOF Sensor
-elif settings['modules']['dist'] == 'hcsr04':
-    from distance_hcsr04 import HopperLevel  # Library for reading HopperLevel HC-SR04 Ultrasonic Sensor
-else:
-    from distance_prototype import HopperLevel  # Simulated Library for reading the HopperLevel
+'''
+Set up Probes Input (ADC) Module
+'''
+try: 
+    probesinput = settings['modules']['adc']
+    filename = 'adc_' + wizardData['modules']['probes'][probesinput]['filename']
+    ProbesModule = importlib.import_module(filename)
+
+except:
+    ProbesModule = importlib.import_module('adc_prototype')
+    error_event = f'An error occured loading the [{settings["modules"]["adc"]}] probes module.  The prototype module has been loaded instead.  This sometimes means that the hardware is not connected properly, or the module is not configured.  Please run the configuration wizard again from the admin panel to fix this issue.'
+    errors.append(error_event)
+    WriteErrors(errors)
+    WriteLog(error_event)
+    if settings['globals']['debug_mode']:
+        raise
+
+# Start ADC object and set profiles
+grill1type = settings['probe_types']['grill1type']
+grill2type = settings['probe_types']['grill2type']
+probe1type = settings['probe_types']['probe1type']
+probe2type = settings['probe_types']['probe2type']
+
+try:
+    adc_device = ProbesModule.ReadADC(
+                    settings['probe_settings']['probe_profiles'][grill1type],
+                    settings['probe_settings']['probe_profiles'][grill2type],
+                    settings['probe_settings']['probe_profiles'][probe1type],
+                    settings['probe_settings']['probe_profiles'][probe2type], 
+                    units=settings['globals']['units'])
+except:
+    from adc_prototype import ReadADC  # Simulated Library for controlling the grill platform
+    adc_device = ReadADC(
+                    settings['probe_settings']['probe_profiles'][grill0type],
+                    settings['probe_settings']['probe_profiles'][probe1type],
+                    settings['probe_settings']['probe_profiles'][probe2type], 
+                    units=settings['globals']['units'])
+    
+    error_event = f'An error occured configuring the [{settings["modules"]["adc"]}] probes object.  The prototype module has been loaded instead.  This sometimes means that the hardware is not connected properly, or the module is not configured.  Please run the configuration wizard again from the admin panel to fix this issue.'
+    errors.append(error_event)
+    WriteErrors(errors)
+    WriteLog(error_event)
+    if settings['globals']['debug_mode']:
+        raise
 
 for probe_source in settings['probe_settings']['probe_sources']:
     # if any of the probes uses max31865 then load the library
@@ -77,6 +158,79 @@ for probe_source in settings['probe_settings']['probe_sources']:
 
         break
 
+'''
+Set up Display Module
+'''
+try: 
+    displayname = settings['modules']['display']
+    filename = 'display_' + wizardData['modules']['display'][displayname]['filename']
+    DisplayModule = importlib.import_module(filename)
+
+except:
+    DisplayModule = importlib.import_module('display_prototype')
+    error_event = f'An error occured loading the [{settings["modules"]["display"]}] display module.  The prototype module has been loaded instead.  This sometimes means that the hardware is not connected properly, or the module is not configured.  Please run the configuration wizard again from the admin panel to fix this issue.'
+    errors.append(error_event)
+    WriteErrors(errors)
+    WriteLog(error_event)
+    if settings['globals']['debug_mode']:
+        raise
+
+try:
+    if str(settings['modules']['display']).endswith('b'):
+        display_device = DisplayModule.Display(buttonslevel=buttonslevel, units=units)
+    else:
+        display_device = DisplayModule.Display(units=units)
+except:
+    from display_prototype import Display  # Simulated Library for controlling the grill platform
+    display_device = Display(units=units)
+    error_event = f'An error occured configuring the [{settings["modules"]["display"]}] display object.  The prototype module has been loaded instead.  This sometimes means that the hardware is not connected properly, or the module is not configured.  Please run the configuration wizard again from the admin panel to fix this issue.'
+    errors.append(error_event)
+    WriteErrors(errors)
+    WriteLog(error_event)
+    if settings['globals']['debug_mode']:
+        raise
+
+'''
+Set up Distance (Hopper Level) Module
+'''
+try: 
+    distname = settings['modules']['dist']
+    filename = 'distance_' + wizardData['modules']['distance'][distname]['filename']
+    DistanceModule = importlib.import_module(filename)
+
+except:
+    DistanceModule = importlib.import_module('distance_prototype')
+    error_event = f'An error occured loading the [{settings["modules"]["dist"]}] distance module.  The prototype module has been loaded instead.  This sometimes means that the hardware is not connected properly, or the module is not configured.  Please run the configuration wizard again from the admin panel to fix this issue.'
+    errors.append(error_event)
+    WriteErrors(errors)
+    WriteLog(error_event)
+    if settings['globals']['debug_mode']:
+        raise
+
+try:
+    if (settings['modules']['grillplat'] == 'prototype') and (settings['modules']['dist'] == 'prototype'):
+        # If in prototype mode, enable test reading (i.e. random values from proto distance sensor)
+        dist_device = DistanceModule.HopperLevel(settings['pelletlevel']['empty'], settings['pelletlevel']['full'], test=True)
+    else:
+        dist_device = DistanceModule.HopperLevel(settings['pelletlevel']['empty'], settings['pelletlevel']['full'])
+except:
+    from distance_prototype import HopperLevel  # Simulated Library for controlling the grill platform
+    dist_device = HopperLevel(settings['pelletlevel']['empty'], settings['pelletlevel']['full'])
+    error_event = f'An error occured configuring the [{settings["modules"]["dist"]}] distance object.  The prototype module has been loaded instead.  This sometimes means that the hardware is not connected properly, or the module is not configured.  Please run the configuration wizard again from the admin panel to fix this issue.'
+    errors.append(error_event)
+    WriteErrors(errors)
+    WriteLog(error_event)
+    if settings['globals']['debug_mode']:
+        raise
+
+# Get current hopper level and save it to the current pellet information
+pelletdb = ReadPelletDB()
+pelletdb['current']['hopper_level'] = dist_device.GetLevel()
+WritePelletDB(pelletdb)
+if settings['globals']['debug_mode']:
+    event = "* Hopper Level Checked @ " + str(pelletdb['current']['hopper_level']) + "%"
+    print(event)
+    WriteLog(event)
 
 # *****************************************
 # Function Definitions
@@ -1427,93 +1581,6 @@ def CheckNotifyPellets(control, settings, pelletdb):
 # *****************************************
 # Main Program Start / Init
 # *****************************************
-
-# Init Global Variables / Classes
-
-settings = ReadSettings()
-
-outpins = settings['outpins']
-inpins = settings['inpins']
-triggerlevel = settings['globals']['triggerlevel']
-buttonslevel = settings['globals']['buttonslevel']
-units = settings['globals']['units']
-
-if triggerlevel == 'LOW':
-    AUGERON = 0
-    AUGEROFF = 1
-    FANON = 0
-    FANOFF = 1
-    IGNITERON = 0
-    IGNITEROFF = 1
-    POWERON = 0
-    POWEROFF = 1
-else:
-    AUGERON = 1
-    AUGEROFF = 0
-    FANON = 1
-    FANOFF = 0
-    IGNITERON = 1
-    IGNITEROFF = 0
-    POWERON = 1
-    POWEROFF = 0
-
-# Initialize Grill Platform Object
-grill_platform = GrillPlatform(outpins, inpins, triggerlevel)
-
-# If powering on, check the on/off switch and set grill power appropriately.
-last = grill_platform.GetInputStatus()
-
-if last == 0:
-    grill_platform.PowerOn()
-else:
-    grill_platform.PowerOff()
-
-# Start display device object and display splash
-if str(settings['modules']['display']).endswith('b'):
-    display_device = Display(buttonslevel=buttonslevel, units=units)
-else:
-    display_device = Display(units=units)
-
-grill1type = settings['probe_types']['grill1type']
-grill2type = settings['probe_types']['grill2type']
-probe1type = settings['probe_types']['probe1type']
-probe2type = settings['probe_types']['probe2type']
-
-# Start ADC object and set profiles
-adc_device = ReadADC(settings['probe_settings']['probe_profiles'][grill1type],
-                     settings['probe_settings']['probe_profiles'][grill2type],
-                     settings['probe_settings']['probe_profiles'][probe1type],
-                     settings['probe_settings']['probe_profiles'][probe2type],
-                     units=units)
-
-pelletdb = ReadPelletDB()
-
-# Start Distance Sensor Object for Hopper
-if (settings['modules']['grillplat'] == 'prototype') and (settings['modules']['dist'] == 'prototype'):
-    # If in prototype mode, enable test reading (i.e. random values from proto distance sensor)
-    dist_device = HopperLevel(settings['pelletlevel']['empty'], settings['pelletlevel']['full'], test=True)
-else:
-    dist_device = HopperLevel(settings['pelletlevel']['empty'], settings['pelletlevel']['full'])
-
-# Get current hopper level and save it to the current pellet information
-pelletdb['current']['hopper_level'] = dist_device.GetLevel()
-WritePelletDB(pelletdb)
-if settings['globals']['debug_mode']:
-    event = "* Hopper Level Checked @ " + str(pelletdb['current']['hopper_level']) + "%"
-    print(event)
-    WriteLog(event)
-
-#  Flush Redis DB and create JSON structure
-control = ReadControl(flush=True)
-#  Delete Redis DB for history / current
-ReadHistory(0, flushhistory=True)
-#  Create metrics DB for tracking certain metrics
-metrics = ReadMetrics(flush=True)
-
-event = 'Flushing Redis DB and creating new control structure'
-WriteLog(event)
-
-#  Create /logs/event.log file
 event = 'Control Script Starting Up.'
 WriteLog(event)
 

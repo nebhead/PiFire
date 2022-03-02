@@ -6,7 +6,9 @@
     <meta http-equiv="refresh" content="30;url=/" />
     {% elif "reboot" in action %}
     <meta http-equiv="refresh" content="30;url=/" />
-    {% else %}
+    {% elif "restart" in action %}
+    <meta http-equiv="refresh" content="30;url=/" />
+	{% else %}
     <meta http-equiv="refresh" content="3;url=/" />
     {% endif %}
 {% endblock %}
@@ -16,6 +18,8 @@
 	Shutting Down
 	{% elif "reboot" in action %}
 	Rebooting
+	{% elif "restart" in action %}
+	Restarting Server
 	{% else %}
 	PiFire
 	{% endif %}
@@ -25,22 +29,27 @@
 {% endblock %}
 
 {% block content %}
-    <br>
-      {% if "shutdown" in action %}
-        <center>
-          <H1>Shutting Down...</H1><br>
-        </center>
-      {% elif "reboot" in action %}
-        <center>
-          <H1>Rebooting...</H1><br>
-          Hang in there, this could take a few minutes.
-        </center>
-      {% else %}
-        <center><H1>Unspecified Action</H1></center>
-      {% endif %}
-      <br>
-      <div class="d-flex justify-content-center">
-        <div class="spinner-border text-primary" style="width: 4rem; height: 4rem;"></div>
-      </div>
-    </div>
+	<br>
+	{% if "shutdown" in action %}
+		<center>
+			<H1>Shutting Down...</H1><br>
+		</center>
+	{% elif "reboot" in action %}
+		<center>
+			<H1>Rebooting...</H1><br>
+			Hang in there, this could take a few minutes.
+		</center>
+	{% elif "restart" in action %}
+		<center>
+			<H1>Restarting Server...</H1><br>
+			Restarting the server software.  You'll be returned to the dashboard shortly.
+		</center>
+	{% else %}
+		<center><H1>Unspecified Action</H1></center>
+	{% endif %}
+		<br>
+		<div class="d-flex justify-content-center">
+			<div class="spinner-border text-primary" style="width: 4rem; height: 4rem;"></div>
+		</div>
+	</div>
 {% endblock %}
