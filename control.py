@@ -139,7 +139,8 @@ try:
 except:
     from adc_prototype import ReadADC  # Simulated Library for controlling the grill platform
     adc_device = ReadADC(
-                    settings['probe_settings']['probe_profiles'][grill0type],
+                    settings['probe_settings']['probe_profiles'][grill1type],
+                    settings['probe_settings']['probe_profiles'][grill2type],
                     settings['probe_settings']['probe_profiles'][probe1type],
                     settings['probe_settings']['probe_profiles'][probe2type], 
                     units=settings['globals']['units'])
