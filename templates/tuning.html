@@ -32,7 +32,9 @@
 						<form name="probe_select" id="probe_select" action="/tuning/select" method="POST">
 							<select class="form-control" name="probe_select" id="probe_select" onchange="this.form.submit()">
 								<option value="none"{% if pagectrl['selected'] == 'none' %} selected{% endif %}>Select an Input to Tune</option>
+								{% if settings['grill_probe_settings']['grill_probe_enabled'][2] != 1 %}
 								<option value="grill_input"{% if pagectrl['selected'] == 'grill_input' %} selected{% endif %}>Grill Ambient Thermistor Input</option>
+								{% endif %}
 								<option value="probe1_input"{% if pagectrl['selected'] == 'probe1_input' %} selected{% endif %}>Probe 1 Thermistor Input</option>
 								<option value="probe2_input"{% if pagectrl['selected'] == 'probe2_input' %} selected{% endif %}>Probe 2 Thermistor Input</option>
 							</select>

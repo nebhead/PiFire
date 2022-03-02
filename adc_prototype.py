@@ -18,23 +18,26 @@ import random
 
 class ReadADC:
 
-	def __init__(self, grill_probe_profile, probe_01_profile, probe_02_profile, units='F'):
-		self.SetProfiles(grill_probe_profile, probe_01_profile, probe_02_profile)
+	def __init__(self, grill_probe1_profile, grill_probe2_profile, probe_01_profile, probe_02_profile, units='F'):
+		self.SetProfiles(grill_probe1_profile, grill_probe2_profile, probe_01_profile, probe_02_profile)
 
 		self.adc_data = {}
-		self.units = units 
+		self.units = units
 		if self.units == 'F':
-			self.adc_data['GrillTemp'] = 55		# Fake starting temperature for prototype only
+			self.adc_data['Grill1Temp'] = 55	# Fake starting temperature for prototype only
+			self.adc_data['Grill2Temp'] = 55	# Fake starting temperature for prototype only
 			self.adc_data['Probe1Temp'] = 32	# Fake starting temperature for prototype only
 			self.adc_data['Probe2Temp'] = 42	# Fake starting temperature for prototype only
 		else:
-			self.adc_data['GrillTemp'] = 12		# Fake starting temperature for prototype only
-			self.adc_data['Probe1Temp'] = 0	# Fake starting temperature for prototype only
+			self.adc_data['Grill1Temp'] = 12	# Fake starting temperature for prototype only
+			self.adc_data['Grill2Temp'] = 12	# Fake starting temperature for prototype only
+			self.adc_data['Probe1Temp'] = 0		# Fake starting temperature for prototype only
 			self.adc_data['Probe2Temp'] = 5.5	# Fake starting temperature for prototype only
 
 
-	def SetProfiles(self, grill_probe_profile, probe_01_profile, probe_02_profile):
-		self.grill_probe_profile = grill_probe_profile
+	def SetProfiles(self, grill_probe1_profile, grill_probe2_profile, probe_01_profile, probe_02_profile):
+		self.grill_probe1_profile = grill_probe1_profile
+		self.grill_probe2_profile = grill_probe2_profile
 		self.probe_01_profile = probe_01_profile
 		self.probe_02_profile = probe_02_profile
 
@@ -65,9 +68,9 @@ class ReadADC:
 
 	def ReadAllPorts(self):
 		# This is my attemp at making a psuedo-random temperature that will generally rise
-		adc_value = [0,0,0] # Using this to populate random numbers from 0-9
+		adc_value = [0,0,0,0] # Using this to populate random numbers from 0-9
 
-		for index in range(3):
+		for index in range(4):
 			adc_value[index] = random.randint(0,9)
 
 		if self.units == 'F':
@@ -83,10 +86,15 @@ class ReadADC:
 			minProbeTemp = 0
 			changeFactor = 0.5
 
-		if (adc_value[0] > 7) and (self.adc_data['GrillTemp'] < maxGrillTemp):
-			self.adc_data['GrillTemp'] += changeFactor # raise temperature by changeFactor degree
-		elif (adc_value[0] < 1) and (self.adc_data['GrillTemp'] > minGrillTemp):
-			self.adc_data['GrillTemp'] -= changeFactor # reduce temperature by changeFactor degree
+		if (adc_value[0] > 7) and (self.adc_data['Grill1Temp'] < maxGrillTemp):
+			self.adc_data['Grill1Temp'] += 1 # raise temperature by changeFactor degree
+		elif (adc_value[0] < 1) and (self.adc_data['Grill1Temp'] > minGrillTemp):
+			self.adc_data['Grill1Temp'] -= 1 # reduce temperature by changeFactor degree
+
+		if (adc_value[3] > 7) and (self.adc_data['Grill2Temp'] < maxGrillTemp):
+			self.adc_data['Grill2Temp'] += changeFactor # raise temperature by changeFactor degree
+		elif (adc_value[3] < 1) and (self.adc_data['Grill2Temp'] > minGrillTemp):
+			self.adc_data['Grill2Temp'] -= changeFactor # reduce temperature by changeFactor degree
 
 		if (adc_value[1] > 7) and (self.adc_data['Probe1Temp'] < maxProbeTemp):
 			self.adc_data['Probe1Temp'] += changeFactor # raise temperature by changeFactor degree
@@ -99,7 +107,8 @@ class ReadADC:
 			self.adc_data['Probe2Temp'] -= changeFactor # reduce temperature by changeFactor degree
 
 		# Thermistor data is not useful in prototype mode
-		self.adc_data['GrillTr'] = self.adctotemp(self.adc_data['GrillTemp'], self.grill_probe_profile) # Resistance of Grill Thermistor
+		self.adc_data['Grill1Tr'] = self.adctotemp(self.adc_data['Grill1Temp'], self.grill_probe1_profile) # Resistance of Grill 1 Thermistor
+		self.adc_data['Grill2Tr'] = self.adctotemp(self.adc_data['Grill2Temp'], self.grill_probe2_profile) # Resistance of Grill 2 Thermistor
 		self.adc_data['Probe1Tr'] = self.adctotemp(self.adc_data['Probe1Temp'], self.probe_01_profile) # Resistance of Probe Thermistor
 		self.adc_data['Probe2Tr'] = self.adctotemp(self.adc_data['Probe2Temp'], self.probe_02_profile) # Resistance of Probe Thermistor
 
@@ -108,11 +117,13 @@ class ReadADC:
 	def update_units(self, units):
 		if units == 'C':
 			self.units = 'C'
-			self.adc_data['GrillTemp'] = 12		# Fake starting temperature for prototype only
+			self.adc_data['Grill1Temp'] = 12	# Fake starting temperature for prototype only
+			self.adc_data['Grill2Temp'] = 12	# Fake starting temperature for prototype only
 			self.adc_data['Probe1Temp'] = 0	 	# Fake starting temperature for prototype only
 			self.adc_data['Probe2Temp'] = 5.5	# Fake starting temperature for prototype only
 		else: 
 			self.units = 'F'
-			self.adc_data['GrillTemp'] = 55		# Fake starting temperature for prototype only
+			self.adc_data['Grill1Temp'] = 55	# Fake starting temperature for prototype only
+			self.adc_data['Grill2Temp'] = 55	# Fake starting temperature for prototype only
 			self.adc_data['Probe1Temp'] = 32	# Fake starting temperature for prototype only
 			self.adc_data['Probe2Temp'] = 42	# Fake starting temperature for prototype only

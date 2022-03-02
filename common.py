@@ -47,7 +47,7 @@ def DefaultSettings():
 		'probe_profiles' :  DefaultProbeProfiles(),
 		'probes_enabled' : [1,1,1],
 		# probe sources can be ADC0-3 or max31865
-		'probe_sources'  : ['ADC0', 'ADC1', 'ADC2']
+		'probe_sources' : ['ADC0', 'ADC1', 'ADC2', 'ADC3']
 	}
 
 	settings['globals'] = {
@@ -98,9 +98,16 @@ def DefaultSettings():
 	}
 
 	settings['probe_types'] = {
-		'grill0type' : 'PT-1000-OEM',
+		'grill1type' : 'PT-1000-OEM',
+		'grill2type' : 'TWPS00',
 		'probe1type' : 'TWPS00',
 		'probe2type' : 'TWPS00'
+	}
+
+	settings['grill_probe_settings'] = {
+		'grill_probes': GrillProbes(),
+		'grill_probe' : 'grill_probe1',
+		'grill_probe_enabled' : [1,0,0]
 	}
 
 	settings['outpins'] = {
@@ -384,6 +391,24 @@ def DefaultProbeProfiles():
 			'name' : 'ET-73-skyeperry1'
 	}
 	return probe_profiles
+
+def GrillProbes():
+
+	grill_probes = {}
+
+	grill_probes['grill_probe1'] = {
+		'name' : 'Grill Probe 1'
+	}
+
+	grill_probes['grill_probe2'] = {
+		'name' : 'Grill Probe 2'
+	}
+
+	grill_probes['grill_probe3'] = {
+		'name' : 'Avg Grill Probes'
+	}
+
+	return grill_probes
 
 def generateUUID():
 	node = uuid.getnode()
