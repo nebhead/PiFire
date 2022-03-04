@@ -1722,6 +1722,9 @@ while True:
                 control['mode'] = 'Stop'  # Set mode to Stop
                 control['updated'] = True
                 WriteControl(control)
+                if settings['globals']['auto_power_off']:
+                    WriteLog('Shutdown mode ended powering off grill')
+                    os.system("sleep 3 && sudo shutdown -h now &")
         # e. Monitor (monitor the OEM controller)
         elif control['mode'] == 'Monitor':
             control['status'] = 'monitor'  # Set status to monitor

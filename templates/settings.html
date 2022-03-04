@@ -589,6 +589,7 @@
                             </h5>
                         </div>
                         <div class="card-body">
+                            <h5>Timer Settings</h5>
                             <div class="input-group mb-3">
                                 <div class="input-group-prepend">
                                     <span class="input-group-text" data-toggle="tooltip" title="Shutdown timer (seconds) [Default=60]">
@@ -609,6 +610,17 @@
                             </div>
                             <span class="badge badge-warning">NOTE:</span>
                             <i class="small"> Amount of time for startup before transitioning to smoke or attempting a reignite</i>
+                            <br>
+                            <br>
+                            <h5>Power Off Settings</h5>
+                            <span class="badge badge-warning">NOTE:</span>
+                            <i class="small"> When enabled the Raspberry Pi will auto power off after the Grill Shutdown Mode has ended</i>
+                            <br>
+                            <br>
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="auto_power_off" name="auto_power_off" {% if settings['globals']['auto_power_off'] == True %}checked{% endif %}>
+                                <label class="custom-control-label" for="auto_power_off">Auto Power Off</label>
+                            </div>
                             <br>
                         </div>
                         <!-- End of card body -->

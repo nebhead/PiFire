@@ -836,6 +836,12 @@ def settingspage(action=None):
 			if(response['startup_timer'] != ''):
 				settings['globals']['startup_timer'] = int(response['startup_timer'])
 
+		if('auto_power_off' in response):
+			if(response['auto_power_off'] == 'on'):
+				settings['globals']['auto_power_off'] = True
+		else:
+			settings['globals']['auto_power_off'] = False
+
 		event['type'] = 'updated'
 		event['text'] = 'Successfully updated startup/shutdown settings.'
 
