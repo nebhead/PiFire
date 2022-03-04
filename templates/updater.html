@@ -8,6 +8,7 @@
 {% block notify %}
 <!-- Success -->
   {% if (alert['type'] == 'success') %}
+  <br>
   <div class="container">
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         <i class="fas fa-check-circle"></i>&nbsp; <strong>Success.</strong> {{ alert['text'] }}
@@ -16,7 +17,8 @@
 		</button>
     </div>
   </div>
-  {% elif (alert['type'] == 'error') %} 
+  {% elif (alert['type'] == 'error') %}
+  <br>
   <div class="container">
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
         <i class="fas fa-check-circle"></i>&nbsp; <strong>Error!</strong> {{ alert['text'] }}
@@ -25,7 +27,8 @@
 		</button>    
 	</div>
   </div>
-  {% elif (alert['type'] == 'warning') %} 
+  {% elif (alert['type'] == 'warning') %}
+  <br>
   <div class="container">
     <div class="alert alert-warning alert-dismissible fade show" role="alert">
         <i class="fas fa-check-circle"></i>&nbsp; <strong>Warning!</strong> {{ alert['text'] }}
@@ -37,12 +40,13 @@
   {% endif %}
 {% endblock %}
 
-{% block content %} 
+{% block content %}
+<br>
 <div class="container">
 
 <!-- Status & Info Row -->
 <div class="row">
-	<div class="col">
+	<div class="col mb-4">
 		<div class="card shadow">
 			<div class="card-header bg-info">
 				<i class="far fa-arrow-alt-circle-up"></i>&nbsp; Status
@@ -70,19 +74,19 @@
 						<h1><i class="fas fa-exclamation-triangle"></i></h1>
 						<strong>Error!</strong> The update check failed for some reason. Check your logs.
 					</div>
-					<button type="button" class="btn btn-outline-danger btn-block shadow" role="button" id="check_for_update">Check Again</a>
+					<button type="button" class="btn btn-outline-danger btn-block shadow" role="button" id="check_for_update">Check Again</button>
 				</div>
 				<div id="update_current" style="display:none">
 					<div class="alert alert-info fade show" role="alert">
 						<h1><i class="far fa-check-circle"></i></h1>
 						<strong>Great News!  You are up to date on this branch!</strong>
 					</div>
-					<button type="button" class="btn btn-outline-info btn-block shadow" role="button" id="check_for_update_2">Check Again</a>
+					<button type="button" class="btn btn-outline-info btn-block shadow" role="button" id="check_for_update_2">Check Again</button>
 				</div>
 			</div>
 		</div>
 	</div>
-	<div class="col">
+	<div class="col mb-4">
 		<div class="card shadow">
 			<div class="card-header bg-info">
 				<i class="fas fa-info-circle"></i>&nbsp; Info
@@ -95,7 +99,7 @@
 			</div>
 		</div>
 	</div>	
-</div><br>
+</div>
 
 <!-- Branch Selector Card -->
 <form method="POST" action="/update">

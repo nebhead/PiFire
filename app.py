@@ -13,6 +13,7 @@
 # *****************************************
 
 from flask import Flask, request, abort, render_template, make_response, send_file, jsonify, redirect
+from flask_mobility import Mobility
 from flask_socketio import SocketIO
 from flask_qrcode import QRcode
 from werkzeug.utils import secure_filename
@@ -35,6 +36,7 @@ ALLOWED_EXTENSIONS = {'json'}
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
 QRcode(app)
+Mobility(app)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 @app.route('/')
