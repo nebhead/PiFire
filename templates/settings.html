@@ -1,996 +1,1085 @@
-{% extends 'base.html' %} {% block cssextend %} {% endblock %} {% block title %}Settings{% endblock %} {% block notify %}
-<!-- Settings Success --> {% if (alert['type'] == "updated") %} <div class="alert alert-success alert-dismissible">
+{% extends 'base.html' %}
+
+{% block cssextend %}{% endblock %}
+
+{% block title %}Settings{% endblock %}
+
+{% block notify %}
+<!-- Settings Success -->
+{% if (alert['type'] == "updated") %}
+<br>
+<div class="alert alert-success alert-dismissible">
     <button type="button" class="close" data-dismiss="alert">&times;</button>
     <b>
         <i class="far fa-check-circle"></i>&nbsp; {{ alert['text'] }}
     </b>
 </div>
-<br> {% elif (alert['type'] == "warning") %} <div class="alert alert-warning alert-dismissible">
+{% elif (alert['type'] == "warning") %}
+<br>
+<div class="alert alert-warning alert-dismissible">
     <button type="button" class="close" data-dismiss="alert">&times;</button>
     <b>
         <i class="far fa-exclamation-circle"></i>&nbsp; {{ alert['text'] }}
     </b>
 </div>
-<br> {% elif (alert['type'] == "error") %} <div class="alert alert-danger alert-dismissible">
+{% elif (alert['type'] == "error") %}
+<br>
+<div class="alert alert-danger alert-dismissible">
     <button type="button" class="close" data-dismiss="alert">&times;</button>
     <b>
         <i class="fas fa-bomb"></i>&nbsp; {{ alert['text'] }}
     </b>
 </div>
-<br> {% endif %} {% endblock %} {% block content %}
-<!-- ============================ Probe Types ========================== -->
+{% endif %}{% endblock %}
 
-<BR>
+{% block content %}
+<br>
 <div class="row">
-    <div class="col">
-        <div class="card shadow">
-            <div class="card-header bg-primary text-white">
-                <h5>
-                    <i class="fas fa-thermometer"></i>&nbsp; Probe Settings
-                </h5>
-            </div>
-            <div class="card-body">
-                <!-- Probe Settings Form Start -->
-                <form name="probe_input" id="probe_form" action="/settings/probes" method="POST">
-                    <!-- Grill Probe Selection -->
-                    {% if settings['globals']['four_probes'] == True %}
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text">Grill Probe Selection</span>
-                        </div>
-                        <select class="form-control" name="grill_probes" id="grill_probes" onchange="this.form.submit()"> {% for index, data in settings['grill_probe_settings']['grill_probes'].items()|sort %} {% if index == settings['grill_probe_settings']['grill_probe'] %} <option value="{{ index }}" selected>{{ data['name'] }}</option> {% else %} <option value="{{ index }}">{{ data['name'] }}</option> {% endif %} {% endfor %} </select>
-                    </div>
-                    <!-- Grill Probe 1 Settings -->
-                    {% endif %}
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            {% if settings['globals']['four_probes'] == True %}
-                            <span class="input-group-text">Grill Probe 1 Type</span>
-                            {% else %}
-                            <span class="input-group-text">Grill Probe Type</span>
-                            {% endif %}
-                        </div>
-                        <select class="form-control" name="grill_probe1_type" id="grill_probe1_type" onchange="this.form.submit()"> {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %} {% if index == settings['probe_types']['grill1type'] %} <option value="{{ index }}" selected>{{ data['name'] }}</option> {% else %} <option value="{{ index }}">{{ data['name'] }}</option> {% endif %} {% endfor %} </select>
-                        <div class="input-group-append"> {% if settings['grill_probe_settings']['grill_probe_enabled'][0] == 1 or settings['grill_probe_settings']['grill_probe_enabled'][2] == 1 %} <button type="submit" name="grill1enable" value="0" class="btn btn-success btn-sm float-right" disabled>
-                            <i class="fas fa-eye"></i>
-                        </button> {% else %} <button type="submit" name="grill1enable" value="1" class="btn btn-outline-secondary btn-sm float-right" disabled>
-                            <i class="fas fa-eye-slash"></i>
-                        </button> {% endif %} </div>
-                    </div>
-                    <!-- Grill Probe 2 Settings -->
-                    {% if settings['globals']['four_probes'] == True %}
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text">Grill Probe 2 Type</span>
-                        </div>
-                        <select class="form-control" name="grill_probe2_type" id="grill_probe2_type" onchange="this.form.submit()"> {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %} {% if index == settings['probe_types']['grill2type'] %} <option value="{{ index }}" selected>{{ data['name'] }}</option> {% else %} <option value="{{ index }}">{{ data['name'] }}</option> {% endif %} {% endfor %} </select>
-                        <div class="input-group-append"> {% if settings['grill_probe_settings']['grill_probe_enabled'][1] == 1 or settings['grill_probe_settings']['grill_probe_enabled'][2] == 1 %} <button type="submit" name="grill2enable" value="0" class="btn btn-success btn-sm float-right" disabled>
-                            <i class="fas fa-eye"></i>
-                        </button> {% else %} <button type="submit" name="grill2enable" value="1" class="btn btn-outline-secondary btn-sm float-right" disabled>
-                            <i class="fas fa-eye-slash"></i>
-                        </button> {% endif %} </div>
-                    </div>
-                    {% endif %}
-                    <!-- Probe 1 Settings -->
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text">Probe-1 Type</span>
-                        </div>
-                        <select class="form-control" name="probe1_type" id="probe1_type" onchange="this.form.submit()"> {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %} {% if index == settings['probe_types']['probe1type'] %} <option value="{{ index }}" selected>{{ data['name'] }}</option> {% else %} <option value="{{ index }}">{{ data['name'] }}</option> {% endif %} {% endfor %} </select>
-                        <div class="input-group-append"> {% if settings['probe_settings']['probes_enabled'][1] == 1  %} <button type="submit" name="probe1enable" value="0" class="btn btn-success btn-sm float-right">
-                                <i class="fas fa-eye"></i>
-                            </button> {% else %} <button type="submit" name="probe1enable" value="1" class="btn btn-outline-secondary btn-sm float-right">
-                                <i class="fas fa-eye-slash"></i>
-                            </button> {% endif %} </div>
-                    </div>
-                    <!-- Probe 2 Settings -->
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text">Probe-2 Type</span>
-                        </div>
-                        <select class="form-control" name="probe2_type" id="probe2_type" onchange="this.form.submit()"> {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %} {% if index == settings['probe_types']['probe2type'] %} <option value="{{ index }}" selected>{{ data['name'] }}</option> {% else %} <option value="{{ index }}">{{ data['name'] }}</option> {% endif %} {% endfor %} </select>
-                        <div class="input-group-append"> {% if settings['probe_settings']['probes_enabled'][2] == 1  %} <button type="submit" name="probe2enable" value="0" class="btn btn-success btn-sm float-right">
-                                <i class="fas fa-eye"></i>
-                            </button> {% else %} <button type="submit" name="probe2enable" value="1" class="btn btn-outline-secondary btn-sm float-right">
-                                <i class="fas fa-eye-slash"></i>
-                            </button> {% endif %} </div>
-                    </div>
-                </form>
-            </div>
-            <!-- End of card body -->
+    {% if not request.MOBILE %}
+    <div class="col-3">
+        <!-- Side Navigation Row -->
+        <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+            <a class="nav-link active" id="v-pills-probes-tab" data-toggle="pill" href="#v-pills-probes" role="tab" aria-controls="v-pills-probes" aria-selected="true">Probe Settings</a>
+            <a class="nav-link" id="v-pills-probe-profiles-tab" data-toggle="pill" href="#v-pills-probe-profiles" role="tab" aria-controls="v-pills-probe-profiles" aria-selected="false">Probe Profiles</a>
+            <a class="nav-link" id="v-pills-units-tab" data-toggle="pill" href="#v-pills-units" role="tab" aria-controls="v-pills-units" aria-selected="false">Units</a>
+            <a class="nav-link" id="v-pills-name-tab" data-toggle="pill" href="#v-pills-name" role="tab" aria-controls="v-pills-name" aria-selected="false">Grill Name</a>
+            <a class="nav-link" id="v-pills-work-mode-tab" data-toggle="pill" href="#v-pills-work-mode" role="tab" aria-controls="v-pills-work-mode" aria-selected="false">Work Mode</a>
+            <a class="nav-link" id="v-pills-timers-tab" data-toggle="pill" href="#v-pills-timers" role="tab" aria-controls="v-pills-timers" aria-selected="false">Startup & Shutdown</a>
+            <a class="nav-link" id="v-pills-history-tab" data-toggle="pill" href="#v-pills-history" role="tab" aria-controls="v-pills-history" aria-selected="false">History</a>
+            <a class="nav-link" id="v-pills-safety-tab" data-toggle="pill" href="#v-pills-safety" role="tab" aria-controls="v-pills-safety" aria-selected="false">Safety</a>
+            <a class="nav-link" id="v-pills-pellets-tab" data-toggle="pill" href="#v-pills-pellets" role="tab" aria-controls="v-pills-pellets" aria-selected="false">Pellets</a>
+            <a class="nav-link" id="v-pills-theme-tab" data-toggle="pill" href="#v-pills-theme" role="tab" aria-controls="v-pills-theme" aria-selected="false">Theme</a>
+            <a class="nav-link" id="v-pills-notifications-tab" data-toggle="pill" href="#v-pills-notifications" role="tab" aria-controls="v-pills-notifications" aria-selected="false">Notifications</a>
         </div>
-        <!-- End of Card -->
     </div>
-    <!-- End of Column -->
-</div>
-<!-- End of Row -->
-<!-- ============================ Edit / Add / Delete Probe Profiles ========================== -->
-<BR>
-<div class="row">
-    <div class="col">
-        <div class="card shadow">
-            <div class="card-header bg-primary text-white">
-                <h5>
-                    <i class="fas fa-edit"></i>&nbsp; Probe Profile Editor
-                </h5>
-            </div>
-            <div class="card-body"> {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %} <div class="card shadow">
-                    <form name="editprofile" action="/settings/editprofile" method="POST">
-                        <div class="card-header bg-light text-dark">
-                            <h5>
-                                <a href="#edit{{ index }}" data-toggle="collapse">
-                                    <i class="far fa-caret-square-down"></i>&nbsp; {{ data['name'] }}
-                                </a>
-                            </h5>
-                        </div>
-                        <div id="edit{{ index }}" class="collapse">
-                            <div class="card-body">
-                                <div class="input-group mb-3">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text" data-toggle="tooltip" title="Short Unique ID to select a profile.  Should not use spaces.">
-                                            <i class="fas fa-fingerprint"></i>&nbsp; UniqueID </span>
-                                    </div>
-                                    <input id="UniqueID_{{ index }}" type="text" class="form-control" name="UniqueID_{{ index }}" value="{{ index }}">
-                                </div>
-                                <div class="input-group mb-3">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text" data-toggle="tooltip" title="Human readable name for profile. Used to display above.">
-                                            <i class="fas fa-user-circle"></i>&nbsp; Name </span>
-                                    </div>
-                                    <input id="Name_{{ index }}" type="text" class="form-control" name="Name_{{ index }}" value="{{ data['name'] }}">
-                                </div>
-                                <div class="input-group mb-3">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text" data-toggle="tooltip" title="Source Voltage (volts)">
-                                            <i class="fas fa-bolt"></i>&nbsp; Vs </span>
-                                    </div>
-                                    <input id="Vs_{{ index }}" type="text" class="form-control" name="Vs_{{ index }}" value="{{ data['Vs'] }}">
-                                </div>
-                                <div class="input-group mb-3">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text" data-toggle="tooltip" title="R1 in resistor divider (ohms)">
-                                            <i class="fas fa-divide"></i>&nbsp; Rd </span>
-                                    </div>
-                                    <input id="Rd_{{ index }}" type="text" class="form-control" name="Rd_{{ index }}" value="{{ data['Rd'] }}">
-                                </div>
-                                <div class="input-group mb-3">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text" data-toggle="tooltip" title="Coefficient A in Steinhart Hart Calculation">
-                                            <i class="fas fa-calculator"></i>&nbsp; CoEff A </span>
-                                    </div>
-                                    <input id="A_{{ index }}" type="text" class="form-control" name="A_{{ index }}" value="{{ data['A'] }}">
-                                </div>
-                                <div class="input-group mb-3">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text" data-toggle="tooltip" title="Coefficient B in Steinhart Hart Calculation">
-                                            <i class="fas fa-calculator"></i>&nbsp; CoEff B </span>
-                                    </div>
-                                    <input id="B_{{ index }}" type="text" class="form-control" name="B_{{ index }}" value="{{ data['B'] }}">
-                                </div>
-                                <div class="input-group mb-3">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text" data-toggle="tooltip" title="Coefficient C in Steinhart Hart Calculation">
-                                            <i class="fas fa-calculator"></i>&nbsp; CoEff C </span>
-                                    </div>
-                                    <input id="C_{{ index }}" type="text" class="form-control" name="C_{{ index }}" value="{{ data['C'] }}">
-                                </div>
-                            </div>
-                            <div class="card-footer bg-light">
-                                <button type="submit" class="btn btn-primary" name="editprofile" value="{{ index }}">Save</button>
-                                <!-- Button to Open the Modal -->
-                                <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#DeleteProfileModal{{ index }}">Delete</button>
-                                <!-- The Modal -->
-                                <div class="modal" id="DeleteProfileModal{{ index }}">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <!-- Modal Header -->
-                                            <div class="modal-header">
-                                                <h4 class="modal-title">Delete Profile {{ index }}</h4>
-                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                                            </div>
-                                            <!-- Modal body -->
-                                            <div class="modal-body"> Are you sure you want to delete the {{ data['name'] }} profile? </div>
-                                            <!-- Modal footer -->
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn btn-danger" name="delete" value="{{ index }}">Delete</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <BR> {% endfor %} <a href="/tuning" class="btn btn-outline-primary btn-block shadow" role="button">
-                    <i class="fas fa-toolbox"></i> Tune Probe Coefficients Tool </a>
-                <BR>
+    {% endif %}
+    <!-- ============================ Probe Settings =============================== -->
+    <div class="{% if request.MOBILE %}col-12{% else %}col-9{% endif %}">
+        <div class="tab-content" id="v-pills-tabContent">
+            <div class="tab-pane fade show active" id="v-pills-probes" role="tabpanel" aria-labelledby="v-pills-probes-tab">
                 <div class="card shadow">
-                    <form name="addprofile" action="/settings/addprofile" method="POST">
-                        <div class="card-header bg-light text-dark">
-                            <h5>
-                                <a href="#addprofile" data-toggle="collapse">
-                                    <i class="fas fa-plus-circle"></i>&nbsp; Add Profile </a>
-                            </h5>
-                        </div>
-                        <div id="addprofile" class="collapse">
-                            <div class="card-body">
-                                <div class="input-group mb-3">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text" data-toggle="tooltip" title="Short Unique ID to select a profile.  Should not use spaces.">
-                                            <i class="fas fa-fingerprint"></i>&nbsp; UniqueID </span>
-                                    </div>
-                                    <input id="UniqueID" type="text" class="form-control" placeholder="UniqueID" name="UniqueID">
+                    <div class="card-header bg-primary text-white">
+                        <h5>
+                            <i class="fas fa-thermometer"></i>&nbsp; Probe Settings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Probe Settings Form Start -->
+                        <form name="probe_input" id="probe_form" action="/settings/probes" method="POST">
+                            <!-- Grill Probe Selection -->
+                            {% if settings['globals']['four_probes'] == True %}
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">Grill Probe Selection</span>
                                 </div>
-                                <div class="input-group mb-3">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text" data-toggle="tooltip" title="Human readable name for profile. Used to display above.">
-                                            <i class="fas fa-user-circle"></i>&nbsp; Name </span>
-                                    </div>
-                                    <input id="Name" type="text" class="form-control" placeholder="Name" name="Name">
+                                <select class="form-control" name="grill_probes" id="grill_probes" onchange="this.form.submit()">
+                                    {% for index, data in settings['grill_probe_settings']['grill_probes'].items()|sort %}
+                                    {% if index == settings['grill_probe_settings']['grill_probe'] %}
+                                    <option value="{{ index }}" selected>{{ data['name'] }}</option>
+                                    {% else %}
+                                    <option value="{{ index }}">{{ data['name'] }}</option>
+                                    {% endif %} {% endfor %}
+                                </select>
+                            </div>
+                            <!-- Grill Probe 1 Settings -->
+                            {% endif %}
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    {% if settings['globals']['four_probes'] == True %}
+                                    <span class="input-group-text">Grill Probe 1 Type</span>
+                                    {% else %}
+                                    <span class="input-group-text">Grill Probe Type</span>
+                                    {% endif %}
                                 </div>
-                                <div class="input-group mb-3">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text" data-toggle="tooltip" title="Source Voltage (volts)">
-                                            <i class="fas fa-bolt"></i>&nbsp; Vs </span>
-                                    </div>
-                                    <input id="Vs" type="text" class="form-control" placeholder="3.28" name="Vs">
-                                </div>
-                                <div class="input-group mb-3">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text" data-toggle="tooltip" title="R1 in resistor divider (ohms)">
-                                            <i class="fas fa-divide"></i>&nbsp; Rd </span>
-                                    </div>
-                                    <input id="Rd" type="text" class="form-control" placeholder="10000" name="Rd">
-                                </div>
-                                <div class="input-group mb-3">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text" data-toggle="tooltip" title="Coefficient A in Steinhart Hart Calculation">
-                                            <i class="fas fa-calculator"></i>&nbsp; CoEff A </span>
-                                    </div>
-                                    <input id="A" type="text" class="form-control" name="A">
-                                </div>
-                                <div class="input-group mb-3">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text" data-toggle="tooltip" title="Coefficient B in Steinhart Hart Calculation">
-                                            <i class="fas fa-calculator"></i>&nbsp; CoEff B </span>
-                                    </div>
-                                    <input id="B" type="text" class="form-control" name="B">
-                                </div>
-                                <div class="input-group mb-3">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text" data-toggle="tooltip" title="Coefficient C in Steinhart Hart Calculation">
-                                            <i class="fas fa-calculator"></i>&nbsp; CoEff C </span>
-                                    </div>
-                                    <input id="C" type="text" class="form-control" name="C">
+                                <select class="form-control" name="grill_probe1_type" id="grill_probe1_type" onchange="this.form.submit()">
+                                    {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %}
+                                    {% if index == settings['probe_types']['grill1type'] %}
+                                    <option value="{{ index }}" selected>{{ data['name'] }}</option>
+                                    {% else %}
+                                    <option value="{{ index }}">{{ data['name'] }}</option>
+                                    {% endif %}
+                                    {% endfor %}
+                                </select>
+                                <div class="input-group-append">
+                                    {% if settings['grill_probe_settings']['grill_probe_enabled'][0] == 1 or settings['grill_probe_settings']['grill_probe_enabled'][2] == 1 %}
+                                    <button type="submit" name="grill1enable" value="0" class="btn btn-success btn-sm float-right" disabled><i class="fas fa-eye"></i></button>
+                                    {% else %}
+                                    <button type="submit" name="grill1enable" value="1" class="btn btn-outline-secondary btn-sm float-right" disabled><i class="fas fa-eye-slash"></i></button>
+                                    {% endif %}
                                 </div>
                             </div>
-                            <div class="card-footer bg-light">
-                                <button type="submit" class="btn btn-outline-primary">Save</button>
+                            <!-- Grill Probe 2 Settings -->
+                            {% if settings['globals']['four_probes'] == True %}
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">Grill Probe 2 Type</span>
+                                </div>
+                                <select class="form-control" name="grill_probe2_type" id="grill_probe2_type" onchange="this.form.submit()">
+                                    {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %}
+                                    {% if index == settings['probe_types']['grill2type'] %}
+                                    <option value="{{ index }}" selected>{{ data['name'] }}</option>
+                                    {% else %}
+                                    <option value="{{ index }}">{{ data['name'] }}</option>
+                                    {% endif %}
+                                    {% endfor %}
+                                </select>
+                                <div class="input-group-append">
+                                    {% if settings['grill_probe_settings']['grill_probe_enabled'][1] == 1 or settings['grill_probe_settings']['grill_probe_enabled'][2] == 1 %}
+                                    <button type="submit" name="grill2enable" value="0" class="btn btn-success btn-sm float-right" disabled><i class="fas fa-eye"></i></button>
+                                    {% else %}
+                                    <button type="submit" name="grill2enable" value="1" class="btn btn-outline-secondary btn-sm float-right" disabled><i class="fas fa-eye-slash"></i></button>
+                                    {% endif %}
+                                </div>
                             </div>
-                        </div>
-                    </form>
+                            {% endif %}
+                            <!-- Probe 1 Settings -->
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">Probe-1 Type</span>
+                                </div>
+                                <select class="form-control" name="probe1_type" id="probe1_type" onchange="this.form.submit()">
+                                    {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %}
+                                    {% if index == settings['probe_types']['probe1type'] %}
+                                    <option value="{{ index }}" selected>{{ data['name'] }}</option>
+                                    {% else %}
+                                    <option value="{{ index }}">{{ data['name'] }}</option>
+                                    {% endif %}
+                                    {% endfor %}
+                                </select>
+                                <div class="input-group-append">
+                                    {% if settings['probe_settings']['probes_enabled'][1] == 1  %}
+                                    <button type="submit" name="probe1enable" value="0" class="btn btn-success btn-sm float-right"><i class="fas fa-eye"></i></button>
+                                    {% else %}
+                                    <button type="submit" name="probe1enable" value="1" class="btn btn-outline-secondary btn-sm float-right"><i class="fas fa-eye-slash"></i></button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <!-- Probe 2 Settings -->
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">Probe-2 Type</span>
+                                </div>
+                                <select class="form-control" name="probe2_type" id="probe2_type" onchange="this.form.submit()">
+                                    {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %}
+                                    {% if index == settings['probe_types']['probe2type'] %}
+                                    <option value="{{ index }}" selected>{{ data['name'] }}</option>
+                                    {% else %}
+                                    <option value="{{ index }}">{{ data['name'] }}</option>
+                                    {% endif %}
+                                    {% endfor %}
+                                </select>
+                                <div class="input-group-append">
+                                    {% if settings['probe_settings']['probes_enabled'][2] == 1  %}
+                                    <button type="submit" name="probe2enable" value="0" class="btn btn-success btn-sm float-right"><i class="fas fa-eye"></i></button>
+                                    {% else %}
+                                    <button type="submit" name="probe2enable" value="1" class="btn btn-outline-secondary btn-sm float-right"><i class="fas fa-eye-slash"></i></button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <!-- End of card body -->
                 </div>
+                <!-- End of Card -->
             </div>
-            <!-- End of card body -->
-        </div>
-        <!-- End of Card -->
-    </div>
-    <!-- End of Column -->
-</div>
-<!-- End of Row -->
-<br>
-<!-- ============================ Select Units ========================== -->
-<div class="row">
-    <div class="col">
-        <div class="card shadow">
-            <form name="Units" action="/settings/units" method="POST">
-                <div class="card-header bg-primary text-white">
-                    <h5>
-                        <i class="fas fa-temperature-low"></i>&nbsp; Select Units
-                    </h5>
-                </div>
-                <div class="card-body">
-                    
-                    <div class="form-group">
-                        <label for="selectUnits">Select temperature units to be used globally:</label>
-                        <select class="form-control" id="selectUnits" name="units">
-                          <option value="F" {% if settings['globals']['units'] == 'F' %}selected{% endif %}>Fahrenheit (F)</option>
-                          <option value="C" {% if settings['globals']['units'] == 'C' %}selected{% endif %}>Celsius (C)</option>
-                        </select>
+            <!-- End of Tab -->
+            <!-- ============================ Edit / Add / Delete Probe Profiles ========================== -->
+            {% if request.MOBILE %}<br>{% endif %}
+            <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-probe-profiles" role="tabpanel" aria-labelledby="v-pills-probe-profiles-tab">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h5>
+                            <i class="fas fa-edit"></i>&nbsp; Probe Profile Editor
+                        </h5>
                     </div>
-                    <span class="badge badge-warning">NOTE:</span>
-                    <i class="small"> Changing the scale/units will restart the grill controller (stopping any currently running modes) and automatically erase history. </i>
-
-                </div>
-                <div class="card-footer bg-light">
-                    <button type="submit" class="btn btn-outline-primary">Save</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-<br>
-
-<!-- ============================ Grill Name ========================== -->
-<div class="row">
-    <div class="col">
-        <div class="card shadow">
-            <form name="GrillName" action="/settings/grillname" method="POST">
-                <div class="card-header bg-primary text-white">
-                    <h5>
-                        <i class="fas fa-file-signature"></i>&nbsp; Grill Name
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Choose a name for your grill!">
-                                <i class="fas fa-user-ninja"></i>&nbsp; Grill Name </span>
-                        </div>
-                        <input id="grill_name" type="text" class="form-control" placeholder="{{ settings['globals']['grill_name'] }}" value="{{ settings['globals']['grill_name'] }}" name="grill_name">
-                    </div>
-                </div>
-                <div class="card-footer bg-light">
-                    <button type="submit" class="btn btn-outline-primary">Save</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-<br>
-<!-- ============================ Cycle Settings ========================== -->
-<div class="row">
-    <div class="col">
-        <div class="card shadow">
-            <form name="cyclesettings" action="/settings/cycle" method="POST">
-                <div class="card-header bg-primary text-white">
-                    <h5>
-                        <i class="fas fa-tools"></i>&nbsp; Work Mode Settings
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <h5>Startup / Smoke Mode Cycle Settings</h5>
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Auger-On Time for Smoke / Startup (seconds)[Default=15]">
-                                <i class="far fa-clock"></i>&nbsp; Auger On Time </span>
-                        </div>
-                        <input id="smokecycletime" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['SmokeCycleTime'] }}" value="{{ settings['cycle_data']['SmokeCycleTime'] }}" name="smokecycletime">
-                    </div>
-                    <span class="badge badge-warning">NOTE:</span>
-                    <i class="small"> More information about the PMode can be found <a href="http://tipsforbbq.com/Definition/Traeger-P-Setting" target="blank">here.</a> P-Mode is used for both Startup and Smoke modes, but not Hold mode. </i>
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="(Auger-Off Time: Set P-Mode for Smoke Cycle (1-10)">
-                                <i class="fas fa-cog"></i>&nbsp; P-Mode </span>
-                        </div>
-                        <input id="pmode" type="number" min="0" max="9" class="form-control" placeholder="{{ settings['cycle_data']['PMode'] }}" value="{{ settings['cycle_data']['PMode'] }}" name="pmode">
-                    </div>
-                    <table class="table table-bordered">
-                        <thead class="thead-light">
-                            <tr>
-                                <th>P-Mode</th>
-                                <th>Auger ON Time</th>
-                                <th>Auger OFF Time</th>
-                            </tr>
-                        </thead> {% for row in range(10) %} <tbody> {% if row == settings['cycle_data']['PMode'] %} <tr class="table-warning"> {% else %}
-                            <tr> {% endif %} <td>{{ row }} {% if (row == 2) %}(Factory Default){% endif %}</td>
-                                <td>{{ settings['cycle_data']['SmokeCycleTime'] }}</td>
-                                <td>{{ (row * 10)+45 }} seconds</td>
-                            </tr> {% endfor %}
-                        </tbody>
-                    </table>
-                    <br>
-                    <h5>Smoke Plus Settings (SMOKE & HOLD Mode) [Fan Cycling]</h5>
-                    <span class="badge badge-warning">NOTE:</span>
-                    <i class="small">Smoke Plus Mode can be toggled on/off by tapping the fan icon button on the dashboard. The icon will be highlighted blue indicating that smoke plus is enabled. Smoke Plus will cycle the fan on and off during smoke and hold mode to promote additional smoke generation. Fan cycling will only occur between the below min/max temperatures.</i>
-                    <br>
-                    <br>
-                    <div class="custom-control custom-switch">
-                        <input type="checkbox" class="custom-control-input" id="defaultsmokeplus" name="defaultsmokeplus" {% if settings['smoke_plus']['enabled'] == True %}checked{% endif %}>
-                        <label class="custom-control-label" for="defaultsmokeplus">Smoke Plus Enabled by Default</label>
-                    </div>
-                    <br>
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Fan Cycle Time (seconds) [Default: 10]">
-                                <i class="far fa-clock"></i>&nbsp; Fan Cycle Time (s) </span>
-                        </div>
-                        <input id="sp_cycle" type="number" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['cycle'] }}" value="{{ settings['smoke_plus']['cycle'] }}" name="sp_cycle">
-                    </div>
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Lowest temperature for Smoke Plus to operate. ({{settings['globals']['units']}}) [Default: 160F/71C]">
-                                <i class="fas fa-temperature-high"></i>&nbsp; Min Oprerational Temp ({{settings['globals']['units']}}) </span>
-                        </div>
-                        <input id="minsptemp" type="number" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['min_temp'] }}" value="{{ settings['smoke_plus']['min_temp'] }}" name="minsptemp">
-                    </div>
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Highest temperature for Smoke Plus to operate. ({{settings['globals']['units']}}) [Default: 220F/104C]">
-                                <i class="fas fa-temperature-high"></i>&nbsp; Max Oprerational Temp ({{settings['globals']['units']}}) </span>
-                        </div>
-                        <input id="maxsptemp" type="number" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['max_temp'] }}" value="{{ settings['smoke_plus']['max_temp'] }}" name="maxsptemp">
-                    </div>
-                    <br>
-                    <h5>PID Settings (HOLD Mode)</h5>
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Cycle Time for PID Controller (seconds)[Default=20]">
-                                <i class="far fa-clock"></i>&nbsp; Cycle Time </span>
-                        </div>
-                        <input id="holdcycletime" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['HoldCycleTime'] }}" value="{{ settings['cycle_data']['HoldCycleTime'] }}" name="holdcycletime">
-                    </div>
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Proportional Band - This is the temperature band centered around the set point, that the controller is active.  If the error is greater than PB/2, the command is 0.  If the error is less than PB/2, the command is 1.0 [Default=60.0]">
-                                <i class="fas fa-wave-square"></i>&nbsp; Proportional Band (PB) </span>
-                        </div>
-                        <input id="propband" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['PB'] }}" value="{{ settings['cycle_data']['PB'] }}" name="propband">
-                    </div>
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Integral Time - Time (in seconds) to eliminate the integral error. [Default=180.0]">
-                                <i class="far fa-clock"></i>&nbsp; Integral Time (Ti) </span>
-                        </div>
-                        <input id="integraltime" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['Ti'] }}" value="{{ settings['cycle_data']['Ti'] }}" name="integraltime">
-                    </div>
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Derivative Time - Time (in seconds) to predict the future value. [Default=45.0]">
-                                <i class="far fa-clock"></i>&nbsp; Derivative Time (Td) </span>
-                        </div>
-                        <input id="derivtime" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['Td'] }}" value="{{ settings['cycle_data']['Td'] }}" name="derivtime">
-                    </div>
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Min Cycle Ratio [Default=0.15]">
-                                <i class="far fa-clock"></i>&nbsp; Min Cycle Ratio</span>
-                        </div>
-                        <input id="u_min" type="number" min="0.05" step="0.01" class="form-control" placeholder="{{ settings['cycle_data']['u_min'] }}" value="{{ settings['cycle_data']['u_min'] }}" name="u_min">
-                    </div>
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Cycle Ratio Max [Default=1.0]">
-                                <i class="far fa-clock"></i>&nbsp; Max Cycle Ratio</span>
-                        </div>
-                        <input id="u_max" type="number" min="0.1" step="0.01" class="form-control" placeholder="{{ settings['cycle_data']['u_max'] }}" value="{{ settings['cycle_data']['u_max'] }}" name="u_max">
-                    </div>
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Center Ratio [Default=0.5]">
-                                <i class="far fa-clock"></i>&nbsp; Center Ratio</span>
-                        </div>
-                        <input id="center" type="number" min="0.1" step="0.01" class="form-control" placeholder="{{ settings['cycle_data']['center'] }}" value="{{ settings['cycle_data']['center'] }}" name="center">
-                    </div>
-                    <span class="badge badge-warning">NOTE:</span>
-                    <i class="small"> If you are in hold mode currently, you will need to change to another mode and back into hold mode for this to take effect. More information on the PID control settings can be found <a href="http://engineeredmusings.com/pismoker/" target="blank">here.</a></i>
-                    <br><br>
-                    <h5>Keep Warm Settings</h5>
-                    <span class="badge badge-warning">NOTE:</span>
-                    <i class="small">The Keep Warm option will be activated when selected once a probe set point has been achieved or the set timer has expired. The Grill will exit the currently running mode then switch to Hold Mode and attempt to maintain the temperature set below. You can also enable or disable the Smoke Plus feature during Keep Warm.</i>
-                    <br><br>
-                    <div class="custom-control custom-switch">
-                        <input type="checkbox" class="custom-control-input" id="keep_warm_s_plus" name="keep_warm_s_plus" {% if settings['keep_warm']['s_plus'] == True %}checked{% endif %}>
-                        <label class="custom-control-label" for="keep_warm_s_plus">Smoke Plus Enabled</label>
-                    </div>
-                    <br>
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Keep Warm Temperature ({{settings['globals']['units']}}) [Default: 165F/74C]">
-                                <i class="fas fa-temperature-high"></i>&nbsp; Keep Warm Temp ({{settings['globals']['units']}}) </span>
-                        </div>
-                        <input id="keep_warm_temp" type="number" min="1" class="form-control" placeholder="{{ settings['keep_warm']['temp'] }}" value="{{ settings['keep_warm']['temp'] }}" name="keep_warm_temp">
-                    </div>
-                </div>
-                <!-- End of card body -->
-                <div class="card-footer bg-light">
-                    <button type="submit" class="btn btn-outline-primary">Save</button>
-                </div>
-            </form>
-        </div>
-        <!-- End of Card -->
-    </div>
-    <!-- End of Column -->
-</div>
-<!-- End of Row -->
-<!-- ============================ Shutdown Settings ========================== -->
-<br>
-<div class="row">
-    <div class="col">
-        <div class="card shadow">
-            <form name="startshutdowntimers" action="/settings/timers" method="POST">
-                <div class="card-header bg-primary text-white">
-                    <h5>
-                        <i class="fas fa-tools"></i>&nbsp; Startup & Shutdown Settings
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Shutdown timer (in seconds) (seconds)[Default=60]">
-                                <i class="far fa-clock"></i>&nbsp; Shutdown Timer (seconds) </span>
-                        </div>
-                        <input id="shutdown_timer" type="number" min="1" class="form-control" placeholder="{{ settings['globals']['shutdown_timer'] }}" value="{{ settings['globals']['shutdown_timer'] }}" name="shutdown_timer">
-                    </div>
-                    <span class="badge badge-warning">NOTE:</span>
-                    <i class="small"> Amount of time fan will run after shutdown is selected </i>
-                </div>
-                <div class="card-body">
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Startup timer (in seconds) (seconds)[Default=240]">
-                                <i class="far fa-clock"></i>&nbsp; Startup Timer (seconds) </span>
-                        </div>
-                        <input id="startup_timer" type="number" min="1" class="form-control" placeholder="{{ settings['globals']['startup_timer'] }}" value="{{ settings['globals']['startup_timer'] }}" name="startup_timer">
-                    </div>
-                    <span class="badge badge-warning">NOTE:</span>
-                    <i class="small"> Amount of time for startup before transitioning to smoke or attempting a reignite</i>
-                </div>
-                <!-- End of card body -->
-                <div class="card-footer bg-light">
-                    <button type="submit" class="btn btn-outline-primary">Save</button>
-                </div>
-            </form>
-        </div>
-        <!-- End of Card -->
-    </div>
-    <!-- End of Column -->
-</div>
-<!-- End of Row -->
-<!-- ============================ History Settings ========================== -->
-<br>
-<div class="row">
-    <div class="col">
-        <div class="card shadow">
-            <form name="miscsettings" action="/settings/history" method="POST">
-                <div class="card-header bg-primary text-white">
-                    <h5>
-                        <i class="fas fa-tools"></i>&nbsp; History Settings
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Amount of history to display on the history page (minutes). [Default = 60]">
-                                <i class="far fa-clock"></i>&nbsp; History to Display (mins) </span>
-                        </div>
-                        <input id="historymins" type="number" min="1" class="form-control" placeholder="{{ settings['history_page']['minutes'] }}" value="{{ settings['history_page']['minutes'] }}" name="historymins">
-                    </div>
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Number of datapoints to display per page.">
-                                <i class="far fa-clock"></i>&nbsp; Datapoints to Display </span>
-                        </div>
-                        <input id="datapoints" type="number" min="10" class="form-control" placeholder="{{ settings['history_page']['datapoints'] }}" value="{{ settings['history_page']['datapoints'] }}" name="datapoints">
-                    </div>
-                    <div class="custom-control custom-switch">
-                        <input type="checkbox" class="custom-control-input" id="clearhistorystartup" name="clearhistorystartup" {% if settings['history_page']['clearhistoryonstart'] == True %}checked{% endif %}>
-                        <label class="custom-control-label" for="clearhistorystartup">Clear History on Startup</label>
-                    </div>
-                    <br>
-                    <div class="custom-control custom-switch">
-                        <input type="checkbox" class="custom-control-input" id="historyautorefresh" name="historyautorefresh" {% if settings['history_page']['autorefresh'] == 'on' %}checked{% endif %}>
-                        <label class="custom-control-label" for="historyautorefresh">History Auto-Refresh</label>
-                    </div>
-                    <br>
-                </div>
-                <!-- End of card body -->
-                <div class="card-footer bg-light">
-                    <button type="submit" class="btn btn-outline-primary">Save</button>
-                </div>
-            </form>
-        </div>
-        <!-- End of Card -->
-    </div>
-    <!-- End of Column -->
-</div>
-<!-- End of Row -->
-<!-- ============================ Safety Settings ========================== -->
-<br>
-<div class="row">
-    <div class="col">
-        <div class="card shadow">
-            <form name="safetysettings" action="/settings/safety" method="POST">
-                <div class="card-header bg-primary text-white">
-                    <h5>
-                        <i class="fas fa-tools"></i>&nbsp; Safety Settings
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Lowest temperature after startup allowed.  Shut down grill to prevent firepot overload.">
-                                <i class="fas fa-temperature-high"></i>&nbsp; Min Startup Temp ({{settings['globals']['units']}}) </span>
-                        </div>
-                        <input id="minstartuptemp" type="number" min="1" class="form-control" placeholder="{{ settings['safety']['minstartuptemp'] }}" value="{{ settings['safety']['minstartuptemp'] }}" name="minstartuptemp">
-                    </div>
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Lowest allowed operational temperature, after startup has completed.  Shut down grill to prevent firepot overload.">
-                                <i class="fas fa-temperature-high"></i>&nbsp; Max Startup Temp ({{settings['globals']['units']}})</span>
-                        </div>
-                        <input id="maxstartuptemp" type="number" min="1" class="form-control" placeholder="{{ settings['safety']['maxstartuptemp'] }}" value="{{ settings['safety']['maxstartuptemp'] }}" name="maxstartuptemp">
-                    </div>
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Number of retries to attempt re-ignite after the grill temperature goes too low. Set to zero to disable. [default=1]">
-                                <i class="fas fa-redo-alt"></i>&nbsp; Reignite Retries </span>
-                        </div>
-                        <input id="reigniteretries" type="number" min="0" max="10" class="form-control" placeholder="{{ settings['safety']['reigniteretries'] }}" value="{{ settings['safety']['reigniteretries'] }}" name="reigniteretries">
-                    </div>
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Maximum allowable temperature.  Shut down grill to prevent potential damage.">
-                                <i class="fas fa-temperature-high"></i>&nbsp; Max Operational Temp ({{settings['globals']['units']}}) </span>
-                        </div>
-                        <input id="maxtemp" type="number" min="1" class="form-control" placeholder="{{ settings['safety']['maxtemp'] }}" value="{{ settings['safety']['mintemp'] }}" name="maxtemp">
-                    </div>
-                    <span class="badge badge-warning">NOTE:</span>
-                    <i class="small"> In an error condition (temp too low, temp too high) the grill will immediately shutdown and log the error in the events log. Notifications of an error will be sent if enabled. The Max Temp safety setting is also enabled in Monitor mode.</i>
-                    <br>
-                    <span class="badge badge-danger">WARNING:</span>
-                    <i class="small"> Safety features are not infallible and may not prevent safety issues with your grill in all cases. As with any grill, it is the operator's responsibility to monitor their equipment to ensure proper operational safety.</i>
-                </div>
-                <!-- End of card body -->
-                <div class="card-footer bg-light">
-                    <button type="submit" class="btn btn-outline-primary">Save</button>
-                </div>
-            </form>
-        </div>
-        <!-- End of Card -->
-    </div>
-    <!-- End of Column -->
-</div>
-<!-- End of Row -->
-<!-- ============================ Pellet Settings ========================== -->
-<br>
-<div class="row">
-    <div class="col">
-        <div class="card shadow">
-            <form name="pelletsettings" action="/settings/pellets" method="POST">
-                <div class="card-header bg-primary text-white">
-                    <h5>
-                        <i class="fas fa-tools"></i>&nbsp; Pellet Settings
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="custom-control custom-switch">
-                        <input type="checkbox" class="custom-control-input" id="pelletwarning" name="pelletwarning" {% if settings['pelletlevel']['warning_enabled'] == True %}checked{% endif %}>
-                        <label class="custom-control-label" for="pelletwarning">Pellet Level Warning</label>
-                    </div>
-                    <br>
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Low pellet level warning percent">
-                                <i class="fas fa-exclamation-triangle"></i>&nbsp; Level Warning %</span>
-                        </div>
-                        <input id="warninglevel" type="number" min="0" max="100" class="form-control" placeholder="{{ settings['pelletlevel']['warning_level'] }}" value="{{ settings['pelletlevel']['warning_level'] }}" name="warninglevel">
-                    </div>
-                    <span class="badge badge-warning">NOTE:</span>
-                    <i class="small"> Pellet levels below the input number will receive notifications every 20 minutes during a cook</i>
-                    <br>
-                    <br>
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Distance (cm) measured when the hopper is full.">
-                                <i class="fas fa-level-up-alt"></i>&nbsp; Hopper Full Distance (cm) </span>
-                        </div>
-                        <input id="full" type="number" min="0" max="100" class="form-control" placeholder="{{ settings['pelletlevel']['full'] }}" value="{{ settings['pelletlevel']['full'] }}" name="full">
-                    </div>
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Distance (cm) measured when the hopper is empty.">
-                                <i class="fas fa-level-down-alt"></i>&nbsp; Hopper Empty Distance (cm) </span>
-                        </div>
-                        <input id="empty" type="number" min="1" max="100" class="form-control" placeholder="{{ settings['pelletlevel']['empty'] }}" value="{{ settings['pelletlevel']['empty'] }}" name="empty">
-                    </div>
-                    <span class="badge badge-warning">NOTE:</span>
-                    <i class="small"> The distance value for full must be smaller than the value for empty. </i>
-                    <br>
-                </div>
-                <!-- End of card body -->
-                <div class="card-footer bg-light">
-                    <button type="submit" class="btn btn-outline-primary">Save</button>
-                </div>
-            </form>
-        </div>
-        <!-- End of Card -->
-    </div>
-    <!-- End of Column -->
-</div>
-<!-- End of Row -->
-<!-- ============================ Page Settings ========================== -->
-<br>
-<div class="row">
-    <div class="col">
-        <div class="card shadow">
-            <form name="pagesettings" action="/settings/pagesettings" method="POST">
-                <div class="card-header bg-primary text-white">
-                    <h5>
-                        <i class="fas fa-tools"></i>&nbsp; Page Settings
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="custom-control custom-switch">
-                        <input type="checkbox" class="custom-control-input" id="darkmode" name="darkmode" {% if settings['globals']['page_theme'] == 'dark' %}checked{% endif %}>
-                        <label class="custom-control-label" for="darkmode">Enable Dark Mode</label>
-                    </div>
-                    <br>
-                </div>
-                <!-- End of card body -->
-                <div class="card-footer bg-light">
-                    <button type="submit" class="btn btn-outline-primary">Save</button>
-                </div>
-            </form>
-        </div>
-        <!-- End of Card -->
-    </div>
-    <!-- End of Column -->
-</div>
-<!-- End of Row -->
-<!-- ========================== Notification Types ========================== -->
-<br>
-<div class="row">
-    <div class="col">
-        <div class="card shadow">
-            <form name="notify" action="/settings/notify" method="POST">
-                <div class="card-header bg-primary text-white">
-                    <h5>
-                        <i class="far fa-bell"></i>&nbsp; Notification Settings
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-light text-dark">
-                            <h5>IFTTT WebHooks</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="ifttt_enabled" name="ifttt_enabled" {% if settings['ifttt']['enabled'] == True %}checked{% endif %}>
-                                <label class="custom-control-label" for="ifttt_enabled">IFTTT Enabled</label>
-                            </div>
-                            <br>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-key"></i>&nbsp; API Key </span>
-                                </div>
-                                <input id="iftttapi" type="text" class="form-control" name="iftttapi" value="{{settings['ifttt']['APIKey']}}">
-                            </div>
-                            <span class="badge badge-warning">NOTE:</span>
-                            <i class="small"> Leave blank to disable.</i>
-                        </div>
-                        <!-- End of card body -->
-                    </div>
-                    <!-- End of Card -->
-                    <br>
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-light text-dark">
-                            <h5>PushOver</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="pushover_enabled" name="pushover_enabled" {% if settings['pushover']['enabled'] == True %}checked{% endif %}>
-                                <label class="custom-control-label" for="pushover_enabled">PushOver Enabled</label>
-                            </div>
-                            <br>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-key"></i>&nbsp; API Key </span>
-                                </div>
-                                <input id="pushover_apikey" type="text" class="form-control" name="pushover_apikey" value="{{settings['pushover']['APIKey']}}">
-                            </div>
-                            <span class="badge badge-warning">NOTE:</span>
-                            <i class="small"> Add commas for multiple user keys. Leave blank to disable.</i>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-key"></i>&nbsp; User Keys </span>
-                                </div>
-                                <input id="pushover_userkeys" type="text" class="form-control" name="pushover_userkeys" value="{{settings['pushover']['UserKeys']}}">
-                            </div>
-                            <span class="badge badge-warning">NOTE:</span>
-                            <i class="small"> URL to be added to Pushover notifications.</i>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-link"></i>&nbsp; Public URL </span>
-                                </div>
-                                <input id="pushover_publicurl" type="text" class="form-control" name="pushover_publicurl" value="{{settings['pushover']['PublicURL']}}">
-                            </div>
-                        </div>
-                        <!-- End of card body -->
-                    </div>
-                    <!-- End of Card -->
-                    <br>
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-light text-dark">
-                            <h5>Pushbullet</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="pushbullet_enabled" name="pushbullet_enabled" {% if settings['pushbullet']['enabled'] == True %}checked{% endif %}>
-                                <label class="custom-control-label" for="pushbullet_enabled">Pushbullet Enabled</label>
-                            </div>
-                            <br>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-key"></i>&nbsp; API Key </span>
-                                </div>
-                                <input id="pushbullet_apikey" type="text" class="form-control" name="pushbullet_apikey" value="{{settings['pushbullet']['APIKey']}}">
-                            </div>
-                            <span class="badge badge-warning">NOTE:</span>
-                            <i class="small"> URL to be added to Pushbullet notifications.</i>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-link"></i>&nbsp; Public URL </span>
-                                </div>
-                                <input id="pushbullet_publicurl" type="text" class="form-control" name="pushbullet_publicurl" value="{{settings['pushbullet']['PublicURL']}}">
-                            </div>
-                        </div>
-                        <!-- End of card body -->
-                    </div>
-                    <!-- End of Card -->
-                    <br>
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-light text-dark">
-                            <h5>Android Push Notifications</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="onesignal_enabled" name="onesignal_enabled" {% if settings['onesignal']['enabled'] == True %}checked{% endif %}>
-                                <label class="custom-control-label" for="onesignal_enabled">OneSignal Enabled</label>
-                            </div>
-                            <br>
-                            {% for index, data in settings['onesignal']['devices'].items()|sort %}
-                            <div class="card shadow">
+                    <div class="card-body">
+                        {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %}
+                        <div class="card shadow">
+                            <form name="editprofile" action="/settings/editprofile" method="POST">
                                 <div class="card-header bg-light text-dark">
                                     <h5>
-                                        <a href="#edit_device{{ index }}" data-toggle="collapse">
-                                            {% if data['friendly_name']  == '' %}
-                                            <i class="far fa-caret-square-down"></i>&nbsp; {{ data['device_name'] }}
-                                            {% else %}
-                                            <i class="far fa-caret-square-down"></i>&nbsp; {{ data['friendly_name'] }}
-                                            {% endif %}
-                                        </a>
+                                        <a href="#edit{{ index }}" data-toggle="collapse">
+                                            <i class="far fa-caret-square-down"></i>&nbsp; {{ data['name'] }}</a>
                                     </h5>
                                 </div>
-                                <div id="edit_device{{ index }}" class="collapse">
+                                <div id="edit{{ index }}" class="collapse">
                                     <div class="card-body">
                                         <div class="input-group mb-3">
                                             <div class="input-group-prepend">
-                                                <span class="input-group-text" data-toggle="tooltip" title="Human readable name for device used to display above.">
-                                                    <i class="fas fa-user-circle"></i>&nbsp; Friendly Name </span>
+                                                <span class="input-group-text" data-toggle="tooltip" title="Short Unique ID to select a profile.  Should not use spaces.">
+                                                    <i class="fas fa-fingerprint"></i>&nbsp; UniqueID </span>
                                             </div>
-                                            <input id="FriendlyName_{{ index }}" type="text" class="form-control" name="FriendlyName_{{ index }}" value="{{ data['friendly_name'] }}">
+                                            <input id="UniqueID_{{ index }}" type="text" class="form-control" name="UniqueID_{{ index }}" value="{{ index }}">
                                         </div>
                                         <div class="input-group mb-3">
                                             <div class="input-group-prepend">
-                                                <span class="input-group-text" data-toggle="tooltip" title="The factory device name">
-                                                    <i class="fas fa-user-circle"></i>&nbsp; Device Name </span>
+                                                <span class="input-group-text" data-toggle="tooltip" title="Human readable name for profile. Used to display above.">
+                                                    <i class="fas fa-user-circle"></i>&nbsp; Name </span>
                                             </div>
-                                            <input id="DeviceName_{{ index }}" type="text" class="form-control" name="DeviceName_{{ index }}" value="{{ data['device_name'] }}" readonly>
+                                            <input id="Name_{{ index }}" type="text" class="form-control" name="Name_{{ index }}" value="{{ data['name'] }}">
                                         </div>
                                         <div class="input-group mb-3">
                                             <div class="input-group-prepend">
-                                                <span class="input-group-text" data-toggle="tooltip" title="Android app version">
-                                                    <i class="fas fa-info-circle"></i>&nbsp; App Version </span>
+                                                <span class="input-group-text" data-toggle="tooltip" title="Source Voltage (volts)">
+                                                    <i class="fas fa-bolt"></i>&nbsp; Vs </span>
                                             </div>
-                                            <input id="AppVersion_{{ index }}" type="text" class="form-control" name="AppVersion_{{ index }}" value="{{ data['app_version'] }}" readonly>
+                                            <input id="Vs_{{ index }}" type="text" class="form-control" name="Vs_{{ index }}" value="{{ data['Vs'] }}">
                                         </div>
                                         <div class="input-group mb-3">
                                             <div class="input-group-prepend">
-                                                <span class="input-group-text" data-toggle="tooltip" title="The OneSignal device ID">
-                                                    <i class="fas fa-fingerprint"></i>&nbsp; OneSignal Device ID </span>
+                                                <span class="input-group-text" data-toggle="tooltip" title="R1 in resistor divider (ohms)">
+                                                    <i class="fas fa-divide"></i>&nbsp; Rd </span>
                                             </div>
-                                            <input id="DeviceID_{{ index }}" type="text" class="form-control" name="DeviceID_{{ index }}" value="{{ index }}" disabled>
+                                            <input id="Rd_{{ index }}" type="text" class="form-control" name="Rd_{{ index }}" value="{{ data['Rd'] }}">
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="Coefficient A in Steinhart Hart Calculation">
+                                                    <i class="fas fa-calculator"></i>&nbsp; CoEff A </span>
+                                            </div>
+                                            <input id="A_{{ index }}" type="text" class="form-control" name="A_{{ index }}" value="{{ data['A'] }}">
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="Coefficient B in Steinhart Hart Calculation">
+                                                    <i class="fas fa-calculator"></i>&nbsp; CoEff B </span>
+                                            </div>
+                                            <input id="B_{{ index }}" type="text" class="form-control" name="B_{{ index }}" value="{{ data['B'] }}">
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="Coefficient C in Steinhart Hart Calculation">
+                                                    <i class="fas fa-calculator"></i>&nbsp; CoEff C </span>
+                                            </div>
+                                            <input id="C_{{ index }}" type="text" class="form-control" name="C_{{ index }}" value="{{ data['C'] }}">
                                         </div>
                                     </div>
                                     <div class="card-footer bg-light">
-                                        <button type="submit" class="btn btn-primary" name="edit_device" value="{{ index }}">Save</button>
+                                        <button type="submit" class="btn btn-primary" name="editprofile" value="{{ index }}">Save</button>
                                         <!-- Button to Open the Modal -->
-                                        <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#DeleteDeviceModal{{ index }}">Delete</button>
+                                        <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#DeleteProfileModal{{ index }}">Delete</button>
                                         <!-- The Modal -->
-                                        <div class="modal" id="DeleteDeviceModal{{ index }}">
+                                        <div class="modal" id="DeleteProfileModal{{ index }}">
                                             <div class="modal-dialog">
                                                 <div class="modal-content">
                                                     <!-- Modal Header -->
                                                     <div class="modal-header">
-                                                        {% if data['friendly_name']  == '' %}
-                                                        <h4 class="modal-title">Delete Device {{ data['device_name'] }}</h4>
-                                                        {% else %}
-                                                        <h4 class="modal-title">Delete Device {{ data['friendly_name'] }}</h4>
-                                                        {% endif %}
+                                                        <h4 class="modal-title">Delete Profile {{ index }}</h4>
                                                         <button type="button" class="close" data-dismiss="modal">&times;</button>
                                                     </div>
                                                     <!-- Modal body -->
-                                                    {% if data['friendly_name']  == '' %}
-                                                    <div class="modal-body"> Are you sure you want to delete the {{ data['device_name'] }} device? </div>
-                                                    {% else %}
-                                                    <div class="modal-body"> Are you sure you want to delete the {{ data['friendly_name'] }} device? </div>
-                                                    {% endif %}
+                                                    <div class="modal-body"> Are you sure you want to delete the {{ data['name'] }} profile?</div>
                                                     <!-- Modal footer -->
                                                     <div class="modal-footer">
                                                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                                                        <button type="submit" class="btn btn-danger" name="delete_device" value="{{ index }}">Delete</button>
+                                                        <button type="submit" class="btn btn-danger" name="delete" value="{{ index }}">Delete</button>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+                            </form>
+                        </div>
+                        <br>
+                        {% endfor %}
+                        <a href="/tuning" class="btn btn-outline-primary btn-block shadow" role="button"><i class="fas fa-toolbox"></i> Tune Probe Coefficients Tool </a>
+                        <br>
+                        <div class="card shadow">
+                            <form name="addprofile" action="/settings/addprofile" method="POST">
+                                <div class="card-header bg-light text-dark">
+                                    <h5>
+                                        <a href="#addprofile" data-toggle="collapse">
+                                            <i class="fas fa-plus-circle"></i>&nbsp; Add Profile </a>
+                                    </h5>
+                                </div>
+                                <div id="addprofile" class="collapse">
+                                    <div class="card-body">
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend"><span class="input-group-text" data-toggle="tooltip" title="Short Unique ID to select a profile.  Should not use spaces.">
+                                                <i class="fas fa-fingerprint"></i>&nbsp; UniqueID </span>
+                                            </div>
+                                            <input id="UniqueID" type="text" class="form-control" placeholder="UniqueID" name="UniqueID">
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="Human readable name for profile. Used to display above.">
+                                                    <i class="fas fa-user-circle"></i>&nbsp; Name </span>
+                                            </div>
+                                            <input id="Name" type="text" class="form-control" placeholder="Name" name="Name">
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="Source Voltage (volts)">
+                                                    <i class="fas fa-bolt"></i>&nbsp; Vs </span>
+                                            </div>
+                                            <input id="Vs" type="text" class="form-control" placeholder="3.28" name="Vs">
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="R1 in resistor divider (ohms)">
+                                                    <i class="fas fa-divide"></i>&nbsp; Rd </span>
+                                            </div>
+                                            <input id="Rd" type="text" class="form-control" placeholder="10000" name="Rd">
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="Coefficient A in Steinhart Hart Calculation">
+                                                    <i class="fas fa-calculator"></i>&nbsp; CoEff A </span>
+                                            </div>
+                                            <input id="A" type="text" class="form-control" name="A">
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="Coefficient B in Steinhart Hart Calculation">
+                                                    <i class="fas fa-calculator"></i>&nbsp; CoEff B </span>
+                                            </div>
+                                            <input id="B" type="text" class="form-control" name="B">
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend"><span class="input-group-text" data-toggle="tooltip" title="Coefficient C in Steinhart Hart Calculation">
+                                                <i class="fas fa-calculator"></i>&nbsp; CoEff C </span>
+                                            </div>
+                                            <input id="C" type="text" class="form-control" name="C">
+                                        </div>
+                                    </div>
+                                    <div class="card-footer bg-light">
+                                        <button type="submit" class="btn btn-outline-primary">Save</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <!-- End of card body -->
+                </div>
+                <!-- End of Card -->
+            </div>
+            <!-- End of Tab -->
+            <!-- ============================ Select Temp Units ========================== -->
+            {% if request.MOBILE %}<br>{% endif %}
+            <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-units" role="tabpanel" aria-labelledby="v-pills-units-tab">
+                <div class="card shadow">
+                    <form name="Units" action="/settings/units" method="POST">
+                        <div class="card-header bg-primary text-white">
+                            <h5>
+                                <i class="fas fa-temperature-low"></i>&nbsp; Select Units
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="selectUnits">Select temperature units to be used
+                                    globally:</label>
+                                <select class="form-control" id="selectUnits" name="units">
+                                    <option value="F" {% if settings['globals']['units'] == 'F' %}selected{% endif %}>Fahrenheit (F)</option>
+                                    <option value="C" {% if settings['globals']['units'] == 'C' %}selected{% endif %}>Celsius (C)</option>
+                                </select>
                             </div>
-                            <br> {% endfor %}
                             <span class="badge badge-warning">NOTE:</span>
-                            <i class="small"> You can download the Android application from <a href="https://github.com/weberbox/PiFire-Android" target="blank">Github</a> </i>
+                            <i class="small"> Changing the scale/units will restart the grill controller (stopping any currently running modes) and automatically erase history. </i>
+                        </div>
+                        <!-- End of card body -->
+                        <div class="card-footer bg-light">
+                            <button type="submit" class="btn btn-outline-primary">Save</button>
+                        </div>
+                    </form>
+                </div>
+                <!-- End of Card -->
+            </div>
+            <!-- End of Tab -->
+            <!-- ============================ Grill Name ========================== -->
+            {% if request.MOBILE %}<br>{% endif %}
+            <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-name" role="tabpanel" aria-labelledby="v-pills-name-tab">
+                <div class="card shadow">
+                    <form name="GrillName" action="/settings/grillname" method="POST">
+                        <div class="card-header bg-primary text-white">
+                            <h5>
+                                <i class="fas fa-file-signature"></i>&nbsp; Grill Name
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Choose a name for your grill!">
+                                        <i class="fas fa-user-ninja"></i>&nbsp; Grill Name </span>
+                                </div>
+                                <input id="grill_name" type="text" class="form-control" placeholder="{{ settings['globals']['grill_name'] }}" value="{{ settings['globals']['grill_name'] }}" name="grill_name">
+                            </div>
+                        </div>
+                        <!-- End of card body -->
+                        <div class="card-footer bg-light">
+                            <button type="submit" class="btn btn-outline-primary">Save</button>
+                        </div>
+                    </form>
+                </div>
+                <!-- End of Card -->
+            </div>
+            <!-- End of Tab -->
+            <!-- ============================ Work Mode Settings ========================== -->
+            {% if request.MOBILE %}<br>{% endif %}
+            <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-work-mode" role="tabpanel" aria-labelledby="v-pills-work-mode-tab">
+                <div class="card shadow">
+                    <form name="cyclesettings" action="/settings/cycle" method="POST">
+                        <div class="card-header bg-primary text-white">
+                            <h5>
+                                <i class="fas fa-tools"></i>&nbsp; Work Mode Settings
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <h5>Startup / Smoke Mode Cycle Settings</h5>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Auger-On Time for Smoke / Startup (seconds)[Default=15]">
+                                        <i class="far fa-clock"></i>&nbsp; Auger On Time </span>
+                                </div>
+                                <input id="smokecycletime" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['SmokeCycleTime'] }}" value="{{ settings['cycle_data']['SmokeCycleTime'] }}" name="smokecycletime">
+                            </div>
+                            <span class="badge badge-warning">NOTE:</span>
+                            <i class="small"> More information about the PMode can be found <a href="http://tipsforbbq.com/Definition/Traeger-P-Setting" target="blank">here.</a> P-Mode is used for both Startup and Smoke modes, but not Hold mode. </i>
+                            <br>
+                            <br>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="(Auger-Off Time: Set P-Mode for Smoke Cycle (1-10)">
+                                        <i class="fas fa-cog"></i>&nbsp; P-Mode </span>
+                                </div>
+                                <input id="pmode" type="number" min="0" max="9" class="form-control" placeholder="{{ settings['cycle_data']['PMode'] }}" value="{{ settings['cycle_data']['PMode'] }}" name="pmode">
+                            </div>
+                            <table class="table table-bordered">
+                                <thead class="thead-light">
+                                <tr>
+                                    <th>P-Mode</th>
+                                    <th>Auger ON Time</th>
+                                    <th>Auger OFF Time</th>
+                                </tr>
+                                </thead>
+                                {% for row in range(10) %}
+                                <tbody>
+                                {% if row == settings['cycle_data']['PMode'] %}
+                                <tr class="table-warning">
+                                    {% else %}
+                                <tr>
+                                    {% endif %}
+                                    <td>{{ row }} {% if (row == 2) %}(Factory Default){% endif %}</td>
+                                    <td>{{ settings['cycle_data']['SmokeCycleTime'] }}</td>
+                                    <td>{{ (row * 10)+45 }} seconds</td>
+                                </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                            <br>
+                            <h5>Smoke Plus Settings (SMOKE & HOLD Mode) [Fan Cycling]</h5>
+                            <span class="badge badge-warning">NOTE:</span>
+                            <i class="small">Smoke Plus Mode can be toggled on/off by tapping the fan icon button on the dashboard. The icon will be highlighted blue indicating that smoke plus is enabled. Smoke Plus will cycle the fan on and off during smoke and hold mode to promote additional smoke generation. Fan cycling will only occur between the below min/max temperatures.</i>
+                            <br>
+                            <br>
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="defaultsmokeplus" name="defaultsmokeplus" {% if settings['smoke_plus']['enabled'] == True %}checked{% endif %}>
+                                <label class="custom-control-label" for="defaultsmokeplus">Smoke Plus Enabled by Default</label>
+                            </div>
+                            <br>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                            <span class="input-group-text" data-toggle="tooltip" title="Fan Cycle Time (seconds) [Default: 10]">
+                                <i class="far fa-clock"></i>&nbsp; Fan Cycle Time (s) </span>
+                                </div>
+                                <input id="sp_cycle" type="number" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['cycle'] }}" value="{{ settings['smoke_plus']['cycle'] }}" name="sp_cycle">
+                            </div>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Lowest temperature for Smoke Plus to operate. ({{settings['globals']['units']}}) [Default: 160F/71C]">
+                                        <i class="fas fa-temperature-high"></i>&nbsp; Min Oprerational Temp ({{settings['globals']['units']}}) </span>
+                                </div>
+                                <input id="minsptemp" type="number" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['min_temp'] }}" value="{{ settings['smoke_plus']['min_temp'] }}" name="minsptemp">
+                            </div>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Highest temperature for Smoke Plus to operate. ({{settings['globals']['units']}}) [Default: 220F/104C]">
+                                        <i class="fas fa-temperature-high"></i>&nbsp; Max Oprerational Temp ({{settings['globals']['units']}}) </span>
+                                </div>
+                                <input id="maxsptemp" type="number" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['max_temp'] }}" value="{{ settings['smoke_plus']['max_temp'] }}" name="maxsptemp">
+                            </div>
+                            <br>
+                            <h5>PID Settings (HOLD Mode)</h5>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Cycle Time for PID Controller (seconds)[Default=20]">
+                                        <i class="far fa-clock"></i>&nbsp; Cycle Time </span>
+                                </div>
+                                <input id="holdcycletime" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['HoldCycleTime'] }}" value="{{ settings['cycle_data']['HoldCycleTime'] }}" name="holdcycletime">
+                            </div>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Proportional Band - This is the temperature band centered around the set point, that the controller is active.  If the error is greater than PB/2, the command is 0.  If the error is less than PB/2, the command is 1.0 [Default=60.0]">
+                                        <i class="fas fa-wave-square"></i>&nbsp; Proportional Band (PB) </span>
+                                </div>
+                                <input id="propband" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['PB'] }}" value="{{ settings['cycle_data']['PB'] }}" name="propband">
+                            </div>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Integral Time - Time (in seconds) to eliminate the integral error. [Default=180.0]">
+                                        <i class="far fa-clock"></i>&nbsp; Integral Time (Ti) </span>
+                                </div>
+                                <input id="integraltime" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['Ti'] }}" value="{{ settings['cycle_data']['Ti'] }}" name="integraltime">
+                            </div>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Derivative Time - Time (in seconds) to predict the future value. [Default=45.0]">
+                                        <i class="far fa-clock"></i>&nbsp; Derivative Time (Td) </span>
+                                </div>
+                                <input id="derivtime" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['Td'] }}" value="{{ settings['cycle_data']['Td'] }}" name="derivtime">
+                            </div>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Min Cycle Ratio [Default=0.15]">
+                                        <i class="far fa-clock"></i>&nbsp; Min Cycle Ratio</span>
+                                </div>
+                                <input id="u_min" type="number" min="0.05" step="0.01" class="form-control" placeholder="{{ settings['cycle_data']['u_min'] }}" value="{{ settings['cycle_data']['u_min'] }}" name="u_min">
+                            </div>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Max Cycle Ratio [Default=1.0]">
+                                        <i class="far fa-clock"></i>&nbsp; Max Cycle Ratio</span>
+                                </div>
+                                <input id="u_max" type="number" min="0.1" step="0.01" class="form-control" placeholder="{{ settings['cycle_data']['u_max'] }}" value="{{ settings['cycle_data']['u_max'] }}" name="u_max">
+                            </div>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Center Ratio [Default=0.5]">
+                                        <i class="far fa-clock"></i>&nbsp; Center Ratio</span>
+                                </div>
+                                <input id="center" type="number" min="0.1" step="0.01" class="form-control" placeholder="{{ settings['cycle_data']['center'] }}" value="{{ settings['cycle_data']['center'] }}" name="center">
+                            </div>
+                            <span class="badge badge-warning">NOTE:</span>
+                            <i class="small"> If you are in hold mode currently, you will need to change to another mode and back into hold mode for this to take effect. More information on the PID control settings can be found <a href="http://engineeredmusings.com/pismoker/" target="blank">here.</a></i>
+                            <br><br>
+                            <h5>Keep Warm Settings</h5>
+                            <span class="badge badge-warning">NOTE:</span>
+                            <i class="small">The Keep Warm option will be activated when selected once a probe set point has been achieved or the set timer has expired. The Grill will exit the currently running mode then switch to Hold Mode and attempt to maintain the temperature set below. You can also enable or disable the Smoke Plus feature during Keep Warm.</i>
+                            <br><br>
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="keep_warm_s_plus" name="keep_warm_s_plus" {% if settings['keep_warm']['s_plus'] == True %}checked{% endif %}>
+                                <label class="custom-control-label" for="keep_warm_s_plus">Smoke Plus Enabled</label>
+                            </div>
+                            <br>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Keep Warm Temperature ({{settings['globals']['units']}}) [Default: 165F/74C]">
+                                        <i class="fas fa-temperature-high"></i>&nbsp; Keep Warm Temp ({{settings['globals']['units']}})</span>
+                                </div>
+                                <input id="keep_warm_temp" type="number" min="1" class="form-control" placeholder="{{ settings['keep_warm']['temp'] }}" value="{{ settings['keep_warm']['temp'] }}" name="keep_warm_temp">
+                            </div>
+                        </div>
+                        <!-- End of card body -->
+                        <div class="card-footer bg-light">
+                            <button type="submit" class="btn btn-outline-primary">Save</button>
+                        </div>
+                    </form>
+                </div>
+                <!-- End of Card -->
+            </div>
+            <!-- End of Tab -->
+            <!-- ============================ Startup/Shutdown Settings ========================== -->
+            {% if request.MOBILE %}<br>{% endif %}
+            <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-timers" role="tabpanel" aria-labelledby="v-pills-timers-tab">
+                <div class="card shadow">
+                    <form name="startshutdowntimers" action="/settings/timers" method="POST">
+                        <div class="card-header bg-primary text-white">
+                            <h5>
+                                <i class="fas fa-tools"></i>&nbsp; Startup & Shutdown Settings
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Shutdown timer (seconds) [Default=60]">
+                                        <i class="far fa-clock"></i>&nbsp; Shutdown Timer (seconds)</span>
+                                </div>
+                                <input id="shutdown_timer" type="number" min="1" class="form-control" placeholder="{{ settings['globals']['shutdown_timer'] }}" value="{{ settings['globals']['shutdown_timer'] }}" name="shutdown_timer">
+                            </div>
+                            <span class="badge badge-warning">NOTE:</span>
+                            <i class="small"> Amount of time fan will run after shutdown is selected </i>
+                            <br>
+                            <br>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Startup timer (seconds) [Default=240]">
+                                        <i class="far fa-clock"></i>&nbsp; Startup Timer (seconds)</span>
+                                </div>
+                                <input id="startup_timer" type="number" min="1" class="form-control" placeholder="{{ settings['globals']['startup_timer'] }}" value="{{ settings['globals']['startup_timer'] }}" name="startup_timer">
+                            </div>
+                            <span class="badge badge-warning">NOTE:</span>
+                            <i class="small"> Amount of time for startup before transitioning to smoke or attempting a reignite</i>
                             <br>
                         </div>
                         <!-- End of card body -->
-                    </div>
-                    <!-- End of Card -->
-                    <br>
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-light text-dark">
-                            <h5>InfluxDB</h5>
+                        <div class="card-footer bg-light">
+                            <button type="submit" class="btn btn-outline-primary">Save</button>
+                        </div>
+                    </form>
+                </div>
+                <!-- End of Card -->
+            </div>
+            <!-- End of Tab -->
+            <!-- ============================ History Settings ========================== -->
+            {% if request.MOBILE %}<br>{% endif %}
+            <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-history" role="tabpanel" aria-labelledby="v-pills-history-tab">
+                <div class="card shadow">
+                    <form name="miscsettings" action="/settings/history" method="POST">
+                        <div class="card-header bg-primary text-white">
+                            <h5>
+                                <i class="fas fa-tools"></i>&nbsp; History Settings
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Amount of history to display on the history page (minutes). [Default = 60]">
+                                        <i class="far fa-clock"></i>&nbsp; History to Display (mins)</span>
+                                </div>
+                                <input id="historymins" type="number" min="1" class="form-control" placeholder="{{ settings['history_page']['minutes'] }}" value="{{ settings['history_page']['minutes'] }}" name="historymins">
+                            </div>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Number of datapoints to display per page.">
+                                        <i class="far fa-clock"></i>&nbsp; Datapoints to Display</span>
+                                </div>
+                                <input id="datapoints" type="number" min="10" class="form-control" placeholder="{{ settings['history_page']['datapoints'] }}" value="{{ settings['history_page']['datapoints'] }}" name="datapoints">
+                            </div>
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="clearhistorystartup" name="clearhistorystartup" {% if settings['history_page']['clearhistoryonstart'] == True %}checked{% endif %}>
+                                <label class="custom-control-label" for="clearhistorystartup">Clear History on Startup</label>
+                            </div>
+                            <br>
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="historyautorefresh" name="historyautorefresh" {% if settings['history_page']['autorefresh'] == 'on' %}checked{% endif %}>
+                                <label class="custom-control-label" for="historyautorefresh">History Auto-Refresh</label>
+                            </div>
+                            <br>
+                        </div>
+                        <!-- End of card body -->
+                        <div class="card-footer bg-light">
+                            <button type="submit" class="btn btn-outline-primary">Save</button>
+                        </div>
+                    </form>
+                </div>
+                <!-- End of Card -->
+            </div>
+            <!-- End of Tab -->
+            <!-- ============================ Safety Settings ========================== -->
+            {% if request.MOBILE %}<br>{% endif %}
+            <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-safety" role="tabpanel" aria-labelledby="v-pills-safety-tab">
+                <div class="card shadow">
+                    <form name="safetysettings" action="/settings/safety" method="POST">
+                        <div class="card-header bg-primary text-white">
+                            <h5>
+                                <i class="fas fa-tools"></i>&nbsp; Safety Settings
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Lowest temperature after startup allowed.  Shut down grill to prevent firepot overload.">
+                                        <i class="fas fa-temperature-high"></i>&nbsp; Min Startup Temp ({{settings['globals']['units']}})
+                                    </span>
+                                </div>
+                                <input id="minstartuptemp" type="number" min="1" class="form-control" placeholder="{{ settings['safety']['minstartuptemp'] }}" value="{{ settings['safety']['minstartuptemp'] }}" name="minstartuptemp">
+                            </div>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Lowest allowed operational temperature, after startup has completed. Shut down grill to prevent firepot overload.">
+                                        <i class="fas fa-temperature-high"></i>&nbsp; Max Startup Temp ({{settings['globals']['units']}})</span>
+                                </div>
+                                <input id="maxstartuptemp" type="number" min="1" class="form-control" placeholder="{{ settings['safety']['maxstartuptemp'] }}" value="{{ settings['safety']['maxstartuptemp'] }}" name="maxstartuptemp">
+                            </div>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Number of retries to attempt re-ignite after the grill temperature goes too low. Set to zero to disable. [default=1]">
+                                        <i class="fas fa-redo-alt"></i>&nbsp; Reignite Retries</span>
+                                </div>
+                                <input id="reigniteretries" type="number" min="0" max="10" class="form-control" placeholder="{{ settings['safety']['reigniteretries'] }}" value="{{ settings['safety']['reigniteretries'] }}" name="reigniteretries">
+                            </div>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Maximum allowable temperature.  Shut down grill to prevent potential damage.">
+                                        <i class="fas fa-temperature-high"></i>&nbsp; Max Operational Temp ({{settings['globals']['units']}})</span>
+                                </div>
+                                <input id="maxtemp" type="number" min="1" class="form-control" placeholder="{{ settings['safety']['maxtemp'] }}" value="{{ settings['safety']['mintemp'] }}" name="maxtemp">
+                            </div>
+                            <span class="badge badge-warning">NOTE:</span>
+                            <i class="small"> In an error condition (temp too low, temp too high) the grill will immediately shutdown and log the error in the events log. Notifications of an error will be sent if enabled. The Max Temp safety setting is also enabled in Monitor mode.</i>
+                            <br>
+                            <span class="badge badge-danger">WARNING:</span>
+                            <i class="small"> Safety features are not infallible and may not prevent safety issues with your grill in all cases. As with any grill, it is the operator's responsibility to monitor their equipment to ensure proper operational safety.</i>
+                        </div>
+                        <!-- End of card body -->
+                        <div class="card-footer bg-light">
+                            <button type="submit" class="btn btn-outline-primary">Save</button>
+                        </div>
+                    </form>
+                </div>
+                <!-- End of Card -->
+            </div>
+            <!-- End of Tab -->
+            <!-- ============================ Pellet Settings ========================== -->
+            {% if request.MOBILE %}<br>{% endif %}
+            <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-pellets" role="tabpanel" aria-labelledby="v-pills-pellets-tab">
+                <div class="card shadow">
+                    <form name="pelletsettings" action="/settings/pellets" method="POST">
+                        <div class="card-header bg-primary text-white">
+                            <h5>
+                                <i class="fas fa-tools"></i>&nbsp; Pellet Settings
+                            </h5>
                         </div>
                         <div class="card-body">
                             <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="influxdb_enabled" name="influxdb_enabled" {% if settings['influxdb']['enabled'] == True %}checked{% endif %}>
-                                <label class="custom-control-label" for="influxdb_enabled">InfluxDB Enabled</label>
+                                <input type="checkbox" class="custom-control-input" id="pelletwarning" name="pelletwarning" {% if settings['pelletlevel']['warning_enabled'] == True %}checked{% endif %}>
+                                <label class="custom-control-label" for="pelletwarning">Pellet Level Warning</label>
                             </div>
                             <br>
                             <div class="input-group mb-3">
                                 <div class="input-group-prepend">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-key"></i>&nbsp; URL </span>
+                                    <span class="input-group-text" data-toggle="tooltip" title="Low pellet level warning percent">
+                                        <i class="fas fa-exclamation-triangle"></i>&nbsp; Level Warning %</span>
                                 </div>
-                                <input id="influxdb_url" type="text" class="form-control" name="influxdb_url" value="{{settings['influxdb']['url']}}">
+                                <input id="warninglevel" type="number" min="0" max="100" class="form-control" placeholder="{{ settings['pelletlevel']['warning_level'] }}" value="{{ settings['pelletlevel']['warning_level'] }}" name="warninglevel">
+                            </div>
+                            <span class="badge badge-warning">NOTE:</span>
+                            <i class="small"> Pellet levels below the input number will receive notifications every 20 minutes during a cook</i>
+                            <br>
+                            <br>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Distance (cm) measured when the hopper is full.">
+                                        <i class="fas fa-level-up-alt"></i>&nbsp; Hopper Full Distance (cm)</span>
+                                </div>
+                                <input id="full" type="number" min="0" max="100" class="form-control" placeholder="{{ settings['pelletlevel']['full'] }}" value="{{ settings['pelletlevel']['full'] }}" name="full">
                             </div>
                             <div class="input-group mb-3">
                                 <div class="input-group-prepend">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-key"></i>&nbsp; token </span>
+                                    <span class="input-group-text" data-toggle="tooltip" title="Distance (cm) measured when the hopper is empty.">
+                                        <i class="fas fa-level-down-alt"></i>&nbsp; Hopper Empty Distance (cm)</span>
                                 </div>
-                                <input id="influxdb_token" type="text" class="form-control" name="influxdb_token" value="{{settings['influxdb']['token']}}">
+                                <input id="empty" type="number" min="1" max="100" class="form-control" placeholder="{{ settings['pelletlevel']['empty'] }}" value="{{ settings['pelletlevel']['empty'] }}" name="empty">
                             </div>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-key"></i>&nbsp; org </span>
-                                </div>
-                                <input id="influxdb_org" type="text" class="form-control" name="influxdb_org" value="{{settings['influxdb']['org']}}">
-                            </div>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-key"></i>&nbsp; bucket </span>
-                                </div>
-                                <input id="influxdb_bucket" type="text" class="form-control" name="influxdb_bucket" value="{{settings['influxdb']['bucket']}}">
-                            </div>
-
+                            <span class="badge badge-warning">NOTE:</span>
+                            <i class="small"> The distance value for full must be smaller than the value for empty. </i>
+                            <br>
                         </div>
                         <!-- End of card body -->
-                    </div>
-                    <!-- End of Card -->
-                    <br>
+                        <div class="card-footer bg-light">
+                            <button type="submit" class="btn btn-outline-primary">Save</button>
+                        </div>
+                    </form>
                 </div>
-                <!-- End of card body -->
-                <div class="card-footer bg-light">
-                    <button type="submit" class="btn btn-outline-primary">Save</button>
+                <!-- End of Card -->
+            </div>
+            <!-- End of Tab -->
+            <!-- ============================ Page Settings ========================== -->
+            {% if request.MOBILE %}<br>{% endif %}
+            <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-theme" role="tabpanel" aria-labelledby="v-pills-theme-tab">
+                <div class="card shadow">
+                    <form name="pagesettings" action="/settings/pagesettings" method="POST">
+                        <div class="card-header bg-primary text-white">
+                            <h5>
+                                <i class="fas fa-tools"></i>&nbsp; Page Settings
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="darkmode" name="darkmode" {% if settings['globals']['page_theme'] == 'dark' %}checked{% endif %}>
+                                <label class="custom-control-label" for="darkmode">Enable Dark Mode</label>
+                            </div>
+                            <br>
+                        </div>
+                        <!-- End of card body -->
+                        <div class="card-footer bg-light">
+                            <button type="submit" class="btn btn-outline-primary">Save</button>
+                        </div>
+                    </form>
                 </div>
-            </form>
+                <!-- End of Card -->
+            </div>
+            <!-- End of Tab -->
+            <!-- ========================== Notification Settings ========================== -->
+            {% if request.MOBILE %}<br>{% endif %}
+            <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-notifications" role="tabpanel" aria-labelledby="v-pills-notifications-tab">
+                <div class="card shadow">
+                    <form name="notify" action="/settings/notify" method="POST">
+                        <div class="card-header bg-primary text-white">
+                            <h5>
+                                <i class="far fa-bell"></i>&nbsp; Notification Settings
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- IFTTT WebHooks -->
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-light text-dark">
+                                    <h5>IFTTT WebHooks</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="ifttt_enabled" name="ifttt_enabled" {% if settings['ifttt']['enabled'] == True %}checked{% endif %}>
+                                        <label class="custom-control-label" for="ifttt_enabled">IFTTT Enabled</label>
+                                    </div>
+                                    <br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-key"></i>&nbsp; API Key</span>
+                                        </div>
+                                        <input id="iftttapi" type="text" class="form-control" name="iftttapi" value="{{settings['ifttt']['APIKey']}}">
+                                    </div>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> Leave blank to disable.</i>
+                                </div>
+                                <!-- End of card body -->
+                            </div>
+                            <!-- End of Card -->
+                            <br>
+                            <!-- PushOver Notifications -->
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-light text-dark">
+                                    <h5>PushOver</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="pushover_enabled" name="pushover_enabled" {% if settings['pushover']['enabled'] == True %}checked{% endif %}>
+                                        <label class="custom-control-label" for="pushover_enabled">PushOver Enabled</label>
+                                    </div>
+                                    <br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-key"></i>&nbsp; API Key</span>
+                                        </div>
+                                        <input id="pushover_apikey" type="text" class="form-control" name="pushover_apikey" value="{{settings['pushover']['APIKey']}}">
+                                    </div>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> Add commas for multiple user keys. Leave blank to disable.</i>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-key"></i>&nbsp; User Keys</span>
+                                        </div>
+                                        <input id="pushover_userkeys" type="text" class="form-control" name="pushover_userkeys" value="{{settings['pushover']['UserKeys']}}">
+                                    </div>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> URL to be added to Pushover notifications.</i>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-link"></i>&nbsp; Public URL </span>
+                                        </div>
+                                        <input id="pushover_publicurl" type="text" class="form-control" name="pushover_publicurl" value="{{settings['pushover']['PublicURL']}}">
+                                    </div>
+                                </div>
+                                <!-- End of card body -->
+                            </div>
+                            <!-- End of Card -->
+                            <br>
+                            <!-- Pushbullet Notifications -->
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-light text-dark">
+                                    <h5>Pushbullet</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="pushbullet_enabled" name="pushbullet_enabled" {% if settings['pushbullet']['enabled'] == True %}checked{% endif %}>
+                                        <label class="custom-control-label" for="pushbullet_enabled">Pushbullet Enabled</label>
+                                    </div>
+                                    <br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-key"></i>&nbsp; API Key</span>
+                                        </div>
+                                        <input id="pushbullet_apikey" type="text" class="form-control" name="pushbullet_apikey" value="{{settings['pushbullet']['APIKey']}}">
+                                    </div>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> URL to be added to Pushbullet notifications.</i>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-link"></i>&nbsp; Public URL</span>
+                                        </div>
+                                        <input id="pushbullet_publicurl" type="text" class="form-control" name="pushbullet_publicurl" value="{{settings['pushbullet']['PublicURL']}}">
+                                    </div>
+                                </div>
+                                <!-- End of card body -->
+                            </div>
+                            <!-- End of Card -->
+                            <br>
+                            <!-- Android Push Notifications -->
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-light text-dark">
+                                    <h5>Push Notifications</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input"
+                                               id="onesignal_enabled"
+                                               name="onesignal_enabled" {% if settings['onesignal']['enabled'] == True %}checked{% endif %}>
+                                        <label class="custom-control-label" for="onesignal_enabled">OneSignal Enabled</label>
+                                    </div>
+                                    <br>
+                                    {% for index, data in settings['onesignal']['devices'].items()|sort %}
+                                    <div class="card shadow">
+                                        <div class="card-header bg-light text-dark">
+                                            <h5>
+                                                <a href="#edit_device{{ index }}" data-toggle="collapse">
+                                                    {% if data['friendly_name'] == '' %}
+                                                    <i class="far fa-caret-square-down"></i>&nbsp; {{ data['device_name'] }}
+                                                    {% else %}
+                                                    <i class="far fa-caret-square-down"></i>&nbsp; {{ data['friendly_name'] }}
+                                                    {% endif %}
+                                                </a>
+                                            </h5>
+                                        </div>
+                                        <div id="edit_device{{ index }}" class="collapse">
+                                            <div class="card-body">
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" data-toggle="tooltip" title="Human readable name for device used to display above.">
+                                                            <i class="fas fa-user-circle"></i>&nbsp; Friendly Name
+                                                        </span>
+                                                    </div>
+                                                    <input id="FriendlyName_{{ index }}" type="text" class="form-control" name="FriendlyName_{{ index }}" value="{{ data['friendly_name'] }}">
+                                                </div>
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" data-toggle="tooltip" title="The factory device name">
+                                                            <i class="fas fa-user-circle"></i>&nbsp; Device Name</span>
+                                                    </div>
+                                                    <input id="DeviceName_{{ index }}" type="text" class="form-control" name="DeviceName_{{ index }}" value="{{ data['device_name'] }}" readonly>
+                                                </div>
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" data-toggle="tooltip" title="Android app version">
+                                                            <i class="fas fa-info-circle"></i>&nbsp; App Version</span>
+                                                    </div>
+                                                    <input id="AppVersion_{{ index }}" type="text" class="form-control" name="AppVersion_{{ index }}" value="{{ data['app_version'] }}" readonly>
+                                                </div>
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" data-toggle="tooltip" title="The OneSignal device ID">
+                                                            <i class="fas fa-fingerprint"></i>&nbsp; OneSignal Device ID</span>
+                                                    </div>
+                                                    <input id="DeviceID_{{ index }}" type="text" class="form-control" name="DeviceID_{{ index }}" value="{{ index }}" disabled>
+                                                </div>
+                                            </div>
+                                            <div class="card-footer bg-light">
+                                                <button type="submit" class="btn btn-primary" name="edit_device" value="{{ index }}">Save</button>
+                                                <!-- Button to Open the Modal -->
+                                                <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#DeleteDeviceModal{{ index }}">Delete</button>
+                                                <!-- The Modal -->
+                                                <div class="modal" id="DeleteDeviceModal{{ index }}">
+                                                    <div class="modal-dialog">
+                                                        <div class="modal-content">
+                                                            <!-- Modal Header -->
+                                                            <div class="modal-header">
+                                                                {% if data['friendly_name'] == '' %}
+                                                                <h4 class="modal-title">Delete Device {{ data['device_name'] }}</h4>
+                                                                {% else %}
+                                                                <h4 class="modal-title">Delete Device {{ data['friendly_name'] }}</h4>
+                                                                {% endif %}
+                                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                            </div>
+                                                            <!-- Modal body -->
+                                                            {% if data['friendly_name'] == '' %}
+                                                            <div class="modal-body"> Are you sure you want to delete the {{ data['device_name'] }} device?</div>
+                                                            {% else %}
+                                                            <div class="modal-body"> Are you sure you want to delete the {{ data['friendly_name'] }} device?</div>
+                                                            {% endif %}
+                                                            <!-- Modal footer -->
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                                                <button type="submit" class="btn btn-danger" name="delete_device" value="{{ index }}">Delete</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <br>
+                                    {% endfor %}
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> You can download the Android application from <a href="https://github.com/weberbox/PiFire-Android" target="blank">Github</a> </i>
+                                    <br>
+                                </div>
+                                <!-- End of card body -->
+                            </div>
+                            <!-- End of Card -->
+                            <br>
+                            <!-- InfluxDB Notifications -->
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-light text-dark">
+                                    <h5>InfluxDB</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="influxdb_enabled" name="influxdb_enabled" {% if settings['influxdb']['enabled'] == True %}checked{% endif %}>
+                                        <label class="custom-control-label" for="influxdb_enabled">InfluxDB Enabled</label>
+                                    </div>
+                                    <br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-key"></i>&nbsp; URL </span>
+                                        </div>
+                                        <input id="influxdb_url" type="text" class="form-control" name="influxdb_url" value="{{settings['influxdb']['url']}}">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-key"></i>&nbsp; token </span>
+                                        </div>
+                                        <input id="influxdb_token" type="text" class="form-control" name="influxdb_token" value="{{settings['influxdb']['token']}}">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-key"></i>&nbsp; org </span>
+                                        </div>
+                                        <input id="influxdb_org" type="text" class="form-control" name="influxdb_org" value="{{settings['influxdb']['org']}}">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-key"></i>&nbsp; bucket </span>
+                                        </div>
+                                        <input id="influxdb_bucket" type="text" class="form-control" name="influxdb_bucket" value="{{settings['influxdb']['bucket']}}">
+                                    </div>
+                                </div>
+                                <!-- End of card body -->
+                            </div>
+                            <!-- End of Card -->
+                            <br>
+                        </div>
+                        <!-- End of card body -->
+                        <div class="card-footer bg-light">
+                            <button type="submit" class="btn btn-outline-primary">Save</button>
+                        </div>
+                    </form>
+                </div>
+                <!-- End of Card -->
+            </div>
+            <!-- End of Tab -->
         </div>
-        <!-- End of Card -->
     </div>
-    <!-- End of Column -->
 </div>
-<!-- End of Row -->
-<br>
-<br>
-<br> {% endblock %} {% block postcontainer %} {% endblock %} {% block scripts %} {% endblock %}
-
+{% endblock %}
+{% block postcontainer %}{% endblock %}
+{% block scripts %}
+<script>
+    $(document).ready(function(){
+        $('a[data-toggle="pill"]').on('show.bs.tab', function(e) {
+            sessionStorage.setItem('activeTab', $(e.target).attr('href'));
+        });
+        var activeTab = sessionStorage.getItem('activeTab');
+        if(activeTab){
+            $('#v-pills-tab a[href="' + activeTab + '"]').tab('show');
+        }
+    });
+</script>
+{% endblock %}

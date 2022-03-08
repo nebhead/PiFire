@@ -29,7 +29,8 @@ whiptail --msgbox --backtitle "Welcome" --title "PiFire Automated Installer" "Th
 # Install dependencies
 sudo -H pip3 install flask
 sudo -H pip3 install pushbullet.py
-sudo -H pip3 install flask_qrcode
+sudo -H pip3 install flask-mobility
+sudo -H pip3 install flask-qrcode
 sudo -H pip3 install flask-socketio
 sudo -H pip3 install eventlet==0.30.2
 sudo -H pip3 install redis
@@ -76,6 +77,6 @@ python3 settings.py -v @VERSION@
 echo " " | sudo tee -a upgradecheck >/dev/null
 
 # Finish
-whiptail --msgbox --backtitle "Install Complete / Reboot Required" --title "Installation Completed" "Congratulations, the installation is complete.  At this time, you should reboot your system to complete the installation.  You should be able to access your application by opening a browser on your PC or other device and using the IP address for this device  Enjoy!" ${r} ${c}
+whiptail --msgbox --backtitle "Install Complete / Reboot Required" --title "Installation Completed" "Congratulations, the installation is complete.  At this time, you should reboot your system to complete the installation.  On first boot, the wizard will guide you through the remaining setup steps.  You should be able to access your application by opening a browser on your PC or other device and using the IP address for this device.  Enjoy!"  ${r} ${c}
 
 exit 0
