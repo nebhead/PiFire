@@ -58,6 +58,7 @@ def DefaultSettings():
 		'buttonslevel' : 'HIGH',
 		'shutdown_timer' : 60,
 		'startup_timer' : 240,
+		'auto_power_off' : False,
 		'four_probes' : False,
 		'units' : 'F',
 		'augerrate' : 0.3,  # (grams per second) default auger load rate is 10 grams / 30 seconds
