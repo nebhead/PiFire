@@ -9,13 +9,11 @@
 							<div class="card-header bg-primary text-white">
 								<a href="/history/export" class="btn btn-primary float-right" role="button"><i class="fas fa-file-download"></i></a>
 								<button class="btn btn-primary float-right" type="button" data-toggle="modal" data-target="#clearallhistory"><i class="fas fa-trash-alt"></i></button>
-								<form name="refreshmode" method="POST">
-									{% if autorefresh == "off" %}
-									<button class="btn btn-secondary text-light float-right" type="submit" id="autorefresh" name="autorefresh" value="on"><i class="fas fa-sync-alt"></i> OFF</button>
-									{% else %}
-									<button class="btn btn-outline-primary border-white text-white float-right" type="submit" id="autorefresh" name="autorefresh" value="off"><i class="fas fa-sync-alt"></i> ON</button>
-									{% endif %}
-								</form>
+								{% if autorefresh == "off" %}
+								<button class="btn btn-secondary text-light float-right" type="button" id="autorefresh" name="autorefresh" value="on"><i class="fas fa-sync-alt"></i> OFF</button>
+								{% else %}
+								<button class="btn btn-outline-primary border-white text-white float-right" type="button" id="autorefresh" name="autorefresh" value="off"><i class="fas fa-sync-alt"></i> ON</button>
+								{% endif %}
 								<h5><i class="fas fa-history"></i>&nbsp; History</h5>
 							</div>
 			        <div class="card-body" {% if page_theme == 'dark' %} style="background-color: #aaaaaa;"{% endif %}>
@@ -69,220 +67,38 @@
 {% endblock %}
 
 {% block scripts %}
-	<script src="{{ url_for('static', filename='js/Chart.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/chart.js') }}"></script>
 
 	<script>
-	$(document).ready(function(){
-			var chartdata = {
-					labels: {{ label_time_list | safe }},
-					datasets: [
-							{
-									label: "Grill Temp",
-									fill: false,
-									lineTension: 0.1,
-									backgroundColor: "rgba(0,0,127,0.4)",
-									borderColor: "rgba(0,0,127,1)",
-									borderCapStyle: 'butt',
-									borderDash: [],
-									borderDashOffset: 0.0,
-									borderJoinStyle: 'miter',
-									pointBorderColor: "rgba(0,0,127,1)",
-									pointBackgroundColor: "#fff",
-									pointBorderWidth: 1,
-									pointHoverRadius: 5,
-									pointHoverBackgroundColor: "rgba(0,0,127,0.4)",
-									pointHoverBorderColor: "rgba(0,0,127,1)",
-									pointHoverBorderWidth: 2,
-									pointRadius: 1,
-									pointHitRadius: 10,
-									data: {{ grill_temp_list }},
-									spanGaps: false,
-							},
-							{
-									label: "Grill Set Point",
-									fill: false,
-									lineTension: 0.1,
-									backgroundColor: "rgba(0,0,255,0.4)",
-									borderColor: "rgba(0,0,255,1)",
-									borderCapStyle: 'butt',
-									borderDash: [],
-									borderDashOffset: 0.0,
-									borderJoinStyle: 'miter',
-									pointBorderColor: "rgba(0,0,255,1)",
-									pointBackgroundColor: "#fff",
-									pointBorderWidth: 1,
-									pointHoverRadius: 5,
-									pointHoverBackgroundColor: "rgba(0,0,255,0.4)",
-									pointHoverBorderColor: "rgba(0,0,255,1)",
-									pointHoverBorderWidth: 2,
-									pointRadius: 1,
-									pointHitRadius: 10,
-									data: {{ grill_settemp_list }},
-									spanGaps: false,
-									{% if probes_enabled[0] == 0 %}
-										hidden: true,
-									{% endif %}
-							},
-							{
-									label: "Probe-1 Temp",
-									fill: false,
-									lineTension: 0.1,
-									backgroundColor: "rgba(256,0,0,0.4)",
-									borderColor: "rgba(256,0,0,1)",
-									borderCapStyle: 'butt',
-									borderDash: [],
-									borderDashOffset: 0.0,
-									borderJoinStyle: 'miter',
-									pointBorderColor: "rgba(256,0,0,1)",
-									pointBackgroundColor: "#fff",
-									pointBorderWidth: 1,
-									pointHoverRadius: 5,
-									pointHoverBackgroundColor: "rgba(256,0,0,0.4)",
-									pointHoverBorderColor: "rgba(256,0,0,1)",
-									pointHoverBorderWidth: 2,
-									pointRadius: 1,
-									pointHitRadius: 10,
-									data: {{ probe1_temp_list }},
-									spanGaps: false,
-									{% if probes_enabled[1] == 0 %}
-										hidden: true,
-									{% endif %}
-							},
-							{
-									label: "Probe-1 Set Point",
-									fill: false,
-									lineTension: 0.1,
-									backgroundColor: "rgba(127,0,0,0.4)",
-									borderColor: "rgba(127,0,0,1)",
-									borderCapStyle: 'butt',
-									borderDash: [],
-									borderDashOffset: 0.0,
-									borderJoinStyle: 'miter',
-									pointBorderColor: "rgba(127,0,0,1)",
-									pointBackgroundColor: "#fff",
-									pointBorderWidth: 1,
-									pointHoverRadius: 5,
-									pointHoverBackgroundColor: "rgba(127,0,0,0.4)",
-									pointHoverBorderColor: "rgba(127,0,0,1)",
-									pointHoverBorderWidth: 2,
-									pointRadius: 1,
-									pointHitRadius: 10,
-									data: {{ probe1_settemp_list }},
-									spanGaps: false,
-									{% if probes_enabled[1] == 0 %}
-										hidden: true,
-									{% endif %}
-							},
-							{
-									label: "Probe-2 Temp",
-									fill: false,
-									lineTension: 0.1,
-									backgroundColor: "rgba(0,127,0,0.4)",
-									borderColor: "rgba(0,127,0,1)",
-									borderCapStyle: 'butt',
-									borderDash: [],
-									borderDashOffset: 0.0,
-									borderJoinStyle: 'miter',
-									pointBorderColor: "rgba(0,127,0,1)",
-									pointBackgroundColor: "#fff",
-									pointBorderWidth: 1,
-									pointHoverRadius: 5,
-									pointHoverBackgroundColor: "rgba(0,127,0,0.4)",
-									pointHoverBorderColor: "rgba(0,127,0,1)",
-									pointHoverBorderWidth: 2,
-									pointRadius: 1,
-									pointHitRadius: 10,
-									data: {{ probe2_temp_list }},
-									spanGaps: false,
-									{% if probes_enabled[2] == 0 %}
-										hidden: true,
-									{% endif %}
-							},
-							{
-									label: "Probe-2 Set Point",
-									fill: false,
-									lineTension: 0.1,
-									backgroundColor: "rgba(0,255,0,0.4)",
-									borderColor: "rgba(0,255,0,1)",
-									borderCapStyle: 'butt',
-									borderDash: [],
-									borderDashOffset: 0.0,
-									borderJoinStyle: 'miter',
-									pointBorderColor: "rgba(0,255,0,1)",
-									pointBackgroundColor: "#fff",
-									pointBorderWidth: 1,
-									pointHoverRadius: 5,
-									pointHoverBackgroundColor: "rgba(0,255,0,0.4)",
-									pointHoverBorderColor: "rgba(0,255,0,1)",
-									pointHoverBorderWidth: 2,
-									pointRadius: 1,
-									pointHitRadius: 10,
-									data: {{ probe2_settemp_list }},
-									spanGaps: false,
-									{% if probes_enabled[2] == 0 %}
-										hidden: true,
-									{% endif %}
-							}
-					]
-				}
 
-			var temperatureCharts = new Chart(document.getElementById('HistoryChart'), {
-					type: 'line',
-					data: chartdata,
-					options: {
-						scales: {
-								yAxes: [{
-										ticks: {
-												beginAtZero:true
-										}
-								}]
-						},
-						responsive: true,
-						maintainAspectRatio: false,
-						animation: false
-					}
-				});
+	var label_list = {{ label_time_list | safe }}; 
+	var grill_temp_list = {{ grill_temp_list }};
+	var grill_settemp_list = {{ grill_settemp_list }};
+	var probe1_temp_list = {{ probe1_temp_list }};
+	var probe1_settemp_list = {{ probe1_settemp_list }};
+	var probe2_temp_list = {{ probe2_temp_list }};
+	var probe2_settemp_list = {{ probe2_settemp_list }};
 
-		{% if autorefresh == 'on' %}
-		
-		// Auto-Refresh of History Data
+	{% if probes_enabled[0] == 0 %}
+	var probe0_hidden = true;
+	{% else %}
+	var probe0_hidden = false;
+	{% endif %}
 
-		setInterval(function(){
-			// Get Data from historyupdate route
-			req = $.ajax({
-				url : '/historyupdate',
-				type : 'GET'
-			});
+	{% if probes_enabled[1] == 0 %}
+	var probe1_hidden = true;
+	{% else %}
+	var probe1_hidden = false;
+	{% endif %}
 
-			req.done(function(data) {
-				// Update chart data
-				// console.log(data);  // Debug logging
+	{% if probes_enabled[2] == 0 %}
+	var probe2_hidden = true;
+	{% else %}
+	var probe2_hidden = false;
+	{% endif %}
 
-				// Returned Lists: 
-				// 'grill_temp_list' 
-				// 'grill_settemp_list'
-				// 'probe1_temp_list' 
-				// 'probe1_settemp_list'
-				// 'probe2_temp_list' 
-				// 'probe2_settemp_list' 
-				// 'label_time_list' 
+</script>
 
-				// Replace data for each dataset and label list
-				temperatureCharts.data.labels = data.label_time_list;
-				temperatureCharts.data.datasets[0].data = data.grill_temp_list;
-				temperatureCharts.data.datasets[1].data = data.grill_settemp_list;
-				temperatureCharts.data.datasets[2].data = data.probe1_temp_list;
-				temperatureCharts.data.datasets[3].data = data.probe1_settemp_list;
-				temperatureCharts.data.datasets[4].data = data.probe2_temp_list;
-				temperatureCharts.data.datasets[5].data = data.probe2_settemp_list;
-    			
-				// Update Chart
-				temperatureCharts.update();
-
-			});
-		}, 1000); // Update chart every 1 second
-		{% endif %}
-	});
-	</script>
+	<script src="{{ url_for('static', filename='js/history.js') }}"></script>
 
 {% endblock %}

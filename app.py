@@ -148,14 +148,6 @@ def historypage(action=None):
 
 	if (request.method == 'POST'):
 		response = request.form
-		if('autorefresh' in response):
-			if(response['autorefresh'] == 'on'):
-				settings['history_page']['autorefresh'] = 'on'
-				WriteSettings(settings)
-			else:
-				settings['history_page']['autorefresh'] = 'off'
-				WriteSettings(settings)
-
 		if(action == 'setmins'):
 			if('minutes' in response):
 				if(response['minutes'] != ''):
