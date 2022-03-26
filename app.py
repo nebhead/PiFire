@@ -178,6 +178,9 @@ def historypage(action=None):
 				if (int((index/list_length)*100) > last):
 					#print('Generating Data: ' + str(int((index/list_length)*100)) + "%")
 					last = int((index/list_length)*100)
+				# Convert time data to datetime format
+				converted_dt = datetime.datetime.fromtimestamp(int(data_list[index][0]) / 1000)
+				data_list[index][0] = converted_dt.strftime('%Y-%m-%d %H:%M:%S')
 				writeline = ','.join(data_list[index])
 				csvfile.write(writeline + '\n')
 		else:
@@ -195,16 +198,31 @@ def historypage(action=None):
 	data_blob = prepare_data(num_items, True, settings['history_page']['datapoints'])
 
 	return render_template('history.html', control=control, grill_temp_list=data_blob['grill_temp_list'], grill_settemp_list=data_blob['grill_settemp_list'], probe1_temp_list=data_blob['probe1_temp_list'], probe1_settemp_list=data_blob['probe1_settemp_list'], probe2_temp_list=data_blob['probe2_temp_list'], probe2_settemp_list=data_blob['probe2_settemp_list'], label_time_list=data_blob['label_time_list'], probes_enabled=probes_enabled, num_mins=settings['history_page']['minutes'], num_datapoints=settings['history_page']['datapoints'], autorefresh=settings['history_page']['autorefresh'], page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
-    
+
+@app.route('/historyupdate/<action>')    
 @app.route('/historyupdate')
-def historyupdate():
+def historyupdate(action=None):
 	global settings
 
-	data_blob = {}
-	num_items = settings['history_page']['minutes'] * 20
-	data_blob = prepare_data(num_items, True, settings['history_page']['datapoints'])
+	if(action == 'stream'):
+		control = ReadControl()
+		set_temps = control['setpoints']
+		set_temps[0] = control['setpoints']['grill']
+		set_temps[1] = control['setpoints']['probe1']
+		set_temps[2] = control['setpoints']['probe2']
 
-	return jsonify({ 'grill_temp_list' : data_blob['grill_temp_list'], 'grill_settemp_list' : data_blob['grill_settemp_list'], 'probe1_temp_list' : data_blob['probe1_temp_list'], 'probe1_settemp_list' : data_blob['probe1_settemp_list'], 'probe2_temp_list' : data_blob['probe2_temp_list'], 'probe2_settemp_list' : data_blob['probe2_settemp_list'], 'label_time_list' : data_blob['label_time_list'] })
+		cur_probe_temps = []
+		cur_probe_temps = ReadCurrent()
+		return jsonify({ 'probe0_temp' : int(cur_probe_temps[0]), 'probe0_settemp' : set_temps[0], 'probe1_temp' : int(cur_probe_temps[1]), 'probe1_settemp' : set_temps[1], 'probe2_temp' : int(cur_probe_temps[2]), 'probe2_settemp' : set_temps[2]})
+
+	else: 
+		# Legacy flow - can be removed 
+		data_blob = {}
+		num_items = settings['history_page']['minutes'] * 20
+		data_blob = prepare_data(num_items, True, settings['history_page']['datapoints'])
+		for index in range(0, len(data_blob['label_time_list'])): 
+			data_blob['label_time_list'][index] = datetime.datetime.fromtimestamp(int(data_blob['label_time_list'][index]) / 1000).strftime('%H:%M:%S')
+		return jsonify({ 'grill_temp_list' : data_blob['grill_temp_list'], 'grill_settemp_list' : data_blob['grill_settemp_list'], 'probe1_temp_list' : data_blob['probe1_temp_list'], 'probe1_settemp_list' : data_blob['probe1_settemp_list'], 'probe2_temp_list' : data_blob['probe2_temp_list'], 'probe2_settemp_list' : data_blob['probe2_settemp_list'], 'label_time_list' : data_blob['label_time_list'] })
 
 @app.route('/tuning/<action>', methods=['POST','GET'])
 @app.route('/tuning', methods=['POST','GET'])
@@ -1703,6 +1721,10 @@ def get_app_data(action=None, type=None):
 	elif action == 'history_data':
 		num_items = settings['history_page']['minutes'] * 20
 		data_blob = prepare_data(num_items, True, settings['history_page']['datapoints'])
+		# Converting time format from 'time from epoch' to H:M:S
+		for index in range(0, len(data_blob['label_time_list'])): 
+			data_blob['label_time_list'][index] = datetime.datetime.fromtimestamp(int(data_blob['label_time_list'][index]) / 1000).strftime('%H:%M:%S')
+
 		return { 'grill_temp_list' : data_blob['grill_temp_list'],
 				 'grill_settemp_list' : data_blob['grill_settemp_list'],
 				 'probe1_temp_list' : data_blob['probe1_temp_list'],

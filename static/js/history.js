@@ -1,6 +1,31 @@
+// Convert labels (timestamps) to integers
+var label_list_num = label_list.map(Number);
+
+// Calculate initial display window
+var duration_window = 1000 * 60 * display_mins;
+
+// Check if there is any set-temp history and hide set-temp if none
+var grill_settemp_hidden = false;
+if ((grill_settemp_list.reduce((a, b) => a + b, 0) == 0) || (probe0_hidden)) {
+	//console.log('Hiding Grill Set Temp')
+	grill_settemp_hidden = true;
+}
+
+var probe1_settemp_hidden = false;
+if ((probe1_settemp_list.reduce((a, b) => a + b, 0) == 0) || (probe1_hidden)) {
+	//console.log('Hiding Probe1 Set Temp')
+	probe1_settemp_hidden = true;
+}
+
+var probe2_settemp_hidden = false;
+if ((probe2_settemp_list.reduce((a, b) => a + b, 0) == 0) || (probe2_hidden)) {
+	//console.log('Hiding Probe2 Set Temp')
+	probe2_settemp_hidden = true;
+}
+
 $(document).ready(function(){
 	var chartdata = {
-			labels: label_list,
+			labels: label_list_num,
 			datasets: [
 					{
 							label: "Grill Temp",
@@ -21,8 +46,10 @@ $(document).ready(function(){
 							pointHoverBorderWidth: 2,
 							pointRadius: 1,
 							pointHitRadius: 10,
+							pointStyle: 'line',
 							data: grill_temp_list,
 							spanGaps: false,
+							hidden: probe0_hidden,
 					},
 					{
 							label: "Grill Set Point",
@@ -31,7 +58,7 @@ $(document).ready(function(){
 							backgroundColor: "rgba(0,0,255,0.4)",
 							borderColor: "rgba(0,0,255,1)",
 							borderCapStyle: 'butt',
-							borderDash: [],
+							borderDash: [8,4],
 							borderDashOffset: 0.0,
 							borderJoinStyle: 'miter',
 							pointBorderColor: "rgba(0,0,255,1)",
@@ -43,9 +70,10 @@ $(document).ready(function(){
 							pointHoverBorderWidth: 2,
 							pointRadius: 1,
 							pointHitRadius: 10,
+							pointStyle: 'dash',
 							data: grill_settemp_list,
 							spanGaps: false,
-							hidden: probe0_hidden,
+							hidden: grill_settemp_hidden,
 					},
 					{
 							label: "Probe-1 Temp",
@@ -66,6 +94,7 @@ $(document).ready(function(){
 							pointHoverBorderWidth: 2,
 							pointRadius: 1,
 							pointHitRadius: 10,
+							pointStyle: 'line',
 							data: probe1_temp_list,
 							spanGaps: false,
 							hidden: probe1_hidden,
@@ -77,7 +106,7 @@ $(document).ready(function(){
 							backgroundColor: "rgba(127,0,0,0.4)",
 							borderColor: "rgba(127,0,0,1)",
 							borderCapStyle: 'butt',
-							borderDash: [],
+							borderDash: [8,4],
 							borderDashOffset: 0.0,
 							borderJoinStyle: 'miter',
 							pointBorderColor: "rgba(127,0,0,1)",
@@ -89,9 +118,10 @@ $(document).ready(function(){
 							pointHoverBorderWidth: 2,
 							pointRadius: 1,
 							pointHitRadius: 10,
+							pointStyle: 'dash',
 							data: probe1_settemp_list,
 							spanGaps: false,
-							hidden: probe1_hidden,
+							hidden: probe1_settemp_hidden,
 					},
 					{
 							label: "Probe-2 Temp",
@@ -112,6 +142,7 @@ $(document).ready(function(){
 							pointHoverBorderWidth: 2,
 							pointRadius: 1,
 							pointHitRadius: 10,
+							pointStyle: 'line',
 							data: probe2_temp_list,
 							spanGaps: false,
 							hidden: probe2_hidden,
@@ -123,7 +154,7 @@ $(document).ready(function(){
 							backgroundColor: "rgba(0,255,0,0.4)",
 							borderColor: "rgba(0,255,0,1)",
 							borderCapStyle: 'butt',
-							borderDash: [],
+							borderDash: [8,4],
 							borderDashOffset: 0.0,
 							borderJoinStyle: 'miter',
 							pointBorderColor: "rgba(0,255,0,1)",
@@ -135,9 +166,10 @@ $(document).ready(function(){
 							pointHoverBorderWidth: 2,
 							pointRadius: 1,
 							pointHitRadius: 10,
+							pointStyle: 'dash',
 							data: probe2_settemp_list,
 							spanGaps: false,
-							hidden: probe2_hidden,
+							hidden: probe2_settemp_hidden,
 					}
 			]
 		}
@@ -146,11 +178,51 @@ $(document).ready(function(){
 			type: 'line',
 			data: chartdata,
 			options: {
-				scales: {
-						y: {
-							ticks: {}, 
-							beginAtZero:true
+				plugins: {
+					legend: {
+						labels: {
+							usePointStyle: true,
 						}
+					}
+				},
+				scales: {
+					x: {
+						type: 'realtime',
+						realtime: {
+							duration: duration_window, 
+							delay: 2000,
+							pause: paused,
+							onRefresh: chart => {
+								$.get("/historyupdate/stream", function(data){
+									var dateNow = Date.now();
+									// append the new label (time) to the label list
+									chart.data.labels.push(dateNow);
+									// append the new data array to the existing chart data
+									chart.data.datasets[0].data.push(data.probe0_temp);
+									chart.data.datasets[1].data.push(data.probe0_settemp);
+									chart.data.datasets[2].data.push(data.probe1_temp);
+									chart.data.datasets[3].data.push(data.probe1_settemp);
+									chart.data.datasets[4].data.push(data.probe2_temp);
+									chart.data.datasets[5].data.push(data.probe2_settemp);
+									// unhide set temps if they are turned on AND the probes aren't hidden globally
+									if ((data.probe0_settemp > 0) && (chart.data.datasets[1].hidden == true) && (chart.data.datasets[0].hidden == false)) {
+										chart.data.datasets[1].hidden = false;
+									};
+									if ((data.probe1_settemp > 0) && (chart.data.datasets[3].hidden == true) && (chart.data.datasets[2].hidden == false)) {
+										chart.data.datasets[3].hidden = false;
+									};
+									if ((data.probe2_settemp > 0) && (chart.data.datasets[5].hidden == true) && (chart.data.datasets[4].hidden == false)) {
+										chart.data.datasets[5].hidden = false;
+									};
+
+								});
+							}
+						}
+					  },
+					y: {
+						ticks: {}, 
+						beginAtZero:true
+					}
 				},
 				responsive: true,
 				maintainAspectRatio: false,
@@ -158,55 +230,15 @@ $(document).ready(function(){
 			}
 		});
 
-	function getNewData() {
-		// Get Data from historyupdate route
-		req = $.ajax({
-			url : '/historyupdate',
-			type : 'GET'
-		});
-	
-		req.done(function(data) {
-			// Update chart data
-			// console.log(data);  // Debug logging
-	
-			// Returned Lists: 
-			// 'grill_temp_list' 
-			// 'grill_settemp_list'
-			// 'probe1_temp_list' 
-			// 'probe1_settemp_list'
-			// 'probe2_temp_list' 
-			// 'probe2_settemp_list' 
-			// 'label_time_list' 
-	
-			// Replace data for each dataset and label list
-			temperatureCharts.data.labels = data.label_time_list;
-			temperatureCharts.data.datasets[0].data = data.grill_temp_list;
-			temperatureCharts.data.datasets[1].data = data.grill_settemp_list;
-			temperatureCharts.data.datasets[2].data = data.probe1_temp_list;
-			temperatureCharts.data.datasets[3].data = data.probe1_settemp_list;
-			temperatureCharts.data.datasets[4].data = data.probe2_temp_list;
-			temperatureCharts.data.datasets[5].data = data.probe2_settemp_list;
-			
-			// Update Chart
-			temperatureCharts.update();
-		});
-	};
-
-	var refreshfunc;
-
-	if ($("#autorefresh").val() == 'off') {
-		refreshfunc = setInterval(getNewData, 1000); // Update chart every 1 second
-	};
-
 	$("#autorefresh").click(function() {
 		if ($("#autorefresh").val() == 'off') {
 			$("#autorefresh").val('on');
-			clearInterval(refreshfunc);
+			temperatureCharts.options.scales.x.realtime.pause = true;
 			document.getElementById("autorefresh").className = "btn btn-secondary text-light float-right";
 			document.getElementById("autorefresh").innerHTML = "<i class=\"fas fa-sync-alt\"></i> OFF";
 		} else {
 			$("#autorefresh").val('off');
-			refreshfunc = setInterval(getNewData, 1000); // Update chart every 1 second
+			temperatureCharts.options.scales.x.realtime.pause = false;
 			document.getElementById("autorefresh").className = "btn btn-outline-primary border-white text-white float-right";
 			document.getElementById("autorefresh").innerHTML = "<i class=\"fas fa-sync-alt\"></i> ON";
 		};

@@ -37,7 +37,7 @@ def DefaultSettings():
 	}
 
 	settings['history_page'] = {
-		'minutes' : 60, # Sets default number of items to show in history
+		'minutes' : 15, # Sets default number of minutes to show in history
 		'clearhistoryonstart' : True, # Clear history when StartUp Mode selected
 		'autorefresh' : 'on', # Sets history graph to autorefresh ('live' graph)
 		'datapoints' : 60 # Number of datapoints to show on the history chart
@@ -747,7 +747,8 @@ def WriteHistory(TempStruct, maxsizelines=28800, tuning_mode=False):
 	global cmdsts 
 
 	timenow = datetime.datetime.now()
-	timestr = timenow.strftime('%H:%M:%S') # Truncate the microseconds
+	#timestr = timenow.strftime('%H:%M:%S') # Truncate the microseconds
+	timestr = str(int(timenow.timestamp() * 1000))
 	datastring = timestr + ' ' + str(TempStruct['GrillTemp']) + ' ' + str(TempStruct['GrillSetPoint']) + ' ' + str(TempStruct['Probe1Temp']) + ' ' + str(TempStruct['Probe1SetPoint']) + ' ' + str(TempStruct['Probe2Temp']) + ' ' + str(TempStruct['Probe2SetPoint'])
 	# Push data string to the list in the last position
 	cmdsts.rpush('control:history', datastring)

@@ -68,9 +68,18 @@
 
 {% block scripts %}
 	<script src="{{ url_for('static', filename='js/chart.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/luxon.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/chartjs-adapter-luxon.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/chartjs-plugin-streaming.js') }}"></script>
 
 	<script>
+	var paused = false;
+	// Reverse logic for auto-refresh button
+	if ($("#autorefresh").val() == 'on') {
+		var paused = true;
+	}
 
+	var display_mins = {{ num_mins }};
 	var label_list = {{ label_time_list | safe }}; 
 	var grill_temp_list = {{ grill_temp_list }};
 	var grill_settemp_list = {{ grill_settemp_list }};
