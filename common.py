@@ -709,12 +709,15 @@ def ReadHistory(num_items=0, flushhistory=False):
 			WriteLog(event)
 	else:
 		if cmdsts.exists('control:history'):
-			if(num_items > 0) and (len(data_list) < num_items):
-				# Get range
-				liststart = cmdsts.llen('control:history') - num_items
-			else: 
+			list_length = cmdsts.llen('control:history') 
+
+			if((num_items > 0) and (list_length < num_items)) or (num_items == 0):
 				liststart = 0
+			else: 
+				liststart = list_length - num_items 
+
 			data = cmdsts.lrange('control:history', liststart, -1)
+			
 			for index in range(len(data)):
 				data_list.append(data[index].split(' ', 6))  # Splits out each of the values into seperate list items 
 		else:

@@ -27,13 +27,16 @@
 			        <div class="card-footer bg-light">
 								<form name="setmins" action="/history/setmins" method="POST">
 									<div class="input-group">
-										<input id="minutes" name="minutes" type="number" min="1" class="form-control" placeholder="{{ num_mins }}" data-toggle="tooltip" title="Number of Minutes to Display (Note that if your datapoints value is higher than the default (60) in Settings, this may cause very slow loading with large datasets, especially on the RaspberryPi Zero)">
+										<input id="minutes" name="minutes" type="number" min="1" class="form-control" value="{{ num_mins }}" data-toggle="tooltip" title="Number of Minutes to Display (Note that if your datapoints value is higher than the default (60) in Settings, this may cause very slow loading with large datasets, especially on the RaspberryPi Zero)">
 										<div class="input-group-append">
-											<button class="btn btn-success" type="submit">History (Mins)</button>
+											<button class="btn btn-success" type="submit">Show History Window (Mins)</button>
 										</div>
 									</div>
 								</form>
-			        </div>
+								<div class="text-center"> 
+									<input type="range" class="custom-range" min="1" max="480" step="1" value="{{ num_mins }}" id="durationWindowInput" oninput="minutes.value = durationWindowInput.value;">
+								</div>
+					</div>
 						</div> <!-- End of Card -->
 					</div> <!-- End of Column -->
 				</div> <!-- End of Row -->
@@ -74,10 +77,6 @@
 
 	<script>
 	var paused = false;
-	// Reverse logic for auto-refresh button
-	if ($("#autorefresh").val() == 'on') {
-		var paused = true;
-	}
 
 	var display_mins = {{ num_mins }};
 	var label_list = {{ label_time_list | safe }}; 
@@ -106,7 +105,7 @@
 	var probe2_hidden = false;
 	{% endif %}
 
-</script>
+	</script>
 
 	<script src="{{ url_for('static', filename='js/history.js') }}"></script>
 
