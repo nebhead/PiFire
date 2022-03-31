@@ -47,34 +47,34 @@ args = parser.parse_args()
 settings = ReadSettings()
 
 if(args.grillplat):
-    grillplat = args.grillplat
-    print(f"\n * Modifying Grill Platform from {settings['modules']['grillplat']} to {grillplat}")
-    settings['modules']['grillplat'] = grillplat 
-    WriteSettings(settings)
+	grillplat = args.grillplat
+	print(f"\n * Modifying Grill Platform from {settings['modules']['grillplat']} to {grillplat}")
+	settings['modules']['grillplat'] = grillplat 
+	WriteSettings(settings)
 
 if(args.adc):
-    adc = args.adc
-    print(f"\n * Modifying ADC from {settings['modules']['adc']} to {adc}")
-    settings['modules']['adc'] = adc 
-    WriteSettings(settings)
+	adc = args.adc
+	print(f"\n * Modifying ADC from {settings['modules']['adc']} to {adc}")
+	settings['modules']['adc'] = adc 
+	WriteSettings(settings)
 
 if(args.display):
-    display = args.display
-    print(f"\n * Modifying Display from {settings['modules']['display']} to {display}")
-    settings['modules']['display'] = display 
-    WriteSettings(settings)
+	display = args.display
+	print(f"\n * Modifying Display from {settings['modules']['display']} to {display}")
+	settings['modules']['display'] = display 
+	WriteSettings(settings)
 
 if(args.range):
-    range = args.range
-    print(f"\n * Modifying Range Sensor from {settings['modules']['dist']} to {range}")
-    settings['modules']['dist'] = range 
-    WriteSettings(settings)
+	range = args.range
+	print(f"\n * Modifying Range Sensor from {settings['modules']['dist']} to {range}")
+	settings['modules']['dist'] = range 
+	WriteSettings(settings)
 
 if(args.version):
-    version = args.version
-    print(f"\nModifying Server Version {settings['versions']['server']} to {version}")
-    settings['versions']['server'] = version
-    WriteSettings(settings)
+	version = args.version
+	print(f"\nModifying Server Version {settings['versions']['server']} to {version}")
+	settings['versions']['server'] = version
+	WriteSettings(settings)
 
 if(args.triggerlevel):
 	triggerlevel = args.triggerlevel 
