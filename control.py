@@ -36,8 +36,8 @@ wizardData = ReadWizard()
 control = ReadControl(flush=True)
 # Delete Redis DB for history / current
 ReadHistory(0, flushhistory=True)
-# Create metrics DB for tracking certain metrics
-metrics = ReadMetrics(flush=True)
+# Flush metrics DB for tracking certain metrics
+WriteMetrics(flush=True)
 # Create errors log 
 errors = ReadErrors(flush=True)
 
@@ -307,6 +307,13 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
     grill_platform.AugerOff()
     grill_platform.PowerOn()
 
+    WriteMetrics(new_metric=True)
+    metrics = ReadMetrics()
+    metrics['mode'] = str(control['mode'])
+    metrics['smokeplus'] = control['s_plus'] 
+    metrics['grill_settemp'] = control['setpoints']['grill']
+    WriteMetrics(metrics)
+
     if settings['globals']['debug_mode']:
         event = '* Fan ON, Igniter OFF, Auger OFF'
         print(event)
@@ -452,16 +459,6 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 
     # Set Hold Mode Target Temp Boolean
     target_temp_achieved = False
-
-    metrics = ReadMetrics()
-    if mode == 'Startup':
-        metrics['starttime'] = starttime 
-        metrics['endtime'] = 0
-        metrics['augerontime'] = 0
-        WriteMetrics(metrics)
-    elif mode == 'Shutdown':
-        metrics['endtime'] = starttime 
-        WriteMetrics(metrics)
 
     # ============ Main Work Cycle ============
     while status == 'Active':
@@ -728,6 +725,10 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
         WriteControl(control)
     event = mode + ' mode ended.'
     WriteLog(event)
+
+    # Log the end time
+    metrics['endtime'] = time.time()
+    WriteMetrics(metrics)
 
     return ()
 
@@ -1662,6 +1663,12 @@ while True:
             grill_platform.AugerOff()
             grill_platform.IgniterOff()
             grill_platform.FanOff()
+            # Register Stop Mode in Metrics 
+            WriteMetrics(new_metric=True)
+            metrics = ReadMetrics()
+            metrics['mode'] = 'Stop'
+            WriteMetrics(metrics)
+
             if (control['status'] == 'monitor') and (control['mode'] == 'Error'):
                 grill_platform.PowerOn()
             else:

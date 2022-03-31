@@ -1,0 +1,374 @@
+{% macro render_startup(metric) %}
+
+<div class="card shadow"> 
+	<div class="card-header bg-success text-white">
+		<strong><i class="fas fa-play"></i>&nbsp; {{ metric['mode'] }} Mode</strong>
+	</div>
+	<div class="card-body">
+		<table class="table table-striped">
+			<thead>
+			  <tr>
+				<th scope="col">Metric</th>
+				<th scope="col">Value</th>
+				<th scope="col">Converted</th>
+			  </tr>
+			</thead>
+			<tbody>
+			  <tr>
+				<th scope="row">Start Time</th>
+				<td>{{ metric['starttime'] }}</td>
+				<td>{{ metric['addendum']['starttime'] }}</td>
+			  </tr>
+			  <tr>
+				<th scope="row">End Time</th>
+				<td>{{ metric['endtime'] }}</td>
+				<td>{{ metric['addendum']['endtime'] }}</td>
+			  </tr>
+			  <tr>
+				<th scope="row">Time in Mode</th>
+				<td>{% if metric['endtime'] == 0 %} 
+					-- 
+					{% else %}
+					{{ metric['endtime'] - metric['starttime'] }}
+					{% endif %}
+				</td>
+				<td>{{ metric['addendum']['timeinmode'] }}</td>
+			  </tr>
+			  <tr>
+				<th scope="row">Auger On Time</th>
+				<td>{{ metric['augerontime'] }}</td>
+				<td>{{ metric['addendum']['augerontime'] }}</td>
+			  </tr>
+			  <tr>
+				<th scope="row">Estimated Pellet Usage</th>
+				<td>{{ metric['addendum']['estusage_m'] }}</td>
+				<td>{{ metric['addendum']['estusage_i'] }}</td>
+			  </tr>
+
+		</tbody>
+		</table>
+	</div>
+	<div class="card-footer">
+		<button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#rawData_{{metric['id']}}" aria-expanded="false" aria-controls="rawData_{{metric['id']}}">
+		  Raw Data
+		</button>
+		<div class="collapse" id="rawData_{{metric['id']}}">
+			<br>
+			<div class="card" style="font-family:courier;">
+				{{ metric }}
+			</div>
+			<br>
+		</div>
+	</div>
+</div>
+
+{% endmacro %}
+
+{% macro render_reignite(metric) %}
+
+<div class="card shadow"> 
+	<div class="card-header bg-warning text-white">
+		<strong><i class="fas fa-play"></i>&nbsp; {{ metric['mode'] }} Mode</strong>
+	</div>
+	<div class="card-body">
+		<table class="table table-striped">
+			<thead>
+			  <tr>
+				<th scope="col">Metric</th>
+				<th scope="col">Value</th>
+				<th scope="col">Converted</th>
+			  </tr>
+			</thead>
+			<tbody>
+			  <tr>
+				<th scope="row">Start Time</th>
+				<td>{{ metric['starttime'] }}</td>
+				<td>{{ metric['addendum']['starttime'] }}</td>
+			  </tr>
+			  <tr>
+				<th scope="row">End Time</th>
+				<td>{{ metric['endtime'] }}</td>
+				<td>{{ metric['addendum']['endtime'] }}</td>
+			  </tr>
+			  <tr>
+				<th scope="row">Time in Mode</th>
+				<td>{% if metric['endtime'] == 0 %} 
+					-- 
+					{% else %}
+					{{ metric['endtime'] - metric['starttime'] }}
+					{% endif %}
+				</td>
+				<td>{{ metric['addendum']['timeinmode'] }}</td>
+			  </tr>
+			  <tr>
+				<th scope="row">Auger On Time</th>
+				<td>{{ metric['augerontime'] }}</td>
+				<td>{{ metric['addendum']['augerontime'] }}</td>
+			  </tr>
+			  <tr>
+				<th scope="row">Estimated Pellet Usage</th>
+				<td>{{ metric['addendum']['estusage_m'] }}</td>
+				<td>{{ metric['addendum']['estusage_i'] }}</td>
+			  </tr>
+
+		</tbody>
+		</table>
+	</div>
+	<div class="card-footer">
+		<button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#rawData_{{metric['id']}}" aria-expanded="false" aria-controls="rawData_{{metric['id']}}">
+		  Raw Data
+		</button>
+		<div class="collapse" id="rawData_{{metric['id']}}">
+			<br>
+			<div class="card" style="font-family:courier;">
+				{{ metric }}
+			</div>
+			<br>
+		</div>
+	</div>
+</div>
+
+{% endmacro %}
+
+{% macro render_stop(metric) %}
+
+<div class="card shadow"> 
+	<div class="card-header bg-danger text-white">
+		<strong><i class="fas fa-stop"></i>&nbsp; {{ metric['mode'] }} Mode</strong>
+	</div>
+	<div class="card-body">
+		<table class="table table-striped">
+			<thead>
+			  <tr>
+				<th scope="col">Metric</th>
+				<th scope="col">Value</th>
+				<th scope="col">Converted</th>
+			  </tr>
+			</thead>
+			<tbody>
+			  <tr>
+				<th scope="row">Stop Time</th>
+				<td>{{ metric['starttime'] }}</td>
+				<td>{{ metric['addendum']['starttime'] }}</td>
+			  </tr>
+		</tbody>
+		</table>
+	</div>
+	<div class="card-footer">
+		<button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#rawData_{{metric['id']}}" aria-expanded="false" aria-controls="rawData_{{metric['id']}}">
+		  Raw Data
+		</button>
+		<div class="collapse" id="rawData_{{metric['id']}}">
+			<br>
+			<div class="card" style="font-family:courier;">
+				{{ metric }}
+			</div>
+			<br>
+		</div>
+	</div>
+</div>
+
+{% endmacro %}
+
+{% macro render_smoke(metric) %}
+
+<div class="card shadow"> 
+	<div class="card-header bg-secondary text-white">
+		<strong><i class="fas fa-cloud"></i>&nbsp; Smoke Mode</strong>
+	</div>
+	<div class="card-body">
+		<table class="table table-striped">
+			<thead>
+			  <tr>
+				<th scope="col">Metric</th>
+				<th scope="col">Value</th>
+				<th scope="col">Converted</th>
+			  </tr>
+			</thead>
+			<tbody>
+			  <tr>
+				<th scope="row">Start Time</th>
+				<td>{{ metric['starttime'] }}</td>
+				<td>{{ metric['addendum']['starttime'] }}</td>
+			  </tr>
+			  <tr>
+				<th scope="row">End Time</th>
+				<td>{{ metric['endtime'] }}</td>
+				<td>{{ metric['addendum']['endtime'] }}</td>
+			  </tr>
+			  <tr>
+				<th scope="row">Time in Mode</th>
+				<td>{% if metric['endtime'] == 0 %} 
+					-- 
+					{% else %}
+					{{ metric['endtime'] - metric['starttime'] }}
+					{% endif %}
+				</td>
+				<td>{{ metric['addendum']['timeinmode'] }}</td>
+			  </tr>
+			  <tr>
+				<th scope="row">Auger On Time</th>
+				<td>{{ metric['augerontime'] }}</td>
+				<td>{{ metric['addendum']['augerontime'] }}</td>
+			  </tr>
+			  <tr>
+				<th scope="row">Estimated Pellet Usage</th>
+				<td>{{ metric['addendum']['estusage_m'] }}</td>
+				<td>{{ metric['addendum']['estusage_i'] }}</td>
+			  </tr>
+			  <tr>
+				<th scope="row">Smoke Plus</th>
+				<td>{{ metric['smokeplus'] }}</td>
+				<td>{{ metric['addendum']['smokeplus'] }}</td>
+			  </tr>
+
+		</tbody>
+		</table>
+	</div>
+	<div class="card-footer">
+		<button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#rawData_{{metric['id']}}" aria-expanded="false" aria-controls="rawData_{{metric['id']}}">
+		  Raw Data
+		</button>
+		<div class="collapse" id="rawData_{{metric['id']}}">
+			<br>
+			<div class="card" style="font-family:courier;">
+				{{ metric }}
+			</div>
+			<br>
+		</div>
+	</div>
+</div>
+
+{% endmacro %}
+
+{% macro render_hold(metric) %}
+
+<div class="card shadow"> 
+	<div class="card-header bg-secondary text-white">
+		<strong><i class="fas fa-crosshairs"></i>&nbsp; Hold Mode</strong>
+	</div>
+	<div class="card-body">
+		<table class="table table-striped">
+			<thead>
+			  <tr>
+				<th scope="col">Metric</th>
+				<th scope="col">Value</th>
+				<th scope="col">Converted</th>
+			  </tr>
+			</thead>
+			<tbody>
+			  <tr>
+				<th scope="row">Start Time</th>
+				<td>{{ metric['starttime'] }}</td>
+				<td>{{ metric['addendum']['starttime'] }}</td>
+			  </tr>
+			  <tr>
+				<th scope="row">End Time</th>
+				<td>{{ metric['endtime'] }}</td>
+				<td>{{ metric['addendum']['endtime'] }}</td>
+			  </tr>
+			  <tr>
+				<th scope="row">Time in Mode</th>
+				<td>{% if metric['endtime'] == 0 %} 
+					-- 
+					{% else %}
+					{{ metric['endtime'] - metric['starttime'] }}
+					{% endif %}
+				</td>
+				<td>{{ metric['addendum']['timeinmode'] }}</td>
+			  </tr>
+			  <tr>
+				<th scope="row">Auger On Time</th>
+				<td>{{ metric['augerontime'] }}</td>
+				<td>{{ metric['addendum']['augerontime'] }}</td>
+			  </tr>
+			  <tr>
+				<th scope="row">Estimated Pellet Usage</th>
+				<td>{{ metric['addendum']['estusage_m'] }}</td>
+				<td>{{ metric['addendum']['estusage_i'] }}</td>
+			  </tr>
+			  <tr>
+				<th scope="row">Smoke Plus</th>
+				<td>{{ metric['smokeplus'] }}</td>
+				<td>{{ metric['addendum']['smokeplus'] }}</td>
+			  </tr>
+			  <tr>
+				<th scope="row">Grill Set Temp</th>
+				<td>{{ metric['grill_settemp'] }} </td>
+				<td>{{ metric['addendum']['grill_settemp'] }} </td>
+			  </tr>
+
+		</tbody>
+		</table>
+	</div>
+	<div class="card-footer">
+		<button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#rawData_{{metric['id']}}" aria-expanded="false" aria-controls="rawData_{{metric['id']}}">
+		  Raw Data
+		</button>
+		<div class="collapse" id="rawData_{{metric['id']}}">
+			<br>
+			<div class="card" style="font-family:courier;">
+				{{ metric }}
+			</div>
+			<br>
+		</div>
+	</div>
+</div>
+
+{% endmacro %}
+
+{% macro render_shutdown(metric) %}
+
+<div class="card shadow"> 
+	<div class="card-header bg-secondary text-white">
+		<strong><i class="fas fa-flag-checkered"></i>&nbsp; Shutdown Mode</strong>
+	</div>
+	<div class="card-body">
+		<table class="table table-striped">
+			<thead>
+			  <tr>
+				<th scope="col">Metric</th>
+				<th scope="col">Value</th>
+				<th scope="col">Converted</th>
+			  </tr>
+			</thead>
+			<tbody>
+			  <tr>
+				<th scope="row">Start Time</th>
+				<td>{{ metric['starttime'] }}</td>
+				<td>{{ metric['addendum']['starttime'] }}</td>
+			  </tr>
+			  <tr>
+				<th scope="row">End Time</th>
+				<td>{{ metric['endtime'] }}</td>
+				<td>{{ metric['addendum']['endtime'] }}</td>
+			  </tr>
+			  <tr>
+				<th scope="row">Time in Mode</th>
+				<td>{% if metric['endtime'] == 0 %} 
+					-- 
+					{% else %}
+					{{ metric['endtime'] - metric['starttime'] }}
+					{% endif %}
+				</td>
+				<td>{{ metric['addendum']['timeinmode'] }}</td>
+			  </tr>
+		</tbody>
+		</table>
+	</div>
+	<div class="card-footer">
+		<button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#rawData_{{metric['id']}}" aria-expanded="false" aria-controls="rawData_{{metric['id']}}">
+		  Raw Data
+		</button>
+		<div class="collapse" id="rawData_{{metric['id']}}">
+			<br>
+			<div class="card" style="font-family:courier;">
+				{{ metric }}
+			</div>
+			<br>
+		</div>
+	</div>
+</div>
+
+{% endmacro %}
+

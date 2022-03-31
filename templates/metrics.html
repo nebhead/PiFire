@@ -1,0 +1,32 @@
+{% extends 'base.html' %} 
+
+{% from "_macro_metrics.html" import render_startup, render_stop, render_smoke, render_hold, render_shutdown, render_reignite %}
+
+{% block title %}Metrics{% endblock %} 
+
+{% block timer_bar %}{% endblock %}
+
+{% block content %}
+
+{% for item in metrics_data %}
+	{% if item['mode'] == 'Stop' %}
+	{{ render_stop(item) }} 
+	{% elif item['mode'] == 'Startup' %}
+	{{ render_startup(item) }}
+	{% elif item['mode'] == 'Reignite' %}
+	{{ render_reignite(item) }}
+	{% elif item['mode'] == 'Smoke' %}
+	{{ render_smoke(item) }}
+	{% elif item['mode'] == 'Hold' %}
+	{{ render_hold(item) }}
+	{% elif item['mode'] == 'Shutdown' %}
+	{{ render_shutdown(item) }}
+	{% elif item['mode'] == 'Error' %}
+	{{ render_stop(item) }}
+	{% else %}
+	{{ render_reignite(item) }}
+	{% endif %}
+	<br><br> 
+{% endfor %} 
+
+{% endblock %}

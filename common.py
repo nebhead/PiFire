@@ -167,10 +167,10 @@ def DefaultSettings():
 	}
 
 	settings['modules'] = {
-			'grillplat' : 'prototype',
-			'adc' : 'prototype',
-			'display' : 'prototype',
-			'dist' : 'prototype'
+		'grillplat' : 'prototype',
+		'adc' : 'prototype',
+		'display' : 'prototype',
+		'dist' : 'prototype'
 	}
 
 	settings['lastupdated'] = {
@@ -257,9 +257,14 @@ def DefaultControl():
 def DefaultMetrics():
 	metrics = {}
 
+	metrics['id'] = 0
 	metrics['starttime'] = 0
 	metrics['endtime'] = 0 
-	metrics['augerontime'] = 0 
+	metrics['mode'] = ''
+	metrics['augerontime'] = 0
+	metrics['fanontime'] = 0
+	metrics['smokeplus'] = True 
+	metrics['grill_settemp'] = 0
 
 	return(metrics)
 
@@ -466,28 +471,47 @@ def WriteErrors(errors):
 
 	cmdsts.set('errors', json.dumps(errors))
 
-def ReadMetrics(flush=False):
+def ReadMetrics(all=False):
 	global cmdsts
 
-	if flush:
+	if not(cmdsts.exists('metrics:general')):
+		metrics = DefaultMetrics()
+		WriteMetrics(metrics, flush=True)
+	
+	if all: 
+		# Read entire list of Metrics
+		llength = cmdsts.llen('metrics:general')
+		metrics = cmdsts.lrange('metrics:general', 0, -1)
+		metrics_list = []
+		for index in range(0, llength):
+			metrics_list.append(json.loads(metrics[index]))
+		return(metrics_list)
+	
+	# Read current Metrics Record (i.e. top of the list)
+	return(json.loads(cmdsts.lindex('metrics:general', -1)))
+
+def WriteMetrics(metrics=DefaultMetrics(), flush=False, new_metric=False):
+	global cmdsts
+
+	if(flush or not(cmdsts.exists('metrics:general'))):
 		# Remove all control structures in Redis DB (not history or current)
 		cmdsts.delete('metrics:general')
 
 		# The following set's no persistence so that we don't get writes to the disk / SDCard 
 		cmdsts.config_set('appendonly', 'no')
 		cmdsts.config_set('save', '')
+		if not flush:
+			new_metric=True
+		else:
+			return
 
-		metrics = DefaultMetrics()
-		WriteMetrics(metrics)
+	if new_metric:
+		metrics['starttime'] = time.time()
+		metrics['id'] = generateUUID()
+		cmdsts.rpush('metrics:general', json.dumps(metrics))
 	else: 
-		metrics = json.loads(cmdsts.get('metrics:general'))
-
-	return(metrics)
-
-def WriteMetrics(metrics):
-	global cmdsts
-
-	cmdsts.set('metrics:general', json.dumps(metrics))
+		cmdsts.rpop('metrics:general')
+		cmdsts.rpush('metrics:general', json.dumps(metrics))
 
 def ReadSettings(filename='settings.json'):
 	# *****************************************
