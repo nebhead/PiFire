@@ -7,6 +7,8 @@
 {% block timer_bar %}{% endblock %}
 
 {% block content %}
+<a href="/metrics/export" class="btn btn-outline-primary btn-block shadow" role="button"><i class="fas fa-file-download"></i> Download CSV Data</a>
+<br><br>
 
 {% for item in metrics_data %}
 	{% if item['mode'] == 'Stop' %}

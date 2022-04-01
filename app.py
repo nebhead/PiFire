@@ -1468,11 +1468,39 @@ End Updater Section
 ''' 
 Metrics Routes
 '''
+@app.route('/metrics/<action>', methods=['POST','GET'])
 @app.route('/metrics', methods=['POST','GET'])
-def metrics_page():
+def metrics_page(action=None):
 	global settings
 
 	metrics_data = ReadMetrics(all=True)
+
+	if (request.method == 'GET') and (action == 'export'):
+		exportfilename = "pifire_metrics.csv"
+		csvfile = open('/tmp/' + exportfilename, 'w')
+
+		list_length = len(metrics_data) # Length of list
+
+		if(list_length > 0):
+			# Build the header row
+			writeline=''
+			for item in range(0, len(metrics_items)):
+				writeline += f'{metrics_items[item][0]}, '
+			writeline += '\n'
+			csvfile.write(writeline)
+			for index in range(0, list_length):
+				writeline = ''
+				for item in range(0, len(metrics_items)):
+					writeline += f'{metrics_data[index][metrics_items[item][0]]}, '
+				writeline += '\n'
+				csvfile.write(writeline)
+		else:
+			writeline = 'No Data\n'
+			csvfile.write(writeline)
+
+		csvfile.close()
+
+		return send_file('/tmp/' + exportfilename, as_attachment=True, max_age=0)
 
 	# Process Additional Metrics Information for Display
 	for index in range(0, len(metrics_data)):

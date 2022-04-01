@@ -254,17 +254,27 @@ def DefaultControl():
 
 	return(control)
 
+'''
+List of Tuples ('metric_key', default_value)
+ - This structure will be used to build the default metrics structure, and to export the data easily
+ - To add a metric, simply add a tuple to this list.  
+'''
+metrics_items = [ 
+	('id', 0),
+	('starttime', 0),
+	('endtime', 0),
+	('mode', 0),
+	('augerontime', 0), 
+	('fanontime', 0), 
+	('smokeplus', True), 
+	('grill_settemp', 0)
+]
+
 def DefaultMetrics():
 	metrics = {}
 
-	metrics['id'] = 0
-	metrics['starttime'] = 0
-	metrics['endtime'] = 0 
-	metrics['mode'] = ''
-	metrics['augerontime'] = 0
-	metrics['fanontime'] = 0
-	metrics['smokeplus'] = True 
-	metrics['grill_settemp'] = 0
+	for index in range(0, len(metrics_items)):
+		metrics[metrics_items[index][0]] = metrics_items[index][1]
 
 	return(metrics)
 
