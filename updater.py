@@ -4,7 +4,10 @@
 Update support functions to utilize Git/GitHub for live system updates
 '''
 
+from common import *
+import pkg_resources
 import subprocess
+import argparse
 
 def get_available_branches():
 	command = ['git', 'branch', '-a']
@@ -154,3 +157,217 @@ def get_remote_version():
 	else: 
 		result = 'ERROR Getting Remote URL.'
 	return(result, error_msg)
+
+def get_update_data(settings):
+	# Populate Update Data Structure
+	update_data = {}
+	update_data['version'] = settings['versions']['server']
+	update_data['branch_target'], error_msg = get_branch()
+	if error_msg != '':
+		WriteLog(error_msg)
+	update_data['branches'], error_msg = get_available_branches()
+	if error_msg != '':
+		WriteLog(error_msg)
+	update_data['remote_url'], error_msg = get_remote_url()
+	if error_msg != '':
+		WriteLog(error_msg)
+	update_data['remote_version'], error_msg = get_remote_version()
+	if error_msg != '':
+		WriteLog(error_msg)
+
+	return update_data
+
+def change_branch(branch_target):
+	command = ['git', 'checkout', '-f', branch_target]
+	target = subprocess.run(command, capture_output=True, text=True)
+	if(target.returncode == 0):
+		status = 'Branch Changed Successfully'
+		output = ' - ' + target.stdout + target.stderr
+		success = True
+	else:
+		status = 'ERROR Changing Branch'
+		output = ' - ' + target.stderr
+		success = False
+	return(success, status, output)
+
+def install_update():
+	branch, error_msg1 = get_branch()
+	remote, error_msg2 = get_remote_url()
+	if (error_msg1 == '') and (error_msg2 == ''):
+		command = ['git', 'fetch']
+		fetch = subprocess.run(command, capture_output=True, text=True)
+		command = ['git', 'reset', '--hard', 'HEAD']
+		reset = subprocess.run(command, capture_output=True, text=True)
+		command = ['git', 'merge', f'origin/{branch}']
+		merge = subprocess.run(command, capture_output=True, text=True)
+		if(fetch.returncode == 0) and (reset.returncode == 0) and (merge.returncode  == 0):
+			status = 'Update Completed Successfully'
+			output = ' - ' + fetch.stdout + reset.stdout + merge.stdout
+			success = True
+		else:
+			status = 'ERROR Performing Update.'
+			output = ' - ' + fetch.stdout + reset.stdout + merge.stdout
+			success = False
+	else:
+		status = 'ERROR Getting Remote URL.'
+		output = ' - ERROR Getting Remote URL. Please check your git install'
+		success = False
+	return(success, status, output)
+
+def read_output(command):
+	process = subprocess.Popen(command, stdout=subprocess.PIPE, encoding='utf-8')
+	while True:
+		output = process.stdout.readline()
+		if process.poll() is not None:
+			break
+		if output:
+			SetUpdaterInstallStatus(percent, status, output.strip())
+			print(output.strip())
+
+	returncode = process.poll()
+	print(f'Return Code: {returncode}')
+
+def install_dependencies():
+	result = 0
+	percent = 30
+	status = 'Calculating Python/Package Dependencies...'
+	output = ' - Calculating Python & Package Dependencies'
+	SetUpdaterInstallStatus(percent, status, output)
+	time.sleep(2)
+
+	updaterInfo = ReadDepedencies()
+
+	# Get PyPi & Apt dependencies
+	py_dependencies = []
+	apt_dependencies = []
+	for section in updaterInfo['dependencies']:
+		for module in updaterInfo['dependencies'][section]['py_dependencies']:
+			try:
+				dist = pkg_resources.get_distribution(module)
+				print('{} ({}) is installed'.format(dist.key, dist.version))
+			except pkg_resources.DistributionNotFound:
+				print('{} is NOT installed'.format(module))
+				py_dependencies.append(module)
+
+		for package in updaterInfo['dependencies'][section]['apt_dependencies']:
+			if subprocess.call(["which", package]) is not 0:
+				apt_dependencies.append(package)
+
+	# Calculate the percent done from remaining items to install
+	items_remaining = len(py_dependencies) + len(apt_dependencies)
+	if items_remaining == 0:
+		increment = 70
+	else:
+		increment = 70 / items_remaining
+
+	# Install Py dependencies
+	launchpip = ['pip3', 'install']
+	status = 'Installing Python Dependencies...'
+	output = ' - Installing Python Dependencies'
+	SetUpdaterInstallStatus(percent, status, output)
+
+	for py_item in py_dependencies:
+		command = []
+		command.extend(launchpip)
+		command.append(py_item)
+
+		process = subprocess.Popen(command, stdout=subprocess.PIPE, encoding='utf-8')
+		while True:
+			output = process.stdout.readline()
+			if process.poll() is not None:
+				break
+			if output:
+				SetWizardInstallStatus(percent, status, output.strip())
+				print(output.strip())
+		returncode = process.poll()
+		result += returncode
+		print(f'Return Code: {returncode}')
+
+		percent += increment
+		output = f' - Completed Install of {py_item}'
+		SetUpdaterInstallStatus(percent, status, output)
+
+	time.sleep(4)
+
+	# Install Apt dependencies
+	launchapt = ['apt', 'install']
+	status = 'Installing Package Dependencies...'
+	output = ' - Installing APT Package Dependencies'
+	SetUpdaterInstallStatus(percent, status, output)
+
+	for apt_item in apt_dependencies:
+		command = []
+		command.extend(launchapt)
+		command.append(apt_item)
+		command.append('-y')
+
+		process = subprocess.Popen(command, stdout=subprocess.PIPE, encoding='utf-8')
+		while True:
+			output = process.stdout.readline()
+			if process.poll() is not None:
+				break
+			if output:
+				SetUpdaterInstallStatus(percent, status, output.strip())
+				print(output.strip())
+		returncode = process.poll()
+		result += returncode
+		print(f'Return Code: {returncode}')
+
+		percent += increment
+		output = f' - Completed Install of {apt_item}'
+		SetUpdaterInstallStatus(percent, status, output)
+
+	time.sleep(4)
+
+	percent = 100
+	status = 'Finished!'
+	output = ' - Finished!  Restarting Server...'
+	SetUpdaterInstallStatus(percent, status, output)
+
+	time.sleep(4)
+
+	percent = 101
+	SetUpdaterInstallStatus(percent, status, output)
+
+	return result
+
+if __name__ == "__main__":
+	parser = argparse.ArgumentParser(description='Updater Script')
+	parser.add_argument('-b', '--branch', metavar='BRANCH', type=str, required=False, help="Change Branches")
+	parser.add_argument('-u', '--update', metavar='BRANCH', type=str, required=False, help="Update Current Branch")
+
+	args = parser.parse_args()
+
+	if(args.update):
+		percent = 10
+		status = f'Attempting Update on {args.update}...'
+		output = f' - Attempting an update on branch {args.update}'
+		SetUpdaterInstallStatus(percent, status, output)
+		time.sleep(2)
+
+		success, status, output = install_update()
+
+		percent = 20
+		SetUpdaterInstallStatus(percent, status, output)
+		time.sleep(4)
+
+		install_dependencies()
+
+	elif(args.branch):
+		percent = 10
+		status = f'Changing Branch to {args.branch}...'
+		output = f' - Changing to selected branch {args.branch}'
+		SetUpdaterInstallStatus(percent, status, output)
+		time.sleep(2)
+
+		success, status, output = change_branch(args.branch)
+
+		percent = 20
+		SetUpdaterInstallStatus(percent, status, output)
+		time.sleep(4)
+
+		install_dependencies()
+
+	else:
+		print('No Arguments Found. Use --help to see available arguments')
+

@@ -1383,67 +1383,47 @@ def checkupdate(action=None):
 
 	return jsonify({'result' : 'success', 'current' : update_data['version'], 'behind' : commits_behind})
 
+@app.route('/update/<action>', methods=['POST','GET'])
 @app.route('/update', methods=['POST','GET'])
 def update_page(action=None):
 	global settings
 
-	# Populate Update Data Structure
-	update_data = {}
-	update_data['version'] = settings['versions']['server']
-	update_data['branch_target'], error_msg = get_branch()
-	if error_msg != '':
-		WriteLog(error_msg)
-	update_data['branches'], error_msg = get_available_branches()
-	if error_msg != '':
-		WriteLog(error_msg)
-	update_data['remote_url'], error_msg = get_remote_url()
-	if error_msg != '':
-		WriteLog(error_msg)
-	update_data['remote_version'], error_msg = get_remote_version()
-	if error_msg != '':
-		WriteLog(error_msg)
-
 	# Create Alert Structure for Alert Notification
-	alert = { 
-		'type' : '', 
+	alert = {
+		'type' : '',
 		'text' : ''
-		}
+	}
+
+	if(request.method == 'GET'):
+		if(action is None):
+			update_data = get_update_data(settings)
+			return render_template('updater.html', alert=alert, settings=settings, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'], update_data=update_data)
+		elif(action=='updatestatus'):
+			percent, status, output = GetUpdaterInstallStatus()
+			return jsonify({'percent' : percent, 'status' : status, 'output' : output})
 
 	if(request.method == 'POST'):
-		r = request.form 
+		r = request.form
+		update_data = get_update_data(settings)
 
 		if('change_branch' in r):
 			if(update_data['branch_target'] in r['branch_target']):
-				alert = { 
-					'type' : 'success', 
+				alert = {
+					'type' : 'success',
 					'text' : f'Current branch {update_data["branch_target"]} already set to {r["branch_target"]}'
 				}
 				return render_template('updater.html', alert=alert, settings=settings, page_theme=settings['globals']['page_theme'], update_data=update_data, grill_name=settings['globals']['grill_name'])
-			else: 
-				result, error_msg = set_branch(r['branch_target'])
-				if error_msg == '':
-					action = 'restart'
-					output_html = f'*** Changing from current branch {update_data["branch_target"]} to {r["branch_target"]} ***<br><br>'
-					output_html += result 
-					restart_scripts()
-				else:
-					action = ''
-					output_html = f'*** Changing from current branch {update_data["branch_target"]} to {r["branch_target"]} Experienced Errors ***<br><br>'
-					output_html += error_msg
-				return render_template('updater_out.html', settings=settings, page_theme=settings['globals']['page_theme'], action=action, output_html=output_html, grill_name=settings['globals']['grill_name'])				
+			else:
+				print(f'Changing Branch. \nForm Data: {r["branch_target"]}')
+				SetUpdaterInstallStatus(0, 'Starting Branch Change...', '')
+				os.system('python3 %s %s %s &' % ('updater.py', '-b', r['branch_target']))	# Kickoff Branch Change
+				return render_template('updater-status.html', page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
 
 		if('do_update' in r):
-			result, error_msg = do_update() 
-			if error_msg == '':
-				action='restart'
-				output_html = f'*** Attempting an update on {update_data["branch_target"]} ***<br><br>' 
-				output_html += result 
-				restart_scripts()
-			else:
-				action=''
-				output_html = f'*** Attempting an update on {update_data["branch_target"]} ***<br><br>' 
-				output_html += error_msg
-			return render_template('updater_out.html', settings=settings, page_theme=settings['globals']['page_theme'], action=action, output_html=output_html, grill_name=settings['globals']['grill_name'])
+			print(f'Updating. \nForm Data: {r}')
+			SetUpdaterInstallStatus(0, 'Starting Update...', '')
+			os.system('python3 %s %s %s &' % ('updater.py', '-u', update_data['branch_target']))  # Kickoff Update
+			return render_template('updater-status.html', page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
 
 		if('show_log' in r):
 			if(r['show_log'].isnumeric()):
@@ -1460,7 +1440,6 @@ def update_page(action=None):
 			
 			return render_template('updater_out.html', settings=settings, page_theme=settings['globals']['page_theme'], action=action, output_html=output_html, grill_name=settings['globals']['grill_name'])
 
-	return render_template('updater.html', alert=alert, settings=settings, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'], update_data=update_data)
 '''
 End Updater Section
 '''
@@ -2181,27 +2160,37 @@ def updater_action(type='none', branch=None):
 
 	if type == 'change_branch':
 		if branch is not None:
-			result, error_msg = set_branch(branch)
+			success, status, output = change_branch(branch)
 			message = f'Changing to {branch} branch \n'
-			if error_msg == '':
-				message += result
-				restart_scripts()
-				return {'response': {'result':'success', 'message': message }}
+			if success:
+				dependencies = 'Installing any required dependencies \n'
+				message += dependencies
+				if install_dependencies() == 0:
+					message += output
+					restart_scripts()
+					return {'response': {'result':'success', 'message': message }}
+				else:
+					return {'response': {'result':'error', 'message':'Error: Dependencies were not installed properly'}}
 			else:
-				return {'response': {'result':'error', 'message':'Error: ' + error_msg }}
+				return {'response': {'result':'error', 'message':'Error: ' + output }}
 		else:
 			return {'response': {'result':'error', 'message':'Error: Branch not specified in request'}}
 
 	elif type == 'do_update':
 		if branch is not None:
-			result, error_msg = do_update()
+			success, status, output = install_update()
 			message = f'Attempting update on {branch} \n'
-			if error_msg == '':
-				message += result
-				restart_scripts()
-				return {'response': {'result':'success', 'message': message }}
+			if success:
+				dependencies = 'Installing any required dependencies \n'
+				message += dependencies
+				if install_dependencies() == 0:
+					message += output
+					restart_scripts()
+					return {'response': {'result':'success', 'message': message }}
+				else:
+					return {'response': {'result':'error', 'message':'Error: Dependencies were not installed properly'}}
 			else:
-				return {'response': {'result':'error', 'message':'Error: ' + error_msg }}
+				return {'response': {'result':'error', 'message':'Error: ' + output }}
 		else:
 			return {'response': {'result':'error', 'message':'Error: Branch not specified in request'}}
 	else:

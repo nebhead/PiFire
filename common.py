@@ -902,7 +902,7 @@ def ReadWizard(filename='wizard/wizard_manifest.json'):
 		return(wizard)
 	except(ValueError):
 		# A ValueError Exception occurs when multiple accesses collide, this code attempts a retry.
-		event = 'ERROR: Value Error Exception - JSONDecodeError reading settings.json'
+		event = 'ERROR: Value Error Exception - JSONDecodeError reading wizard_manifest.json'
 		WriteLog(event)
 		json_data_file.close()
 		# Retry Reading Settings
@@ -931,4 +931,43 @@ def SetWizardInstallStatus(percent, status, output):
 	cmdsts.set('wizard:percent', percent)
 	cmdsts.set('wizard:status', status)
 	cmdsts.set('wizard:output', output)
+
+def ReadDepedencies(filename='updater/updater_manifest.json'):
+	'''
+		Read Updater Manifest Data from file
+	'''
+	try:
+		json_data_file = os.fdopen(os.open(filename, os.O_RDONLY))
+		json_data_string = json_data_file.read()
+		dependencies = json.loads(json_data_string)
+		json_data_file.close()
+	except(IOError, OSError):
+		event = 'ERROR: Could not read from updater manifest.'
+		WriteLog(event)
+		dependencies = {
+			"dependencies" : {}
+		}
+		return(dependencies)
+	except(ValueError):
+		# A ValueError Exception occurs when multiple accesses collide, this code attempts a retry.
+		event = 'ERROR: Value Error Exception - JSONDecodeError reading updater_manifest.json'
+		WriteLog(event)
+		json_data_file.close()
+		# Retry Reading Settings
+		dependencies = ReadDepedencies(filename=filename)
+
+	return(dependencies)
+
+def GetUpdaterInstallStatus():
+	global cmdsts
+	percent = cmdsts.get('updater:percent')
+	status = cmdsts.get('updater:status')
+	output = cmdsts.get('updater:output')
+	return(percent, status, output)
+
+def SetUpdaterInstallStatus(percent, status, output):
+	global cmdsts
+	cmdsts.set('updater:percent', percent)
+	cmdsts.set('updater:status', status)
+	cmdsts.set('updater:output', output)
 
