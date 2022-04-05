@@ -250,7 +250,7 @@ def install_dependencies():
 				py_dependencies.append(module)
 
 		for package in updaterInfo['dependencies'][section]['apt_dependencies']:
-			if subprocess.call(["which", package]) is not 0:
+			if subprocess.call(["which", package]) != 0:
 				apt_dependencies.append(package)
 
 	# Calculate the percent done from remaining items to install
