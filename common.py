@@ -33,7 +33,7 @@ def DefaultSettings():
 	settings = {}
 
 	settings['versions'] = {
-		'server' : "1.2.9"
+		'server' : "1.3.0"
 	}
 
 	settings['history_page'] = {

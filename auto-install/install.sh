@@ -21,7 +21,7 @@ else
         export SUDO="sudo"
         export SUDOE="sudo -E"
     else
-        echo "Please install sudo or run this as root."
+        echo "Please install sudo."
         exit 1
     fi
 fi
@@ -39,7 +39,7 @@ r=$(( r < 20 ? 20 : r ))
 c=$(( c < 70 ? 70 : c ))
 
 # Display the welcome dialog
-whiptail --msgbox --backtitle "Welcome" --title "PiFire Automated Installer" "This installer will transform your Raspberry Pi into a connected Smoker Controller.  NOTE: This installer is intended to be run on a fresh install of Raspberry Pi OS Buster or later." ${r} ${c}
+whiptail --msgbox --backtitle "Welcome" --title "PiFire Automated Installer" "This installer will transform your Raspberry Pi into a connected Smoker Controller.  NOTE: This installer is intended to be run on a fresh install of Raspberry Pi OS Lite 32-Bit Buster or later." ${r} ${c}
 
 # Starting actual steps for installation
 clear
