@@ -1,4 +1,4 @@
-{% macro render_startup(metric) %}
+{% macro render_startup(metric, units) %}
 
 <div class="card shadow"> 
 	<div class="card-header bg-success text-white">
@@ -17,12 +17,12 @@
 			  <tr>
 				<th scope="row">Start Time</th>
 				<td>{{ metric['starttime'] }}</td>
-				<td>{{ metric['addendum']['starttime'] }}</td>
+				<td>{{ metric['starttime_c'] }}</td>
 			  </tr>
 			  <tr>
 				<th scope="row">End Time</th>
 				<td>{{ metric['endtime'] }}</td>
-				<td>{{ metric['addendum']['endtime'] }}</td>
+				<td>{{ metric['endtime_c'] }}</td>
 			  </tr>
 			  <tr>
 				<th scope="row">Time in Mode</th>
@@ -32,17 +32,17 @@
 					{{ metric['endtime'] - metric['starttime'] }}
 					{% endif %}
 				</td>
-				<td>{{ metric['addendum']['timeinmode'] }}</td>
+				<td>{{ metric['timeinmode'] }}</td>
 			  </tr>
 			  <tr>
 				<th scope="row">Auger On Time</th>
 				<td>{{ metric['augerontime'] }}</td>
-				<td>{{ metric['addendum']['augerontime'] }}</td>
+				<td>{{ metric['augerontime_c'] }}</td>
 			  </tr>
 			  <tr>
 				<th scope="row">Estimated Pellet Usage</th>
-				<td>{{ metric['addendum']['estusage_m'] }}</td>
-				<td>{{ metric['addendum']['estusage_i'] }}</td>
+				<td>{{ metric['estusage_m'] }}</td>
+				<td>{{ metric['estusage_i'] }}</td>
 			  </tr>
 
 		</tbody>
@@ -64,7 +64,7 @@
 
 {% endmacro %}
 
-{% macro render_reignite(metric) %}
+{% macro render_reignite(metric, units) %}
 
 <div class="card shadow"> 
 	<div class="card-header bg-warning text-white">
@@ -83,12 +83,12 @@
 			  <tr>
 				<th scope="row">Start Time</th>
 				<td>{{ metric['starttime'] }}</td>
-				<td>{{ metric['addendum']['starttime'] }}</td>
+				<td>{{ metric['starttime_c'] }}</td>
 			  </tr>
 			  <tr>
 				<th scope="row">End Time</th>
 				<td>{{ metric['endtime'] }}</td>
-				<td>{{ metric['addendum']['endtime'] }}</td>
+				<td>{{ metric['endtime_c'] }}</td>
 			  </tr>
 			  <tr>
 				<th scope="row">Time in Mode</th>
@@ -98,17 +98,17 @@
 					{{ metric['endtime'] - metric['starttime'] }}
 					{% endif %}
 				</td>
-				<td>{{ metric['addendum']['timeinmode'] }}</td>
+				<td>{{ metric['timeinmode'] }}</td>
 			  </tr>
 			  <tr>
 				<th scope="row">Auger On Time</th>
 				<td>{{ metric['augerontime'] }}</td>
-				<td>{{ metric['addendum']['augerontime'] }}</td>
+				<td>{{ metric['augerontime_c'] }}</td>
 			  </tr>
 			  <tr>
 				<th scope="row">Estimated Pellet Usage</th>
-				<td>{{ metric['addendum']['estusage_m'] }}</td>
-				<td>{{ metric['addendum']['estusage_i'] }}</td>
+				<td>{{ metric['estusage_m'] }}</td>
+				<td>{{ metric['estusage_i'] }}</td>
 			  </tr>
 
 		</tbody>
@@ -130,7 +130,7 @@
 
 {% endmacro %}
 
-{% macro render_stop(metric) %}
+{% macro render_stop(metric, units) %}
 
 <div class="card shadow"> 
 	<div class="card-header bg-danger text-white">
@@ -149,7 +149,7 @@
 			  <tr>
 				<th scope="row">Stop Time</th>
 				<td>{{ metric['starttime'] }}</td>
-				<td>{{ metric['addendum']['starttime'] }}</td>
+				<td>{{ metric['starttime_c'] }}</td>
 			  </tr>
 		</tbody>
 		</table>
@@ -170,7 +170,7 @@
 
 {% endmacro %}
 
-{% macro render_smoke(metric) %}
+{% macro render_smoke(metric, units) %}
 
 <div class="card shadow"> 
 	<div class="card-header bg-secondary text-white">
@@ -189,12 +189,12 @@
 			  <tr>
 				<th scope="row">Start Time</th>
 				<td>{{ metric['starttime'] }}</td>
-				<td>{{ metric['addendum']['starttime'] }}</td>
+				<td>{{ metric['starttime_c'] }}</td>
 			  </tr>
 			  <tr>
 				<th scope="row">End Time</th>
 				<td>{{ metric['endtime'] }}</td>
-				<td>{{ metric['addendum']['endtime'] }}</td>
+				<td>{{ metric['endtime_c'] }}</td>
 			  </tr>
 			  <tr>
 				<th scope="row">Time in Mode</th>
@@ -204,22 +204,27 @@
 					{{ metric['endtime'] - metric['starttime'] }}
 					{% endif %}
 				</td>
-				<td>{{ metric['addendum']['timeinmode'] }}</td>
+				<td>{{ metric['timeinmode'] }}</td>
 			  </tr>
 			  <tr>
 				<th scope="row">Auger On Time</th>
 				<td>{{ metric['augerontime'] }}</td>
-				<td>{{ metric['addendum']['augerontime'] }}</td>
+				<td>{{ metric['augerontime_c'] }}</td>
 			  </tr>
 			  <tr>
 				<th scope="row">Estimated Pellet Usage</th>
-				<td>{{ metric['addendum']['estusage_m'] }}</td>
-				<td>{{ metric['addendum']['estusage_i'] }}</td>
+				<td>{{ metric['estusage_m'] }}</td>
+				<td>{{ metric['estusage_i'] }}</td>
 			  </tr>
 			  <tr>
 				<th scope="row">Smoke Plus</th>
 				<td>{{ metric['smokeplus'] }}</td>
-				<td>{{ metric['addendum']['smokeplus'] }}</td>
+				<td>{% if metric['smokeplus'] == True %}
+					Active
+					{% else %} 
+					Disabled
+					{% endif %}
+				</td>
 			  </tr>
 
 		</tbody>
@@ -241,7 +246,7 @@
 
 {% endmacro %}
 
-{% macro render_hold(metric) %}
+{% macro render_hold(metric, units) %}
 
 <div class="card shadow"> 
 	<div class="card-header bg-secondary text-white">
@@ -260,12 +265,12 @@
 			  <tr>
 				<th scope="row">Start Time</th>
 				<td>{{ metric['starttime'] }}</td>
-				<td>{{ metric['addendum']['starttime'] }}</td>
+				<td>{{ metric['starttime_c'] }}</td>
 			  </tr>
 			  <tr>
 				<th scope="row">End Time</th>
 				<td>{{ metric['endtime'] }}</td>
-				<td>{{ metric['addendum']['endtime'] }}</td>
+				<td>{{ metric['endtime_c'] }}</td>
 			  </tr>
 			  <tr>
 				<th scope="row">Time in Mode</th>
@@ -275,27 +280,32 @@
 					{{ metric['endtime'] - metric['starttime'] }}
 					{% endif %}
 				</td>
-				<td>{{ metric['addendum']['timeinmode'] }}</td>
+				<td>{{ metric['timeinmode'] }}</td>
 			  </tr>
 			  <tr>
 				<th scope="row">Auger On Time</th>
 				<td>{{ metric['augerontime'] }}</td>
-				<td>{{ metric['addendum']['augerontime'] }}</td>
+				<td>{{ metric['augerontime_c'] }}</td>
 			  </tr>
 			  <tr>
 				<th scope="row">Estimated Pellet Usage</th>
-				<td>{{ metric['addendum']['estusage_m'] }}</td>
-				<td>{{ metric['addendum']['estusage_i'] }}</td>
+				<td>{{ metric['estusage_m'] }}</td>
+				<td>{{ metric['estusage_i'] }}</td>
 			  </tr>
 			  <tr>
 				<th scope="row">Smoke Plus</th>
 				<td>{{ metric['smokeplus'] }}</td>
-				<td>{{ metric['addendum']['smokeplus'] }}</td>
+				<td>{% if metric['smokeplus'] == True %}
+					Active
+					{% else %} 
+					Disabled
+					{% endif %}
+				</td>
 			  </tr>
 			  <tr>
 				<th scope="row">Grill Set Temp</th>
 				<td>{{ metric['grill_settemp'] }} </td>
-				<td>{{ metric['addendum']['grill_settemp'] }} </td>
+				<td>{{ metric['grill_settemp'] }} {{ units }}</td>
 			  </tr>
 
 		</tbody>
@@ -317,7 +327,7 @@
 
 {% endmacro %}
 
-{% macro render_shutdown(metric) %}
+{% macro render_shutdown(metric, units) %}
 
 <div class="card shadow"> 
 	<div class="card-header bg-secondary text-white">
@@ -336,12 +346,12 @@
 			  <tr>
 				<th scope="row">Start Time</th>
 				<td>{{ metric['starttime'] }}</td>
-				<td>{{ metric['addendum']['starttime'] }}</td>
+				<td>{{ metric['starttime_c'] }}</td>
 			  </tr>
 			  <tr>
 				<th scope="row">End Time</th>
 				<td>{{ metric['endtime'] }}</td>
-				<td>{{ metric['addendum']['endtime'] }}</td>
+				<td>{{ metric['endtime_c'] }}</td>
 			  </tr>
 			  <tr>
 				<th scope="row">Time in Mode</th>
@@ -351,7 +361,7 @@
 					{{ metric['endtime'] - metric['starttime'] }}
 					{% endif %}
 				</td>
-				<td>{{ metric['addendum']['timeinmode'] }}</td>
+				<td>{{ metric['timeinmode'] }}</td>
 			  </tr>
 		</tbody>
 		</table>

@@ -1663,11 +1663,13 @@ while True:
 			grill_platform.AugerOff()
 			grill_platform.IgniterOff()
 			grill_platform.FanOff()
-			# Register Stop Mode in Metrics 
-			WriteMetrics(new_metric=True)
-			metrics = ReadMetrics()
-			metrics['mode'] = 'Stop'
-			WriteMetrics(metrics)
+			# Register Stop Mode in Metrics DB if this is not initial stop-mode on startup (i.e. DB is empty)
+			metrics_list = ReadMetrics(all=True)
+			if(len(metrics_list) != 0):
+				WriteMetrics(new_metric=True)
+				metrics = ReadMetrics()
+				metrics['mode'] = 'Stop'
+				WriteMetrics(metrics)
 
 			if (control['status'] == 'monitor') and (control['mode'] == 'Error'):
 				grill_platform.PowerOn()

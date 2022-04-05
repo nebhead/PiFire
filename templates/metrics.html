@@ -7,28 +7,38 @@
 {% block timer_bar %}{% endblock %}
 
 {% block content %}
-<a href="/metrics/export" class="btn btn-outline-primary btn-block shadow" role="button"><i class="fas fa-file-download"></i> Download CSV Data</a>
-<br><br>
 
-{% for item in metrics_data %}
-	{% if item['mode'] == 'Stop' %}
-	{{ render_stop(item) }} 
-	{% elif item['mode'] == 'Startup' %}
-	{{ render_startup(item) }}
-	{% elif item['mode'] == 'Reignite' %}
-	{{ render_reignite(item) }}
-	{% elif item['mode'] == 'Smoke' %}
-	{{ render_smoke(item) }}
-	{% elif item['mode'] == 'Hold' %}
-	{{ render_hold(item) }}
-	{% elif item['mode'] == 'Shutdown' %}
-	{{ render_shutdown(item) }}
-	{% elif item['mode'] == 'Error' %}
-	{{ render_stop(item) }}
-	{% else %}
-	{{ render_reignite(item) }}
-	{% endif %}
-	<br><br> 
-{% endfor %} 
+{% if metrics_data == [] %}
+	<div class="card shadow text-center">
+		<br>
+		<H2>No Data</H2>
+		<i>Start the grill to begin populating metrics.</i>
+		<br>
+	</div>
+{% else %}
+	<a href="/metrics/export" class="btn btn-outline-primary btn-block shadow" role="button"><i class="fas fa-file-download"></i> Download CSV Data</a>
+	<br><br>
+
+	{% for item in metrics_data %}
+		{% if item['mode'] == 'Stop' %}
+		{{ render_stop(item, settings['globals']['units']) }} 
+		{% elif item['mode'] == 'Startup' %}
+		{{ render_startup(item, settings['globals']['units']) }}
+		{% elif item['mode'] == 'Reignite' %}
+		{{ render_reignite(item, settings['globals']['units']) }}
+		{% elif item['mode'] == 'Smoke' %}
+		{{ render_smoke(item, settings['globals']['units']) }}
+		{% elif item['mode'] == 'Hold' %}
+		{{ render_hold(item, settings['globals']['units']) }}
+		{% elif item['mode'] == 'Shutdown' %}
+		{{ render_shutdown(item, settings['globals']['units']) }}
+		{% elif item['mode'] == 'Error' %}
+		{{ render_stop(item, settings['globals']['units']) }}
+		{% else %}
+		{{ render_reignite(item, settings['globals']['units']) }}
+		{% endif %}
+		<br><br> 
+	{% endfor %} 
+{% endif %}
 
 {% endblock %}

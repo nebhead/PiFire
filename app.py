@@ -1454,6 +1454,38 @@ def metrics_page(action=None):
 
 	metrics_data = ReadMetrics(all=True)
 
+	# Process Additional Metrics Information for Display
+	for index in range(0, len(metrics_data)):
+		# Convert Start Time
+		starttime = metrics_data[index]['starttime']
+		metrics_data[index]['starttime_c'] = epoch_to_time(starttime)
+		# Convert End Time
+		if(metrics_data[index]['endtime'] == 0):
+			endtime = 0
+		else: 
+			endtime = epoch_to_time(metrics_data[index]['endtime'])
+		metrics_data[index]['endtime_c'] = endtime
+		# Time in Mode
+		if(metrics_data[index]['mode'] == 'Stop'):
+			timeinmode = 'NA'
+		elif(metrics_data[index]['endtime'] == 0):
+			timeinmode = 'Active'
+		else:
+			seconds = int(metrics_data[index]['endtime'] - metrics_data[index]['starttime'])
+			if seconds > 60:
+				timeinmode = f'{int(seconds/60)} m {seconds % 60} s'
+			else:
+				timeinmode = f'{seconds} s'
+		metrics_data[index]['timeinmode'] = timeinmode 
+		# Convert Auger On Time
+		metrics_data[index]['augerontime_c'] = str(int(metrics_data[index]['augerontime'])) + ' s'
+		# Estimated Pellet Usage
+		grams = int(metrics_data[index]['augerontime'] * settings['globals']['augerrate'])
+		pounds = grams * 0.00220462
+		ounces = grams * 0.03527392
+		metrics_data[index]['estusage_m'] = f'{grams} grams'
+		metrics_data[index]['estusage_i'] = f'{pounds} pounds ({ounces} ounces)'
+
 	if (request.method == 'GET') and (action == 'export'):
 		exportfilename = "pifire_metrics.csv"
 		csvfile = open('/tmp/' + exportfilename, 'w')
@@ -1480,44 +1512,6 @@ def metrics_page(action=None):
 		csvfile.close()
 
 		return send_file('/tmp/' + exportfilename, as_attachment=True, max_age=0)
-
-	# Process Additional Metrics Information for Display
-	for index in range(0, len(metrics_data)):
-		metrics_data[index]['addendum'] = {}  # Create addendum space
-		# Convert Start Time
-		starttime = metrics_data[index]['starttime']
-		metrics_data[index]['addendum']['starttime'] = epoch_to_time(starttime)
-		# Convert End Time
-		if(metrics_data[index]['endtime'] == 0):
-			endtime = 0
-		else: 
-			endtime = epoch_to_time(metrics_data[index]['endtime'])
-		metrics_data[index]['addendum']['endtime'] = endtime
-		# Time in Mode
-		if(metrics_data[index]['mode'] == 'Stop'):
-			timeinmode = 'NA'
-		elif(metrics_data[index]['endtime'] == 0):
-			timeinmode = 'Active'
-		else:
-			seconds = int(metrics_data[index]['endtime'] - metrics_data[index]['starttime'])
-			if seconds > 60:
-				timeinmode = f'{int(seconds/60)} m {seconds % 60} s'
-			else:
-				timeinmode = f'{seconds} s'
-		metrics_data[index]['addendum']['timeinmode'] = timeinmode 
-		# Convert Auger On Time
-		metrics_data[index]['addendum']['augerontime'] = str(int(metrics_data[index]['augerontime'])) + ' s'
-		# Estimated Pellet Usage
-		grams = int(metrics_data[index]['augerontime'] * settings['globals']['augerrate'])
-		pounds = grams * 0.00220462
-		ounces = grams * 0.03527392
-		metrics_data[index]['addendum']['estusage_m'] = f'{grams} grams'
-		metrics_data[index]['addendum']['estusage_i'] = f'{pounds} pounds ({ounces} ounces)'
-		if metrics_data[index]['smokeplus'] == True:
-			metrics_data[index]['addendum']['smokeplus'] = 'Active'
-		else:
-			metrics_data[index]['addendum']['smokeplus'] = 'Disabled'
-		metrics_data[index]['addendum']['grill_settemp'] = f"{metrics_data[index]['grill_settemp']} {settings['globals']['units']}"
 
 	return render_template('metrics.html', settings=settings, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'], metrics_data=metrics_data)
 

@@ -262,12 +262,19 @@ List of Tuples ('metric_key', default_value)
 metrics_items = [ 
 	('id', 0),
 	('starttime', 0),
+	('starttime_c', 0),  # Converted Start Time
 	('endtime', 0),
-	('mode', 0),
+	('endtime_c', 0),  # Converted End Time
+	('timeinmode', 0),  # Calculated Time in Mode
+	('mode', ''),  
 	('augerontime', 0), 
-	('fanontime', 0), 
+	('augerontime_c', 0),  # Converted Auger On Time
+	('estusage_m', ''),  # Estimated pellet usage in metric (grams)
+	('estusage_i', ''),  # Estimated pellet usage in pounds (and ounces)
+	('fanontime', 0),
+	('fanontime_c', 0),  # Converted Fan On Time
 	('smokeplus', True), 
-	('grill_settemp', 0)
+	('grill_settemp', 0)  
 ]
 
 def DefaultMetrics():
@@ -485,8 +492,8 @@ def ReadMetrics(all=False):
 	global cmdsts
 
 	if not(cmdsts.exists('metrics:general')):
-		metrics = DefaultMetrics()
-		WriteMetrics(metrics, flush=True)
+		WriteMetrics(flush=True)
+		return([])
 	
 	if all: 
 		# Read entire list of Metrics
