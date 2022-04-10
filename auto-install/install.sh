@@ -103,9 +103,9 @@ echo "**                                                                     **"
 echo "**      Cloning PiFire from GitHub...                                  **"
 echo "**                                                                     **"
 echo "*************************************************************************"
-cd ~
+cd /usr/local/bin
 # Use a shallow clone to reduce download size
-git clone --depth 1 https://github.com/nebhead/pifire
+$SUDO git clone --depth 1 https://github.com/nebhead/pifire
 # Replace the below command to fetch development branch
 #git clone --depth 1 --branch development https://github.com/nebhead/pifire
 
@@ -122,7 +122,7 @@ echo "**      Configuring nginx...                                           **"
 echo "**                                                                     **"
 echo "*************************************************************************"
 # Move into install directory
-cd ~/pifire/auto-install/
+cd /usr/local/bin/pifire/auto-install/nginx
 
 # Delete default configuration
 $SUDO rm /etc/nginx/sites-enabled/default
@@ -146,7 +146,7 @@ echo "*************************************************************************"
 
 # Copy configuration files (control.conf, webapp.conf) to supervisor config directory
 # NOTE: If you used a different directory for the installation then make sure you edit the *.conf files appropriately
-cd ~/pifire/supervisor
+cd /usr/local/bin/pifire/auto-install/supervisor
 
 $SUDO cp *.conf /etc/supervisor/conf.d/
 
@@ -169,6 +169,6 @@ fi
 $SUDO service supervisor start
 
 # Rebooting
-whiptail --msgbox --backtitle "Install Complete / Reboot Required" --title "Installation Completed - Rebooting" "Congratulations, the installation is complete.  At this time, we will perform a reboot and your application should be ready.  On first boot, the wizard will guide you through the remaining setup steps.  You should be able to access your application by opening a browser on your PC or other device and using the IP address for this Pi.  Enjoy!" ${r} ${c}
+whiptail --msgbox --backtitle "Install Complete / Reboot Required" --title "Installation Completed - Rebooting" "Congratulations, the installation is complete.  At this time, we will perform a reboot and your application should be ready.  On first boot, the wizard will guide you through the remaining setup steps.  You should be able to access your application by opening a browser on your PC or other device and using the IP address (or http://[hostname].local) for this device.  Enjoy!" ${r} ${c}
 clear
 $SUDO reboot
