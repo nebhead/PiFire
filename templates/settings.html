@@ -33,6 +33,7 @@
 {% endif %}{% endblock %}
 
 {% block content %}
+<input type="hidden" id="units" name="units" value="{{ settings['globals']['units'] }}">
 <br>
 <div class="row">
     {% if not request.MOBILE %}
@@ -589,39 +590,196 @@
                             </h5>
                         </div>
                         <div class="card-body">
-                            <h5>Timer Settings</h5>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text" data-toggle="tooltip" title="Shutdown timer (seconds) [Default=60]">
-                                        <i class="far fa-clock"></i>&nbsp; Shutdown Timer (seconds)</span>
-                                </div>
-                                <input id="shutdown_timer" type="number" min="1" class="form-control" placeholder="{{ settings['globals']['shutdown_timer'] }}" value="{{ settings['globals']['shutdown_timer'] }}" name="shutdown_timer">
-                            </div>
-                            <span class="badge badge-warning">NOTE:</span>
-                            <i class="small"> Amount of time fan will run after shutdown is selected </i>
-                            <br>
-                            <br>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text" data-toggle="tooltip" title="Startup timer (seconds) [Default=240]">
-                                        <i class="far fa-clock"></i>&nbsp; Startup Timer (seconds)</span>
-                                </div>
-                                <input id="startup_timer" type="number" min="1" class="form-control" placeholder="{{ settings['globals']['startup_timer'] }}" value="{{ settings['globals']['startup_timer'] }}" name="startup_timer">
-                            </div>
-                            <span class="badge badge-warning">NOTE:</span>
-                            <i class="small"> Amount of time for startup before transitioning to smoke or attempting a reignite</i>
-                            <br>
-                            <br>
-                            <h5>Power Off Settings</h5>
-                            <span class="badge badge-warning">NOTE:</span>
-                            <i class="small"> When enabled the Raspberry Pi will auto power off after the Grill Shutdown Mode has ended</i>
-                            <br>
-                            <br>
-                            <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="auto_power_off" name="auto_power_off" {% if settings['globals']['auto_power_off'] == True %}checked{% endif %}>
-                                <label class="custom-control-label" for="auto_power_off">Auto Power Off</label>
-                            </div>
-                            <br>
+                            <!-- Startup Settings -->
+							<div class="card shadow">
+								<div class="card-header">
+									<h5>
+										<i class="fas fa-play"></i>&nbsp; Default Startup Settings
+									</h5>
+								</div>
+								<div class="card-body">
+									<div class="input-group mb-3">
+										<div class="input-group-prepend">
+											<span class="input-group-text" data-toggle="tooltip" title="Startup timer (seconds) [Default=240]">
+												<i class="far fa-clock"></i>&nbsp; Startup Timer (seconds)</span>
+										</div>
+										<input id="startup_timer" type="number" min="1" class="form-control" placeholder="{{ settings['globals']['startup_timer'] }}" value="{{ settings['globals']['startup_timer'] }}" name="startup_timer">
+									</div>
+									<span class="badge badge-warning">NOTE:</span>
+									<i class="small"> Amount of time for startup before transitioning to smoke or attempting a reignite</i>
+								</div>
+							</div>
+							<br>
+							
+							<!-- Smart Start Settings -->
+							<div class="card shadow">
+								<div class="card-header">
+									<h5>
+										<i class="fas fa-brain"></i>&nbsp; Smart Start Settings
+									</h5>
+								</div>
+								<div class="card-body">
+									<span class="badge badge-warning">NOTE:</span>
+									<i class="small"> Smart Start will sample the temperature from your grill temperature probe on startup to determine the startup mode time and the Smoke mode cycle settings.  If this mode is enabled, it will override the above startup and smoke cycle settings.  Edit the profiles below to customize the behavior of startup. </i>
+									<div class="custom-control custom-switch">
+										<input type="checkbox" class="custom-control-input" id="smartstart_enable" name="smartstart_enable" {% if settings['smartstart']['enabled'] == True %}checked{% endif %}>
+										<label class="custom-control-label" for="smartstart_enable">Smart Start Enabled</label>
+									</div><br>
+									<!-- Smart Start Profiles -->
+									<table class="table table-sm" id="smartStartTable">
+										<thead>
+										  <tr>
+											<th scope="col">Action</th>
+											<th scope="col">Temp Range</th>
+											<th scope="col">Startup</th>
+											<th scope="col">AugerOn</th>
+											<th scope="col">P-Mode</th>
+										</tr>
+										</thead>
+										<tbody>
+										</tbody>
+										<tfoot>
+											<tr>
+												<td>
+													<button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#sstrt_add_modal"><i class="fas fa-plus"></i></button>
+												</td>
+												<td></td>
+												<td></td>
+												<td></td>
+												<td></td>
+											</tr>
+										</tfoot>
+									</table>
+									<!-- Smart Start ADD Profile modal -->
+									<div class="modal fade" id="sstrt_add_modal" tabindex="-1" aria-labelledby="sstrt_add_modal_label" aria-hidden="true">
+										<div class="modal-dialog">
+										<div class="modal-content">
+											<div class="modal-header">
+											<h5 class="modal-title" id="sstrt_add_modal_label">Add Smart Start Profile</h5>
+											<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+												<span aria-hidden="true">&times;</span>
+											</button>
+											</div>
+											<div class="modal-body">
+                                                <span class="badge badge-warning">NOTE:</span>
+                                                <i class="small">Enter a value greater than <span id="addMinTemp">0</span>{{ settings['globals']['units'] }}</i>
+												<div class="input-group mb-3">
+													<div class="input-group-prepend">
+													  <span class="input-group-text" id="minTempLabel">Min Temperature({{ settings['globals']['units'] }})</span>
+													</div>
+													<input type="number" class="form-control" value="55" min="0" max="200" name="minTemp" id="minTemp" aria-label="Min Temperature" aria-describedby="minTempLabel">
+												</div>
+												<div class="input-group mb-3">
+													<div class="input-group-prepend">
+													  <span class="input-group-text" id="startupTimeLabel">Startup Time(s)</span>
+													</div>
+													<input type="number" class="form-control" value="240" min="30" max="1200" name="startupTime" id="startupTime" aria-label="Startup Time" aria-describedby="startupTimeLabel">
+												</div>
+												<div class="input-group mb-3">
+													<div class="input-group-prepend">
+													  <span class="input-group-text" id="augeronTimeLabel">Auger On Time(s)</span>
+													</div>
+													<input type="number" class="form-control" value="15" min="1" max="1000" name="augeronTime" id="augeronTime" aria-label="Auger On Time" aria-describedby="augeronTimeLabel">
+												</div>
+												<div class="input-group mb-3">
+													<div class="input-group-prepend">
+													  <span class="input-group-text" id="pModeLabel">P-Mode</span>
+													</div>
+													<input type="number" class="form-control" value="2" min="0" max="9" name="pMode" id="pMode" aria-label="P-Mode" aria-describedby="pModeLabel">
+												</div>
+
+											</div>
+											<div class="modal-footer">
+											<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+											<button type="button" class="btn btn-primary" data-dismiss="modal" onClick="onAdd()">Save changes</button>
+											</div>
+										</div>
+										</div>
+									</div><!-- End of Add Modal-->
+
+                                    <!-- Smart Start EDIT Profile modal -->
+									<div class="modal fade" id="sstrt_edit_modal" tabindex="-1" aria-labelledby="sstrt_edit_modal_label" aria-hidden="true">
+										<div class="modal-dialog">
+										<div class="modal-content">
+											<div class="modal-header">
+											<h5 class="modal-title" id="sstrt_edit_modal_label">Edit Smart Start Profile</h5>
+											<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+												<span aria-hidden="true">&times;</span>
+											</button>
+											</div>
+											<div class="modal-body">
+                                                <span class="badge badge-warning">NOTE:</span>
+                                                <i class="small" id="edit_RangeText">Enter a value in the range <span id="editRangeMin">0</span>-<span id="editRangeMax">200</span>{{ settings['globals']['units'] }}</i>
+                                                <div class="input-group mb-3">
+													<div class="input-group-prepend">
+													  <span class="input-group-text" id="edit_minTempLabel">Max Temperature({{ settings['globals']['units'] }})</span>
+													</div>
+													<input type="number" class="form-control" value="55" min="0" max="200" name="edit_minTemp" id="edit_minTemp" aria-label="Min Temperature" aria-describedby="edit_minTempLabel">
+												</div>
+												<div class="input-group mb-3">
+													<div class="input-group-prepend">
+													  <span class="input-group-text" id="edit_startupTimeLabel">Startup Time(s)</span>
+													</div>
+													<input type="number" class="form-control" value="240" min="30" max="1200" name="edit_startupTime" id="edit_startupTime" aria-label="Startup Time" aria-describedby="edit_startupTimeLabel">
+												</div>
+												<div class="input-group mb-3">
+													<div class="input-group-prepend">
+													  <span class="input-group-text" id="edit_augeronTimeLabel">Auger On Time(s)</span>
+													</div>
+													<input type="number" class="form-control" value="15" min="1" max="1000" name="edit_augeronTime" id="edit_augeronTime" aria-label="Auger On Time" aria-describedby="edit_augeronTimeLabel">
+												</div>
+												<div class="input-group mb-3">
+													<div class="input-group-prepend">
+													  <span class="input-group-text" id="edit_pModeLabel">P-Mode</span>
+													</div>
+													<input type="number" class="form-control" value="2" min="0" max="9" name="edit_pMode" id="edit_pMode" aria-label="P-Mode" aria-describedby="edit_pModeLabel">
+												</div>
+
+											</div>
+											<div class="modal-footer">
+											<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+											<button type="button" class="btn btn-primary" id="saveEdits" value="" data-dismiss="modal" onClick="saveChanges(this.value)">Save changes</button>
+											</div>
+										</div>
+										</div>
+									</div><!-- End of Add Modal-->
+
+								</div><!-- End of Smart Start Settings Card Body -->
+							</div><!-- End of Smart Start Settings Card-->
+							<br>
+							<script>
+
+							</script>
+							<!-- Shutdown Settings -->
+							<div class="card shadow">
+								<div class="card-header">
+									<h5>
+										<i class="fas fa-flag-checkered"></i>&nbsp; Default Shutdown Settings
+									</h5>
+								</div>
+								<div class="card-body"> 
+									<div class="input-group mb-3">
+										<div class="input-group-prepend">
+											<span class="input-group-text" data-toggle="tooltip" title="Shutdown timer (seconds) [Default=60]">
+												<i class="far fa-clock"></i>&nbsp; Shutdown Timer (seconds)</span>
+										</div>
+										<input id="shutdown_timer" type="number" min="1" class="form-control" placeholder="{{ settings['globals']['shutdown_timer'] }}" value="{{ settings['globals']['shutdown_timer'] }}" name="shutdown_timer">
+									</div>
+									<span class="badge badge-warning">NOTE:</span>
+									<i class="small"> Amount of time fan will run after shutdown is selected </i>
+									<br>
+									<br>
+									<h5>Power Off Settings</h5>
+									<span class="badge badge-warning">NOTE:</span>
+									<i class="small"> When enabled the Raspberry Pi will auto power off after the Grill Shutdown Mode has ended</i>
+									<br>
+									<br>
+									<div class="custom-control custom-switch">
+										<input type="checkbox" class="custom-control-input" id="auto_power_off" name="auto_power_off" {% if settings['globals']['auto_power_off'] == True %}checked{% endif %}>
+										<label class="custom-control-label" for="auto_power_off">Auto Power Off</label>
+									</div>
+								</div>
+							</div> <!-- End of Shutdown Settings Card-->
                         </div>
                         <!-- End of card body -->
                         <div class="card-footer bg-light">
@@ -1084,14 +1242,417 @@
 {% block postcontainer %}{% endblock %}
 {% block scripts %}
 <script>
-    $(document).ready(function(){
-        $('a[data-toggle="pill"]').on('show.bs.tab', function(e) {
+	// GLOBALS
+	// Get units
+	var units = document.getElementById("units").value;
+	var temps_list;
+	var profiles;
+
+	// Functions
+	function postSmartStartData(temps_list, profiles) {
+		var postdata = { 
+			'temps_list' : temps_list,
+			'profiles' : profiles,
+		};
+		
+		$.ajax({
+			url : '/settings/smartstart',
+			type : 'POST',
+			data : JSON.stringify(postdata),
+			contentType: "application/json; charset=utf-8",
+			traditional: true,
+			success: function (data) {
+				//console.log('POST data sent.');
+			}
+		});
+	};
+
+	function onDelete(td, rowSelected) {
+		if (confirm('Are you sure to delete this record ?')) {
+			if (rowSelected <= 1) {
+                alert('Cannot delete last two profiles.  You must have at least one profile enabled.  Action cancelled.')
+            } else if (rowSelected == profiles.length - 1) {
+                // Select Row to Delete
+                var delRow = td.parentElement.parentElement;
+                // Select Previous Row 
+                var prevRow = delRow.previousElementSibling;
+                document.getElementById("smartStartTable").deleteRow(delRow.rowIndex);
+                console.log('Row ' + rowSelected + ' Deleted.');
+                var delButtonHTML_enabled = '<button type="button" class="btn btn-danger btn-sm" id="sstrt_del_row" onClick="onDelete(this,' + (rowSelected-1) + ')"><i class="fas fa-trash-alt"></i></button>';
+                var delButtonHTML_disabled = '<button type="button" class="btn btn-secondary btn-sm" id="sstrt_del_row" data-toggle="tooltip" data-placement="top" title="This profile cannot be deleted." disabled><i class="fas fa-trash-alt"></i></button>';
+                var prevEditButtonHTML = '<button type="button" class="btn btn-warning btn-sm" onClick="onEdit(' + (rowSelected - 1) + ')" data-toggle="modal" data-target="#sstrt_edit_modal"><i class="fas fa-edit"></i></button> \n';
+                // If it's the previous profile is the second profile, disable the delete button
+                if (rowSelected - 1 == 1) {
+                    var delButtonHTML = delButtonHTML_disabled;
+                } else {
+                    var delButtonHTML = delButtonHTML_enabled;
+                };
+                prevRow.cells[0].innerHTML = prevEditButtonHTML + delButtonHTML;
+                if(rowSelected > 1) {
+                    prevRow.cells[1].innerHTML = '&gt ' + temps_list[rowSelected-2] + units;
+                    var newMinTemp = temps_list[rowSelected-2] + 1;
+                } else {
+                    prevRow.cells[1].innerHTML = '&gt ' + temps_list[rowSelected-1] + units;
+                    var newMinTemp = temps_list[rowSelected-1] + 1;
+                }
+
+                // Change minimum value for added items
+				$('#minTemp').val(newMinTemp);
+				document.getElementById("minTemp").min = newMinTemp;
+                $('#addMinTemp').html(newMinTemp - 1);
+
+                // Remove items from lists
+                if(rowSelected > 1) {
+                    var popped = temps_list.pop();
+                    console.log('Popped: ' + popped);
+                } 
+                profiles.pop();
+
+                // Save values to server
+                postSmartStartData(temps_list, profiles);
+            };
+		};
+	};
+
+	function onEdit(rowSelected) {
+        if (rowSelected == 0) {
+            // First Row Selected
+            var minTemp = 0;
+            var curTemp = temps_list[0];
+            if (temps_list.length > 1) {
+                var maxTemp = temps_list[1]-1;
+            } else {
+                var maxTemp = 1000;
+            }
+            document.getElementById("edit_minTemp").disabled = '';
+        } else if (rowSelected == profiles.length - 1) {
+            // Last Row Selected
+            // Disable editing min Temp
+            var minTemp = temps_list[rowSelected-1];
+            var curTemp = temps_list[rowSelected-1];
+            var maxTemp = minTemp;
+            document.getElementById("edit_minTemp").disabled = 'disabled';
+        } else if (rowSelected == profiles.length - 2) {
+            // Second to Last Row Selected
+            var minTemp = temps_list[rowSelected-1]+1;
+            var curTemp = temps_list[rowSelected];
+            var maxTemp = 1000;
+            document.getElementById("edit_minTemp").disabled = '';
+        } else {
+            // All other rows  
+            var minTemp = temps_list[rowSelected-1]+1;
+            var curTemp = temps_list[rowSelected];
+            var maxTemp = temps_list[rowSelected+1]-1;
+            document.getElementById("edit_minTemp").disabled = '';
+        }
+        var startupTime = profiles[rowSelected].startuptime; 
+        var augeronTime = profiles[rowSelected].augerontime; 
+        var pMode = profiles[rowSelected].p_mode;
+        
+		$('#edit_minTemp').val(curTemp);
+		document.getElementById("edit_minTemp").min = minTemp;
+		document.getElementById("edit_minTemp").max = maxTemp;
+
+        $('#edit_startupTime').val(startupTime);
+        $('#edit_augeronTime').val(augeronTime);
+        $('#edit_pMode').val(pMode);
+        $('#saveEdits').val(rowSelected);
+        if(rowSelected == profiles.length - 1) {
+            $('#edit_RangeText').html('No minimum temperature for the last profile.');
+        } else {
+            $('#edit_RangeText').html('Enter a value in the range <span id="editRangeMin">0</span>-<span id="editRangeMax">200</span>' + units);
+            $('#editRangeMin').html(minTemp);
+            $('#editRangeMax').html(maxTemp);
+        };
+
+		//console.log('Row Selected for Edit: ' + rowSelected);
+	};
+
+    function saveChanges(rowSelectedString) {
+        rowSelected = parseInt(rowSelectedString);
+
+        // Validate 
+        var newTemp = parseInt($('#edit_minTemp').val());
+        var valid = false;
+
+        // Check minTemp Value
+        if((rowSelected == 0)&&(temps_list.length > 1)) {
+            // If first row selected, and temperature list is longer than 1 set point
+            if((newTemp >= 0)&&(newTemp < temps_list[1])) {
+                valid = true;
+            };
+        } else if((rowSelected == 0)&&(temps_list.length == 1)) {
+            // If first row selected, and there is only one set point
+            valid = true;
+        } else if(rowSelected == profiles.length-1) {
+            // If last profile is selected
+            newTemp = temps_list[rowSelected-1];
+            valid = true;
+        } else if((newTemp > temps_list[rowSelected-1])&&(newTemp < temps_list[rowSelected+1])) {
+            // If inner rows are selected, check range
+            valid = true;
+        } else if((newTemp > temps_list[rowSelected-1])&&(rowSelected + 1 == temps_list.length)) {
+            // If second to last row is selected check greater than previous 
+            valid = true;
+        } else {
+            valid = false;
+            console.log('Failed Temperature Range Check.');
+        };
+
+        // Check startup time
+        var startuptime = parseInt($('#edit_startupTime').val());
+
+        if((startuptime < 30)||(startuptime > 1200)) {
+            valid = false;
+            console.log('Failed Startup Time Range Check.');
+        };
+
+        var augerontime = parseInt($('#edit_augeronTime').val());
+
+        if((augerontime < 1)||(augerontime > 1000)) {
+            valid = false;
+            console.log('Failed Auger On Time Range Check.');
+        }
+
+        var p_mode = parseInt($('#edit_pMode').val());
+
+        if((p_mode < 0) || (p_mode > 9)) {
+            valid = false;
+            console.log('Failed P-Mode Range Check.');
+        }
+
+        // If checks passed, send to server and update table 
+        if(valid) {
+            // Get data and send to server
+            if(rowSelected < profiles.length-1) {
+                temps_list[rowSelected] = newTemp;
+            };
+
+            profiles[rowSelected].startuptime = startuptime;
+            profiles[rowSelected].augerontime = augerontime;
+            profiles[rowSelected].p_mode = p_mode;
+            postSmartStartData(temps_list, profiles);
+            
+            // Update table with new data
+            var table = document.getElementById("smartStartTable").getElementsByTagName('tbody')[0];
+            var updateRow = table.rows[rowSelected];
+            
+            if(rowSelected == 0) {
+                // First row selected format with less than
+                updateRow.cells[1].innerHTML = newTemp + units + ' &lt';
+                if(profiles.length > 1) {
+                    var nextRow = table.rows[rowSelected+1];
+                    var nextTemp = temps_list[rowSelected+1];
+                    nextRow.cells[1].innerHTML = newTemp + units + ' - ' + nextTemp + units;
+                };
+            } else if (rowSelected == profiles.length-1) {
+                updateRow.cells[1].innerHTML = '&gt ' + newTemp + units;
+            } else {
+                // Middle rows format 
+                prevTemp = temps_list[rowSelected-1];
+                updateRow.cells[1].innerHTML = prevTemp + units + ' - ' + newTemp + units;
+                if (rowSelected == profiles.length-2) {
+                    // Second to last row selected format next row with greater than
+                    var nextRow = table.rows[rowSelected+1];
+                    nextRow.cells[1].innerHTML = '&gt ' + newTemp + units;
+                } else if(profiles.length > 1) {
+                    var nextRow = table.rows[rowSelected+1];
+                    var nextTemp = temps_list[rowSelected+1];
+                    nextRow.cells[1].innerHTML = newTemp + units + ' - ' + nextTemp + units;
+                };
+            };
+
+            updateRow.cells[2].innerHTML = startuptime + 's'; 
+            updateRow.cells[3].innerHTML = augerontime + 's'; 
+            updateRow.cells[4].innerHTML = p_mode; 
+
+            // Update Add Modal minTemp
+            if(rowSelected == temps_list.length) {
+                var newMinTemp = temps_list[rowSelected-1] + 1;
+                $('#minTemp').val(newMinTemp);
+                document.getElementById("minTemp").min = newMinTemp;
+                $('#addMinTemp').html(newMinTemp-1);
+            };
+        } else {
+            alert('Invalid Input Range for one of your values.  No changes saved.  Please try again.');
+        };
+    };
+
+	function addSmartStartProfile(data) {
+		var table = document.getElementById("smartStartTable").getElementsByTagName('tbody')[0];
+		var newRow = table.insertRow(table.length);
+        var lastRow = newRow.previousElementSibling;
+		var editButtonHTML = '<button type="button" class="btn btn-warning btn-sm" onClick="onEdit(' + data.rowSelected + ')" data-toggle="modal" data-target="#sstrt_edit_modal"><i class="fas fa-edit"></i></button> \n';
+		var delButtonHTML_enabled = '<button type="button" class="btn btn-danger btn-sm" id="sstrt_del_row" onClick="onDelete(this,' + data.rowSelected + ')"><i class="fas fa-trash-alt"></i></button>';
+        var delButtonHTML_disabled = '<button type="button" class="btn btn-secondary btn-sm" id="sstrt_del_row" data-toggle="tooltip" data-placement="top" title="This profile cannot be deleted." disabled><i class="fas fa-trash-alt"></i></button>';
+
+		if(data.position=='first' || data.position=='inner') {
+			cell0 = newRow.insertCell(0);
+			cell0.innerHTML = editButtonHTML + delButtonHTML_disabled;
+		} else {
+			cell0 = newRow.insertCell(0);
+			cell0.innerHTML = editButtonHTML + delButtonHTML_enabled;
+		}
+		if(data.position=='first') {
+			cell1 = newRow.insertCell(1);
+			cell1.innerHTML = data.tempMin + units + ' &lt';
+		} else if (data.position=='last') {
+			cell1 = newRow.insertCell(1);
+			cell1.innerHTML = '&gt ' + data.tempMin + units;
+            // Edit Previous Cells Buttons and Data
+            var prevEditButtonHTML = '<button type="button" class="btn btn-warning btn-sm" onClick="onEdit(' + (data.rowSelected - 1) + ')" data-toggle="modal" data-target="#sstrt_edit_modal"><i class="fas fa-edit"></i></button> \n';
+            lastRow.cells[0].innerHTML = prevEditButtonHTML + delButtonHTML_disabled;
+            lastRow.cells[1].innerHTML = data.tempMinPrevious + units + ' - ' + data.tempMin + units;
+		} else {
+			cell1 = newRow.insertCell(1);
+			cell1.innerHTML = data.tempMinPrevious + units + ' - ' + data.tempMin + units;
+		}
+		cell2 = newRow.insertCell(2);
+		cell2.innerHTML = data.startUpTime + 's';
+		cell3 = newRow.insertCell(3);
+		cell3.innerHTML = data.augerOnTime + 's';
+		cell4 = newRow.insertCell(4);
+		cell4.innerHTML = data.pMode;
+	};
+
+	function onAdd() {
+		var newRowNum = profiles.length;
+
+        if(temps_list.length > 1) {
+            var prevMinTemp = temps_list[newRowNum-2];
+        } else {
+            var prevMinTemp = temps_list[0];
+        }
+
+        // Validate Inputs
+        var valid = true;
+
+        // Check startup time
+        var startuptime = parseInt($('#startupTime').val());
+
+        if((startuptime < 30)||(startuptime > 1200)) {
+            valid = false;
+            console.log('Failed Startup Time Range Check.');
+        };
+
+        var augerontime = parseInt($('#augeronTime').val());
+
+        if((augerontime < 1)||(augerontime > 1000)) {
+            valid = false;
+            console.log('Failed Auger On Time Range Check.');
+        }
+
+        var p_mode = parseInt($('#pMode').val());
+
+        if((p_mode < 0) || (p_mode > 9)) {
+            valid = false;
+            console.log('Failed P-Mode Range Check.');
+        }
+
+        // If checks passed, send to server and update table 
+        if(valid) {
+            if(parseInt($("#minTemp").val()) > prevMinTemp){
+                profiles[newRowNum] = {};
+                profiles[newRowNum].startuptime = parseInt($("#startupTime").val());
+                profiles[newRowNum].p_mode = parseInt($("#pMode").val());
+                profiles[newRowNum].augerontime = parseInt($("#augeronTime").val());
+
+                temps_list[newRowNum-1] = parseInt($("#minTemp").val());
+                postSmartStartData(temps_list, profiles);
+                // Add HTML 
+                profile = {}
+                profile.rowSelected = newRowNum;
+                profile.numRows = profiles.length;
+                profile.position = 'last'; 
+                profile.tempMinPrevious = prevMinTemp 
+                profile.tempMin = temps_list[newRowNum-1]; 
+                
+                var newMinTemp = profile.tempMin + 1;
+                $('#minTemp').val(newMinTemp);
+                document.getElementById("minTemp").min = newMinTemp;
+                $('#addMinTemp').html(newMinTemp - 1);
+
+                profile.startUpTime = profiles[newRowNum].startuptime;
+                profile.augerOnTime = profiles[newRowNum].augerontime;
+                profile.pMode = profiles[newRowNum].p_mode;
+                addSmartStartProfile(profile);
+            } else {
+                alert('Minimum Temperature MUST be greater than the previous minimum temperature!  Not added.');
+            };
+        } else {
+            alert('Invalid Input Range for one of your values.  No changes saved.  Please try again.');
+        };
+	};
+
+	// On page load...
+	$(document).ready(function(){
+		// Select last pill 
+		$('a[data-toggle="pill"]').on('show.bs.tab', function(e) {
             sessionStorage.setItem('activeTab', $(e.target).attr('href'));
         });
         var activeTab = sessionStorage.getItem('activeTab');
         if(activeTab){
             $('#v-pills-tab a[href="' + activeTab + '"]').tab('show');
         }
-    });
+
+		// Prevent 'enter' from doing a form submit
+        $(window).keydown(function(event){
+            if(event.keyCode == 13) {
+            event.preventDefault();
+            return false;
+            }
+        });
+		
+        // Get Smart Start Data
+		$.ajax({
+			url : '/settings/smartstart',
+			type : 'GET',
+			contentType: "application/json; charset=utf-8",
+			traditional: true,
+			success: function (data) {
+				temps_list = data.temps_list;
+				profiles = data.profiles;
+				// Populate table with initial data
+				var profile = {};
+				for (let index = 0; index < profiles.length; index++) {
+					profile.rowSelected = index;
+					profile.numRows = profiles.length;
+					// Determine list position
+					if(index == 0) {
+						profile.position = 'first';
+					} else if (index == profiles.length - 1) {
+						profile.position = 'last';
+					} else {
+						profile.position = 'inner';
+					}
+					// Set previous temperature minimum value, for ranges
+					if(index > 0) {
+						profile.tempMinPrevious = temps_list[index-1];
+					} else {
+						profile.tempMinPrevious = temps_list[index];
+					}
+                    // If last profile and the list is greater than 1 profile long
+					if((index == profiles.length-1) && (profiles.length > 1)) {
+						profile.tempMin = temps_list[index-1];
+						profile.tempMinPrevious = temps_list[index-2];
+						// Set minimum value for next range to be the minimun of last range plus 1
+						var newMinTemp = temps_list[index-1] + 1;
+						$('#minTemp').val(newMinTemp);
+						document.getElementById("minTemp").min = newMinTemp;
+                        $('#addMinTemp').html(newMinTemp - 1);
+					} else {
+						profile.tempMin = temps_list[index];
+					};
+					profile.startUpTime = profiles[index].startuptime;
+					profile.augerOnTime = profiles[index].augerontime;
+					profile.pMode = profiles[index].p_mode;
+					addSmartStartProfile(profile);
+				}
+			}
+		});
+
+
+
+	}); // End of document ready function
 </script>
 {% endblock %}

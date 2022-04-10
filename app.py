@@ -869,6 +869,12 @@ def settingspage(action=None):
 		else:
 			settings['globals']['auto_power_off'] = False
 
+		if('smartstart_enable' in response):
+			if(response['smartstart_enable'] == 'on'):
+				settings['smartstart']['enabled'] = True
+		else:
+			settings['smartstart']['enabled'] = False
+
 		event['type'] = 'updated'
 		event['text'] = 'Successfully updated startup/shutdown settings.'
 
@@ -993,6 +999,21 @@ def settingspage(action=None):
 				control['updated'] = True
 				control['units_change'] = True 
 				WriteControl(control)
+	'''
+	Smart Start Settings
+	'''
+	if (request.method == 'GET') and (action == 'smartstart'):
+		temps = settings['smartstart']['temp_range_list']
+		profiles = settings['smartstart']['profiles']
+		return(jsonify({'temps_list' : temps, 'profiles' : profiles}))
+
+	if (request.method == 'POST') and (action == 'smartstart'):
+		#print(f'\nGot POST Request: \n{request.json}')
+		response = request.json 
+		settings['smartstart']['temp_range_list'] = response['temps_list']
+		settings['smartstart']['profiles'] = response['profiles']
+		WriteSettings(settings)
+		return(jsonify({'result' : 'success'}))
 
 	return render_template('settings.html', settings=settings, alert=event, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'], pelletdb=pelletdb)
 

@@ -33,7 +33,7 @@ def DefaultSettings():
 	settings = {}
 
 	settings['versions'] = {
-		'server' : "1.3.0"
+		'server' : "1.3.1"
 	}
 
 	settings['history_page'] = {
@@ -177,6 +177,33 @@ def DefaultSettings():
 		'time' : math.trunc(time.time())
 	}
 
+	settings['smartstart'] = {
+		'enabled' : True, 
+		'temp_range_list' : [60, 80, 90],  # Min Temps for Each Profile 999 meaning it's the last item
+		'profiles' : [
+			{
+				'startuptime' : 360,  
+				'augerontime' : 15,
+				'p_mode' : 0
+			},
+			{
+				'startuptime' : 360,  
+				'augerontime' : 15,
+				'p_mode' : 1
+			},
+			{
+				'startuptime' : 240,  
+				'augerontime' : 15,
+				'p_mode' : 3
+			},
+			{
+				'startuptime' : 240,  
+				'augerontime' : 15,
+				'p_mode' : 5
+			}
+		]
+	}
+
 	return settings
 
 def DefaultControl():
@@ -251,6 +278,11 @@ def DefaultControl():
 	}
 
 	control['errors'] = []
+
+	control['smartstart'] = {
+		'startuptemp' : 0,
+		'profile_selected' : 0
+	}
 
 	return(control)
 

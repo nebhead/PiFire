@@ -430,6 +430,24 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 				control['updated'] = True
 				WriteControl(control)
 
+	# Apply Smart Start Settings if Enabled 
+	if(settings['smartstart']['enabled']) and ((control['mode'] == 'Startup') or (control['mode'] == 'Smoke')):
+		# If Startup, then save intial temperature & select the profile
+		if control['mode'] == 'Startup':
+			control['smartstart']['startuptemp'] = int(AvgGT.average())
+			# Cycle through profiles, and set profile if startup temperature falls below the minimum temperature
+			for profile_selected in range(0, len(settings['smartstart']['temp_range_list'])):
+				if control['smartstart']['startuptemp'] < settings['smartstart']['temp_range_list'][profile_selected]:
+					control['smartstart']['profile_selected'] = profile_selected
+					WriteControl(control)
+					break  # Break out of the loop
+		# Apply the profile 
+		profile_selected = control['smartstart']['profile_selected']
+		OnTime = settings['smartstart']['profiles'][profile_selected]['augerontime']  # Auger On Time (Default 15s)
+		OffTime = 45 + (settings['smartstart']['profiles'][profile_selected]['p_mode'] * 10)  # Auger Off Time
+		CycleTime = OnTime + OffTime  # Total Cycle Time
+		CycleRatio = OnTime / CycleTime  # Ratio of OnTime to CycleTime
+
 	# Set the start time
 	starttime = time.time()
 
@@ -692,7 +710,11 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 
 		# Check if startup time has elapsed since startup/reignite mode started
 		if (mode == 'Startup') or (mode == 'Reignite'):
-			if (now - starttime) > settings['globals']['startup_timer']:
+			if settings['smartstart']['enabled']:
+				startup_timer = settings['smartstart']['profiles'][profile_selected]['startuptime']
+			else: 
+				startup_timer = settings['globals']['startup_timer']
+			if (now - starttime) > startup_timer:
 				status = 'Inactive'
 
 		# Check if shutdown time has elapsed since shutdown mode started
