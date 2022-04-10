@@ -179,7 +179,7 @@ def DefaultSettings():
 
 	settings['smartstart'] = {
 		'enabled' : True, 
-		'temp_range_list' : [60, 80, 90],  # Min Temps for Each Profile 999 meaning it's the last item
+		'temp_range_list' : [60, 80, 90],  # Min Temps for Each Profile
 		'profiles' : [
 			{
 				'startuptime' : 360,  
@@ -904,6 +904,8 @@ def convert_settings_units(units, settings):
 	settings['smoke_plus']['max_temp'] = convert_temp(units, settings['smoke_plus']['max_temp'])
 	settings['smoke_plus']['min_temp'] = convert_temp(units, settings['smoke_plus']['min_temp'])
 	settings['keep_warm']['temp'] = convert_temp(units, settings['keep_warm']['temp'])
+	for temp in range(0, len(settings['smartstart']['temp_range_list'])):
+		settings['smartstart']['temp_range_list'][temp] = convert_temp(units, settings['smartstart']['temp_range_list'][temp])
 	return(settings)
 
 '''
