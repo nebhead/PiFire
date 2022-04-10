@@ -222,7 +222,7 @@ def historyupdate(action=None):
 			set_temps[2] = control['setpoints']['probe2']
 			cur_probe_temps = []
 			cur_probe_temps = ReadCurrent()
-		return jsonify({ 'probe0_temp' : int(cur_probe_temps[0]), 'probe0_settemp' : set_temps[0], 'probe1_temp' : int(cur_probe_temps[1]), 'probe1_settemp' : set_temps[1], 'probe2_temp' : int(cur_probe_temps[2]), 'probe2_settemp' : set_temps[2]})
+		return jsonify({ 'probe0_temp' : int(float(cur_probe_temps[0])), 'probe0_settemp' : set_temps[0], 'probe1_temp' : int(float(cur_probe_temps[1])), 'probe1_settemp' : set_temps[1], 'probe2_temp' : int(float(cur_probe_temps[2])), 'probe2_settemp' : set_temps[2]})
 
 	elif(action == 'refresh'):
 		# POST - Get number of minutes into the history to refresh the history chart
