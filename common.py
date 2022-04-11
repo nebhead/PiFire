@@ -306,7 +306,11 @@ metrics_items = [
 	('fanontime', 0),
 	('fanontime_c', 0),  # Converted Fan On Time
 	('smokeplus', True), 
-	('grill_settemp', 0)  
+	('grill_settemp', 0),
+	('smart_start_profile', 0), # Smart Start Profile Selected
+	('startup_temp', 0), # Smart Start Start Up Temp
+	('p_mode', 0), # P_mode selected
+	('auger_cycle_time', 0),  # Auger Cycle Time 
 ]
 
 def DefaultMetrics():

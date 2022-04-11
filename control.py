@@ -336,6 +336,10 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 		OffTime = 45 + (settings['cycle_data']['PMode'] * 10)  # Auger Off Time
 		CycleTime = OnTime + OffTime  # Total Cycle Time
 		CycleRatio = OnTime / CycleTime  # Ratio of OnTime to CycleTime
+		# Write Metrics (note these will be overwritten if smart start is enabled)
+		metrics['p_mode'] = settings['cycle_data']['PMode']
+		metrics['auger_cycle_time'] = settings['cycle_data']['SmokeCycleTime']
+		WriteMetrics(metrics)
 
 	if mode == 'Shutdown':
 		OnTime = 0  # Auger On Time
@@ -441,12 +445,21 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 					control['smartstart']['profile_selected'] = profile_selected
 					WriteControl(control)
 					break  # Break out of the loop
+				if profile_selected == len(settings['smartstart']['temp_range_list'])-1:
+					control['smartstart']['profile_selected'] = profile_selected + 1
+					WriteControl(control)
 		# Apply the profile 
 		profile_selected = control['smartstart']['profile_selected']
 		OnTime = settings['smartstart']['profiles'][profile_selected]['augerontime']  # Auger On Time (Default 15s)
 		OffTime = 45 + (settings['smartstart']['profiles'][profile_selected]['p_mode'] * 10)  # Auger Off Time
 		CycleTime = OnTime + OffTime  # Total Cycle Time
 		CycleRatio = OnTime / CycleTime  # Ratio of OnTime to CycleTime
+		# Write Metrics
+		metrics['smart_start_profile'] = profile_selected
+		metrics['startup_temp'] = control['smartstart']['startuptemp']
+		metrics['p_mode'] = settings['smartstart']['profiles'][profile_selected]['p_mode']
+		metrics['auger_cycle_time'] = settings['smartstart']['profiles'][profile_selected]['augerontime']
+		WriteMetrics(metrics)
 
 	# Set the start time
 	starttime = time.time()
