@@ -1,6 +1,5 @@
 # ![Dashboard](static/img/launcher-icon-1x.png) PiFire
-## Raspberry Pi Zero (2) W based Smoker Grill Controller using Python 3 and Flask/Gunicorn/nginx
-*Also uses Bootstrap 4 (http://getbootstrap.com/) w/jQuery and Popper support*
+## Raspberry Pi Zero W based Smoker Grill Controller
 
 ***Note:*** *This project is continuously evolving, and thus this readme will likely be improved over time, as I find the inspiration to make adjustments.  That being said, I'm sure there will be many errors that I have overlooked or sections that I haven't updated. This project is something I've done for both fun and for self-education.  If you decide to implement this project for yourself, and run into issues/challenges, feel free to submit an issue here on GitHub.  However, I would highly encourage you to dig in and debug the issue as much as you can on your own for the sake of growing your own knowledge.  Also, I have a very demanding day job, a family, and lots of barbeque to make - so please have patience with me.*
 
@@ -76,10 +75,6 @@ I recommend at least taking a peek at the PiFire overview video below.  It cover
 
 [![YouTube Demo](docs/photos/Video-Link-Image-sm.png)](https://youtu.be/_sIkpIFP5qA)
 
-Here's a picture of my version 1.0 hardware w/OLED screen in a waterproof project box.    
-
-![Hardware v1](docs/photos/HW-V1-Display.jpg)
-
 Here is a the latest version 2.0 of the hardware w/TFT screen and hardware buttons in a custom 3D printed enclosure. We've come a long way since v1.0.
 
 ![Hardware v2](docs/photos/HW-V2-Display.jpg)
@@ -94,7 +89,8 @@ The full documentation has been moved to a GitHub page here: [https://nebhead.gi
 
 * 9/2020 - Initial Release
 * 12/2020 - Moved documentation to [https://nebhead.github.io/PiFire/](https://nebhead.github.io/PiFire/)
-* **11/2021 Massive Update!** - Many new features, bug fixes, and improvements.  New hardware support etc. which have been in incorporated over the last year, have been mreged from the development branch
+* 11/2021 - Many new features, bug fixes, and improvements.  New hardware support etc. which have been in incorporated over the last year, have been mreged from the development branch
+* **4/2022** - Release v1.3.1 - Another HUGE release with many new features including an updater, a new configuration wizard, bug fixes, Smart Start feature and much, much more!   
 
 ### Credits
 
@@ -127,7 +123,7 @@ This project is licensed under the MIT license.
 ```
 MIT License
 
-Copyright (c) 2020, 2021 Ben Parmeter and Contributors
+Copyright (c) 2020 - 2022 Ben Parmeter and Contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
