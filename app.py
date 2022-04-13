@@ -16,9 +16,11 @@ from flask import Flask, request, abort, render_template, make_response, send_fi
 from flask_mobility import Mobility
 from flask_socketio import SocketIO
 from flask_qrcode import QRcode
+from io import BytesIO
 from werkzeug.utils import secure_filename
 from collections.abc import Mapping
 import threading
+import zipfile
 from threading import Thread
 from datetime import timedelta
 from datetime import datetime
@@ -1094,6 +1096,13 @@ def adminpage(action=None):
 				control = DefaultControl()
 				WriteSettings(settings)
 				WriteControl(control)
+
+		if('download_logs' in response):
+			timenow = datetime.datetime.now()
+			timestr = timenow.strftime('%m-%d-%y_%H%M%S') # Truncate the microseconds
+			file_name = 'PiFire_Logs_' + timestr + '.zip'
+			zip_file = zip_files_dir('logs')
+			return send_file(zip_file, as_attachment=True, attachment_filename=file_name, max_age=0)
 		
 		if('backupsettings' in response):
 			#print('Backing up settings... ')
@@ -1694,6 +1703,15 @@ def str_td(td):
 def epoch_to_time(epoch):
 	end_time =  datetime.datetime.fromtimestamp(epoch)
 	return end_time.strftime("%H:%M:%S")
+
+def zip_files_dir(dir_name):
+	memory_file = BytesIO()
+	with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+		for root, dirs, files in os.walk(dir_name):
+			for file in files:
+				zipf.write(os.path.join(root, file))
+	memory_file.seek(0)
+	return memory_file
 
 def deep_dict_update(orig_dict, new_dict):
 	for key, value in new_dict.items():
