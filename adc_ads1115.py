@@ -92,8 +92,8 @@ class ReadADC:
 			now = now[0:19] # Truncate the microseconds
 			print(str(now) + ' Error Reading Temperature.')
 			adc_data = {}
-			adc_data['GrillTemp'] = 0
-			adc_data['GrillTr'] = 0 
+			adc_data['Grill1Temp'] = 0
+			adc_data['Grill1Tr'] = 0 
 			adc_data['Probe1Temp'] = 0
 			adc_data['Probe1Tr'] = 0
 			adc_data['Probe2Temp'] = 0
