@@ -660,6 +660,12 @@ def settingspage(action=None):
 		else:
 			settings['pushover']['enabled'] = False
 
+		if('onesignal_enabled' in response):
+			if(response['onesignal_enabled'] == 'on'):
+				settings['onesignal']['enabled'] = True
+		else:
+			settings['onesignal']['enabled'] = False
+
 		if('iftttapi' in response):
 			if(response['iftttapi'] == "0") or (response['iftttapi'] == ''):
 				settings['ifttt']['APIKey'] = ''
