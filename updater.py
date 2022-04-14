@@ -31,6 +31,17 @@ def get_available_branches():
 		error_msg = branches.stderr 
 	return(branch_list, error_msg)
 
+def update_remote_branches():
+	# git remote set-branches origin '*'
+	# git fetch -v
+	command = ['git', 'remote', 'set-branches', 'origin', '"*"']
+	remote_branches = subprocess.run(command, capture_output=True, text=True)
+	error_msg = ''
+	if(remote_branches.returncode != 0):
+		error_msg = remote_branches.stderr 
+
+	return(error_msg)
+
 def get_branch():
 #	--show-current is only in later versions of git, and unfortunatly buster does not have this
 	command = ['git', 'branch', '-a']
@@ -335,6 +346,7 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Updater Script')
 	parser.add_argument('-b', '--branch', metavar='BRANCH', type=str, required=False, help="Change Branches")
 	parser.add_argument('-u', '--update', metavar='BRANCH', type=str, required=False, help="Update Current Branch")
+	parser.add_argument('-r', '--remote', action='store_true', required=False, help="Update Remote Branches")
 
 	args = parser.parse_args()
 
@@ -367,6 +379,11 @@ if __name__ == "__main__":
 		time.sleep(4)
 
 		install_dependencies()
+
+	elif(args.remote):
+		error_msg = update_remote_branches()
+		if error_msg != '':
+			print(f'Error updating remote branches: {error_msg}')
 
 	else:
 		print('No Arguments Found. Use --help to see available arguments')
