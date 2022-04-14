@@ -103,6 +103,16 @@
 					}
 				}
 			},
+			"none" : {
+				"friendly_name" : "None",
+				"filename" : "none",
+				"description" : "This is for systems without a display.  This module should be selected if no display is present.",
+				"default" : false,
+				"image" : "prototype.png",
+				"py_dependencies" : [], 
+				"apt_dependencies" : [],
+				"settings_dependencies" : {}			
+			},
 			"prototype" : {
 				"friendly_name" : "Prototype / None",
 				"filename" : "prototype",

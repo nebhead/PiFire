@@ -168,8 +168,8 @@ try:
 	DisplayModule = importlib.import_module(filename)
 
 except:
-	DisplayModule = importlib.import_module('display_prototype')
-	error_event = f'An error occured loading the [{settings["modules"]["display"]}] display module.  The prototype module has been loaded instead.  This sometimes means that the hardware is not connected properly, or the module is not configured.  Please run the configuration wizard again from the admin panel to fix this issue.'
+	DisplayModule = importlib.import_module('display_none')
+	error_event = f'An error occured loading the [{settings["modules"]["display"]}] display module.  The "display_none" module has been loaded instead.  This sometimes means that the hardware is not connected properly, or the module is not configured.  Please run the configuration wizard again from the admin panel to fix this issue.'
 	errors.append(error_event)
 	WriteErrors(errors)
 	WriteLog(error_event)
@@ -182,9 +182,9 @@ try:
 	else:
 		display_device = DisplayModule.Display(units=units)
 except:
-	from display_prototype import Display  # Simulated Library for controlling the grill platform
+	from display_none import Display  # Simulated Library for controlling the grill platform
 	display_device = Display(units=units)
-	error_event = f'An error occured configuring the [{settings["modules"]["display"]}] display object.  The prototype module has been loaded instead.  This sometimes means that the hardware is not connected properly, or the module is not configured.  Please run the configuration wizard again from the admin panel to fix this issue.'
+	error_event = f'An error occured configuring the [{settings["modules"]["display"]}] display object.  The "display_none" module has been loaded instead.  This sometimes means that the hardware is not connected properly, or the module is not configured.  Please run the configuration wizard again from the admin panel to fix this issue.'
 	errors.append(error_event)
 	WriteErrors(errors)
 	WriteLog(error_event)
