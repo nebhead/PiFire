@@ -1445,7 +1445,7 @@ def update_page(action=None):
 		if('update_remote_branches' in r):
 			if isRaspberryPi():
 				os.system('python3 %s %s &' % ('updater.py', '-r'))	 # Update branches from remote 
-			time.sleep(2)
+				time.sleep(4)  # Artificial delay to avoid race condition
 			return redirect('/update')
 
 		if('change_branch' in r):

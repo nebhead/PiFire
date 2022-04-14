@@ -33,13 +33,16 @@ def get_available_branches():
 
 def update_remote_branches():
 	# git remote set-branches origin '*'
-	# git fetch -v
-	command = ['git', 'remote', 'set-branches', 'origin', '"*"']
+	command = ['git', 'remote', 'set-branches', 'origin', '*']
 	remote_branches = subprocess.run(command, capture_output=True, text=True)
 	error_msg = ''
 	if(remote_branches.returncode != 0):
 		error_msg = remote_branches.stderr 
-
+	# Fetch Branch Information Locally
+	command = ['git', 'fetch'] 
+	fetch = subprocess.run(command, capture_output=True, text=True)
+	if(fetch.returncode != 0):
+		error_msg += ' | ' + remote_branches.stderr 
 	return(error_msg)
 
 def get_branch():
