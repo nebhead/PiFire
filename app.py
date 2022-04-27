@@ -1264,11 +1264,10 @@ def api_page(action=None):
 			return jsonify({'control':control}), 201
 		elif(action == 'current'):
 			current=ReadCurrent()
-			#print(current)
 			current_temps = {
-				'grill_temp' : current[0],
-				'probe1_temp' : current[1],
-				'probe2_temp' : current[2]
+				'grill_temp' : int(float(current[0])),
+				'probe1_temp' : int(float(current[1])),
+				'probe2_temp' : int(float(current[2]))
 			}
 			control=ReadControl()
 			current_setpoints = control['setpoints']
