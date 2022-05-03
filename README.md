@@ -73,7 +73,9 @@ Here's a brief YouTube video giving a basic overview of the PiFire web interface
 
 I recommend at least taking a peek at the PiFire overview video below.  It covers the basics of operation, settings and control.  
 
-[![YouTube Demo](docs/photos/Video-Link-Image-sm.png)](https://youtu.be/_sIkpIFP5qA)
+[![YouTube Demo](docs/photos/Video-Link-Image-sm.png)](https://youtu.be/zifl0_sfFBA)
+
+[Link to our channel on YouTube](https://www.youtube.com/channel/UCYYs50U5QvHHhogx_rqs0Yg)
 
 Here is a the latest version 2.0 of the hardware w/TFT screen and hardware buttons in a custom 3D printed enclosure. We've come a long way since v1.0.
 
