@@ -58,6 +58,10 @@ class Display:
 		self.upButton = Button(pin=self.up, pull_up=self.BUTTON_INPUT)
 		self.downButton = Button(pin=self.down, pull_up=self.BUTTON_INPUT, hold_time=2) 
 		self.enterButton = Button(pin=self.enter, pull_up=self.BUTTON_INPUT)
+		# If using GPIOZero native callbacks (still buggy, needs more work)
+		#self.upButton.when_pressed = self.UpCallback
+		#self.downButton.when_pressed = self.DownCallback
+		#self.enterButton.when_pressed = self.EnterCallback
 
 		# ==== Menu Setup =====
 		self.displayactive = False
@@ -79,6 +83,10 @@ class Display:
 			'Stop' : {
 				'displaytext' : 'Stop',
 				'icon' : '\uf04d' # FontAwesome Stop Icon
+			},
+			'Wifi': {
+				'displaytext': 'WIFI',
+				'icon': '\uf1eb'  # FontAwesome Wifi Icon
 			}
 		} 
 		self.menu['active'] = { # List of options for the 'active' menu.  This is the second level menu of options while running.
@@ -101,6 +109,10 @@ class Display:
 			'SmokePlus' : {
 				'displaytext' : 'Toggle Smoke+',
 				'icon' : '\uf0c2' # FontAwesome Cloud Icon
+			},
+			'Wifi': {
+				'displaytext': 'WIFI',
+				'icon': '\uf1eb'  # FontAwesome Wifi Icon
 			} 
 		 } 
 		self.menu['current'] = {}
@@ -449,10 +461,6 @@ class Display:
 	# ====================== Menu Code ========================
 
 	def EventDetect(self):
-
-		if(self.downButton.is_held):
-			self.HoldCallback(self.down)
-
 		if(self.upButton.is_pressed):
 			self.UpCallback(self.up)
 
@@ -483,11 +491,6 @@ class Display:
 		self.menuactive = True
 		self.menutime = time.time()
 		self.MenuDisplay('enter')
-
-	def HoldCallback(self, pin):
-		self.menuactive = True
-		self.menutime = time.time()
-		self.DisplayNetwork()
 
 	def MenuDisplay(self, action):
 		# If menu is not currently being displayed, check mode and draw menu
@@ -642,7 +645,9 @@ class Display:
 					else:
 						control['s_plus'] = True
 					WriteControl(control)
-
+				elif (selected == 'Wifi'):
+					print('Wifi Selected')
+					self.DisplayNetwork()
 		# Create canvas
 		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
 
