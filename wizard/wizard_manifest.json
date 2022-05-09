@@ -66,10 +66,20 @@
 			}
 		},
 		"display" : {
-			"ili9341_encoder" : {
-				"friendly_name" : "ILI9341 TFT with Rotary Encoder Input",
-				"filename" : "ili9341_encoder",
+			"ili9341e" : {
+				"friendly_name" : "ILI9341 TFT with Rotary Encoder Input (standard)",
+				"filename" : "ili9341e",
 				"description" : "The ILI9341 TFT Display Module LCD Screen is an affordable, popular display with a 320x240 resolution and color.  It comes in many different physical sizes from 2\" - 3.2\" with and without capacitive touch.  This version of the module supports input based on the KY-040 rotary encoder.",
+				"default" : false,
+				"image" : "ili9341-ky040.png",
+				"py_dependencies" : ["luma.lcd", "pyky040==0.1.4"], 
+				"apt_dependencies" : [],
+				"settings_dependencies" : {}
+			},
+			"ili9341_encoder" : {
+				"friendly_name" : "ILI9341 TFT with Rotary Encoder Input (max31865 version)",
+				"filename" : "ili9341_encoder",
+				"description" : "The ILI9341 TFT Display Module LCD Screen is an affordable, popular display with a 320x240 resolution and color.  It comes in many different physical sizes from 2\" - 3.2\" with and without capacitive touch.  This version of the module supports input based on the KY-040 rotary encoder.  This version should be used if also using the max31865, due to SPI conflicts with the standard implementation.",
 				"default" : false,
 				"image" : "ili9341-ky040.png",
 				"py_dependencies" : ["luma.lcd", "pyky040==0.1.4"], 
