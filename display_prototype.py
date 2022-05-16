@@ -15,10 +15,10 @@
 class Display:
 
 	def __init__(self, units='F'):
-		self.DisplaySplash()
+		self.display_splash()
 		self.units = units 
 
-	def DisplayStatus(self, in_data, status_data):
+	def display_status(self, in_data, status_data):
 		units = status_data['units']
 		print('====[Display]=====')
 		print('* Grill Temp: ' + str(in_data['GrillTemp'])[:5] + units)
@@ -39,7 +39,7 @@ class Display:
 				print('* ' + str(item) + ' ON')
 		print('==================')
 
-	def DisplaySplash(self):
+	def display_splash(self):
 		print('  (        (')
 		print('  )\ )     )\ )')
 		print(' (()/( (  (()/(  (   (      (')
@@ -49,13 +49,13 @@ class Display:
 		print(' |  _/ | || __|  | || \'_|/ -_)  ')
 		print(' |_|   |_||_|    |_||_|  \___|  ')
 
-	def ClearDisplay(self):
+	def clear_display(self):
 		print('[Display] Clear Display Command Sent')
 
-	def DisplayText(self, text):
+	def display_text(self, text):
 		print('====[Display]=====')
 		print('* Text: ' + str(text))
 		print('==================')
 
-	def EventDetect(self):
-		return()
+	def display_network(self):
+		pass

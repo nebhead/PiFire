@@ -1,30 +1,51 @@
 #!/usr/bin/env python3
+'''
+*****************************************
+PiFire Display Interface Library
+*****************************************
 
-# *****************************************
-# PiFire Display Interface Library
-# *****************************************
-#
-# Description: This library supports using the 
-# ST7789 SPI display with the __Pimoroni__ libraries.
-#
-# Dependancies: (Pimoroni ST7789 Library, Pillow, Numpy)
-# sudo apt-get update
-# sudo apt-get install python3-rpi.gpio python3-spidev python3-pip python3-pil python3-numpy
-# sudo pip3 install st7789
-#
-# *****************************************
+ Description: 
+   This library supports using 
+ the ST7789 display with resolution.
+ This module utilizes the Pimoroni libraries 
+ to interface this display. 
 
-# *****************************************
-# Imported Libraries
-# *****************************************
+*****************************************
+'''
+
+'''
+ Imported Libraries
+'''
+import time
+import threading
 import ST7789 as ST7789  
 from PIL import Image, ImageDraw, ImageFont
-import datetime
-import time
 
+'''
+Display class definition
+'''
 class Display:
 
 	def __init__(self, units='F'):
+		# Init Global Variables and Constants
+		self.units = units
+		self.displayactive = False
+		self.in_data = None
+		self.status_data = None
+		self.displaytimeout = None 
+		self.displaycommand = 'splash'
+
+		# Init Display Device, Input Device, Assets
+		self._init_globals()
+		self._init_assets() 
+		self._init_display_device()
+
+	def _init_globals(self):
+		# Init constants and variables 
+		pass
+
+	def _init_display_device(self):
+		# Init Device
 		self.device = ST7789.ST7789(
 			port=0,
 			cs=0, 
@@ -34,16 +55,97 @@ class Display:
 			rotation=0,
 			spi_speed_hz=80 * 1000 * 1000
 		)
-
-		self.units = units 
-		
 		self.WIDTH = self.device.width
 		self.HEIGHT = self.device.height
 
-		self.DisplaySplash()
-		time.sleep(3) # Keep the splash up for three seconds on boot-up - you can certainly disable this if you want 
+		# Setup & Start Display Loop Thread 
+		display_thread = threading.Thread(target=self._display_loop)
+		display_thread.start()
 
-	def DisplayStatus(self, in_data, status_data):
+	def _display_loop(self):
+		'''
+		Main display loop
+		'''
+		while True:
+			if self.displaytimeout:
+				if time.time() > self.displaytimeout:
+					self.displaycommand = 'clear'
+
+			if self.displaycommand == 'clear':
+				self.displayactive = False
+				self.displaytimeout = None 
+				self.displaycommand = None
+				self._display_clear()
+
+			if self.displaycommand == 'splash':
+				self.displayactive = True
+				self._display_splash()
+				self.displaytimeout = time.time() + 3
+				self.displaycommand = None
+				time.sleep(3) # Hold splash screen for 3 seconds
+
+			if self.displaycommand == 'text': 
+				self.displayactive = True
+				self._display_text()
+				self.displaycommand = None
+				self.displaytimeout = time.time() + 10 
+
+			if self.displayactive:
+				if not self.displaytimeout:
+					if (self.in_data is not None) and (self.status_data is not None):
+						self._display_current(self.in_data, self.status_data)
+			
+			time.sleep(0.1)
+
+	'''
+	============== Graphics / Display / Draw Methods ============= 
+	'''
+	def _init_assets(self): 
+		self._init_splash()
+
+	def _init_splash(self):
+		self.splash = Image.open('color-boot-splash.png')
+
+		(self.splash_width, self.splash_height) = self.splash.size
+		self.splash_width *= 2
+		self.splash_height *= 2
+
+		# Resize the boot-splash
+		self.splash = self.splash.resize((self.splash_width, self.splash_height))
+
+	def _display_clear(self):
+		# Create blank canvas
+		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
+		self.device.display(img)
+		# Kill the backlight to the display
+		self.device.set_backlight(0)
+
+	def _display_splash(self):
+		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
+		# Set the position 
+		position = ((self.WIDTH - self.splash_width)//2, (self.HEIGHT - self.splash_height)//2)
+
+		# Paste the splash screen onto the canvas
+		img.paste(self.splash, position)
+
+		self.device.display(img)
+
+	def _display_text(self):
+		# Turn on Backlight (just in case it was off)
+		self.device.set_backlight(1)
+
+		# Create canvas
+		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
+
+		# Create drawing object
+		draw = ImageDraw.Draw(img)
+
+		font = ImageFont.truetype("impact.ttf", 42)
+		(font_width, font_height) = font.getsize(self.displaydata)
+		draw.text((self.WIDTH//2 - font_width//2, self.HEIGHT//2 - font_height//2), self.displaydata, font=font, fill=255)
+		self.device.display(img)
+
+	def _display_current(self, in_data, status_data):
 		self.units = status_data['units']
 		# Turn on Backlight (just in case it was off)
 		self.device.set_backlight(1)
@@ -93,65 +195,42 @@ class Display:
 		(font_width, font_height) = font.getsize(text)
 		draw.text((self.WIDTH//2 - font_width//2, self.HEIGHT - font_height - 4), text, font=font, fill=(255,255,255))
 
-		try:
-			self.device.display(img)
-		except:
-			now = str(datetime.datetime.now())
-			now = now[0:19] # Truncate the microseconds
-			print(str(now) + ' ERROR displaying status.')
-
-	def DisplaySplash(self):
-		# Create canvas
-		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
-
-		splash = Image.open('color-boot-splash.png')
-
-		(splash_width, splash_height) = splash.size
-		splash_width *= 2
-		splash_height *= 2
-
-		# Resize the boot-splash
-		splash = splash.resize((splash_width, splash_height))
-
-		# Set the position 
-		position = ((self.WIDTH - splash_width)//2, (self.HEIGHT - splash_height)//2)
-
-		# Paste the splash screen onto the canvas
-		img.paste(splash, position)
-
 		self.device.display(img)
 
-	def ClearDisplay(self):
-		try:
-			# Create blank canvas
-			img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
-			self.device.display(img)
-			# Kill the backlight to the display
-			self.device.set_backlight(0)
-		except:
-			now = str(datetime.datetime.now())
-			now = now[0:19] # Truncate the microseconds
-			print(str(now) + ' Error clearing display.')
+	'''
+	================ Externally Available Methods ================
+	'''
 
-	def DisplayText(self, text):
-		# Turn on Backlight (just in case it was off)
-		self.device.set_backlight(1)
+	def display_status(self, in_data, status_data):
+		'''
+		- Updates the current data for the display loop, if in a work mode 
+		'''
+		self.units = status_data['units']
+		self.displayactive = True
+		self.in_data = in_data 
+		self.status_data = status_data 
 
-		# Create canvas
-		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
+	def display_splash(self):
+		''' 
+		- Calls Splash Screen 
+		'''
+		self.displaycommand = 'splash'
 
-		# Create drawing object
-		draw = ImageDraw.Draw(img)
+	def clear_display(self):
+		''' 
+		- Clear display and turn off backlight 
+		'''
+		self.displaycommand = 'clear'
 
-		font = ImageFont.truetype("impact.ttf", 42)
-		(font_width, font_height) = font.getsize(text)
-		draw.text((self.WIDTH//2 - font_width//2, self.HEIGHT//2 - font_height//2), text, font=font, fill=255)
-		try: 
-			self.device.display(img)
-		except:
-			now = str(datetime.datetime.now())
-			now = now[0:19] # Truncate the microseconds
-			print(str(now) + ' Error displaying text.')
+	def display_text(self, text):
+		''' 
+		- Display some text 
+		'''
+		self.displaycommand = 'text'
+		self.displaydata = text
 
-	def EventDetect(self):
-		return()
+	def display_network(self):
+		''' 
+		- Display Network IP QR Code 
+		'''
+		pass

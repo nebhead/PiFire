@@ -1,52 +1,182 @@
 #!/usr/bin/env python3
+'''
+*****************************************
+PiFire Display Interface Library
+*****************************************
 
-# *****************************************
-# PiFire Display Interface Library
-# *****************************************
-#
-# Description: This library supports using pygame 
-# on your development PC for debug and development 
-# purposes. Likely only works in an desktop 
-# environment.  Tested on Ubuntu 20.04.  
-#
-# Edit the WIDTH / HEIGHT constants below to 
-# simulate your screen size. 
-# 
-# Dependancies:
-#   sudo pip3 install pygame Pillow 
-#   sudo apt install ttf-mscorefonts-installer
-#
-# *****************************************
+ Description: This library supports using pygame 
+ on your development PC for debug and development 
+ purposes. Likely only works in an desktop 
+ environment.  Tested on Ubuntu 20.04.  
 
-# *****************************************
-# Imported Libraries
-# *****************************************
-import pygame  
-from PIL import Image, ImageDraw, ImageFont
+*****************************************
+'''
+
+'''
+ Imported Libraries
+'''
 import time
+import socket
+import qrcode
+import threading
+import pygame 
+from PIL import Image, ImageDraw, ImageFont
 
+'''
+Display class definition
+'''
 class Display:
 
 	def __init__(self, units='F'):
-		# Set Display Width and Height.  Modify for your needs.   
+		# Init Global Variables and Constants
+		self.units = units
+		self.displayactive = False
+		self.in_data = None
+		self.status_data = None
+		self.displaytimeout = None 
+		self.displaycommand = 'splash'
+
+		# Init Display Device, Input Device, Assets
+		self._init_globals()
+		self._init_assets() 
+		self._init_display_device()
+
+	def _init_globals(self):
+		# Init constants and variables 
 		self.WIDTH = 128
 		self.HEIGHT = 64
-		# Set Temperature Units
-		self.units = units
-		# Activate PyGame
-		pygame.init()
 
-		# Create Display Surface
-		self.display_surface = pygame.display.set_mode((self.WIDTH, self.HEIGHT )) 
+	def _init_display_device(self):
+		self.first_run = True 
+		# Setup & Start Display Loop Thread 
+		display_thread = threading.Thread(target=self._display_loop)
+		display_thread.start()
 
-		# set the pygame window name 
-		pygame.display.set_caption('PiFire Device Display')
+	def _display_loop(self):
+		if self.first_run:
+			# Init Device
+			pygame.init()
+			# set the pygame window name 
+			pygame.display.set_caption('PiFire Device Display')
+			# Create Display Surface
+			self.display_surface = pygame.display.set_mode(size=(self.WIDTH, self.HEIGHT), flags=pygame.SHOWN)
+			self.first_run = False 
 
-		self.DisplaySplash()
-		time.sleep(3) # Keep the splash up for three seconds on boot-up - you can certainly disable this if you want 
+		'''
+		Main display loop
+		'''
+		while True:
+			if self.displaytimeout:
+				if time.time() > self.displaytimeout:
+					self.displaycommand = 'clear'
 
+			if self.displaycommand == 'clear':
+				self.displayactive = False
+				self.displaytimeout = None 
+				self.displaycommand = None
+				self._display_clear()
 
-	def DisplayStatus(self, in_data, status_data):
+			if self.displaycommand == 'splash':
+				self.displayactive = True
+				self._display_splash()
+				self.displaytimeout = time.time() + 3
+				self.displaycommand = None
+				time.sleep(3) # Hold splash screen for 3 seconds
+
+			if self.displaycommand == 'text': 
+				self.displayactive = True
+				self._display_text()
+				self.displaycommand = None
+				self.displaytimeout = time.time() + 10 
+
+			if self.displaycommand == 'network':
+				self.displayactive = True
+				s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+				s.connect(("8.8.8.8", 80))
+				networkip = s.getsockname()[0]
+				if (networkip != ''):
+					self._display_network(networkip)
+					self.displaytimeout = time.time() + 30
+					self.displaycommand = None
+				else:
+					self.display_text("No IP Found")
+
+			if self.displayactive:
+				if not self.displaytimeout:
+					if (self.in_data is not None) and (self.status_data is not None):
+						self._display_current(self.in_data, self.status_data)
+			
+			time.sleep(0.1)
+
+	'''
+	============== Graphics / Display / Draw Methods ============= 
+	'''
+	def _init_assets(self): 
+		self._init_splash()
+
+	def _init_splash(self):
+		self.splash = Image.open('color-boot-splash.png') \
+			.transform((self.WIDTH, self.HEIGHT), Image.AFFINE, (1, 0, 0, 0, 1, 0), Image.BILINEAR) \
+			.convert("L") \
+			.convert("1")
+
+		self.splashSize = self.splash.size
+
+	def _rounded_rectangle(self, draw, xy, rad, fill=None):
+		x0, y0, x1, y1 = xy
+		draw.rectangle([(x0, y0 + rad), (x1, y1 - rad)], fill=fill)
+		draw.rectangle([(x0 + rad, y0), (x1 - rad, y1)], fill=fill)
+		draw.pieslice([(x0, y0), (x0 + rad * 2, y0 + rad * 2)], 180, 270, fill=fill)
+		draw.pieslice([(x1 - rad * 2, y1 - rad * 2), (x1, y1)], 0, 90, fill=fill)
+		draw.pieslice([(x0, y1 - rad * 2), (x0 + rad * 2, y1)], 90, 180, fill=fill)
+		draw.pieslice([(x1 - rad * 2, y0), (x1, y0 + rad * 2)], 270, 360, fill=fill)
+		return (draw)
+
+	def _display_clear(self):
+		self.display_surface.fill((0,0,0))
+		pygame.display.update() 
+
+	def _display_splash(self):
+		# Create canvas
+		screen = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=0)
+
+		screen.paste(self.splash, (32, 0, self.splashSize[0]+32, self.splashSize[1]))
+
+		# Convert to PyGame and Display
+		strFormat = screen.mode
+		size = screen.size
+		raw_str = screen.tobytes("raw", strFormat)
+		self.display_image = pygame.image.fromstring(raw_str, size, strFormat)
+
+		self.display_surface.fill((255,255,255))
+		self.display_surface.blit(self.display_image, (0, 0))
+
+		pygame.display.update() 
+
+	def _display_text(self):
+		# Create canvas
+		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
+
+		# Create drawing object
+		draw = ImageDraw.Draw(img)
+
+		font = ImageFont.truetype("impact.ttf", 42)
+		(font_width, font_height) = font.getsize(self.displaydata)
+		draw.text((self.WIDTH // 2 - font_width // 2, self.HEIGHT // 2 - font_height // 2), self.displaydata, font=font, fill=255)
+
+		# Convert to PyGame and Display
+		strFormat = img.mode
+		size = img.size
+		raw_str = img.tobytes("raw", strFormat)
+
+		self.display_image = pygame.image.fromstring(raw_str, size, strFormat)
+
+		self.display_surface.fill((255,255,255))
+		self.display_surface.blit(self.display_image, (0, 0))
+
+		pygame.display.update() 
+
+	def _display_current(self, in_data, status_data):
 		self.units = status_data['units']
 		# Create canvas
 		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
@@ -102,64 +232,40 @@ class Display:
 
 		pygame.display.update() 
 
-	def DisplaySplash(self):
-		# Create canvas
-		screen = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=0)
-		splash = Image.open('color-boot-splash.png')
+	'''
+	================ Externally Available Methods ================
+	'''
 
-		splash = Image.open('color-boot-splash.png') \
-			.transform((self.WIDTH, self.HEIGHT), Image.AFFINE, (1, 0, 0, 0, 1, 0), Image.BILINEAR) \
-			.convert("L") \
-			.convert("1")
+	def display_status(self, in_data, status_data):
+		'''
+		- Updates the current data for the display loop, if in a work mode 
+		'''
+		self.units = status_data['units']
+		self.displayactive = True
+		self.in_data = in_data 
+		self.status_data = status_data 
 
-		(splash_width, splash_height) = splash.size
-		splash_width *= 2
-		splash_height *= 2
+	def display_splash(self):
+		''' 
+		- Calls Splash Screen 
+		'''
+		self.displaycommand = 'splash'
 
-		splashSize = splash.size
+	def clear_display(self):
+		''' 
+		- Clear display and turn off backlight 
+		'''
+		self.displaycommand = 'clear'
 
-		screen.paste(splash, (32, 0, splashSize[0]+32, splashSize[1]))
+	def display_text(self, text):
+		''' 
+		- Display some text 
+		'''
+		self.displaycommand = 'text'
+		self.displaydata = text
 
-		# Convert to PyGame and Display
-		strFormat = screen.mode
-		size = screen.size
-		raw_str = screen.tobytes("raw", strFormat)
-		self.display_image = pygame.image.fromstring(raw_str, size, strFormat)
-
-		self.display_surface.fill((255,255,255))
-		self.display_surface.blit(self.display_image, (0, 0))
-
-		pygame.display.update() 
-
-
-	def ClearDisplay(self):
-		# Fill with black
-		self.display_surface.fill((0,0,0))
-		pygame.display.update() 
-
-
-	def DisplayText(self, text):
-		# Create canvas
-		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
-
-		# Create drawing object
-		draw = ImageDraw.Draw(img)
-
-		font = ImageFont.truetype("impact.ttf", 42)
-		(font_width, font_height) = font.getsize(text)
-		draw.text((128//2 - font_width//2, 64//2 - font_height//2), text, font=font, fill=(255,255,255))
-
-		# Convert to PyGame and Display
-		strFormat = img.mode
-		size = img.size
-		raw_str = img.tobytes("raw", strFormat)
-
-		self.display_image = pygame.image.fromstring(raw_str, size, strFormat)
-
-		self.display_surface.fill((255,255,255))
-		self.display_surface.blit(self.display_image, (0, 0))
-
-		pygame.display.update() 
-
-	def EventDetect(self):
-		return()
+	def display_network(self):
+		''' 
+		- Display Network IP QR Code 
+		'''
+		self.displaycommand = 'network'

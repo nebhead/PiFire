@@ -414,7 +414,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 					control['safety']['startuptemp']) + settings['globals'][
 							'units'] + '! Shutting down to prevent firepot overload.'
 				WriteLog(event)
-				display_device.DisplayText('ERROR')
+				display_device.display_text('ERROR')
 				# control = ReadControl()  # Read Modify Write
 				control['mode'] = 'Error'
 				control['updated'] = True
@@ -429,15 +429,15 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 					control['safety']['startuptemp']) + settings['globals'][
 							'units'] + '. Starting a re-ignite attempt, per user settings.'
 				WriteLog(event)
-				display_device.DisplayText('Re-Ignite')
+				display_device.display_text('Re-Ignite')
 				control['mode'] = 'Reignite'
 				control['updated'] = True
 				WriteControl(control)
 
 	# Apply Smart Start Settings if Enabled 
-	if(settings['smartstart']['enabled']) and ((control['mode'] == 'Startup') or (control['mode'] == 'Smoke')):
+	if(settings['smartstart']['enabled']) and ((control['mode'] == 'Startup') or (control['mode'] == 'Smoke') or (control['mode'] == 'Reignite')):
 		# If Startup, then save intial temperature & select the profile
-		if control['mode'] == 'Startup':
+		if (control['mode'] == 'Startup') or (control['mode'] == 'Reignite'):
 			control['smartstart']['startuptemp'] = int(AvgGT.average())
 			# Cycle through profiles, and set profile if startup temperature falls below the minimum temperature
 			for profile_selected in range(0, len(settings['smartstart']['temp_range_list'])):
@@ -496,7 +496,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 		now = time.time()
 
 		# Check for button input event
-		display_device.EventDetect()
+		#display_device.EventDetect()
 
 		# Check for update in control status every 0.1 seconds
 		if now - controlchecktime > 0.1:
@@ -640,12 +640,12 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 		control = CheckNotify(in_data, control, settings, pelletdb, grill_platform)
 
 		# Check for button input event
-		display_device.EventDetect()
+		#display_device.EventDetect()
 
 		# Send Current Status / Temperature Data to Display Device every 0.5 second (Display Refresh)
 		if now - displaytoggletime > 0.5:
 			status_data = GetStatus(grill_platform, control, settings, pelletdb)
-			display_device.DisplayStatus(in_data, status_data)
+			display_device.display_status(in_data, status_data)
 			displaytoggletime = time.time()  # Reset the displaytoggletime to current time
 
 		# Safety Controls
@@ -659,7 +659,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 						control['safety']['startuptemp']) + settings['globals'][
 								'units'] + '! Shutting down to prevent firepot overload.'
 					WriteLog(event)
-					display_device.DisplayText('ERROR')
+					display_device.display_text('ERROR')
 					# control = ReadControl()  # Read Modify Write
 					control['mode'] = 'Error'
 					control['updated'] = True
@@ -673,7 +673,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 						control['safety']['startuptemp']) + settings['globals'][
 								'units'] + '. Starting a re-ignite attempt, per user settings.'
 					WriteLog(event)
-					display_device.DisplayText('Re-Ignite')
+					display_device.display_text('Re-Ignite')
 					# control = ReadControl()  # Read Modify Write
 					control['mode'] = 'Reignite'
 					control['updated'] = True
@@ -684,7 +684,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 				event = 'ERROR: Grill exceed maximum temperature limit of ' + str(
 					settings['safety']['maxtemp']) + 'F! Shutting down.'
 				WriteLog(event)
-				display_device.DisplayText('ERROR')
+				display_device.display_text('ERROR')
 				# control = ReadControl()  # Read Modify Write
 				control['mode'] = 'Error'
 				control['updated'] = True
@@ -949,12 +949,12 @@ def Monitor(grill_platform, adc_device, display_device, dist_device):
 		control = CheckNotify(in_data, control, settings, pelletdb, grill_platform)
 
 		# Check for button input event
-		display_device.EventDetect()
+		#display_device.EventDetect()
 
 		# Update Display Device after 1 second has passed
 		if now - displaytoggletime > 1:
 			status_data = GetStatus(grill_platform, control, settings, pelletdb)
-			display_device.DisplayStatus(in_data, status_data)
+			display_device.display_status(in_data, status_data)
 			displaytoggletime = now
 
 		# Write History after 3 seconds has passed
@@ -968,7 +968,7 @@ def Monitor(grill_platform, adc_device, display_device, dist_device):
 			event = 'ERROR: Grill exceed maximum temperature limit of ' + str(settings['safety']['maxtemp']) + \
 					settings['globals']['units'] + '! Shutting down.'
 			WriteLog(event)
-			display_device.DisplayText('ERROR')
+			display_device.display_text('ERROR')
 			# control = ReadControl()  # Read Modify Write
 			control['mode'] = 'Error'
 			control['updated'] = True
@@ -1161,7 +1161,7 @@ def Manual_Mode(grill_platform, adc_device, display_device, dist_device):
 		# Update Display Device after 1 second has passed
 		if now - displaytoggletime > 1:
 			status_data = GetStatus(grill_platform, control, settings, pelletdb)
-			display_device.DisplayStatus(in_data, status_data)
+			display_device.display_status(in_data, status_data)
 			displaytoggletime = now
 
 		control = CheckNotify(in_data, control, settings, pelletdb, grill_platform)
@@ -1638,7 +1638,7 @@ while True:
 			control['mode'] == 'Stop'
 			WriteControl(control)
 
-	display_device.EventDetect()
+	#display_device.EventDetect()
 
 	# 1. Check control.json for commands
 	control = ReadControl()
@@ -1711,7 +1711,7 @@ while True:
 			else:
 				grill_platform.PowerOff()
 			if control['mode'] == 'Stop':
-				display_device.ClearDisplay()  # When in error mode, leave the display showing ERROR
+				display_device.clear_display()  # When in error mode, leave the display showing ERROR
 				control['status'] = 'inactive'
 				event = "Stop Mode Started."
 				# Reset Control to Defaults

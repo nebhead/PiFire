@@ -36,3 +36,5 @@ test.json
 pelletdb.json
 
 static/js/backups/
+
+backups/
