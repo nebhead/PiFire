@@ -199,6 +199,16 @@
 				"py_dependencies" : ["st7789"], 
 				"apt_dependencies" : ["python3-rpi.gpio", "python3-spidev", "python3-pil", "python3-numpy"],
 				"settings_dependencies" : {}			
+			},
+			"st7789e" : {
+				"friendly_name" : "ST7789 IPS Display 240x320px w/Encoder input",
+				"filename" : "st7789e",
+				"description" : "The ST7789 is a 2inch LCD IPS Screen with a resolution of 240x320px and is an affordable SPI display.  This one can be complicated to find the right compatible display, so your mileage may vary.  This module supports the 240x320 version and provides the advanced color interface (similar to the ILI9341).  Pinout:  DIN = MOSI(Pin19), CLK=SCLK(Pin23), CS=CE0(Pin24), DC=GPIO24, RST=GPIO25, BL=GPIO05.  This version also supports an KY040 encoder for input.",
+				"default" : false,
+				"image" : "st7789p.png",
+				"py_dependencies" : ["st7789", "pyky040==0.1.4"], 
+				"apt_dependencies" : ["python3-rpi.gpio", "python3-spidev", "python3-pil", "python3-numpy"],
+				"settings_dependencies" : {}			
 			}
 		}, 
 		"distance" : {
