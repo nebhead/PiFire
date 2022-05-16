@@ -155,11 +155,10 @@ class Display:
 					self.displaycommand = 'clear'
 
 			if self.displaycommand == 'clear':
-				if not self.menuactive:
-					self.displayactive = False
-					self.displaytimeout = None 
-					self.displaycommand = None
-					self._display_clear()
+				self.displayactive = False
+				self.displaytimeout = None 
+				self.displaycommand = None
+				self._display_clear()
 
 			if self.displaycommand == 'splash':
 				self.displayactive = True
@@ -186,17 +185,15 @@ class Display:
 				else:
 					self.display_text("No IP Found")
 
-			if self.displayactive:
-				if self.menuactive:
-					if time.time() - self.menutime > 5:
-						self.menuactive = False
-						self.menu['current']['mode'] = 'none'
-						self.menu['current']['option'] = 0
-						if not self.displaytimeout:
-							self.clear_display()
-				elif not self.displaytimeout:
-					if (self.in_data is not None) and (self.status_data is not None):
-						self._display_current(self.in_data, self.status_data)
+			if self.menuactive and not self.displaytimeout:
+				if time.time() - self.menutime > 5:
+					self.menuactive = False
+					self.menu['current']['mode'] = 'none'
+					self.menu['current']['option'] = 0
+					self.displaycommand = 'clear'
+			elif (not self.displaytimeout) and (self.displayactive):
+				if (self.in_data is not None) and (self.status_data is not None):
+					self._display_current(self.in_data, self.status_data)
 			
 			time.sleep(0.1)
 
@@ -585,8 +582,6 @@ class Display:
 		command = self.input_event  # Save to variable to prevent spurious changes 
 		if command:
 			self.displaytimeout = None  # If something is being displayed i.e. text, network, splash then override this
-			self.displaycommand = None
-			self.displaydata = None 
 
 			if (command != 'ENTER') and (self.input_counter == 0):
 				return
@@ -594,6 +589,8 @@ class Display:
 				if command not in ['UP', 'DOWN', 'ENTER']:
 					return
 
+				self.displaycommand = None
+				self.displaydata = None 
 				self.input_event=None
 				self.menuactive = True
 				self.menutime = time.time()
