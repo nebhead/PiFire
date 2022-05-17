@@ -5,9 +5,11 @@ PiFire Display Interface Library
 *****************************************
 
  Description: This library supports using pygame 
- on your development PC for debug and development 
- purposes. Likely only works in an desktop 
+ on your Linux development PC for debug and development 
+ purposes. Only works in a graphical desktop 
  environment.  Tested on Ubuntu 20.04.  
+
+ This version supports arrow keys (up/down) and enter.  
 
 *****************************************
 '''
@@ -52,7 +54,6 @@ class Display:
 		self.icon_color = 100
 
 	def _init_display_device(self):
-		self.first_run = True 
 		# Setup & Start Display Loop Thread 
 		display_thread = threading.Thread(target=self._display_loop)
 		display_thread.start()
@@ -121,29 +122,30 @@ class Display:
 		self.menu['current']['option'] = 0  # Current option in current mode
 
 	def _display_loop(self):
-		if self.first_run:
-			# Init Device
-			pygame.init()
-			# set the pygame window name 
-			pygame.display.set_caption('PiFire Device Display')
-			# Create Display Surface
-			self.display_surface = pygame.display.set_mode(size=(self.WIDTH, self.HEIGHT), flags=pygame.SHOWN)
-			self.first_run = False 
+		# Init Device
+		pygame.init()
+		# set the pygame window name 
+		pygame.display.set_caption('PiFire Device Display')
+		# Create Display Surface
+		self.display_surface = pygame.display.set_mode(size=(self.WIDTH, self.HEIGHT), flags=pygame.SHOWN)
+		self.displaycommand = 'splash'
+
 		'''
 		Main display loop
 		'''
 		while True:
 			''' Add pygame key test here. '''
+			pygame.time.delay(100)
+			events = pygame.event.get()  # Gets events (required for keypresses to be registered)
 			keys = pygame.key.get_pressed()  # This will give us a dictonary where each key has a value of 1 or 0. Where 1 is pressed and 0 is not pressed.
 			if(keys[pygame.K_UP]):
-				print('Up pressed.')
 				self.input_event = 'UP'
 			if(keys[pygame.K_DOWN]):
-				print('Down pressed.')
 				self.input_event = 'DOWN'
 			if(keys[pygame.K_RETURN]):
-				print('Enter pressed.')
 				self.input_event = 'ENTER'
+			
+			''' Normal display loop'''
 			self._event_detect()
 
 			if self.displaytimeout:
@@ -161,7 +163,7 @@ class Display:
 				self._display_splash()
 				self.displaytimeout = time.time() + 3
 				self.displaycommand = None
-				time.sleep(3) # Hold splash screen for 3 seconds
+				pygame.time.delay(3000) # Hold splash screen for 3 seconds
 
 			if self.displaycommand == 'text': 
 				self.displayactive = True
@@ -190,8 +192,8 @@ class Display:
 			elif (not self.displaytimeout) and (self.displayactive):
 				if (self.in_data is not None) and (self.status_data is not None):
 					self._display_current(self.in_data, self.status_data)
-			
-			time.sleep(0.1)
+
+		pygame.quit()
 
 	'''
 	============== Graphics / Display / Draw Methods ============= 
@@ -625,14 +627,6 @@ class Display:
 				minTemp = 50  # minimum temperature set for hold
 				maxTemp = 260  # maximum temperature set for hold
 			
-			# Speed up step count if input is faster
-			if self.input_counter < 3:
-				pass
-			elif self.input_counter < 7: 
-				stepValue *= 4
-			else:
-				stepValue *= 6 
-
 			if (action == 'DOWN'):
 				self.menu['current']['option'] -= stepValue  # Step down by stepValue degrees
 				if (self.menu['current']['option'] <= minTemp):
@@ -838,9 +832,17 @@ class Display:
 					  font=font, fill=(255, 255, 255))
 
 		# Display Image
-		self.device.backlight(True)
-		self.device.show()
-		self.device.display(img)
+		# Convert to PyGame and Display
+		strFormat = img.mode
+		size = img.size
+		raw_str = img.tobytes("raw", strFormat)
+		
+		self.display_image = pygame.image.fromstring(raw_str, size, strFormat)
+
+		self.display_surface.fill((255,255,255))
+		self.display_surface.blit(self.display_image, (0, 0))
+
+		pygame.display.update() 	
 
 	'''
 	================ Externally Available Methods ================

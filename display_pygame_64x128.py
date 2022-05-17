@@ -5,8 +5,8 @@ PiFire Display Interface Library
 *****************************************
 
  Description: This library supports using pygame 
- on your development PC for debug and development 
- purposes. Likely only works in an desktop 
+ on your Linux development PC for debug and development 
+ purposes. Only works in an graphical desktop 
  environment.  Tested on Ubuntu 20.04.  
 
 *****************************************
@@ -47,25 +47,27 @@ class Display:
 		self.HEIGHT = 64
 
 	def _init_display_device(self):
-		self.first_run = True 
 		# Setup & Start Display Loop Thread 
 		display_thread = threading.Thread(target=self._display_loop)
 		display_thread.start()
 
 	def _display_loop(self):
-		if self.first_run:
-			# Init Device
-			pygame.init()
-			# set the pygame window name 
-			pygame.display.set_caption('PiFire Device Display')
-			# Create Display Surface
-			self.display_surface = pygame.display.set_mode(size=(self.WIDTH, self.HEIGHT), flags=pygame.SHOWN)
-			self.first_run = False 
+		# Init Device
+		pygame.init()
+		# set the pygame window name 
+		pygame.display.set_caption('PiFire Device Display')
+		# Create Display Surface
+		self.display_surface = pygame.display.set_mode(size=(self.WIDTH, self.HEIGHT), flags=pygame.SHOWN)
+		self.displaycommand = 'splash'
 
 		'''
 		Main display loop
 		'''
 		while True:
+			pygame.time.delay(100)
+			events = pygame.event.get()  # Gets events (required for keypresses to be registered)
+
+			''' Normal display loop'''
 			if self.displaytimeout:
 				if time.time() > self.displaytimeout:
 					self.displaycommand = 'clear'
@@ -105,8 +107,6 @@ class Display:
 				if not self.displaytimeout:
 					if (self.in_data is not None) and (self.status_data is not None):
 						self._display_current(self.in_data, self.status_data)
-			
-			time.sleep(0.1)
 
 	'''
 	============== Graphics / Display / Draw Methods ============= 
