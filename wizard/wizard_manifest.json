@@ -72,7 +72,7 @@
 				"description" : "The ILI9341 TFT Display Module LCD Screen is an affordable, popular display with a 320x240 resolution and color.  It comes in many different physical sizes from 2\" - 3.2\" with and without capacitive touch.  This module uses: MISO = MISO(Pin 21), LED = GPIO05, SCK = SCLK(Pin 23), MOSI = MOSI(Pin 19), DC = GPIO24, RST = GPIO25, CS = CE0(Pin 24).  This version of the module supports input based on the KY-040 rotary encoder.  CLK = GPIO16, DT = GPIO20, SW = GPIO21",
 				"default" : false,
 				"image" : "ili9341-ky040.png",
-				"py_dependencies" : ["luma.lcd", "pyky040==0.1.4"], 
+				"py_dependencies" : ["luma.lcd", "pyky040==0.1.4", "pillow==9.1.1"], 
 				"apt_dependencies" : [],
 				"settings_dependencies" : {}
 			},
@@ -82,7 +82,7 @@
 				"description" : "NOTE: This version should be used if also using the max31865, due to SPI conflicts with the standard implementation.  The ILI9341 TFT Display Module LCD Screen is an affordable, popular display with a 320x240 resolution and color.  It comes in many different physical sizes from 2\" - 3.2\" with and without capacitive touch.  This module uses: MISO = MISO(Pin 21), LED = GPIO12, SCK = SCLK(Pin 23), MOSI = MOSI(Pin 19), DC = GPIO16, RST = GPIO20, CS = CE0(Pin 24).  This version of the module supports input based on the KY-040 rotary encoder.  CLK = GPIO25, DT = GPIO24, SW = GPIO23.",
 				"default" : false,
 				"image" : "ili9341-ky040.png",
-				"py_dependencies" : ["luma.lcd", "pyky040==0.1.4"], 
+				"py_dependencies" : ["luma.lcd", "pyky040==0.1.4", "pillow==9.1.1"], 
 				"apt_dependencies" : [],
 				"settings_dependencies" : {}
 			},
@@ -92,7 +92,7 @@
 				"description" : "The ILI9341 TFT Display Module LCD Screen is an affordable, popular display with a 320x240 resolution and color.  It comes in many different physical sizes from 2\" - 3.2\" with and without capacitive touch.  This module uses: MISO = MISO(Pin 21), LED = GPIO05, SCK = SCLK(Pin 23), MOSI = MOSI(Pin 19), DC = GPIO24, RST = GPIO25, CS = CE0(Pin 24).",
 				"default" : false,
 				"image" : "ili9341.png",
-				"py_dependencies" : ["luma.lcd"], 
+				"py_dependencies" : ["luma.lcd", "pillow==9.1.1"], 
 				"apt_dependencies" : [],
 				"settings_dependencies" : {}
 			},
@@ -102,7 +102,7 @@
 				"description" : "The ILI9341 TFT Display Module LCD Screen is an affordable, popular display with a 320x240 resolution and color.  It comes in many different physical sizes from 2\" - 3.2\" with and without capacitive touch.  This module uses: MISO = MISO(Pin 21), LED = GPIO05, SCK = SCLK(Pin 23), MOSI = MOSI(Pin 19), DC = GPIO24, RST = GPIO25, CS = CE0(Pin 24).  This version of the module supports a three button input.  UP = GPIO16, DOWN = GPIO20, ENTER = GPIO21",
 				"default" : true,
 				"image" : "ili9341b.png",
-				"py_dependencies" : ["luma.lcd"], 
+				"py_dependencies" : ["luma.lcd", "pillow==9.1.1"], 
 				"apt_dependencies" : [],
 				"settings_dependencies" : {
 					"buttonslevel" : {
@@ -149,7 +149,7 @@
 				"description" : "This is the test module for display using Pygame.  This should be used for development & debug only.",
 				"default" : false,
 				"image" : "pygame.png",
-				"py_dependencies" : ["pygame"], 
+				"py_dependencies" : ["pygame", "pillow==9.1.1"], 
 				"apt_dependencies" : [],
 				"settings_dependencies" : {}			
 			},
@@ -159,7 +159,7 @@
 				"description" : "This is the test module for display using Pygame.  This should be used for development & debug only.",
 				"default" : false,
 				"image" : "pygame.png",
-				"py_dependencies" : ["pygame"], 
+				"py_dependencies" : ["pygame", "pillow==9.1.1"], 
 				"apt_dependencies" : [],
 				"settings_dependencies" : {}			
 			},

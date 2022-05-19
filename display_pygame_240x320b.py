@@ -52,6 +52,8 @@ class Display:
 		self.HEIGHT = 240
 		self.inc_pulse_color = True 
 		self.icon_color = 100
+		self.fan_rotation = 0
+		self.auger_step = 0
 
 	def _init_display_device(self):
 		# Setup & Start Display Loop Thread 
@@ -223,8 +225,84 @@ class Display:
 		draw.pieslice([(x1 - rad * 2, y0), (x1, y0 + rad * 2)], 270, 360, fill=fill)
 		return (draw)
 
+	def _create_icon(self, charid, size, color):
+		# Get font and character size 
+		font = ImageFont.truetype("FA-Free-Solid.otf", size)
+		# Create canvas
+		iconcanvas = Image.new('RGBa', font.getsize(charid))
+		# Create drawing object
+		draw = ImageDraw.Draw(iconcanvas)
+		draw.text((0, 0), charid, font=font, fill=color)
+		iconcanvas = iconcanvas.crop(iconcanvas.getbbox())
+		return(iconcanvas)	
+
+	def _paste_icon(self, icon, canvas, position, rotation, bgcolor):
+		# First fill the background 
+		bgfill = ImageDraw.Draw(canvas)
+		# Rotate the icon
+		icon = icon.rotate(rotation)
+		(icon_width, icon_height) = icon.size
+		#bgfill.rectangle([(position[0], position[1]), (position[0] + icon_width, position[1] + icon_height)], fill=bgcolor)
+		# Set the position & paste the icon onto the canvas
+		canvas.paste(icon, position, icon)
+		return(canvas)
+
+	def _draw_fan_icon(self, canvas):
+		# F = Fan (Upper Left)
+		icon_char = '\uf863'
+		icon_color = (0, self.icon_color, 255)
+
+		drawing = ImageDraw.Draw(canvas)
+		# Draw Rounded Rectangle Border
+		drawing = self._rounded_rectangle(drawing, (
+			self.WIDTH // 8 - 22, self.HEIGHT // 6 - 22, self.WIDTH // 8 + 22, self.HEIGHT // 6 + 22), 5,
+										icon_color)
+		# Fill Rectangle with Black
+		drawing = self._rounded_rectangle(drawing, (
+			self.WIDTH // 8 - 20, self.HEIGHT // 6 - 20, self.WIDTH // 8 + 20, self.HEIGHT // 6 + 20), 5,
+										(0, 0, 0))
+		# Create Icon Image
+		icon = self._create_icon(icon_char, 36, icon_color)
+		position = (self.WIDTH // 8 - 18, self.HEIGHT // 6 - 18)
+		canvas = self._paste_icon(icon, canvas, position, self.fan_rotation, (0,0,0))
+		return(canvas)
+
+	def _draw_auger_icon(self, canvas):
+		# A = Auger (Center Left)
+		icon_char = '\uf101'
+		icon_color_tuple = (0, self.icon_color, 0)
+		# Create a drawing object
+		drawing = ImageDraw.Draw(canvas)
+		# Draw Rounded Rectangle Border
+		drawing = self._rounded_rectangle(drawing, (
+			self.WIDTH // 8 - 22, self.HEIGHT // 2.5 - 22, self.WIDTH // 8 + 22, self.HEIGHT // 2.5 + 22), 5,
+										icon_color_tuple)
+		# Fill Rectangle with Black
+		drawing = self._rounded_rectangle(drawing, (
+			self.WIDTH // 8 - 20, self.HEIGHT // 2.5 - 20, self.WIDTH // 8 + 20, self.HEIGHT // 2.5 + 20), 5,
+										(0, 0, 0))
+		# Create Icon Image
+		icon = self._create_icon(icon_char, 36, icon_color_tuple)
+		(icon_width, icon_height) = icon.size 
+		position = ((self.WIDTH // 8 - 18) + (icon_width // 8) + self.auger_step, (int(self.HEIGHT // 2.5) - 18) + (icon_height // 3))
+		canvas = self._paste_icon(icon, canvas, position, 0, (0,0,0))
+		return(canvas)
+
 	def _display_clear(self):
 		self.display_surface.fill((0,0,0))
+		pygame.display.update() 
+
+	def _display_canvas(self, canvas):
+		# Convert to PyGame and Display
+		strFormat = canvas.mode
+		size = canvas.size
+		raw_str = canvas.tobytes("raw", strFormat)
+		
+		self.display_image = pygame.image.fromstring(raw_str, size, strFormat)
+
+		self.display_surface.fill((255,255,255))
+		self.display_surface.blit(self.display_image, (0, 0))
+
 		pygame.display.update() 
 
 	def _display_splash(self):
@@ -235,16 +313,7 @@ class Display:
 		position = ((self.WIDTH - self.splash_width) // 2, (self.HEIGHT - self.splash_height) // 2)
 		img.paste(self.splash, position)
 
-		# Convert to PyGame and Display
-		strFormat = img.mode
-		size = img.size
-		raw_str = img.tobytes("raw", strFormat)
-		self.display_image = pygame.image.fromstring(raw_str, size, strFormat)
-
-		self.display_surface.fill((255,255,255))
-		self.display_surface.blit(self.display_image, (0, 0))
-
-		pygame.display.update() 
+		self._display_canvas(img)
 
 	def _display_text(self):
 		# Create canvas
@@ -257,17 +326,7 @@ class Display:
 		(font_width, font_height) = font.getsize(self.displaydata)
 		draw.text((self.WIDTH // 2 - font_width // 2, self.HEIGHT // 2 - font_height // 2), self.displaydata, font=font, fill=255)
 
-		# Convert to PyGame and Display
-		strFormat = img.mode
-		size = img.size
-		raw_str = img.tobytes("raw", strFormat)
-
-		self.display_image = pygame.image.fromstring(raw_str, size, strFormat)
-
-		self.display_surface.fill((255,255,255))
-		self.display_surface.blit(self.display_image, (0, 0))
-
-		pygame.display.update() 
+		self._display_canvas(img)
 
 	def _display_network(self, networkip):
 		# Create canvas
@@ -281,18 +340,7 @@ class Display:
 		position = (int((self.WIDTH/2)-(w/2)), 0)
 		img.paste(new_image, position)
 
-		# Convert to PyGame and Display
-		strFormat = img.mode
-		size = img.size
-		raw_str = img.tobytes("raw", strFormat)
-
-		self.display_image = pygame.image.fromstring(raw_str, size, strFormat)
-
-		self.display_surface.fill((255,255,255))
-		self.display_surface.blit(self.display_image, (0, 0))
-
-		pygame.display.update() 
-
+		self._display_canvas(img)
 
 	def _display_current(self, in_data, status_data):
 		if (self.menuactive == False):
@@ -465,16 +513,10 @@ class Display:
 			font = ImageFont.truetype("FA-Free-Solid.otf", 36)
 			if (status_data['outpins']['fan'] == 0):
 				# F = Fan (Upper Left), 40x40, origin 10,10
-				text = '\uf863'
-				(font_width, font_height) = font.getsize(text)
-				draw = self._rounded_rectangle(draw, (
-					self.WIDTH // 8 - 22, self.HEIGHT // 6 - 22, self.WIDTH // 8 + 22, self.HEIGHT // 6 + 22), 5,
-											  (0, self.icon_color, 255))
-				draw = self._rounded_rectangle(draw, (
-					self.WIDTH // 8 - 20, self.HEIGHT // 6 - 20, self.WIDTH // 8 + 20, self.HEIGHT // 6 + 20), 5,
-											  (0, 0, 0))
-				draw.text((self.WIDTH // 8 - font_width // 2 + 1, self.HEIGHT // 6 - font_height // 2), text, font=font,
-						  fill=(0, self.icon_color, 255))
+				self._draw_fan_icon(img)
+				self.fan_rotation += 30 
+				if self.fan_rotation >= 360: 
+					self.fan_rotation = 0
 			if (status_data['outpins']['igniter'] == 0):
 				# I = Igniter(Center Right)
 				text = '\uf46a'
@@ -489,16 +531,10 @@ class Display:
 						  font=font, fill=(255, self.icon_color, 0))
 			if (status_data['outpins']['auger'] == 0):
 				# A = Auger (Center Left)
-				text = '\uf101'
-				(font_width, font_height) = font.getsize(text)
-				draw = self._rounded_rectangle(draw, (
-					self.WIDTH // 8 - 22, self.HEIGHT // 2.5 - 22, self.WIDTH // 8 + 22, self.HEIGHT // 2.5 + 22), 5,
-											  (0, self.icon_color+55, 0))
-				draw = self._rounded_rectangle(draw, (
-					self.WIDTH // 8 - 20, self.HEIGHT // 2.5 - 20, self.WIDTH // 8 + 20, self.HEIGHT // 2.5 + 20), 5,
-											  (0, 0, 0))
-				draw.text((self.WIDTH // 8 - font_width // 2 + 1, self.HEIGHT // 2.5 - font_height // 2 - 2), text,
-						  font=font, fill=(0, self.icon_color+55, 0))
+				self._draw_auger_icon(img)
+				self.auger_step += 1 
+				if self.auger_step >= 3: 
+					self.auger_step = 0
 
 			# Notification Indicator (Right)
 			show_notify_indicator = False
@@ -572,17 +608,7 @@ class Display:
 			draw.text((self.WIDTH // 2 - font_width // 2, self.HEIGHT - font_height - 6), text, font=font,
 					  fill=(0, 0, 0))
 
-		# Convert to PyGame and Display
-		strFormat = img.mode
-		size = img.size
-		raw_str = img.tobytes("raw", strFormat)
-		
-		self.display_image = pygame.image.fromstring(raw_str, size, strFormat)
-
-		self.display_surface.fill((255,255,255))
-		self.display_surface.blit(self.display_image, (0, 0))
-
-		pygame.display.update() 
+		self._display_canvas(img)
 
 	'''
 	 ====================== Input & Menu Code ========================
@@ -782,13 +808,6 @@ class Display:
 			draw.text((self.WIDTH // 2 - font_width // 2, (self.HEIGHT // 8) * 6.25), text, font=font,
 					  fill=(255, 255, 255))
 
-			# Up / Down Arrows (Middle Right)
-			font = ImageFont.truetype("FA-Free-Solid.otf", 80)
-			text = '\uf0dc'  # FontAwesome Icon Sort (Up/Down Arrows)
-			(font_width, font_height) = font.getsize(text)
-			draw.text(((self.WIDTH - (font_width // 2) ** 1.3), (self.HEIGHT // 2.5 - font_height // 2)), text,
-					  font=font, fill=(255, 255, 255))
-
 		elif (self.menu['current']['mode'] != 'none'):
 			# Menu Option (Large Top Center)
 			index = 0
@@ -824,25 +843,43 @@ class Display:
 			draw.text((self.WIDTH // 2 - font_width // 2, (self.HEIGHT // 8) * 6.25), text, font=font,
 					  fill=(255, 255, 255))
 
-			# Up / Down Arrows (Middle Right)
-			font = ImageFont.truetype("FA-Free-Solid.otf", 80)
-			text = '\uf0dc'  # FontAwesome Icon Sort (Up/Down Arrows)
-			(font_width, font_height) = font.getsize(text)
-			draw.text(((self.WIDTH - (font_width // 2) ** 1.3), (self.HEIGHT // 2.5 - font_height // 2)), text,
-					  font=font, fill=(255, 255, 255))
+		# Change color of Arrow for Up / Down when adjusting temperature
+		up_color = (255, 255, 255)
+		down_color = (255, 255, 255)
 
-		# Display Image
-		# Convert to PyGame and Display
-		strFormat = img.mode
-		size = img.size
-		raw_str = img.tobytes("raw", strFormat)
+		if action == 'UP': 
+			up_color = (255, 255, 0)
+		elif action == 'DOWN':
+			down_color = (255, 255, 0)
+
+		# Up / Down Arrows (Middle Right)
+		font = ImageFont.truetype("FA-Free-Solid.otf", 80)
+		text = '\uf0de'  # FontAwesome Icon Sort (Up Arrow)
+		(font_width, font_height) = font.getsize(text)
+		draw.text(((self.WIDTH - (font_width // 2) ** 1.3), (self.HEIGHT // 2.5 - font_height // 2)), text,
+					font=font, fill=up_color)
+
+		text = '\uf0dd'  # FontAwesome Icon Sort (Down Arrow)
+		(font_width, font_height) = font.getsize(text)
+		draw.text(((self.WIDTH - (font_width // 2) ** 1.3), (self.HEIGHT // 2.4 - font_height // 2)), text,
+					font=font, fill=down_color)
 		
-		self.display_image = pygame.image.fromstring(raw_str, size, strFormat)
+		self._display_canvas(img)
+		pygame.time.delay(50)
 
-		self.display_surface.fill((255,255,255))
-		self.display_surface.blit(self.display_image, (0, 0))
+		# Up / Down Arrows (Middle Right)
+		font = ImageFont.truetype("FA-Free-Solid.otf", 80)
+		text = '\uf0de'  # FontAwesome Icon Sort (Up Arrow)
+		(font_width, font_height) = font.getsize(text)
+		draw.text(((self.WIDTH - (font_width // 2) ** 1.3), (self.HEIGHT // 2.5 - font_height // 2)), text,
+					font=font, fill=(255, 255, 255))
 
-		pygame.display.update() 	
+		text = '\uf0dd'  # FontAwesome Icon Sort (Down Arrow)
+		(font_width, font_height) = font.getsize(text)
+		draw.text(((self.WIDTH - (font_width // 2) ** 1.3), (self.HEIGHT // 2.4 - font_height // 2)), text,
+		font=font, fill=(255, 255, 255))
+
+		self._display_canvas(img)
 
 	'''
 	================ Externally Available Methods ================
