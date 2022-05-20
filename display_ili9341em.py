@@ -76,7 +76,6 @@ class Display:
 		self.debounce_ms = 500  # number of milliseconds to debounce input
 		self.input_event = None
 		self.input_counter = 0
-		self.last_event = [time.time(), None]
 
 		# Init Menu Structures
 		self._init_menu()
@@ -156,7 +155,7 @@ class Display:
 
 			if self.displaytimeout:
 				if time.time() > self.displaytimeout:
-					self.displaycommand = 'clear'
+					self.displaytimeout = None
 
 			if self.displaycommand == 'clear':
 				self.displayactive = False
@@ -165,20 +164,17 @@ class Display:
 				self._display_clear()
 
 			if self.displaycommand == 'splash':
-				self.displayactive = True
 				self._display_splash()
 				self.displaytimeout = time.time() + 3
 				self.displaycommand = None
 				time.sleep(3) # Hold splash screen for 3 seconds
 
 			if self.displaycommand == 'text': 
-				self.displayactive = True
 				self._display_text()
 				self.displaycommand = None
 				self.displaytimeout = time.time() + 10 
 
 			if self.displaycommand == 'network':
-				self.displayactive = True
 				s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 				s.connect(("8.8.8.8", 80))
 				networkip = s.getsockname()[0]
@@ -194,11 +190,12 @@ class Display:
 					self.menuactive = False
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
-					self.displaycommand = 'clear'
 			elif (not self.displaytimeout) and (self.displayactive):
 				if (self.in_data is not None) and (self.status_data is not None):
 					self._display_current(self.in_data, self.status_data)
-			
+			elif (not self.displaytimeout):
+				self.displaycommand = 'clear'
+
 			time.sleep(0.1)
 
 	'''
@@ -353,7 +350,6 @@ class Display:
 		img.paste(new_image, position)
 
 		self._display_canvas(img)
-
 
 	def _display_current(self, in_data, status_data):
 		if (self.menuactive == False):
@@ -649,7 +645,6 @@ class Display:
 				self.input_counter = 0
 
 	def _menu_display(self, action):
-		self.displayactive = True
 		# If menu is not currently being displayed, check mode and draw menu
 		if (self.menu['current']['mode'] == 'none'):
 			control = ReadControl()
@@ -735,6 +730,7 @@ class Display:
 					index += 1
 				# Inactive Mode Items
 				if (selected == 'Startup'):
+					self.displayactive = True
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
 					self.menuactive = False
@@ -744,6 +740,7 @@ class Display:
 					control['mode'] = 'Startup'
 					WriteControl(control)
 				elif (selected == 'Monitor'):
+					self.displayactive = True
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
 					self.menuactive = False
@@ -764,6 +761,7 @@ class Display:
 					WriteControl(control)
 				# Active Mode
 				elif (selected == 'Shutdown'):
+					self.displayactive = True
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
 					self.menuactive = False
@@ -773,6 +771,7 @@ class Display:
 					control['mode'] = 'Shutdown'
 					WriteControl(control)
 				elif (selected == 'Hold'):
+					self.displayactive = True
 					self.menu['current']['mode'] = 'grill_hold_value'
 					if self.in_data['GrillSetPoint'] == 0:
 						if (self.units == 'F'):
@@ -782,6 +781,7 @@ class Display:
 					else:
 						self.menu['current']['option'] = self.in_data['GrillSetPoint']
 				elif (selected == 'Smoke'):
+					self.displayactive = True
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
 					self.menuactive = False

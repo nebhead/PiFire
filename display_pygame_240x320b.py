@@ -33,6 +33,7 @@ class Display:
 	def __init__(self, buttonslevel='HIGH', rotation=0, units='F'):
 		# Init Global Variables and Constants
 		self.buttonslevel = buttonslevel
+		self.rotation = rotation
 		self.units = units
 		self.displayactive = False
 		self.in_data = None
@@ -137,7 +138,7 @@ class Display:
 		'''
 		while True:
 			''' Add pygame key test here. '''
-			pygame.time.delay(100)
+			pygame.time.delay(50)
 			events = pygame.event.get()  # Gets events (required for keypresses to be registered)
 			keys = pygame.key.get_pressed()  # This will give us a dictonary where each key has a value of 1 or 0. Where 1 is pressed and 0 is not pressed.
 			if(keys[pygame.K_UP]):
@@ -152,7 +153,7 @@ class Display:
 
 			if self.displaytimeout:
 				if time.time() > self.displaytimeout:
-					self.displaycommand = 'clear'
+					self.displaytimeout = None
 
 			if self.displaycommand == 'clear':
 				self.displayactive = False
@@ -161,20 +162,17 @@ class Display:
 				self._display_clear()
 
 			if self.displaycommand == 'splash':
-				self.displayactive = True
 				self._display_splash()
 				self.displaytimeout = time.time() + 3
 				self.displaycommand = None
 				pygame.time.delay(3000) # Hold splash screen for 3 seconds
 
 			if self.displaycommand == 'text': 
-				self.displayactive = True
 				self._display_text()
 				self.displaycommand = None
 				self.displaytimeout = time.time() + 10 
 
 			if self.displaycommand == 'network':
-				self.displayactive = True
 				s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 				s.connect(("8.8.8.8", 80))
 				networkip = s.getsockname()[0]
@@ -190,10 +188,11 @@ class Display:
 					self.menuactive = False
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
-					self.displaycommand = 'clear'
 			elif (not self.displaytimeout) and (self.displayactive):
 				if (self.in_data is not None) and (self.status_data is not None):
 					self._display_current(self.in_data, self.status_data)
+			elif (not self.displaytimeout):
+				self.displaycommand = 'clear'
 
 		pygame.quit()
 
@@ -632,7 +631,6 @@ class Display:
 			self._menu_display(command)
 
 	def _menu_display(self, action):
-		self.displayactive = True
 		# If menu is not currently being displayed, check mode and draw menu
 		if (self.menu['current']['mode'] == 'none'):
 			control = ReadControl()
@@ -710,6 +708,7 @@ class Display:
 					index += 1
 				# Inactive Mode Items
 				if (selected == 'Startup'):
+					self.displayactive = True
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
 					self.menuactive = False
@@ -719,6 +718,7 @@ class Display:
 					control['mode'] = 'Startup'
 					WriteControl(control)
 				elif (selected == 'Monitor'):
+					self.displayactive = True
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
 					self.menuactive = False
@@ -739,6 +739,7 @@ class Display:
 					WriteControl(control)
 				# Active Mode
 				elif (selected == 'Shutdown'):
+					self.displayactive = True
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
 					self.menuactive = False
@@ -748,6 +749,7 @@ class Display:
 					control['mode'] = 'Shutdown'
 					WriteControl(control)
 				elif (selected == 'Hold'):
+					self.displayactive = True
 					self.menu['current']['mode'] = 'grill_hold_value'
 					if self.in_data['GrillSetPoint'] == 0:
 						if (self.units == 'F'):
@@ -757,6 +759,7 @@ class Display:
 					else:
 						self.menu['current']['option'] = self.in_data['GrillSetPoint']
 				elif (selected == 'Smoke'):
+					self.displayactive = True
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
 					self.menuactive = False
