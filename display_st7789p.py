@@ -26,8 +26,9 @@ Display class definition
 '''
 class Display:
 
-	def __init__(self, units='F'):
+	def __init__(self, buttonslevel='HIGH', rotation=0, units='F'):
 		# Init Global Variables and Constants
+		self.rotation = rotation
 		self.units = units
 		self.displayactive = False
 		self.in_data = None
@@ -52,7 +53,7 @@ class Display:
 			dc=24,
 			backlight=5,
 			rst=25,
-			rotation=0,
+			rotation=self.rotation,
 			spi_speed_hz=80 * 1000 * 1000
 		)
 		self.WIDTH = self.device.width

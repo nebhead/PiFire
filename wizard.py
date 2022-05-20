@@ -54,6 +54,13 @@ for module in WizardInstallInfo['modules']:
 	for setting in WizardInstallInfo['modules'][module]['settings']:
 		selected = WizardInstallInfo['modules'][module]['module_selected']
 		settingsLocation = WizardData['modules'][module][selected]['settings_dependencies'][setting]['settings']
+		selected_setting = WizardInstallInfo['modules'][module]['settings'][setting]
+
+		# Convert Number Strings to Int or Float
+		if selected_setting.isdigit():
+			selected_setting = int(selected_setting)
+		elif selected_setting.isdecimal():
+			selected_setting = float(selected_setting)
 		
 		# Special Handling for Units
 		if(setting == 'units'):
@@ -63,11 +70,11 @@ for module in WizardInstallInfo['modules']:
 			elif(units == 'F') and (settings['globals']['units'] == 'C'):
 				settings = convert_settings_units('F', settings)
 		elif(len(settingsLocation) == 1):
-			settings[settingsLocation[0]] = WizardInstallInfo['modules'][module]['settings'][setting]
+			settings[settingsLocation[0]] = selected_setting
 		elif(len(settingsLocation) == 2):
-			settings[settingsLocation[0]][settingsLocation[1]] = WizardInstallInfo['modules'][module]['settings'][setting]
+			settings[settingsLocation[0]][settingsLocation[1]] = selected_setting
 		elif(len(settingsLocation) == 3):
-			settings[settingsLocation[0]][settingsLocation[1]][settingsLocation[2]] = WizardInstallInfo['modules'][module]['settings'][setting]
+			settings[settingsLocation[0]][settingsLocation[1]][settingsLocation[2]] = selected_setting
 
 		output = f'   + Set {setting} in settings.json'
 		SetWizardInstallStatus(percent, status, output)

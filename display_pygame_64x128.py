@@ -27,7 +27,7 @@ Display class definition
 '''
 class Display:
 
-	def __init__(self, units='F'):
+	def __init__(self, buttonslevel='HIGH', rotation=0, units='F'):
 		# Init Global Variables and Constants
 		self.units = units
 		self.displayactive = False
@@ -174,7 +174,31 @@ class Display:
 		self.display_surface.fill((255,255,255))
 		self.display_surface.blit(self.display_image, (0, 0))
 
-		pygame.display.update() 
+		pygame.display.update()
+
+	def _display_network(self, networkip):
+		# Create canvas
+		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(255, 255, 255))
+		img_qr = qrcode.make('http://' + networkip)
+		img_qr_width, img_qr_height = img_qr.size
+		img_qr_width *= 2
+		img_qr_height *= 2
+		w = min(self.WIDTH, self.HEIGHT)
+		new_image = img_qr.resize((w, w))
+		position = (int((self.WIDTH/2)-(w/2)), 0)
+		img.paste(new_image, position)
+
+		# Convert to PyGame and Display
+		strFormat = img.mode
+		size = img.size
+		raw_str = img.tobytes("raw", strFormat)
+
+		self.display_image = pygame.image.fromstring(raw_str, size, strFormat)
+
+		self.display_surface.fill((255,255,255))
+		self.display_surface.blit(self.display_image, (0, 0))
+
+		pygame.display.update()
 
 	def _display_current(self, in_data, status_data):
 		self.units = status_data['units']

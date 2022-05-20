@@ -14,7 +14,7 @@
 
 class Display:
 
-	def __init__(self, units='F'):
+	def __init__(self, buttonslevel='HIGH', rotation=0, units='F'):
 		self.display_splash()
 		self.units = units 
 

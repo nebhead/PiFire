@@ -32,9 +32,10 @@ Display class definition
 '''
 class Display:
 
-	def __init__(self, buttonslevel='HIGH', units='F'):
+	def __init__(self, buttonslevel='HIGH', rotation=0, units='F'):
 		# Init Global Variables and Constants
 		self.buttonslevel = buttonslevel
+		self.rotation = rotation
 		self.units = units
 		self.displayactive = False
 		self.in_data = None
@@ -60,7 +61,7 @@ class Display:
 	def _init_display_device(self):
 		# Init Device
 		self.serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25, bus_speed_hz=32000000, reset_hold_time=0.2, reset_release_time=0.2)
-		self.device = ili9341(self.serial, active_low=False, width=self.WIDTH, height=self.HEIGHT, gpio_LIGHT=5)
+		self.device = ili9341(self.serial, active_low=False, width=self.WIDTH, height=self.HEIGHT, gpio_LIGHT=5, rotate=self.rotation)
 
 		# Setup & Start Display Loop Thread 
 		display_thread = threading.Thread(target=self._display_loop)
@@ -626,7 +627,7 @@ class Display:
 			draw.text((self.WIDTH // 2 - font_width // 2, self.HEIGHT - font_height - 6), text, font=font,
 					  fill=(0, 0, 0))
 
-		self._display_canvas(img)
+			self._display_canvas(img)
 
 	'''
 	 ====================== Input & Menu Code ========================
