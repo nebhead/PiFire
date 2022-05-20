@@ -34,8 +34,9 @@ Display class definition
 '''
 class Display:
 
-	def __init__(self, units='F'):
+	def __init__(self, buttonslevel='HIGH', rotation=0, units='F'):
 		# Init Global Variables and Constants
+		self.rotation = rotation
 		self.units = units
 		self.displayactive = False
 		self.in_data = None
@@ -60,8 +61,8 @@ class Display:
 
 	def _init_display_device(self):
 		# Init Device
-		self.serial = spi(port=0, device=0, gpio_DC=16, gpio_RST=20, bus_speed_hz=32000000, reset_hold_time=0.2, reset_release_time=0.2)
-		self.device = ili9341(self.serial, active_low=False, width=self.WIDTH, height=self.HEIGHT, gpio_LIGHT=12)
+		self.serial = spi(spi=spidev.SpiDev(), port=0, device=0, gpio_DC=16, gpio_RST=20, bus_speed_hz=32000000, reset_hold_time=0.2, reset_release_time=0.2)
+		self.device = ili9341(self.serial, active_low=False, width=self.WIDTH, height=self.HEIGHT, gpio_LIGHT=12, rotate=self.rotation)
 
 		# Setup & Start Display Loop Thread 
 		display_thread = threading.Thread(target=self._display_loop)

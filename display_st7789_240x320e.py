@@ -20,9 +20,8 @@ PiFire Display Interface Library
 import time
 import socket
 import qrcode
-import spidev
 import threading
-import ST7789 as ST7789  
+import ST7789 as ST7789
 from PIL import Image, ImageDraw, ImageFont
 from common import ReadControl, WriteControl  # Common Library for WebUI and Control Program
 from pyky040 import pyky040
@@ -32,8 +31,9 @@ Display class definition
 '''
 class Display:
 
-	def __init__(self, units='F'):
+	def __init__(self, buttonslevel='HIGH', rotation=0, units='F'):
 		# Init Global Variables and Constants
+		self.rotation = rotation
 		self.units = units
 		self.displayactive = False
 		self.in_data = None
@@ -43,12 +43,12 @@ class Display:
 
 		# Init Display Device, Input Device, Assets
 		self._init_globals()
-		self._init_assets() 
+		self._init_assets()
 		self._init_input()
 		self._init_display_device()
 
 	def _init_globals(self):
-		# Init constants and variables 
+		# Init constants and variables
 		self.WIDTH = 320
 		self.HEIGHT = 240
 		self.inc_pulse_color = True 
@@ -64,13 +64,15 @@ class Display:
 			dc=24,
 			backlight=5,
 			rst=25,
-			rotation=0,
-			spi_speed_hz=80 * 1000 * 1000
+			rotation=self.rotation,
+			width=320,
+			height=240,
+			spi_speed_hz=60 * 1000 * 1000
 		)
 		self.WIDTH = self.device.width
 		self.HEIGHT = self.device.height
 
-		# Setup & Start Display Loop Thread 
+		# Setup & Start Display Loop Thread
 		display_thread = threading.Thread(target=self._display_loop)
 		display_thread.start()
 
@@ -87,9 +89,9 @@ class Display:
 
 		# Init Device
 		self.encoder = pyky040.Encoder(CLK=CLK_PIN, DT=DT_PIN, SW=SW_PIN)
-		self.encoder.setup(scale_min=0, scale_max=100, step=1, inc_callback=self._inc_callback, dec_callback=self._dec_callback, sw_callback=self._click_callback, polling_interval=200) 
+		self.encoder.setup(scale_min=0, scale_max=100, step=1, inc_callback=self._inc_callback, dec_callback=self._dec_callback, sw_callback=self._click_callback, polling_interval=200)
 
-		# Setup & Start Input Thread 
+		# Setup & Start Input Thread
 		encoder_thread = threading.Thread(target=self.encoder.watch)
 		encoder_thread.start()
 
@@ -164,7 +166,7 @@ class Display:
 
 			if self.displaycommand == 'clear':
 				self.displayactive = False
-				self.displaytimeout = None 
+				self.displaytimeout = None
 				self.displaycommand = None
 				self._display_clear()
 
@@ -175,11 +177,11 @@ class Display:
 				self.displaycommand = None
 				time.sleep(3) # Hold splash screen for 3 seconds
 
-			if self.displaycommand == 'text': 
+			if self.displaycommand == 'text':
 				self.displayactive = True
 				self._display_text()
 				self.displaycommand = None
-				self.displaytimeout = time.time() + 10 
+				self.displaytimeout = time.time() + 10
 
 			if self.displaycommand == 'network':
 				self.displayactive = True
@@ -202,7 +204,7 @@ class Display:
 			elif (not self.displaytimeout) and (self.displayactive):
 				if (self.in_data is not None) and (self.status_data is not None):
 					self._display_current(self.in_data, self.status_data)
-			
+
 			time.sleep(0.1)
 
 	'''
@@ -222,14 +224,14 @@ class Display:
 	'''
 	============== Graphics / Display / Draw Methods ============= 
 	'''
-	def _init_assets(self): 
+	def _init_assets(self):
 		self._init_background()
 		self._init_splash()
 
 	def _init_background(self):
 		self.background = Image.open('background.jpg')
 		self.background = self.background.resize((self.WIDTH, self.HEIGHT))
-	
+
 	def _init_splash(self):
 		self.splash = Image.open('color-boot-splash.png')
 		(self.splash_width, self.splash_height) = self.splash.size
@@ -326,7 +328,7 @@ class Display:
 	def _display_splash(self):
 		# Create canvas
 		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
-		# Set the position 
+		# Set the position
 		position = ((self.WIDTH - self.splash_width)//2, (self.HEIGHT - self.splash_height)//2)
 
 		# Paste the splash screen onto the canvas
@@ -393,37 +395,29 @@ class Display:
 			draw.ellipse((90, 20, 230, 160), fill=(0, 0, 0))  # Black Circle for Center
 
 			# Grill Temp Label
-			font = ImageFont.truetype("trebuc.ttf", 16)
+			font = ImageFont.truetype("trebucbd.ttf", 16)
 			text = "Grill"
 			(font_width, font_height) = font.getsize(text)
 			draw.text((self.WIDTH // 2 - font_width // 2, 20), text, font=font, fill=(255, 255, 255))
 
-			# Grill Set Point (Small Centered Top)
-			if (in_data['GrillSetPoint'] > 0):
-				font = ImageFont.truetype("trebuc.ttf", 16)
-				text = ">" + str(in_data['GrillSetPoint'])[:5] + "<"
-				(font_width, font_height) = font.getsize(text)
-				draw.text((self.WIDTH // 2 - font_width // 2, 45 - font_height // 2), text, font=font,
-						  fill=(0, 200, 255))
-
 			# Grill Temperature (Large Centered)
 			if (self.units == 'F'):
-				font = ImageFont.truetype("trebuc.ttf", 80)
+				font = ImageFont.truetype("trebucbd.ttf", 76)
 				text = str(in_data['GrillTemp'])[:5]
 				(font_width, font_height) = font.getsize(text)
 				draw.text((self.WIDTH // 2 - font_width // 2, 40), text, font=font, fill=(255, 255, 255))
 			else:
-				font = ImageFont.truetype("trebuc.ttf", 55)
+				font = ImageFont.truetype("trebucbd.ttf", 51)
 				text = str(in_data['GrillTemp'])[:5]
 				(font_width, font_height) = font.getsize(text)
 				draw.text((self.WIDTH // 2 - font_width // 2, 56), text, font=font, fill=(255, 255, 255))
 
-			# Draw Grill Temp Scale Label
-			text = "°" + self.units
-			font = ImageFont.truetype("trebuc.ttf", 24)
-			(font_width, font_height) = font.getsize(text)
-			draw.text((self.WIDTH // 2 - font_width // 2, self.HEIGHT // 2 - font_height // 2 + 10), text, font=font,
-					  fill=(255, 255, 255))
+			# Grill Set Point (Small Centered Bottom)
+			if (in_data['GrillSetPoint'] > 0):
+				font = ImageFont.truetype("trebuc.ttf", 18)
+				text = ">" + str(in_data['GrillSetPoint'])[:5] + "<"
+				(font_width, font_height) = font.getsize(text)
+				draw.text((self.WIDTH//2 - font_width//2, 115), text, font=font, fill=(0,200,255))
 
 			# PROBE1 Temp Circle
 			draw.ellipse((10, self.HEIGHT // 2 + 10, 110, self.HEIGHT // 2 + 110), fill=(50, 50, 50))
@@ -445,20 +439,20 @@ class Display:
 			draw.ellipse((20, self.HEIGHT // 2 + 20, 100, self.HEIGHT // 2 + 100), fill=(0, 0, 0))
 
 			# PROBE1 Temp Label
-			font = ImageFont.truetype("trebuc.ttf", 16)
-			text = "Probe-1"
+			font = ImageFont.truetype("trebucbd.ttf", 16)
+			text = "P1"
 			(font_width, font_height) = font.getsize(text)
-			draw.text((60 - font_width // 2, self.HEIGHT // 2 + 40 - font_height // 2), text, font=font,
+			draw.text((60 - font_width // 2, self.HEIGHT // 2 + 28 - font_height // 2), text, font=font,
 					  fill=(255, 255, 255))
 
 			# PROBE1 Temperature (Large Centered)
 			if (self.units == 'F'):
-				font = ImageFont.truetype("trebuc.ttf", 36)
+				font = ImageFont.truetype("trebucbd.ttf", 38)
 			else:
-				font = ImageFont.truetype("trebuc.ttf", 30)
+				font = ImageFont.truetype("trebucbd.ttf", 32)
 			text = str(in_data['Probe1Temp'])[:5]
 			(font_width, font_height) = font.getsize(text)
-			draw.text((60 - font_width // 2, self.HEIGHT // 2 + 60 - font_height // 2), text, font=font,
+			draw.text((60 - font_width // 2, self.HEIGHT // 2 + 56 - font_height // 2), text, font=font,
 					  fill=(255, 255, 255))
 
 			# PROBE1 Set Point (Small Centered Bottom)
@@ -466,7 +460,7 @@ class Display:
 				font = ImageFont.truetype("trebuc.ttf", 16)
 				text = ">" + str(in_data['Probe1SetPoint'])[:5] + "<"
 				(font_width, font_height) = font.getsize(text)
-				draw.text((60 - font_width // 2, self.HEIGHT // 2 + 85 - font_height // 2), text, font=font,
+				draw.text((60 - font_width // 2, self.HEIGHT // 2 + 80 - font_height // 2), text, font=font,
 						  fill=(0, 200, 255))
 
 			# PROBE2 Temp Circle
@@ -491,20 +485,20 @@ class Display:
 						 fill=(0, 0, 0))
 
 			# PROBE2 Temp Label
-			font = ImageFont.truetype("trebuc.ttf", 16)
-			text = "Probe-2"
+			font = ImageFont.truetype("trebucbd.ttf", 16)
+			text = "P2"
 			(font_width, font_height) = font.getsize(text)
-			draw.text((self.WIDTH - 60 - font_width // 2, self.HEIGHT // 2 + 40 - font_height // 2), text, font=font,
+			draw.text((self.WIDTH - 60 - font_width // 2, self.HEIGHT // 2 + 28 - font_height // 2), text, font=font,
 					  fill=(255, 255, 255))
 
 			# PROBE2 Temperature (Large Centered)
 			if (self.units == 'F'):
-				font = ImageFont.truetype("trebuc.ttf", 36)
+				font = ImageFont.truetype("trebucbd.ttf", 38)
 			else:
-				font = ImageFont.truetype("trebuc.ttf", 30)
+				font = ImageFont.truetype("trebucbd.ttf", 32)
 			text = str(in_data['Probe2Temp'])[:5]
 			(font_width, font_height) = font.getsize(text)
-			draw.text((self.WIDTH - 60 - font_width // 2, self.HEIGHT // 2 + 60 - font_height // 2), text, font=font,
+			draw.text((self.WIDTH - 60 - font_width // 2, self.HEIGHT // 2 + 56 - font_height // 2), text, font=font,
 					  fill=(255, 255, 255))
 
 			# PROBE2 Set Point (Small Centered Bottom)
@@ -512,23 +506,23 @@ class Display:
 				font = ImageFont.truetype("trebuc.ttf", 16)
 				text = ">" + str(in_data['Probe2SetPoint'])[:5] + "<"
 				(font_width, font_height) = font.getsize(text)
-				draw.text((self.WIDTH - 60 - font_width // 2, self.HEIGHT // 2 + 85 - font_height // 2), text,
+				draw.text((self.WIDTH - 60 - font_width // 2, self.HEIGHT // 2 + 80 - font_height // 2), text,
 						  font=font, fill=(0, 200, 255))
 
 			# Active Outputs
 			''' Test of pulsing color '''
-			if self.inc_pulse_color == True: 
+			if self.inc_pulse_color == True:
 				if self.icon_color < 200:
 					self.icon_color += 20
-				else: 
-					self.inc_pulse_color = False 
-					self.icon_color -= 20 
+				else:
+					self.inc_pulse_color = False
+					self.icon_color -= 20
 			else:
 				if self.icon_color < 100:
 					self.inc_pulse_color = True
-					self.icon_color += 20 
+					self.icon_color += 20
 				else: 
-					self.icon_color -= 20 
+					self.icon_color -= 20
 
 			font = ImageFont.truetype("FA-Free-Solid.otf", 36)
 			if (status_data['outpins']['fan'] == 0):
@@ -552,8 +546,8 @@ class Display:
 			if (status_data['outpins']['auger'] == 0):
 				# A = Auger (Center Left)
 				self._draw_auger_icon(img)
-				self.auger_step += 1 
-				if self.auger_step >= 3: 
+				self.auger_step += 1
+				if self.auger_step >= 3:
 					self.auger_step = 0
 
 			# Notification Indicator (Right)
@@ -567,16 +561,14 @@ class Display:
 				(font_width, font_height) = font.getsize(text)
 				draw = self._rounded_rectangle(draw, (
 					7 * (self.WIDTH // 8) - 22, self.HEIGHT // 6 - 22, 7 * (self.WIDTH // 8) + 22,
-					self.HEIGHT // 6 + 22),
-											  5, (255, 255, 0))
+					self.HEIGHT // 6 + 22), 5, (255, 255, 0))
 				draw = self._rounded_rectangle(draw, (
 					7 * (self.WIDTH // 8) - 20, self.HEIGHT // 6 - 20, 7 * (self.WIDTH // 8) + 20,
-					self.HEIGHT // 6 + 20),
-											  5, (0, 0, 0))
+					self.HEIGHT // 6 + 20), 5, (0, 0, 0))
 				draw.text((7 * (self.WIDTH // 8) - font_width // 2 + 1, self.HEIGHT // 6 - font_height // 2), text,
 						  font=font, fill=(255, 255, 0))
 
-			# Smoke Plus Inidicator
+			# Smoke Plus Indicator
 			if (status_data['s_plus'] == True) and (
 					(status_data['mode'] == 'Smoke') or (status_data['mode'] == 'Hold')):
 				draw = self._rounded_rectangle(draw, (
@@ -597,7 +589,7 @@ class Display:
 						  font=font, fill=(0, 0, 0))
 
 			# Grill Hopper Level (Lower Center)
-			font = ImageFont.truetype("trebuc.ttf", 16)
+			font = ImageFont.truetype("trebucbd.ttf", 16)
 			text = "Hopper:" + str(status_data['hopper_level']) + "%"
 			(font_width, font_height) = font.getsize(text)
 			if (status_data['hopper_level'] > 70):
@@ -628,27 +620,27 @@ class Display:
 			draw.text((self.WIDTH // 2 - font_width // 2, self.HEIGHT - font_height - 6), text, font=font,
 					  fill=(0, 0, 0))
 
-		self._display_canvas(img)
+			self._display_canvas(img)
 
 	'''
 	 ====================== Input & Menu Code ========================
 	'''
 	def _event_detect(self):
 		'''
-		Called to detect input events from buttons, encoder, touch, etc. 
+		Called to detect input events from buttons, encoder, touch, etc.
 		'''
-		command = self.input_event  # Save to variable to prevent spurious changes 
+		command = self.input_event  # Save to variable to prevent spurious changes
 		if command:
 			self.displaytimeout = None  # If something is being displayed i.e. text, network, splash then override this
 
 			if (command != 'ENTER') and (self.input_counter == 0):
 				return
-			else: 
+			else:
 				if command not in ['UP', 'DOWN', 'ENTER']:
 					return
 
 				self.displaycommand = None
-				self.displaydata = None 
+				self.displaydata = None
 				self.input_event=None
 				self.menuactive = True
 				self.menutime = time.time()
@@ -676,14 +668,14 @@ class Display:
 				stepValue = 2  # change in temp each time button pressed
 				minTemp = 50  # minimum temperature set for hold
 				maxTemp = 260  # maximum temperature set for hold
-			
+
 			# Speed up step count if input is faster
 			if self.input_counter < 3:
 				pass
-			elif self.input_counter < 7: 
+			elif self.input_counter < 7:
 				stepValue *= 4
 			else:
-				stepValue *= 6 
+				stepValue *= 6
 
 			if (action == 'DOWN'):
 				self.menu['current']['option'] -= stepValue  # Step down by stepValue degrees
@@ -813,7 +805,7 @@ class Display:
 
 		# Create canvas
 		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
-		# Set the position & paste background image onto canvas 
+		# Set the position & paste background image onto canvas
 		position = (0, 0)
 		img.paste(self.background, position)
 		# Create drawing object
@@ -919,28 +911,28 @@ class Display:
 
 	def display_status(self, in_data, status_data):
 		'''
-		- Updates the current data for the display loop, if in a work mode 
+		- Updates the current data for the display loop, if in a work mode
 		'''
 		self.units = status_data['units']
 		self.displayactive = True
-		self.in_data = in_data 
-		self.status_data = status_data 
+		self.in_data = in_data
+		self.status_data = status_data
 
 	def display_splash(self):
-		''' 
-		- Calls Splash Screen 
+		'''
+		- Calls Splash Screen
 		'''
 		self.displaycommand = 'splash'
 
 	def clear_display(self):
-		''' 
-		- Clear display and turn off backlight 
+		'''
+		- Clear display and turn off backlight
 		'''
 		self.displaycommand = 'clear'
 
 	def display_text(self, text):
-		''' 
-		- Display some text 
+		'''
+		- Display some text
 		'''
 		self.displaycommand = 'text'
 		self.displaydata = text

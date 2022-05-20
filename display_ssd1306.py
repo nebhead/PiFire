@@ -18,6 +18,7 @@ PiFire Display Interface Library
 '''
 import time
 import threading
+import socket
 from luma.core.interface.serial import i2c
 from luma.core.render import canvas
 from luma.oled.device import ssd1306
@@ -28,7 +29,7 @@ Display class definition
 '''
 class Display:
 
-	def __init__(self, units='F'):
+	def __init__(self, buttonslevel='HIGH', rotation=0, units='F'):
 		# Init Global Variables and Constants
 		self.units = units
 		self.displayactive = False

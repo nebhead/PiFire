@@ -74,7 +74,14 @@
 				"image" : "ili9341-ky040.png",
 				"py_dependencies" : ["luma.lcd", "pyky040==0.1.4", "pillow==9.1.1"], 
 				"apt_dependencies" : [],
-				"settings_dependencies" : {}
+				"settings_dependencies" : {
+					"disp_rotation" : {
+						"friendly_name" : "Display Rotation",
+						"description" : "Select the display rotation angle (Usually 0 degrees)",
+						"options" : {"0" : "0 degrees", "2": "180 degrees", "1": "90 degrees"},
+						"settings" : ["globals", "disp_rotation"]
+					}
+				}
 			},
 			"ili9341em" : {
 				"friendly_name" : "ILI9341 TFT with Rotary Encoder Input (max31865 version)",
@@ -84,7 +91,14 @@
 				"image" : "ili9341-ky040.png",
 				"py_dependencies" : ["luma.lcd", "pyky040==0.1.4", "pillow==9.1.1"], 
 				"apt_dependencies" : [],
-				"settings_dependencies" : {}
+				"settings_dependencies" : {
+					"disp_rotation" : {
+						"friendly_name" : "Display Rotation",
+						"description" : "Select the display rotation angle (Usually 0 degrees)",
+						"options" : {"0" : "0 degrees", "2": "180 degrees", "1": "90 degrees"},
+						"settings" : ["globals", "disp_rotation"]
+					}
+				}
 			},
 			"ili9341" : {
 				"friendly_name" : "ILI9341 TFT",
@@ -94,7 +108,14 @@
 				"image" : "ili9341.png",
 				"py_dependencies" : ["luma.lcd", "pillow==9.1.1"], 
 				"apt_dependencies" : [],
-				"settings_dependencies" : {}
+				"settings_dependencies" : {
+					"disp_rotation" : {
+						"friendly_name" : "Display Rotation",
+						"description" : "Select the display rotation angle (Usually 0 degrees)",
+						"options" : {"0" : "0 degrees", "2": "180 degrees", "1": "90 degrees"},
+						"settings" : ["globals", "disp_rotation"]
+					}
+				}
 			},
 			"ili9341b" : {
 				"friendly_name" : "ILI9341 TFT with 3-Button Input",
@@ -103,13 +124,76 @@
 				"default" : true,
 				"image" : "ili9341b.png",
 				"py_dependencies" : ["luma.lcd", "pillow==9.1.1"], 
-				"apt_dependencies" : [],
+				"apt_dependencies" : ["python3-gpiozero"],
 				"settings_dependencies" : {
+					"disp_rotation" : {
+						"friendly_name" : "Display Rotation",
+						"description" : "Select the display rotation angle (Usually 0 degrees)",
+						"options" : {"0" : "0 degrees", "2": "180 degrees", "1": "90 degrees"},
+						"settings" : ["globals", "disp_rotation"]
+					},
 					"buttonslevel" : {
 						"friendly_name" : "Button Level",
 						"description" : "Select how your button hardware is configured. (HIGH - Pullups, LOW - Pulldowns)",
 						"options" : {"HIGH" : "Pullups", "LOW": "Pulldowns"},
 						"settings" : ["globals", "buttonslevel"]
+					}
+				}
+			},
+			"st7789_240x320b" : {
+				"friendly_name" : "ST7789 IPS Display 240x320px w/Button Input",
+				"filename" : "st7789_240x320b",
+				"description" : "The ST7789 is a 2inch LCD IPS Screen with a resolution of 240x320px and is an affordable spi display with color. This module supports the 240x320 version and provides the advanced color interface (similar to the ILI9341).  Pinout:  DIN = MOSI(Pin19), CLK=SCLK(Pin23), CS=CE0(Pin24), DC=GPIO24, RST=GPIO25, BL=GPIO05. This version of the module supports a three button input.",
+				"default" : false,
+				"image" : "st7789b.png",
+				"py_dependencies" : ["st7789", "pillow==9.1.1"],
+				"apt_dependencies" : ["python3-gpiozero", "python3-pil", "python3-numpy"],
+				"settings_dependencies" : {
+					"disp_rotation" : {
+						"friendly_name" : "Display Rotation",
+						"description" : "Select the display rotation angle (Usually 0 degrees)",
+						"options" : {"0" : "0 degrees", "180": "180 degrees", "90": "90 degrees"},
+						"settings" : ["globals", "disp_rotation"]
+					},
+					"buttonslevel" : {
+						"friendly_name" : "Button Level",
+						"description" : "Select how your button hardware is configured. (HIGH - Pullups, LOW - Pulldowns)",
+						"options" : {"HIGH" : "Pullups", "LOW": "Pulldowns"},
+						"settings" : ["globals", "buttonslevel"]
+					}
+				}
+			},
+			"st7789_240x320e" : {
+				"friendly_name" : "ST7789 IPS Display 240x320px w/ Rotary Encoder Input",
+				"filename" : "st7789_240x320e",
+				"description" : "The ST7789 is a 2inch LCD IPS Screen with a resolution of 240x320px and is an affordable spi display with color. This module supports the 240x320 version and provides the advanced color interface (similar to the ILI9341).  Pinout:  DIN = MOSI(Pin19), CLK=SCLK(Pin23), CS=CE0(Pin24), DC=GPIO24, RST=GPIO25, BL=GPIO05. This version supports input based on the KY-040 rotary encoder.",
+				"default" : false,
+				"image" : "st7789e.png",
+				"py_dependencies" : ["st7789", "pyky040==0.1.4", "pillow==9.1.1"],
+				"apt_dependencies" : ["python3-pil", "python3-numpy"],
+				"settings_dependencies" : {
+					"disp_rotation" : {
+						"friendly_name" : "Display Rotation",
+						"description" : "Select the display rotation angle (Usually 0 degrees)",
+						"options" : {"0" : "0 degrees", "180": "180 degrees", "90": "90 degrees"},
+						"settings" : ["globals", "disp_rotation"]
+					}
+				}
+			},
+			"st7789_240x320" : {
+				"friendly_name" : "ST7789 IPS Display 240x320px",
+				"filename" : "st7789_240x320",
+				"description" : "The ST7789 is a 2inch LCD IPS Screen with a resolution of 240x320px and is an affordable spi display with color. This module supports the 240x320 version and provides the advanced color interface (similar to the ILI9341).  Pinout:  DIN = MOSI(Pin19), CLK=SCLK(Pin23), CS=CE0(Pin24), DC=GPIO24, RST=GPIO25, BL=GPIO05.",
+				"default" : false,
+				"image" : "st7789p.png",
+				"py_dependencies" : ["st7789", "pillow==9.1.1"],
+				"apt_dependencies" : ["python3-pil", "python3-numpy"],
+				"settings_dependencies" : {
+					"disp_rotation" : {
+						"friendly_name" : "Display Rotation",
+						"description" : "Select the display rotation angle (Usually 0 degrees)",
+						"options" : {"0" : "0 degrees", "180": "180 degrees", "90": "90 degrees"},
+						"settings" : ["globals", "disp_rotation"]
 					}
 				}
 			},
@@ -197,16 +281,6 @@
 				"default" : false,
 				"image" : "st7789p.png",
 				"py_dependencies" : ["st7789"], 
-				"apt_dependencies" : ["python3-rpi.gpio", "python3-spidev", "python3-pil", "python3-numpy"],
-				"settings_dependencies" : {}			
-			},
-			"st7789e" : {
-				"friendly_name" : "ST7789 IPS Display 240x320px w/Encoder input",
-				"filename" : "st7789e",
-				"description" : "The ST7789 is a 2inch LCD IPS Screen with a resolution of 240x320px and is an affordable SPI display.  This one can be complicated to find the right compatible display, so your mileage may vary.  This module supports the 240x320 version and provides the advanced color interface (similar to the ILI9341).  Pinout:  DIN = MOSI(Pin19), CLK=SCLK(Pin23), CS=CE0(Pin24), DC=GPIO24, RST=GPIO25, BL=GPIO05.  This version also supports an KY040 encoder for input.",
-				"default" : false,
-				"image" : "st7789p.png",
-				"py_dependencies" : ["st7789", "pyky040==0.1.4"], 
 				"apt_dependencies" : ["python3-rpi.gpio", "python3-spidev", "python3-pil", "python3-numpy"],
 				"settings_dependencies" : {}			
 			}

@@ -30,7 +30,7 @@ Display class definition
 '''
 class Display:
 
-	def __init__(self, buttonslevel='HIGH', units='F'):
+	def __init__(self, buttonslevel='HIGH', rotation=0, units='F'):
 		# Init Global Variables and Constants
 		self.buttonslevel = buttonslevel
 		self.units = units

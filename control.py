@@ -65,6 +65,7 @@ outpins = settings['outpins']
 inpins = settings['inpins']
 triggerlevel = settings['globals']['triggerlevel']
 buttonslevel = settings['globals']['buttonslevel']
+disp_rotation = settings['globals']['disp_rotation']
 units = settings['globals']['units']
 
 if triggerlevel == 'LOW':
@@ -177,13 +178,10 @@ except:
 		raise
 
 try:
-	if str(settings['modules']['display']).endswith('b'):
-		display_device = DisplayModule.Display(buttonslevel=buttonslevel, units=units)
-	else:
-		display_device = DisplayModule.Display(units=units)
+	display_device = DisplayModule.Display(buttonslevel=buttonslevel, rotation=disp_rotation, units=units)
 except:
 	from display_none import Display  # Simulated Library for controlling the grill platform
-	display_device = Display(units=units)
+	display_device = Display(buttonslevel=buttonslevel, rotation=disp_rotation, units=units)
 	error_event = f'An error occured configuring the [{settings["modules"]["display"]}] display object.  The "display_none" module has been loaded instead.  This sometimes means that the hardware is not connected properly, or the module is not configured.  Please run the configuration wizard again from the admin panel to fix this issue.'
 	errors.append(error_event)
 	WriteErrors(errors)

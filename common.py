@@ -56,6 +56,7 @@ def DefaultSettings():
 		'page_theme' : 'light',
 		'triggerlevel' : 'LOW',
 		'buttonslevel' : 'HIGH',
+        'disp_rotation' : 0,
 		'shutdown_timer' : 60,
 		'startup_timer' : 240,
 		'auto_power_off' : False,
