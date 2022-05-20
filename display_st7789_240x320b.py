@@ -408,7 +408,7 @@ class Display:
             font = ImageFont.truetype("trebucbd.ttf", 16)
             text = "Grill"
             (font_width, font_height) = font.getsize(text)
-            draw.text((self.WIDTH // 2 - font_width // 2, 20), text, font=font, fill=(255, 255, 255))
+            draw.text((self.WIDTH // 2 - font_width // 2, 25), text, font=font, fill=(255, 255, 255))
 
             # Grill Temperature (Large Centered)
             if (self.units == 'F'):
@@ -427,7 +427,7 @@ class Display:
                 font = ImageFont.truetype("trebuc.ttf", 18)
                 text = ">" + str(in_data['GrillSetPoint'])[:5] + "<"
                 (font_width, font_height) = font.getsize(text)
-                draw.text((self.WIDTH//2 - font_width//2, 115), text, font=font, fill=(0,200,255))
+                draw.text((self.WIDTH//2 - font_width//2, 118), text, font=font, fill=(0,200,255))
 
             # PROBE1 Temp Circle
             draw.ellipse((10, self.HEIGHT // 2 + 10, 110, self.HEIGHT // 2 + 110), fill=(50, 50, 50))
