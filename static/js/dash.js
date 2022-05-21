@@ -536,16 +536,19 @@ $(document).ready(function(){
 			contentType: "application/json; charset=utf-8",
             traditional: true,
             success: function (data) {
-                console.log('Notification for Grill Requested. ');
+                console.log('Notification for Grill Requested.');
             }
 		});
 	});
 
 	$("#grill_notify_disable").click(function(){
-		var postdata = { 
+		var postdata = {
+			'setpoints' : {
+				'grill' : 0
+			},
 			'notify_req' : {
 				'grill' : false
-			},
+			}
 		};
 		req = $.ajax({
 			url : '/api/control',
@@ -554,7 +557,7 @@ $(document).ready(function(){
 			contentType: "application/json; charset=utf-8",
             traditional: true,
             success: function (data) {
-                console.log('Notification for Probe 1 Cancelled.');
+                console.log('Notification for Grill Cancelled.');
             }
 		});
 	});
@@ -588,13 +591,16 @@ $(document).ready(function(){
 			contentType: "application/json; charset=utf-8",
             traditional: true,
             success: function (data) {
-                console.log('Notification for Probe 1 Requested. Shutdown = ' + shutdown);
+                console.log('Notification for Probe 1 Requested. Shutdown = ' + shutdown + ' Keep Warm = ' + keepWarm);
             }
 		});
 	});
 
 	$("#p1_notify_disable").click(function(){
-		var postdata = { 
+		var postdata = {
+			'setpoints' : {
+				'probe1' : 0
+			},
 			'notify_req' : {
 				'probe1' : false
 			},
@@ -644,13 +650,16 @@ $(document).ready(function(){
 			contentType: "application/json; charset=utf-8",
             traditional: true,
             success: function (data) {
-                console.log('Notification for Probe 1 Requested. Shutdown = ' + shutdown);
+                console.log('Notification for Probe 2 Requested. Shutdown = ' + shutdown + ' Keep Warm = ' + keepWarm);
             }
 		});
 	});
 
 	$("#p2_notify_disable").click(function(){
-		var postdata = { 
+		var postdata = {
+			'setpoints' : {
+				'probe2' : 0
+			},
 			'notify_req' : {
 				'probe2' : false
 			},
@@ -666,7 +675,7 @@ $(document).ready(function(){
 			contentType: "application/json; charset=utf-8",
             traditional: true,
             success: function (data) {
-                console.log('Notification for Probe 1 Cancelled.');
+                console.log('Notification for Probe 2 Cancelled.');
             }
 		});
 	});
