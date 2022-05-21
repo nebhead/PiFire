@@ -1931,7 +1931,7 @@ def get_app_data(action=None, type=None):
 				 'logs_result' : logs_result,
 				 'error_message' : error_msg }
 	else:
-		return {'response': {'result':'error', 'message':'Error: Recieved request without valid action'}}
+		return {'response': {'result':'error', 'message':'Error: Received request without valid action'}}
 
 @socketio.on('post_app_data')
 def post_app_data(action=None, type=None, json_data=None):
@@ -1961,7 +1961,7 @@ def post_app_data(action=None, type=None, json_data=None):
 				else:
 					return {'response': {'result':'error', 'message':'Error: Key not found in control'}}
 		else:
-			return {'response': {'result':'error', 'message':'Error: Recieved request without valid type'}}
+			return {'response': {'result':'error', 'message':'Error: Received request without valid type'}}
 
 	elif action == 'admin_action':
 		if type == 'clear_history':
@@ -2005,7 +2005,7 @@ def post_app_data(action=None, type=None, json_data=None):
 			restart_scripts()
 			return {'response': {'result':'success'}}
 		else:
-			return {'response': {'result':'error', 'message':'Error: Recieved request without valid type'}}
+			return {'response': {'result':'error', 'message':'Error: Received request without valid type'}}
 
 	elif action == 'units_action':
 		if type == 'f_units' and settings['globals']['units'] == 'C':
@@ -2150,7 +2150,7 @@ def post_app_data(action=None, type=None, json_data=None):
 			else:
 				return {'response': {'result':'error', 'message':'Error: Function not specified'}}
 		else:
-			return {'response': {'result':'error', 'message':'Error: Recieved request without valid type'}}
+			return {'response': {'result':'error', 'message':'Error: Received request without valid type'}}
 
 	elif action == 'timer_action':
 		control = ReadControl()
@@ -2169,7 +2169,7 @@ def post_app_data(action=None, type=None, json_data=None):
 					WriteControl(control)
 					return {'response': {'result':'success'}}
 				else:
-					return {'response': {'result':'error', 'message':'Error: Start time not specifed'}}
+					return {'response': {'result':'error', 'message':'Error: Start time not specified'}}
 			else:
 				now = time.time()
 				control['timer']['end'] = (control['timer']['end'] - control['timer']['paused']) + now
@@ -2195,9 +2195,9 @@ def post_app_data(action=None, type=None, json_data=None):
 			WriteControl(control)
 			return {'response': {'result':'success'}}
 		else:
-			return {'response': {'result':'error', 'message':'Error: Recieved request without valid type'}}
+			return {'response': {'result':'error', 'message':'Error: Received request without valid type'}}
 	else:
-		return {'response': {'result':'error', 'message':'Error: Recieved request without valid action'}}
+		return {'response': {'result':'error', 'message':'Error: Received request without valid action'}}
 
 @socketio.on('post_updater_data')
 def updater_action(type='none', branch=None):
@@ -2237,8 +2237,16 @@ def updater_action(type='none', branch=None):
 				return {'response': {'result':'error', 'message':'Error: ' + output }}
 		else:
 			return {'response': {'result':'error', 'message':'Error: Branch not specified in request'}}
+
+	elif type == 'update_remote_branches':
+		if isRaspberryPi():
+			os.system('python3 %s %s &' % ('updater.py', '-r'))	 # Update branches from remote
+			time.sleep(2)
+			return {'response': {'result':'success', 'message': 'Branches successfully updated from remote' }}
+		else:
+			return {'response': {'result':'error', 'message': 'Could not update branches from remote' }}
 	else:
-		return {'response': {'result':'error', 'message':'Error: Recieved request without valid action'}}
+		return {'response': {'result':'error', 'message':'Error: Received request without valid action'}}
 
 @socketio.on('post_restore_data')
 def post_restore_data(type='none', filename='none', json_data=None):
@@ -2264,7 +2272,7 @@ def post_restore_data(type='none', filename='none', json_data=None):
 		else:
 			return {'response': {'result':'error', 'message':'Error: Filename or JSON data not supplied'}}
 	else:
-		return {'response': {'result':'error', 'message':'Error: Recieved request without valid type'}}
+		return {'response': {'result':'error', 'message':'Error: Received request without valid type'}}
 
 '''
 Main Program Start
