@@ -164,7 +164,7 @@ class Display:
 			if self.displaycommand == 'splash':
 				self._display_splash()
 				self.displaytimeout = time.time() + 3
-				self.displaycommand = None
+				self.displaycommand = 'clear'
 				pygame.time.delay(3000) # Hold splash screen for 3 seconds
 
 			if self.displaycommand == 'text': 
@@ -188,11 +188,11 @@ class Display:
 					self.menuactive = False
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
+					if not self.displayactive:
+						self.displaycommand = 'clear'
 			elif (not self.displaytimeout) and (self.displayactive):
 				if (self.in_data is not None) and (self.status_data is not None):
 					self._display_current(self.in_data, self.status_data)
-			elif (not self.displaytimeout):
-				self.displaycommand = 'clear'
 
 		pygame.quit()
 
@@ -288,6 +288,7 @@ class Display:
 		return(canvas)
 
 	def _display_clear(self):
+		print(f'[{time.time()}]  Screen Cleared.')
 		self.display_surface.fill((0,0,0))
 		pygame.display.update() 
 

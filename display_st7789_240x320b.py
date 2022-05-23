@@ -185,7 +185,7 @@ class Display:
 			if self.displaycommand == 'splash':
 				self._display_splash()
 				self.displaytimeout = time.time() + 3
-				self.displaycommand = None
+				self.displaycommand = 'clear'
 				time.sleep(3) # Hold splash screen for 3 seconds
 
 			if self.displaycommand == 'text': 
@@ -209,11 +209,11 @@ class Display:
 					self.menuactive = False
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
+					if not self.displayactive:
+						self.displaycommand = 'clear'
 			elif (not self.displaytimeout) and (self.displayactive):
 				if (self.in_data is not None) and (self.status_data is not None):
 					self._display_current(self.in_data, self.status_data)
-			elif (not self.displaytimeout):
-				self.displaycommand = 'clear'
 
 			time.sleep(0.1)
 

@@ -61,7 +61,6 @@ class Display:
 		# Init Device
 		self.serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25, bus_speed_hz=32000000, reset_hold_time=0.2, reset_release_time=0.2)
 		self.device = ili9341(self.serial, active_low=False, width=self.WIDTH, height=self.HEIGHT, gpio_LIGHT=5, rotate=self.rotation)
-
 		# Setup & Start Display Loop Thread 
 		display_thread = threading.Thread(target=self._display_loop)
 		display_thread.start()
@@ -163,7 +162,7 @@ class Display:
 			if self.displaycommand == 'splash':
 				self._display_splash()
 				self.displaytimeout = time.time() + 3
-				self.displaycommand = None
+				self.displaycommand = 'clear'
 				time.sleep(3) # Hold splash screen for 3 seconds
 
 			if self.displaycommand == 'text': 
@@ -187,11 +186,11 @@ class Display:
 					self.menuactive = False
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
+					if not self.displayactive:
+						self.displaycommand = 'clear'
 			elif (not self.displaytimeout) and (self.displayactive):
 				if (self.in_data is not None) and (self.status_data is not None):
 					self._display_current(self.in_data, self.status_data)
-			elif (not self.displaytimeout):
-				self.displaycommand = 'clear'
 
 			time.sleep(0.1)
 
@@ -307,8 +306,8 @@ class Display:
 
 	def _display_canvas(self, canvas):
 		# Display canvas to screen for ILI9341
-		self.device.backlight(True)
 		self.device.show()
+		self.device.backlight(True)
 		self.device.display(canvas)
 
 	def _display_splash(self):
