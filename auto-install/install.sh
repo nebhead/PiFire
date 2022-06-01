@@ -95,6 +95,7 @@ echo "*************************************************************************"
 echo "dtparam=spi=on" | $SUDO tee -a /boot/config.txt > /dev/null
 # Enable I2C - Needed for some displays, ADCs, distance sensors
 echo "dtparam=i2c_arm=on" | $SUDO tee -a /boot/config.txt > /dev/null
+echo "i2c-dev" | $SUDO tee -a /etc/modules > /dev/null
 
 # Grab project files
 clear
