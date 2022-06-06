@@ -23,7 +23,11 @@
 										<canvas id="HistoryChart" class="table"></canvas>
 									</div>
 								</div>
-			        </div> <!-- End of card body -->
+								<div class="custom-control custom-switch text-secondary">
+									<input type="checkbox" class="custom-control-input" id="annotation_enabled" checked>
+									<label class="custom-control-label" for="annotation_enabled">Annotation Enable</label>
+								</div>
+					</div> <!-- End of card body -->
 			        <div class="card-footer bg-light">
 								<form name="setmins" action="/history/setmins" method="POST">
 									<div class="input-group">
@@ -74,9 +78,12 @@
 	<script src="{{ url_for('static', filename='js/luxon.min.js') }}"></script>
 	<script src="{{ url_for('static', filename='js/chartjs-adapter-luxon.js') }}"></script>
 	<script src="{{ url_for('static', filename='js/chartjs-plugin-streaming.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/chartjs-plugin-annotation.min.js') }}"></script>
 
 	<script>
 	var paused = false;
+
+	var annotation_enabled = true;
 
 	var display_mins = {{ num_mins }};
 	var label_list = {{ label_time_list | safe }}; 
@@ -86,6 +93,7 @@
 	var probe1_settemp_list = {{ probe1_settemp_list }};
 	var probe2_temp_list = {{ probe2_temp_list }};
 	var probe2_settemp_list = {{ probe2_settemp_list }};
+	var annotation_list = {{ annotations|tojson|safe }};
 
 	{% if probes_enabled[0] == 0 %}
 	var probe0_hidden = true;

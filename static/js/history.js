@@ -186,6 +186,9 @@ $(document).ready(function(){
 						labels: {
 							usePointStyle: true,
 						}
+					}, 
+					annotation: {
+						annotations: annotation_list
 					}
 				},
 				scales: {
@@ -226,7 +229,11 @@ $(document).ready(function(){
 									if ((data.probe2_settemp > 0) && (chart.data.datasets[5].hidden == true) && (chart.data.datasets[4].hidden == false)) {
 										chart.data.datasets[5].hidden = false;
 									};
-
+									if (annotation_enabled == true) {
+										chart.options.plugins.annotation.annotations = data.annotations;
+									} else {
+										chart.options.plugins.annotation.annotations = {};
+									};
 								});
 							}
 						}
@@ -288,9 +295,14 @@ $(document).ready(function(){
 				temperatureCharts.update();
             }
 		});
-
-		
 	});
 
+	$("#annotation_enabled").change(function() {
+		if(document.getElementById('annotation_enabled').checked) {
+			annotation_enabled = true;
+		} else {
+			annotation_enabled = false;
+		};
+	});
 }); // End of Document Ready Function 
 
