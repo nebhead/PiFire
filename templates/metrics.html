@@ -1,6 +1,6 @@
 {% extends 'base.html' %} 
 
-{% from "_macro_metrics.html" import render_startup, render_stop, render_smoke, render_hold, render_shutdown, render_reignite %}
+{% from "_macro_metrics.html" import render_startup, render_stop, render_smoke, render_hold, render_shutdown, render_reignite, render_manual, render_monitor %}
 
 {% block title %}Metrics{% endblock %} 
 
@@ -34,6 +34,10 @@
 		{{ render_shutdown(item, settings['globals']['units']) }}
 		{% elif item['mode'] == 'Error' %}
 		{{ render_stop(item, settings['globals']['units']) }}
+		{% elif item['mode'] == 'Monitor' %}
+		{{ render_monitor(item, settings['globals']['units']) }}
+		{% elif item['mode'] == 'Manual' %}
+		{{ render_manual(item, settings['globals']['units']) }}
 		{% else %}
 		{{ render_reignite(item, settings['globals']['units']) }}
 		{% endif %}

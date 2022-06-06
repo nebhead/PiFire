@@ -787,6 +787,12 @@ def Monitor(grill_platform, adc_device, display_device, dist_device):
 	control = ReadControl()
 	pelletdb = ReadPelletDB()
 
+	# Write Metrics
+	WriteMetrics(new_metric=True)
+	metrics = ReadMetrics()
+	metrics['mode'] = str(control['mode'])
+	WriteMetrics(metrics)
+
 	# Initialize all temperature objects
 	AvgGT = TempQueue(units=settings['globals']['units'])
 	AvgP1 = TempQueue(units=settings['globals']['units'])
@@ -979,6 +985,10 @@ def Monitor(grill_platform, adc_device, display_device, dist_device):
 	event = 'Monitor mode ended.'
 	WriteLog(event)
 
+	# Log the end time
+	metrics['endtime'] = time.time()
+	WriteMetrics(metrics)
+
 	return ()
 
 
@@ -991,6 +1001,12 @@ def Manual_Mode(grill_platform, adc_device, display_device, dist_device):
 	settings = ReadSettings()
 	control = ReadControl()
 	pelletdb = ReadPelletDB()
+
+	# Write Metrics
+	WriteMetrics(new_metric=True)
+	metrics = ReadMetrics()
+	metrics['mode'] = str(control['mode'])
+	WriteMetrics(metrics)
 
 	event = 'Manual Mode started.'
 	WriteLog(event)
@@ -1179,6 +1195,10 @@ def Manual_Mode(grill_platform, adc_device, display_device, dist_device):
 
 	event = 'Manual mode ended.'
 	WriteLog(event)
+
+	# Log the end time
+	metrics['endtime'] = time.time()
+	WriteMetrics(metrics)
 
 	return ()
 

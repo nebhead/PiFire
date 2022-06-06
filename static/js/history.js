@@ -203,7 +203,7 @@ $(document).ready(function(){
 								$.get("/historyupdate/stream", function(data){
 									// Reverse logic for auto-refresh button
 									if ($("#autorefresh").val() == 'on') {
-										var paused = true;
+										paused = true;
 										temperatureCharts.options.scales.x.realtime.pause = true;
 										document.getElementById("autorefresh").className = "btn btn-secondary text-light float-right";
 										document.getElementById("autorefresh").innerHTML = "<i class=\"fas fa-sync-alt\"></i> OFF";
@@ -229,6 +229,7 @@ $(document).ready(function(){
 									if ((data.probe2_settemp > 0) && (chart.data.datasets[5].hidden == true) && (chart.data.datasets[4].hidden == false)) {
 										chart.data.datasets[5].hidden = false;
 									};
+
 									if (annotation_enabled == true) {
 										chart.options.plugins.annotation.annotations = data.annotations;
 									} else {
@@ -255,11 +256,13 @@ $(document).ready(function(){
 			temperatureCharts.options.scales.x.realtime.pause = true;
 			document.getElementById("autorefresh").className = "btn btn-secondary text-light float-right";
 			document.getElementById("autorefresh").innerHTML = "<i class=\"fas fa-sync-alt\"></i> OFF";
+			paused = true;
 		} else {
 			$("#autorefresh").val('off');
 			temperatureCharts.options.scales.x.realtime.pause = false;
 			document.getElementById("autorefresh").className = "btn btn-outline-primary border-white text-white float-right";
 			document.getElementById("autorefresh").innerHTML = "<i class=\"fas fa-sync-alt\"></i> ON";
+			paused = false;
 		};
 
 	});
@@ -290,7 +293,7 @@ $(document).ready(function(){
 				temperatureCharts.data.datasets[3].data = data.probe1_settemp_list;
 				temperatureCharts.data.datasets[4].data = data.probe2_temp_list;
 				temperatureCharts.data.datasets[5].data = data.probe2_settemp_list;
-				
+				temperatureCharts.options.plugins.annotation.annotations = data.annotations;
 				// Update Chart
 				temperatureCharts.update();
             }
@@ -298,10 +301,24 @@ $(document).ready(function(){
 	});
 
 	$("#annotation_enabled").change(function() {
+		
 		if(document.getElementById('annotation_enabled').checked) {
 			annotation_enabled = true;
 		} else {
 			annotation_enabled = false;
+		};
+
+		// If streaming is paused, update chart manually
+		if(paused == true) {
+			if (annotation_enabled == true) {
+				$.get("/historyupdate/stream", function(data) {
+					temperatureCharts.options.plugins.annotation.annotations = data.annotations;
+				});
+			} else {
+				temperatureCharts.options.plugins.annotation.annotations = {};
+			};			
+			// Update Chart
+			temperatureCharts.update();
 		};
 	});
 }); // End of Document Ready Function 

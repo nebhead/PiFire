@@ -245,7 +245,18 @@ def historyupdate(action=None):
 			data_blob = {}
 			num_items = int(requestjson['num_mins']) * 20  # Calculate number of items requested 
 			data_blob = prepare_data(num_items, True, settings['history_page']['datapoints'])
-			return jsonify({ 'grill_temp_list' : data_blob['grill_temp_list'], 'grill_settemp_list' : data_blob['grill_settemp_list'], 'probe1_temp_list' : data_blob['probe1_temp_list'], 'probe1_settemp_list' : data_blob['probe1_settemp_list'], 'probe2_temp_list' : data_blob['probe2_temp_list'], 'probe2_settemp_list' : data_blob['probe2_settemp_list'], 'label_time_list' : data_blob['label_time_list'] })
+
+			json_data = { 
+				'grill_temp_list' : data_blob['grill_temp_list'],
+				'grill_settemp_list' : data_blob['grill_settemp_list'],
+				'probe1_temp_list' : data_blob['probe1_temp_list'],
+				'probe1_settemp_list' : data_blob['probe1_settemp_list'],
+				'probe2_temp_list' : data_blob['probe2_temp_list'],
+				'probe2_settemp_list' : data_blob['probe2_settemp_list'],
+				'label_time_list' : data_blob['label_time_list'], 
+				'annotations' : prepare_annotations()
+			}
+			return jsonify(json_data)
 
 	# Legacy Flow - Which may eventually be retired 
 	data_blob = {}
@@ -1664,6 +1675,8 @@ def prepare_annotations():
 			color = 'blue'
 		elif mode == 'Smoke':
 			color = 'grey'
+		elif mode in ['Monitor', 'Manual']:
+			color = 'purple'
 		annotation = {
 						'type' : 'line',
 						'xMin' : starttime,
