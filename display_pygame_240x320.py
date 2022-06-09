@@ -279,14 +279,23 @@ class Display:
 		else:
 			endpoint = ((360 * in_data['GrillTemp']) // 300) + 90
 		draw.pieslice((80, 10, 240, 170), start=90, end=endpoint, fill=(200, 0, 0))  # Red Arc for Temperature
-		if (in_data['GrillSetPoint'] > 0):
+		if (in_data['GrillSetPoint'] > 0) and (status_data['mode'] == 'Hold'):
 			if self.units == 'F':
 				setpoint = ((360 * in_data['GrillSetPoint']) // 600) + 90
 			else:
 				setpoint = ((360 * in_data['GrillSetPoint']) // 300) + 90
 			draw.pieslice((80, 10, 240, 170), start=setpoint - 2, end=setpoint + 2,
-							fill=(255, 255, 0))  # Yellow Arc for SetPoint
+							fill=(0, 200, 255))  # Blue Arc for SetPoint
+		if (in_data['GrillNotifyPoint'] > 0) and (status_data['notify_req']['grill']):
+			if self.units == 'F':
+				setpoint = ((360 * in_data['GrillNotifyPoint']) // 600) + 90
+			else:
+				setpoint = ((360 * in_data['GrillNotifyPoint']) // 300) + 90
+			draw.pieslice((80, 10, 240, 170), start=setpoint - 2, end=setpoint + 2,
+							fill=(255, 255, 0))  # Yellow Arc for Notify Point
+
 		draw.ellipse((90, 20, 230, 160), fill=(0, 0, 0))  # Black Circle for Center
+
 
 		# Grill Temp Label
 		font = ImageFont.truetype("trebuc.ttf", 16)
@@ -295,7 +304,7 @@ class Display:
 		draw.text((self.WIDTH // 2 - font_width // 2, 20), text, font=font, fill=(255, 255, 255))
 
 		# Grill Set Point (Small Centered Top)
-		if (in_data['GrillSetPoint'] > 0):
+		if (in_data['GrillSetPoint'] > 0) and (status_data['mode'] == 'Hold'):
 			font = ImageFont.truetype("trebuc.ttf", 16)
 			text = ">" + str(in_data['GrillSetPoint'])[:5] + "<"
 			(font_width, font_height) = font.getsize(text)

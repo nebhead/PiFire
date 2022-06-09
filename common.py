@@ -243,7 +243,8 @@ def DefaultControl():
 	control['setpoints'] = {
 		'grill' : 0,
 		'probe1' : 0,
-		'probe2' : 0
+		'probe2' : 0,
+		'grill_notify' : 0
 	}
 
 	control['notify_req'] = {
@@ -785,6 +786,7 @@ def ReadHistory(num_items=0, flushhistory=False):
 			cmdsts.hset('control:current', 'Probe2Temp', 0)
 			event = 'WARNING: History data flushed.'
 			WriteLog(event)
+			WriteMetrics(flush=True)
 	else:
 		if cmdsts.exists('control:history'):
 			list_length = cmdsts.llen('control:history') 

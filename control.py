@@ -620,6 +620,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 		in_data['Probe1SetPoint'] = control['setpoints']['probe1']
 		in_data['Probe2Temp'] = AvgP2.average()
 		in_data['Probe2SetPoint'] = control['setpoints']['probe2']
+		in_data['GrillNotifyPoint'] = control['setpoints']['grill_notify']
 
 		if settings['globals']['four_probes']:
 			if settings['grill_probe_settings']['grill_probe_enabled'][2] == 1:
@@ -935,6 +936,7 @@ def Monitor(grill_platform, adc_device, display_device, dist_device):
 		in_data['Probe1SetPoint'] = control['setpoints']['probe1']
 		in_data['Probe2Temp'] = AvgP2.average()
 		in_data['Probe2SetPoint'] = control['setpoints']['probe2']
+		in_data['GrillNotifyPoint'] = control['setpoints']['grill_notify']
 
 		if settings['globals']['four_probes']:
 			if settings['grill_probe_settings']['grill_probe_enabled'][2] == 1:
@@ -1158,6 +1160,7 @@ def Manual_Mode(grill_platform, adc_device, display_device, dist_device):
 		in_data['Probe1SetPoint'] = control['setpoints']['probe1']
 		in_data['Probe2Temp'] = AvgP2.average()
 		in_data['Probe2SetPoint'] = control['setpoints']['probe2']
+		in_data['GrillNotifyPoint'] = control['setpoints']['grill_notify']
 
 		if settings['globals']['four_probes']:
 			if settings['grill_probe_settings']['grill_probe_enabled'][2] == 1:
@@ -1256,8 +1259,8 @@ def SendPushoverNotification(notifyevent, control, settings, pelletdb):
 
 	if "Grill_Temp_Achieved" in notifyevent:
 		notifymessage = "The Grill setpoint of " + str(
-			control['setpoints']['grill']) + unit + " was achieved at " + str(now)
-		subjectmessage = "Grill at " + str(control['setpoints']['grill']) + unit + " at " + str(now)
+			control['setpoints']['grill_notify']) + unit + " was achieved at " + str(now)
+		subjectmessage = "Grill at " + str(control['setpoints']['grill_notify']) + unit + " at " + str(now)
 	elif "Probe1_Temp_Achieved" in notifyevent:
 		notifymessage = "The Probe 1 setpoint of " + str(
 			control['setpoints']['probe1']) + unit + " was achieved at " + str(now)
@@ -1322,8 +1325,8 @@ def SendPushBulletNotification(notifyevent, control, settings, pelletdb):
 	unit = settings['globals']['units']
 	if "Grill_Temp_Achieved" in notifyevent:
 		notifymessage = "The Grill setpoint of " + str(
-			control['setpoints']['grill']) + unit + " was achieved at " + str(now)
-		subjectmessage = "Grill at " + str(control['setpoints']['grill']) + unit + " at " + str(now)
+			control['setpoints']['grill_notify']) + unit + " was achieved at " + str(now)
+		subjectmessage = "Grill at " + str(control['setpoints']['grill_notify']) + unit + " at " + str(now)
 	elif "Probe1_Temp_Achieved" in notifyevent:
 		notifymessage = "The Probe 1 setpoint of " + str(
 			control['setpoints']['probe1']) + unit + " was achieved at " + str(now)
@@ -1381,7 +1384,7 @@ def SendOneSignalNotification(notifyevent, control, settings, pelletdb):
 
 	if "Grill_Temp_Achieved" in notifyevent:
 		titlemessage = "Grill Setpoint Achieved"
-		bodymessage = "Grill setpoint of " + str(control['setpoints']['grill']) + unit + " achieved at " + str(
+		bodymessage = "Grill setpoint of " + str(control['setpoints']['grill_notify']) + unit + " achieved at " + str(
 			time) + " on " + str(day)
 		channel = 'pifire_temp_alerts'
 	elif "Probe1_Temp_Achieved" in notifyevent:
@@ -1467,7 +1470,7 @@ def SendOneSignalNotification(notifyevent, control, settings, pelletdb):
 
 def SendIFTTTNotification(notifyevent, control, settings, pelletdb):
 	if "Grill_Temp_Achieved" in notifyevent:
-		query_args = {"value1": str(control['setpoints']['grill'])}
+		query_args = {"value1": str(control['setpoints']['grill_notify'])}
 	elif "Probe1_Temp_Achieved" in notifyevent:
 		query_args = {"value1": str(control['setpoints']['probe1'])}
 	elif "Probe2_Temp_Achieved" in notifyevent:
@@ -1542,12 +1545,12 @@ def CheckNotify(in_data, control, settings, pelletdb, grill_platform):
 		SendNotifications('GRILL_STATE', control, settings, pelletdb, in_data, grill_platform)
 
 	if control['notify_req']['grill']:
-		if in_data['GrillTemp'] >= control['setpoints']['grill']:
+		if in_data['GrillTemp'] >= control['setpoints']['grill_notify']:
 			# control = ReadControl()  # Read Modify Write
 			control['notify_req']['grill'] = False
 			WriteControl(control)
 			SendNotifications("Grill_Temp_Achieved", control, settings, pelletdb)
-			notify_event = "Grill Temp of " + str(control['setpoints']['grill']) + settings['globals'][
+			notify_event = "Grill Temp of " + str(control['setpoints']['grill_notify']) + settings['globals'][
 				'units'] + " Achieved"
 			WriteLog(notify_event)
 

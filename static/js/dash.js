@@ -39,7 +39,7 @@ function updateCards(data, init) {
             // If notify request is active, change the button highlighting
             document.getElementById("grill_notify_btn").className = "btn btn-primary";
             // Change the text to indicate setpoint
-			$("#grill_notify_btn").html("<i class=\"fas fa-bell\"></i> " + data.set_points['grill'] + "°" + units);
+			$("#grill_notify_btn").html("<i class=\"fas fa-bell\"></i> " + data.set_points['grill_notify'] + "°" + units);
         } else {
             // If notify request is not active, change the button highlighting
             document.getElementById("grill_notify_btn").className = "btn btn-outline-primary";
@@ -513,21 +513,14 @@ $(document).ready(function(){
 
 	$("#grill_notify_enable").click(function(){
 		var setPoint = parseInt($("#grilltempInputId").val());
-		var updated = false;
-		if(last_mode == "Hold") {
-			updated = true;
-			// Update the new setpoint
-			$("#hold_btn").html(setPoint + "°" + units);
-		}
 
 		var postdata = { 
 			'setpoints' : {
-				'grill' : setPoint 
+				'grill_notify' : setPoint 
 			},
 			'notify_req' : {
 				'grill' : true
-			},
-			'updated' : updated
+			}
 		};
 		req = $.ajax({
 			url : '/api/control',
@@ -544,7 +537,7 @@ $(document).ready(function(){
 	$("#grill_notify_disable").click(function(){
 		var postdata = {
 			'setpoints' : {
-				'grill' : 0
+				'grill_notify' : 0
 			},
 			'notify_req' : {
 				'grill' : false
