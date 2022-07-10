@@ -204,7 +204,9 @@ def historypage(action=None):
 	if control['mode'] == 'Stop':
 		autorefresh = 'off'
 
-	annotations = prepare_annotations()
+	# Calculate Displayed Start Time
+	displayed_starttime = time.time() - (settings['history_page']['minutes'] * 60)
+	annotations = prepare_annotations(displayed_starttime)
 
 	return render_template('history.html', control=control, grill_temp_list=data_blob['grill_temp_list'], grill_settemp_list=data_blob['grill_settemp_list'], probe1_temp_list=data_blob['probe1_temp_list'], probe1_settemp_list=data_blob['probe1_settemp_list'], probe2_temp_list=data_blob['probe2_temp_list'], probe2_settemp_list=data_blob['probe2_settemp_list'], label_time_list=data_blob['label_time_list'], probes_enabled=probes_enabled, num_mins=settings['history_page']['minutes'], num_datapoints=settings['history_page']['datapoints'], autorefresh=autorefresh, annotations=annotations, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
 
@@ -227,6 +229,10 @@ def historyupdate(action=None):
 			cur_probe_temps = []
 			cur_probe_temps = ReadCurrent()
 
+		# Calculate Displayed Start Time
+		displayed_starttime = time.time() - (settings['history_page']['minutes'] * 60)
+		annotations = prepare_annotations(displayed_starttime)
+
 		json_data = { 
 			'probe0_temp' : int(float(cur_probe_temps[0])), 
 			'probe0_settemp' : set_temps[0], 
@@ -234,7 +240,7 @@ def historyupdate(action=None):
 			'probe1_settemp' : set_temps[1], 
 			'probe2_temp' : int(float(cur_probe_temps[2])), 
 			'probe2_settemp' : set_temps[2],
-			'annotations' : prepare_annotations()
+			'annotations' : annotations
 		}
 		return jsonify(json_data)
 
@@ -246,6 +252,10 @@ def historyupdate(action=None):
 			num_items = int(requestjson['num_mins']) * 20  # Calculate number of items requested 
 			data_blob = prepare_data(num_items, True, settings['history_page']['datapoints'])
 
+			# Calculate Displayed Start Time
+			displayed_starttime = time.time() - (settings['history_page']['minutes'] * 60)
+			annotations = prepare_annotations(displayed_starttime)
+
 			json_data = { 
 				'grill_temp_list' : data_blob['grill_temp_list'],
 				'grill_settemp_list' : data_blob['grill_settemp_list'],
@@ -254,7 +264,7 @@ def historyupdate(action=None):
 				'probe2_temp_list' : data_blob['probe2_temp_list'],
 				'probe2_settemp_list' : data_blob['probe2_settemp_list'],
 				'label_time_list' : data_blob['label_time_list'], 
-				'annotations' : prepare_annotations()
+				'annotations' : annotations
 			}
 			return jsonify(json_data)
 
@@ -1652,49 +1662,51 @@ def prepare_data(num_items=10, reduce=True, datapoints=60):
 
 	return(data_blob)
 
-def prepare_annotations():
+def prepare_annotations(displayed_starttime):
 	metrics_data = ReadMetrics(all=True)
 	annotation_json = {}
 	# Process Additional Metrics Information for Display
 	for index in range(0, len(metrics_data)):
-		# Convert Start Time
-		starttime = epoch_to_time(metrics_data[index]['starttime'])
-		mode = metrics_data[index]['mode']
-		color = 'blue'
-		if mode == 'Startup':
-			color = 'green'
-		elif mode == 'Stop': 
-			color = 'red'
-		elif mode == 'Shutdown':
-			color = 'black'
-		elif mode == 'Reignite':
-			color = 'orange'
-		elif mode == 'Error':
-			color = 'red'
-		elif mode == 'Hold': 
+		# Check if metric falls in the displayed time window
+		if(metrics_data[index]['starttime'] > displayed_starttime):
+			# Convert Start Time
+			starttime = epoch_to_time(metrics_data[index]['starttime'])
+			mode = metrics_data[index]['mode']
 			color = 'blue'
-		elif mode == 'Smoke':
-			color = 'grey'
-		elif mode in ['Monitor', 'Manual']:
-			color = 'purple'
-		annotation = {
-						'type' : 'line',
-						'xMin' : starttime,
-						'xMax' : starttime,
-						'borderColor' : color,
-						'borderWidth' : 2,
-						'label': {
-							'backgroundColor': color,
-							'borderColor' : 'black',
-							'color': 'white',
-							'content': mode,
-							'enabled': True, 
-							'position': 'end',
-							'rotation': 0,
-							}, 
-						'display': True
-					}
-		annotation_json[f'event_{index}'] = annotation
+			if mode == 'Startup':
+				color = 'green'
+			elif mode == 'Stop': 
+				color = 'red'
+			elif mode == 'Shutdown':
+				color = 'black'
+			elif mode == 'Reignite':
+				color = 'orange'
+			elif mode == 'Error':
+				color = 'red'
+			elif mode == 'Hold': 
+				color = 'blue'
+			elif mode == 'Smoke':
+				color = 'grey'
+			elif mode in ['Monitor', 'Manual']:
+				color = 'purple'
+			annotation = {
+							'type' : 'line',
+							'xMin' : starttime,
+							'xMax' : starttime,
+							'borderColor' : color,
+							'borderWidth' : 2,
+							'label': {
+								'backgroundColor': color,
+								'borderColor' : 'black',
+								'color': 'white',
+								'content': mode,
+								'enabled': True, 
+								'position': 'end',
+								'rotation': 0,
+								}, 
+							'display': True
+						}
+			annotation_json[f'event_{index}'] = annotation
 
 	return(annotation_json)
 
