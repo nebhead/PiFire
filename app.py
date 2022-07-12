@@ -250,6 +250,8 @@ def historyupdate(action=None):
 		if('num_mins' in requestjson):
 			data_blob = {}
 			num_items = int(requestjson['num_mins']) * 20  # Calculate number of items requested 
+			settings['history_page']['minutes'] = int(requestjson['num_mins'])
+			WriteSettings(settings)
 			data_blob = prepare_data(num_items, True, settings['history_page']['datapoints'])
 
 			# Calculate Displayed Start Time
