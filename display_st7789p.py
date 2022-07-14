@@ -26,15 +26,16 @@ Display class definition
 '''
 class Display:
 
-	def __init__(self, buttonslevel='HIGH', rotation=0, units='F'):
+	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F'):
 		# Init Global Variables and Constants
+		self.dev_pins = dev_pins
 		self.rotation = rotation
 		self.units = units
-		self.displayactive = False
+		self.display_active = False
 		self.in_data = None
 		self.status_data = None
-		self.displaytimeout = None 
-		self.displaycommand = 'splash'
+		self.display_timeout = None
+		self.display_command = 'splash'
 
 		# Init Display Device, Input Device, Assets
 		self._init_globals()
@@ -47,12 +48,16 @@ class Display:
 
 	def _init_display_device(self):
 		# Init Device
+		dc_pin = self.dev_pins['display']['dc']
+		bl_pin = self.dev_pins['display']['led']
+		rst_pin = self.dev_pins['display']['rst']
+
 		self.device = ST7789.ST7789(
 			port=0,
 			cs=0, 
-			dc=24,
-			backlight=5,
-			rst=25,
+			dc=dc_pin,
+			backlight=bl_pin,
+			rst=rst_pin,
 			rotation=self.rotation,
 			spi_speed_hz=80 * 1000 * 1000
 		)
@@ -64,36 +69,36 @@ class Display:
 		display_thread.start()
 
 	def _display_loop(self):
-		'''
+		"""
 		Main display loop
-		'''
+		"""
 		while True:
-			if self.displaytimeout:
-				if time.time() > self.displaytimeout:
-					self.displaycommand = 'clear'
+			if self.display_timeout:
+				if time.time() > self.display_timeout:
+					self.display_command = 'clear'
 
-			if self.displaycommand == 'clear':
-				self.displayactive = False
-				self.displaytimeout = None 
-				self.displaycommand = None
+			if self.display_command == 'clear':
+				self.display_active = False
+				self.display_timeout = None
+				self.display_command = None
 				self._display_clear()
 
-			if self.displaycommand == 'splash':
-				self.displayactive = True
+			if self.display_command == 'splash':
+				self.display_active = True
 				self._display_splash()
-				self.displaytimeout = time.time() + 3
-				self.displaycommand = None
+				self.display_timeout = time.time() + 3
+				self.display_command = None
 				time.sleep(3) # Hold splash screen for 3 seconds
 
-			if self.displaycommand == 'text': 
-				self.displayactive = True
+			if self.display_command == 'text':
+				self.display_active = True
 				self._display_text()
-				self.displaycommand = None
-				self.displaytimeout = time.time() + 10 
+				self.display_command = None
+				self.display_timeout = time.time() + 10
 
-			if self.displayactive:
-				if not self.displaytimeout:
-					if (self.in_data is not None) and (self.status_data is not None):
+			if self.display_active:
+				if not self.display_timeout:
+					if self.in_data is not None and self.status_data is not None:
 						self._display_current(self.in_data, self.status_data)
 			
 			time.sleep(0.1)
@@ -105,7 +110,7 @@ class Display:
 		self._init_splash()
 
 	def _init_splash(self):
-		self.splash = Image.open('color-boot-splash.png')
+		self.splash = Image.open('static/img/display/color-boot-splash.png')
 
 		(self.splash_width, self.splash_height) = self.splash.size
 		self.splash_width *= 2
@@ -142,8 +147,9 @@ class Display:
 		draw = ImageDraw.Draw(img)
 
 		font = ImageFont.truetype("impact.ttf", 42)
-		(font_width, font_height) = font.getsize(self.displaydata)
-		draw.text((self.WIDTH//2 - font_width//2, self.HEIGHT//2 - font_height//2), self.displaydata, font=font, fill=255)
+		(font_width, font_height) = font.getsize(self.display_data)
+		draw.text((self.WIDTH//2 - font_width//2, self.HEIGHT//2 - font_height//2), self.display_data, font=font,
+				  fill=255)
 		self.device.display(img)
 
 	def _display_current(self, in_data, status_data):
@@ -158,7 +164,7 @@ class Display:
 		draw = ImageDraw.Draw(img)
 
 		# Grill Temperature (Large Centered) 
-		if(self.units == 'F'):
+		if self.units == 'F':
 			font = ImageFont.truetype("trebuc.ttf", 128)
 		else:
 			font = ImageFont.truetype("trebuc.ttf", 80)
@@ -167,32 +173,32 @@ class Display:
 		draw.text((self.WIDTH//2 - font_width//2,0), text, font=font, fill=(255,255,255))
 		
 		# Active Outputs F = Fan (Left), I = Igniter(Center Left), A = Auger (Center Right)
-		font = ImageFont.truetype("FA-Free-Solid.otf", 48)
-		if(status_data['outpins']['fan']==0):
+		font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 48)
+		if status_data['outpins']['fan']:
 			text = '\uf863'
 			(font_width, font_height) = font.getsize(text)
 			draw.text(( ((self.WIDTH//8)*1) - font_width//2, self.HEIGHT - 96), text, font=font, fill=(0,0,255))
-		if(status_data['outpins']['igniter']==0):
+		if status_data['outpins']['igniter']:
 			text = '\uf46a'
 			(font_width, font_height) = font.getsize(text)
 			draw.text(( ((self.WIDTH//8)*3) - font_width//2, self.HEIGHT - 96), text, font=font, fill=(255,200,0))
-		if(status_data['outpins']['auger']==0):
+		if status_data['outpins']['auger']:
 			text = '\uf101'
 			(font_width, font_height) = font.getsize(text)
 			draw.text(( ((self.WIDTH//8)*5) - font_width//2, self.HEIGHT - 96), text, font=font, fill=(0,255,0))
 
 		# Notification Indicator (Right)
-		font = ImageFont.truetype("FA-Free-Solid.otf", 48)
+		font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 48)
 		text = ' '
 		for item in status_data['notify_req']:
-			if status_data['notify_req'][item] == True:
+			if status_data['notify_req'][item]:
 				text = '\uf0f3'
 		(font_width, font_height) = font.getsize(text)
 		draw.text(( ((self.WIDTH//8)*7) - font_width//2, self.HEIGHT - 96), text, font=font, fill=(255,255,0))
 
 		# Current Mode (Bottom Center)
 		font = ImageFont.truetype("trebuc.ttf", 36)
-		text = status_data['mode'] #+ ' Mode'
+		text = status_data['mode'] # + ' Mode'
 		(font_width, font_height) = font.getsize(text)
 		draw.text((self.WIDTH//2 - font_width//2, self.HEIGHT - font_height - 4), text, font=font, fill=(255,255,255))
 
@@ -203,35 +209,35 @@ class Display:
 	'''
 
 	def display_status(self, in_data, status_data):
-		'''
-		- Updates the current data for the display loop, if in a work mode 
-		'''
+		"""
+		- Updates the current data for the display loop, if in a work mode
+		"""
 		self.units = status_data['units']
-		self.displayactive = True
+		self.display_active = True
 		self.in_data = in_data 
 		self.status_data = status_data 
 
 	def display_splash(self):
-		''' 
-		- Calls Splash Screen 
-		'''
-		self.displaycommand = 'splash'
+		"""
+		- Calls Splash Screen
+		"""
+		self.display_command = 'splash'
 
 	def clear_display(self):
-		''' 
-		- Clear display and turn off backlight 
-		'''
-		self.displaycommand = 'clear'
+		"""
+		- Clear display and turn off backlight
+		"""
+		self.display_command = 'clear'
 
 	def display_text(self, text):
-		''' 
-		- Display some text 
-		'''
-		self.displaycommand = 'text'
-		self.displaydata = text
+		"""
+		- Display some text
+		"""
+		self.display_command = 'text'
+		self.display_data = text
 
 	def display_network(self):
-		''' 
-		- Display Network IP QR Code 
-		'''
+		"""
+		- Display Network IP QR Code
+		"""
 		pass

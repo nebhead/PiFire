@@ -29,15 +29,16 @@ Display class definition
 '''
 class Display:
 
-	def __init__(self, buttonslevel='HIGH', rotation=0, units='F'):
+	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F'):
 		# Init Global Variables and Constants
+		self.dev_pins = dev_pins
 		self.rotation = rotation
 		self.units = units
-		self.displayactive = False
+		self.display_active = False
 		self.in_data = None
 		self.status_data = None
-		self.displaytimeout = None 
-		self.displaycommand = 'splash'
+		self.display_timeout = None
+		self.display_command = 'splash'
 
 		# Init Display Device, Input Device, Assets
 		self._init_globals()
@@ -55,56 +56,62 @@ class Display:
 
 	def _init_display_device(self):
 		# Init Device
-		self.serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25, bus_speed_hz=32000000, reset_hold_time=0.2, reset_release_time=0.2)
-		self.device = ili9341(self.serial, active_low=False, width=self.WIDTH, height=self.HEIGHT, gpio_LIGHT=5, rotate=self.rotation)
+		dc_pin = self.dev_pins['display']['dc']
+		led_pin = self.dev_pins['display']['led']
+		rst_pin = self.dev_pins['display']['rst']
+
+		self.serial = spi(port=0, device=0, gpio_DC=dc_pin, gpio_RST=rst_pin, bus_speed_hz=32000000,
+						  reset_hold_time=0.2, reset_release_time=0.2)
+		self.device = ili9341(self.serial, active_low=False, width=self.WIDTH, height=self.HEIGHT, gpio_LIGHT=led_pin,
+							  rotate=self.rotation)
 
 		# Setup & Start Display Loop Thread 
 		display_thread = threading.Thread(target=self._display_loop)
 		display_thread.start()
 
 	def _display_loop(self):
-		'''
+		"""
 		Main display loop
-		'''
+		"""
 		while True:
-			if self.displaytimeout:
-				if time.time() > self.displaytimeout:
-					self.displaycommand = 'clear'
+			if self.display_timeout:
+				if time.time() > self.display_timeout:
+					self.display_command = 'clear'
 
-			if self.displaycommand == 'clear':
-				self.displayactive = False
-				self.displaytimeout = None 
-				self.displaycommand = None
+			if self.display_command == 'clear':
+				self.display_active = False
+				self.display_timeout = None
+				self.display_command = None
 				self._display_clear()
 
-			if self.displaycommand == 'splash':
-				self.displayactive = True
+			if self.display_command == 'splash':
+				self.display_active = True
 				self._display_splash()
-				self.displaytimeout = time.time() + 3
-				self.displaycommand = None
+				self.display_timeout = time.time() + 3
+				self.display_command = None
 				time.sleep(3) # Hold splash screen for 3 seconds
 
-			if self.displaycommand == 'text': 
-				self.displayactive = True
+			if self.display_command == 'text':
+				self.display_active = True
 				self._display_text()
-				self.displaycommand = None
-				self.displaytimeout = time.time() + 10 
+				self.display_command = None
+				self.display_timeout = time.time() + 10
 
-			if self.displaycommand == 'network':
-				self.displayactive = True
+			if self.display_command == 'network':
+				self.display_active = True
 				s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 				s.connect(("8.8.8.8", 80))
-				networkip = s.getsockname()[0]
-				if (networkip != ''):
-					self._display_network(networkip)
-					self.displaytimeout = time.time() + 30
-					self.displaycommand = None
+				network_ip = s.getsockname()[0]
+				if network_ip != '':
+					self._display_network(network_ip)
+					self.display_timeout = time.time() + 30
+					self.display_command = None
 				else:
 					self.display_text("No IP Found")
 
-			if self.displayactive:
-				if not self.displaytimeout:
-					if (self.in_data is not None) and (self.status_data is not None):
+			if self.display_active:
+				if not self.display_timeout:
+					if self.in_data is not None and self.status_data is not None:
 						self._display_current(self.in_data, self.status_data)
 			
 			time.sleep(0.1)
@@ -117,11 +124,11 @@ class Display:
 		self._init_splash()
 
 	def _init_background(self):
-		self.background = Image.open('background.jpg')
+		self.background = Image.open('static/img/display/background.jpg')
 		self.background = self.background.resize((self.WIDTH, self.HEIGHT))
 	
 	def _init_splash(self):
-		self.splash = Image.open('color-boot-splash.png')
+		self.splash = Image.open('static/img/display/color-boot-splash.png')
 		(self.splash_width, self.splash_height) = self.splash.size
 		self.splash_width *= 2
 		self.splash_height *= 2
@@ -139,22 +146,24 @@ class Display:
 
 	def _create_icon(self, charid, size, color):
 		# Get font and character size 
-		font = ImageFont.truetype("FA-Free-Solid.otf", size)
+		font = ImageFont.truetype("static/font/FA-Free-Solid.otf", size)
 		# Create canvas
-		iconcanvas = Image.new('RGBa', font.getsize(charid))
+		icon_canvas = Image.new('RGBa', font.getsize(charid))
 		# Create drawing object
-		draw = ImageDraw.Draw(iconcanvas)
+		draw = ImageDraw.Draw(icon_canvas)
 		draw.text((0, 0), charid, font=font, fill=color)
-		iconcanvas = iconcanvas.crop(iconcanvas.getbbox())
-		return(iconcanvas)	
+		icon_canvas = icon_canvas.crop(icon_canvas.getbbox())
+		return(icon_canvas)
 
 	def _paste_icon(self, icon, canvas, position, rotation, bgcolor):
-		# First fill the background 
-		bgfill = ImageDraw.Draw(canvas)
+		# First fill the background
+		bg_fill = ImageDraw.Draw(canvas)
 		# Rotate the icon
 		icon = icon.rotate(rotation)
 		(icon_width, icon_height) = icon.size
-		#bgfill.rectangle([(position[0], position[1]), (position[0] + icon_width, position[1] + icon_height)], fill=bgcolor)
+		#bg_fill.rectangle([(position[0], position[1]), (position[0] + icon_width, position[1] + icon_height)],
+		# fill=bgcolor)
+
 		# Set the position & paste the icon onto the canvas
 		canvas.paste(icon, position, icon)
 		return(canvas)
@@ -168,11 +177,12 @@ class Display:
 		# Draw Rounded Rectangle Border
 		drawing = self._rounded_rectangle(drawing, (
 			self.WIDTH // 8 - 22, self.HEIGHT // 6 - 22, self.WIDTH // 8 + 22, self.HEIGHT // 6 + 22), 5,
-										icon_color)
+										  icon_color)
 		# Fill Rectangle with Black
 		drawing = self._rounded_rectangle(drawing, (
 			self.WIDTH // 8 - 20, self.HEIGHT // 6 - 20, self.WIDTH // 8 + 20, self.HEIGHT // 6 + 20), 5,
-										(0, 0, 0))
+										  (0, 0, 0))
+
 		# Create Icon Image
 		icon = self._create_icon(icon_char, 36, icon_color)
 		position = (self.WIDTH // 8 - 18, self.HEIGHT // 6 - 18)
@@ -188,15 +198,17 @@ class Display:
 		# Draw Rounded Rectangle Border
 		drawing = self._rounded_rectangle(drawing, (
 			self.WIDTH // 8 - 22, self.HEIGHT // 2.5 - 22, self.WIDTH // 8 + 22, self.HEIGHT // 2.5 + 22), 5,
-										icon_color_tuple)
+										  icon_color_tuple)
 		# Fill Rectangle with Black
 		drawing = self._rounded_rectangle(drawing, (
 			self.WIDTH // 8 - 20, self.HEIGHT // 2.5 - 20, self.WIDTH // 8 + 20, self.HEIGHT // 2.5 + 20), 5,
-										(0, 0, 0))
+										  (0, 0, 0))
+
 		# Create Icon Image
 		icon = self._create_icon(icon_char, 36, icon_color_tuple)
 		(icon_width, icon_height) = icon.size 
-		position = ((self.WIDTH // 8 - 18) + (icon_width // 8) + self.auger_step, (int(self.HEIGHT // 2.5) - 18) + (icon_height // 3))
+		position = ((self.WIDTH // 8 - 18) + (icon_width // 8) + self.auger_step, (int(self.HEIGHT // 2.5) - 18) +
+					(icon_height // 3))
 		canvas = self._paste_icon(icon, canvas, position, 0, (0,0,0))
 		return(canvas)
 
@@ -229,15 +241,16 @@ class Display:
 		draw = ImageDraw.Draw(img)
 
 		font = ImageFont.truetype("impact.ttf", 42)
-		(font_width, font_height) = font.getsize(self.displaydata)
-		draw.text((self.WIDTH // 2 - font_width // 2, self.HEIGHT // 2 - font_height // 2), self.displaydata, font=font, fill=255)
+		(font_width, font_height) = font.getsize(self.display_data)
+		draw.text((self.WIDTH // 2 - font_width // 2, self.HEIGHT // 2 - font_height // 2), self.display_data,
+				  font=font, fill=255)
 
 		self._display_canvas(img)
 
-	def _display_network(self, networkip):
+	def _display_network(self, network_ip):
 		# Create canvas
 		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(255, 255, 255))
-		img_qr = qrcode.make('http://' + networkip)
+		img_qr = qrcode.make('http://' + network_ip)
 		img_qr_width, img_qr_height = img_qr.size
 		img_qr_width *= 2
 		img_qr_height *= 2
@@ -268,14 +281,14 @@ class Display:
 		else:
 			endpoint = ((360 * in_data['GrillTemp']) // 300) + 90
 		draw.pieslice((80, 10, 240, 170), start=90, end=endpoint, fill=(200, 0, 0))  # Red Arc for Temperature
-		if (in_data['GrillSetPoint'] > 0) and (status_data['mode'] == 'Hold'):
+		if in_data['GrillSetPoint'] > 0 and status_data['mode'] == 'Hold':
 			if self.units == 'F':
 				setpoint = ((360 * in_data['GrillSetPoint']) // 600) + 90
 			else:
 				setpoint = ((360 * in_data['GrillSetPoint']) // 300) + 90
 			draw.pieslice((80, 10, 240, 170), start=setpoint - 2, end=setpoint + 2,
 							fill=(0, 200, 255))  # Blue Arc for SetPoint
-		if (in_data['GrillNotifyPoint'] > 0) and (status_data['notify_req']['grill']):
+		if in_data['GrillNotifyPoint'] > 0 and status_data['notify_req']['grill']:
 			if self.units == 'F':
 				setpoint = ((360 * in_data['GrillNotifyPoint']) // 600) + 90
 			else:
@@ -293,7 +306,7 @@ class Display:
 		draw.text((self.WIDTH // 2 - font_width // 2, 20), text, font=font, fill=(255, 255, 255))
 
 		# Grill Set Point (Small Centered Top)
-		if (in_data['GrillSetPoint'] > 0) and (status_data['mode'] == 'Hold'):
+		if in_data['GrillSetPoint'] > 0 and status_data['mode'] == 'Hold':
 			font = ImageFont.truetype("trebuc.ttf", 16)
 			text = ">" + str(in_data['GrillSetPoint'])[:5] + "<"
 			(font_width, font_height) = font.getsize(text)
@@ -301,7 +314,7 @@ class Display:
 						fill=(0, 200, 255))
 
 		# Grill Temperature (Large Centered)
-		if (self.units == 'F'):
+		if self.units == 'F':
 			font = ImageFont.truetype("trebuc.ttf", 80)
 			text = str(in_data['GrillTemp'])[:5]
 			(font_width, font_height) = font.getsize(text)
@@ -329,7 +342,7 @@ class Display:
 			endpoint = ((360 * in_data['Probe1Temp']) // 150) + 90
 		draw.pieslice((10, self.HEIGHT // 2 + 10, 110, self.HEIGHT // 2 + 110), start=90, end=endpoint,
 						fill=(3, 161, 252))
-		if (in_data['Probe1SetPoint'] > 0):
+		if in_data['Probe1SetPoint'] > 0:
 			if self.units == 'F':
 				setpoint = ((360 * in_data['Probe1SetPoint']) // 300) + 90
 			else:
@@ -346,7 +359,7 @@ class Display:
 					fill=(255, 255, 255))
 
 		# PROBE1 Temperature (Large Centered)
-		if (self.units == 'F'):
+		if self.units == 'F':
 			font = ImageFont.truetype("trebuc.ttf", 36)
 		else:
 			font = ImageFont.truetype("trebuc.ttf", 30)
@@ -356,7 +369,7 @@ class Display:
 					fill=(255, 255, 255))
 
 		# PROBE1 Set Point (Small Centered Bottom)
-		if (in_data['Probe1SetPoint'] > 0):
+		if in_data['Probe1SetPoint'] > 0:
 			font = ImageFont.truetype("trebuc.ttf", 16)
 			text = ">" + str(in_data['Probe1SetPoint'])[:5] + "<"
 			(font_width, font_height) = font.getsize(text)
@@ -374,7 +387,7 @@ class Display:
 			endpoint = ((360 * in_data['Probe2Temp']) // 150) + 90
 		draw.pieslice((self.WIDTH - 110, self.HEIGHT // 2 + 10, self.WIDTH - 10, self.HEIGHT // 2 + 110), start=90,
 						end=endpoint, fill=(3, 161, 252))
-		if (in_data['Probe2SetPoint'] > 0):
+		if in_data['Probe2SetPoint'] > 0:
 			if self.units == 'F':
 				setpoint = ((360 * in_data['Probe2SetPoint']) // 300) + 90
 			else:
@@ -392,7 +405,7 @@ class Display:
 					fill=(255, 255, 255))
 
 		# PROBE2 Temperature (Large Centered)
-		if (self.units == 'F'):
+		if self.units == 'F':
 			font = ImageFont.truetype("trebuc.ttf", 36)
 		else:
 			font = ImageFont.truetype("trebuc.ttf", 30)
@@ -411,7 +424,7 @@ class Display:
 
 		# Active Outputs
 		''' Test of pulsing color '''
-		if self.inc_pulse_color == True: 
+		if self.inc_pulse_color:
 			if self.icon_color < 200:
 				self.icon_color += 20
 			else: 
@@ -424,14 +437,14 @@ class Display:
 			else: 
 				self.icon_color -= 20 
 
-		font = ImageFont.truetype("FA-Free-Solid.otf", 36)
-		if (status_data['outpins']['fan'] == 0):
+		font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 36)
+		if status_data['outpins']['fan']:
 			# F = Fan (Upper Left), 40x40, origin 10,10
 			self._draw_fan_icon(img)
 			self.fan_rotation += 30 
 			if self.fan_rotation >= 360: 
 				self.fan_rotation = 0
-		if (status_data['outpins']['igniter'] == 0):
+		if status_data['outpins']['igniter']:
 			# I = Igniter(Center Right)
 			text = '\uf46a'
 			(font_width, font_height) = font.getsize(text)
@@ -443,7 +456,7 @@ class Display:
 				self.HEIGHT // 2.5 + 20), 5, (0, 0, 0))
 			draw.text((7 * (self.WIDTH // 8) - font_width // 2, self.HEIGHT // 2.5 - font_height // 2), text,
 						  font=font, fill=(255, self.icon_color, 0))
-		if (status_data['outpins']['auger'] == 0):
+		if status_data['outpins']['auger']:
 			# A = Auger (Center Left)
 			self._draw_auger_icon(img)
 			self.auger_step += 1 
@@ -453,10 +466,10 @@ class Display:
 		# Notification Indicator (Right)
 		show_notify_indicator = False
 		for item in status_data['notify_req']:
-			if status_data['notify_req'][item] == True:
+			if status_data['notify_req'][item]:
 				show_notify_indicator = True
-		if (show_notify_indicator == True):
-			font = ImageFont.truetype("FA-Free-Solid.otf", 36)
+		if show_notify_indicator:
+			font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 36)
 			text = '\uf0f3'
 			(font_width, font_height) = font.getsize(text)
 			draw = self._rounded_rectangle(draw, (
@@ -470,21 +483,20 @@ class Display:
 			draw.text((7 * (self.WIDTH // 8) - font_width // 2 + 1, self.HEIGHT // 6 - font_height // 2), text,
 						font=font, fill=(255, 255, 0))
 
-		# Smoke Plus Inidicator
-		if (status_data['s_plus'] == True) and (
-				(status_data['mode'] == 'Smoke') or (status_data['mode'] == 'Hold')):
+		# Smoke Plus Indicator
+		if status_data['s_plus'] and (status_data['mode'] == 'Smoke' or status_data['mode'] == 'Hold'):
 			draw = self._rounded_rectangle(draw, (
 				7 * (self.WIDTH // 8) - 22, self.HEIGHT // 2.5 - 22, 7 * (self.WIDTH // 8) + 22,
 				self.HEIGHT // 2.5 + 22), 5, (150, 0, 255))
 			draw = self._rounded_rectangle(draw, (
 				7 * (self.WIDTH // 8) - 20, self.HEIGHT // 2.5 - 20, 7 * (self.WIDTH // 8) + 20,
 				self.HEIGHT // 2.5 + 20), 5, (0, 0, 0))
-			font = ImageFont.truetype("FA-Free-Solid.otf", 32)
+			font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 32)
 			text = '\uf0c2'  # FontAwesome Icon for Cloud (Smoke)
 			(font_width, font_height) = font.getsize(text)
 			draw.text((7 * (self.WIDTH // 8) - font_width // 2, self.HEIGHT // 2.5 - font_height // 2), text,
 						font=font, fill=(100, 0, 255))
-			font = ImageFont.truetype("FA-Free-Solid.otf", 24)
+			font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 24)
 			text = '\uf067'  # FontAwesome Icon for PLUS
 			(font_width, font_height) = font.getsize(text)
 			draw.text((7 * (self.WIDTH // 8) - font_width // 2, self.HEIGHT // 2.5 - font_height // 2 + 3), text,
@@ -494,9 +506,9 @@ class Display:
 		font = ImageFont.truetype("trebuc.ttf", 16)
 		text = "Hopper:" + str(status_data['hopper_level']) + "%"
 		(font_width, font_height) = font.getsize(text)
-		if (status_data['hopper_level'] > 70):
+		if status_data['hopper_level'] > 70:
 			hopper_color = (0, 255, 0)
-		elif (status_data['hopper_level'] > 30):
+		elif status_data['hopper_level'] > 30:
 			hopper_color = (255, 150, 0)
 		else:
 			hopper_color = (255, 0, 0)
@@ -529,35 +541,35 @@ class Display:
 	'''
 
 	def display_status(self, in_data, status_data):
-		'''
-		- Updates the current data for the display loop, if in a work mode 
-		'''
+		"""
+		- Updates the current data for the display loop, if in a work mode
+		"""
 		self.units = status_data['units']
-		self.displayactive = True
+		self.display_active = True
 		self.in_data = in_data 
 		self.status_data = status_data 
 
 	def display_splash(self):
-		''' 
-		- Calls Splash Screen 
-		'''
-		self.displaycommand = 'splash'
+		"""
+		- Calls Splash Screen
+		"""
+		self.display_command = 'splash'
 
 	def clear_display(self):
-		''' 
-		- Clear display and turn off backlight 
-		'''
-		self.displaycommand = 'clear'
+		"""
+		- Clear display and turn off backlight
+		"""
+		self.display_command = 'clear'
 
 	def display_text(self, text):
-		''' 
-		- Display some text 
-		'''
-		self.displaycommand = 'text'
-		self.displaydata = text
+		"""
+		- Display some text
+		"""
+		self.display_command = 'text'
+		self.display_data = text
 
 	def display_network(self):
-		''' 
-		- Display Network IP QR Code 
-		'''
-		self.displaycommand = 'network'
+		"""
+		- Display Network IP QR Code
+		"""
+		self.display_command = 'network'

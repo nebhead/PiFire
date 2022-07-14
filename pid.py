@@ -24,74 +24,76 @@
 # Imported Libraries
 # *****************************************
 import time
-from common import ReadSettings
 
 # *****************************************
 # Class Definition
 # *****************************************
 class PID:
-	def __init__(self,  PB, Ti, Td):
-		self.CalculateGains(PB,Ti,Td)
+	def __init__(self,  pb, ti, td, center):
+		self._calculate_gains(pb,ti,td)
 
-		self.P = 0.0
-		self.I = 0.0
-		self.D = 0.0
+		self.p = 0.0
+		self.i = 0.0
+		self.d = 0.0
 		self.u = 0
 
-		settings = ReadSettings()
-		self.Center = settings['cycle_data']['center']
+		self.last_update = time.time()
+		self.error = 0.0
+		self.set_point = 0
 
-		self.Derv = 0.0
-		self.Inter = 0.0
-		self.Inter_max = abs(self.Center/self.Ki)
+		self.center = center
 
-		self.Last = 150
+		self.derv = 0.0
+		self.inter = 0.0
+		self.inter_max = abs(self.center / self.ki)
 
-		self.setTarget(0.0)
+		self.last = 150
 
-	def CalculateGains(self,PB,Ti,Td):
-		self.Kp = -1/PB
-		self.Ki = self.Kp/Ti
-		self.Kd = self.Kp*Td
+		self.set_target(0.0)
 
-	def update(self, Current):
-		#P
-		error = Current - self.setPoint
-		self.P = self.Kp*error + self.Center #P = 1 for PB/2 under setPoint, P = 0 for PB/2 over setPoint
+	def _calculate_gains(self, pb, ti, td):
+		self.kp = -1 / pb
+		self.ki = self.kp / ti
+		self.kd = self.kp * td
 
-		#I
-		dT = time.time() - self.LastUpdate
-		#if self.P > 0 and self.P < 1: #Ensure we are in the PB, otherwise do not calculate I to avoid windup
-		self.Inter += error*dT
-		self.Inter = max(self.Inter, -self.Inter_max)
-		self.Inter = min(self.Inter, self.Inter_max)
+	def update(self, current):
+		# P
+		error = current - self.set_point
+		self.p = self.kp * error + self.center # p = 1 for pb / 2 under set_point, p = 0 for pb / 2 over set_point
 
-		self.I = self.Ki * self.Inter
+		# I
+		dt = time.time() - self.last_update
+		# if self.p > 0 and self.p < 1: # Ensure we are in the pb, otherwise do not calculate i to avoid windup
+		self.inter += error * dt
+		self.inter = max(self.inter, -self.inter_max)
+		self.inter = min(self.inter, self.inter_max)
 
-		#D
-		self.Derv = (Current - self.Last)/dT
-		self.D = self.Kd * self.Derv
+		self.i = self.ki * self.inter
 
-		#PID
-		self.u = self.P + self.I + self.D
+		# D
+		self.derv = (current - self.last) / dt
+		self.d = self.kd * self.derv
 
-		#Update for next cycle
+		# PID
+		self.u = self.p + self.i + self.d
+
+		# Update for next cycle
 		self.error = error
-		self.Last = Current
-		self.LastUpdate = time.time()
+		self.last = current
+		self.last_update = time.time()
 
 		return self.u
 
-	def	setTarget(self, setPoint):
-		self.setPoint = setPoint
+	def set_target(self, set_point):
+		self.set_point = set_point
 		self.error = 0.0
-		self.Inter = 0.0
-		self.Derv = 0.0
-		self.LastUpdate = time.time()
+		self.inter = 0.0
+		self.derv = 0.0
+		self.last_update = time.time()
 
-	def setGains(self, PB, Ti, Td):
-		self.CalculateGains(PB,Ti,Td)
-		self.Inter_max = abs(self.Center/self.Ki)
+	def set_gains(self, pb, ti, td):
+		self._calculate_gains(pb,ti,td)
+		self.inter_max = abs(self.center / self.ki)
 
-	def getK(self):
-		return self.Kp, self.Ki, self.Kd
+	def get_k(self):
+		return self.kp, self.ki, self.kd
