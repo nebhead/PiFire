@@ -798,8 +798,12 @@ def ReadHistory(num_items=0, flushhistory=False):
 
 			data = cmdsts.lrange('control:history', liststart, -1)
 			
+			# Unpack data from json to list
 			for index in range(len(data)):
-				data_list.append(data[index].split(' ', 6))  # Splits out each of the values into seperate list items 
+				datastruct = json.loads(data[index])
+				templist = [str(int(datastruct['T'])), str(datastruct['GT1']), str(datastruct['GSP1']), str(datastruct['PT1']), str(datastruct['PSP1']), str(datastruct['PT2']), str(datastruct['PSP2'])]
+				data_list.append(templist)
+				#data_list.append(data[index].split(' ', 6))  # Splits out each of the values into seperate list items 
 		else:
 			event = 'WARNING: History data is not present in database. Creating Data Structure.'
 			WriteLog(event)
@@ -830,11 +834,20 @@ def WriteHistory(TempStruct, maxsizelines=28800, tuning_mode=False):
 	global cmdsts 
 
 	timenow = datetime.datetime.now()
-	#timestr = timenow.strftime('%H:%M:%S') # Truncate the microseconds
-	timestr = str(int(timenow.timestamp() * 1000))
-	datastring = timestr + ' ' + str(TempStruct['GrillTemp']) + ' ' + str(TempStruct['GrillSetPoint']) + ' ' + str(TempStruct['Probe1Temp']) + ' ' + str(TempStruct['Probe1SetPoint']) + ' ' + str(TempStruct['Probe2Temp']) + ' ' + str(TempStruct['Probe2SetPoint'])
+	#datastring = timestr + ' ' + str(TempStruct['GrillTemp']) + ' ' + str(TempStruct['GrillSetPoint']) + ' ' + str(TempStruct['Probe1Temp']) + ' ' + str(TempStruct['Probe1SetPoint']) + ' ' + str(TempStruct['Probe2Temp']) + ' ' + str(TempStruct['Probe2SetPoint'])
+
+	# Create data structure for current temperature data and timestamp 
+	datastruct = {}
+	datastruct['T'] = int(timenow.timestamp() * 1000)
+	datastruct['GT1'] = TempStruct['GrillTemp']
+	datastruct['GSP1'] = TempStruct['GrillSetPoint']
+	datastruct['PT1'] = TempStruct['Probe1Temp']
+	datastruct['PSP1'] = TempStruct['Probe1SetPoint']
+	datastruct['PT2'] = TempStruct['Probe2Temp']
+	datastruct['PSP2'] = TempStruct['Probe2SetPoint']
+
 	# Push data string to the list in the last position
-	cmdsts.rpush('control:history', datastring)
+	cmdsts.rpush('control:history', json.dumps(datastruct))
 
 	# Check if the list has exceeded maxsizelines, and pop the first item from the list if it has
 	if cmdsts.llen('control:history') > maxsizelines:
