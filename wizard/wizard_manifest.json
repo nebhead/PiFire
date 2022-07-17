@@ -78,7 +78,7 @@
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
 						"description" : "Select the display rotation angle (Usually 0 degrees)",
-						"options" : {"0" : "0 degrees", "2": "180 degrees", "1": "90 degrees"},
+						"options" : {"0" : "0 degrees", "2": "180 degrees"},
 						"settings" : ["globals", "disp_rotation"]
 					}
 				}
@@ -95,7 +95,7 @@
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
 						"description" : "Select the display rotation angle (Usually 0 degrees)",
-						"options" : {"0" : "0 degrees", "2": "180 degrees", "1": "90 degrees"},
+						"options" : {"0" : "0 degrees", "2": "180 degrees"},
 						"settings" : ["globals", "disp_rotation"]
 					}
 				}
@@ -112,7 +112,7 @@
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
 						"description" : "Select the display rotation angle (Usually 0 degrees)",
-						"options" : {"0" : "0 degrees", "2": "180 degrees", "1": "90 degrees"},
+						"options" : {"0" : "0 degrees", "2": "180 degrees"},
 						"settings" : ["globals", "disp_rotation"]
 					}
 				}
@@ -129,7 +129,7 @@
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
 						"description" : "Select the display rotation angle (Usually 0 degrees)",
-						"options" : {"0" : "0 degrees", "2": "180 degrees", "1": "90 degrees"},
+						"options" : {"0" : "0 degrees", "2": "180 degrees"},
 						"settings" : ["globals", "disp_rotation"]
 					},
 					"buttonslevel" : {
