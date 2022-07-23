@@ -23,7 +23,7 @@ from common import WriteLog, ReadSettings
 
 class HopperLevel:
 
-	def __init__(self, empty=22, full=4):
+	def __init__(self, dev_pins, empty=22, full=4):
 		self.empty = empty # Empty is greater than 30cm distance measured
 		self.full = full # Full is less than or equal to the minimum full distance.
 		

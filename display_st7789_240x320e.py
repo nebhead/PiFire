@@ -31,8 +31,9 @@ Display class definition
 '''
 class Display:
 
-	def __init__(self, buttonslevel='HIGH', rotation=0, units='F'):
+	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F'):
 		# Init Global Variables and Constants
+		self.dev_pins = dev_pins
 		self.rotation = rotation
 		self.units = units
 		self.displayactive = False
@@ -58,12 +59,16 @@ class Display:
 
 	def _init_display_device(self):
 		# Init Device
+		dc_pin = self.dev_pins['display']['dc']
+		bl_pin = self.dev_pins['display']['led']
+		rst_pin = self.dev_pins['display']['rst']
+
 		self.device = ST7789.ST7789(
 			port=0,
 			cs=0, 
-			dc=24,
-			backlight=5,
-			rst=25,
+			dc=dc_pin,
+			backlight=bl_pin,
+			rst=rst_pin,
 			rotation=self.rotation,
 			width=320,
 			height=240,
@@ -78,9 +83,9 @@ class Display:
 
 	def _init_input(self):
 		# Init constants and variables 
-		CLK_PIN = 16  # Clock - GPIO16
-		DT_PIN = 20  # DT - GPIO20
-		SW_PIN = 21  # Switch - GPIO21
+		clk_pin = self.dev_pins['input']['up_clk']  	# Clock - GPIO16
+		dt_pin = self.dev_pins['input']['down_dt']  	# DT - GPIO20
+		sw_pin = self.dev_pins['input']['enter_sw'] 	# Switch - GPIO21
 		self.input_event = None
 		self.input_counter = 0
 
@@ -88,8 +93,9 @@ class Display:
 		self._init_menu()
 
 		# Init Device
-		self.encoder = pyky040.Encoder(CLK=CLK_PIN, DT=DT_PIN, SW=SW_PIN)
-		self.encoder.setup(scale_min=0, scale_max=100, step=1, inc_callback=self._inc_callback, dec_callback=self._dec_callback, sw_callback=self._click_callback, polling_interval=200)
+		self.encoder = pyky040.Encoder(CLK=clk_pin, DT=dt_pin, SW=sw_pin)
+		self.encoder.setup(scale_min=0, scale_max=100, step=1, inc_callback=self._inc_callback,
+						   dec_callback=self._dec_callback, sw_callback=self._click_callback, polling_interval=200)
 
 		# Setup & Start Input Thread
 		encoder_thread = threading.Thread(target=self.encoder.watch)

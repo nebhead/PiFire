@@ -31,8 +31,9 @@ Display class definition
 '''
 class Display:
 
-	def __init__(self, buttonslevel='HIGH', rotation=0, units='F'):
+	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F'):
 		# Init Global Variables and Constants
+		self.dev_pins = dev_pins
 		self.buttonslevel = buttonslevel
 		self.rotation = rotation
 		self.units = units
@@ -59,12 +60,16 @@ class Display:
 
 	def _init_display_device(self):
 		# Init Device
+		dc_pin = self.dev_pins['display']['dc']
+		bl_pin = self.dev_pins['display']['led']
+		rst_pin = self.dev_pins['display']['rst']
+
 		self.device = ST7789.ST7789(
 			port=0,
 			cs=0,
-			dc=24,
-			backlight=5,
-			rst=25,
+			dc=dc_pin,
+			backlight=bl_pin,
+			rst=rst_pin,
 			rotation=self.rotation,
 			width=320,
 			height=240,
@@ -79,9 +84,9 @@ class Display:
 
 	def _init_input(self):
 		# Init GPIO for button input, setup callbacks: Uncomment to utilize GPIO input
-		self.up = 16 	# UP - GPIO16
-		self.down = 20	# DOWN - GPIO20
-		self.enter = 21 # ENTER - GPIO21
+		self.up = self.dev_pins['input']['up_clk'] 		# UP - GPIO16
+		self.down = self.dev_pins['input']['down_dt']	# DOWN - GPIO20
+		self.enter = self.dev_pins['input']['enter_sw'] # ENTER - GPIO21
 		self.debounce_ms = 500  # number of milliseconds to debounce input
 		self.input_event = None
 		self.input_counter = 0

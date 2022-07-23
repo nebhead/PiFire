@@ -32,8 +32,9 @@ Display class definition
 '''
 class Display:
 
-	def __init__(self, buttonslevel='HIGH', rotation=0, units='F'):
+	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F'):
 		# Init Global Variables and Constants
+		self.dev_pins = dev_pins
 		self.buttonslevel = buttonslevel
 		self.rotation = rotation
 		self.units = units
@@ -60,8 +61,14 @@ class Display:
 
 	def _init_display_device(self):
 		# Init Device
-		self.serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25, bus_speed_hz=32000000, reset_hold_time=0.2, reset_release_time=0.2)
-		self.device = ili9341(self.serial, active_low=False, width=self.WIDTH, height=self.HEIGHT, gpio_LIGHT=5, rotate=self.rotation)
+		dc_pin = self.dev_pins['display']['dc']
+		led_pin = self.dev_pins['display']['led']
+		rst_pin = self.dev_pins['display']['rst']
+
+		self.serial = spi(port=0, device=0, gpio_DC=dc_pin, gpio_RST=rst_pin, bus_speed_hz=32000000,
+						  reset_hold_time=0.2, reset_release_time=0.2)
+		self.device = ili9341(self.serial, active_low=False, width=self.WIDTH, height=self.HEIGHT, gpio_LIGHT=led_pin,
+							  rotate=self.rotation)
 
 		# Setup & Start Display Loop Thread 
 		display_thread = threading.Thread(target=self._display_loop)
@@ -69,9 +76,9 @@ class Display:
 
 	def _init_input(self):
 		# Init GPIO for button input, setup callbacks: Uncomment to utilize GPIO input
-		self.up = 16 	# UP - GPIO16
-		self.down = 20	# DOWN - GPIO20
-		self.enter = 21 # ENTER - GPIO21
+		self.up = self.dev_pins['input']['up_clk'] 		# UP - GPIO16
+		self.down = self.dev_pins['input']['down_dt']	# DOWN - GPIO20
+		self.enter = self.dev_pins['input']['enter_sw'] # ENTER - GPIO21
 		self.debounce_ms = 500  # number of milliseconds to debounce input
 		self.input_event = None
 		self.input_counter = 0

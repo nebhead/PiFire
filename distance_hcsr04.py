@@ -22,7 +22,7 @@ from common import WriteLog
 
 class HopperLevel:
 
-	def __init__(self, empty=22, full=4):
+	def __init__(self, dev_pins, empty=22, full=4):
 		self.empty = empty # Empty is greater than 30cm distance measured
 		self.full = full # Full is less than or equal to the minimum full distance.
 		if self.empty <= self.full:
@@ -33,10 +33,10 @@ class HopperLevel:
 			self.full = 4
 
 		# (NOTE: This is a 5V device and must be connected to 5V VCC)
-		self.trig_pin = 23 # Modify to match design
+		self.trig_pin = dev_pins['distance']['trig'] # Modify to match design
 		# (NOTE: This pin (echo_pin) must have a resistor divider to reduce the voltage to tolerable levels)
 		# (Details: https://www.linuxnorth.org/hcsr04sensor/)
-		self.echo_pin = 27 # Modify to match design 
+		self.echo_pin = dev_pins['distance']['echo'] # Modify to match design
 		
 		# Default values
 		# unit = 'metric'
