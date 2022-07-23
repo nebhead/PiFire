@@ -1943,6 +1943,7 @@ def get_app_data(action=None, type=None):
 			'temp' : checkcputemp(),
 			'outpins' : settings['outpins'],
 			'inpins' : settings['inpins'],
+			'dev_pins' : settings['dev_pins'],
 			'server_version' : settings['versions']['server'] }
 
 	elif action == 'manual_data':

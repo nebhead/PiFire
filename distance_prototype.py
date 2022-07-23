@@ -13,7 +13,7 @@ import random
 
 class HopperLevel:
 
-	def __init__(self, empty=22, full=4, test=False):
+	def __init__(self, dev_pins, empty=22, full=4, test=False):
 		self.empty = empty # Empty is greater than distance measured for empty
 		self.full = full # Full is less than or equal to the minimum full distance.
 		self.test = test  # Test mode will generate random pellet levels. 

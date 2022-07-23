@@ -121,6 +121,24 @@ def DefaultSettings():
 
 	settings['inpins'] = { 'selector' : 17 }
 
+	settings['dev_pins'] = {	# Device Pin Assignment
+		'input': {
+			'up_clk': 16,		# Up Button or CLK for encoder
+			'enter_sw' : 21,	# Enter Button or SW for encoder
+			'down_dt' : 20		# Down Button or DT for encoder
+		},
+		'display': {
+			'led' : 5,			# ILI9341: LED	- ST7789: BL
+			'dc' : 24,			# ILI9341: DC	- ST7789: DC
+			'rst' : 25			# ILI9341: RST	- ST7789: RST
+		},
+		'distance': {
+			'trig': 23,			# For hcsr04
+			'echo' : 27			# For hcsr04
+		},
+	}
+
+
 	#PID controller based on proportional band in standard PID form https://en.wikipedia.org/wiki/PID_controller#Ideal_versus_standard_PID_form
 	# u = Kp (e(t)+ 1/Ti INT + Td de/dt)
 	# PB = Proportional Band

@@ -67,6 +67,7 @@ triggerlevel = settings['globals']['triggerlevel']
 buttonslevel = settings['globals']['buttonslevel']
 disp_rotation = settings['globals']['disp_rotation']
 units = settings['globals']['units']
+dev_pins = settings['dev_pins']
 
 if triggerlevel == 'LOW':
 	AUGERON = 0
@@ -178,10 +179,11 @@ except:
 		raise
 
 try:
-	display_device = DisplayModule.Display(buttonslevel=buttonslevel, rotation=disp_rotation, units=units)
+	display_device = DisplayModule.Display(
+		dev_pins=dev_pins, buttonslevel=buttonslevel, rotation=disp_rotation, units=units)
 except:
 	from display_none import Display  # Simulated Library for controlling the grill platform
-	display_device = Display(buttonslevel=buttonslevel, rotation=disp_rotation, units=units)
+	display_device = Display(dev_pins=dev_pins, buttonslevel=buttonslevel, rotation=disp_rotation, units=units)
 	error_event = f'An error occured configuring the [{settings["modules"]["display"]}] display object.  The "display_none" module has been loaded instead.  This sometimes means that the hardware is not connected properly, or the module is not configured.  Please run the configuration wizard again from the admin panel to fix this issue.'
 	errors.append(error_event)
 	WriteErrors(errors)
@@ -209,12 +211,15 @@ except:
 try:
 	if (settings['modules']['grillplat'] == 'prototype') and (settings['modules']['dist'] == 'prototype'):
 		# If in prototype mode, enable test reading (i.e. random values from proto distance sensor)
-		dist_device = DistanceModule.HopperLevel(settings['pelletlevel']['empty'], settings['pelletlevel']['full'], test=True)
+		dist_device = DistanceModule.HopperLevel(
+			dev_pins=dev_pins, empty=settings['pelletlevel']['empty'], full=settings['pelletlevel']['full'], test=True)
 	else:
-		dist_device = DistanceModule.HopperLevel(settings['pelletlevel']['empty'], settings['pelletlevel']['full'])
+		dist_device = DistanceModule.HopperLevel(
+			dev_pins=dev_pins, empty=settings['pelletlevel']['empty'], full=settings['pelletlevel']['full'])
 except:
 	from distance_prototype import HopperLevel  # Simulated Library for controlling the grill platform
-	dist_device = HopperLevel(settings['pelletlevel']['empty'], settings['pelletlevel']['full'])
+	dist_device = HopperLevel(
+		dev_pins=dev_pins, empty=settings['pelletlevel']['empty'], full=settings['pelletlevel']['full'])
 	error_event = f'An error occured configuring the [{settings["modules"]["dist"]}] distance object.  The prototype module has been loaded instead.  This sometimes means that the hardware is not connected properly, or the module is not configured.  Please run the configuration wizard again from the admin panel to fix this issue.'
 	errors.append(error_event)
 	WriteErrors(errors)

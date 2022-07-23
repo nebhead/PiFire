@@ -26,8 +26,9 @@ Display class definition
 '''
 class Display:
 
-	def __init__(self, buttonslevel='HIGH', rotation=0, units='F'):
+	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F'):
 		# Init Global Variables and Constants
+		self.dev_pins = dev_pins
 		self.rotation = rotation
 		self.units = units
 		self.displayactive = False
@@ -47,12 +48,16 @@ class Display:
 
 	def _init_display_device(self):
 		# Init Device
+		dc_pin = self.dev_pins['display']['dc']
+		bl_pin = self.dev_pins['display']['led']
+		rst_pin = self.dev_pins['display']['rst']
+
 		self.device = ST7789.ST7789(
 			port=0,
 			cs=0, 
-			dc=24,
-			backlight=5,
-			rst=25,
+			dc=dc_pin,
+			backlight=bl_pin,
+			rst=rst_pin,
 			rotation=self.rotation,
 			spi_speed_hz=80 * 1000 * 1000
 		)

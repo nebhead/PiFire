@@ -34,7 +34,7 @@ Display class definition
 '''
 class Display:
 
-	def __init__(self, buttonslevel='HIGH', rotation=0, units='F'):
+	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F'):
 		# Init Global Variables and Constants
 		self.rotation = rotation
 		self.units = units
@@ -61,8 +61,17 @@ class Display:
 
 	def _init_display_device(self):
 		# Init Device
-		self.serial = spi(spi=spidev.SpiDev(), port=0, device=0, gpio_DC=16, gpio_RST=20, bus_speed_hz=32000000, reset_hold_time=0.2, reset_release_time=0.2)
-		self.device = ili9341(self.serial, active_low=False, width=self.WIDTH, height=self.HEIGHT, gpio_LIGHT=12, rotate=self.rotation)
+		# dc_pin = self.dev_pins['display']['dc']
+		# led_pin = self.dev_pins['display']['led']
+		# rst_pin = self.dev_pins['display']['rst']
+		dc_pin = 16
+		led_pin = 12
+		rst_pin = 20
+
+		self.serial = spi(spi=spidev.SpiDev(), port=0, device=0, gpio_DC=dc_pin, gpio_RST=rst_pin,
+						  bus_speed_hz=32000000, reset_hold_time=0.2, reset_release_time=0.2)
+		self.device = ili9341(self.serial, active_low=False, width=self.WIDTH, height=self.HEIGHT, gpio_LIGHT=led_pin,
+							  rotate=self.rotation)
 
 		# Setup & Start Display Loop Thread 
 		display_thread = threading.Thread(target=self._display_loop)
@@ -70,9 +79,13 @@ class Display:
 
 	def _init_input(self):
 		# Init constants and variables 
-		CLK_PIN = 25  # Clock - GPIO25
-		DT_PIN = 24  # DT - GPIO24
-		SW_PIN = 23  # Switch - GPIO23
+		# Init constants and variables
+		# clk_pin = self.dev_pins['input']['up_clk']  	# Clock - GPIO16
+		# dt_pin = self.dev_pins['input']['down_dt']  	# DT - GPIO20
+		# sw_pin = self.dev_pins['input']['enter_sw'] 	# Switch - GPIO21
+		clk_pin = 25 	# Clock - GPIO25
+		dt_pin = 24  	# DT - GPIO24
+		sw_pin = 23 	# Switch - GPIO23
 		self.debounce_ms = 500  # number of milliseconds to debounce input
 		self.input_event = None
 		self.input_counter = 0
@@ -81,8 +94,9 @@ class Display:
 		self._init_menu()
 
 		# Init Device
-		self.encoder = pyky040.Encoder(CLK=CLK_PIN, DT=DT_PIN, SW=SW_PIN)
-		self.encoder.setup(scale_min=0, scale_max=100, step=1, inc_callback=self._inc_callback, dec_callback=self._dec_callback, sw_callback=self._click_callback, polling_interval=1) 
+		self.encoder = pyky040.Encoder(CLK=clk_pin, DT=dt_pin, SW=sw_pin)
+		self.encoder.setup(scale_min=0, scale_max=100, step=1, inc_callback=self._inc_callback,
+						   dec_callback=self._dec_callback, sw_callback=self._click_callback, polling_interval=1)
 
 		# Setup & Start Input Thread 
 		encoder_thread = threading.Thread(target=self.encoder.watch)
