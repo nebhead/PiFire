@@ -761,7 +761,7 @@ def WorkCycle(mode, grill_platform, adc_device, display_device, dist_device):
 	WriteLog(event)
 
 	# Log the end time
-	metrics['endtime'] = time.time()
+	metrics['endtime'] = time.time() * 1000
 	WriteMetrics(metrics)
 
 	return ()
@@ -988,7 +988,7 @@ def Monitor(grill_platform, adc_device, display_device, dist_device):
 	WriteLog(event)
 
 	# Log the end time
-	metrics['endtime'] = time.time()
+	metrics['endtime'] = time.time() * 1000
 	WriteMetrics(metrics)
 
 	return ()
@@ -1200,7 +1200,7 @@ def Manual_Mode(grill_platform, adc_device, display_device, dist_device):
 	WriteLog(event)
 
 	# Log the end time
-	metrics['endtime'] = time.time()
+	metrics['endtime'] = time.time() * 1000
 	WriteMetrics(metrics)
 
 	return ()
@@ -1726,6 +1726,7 @@ while True:
 				metrics = ReadMetrics()
 				metrics['mode'] = 'Stop'
 				WriteMetrics(metrics)
+				WriteCookFile()
 
 			if (control['status'] == 'monitor') and (control['mode'] == 'Error'):
 				grill_platform.PowerOn()

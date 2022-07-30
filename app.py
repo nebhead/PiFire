@@ -34,13 +34,15 @@ from updater import *  # Library for doing project updates from GitHub
 
 BACKUPPATH = './backups/'  # Path to backups of settings.json, pelletdb.json
 UPLOAD_FOLDER = BACKUPPATH  # Point uploads to the backup path
-ALLOWED_EXTENSIONS = {'json'}
+HISTORY_FOLDER = './history/'  # Path to historical cook files
+ALLOWED_EXTENSIONS = {'json', 'pifire'}
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
 QRcode(app)
 Mobility(app)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['HISTORY_FOLDER'] = HISTORY_FOLDER
 
 @app.route('/')
 def index():
@@ -149,8 +151,39 @@ def historypage(action=None):
 	global settings
 	control = ReadControl()
 
+	# Grab list of Historical Cook Files
+	dirfiles = os.listdir(HISTORY_FOLDER)
+	cookfiles = []
+	for file in dirfiles:
+		if file.endswith('.pifire'):
+			cookfiles.append(file)
+
 	if (request.method == 'POST'):
 		response = request.form
+		if(action == 'cookfile'):
+			if('delcookfile' in response):
+				filename = './history/' + response["delcookfile"]
+				os.remove(filename)
+				return redirect('/history')
+			if('opencookfile' in response):
+				cookfilename = HISTORY_FOLDER + response['opencookfile']
+				cookfilestruct, status = ReadCookFile(cookfilename)
+				if(status == 'OK'):
+					events = cookfilestruct['events']
+					comments = cookfilestruct['comments']
+					for comment in comments:
+						comment['text'] = comment['text'].replace('\n', '<br>')
+					metadata = cookfilestruct['metadata']
+					metadata['starttime'] = epoch_to_time(metadata['starttime'] / 1000)
+					metadata['endtime'] = epoch_to_time(metadata['endtime'] / 1000)
+					labels = cookfilestruct['graph_labels']
+					assets = cookfilestruct['assets']
+					filenameonly = response['opencookfile']
+					return render_template('cookfile.html', settings=settings, cookfilename=cookfilename, filenameonly=filenameonly, events=events, comments=comments, metadata=metadata, labels=labels, assets=assets, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
+			if('dlcookfile' in response):
+				filename = './history/' + response['dlcookfile']
+				return send_file(filename, as_attachment=True, max_age=0)
+
 		if(action == 'setmins'):
 			if('minutes' in response):
 				if(response['minutes'] != ''):
@@ -165,34 +198,8 @@ def historypage(action=None):
 					ReadHistory(0, flushhistory=True)
 
 	elif (request.method == 'GET') and (action == 'export'):
-		data_list = ReadHistory((settings['history_page']['minutes'] * 20))
-
-		exportfilename = "export.csv"
-		csvfile = open('/tmp/'+exportfilename, "w")
-
-		list_length = len(data_list) # Length of list
-
-		if(list_length > 0):
-			# Build Time_List, Settemp_List, Probe_List, cur_probe_temps
-			writeline = 'Time,Grill Temp,Grill SetTemp,Probe 1 Temp,Probe 1 SetTemp,Probe 2 Temp, Probe 2 SetTemp\n'
-			csvfile.write(writeline)
-			last = -1
-			for index in range(0, list_length):
-				if (int((index/list_length)*100) > last):
-					#print('Generating Data: ' + str(int((index/list_length)*100)) + "%")
-					last = int((index/list_length)*100)
-				# Convert time data to datetime format
-				converted_dt = datetime.datetime.fromtimestamp(int(data_list[index][0]) / 1000)
-				data_list[index][0] = converted_dt.strftime('%Y-%m-%d %H:%M:%S')
-				writeline = ','.join(data_list[index])
-				csvfile.write(writeline + '\n')
-		else:
-			writeline = 'No Data\n'
-			csvfile.write(writeline)
-
-		csvfile.close()
-
-		return send_file('/tmp/'+exportfilename, as_attachment=True, max_age=0)
+		exportfilename = prepare_graph_csv()
+		return send_file(exportfilename, as_attachment=True, max_age=0)
 
 	num_items = settings['history_page']['minutes'] * 20
 	probes_enabled = settings['probe_settings']['probes_enabled']
@@ -208,16 +215,16 @@ def historypage(action=None):
 	displayed_starttime = time.time() - (settings['history_page']['minutes'] * 60)
 	annotations = prepare_annotations(displayed_starttime)
 
-	return render_template('history.html', control=control, grill_temp_list=data_blob['grill_temp_list'], grill_settemp_list=data_blob['grill_settemp_list'], probe1_temp_list=data_blob['probe1_temp_list'], probe1_settemp_list=data_blob['probe1_settemp_list'], probe2_temp_list=data_blob['probe2_temp_list'], probe2_settemp_list=data_blob['probe2_settemp_list'], label_time_list=data_blob['label_time_list'], probes_enabled=probes_enabled, num_mins=settings['history_page']['minutes'], num_datapoints=settings['history_page']['datapoints'], autorefresh=autorefresh, annotations=annotations, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
+	return render_template('history.html', control=control, grill_temp_list=data_blob['grill_temp_list'], grill_settemp_list=data_blob['grill_settemp_list'], probe1_temp_list=data_blob['probe1_temp_list'], probe1_settemp_list=data_blob['probe1_settemp_list'], probe2_temp_list=data_blob['probe2_temp_list'], probe2_settemp_list=data_blob['probe2_settemp_list'], label_time_list=data_blob['label_time_list'], probes_enabled=probes_enabled, num_mins=settings['history_page']['minutes'], num_datapoints=settings['history_page']['datapoints'], autorefresh=autorefresh, annotations=annotations, cookfiles=cookfiles, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
 
 @app.route('/historyupdate/<action>', methods=['POST','GET'])    
 @app.route('/historyupdate')
 def historyupdate(action=None):
 	global settings
 
+	control = ReadControl()
 	if(action == 'stream'):
 		# GET - Read current temperatures and set points for history streaming 
-		control = ReadControl()
 		if control['mode'] == 'Stop':
 			set_temps = [0,0,0]
 			cur_probe_temps = [0,0,0]
@@ -240,7 +247,8 @@ def historyupdate(action=None):
 			'probe1_settemp' : set_temps[1], 
 			'probe2_temp' : int(float(cur_probe_temps[2])), 
 			'probe2_settemp' : set_temps[2],
-			'annotations' : annotations
+			'annotations' : annotations,
+			'mode' : control['mode']
 		}
 		return jsonify(json_data)
 
@@ -266,17 +274,179 @@ def historyupdate(action=None):
 				'probe2_temp_list' : data_blob['probe2_temp_list'],
 				'probe2_settemp_list' : data_blob['probe2_settemp_list'],
 				'label_time_list' : data_blob['label_time_list'], 
-				'annotations' : annotations
+				'annotations' : annotations, 
+				'mode' : control['mode']
 			}
 			return jsonify(json_data)
+	return jsonify({'status' : 'ERROR'})
 
-	# Legacy Flow - Which may eventually be retired 
-	data_blob = {}
-	num_items = settings['history_page']['minutes'] * 20
-	data_blob = prepare_data(num_items, True, settings['history_page']['datapoints'])
-	for index in range(0, len(data_blob['label_time_list'])): 
-		data_blob['label_time_list'][index] = datetime.datetime.fromtimestamp(int(data_blob['label_time_list'][index]) / 1000).strftime('%H:%M:%S')
-	return jsonify({ 'grill_temp_list' : data_blob['grill_temp_list'], 'grill_settemp_list' : data_blob['grill_settemp_list'], 'probe1_temp_list' : data_blob['probe1_temp_list'], 'probe1_settemp_list' : data_blob['probe1_settemp_list'], 'probe2_temp_list' : data_blob['probe2_temp_list'], 'probe2_settemp_list' : data_blob['probe2_settemp_list'], 'label_time_list' : data_blob['label_time_list'] })
+@app.route('/cookfiledata', methods=['POST', 'GET'])
+def cookfiledata(action=None):
+	global settings 
+	
+	if(request.method == 'POST') and ('json' in request.content_type):
+		requestjson = request.json
+		if('full_graph' in requestjson):
+			filename = requestjson['filename']
+			cookfiledata, status = ReadCookFile(filename)
+
+			if(status == 'OK'):
+				annotations = prepare_annotations(0, cookfiledata['events'])
+
+				json_data = { 
+					'GT1_label' : cookfiledata['graph_labels']['grill1_label'],
+					'GSP1_label' : cookfiledata['graph_labels']['grill1_label'] + " SetPoint",
+					'PT1_label' : cookfiledata['graph_labels']['probe1_label'],
+					'PSP1_label' : cookfiledata['graph_labels']['probe1_label'] + " SetPoint",
+					'PT2_label' : cookfiledata['graph_labels']['probe2_label'],
+					'PSP2_label' : cookfiledata['graph_labels']['probe2_label'] + " SetPoint",
+					'GT1_data' : cookfiledata['graph_data']['grill1_temp'], 
+					'GSP1_data' : cookfiledata['graph_data']['grill1_setpoint'], 
+					'PT1_data' : cookfiledata['graph_data']['probe1_temp'], 
+					'PT2_data' : cookfiledata['graph_data']['probe2_temp'], 
+					'PSP1_data' : cookfiledata['graph_data']['probe1_setpoint'],
+					'PSP2_data' : cookfiledata['graph_data']['probe2_setpoint'],
+					'time_labels' : cookfiledata['graph_data']['time_labels'],
+					'annotations' : annotations
+				}
+				return jsonify(json_data)
+		
+		if('getTitles' in requestjson):
+			# Grab list of Historical Cook Files
+			dirfiles = os.listdir(HISTORY_FOLDER)
+			cookfiles = []
+			for file in dirfiles:
+				if file.endswith('.pifire'):
+					cookfiles.append(file)
+
+			cookfiletitles = []
+			for file in cookfiles:
+				filename = HISTORY_FOLDER + file
+				cookfiledata, status = ReadCFJSONData(filename, 'metadata')
+				if(status == 'OK'):
+					cookfiletitles.append({'filename' : file, 'title' : cookfiledata['title']})
+				else:
+					cookfiletitles.append({'filename' : file, 'title' : 'ERROR'})
+			return jsonify(cookfiletitles)
+
+	if(request.method == 'POST') and ('form' in request.content_type):
+		requestform = request.form 
+		if('dl_cookfile' in requestform):
+			# Download the full JSON Cook File Locally
+			filename = requestform['dl_cookfile']
+			return send_file(filename, as_attachment=True, max_age=0)
+
+		if('dl_eventfile' in requestform):
+			filename = requestform['dl_eventfile']
+			cookfiledata, status = ReadCookFile(filename)
+			if(status == 'OK'):
+				csvfilename = prepare_metrics_csv(cookfiledata['events'], filename)
+				return send_file(csvfilename, as_attachment=True, max_age=0)
+
+		if('dl_graphfile' in requestform):
+			# Download CSV of the Graph Data Only
+			filename = requestform['dl_graphfile']
+			cookfiledata, status = ReadCookFile(filename)
+			if(status == 'OK'):
+				csvfilename = prepare_graph_csv(cookfiledata['graph_data'], cookfiledata['graph_labels'], filename)
+				return send_file(csvfilename, as_attachment=True, max_age=0)
+
+		if('ulcookfilereq' in requestform):
+			# Assume we have request.files and localfile in response
+			remotefile = request.files['ulcookfile']
+			
+			if (remotefile.filename != ''):
+				# If the user does not select a file, the browser submits an
+				# empty file without a filename.
+				if remotefile and allowed_file(remotefile.filename):
+					filename = secure_filename(remotefile.filename)
+					remotefile.save(os.path.join(app.config['HISTORY_FOLDER'], filename))
+				else:
+					print('Disallowed File Upload.')
+				return redirect('/history')
+
+	print('Something unexpected has happened.')	
+	return jsonify({'result' : 'ERROR'})
+
+@app.route('/updatecookfile', methods=['POST','GET'])
+def updatecookdata(action=None):
+	global settings 
+
+	if(request.method == 'POST'):
+		requestjson = request.json 
+		if('comments' in requestjson):
+			filename = requestjson['filename']
+			cookfiledata, status = ReadCFJSONData(filename, 'comments')
+
+			if('commentnew' in requestjson):
+				now = datetime.datetime.now()
+				comment_struct = {}
+				comment_struct['text'] = requestjson['commentnew']
+				comment_struct['id'] = generateUUID()
+				comment_struct['edited'] = ''
+				comment_struct['date'] = now.strftime('%Y-%m-%d')
+				comment_struct['time'] = now.strftime('%H:%M')
+				cookfiledata.append(comment_struct)
+				result = UpdateCookFile(cookfiledata, filename, 'comments')
+				if(result == 'OK'):
+					return jsonify({'result' : 'OK', 'newcommentid' : comment_struct['id'], 'newcommentdt': comment_struct['date'] + ' ' + comment_struct['time']})
+			if('delcomment' in requestjson):
+				for item in cookfiledata:
+					if item['id'] == requestjson['delcomment']:
+						cookfiledata.remove(item)
+						result = UpdateCookFile(cookfiledata, filename, 'comments')
+						if(result == 'OK'):
+							return jsonify({'result' : 'OK'})
+			if('editcomment' in requestjson):
+				for item in cookfiledata:
+					if item['id'] == requestjson['editcomment']:
+						return jsonify({'result' : 'OK', 'text' : item['text']})
+			if('savecomment' in requestjson):
+				for item in cookfiledata:
+					if item['id'] == requestjson['savecomment']:
+						now = datetime.datetime.now()
+						item['text'] = requestjson['text']
+						item['edited'] = now.strftime('%Y-%m-%d %H:%M')
+						result = UpdateCookFile(cookfiledata, filename, 'comments')
+						if(result == 'OK'):
+							return jsonify({'result' : 'OK', 'text' : item['text'].replace('\n', '<br>'), 'edited' : item['edited'], 'datetime' : item['date'] + ' ' + item['time']})
+		
+		if('metadata' in requestjson):
+			filename = requestjson['filename']
+			cookfiledata, status = ReadCFJSONData(filename, 'metadata')
+			if(status == 'OK'):
+				if('editTitle' in requestjson):
+					cookfiledata['title'] = requestjson['editTitle']
+					result = UpdateCookFile(cookfiledata, filename, 'metadata')
+					if(result == 'OK'):
+						return jsonify({'result' : 'OK'})
+					else: 
+						print(f'Result: {result}')
+		
+		if('graph_labels' in requestjson):
+			filename = requestjson['filename']
+			cookfiledata, status = ReadCFJSONData(filename, 'graph_labels')
+			if(status == 'OK'):
+				if('grill1_label' in requestjson):
+					cookfiledata['grill1_label'] = requestjson['grill1_label']
+					result = UpdateCookFile(cookfiledata, filename, 'graph_labels')
+					if(result == 'OK'):
+						return jsonify({'result' : 'OK'})
+				if('probe1_label' in requestjson):
+					cookfiledata['probe1_label'] = requestjson['probe1_label']
+					result = UpdateCookFile(cookfiledata, filename, 'graph_labels')
+					if(result == 'OK'):
+						return jsonify({'result' : 'OK'})
+				if('probe2_label' in requestjson):
+					cookfiledata['probe2_label'] = requestjson['probe2_label']
+					result = UpdateCookFile(cookfiledata, filename, 'graph_labels')
+					if(result == 'OK'):
+						return jsonify({'result' : 'OK'})
+			else:
+				print(f'ERROR: {status}')
+
+	return jsonify({'result' : 'ERROR'})
+	
 
 @app.route('/tuning/<action>', methods=['POST','GET'])
 @app.route('/tuning', methods=['POST','GET'])
@@ -576,7 +746,6 @@ def pelletsspage(action=None):
 @app.route('/recipes', methods=['POST','GET'])
 def recipespage(action=None):
 
-	#print('Recipes Page')
 	# Show current recipes
 	# Add a recipe
 	# Delete a Recipe
@@ -1051,7 +1220,6 @@ def settingspage(action=None):
 		return(jsonify({'temps_list' : temps, 'profiles' : profiles}))
 
 	if (request.method == 'POST') and (action == 'smartstart'):
-		#print(f'\nGot POST Request: \n{request.json}')
 		response = request.json 
 		settings['smartstart']['temp_range_list'] = response['temps_list']
 		settings['smartstart']['profiles'] = response['profiles']
@@ -1113,12 +1281,12 @@ def adminpage(action=None):
 		if('clearevents' in response):
 			if(response['clearevents']=='true'):
 				WriteLog('Clearing Events Log.')
-				os.system('rm /tmp/events.log')
+				os.remove('/tmp/events.log')
 
 		if('clearpelletdb' in response):
 			if(response['clearpelletdb']=='true'):
 				WriteLog('Clearing Pellet Database.')
-				os.system('rm pelletdb.json')
+				os.remove('pelletdb.json')
 
 		if('clearpelletdblog' in response):
 			if(response['clearpelletdblog']=='true'):
@@ -1131,8 +1299,8 @@ def adminpage(action=None):
 				WriteLog('Resetting Settings, Control, History to factory defaults.')
 				ReadHistory(0, flushhistory=True)
 				ReadControl(flush=True)
-				os.system('rm settings.json')
-				os.system('rm pelletdb.json')
+				os.remove('settings.json')
+				os.remove('pelletdb.json')
 				settings = DefaultSettings()
 				control = DefaultControl()
 				WriteSettings(settings)
@@ -1146,7 +1314,6 @@ def adminpage(action=None):
 			return send_file(zip_file, as_attachment=True, attachment_filename=file_name, max_age=0)
 		
 		if('backupsettings' in response):
-			#print('Backing up settings... ')
 			timenow = datetime.datetime.now()
 			timestr = timenow.strftime('%m-%d-%y_%H%M%S') # Truncate the microseconds
 			backupfile = BACKUPPATH + 'PiFire_' + timestr + '.json'
@@ -1154,34 +1321,27 @@ def adminpage(action=None):
 			return send_file(backupfile, as_attachment=True, max_age=0)
 
 		if('restoresettings' in response):
-			#print('Restoring settings...')
 			# Assume we have request.files and localfile in response
 			remotefile = request.files['uploadfile']
 			localfile = request.form['localfile']
 			
 			if (localfile != 'none'):
-				#print(f'Selected local file: {BACKUPPATH+localfile}')
 				settings = ReadSettings(filename=BACKUPPATH+localfile)
 				notify = "success"
 			elif (remotefile.filename != ''):
-				#print(f'Selected remote file: {remotefile.filename}')
 				# If the user does not select a file, the browser submits an
 				# empty file without a filename.
 				if remotefile and allowed_file(remotefile.filename):
 					filename = secure_filename(remotefile.filename)
 					remotefile.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-					#print(f'{filename} saved to {BACKUPPATH}')
 					notify = "success"
 					settings = ReadSettings(filename=BACKUPPATH+filename)
 				else:
 					notify = "error"
-					#print('Disallowed File Upload.')
 			else:
 				notify = "error"
-				#print('No file in request.')
 
 		if('backuppelletdb' in response):
-			#print('Backing up pelletdb... ')
 			timenow = datetime.datetime.now()
 			timestr = timenow.strftime('%m-%d-%y_%H%M%S') # Truncate the microseconds
 			backupfile = BACKUPPATH + 'PelletDB_' + timestr + '.json'
@@ -1189,31 +1349,25 @@ def adminpage(action=None):
 			return send_file(backupfile, as_attachment=True, max_age=0)
 
 		if('restorepelletdb' in response):
-			#print('Restoring pelletdb... ')
 			# Assume we have request.files and localfile in response
 			remotefile = request.files['uploadfile']
 			localfile = request.form['localfile']
 			
 			if (localfile != 'none'):
-				#print(f'Selected local file: {BACKUPPATH+localfile}')
 				pelletdb = ReadPelletDB(filename=BACKUPPATH+localfile)
 				notify = "success"
 			elif (remotefile.filename != ''):
-				#print(f'Selected remote file: {remotefile.filename}')
 				# If the user does not select a file, the browser submits an
 				# empty file without a filename.
 				if remotefile and allowed_file(remotefile.filename):
 					filename = secure_filename(remotefile.filename)
 					remotefile.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-					#print(f'{filename} saved to {BACKUPPATH}')
 					notify = "success"
 					pelletdb = ReadPelletDB(filename=BACKUPPATH+filename)
 				else:
 					notify = "error"
-					#print('Disallowed File Upload.')
 			else:
 				notify = "error"
-				#print('No file in request.')
 
 	uptime = os.popen('uptime').readline()
 
@@ -1330,7 +1484,6 @@ def api_page(action=None):
 				for key in settings.keys():
 					if key in requestjson.keys():
 						settings[key].update(requestjson.get(key, {}))
-						#print(f'Updated Key: {key}')
 				WriteSettings(settings)
 				return jsonify({'settings':'success'}), 201
 			elif(action == 'control'):
@@ -1341,14 +1494,12 @@ def api_page(action=None):
 							control[key].update(requestjson.get(key, {}))
 						else:
 							control[key] = requestjson[key]
-						#print(f'Updated Key: {key}')
 				WriteControl(control)
 				return jsonify({'control':'success'}), 201
 			else:
 				return jsonify({'Error':'Recieved POST request no valid action.'}), 404
 	else:
 		return jsonify({'Error':'Recieved undefined/unsupported request.'}), 404
-	#return jsonify({'settings':settings,'control':control, 'current':current_temps}), 201
 
 '''
 Wizard Route for PiFire Setup
@@ -1373,7 +1524,6 @@ def wizard(action=None):
 			WriteSettings(settings)
 			return redirect('/')
 		if(action=='finish'):
-			print(f'Finishing. \n Form Data: {r}')
 			wizardInstallInfo = prepare_wizard_data(r)
 			StoreWizardInstallInfo(wizardInstallInfo)
 			SetWizardInstallStatus(0, 'Starting Install...', '')
@@ -1490,13 +1640,11 @@ def update_page(action=None):
 				}
 				return render_template('updater.html', alert=alert, settings=settings, page_theme=settings['globals']['page_theme'], update_data=update_data, grill_name=settings['globals']['grill_name'])
 			else:
-				print(f'Changing Branch. \nForm Data: {r["branch_target"]}')
 				SetUpdaterInstallStatus(0, 'Starting Branch Change...', '')
 				os.system('python3 %s %s %s &' % ('updater.py', '-b', r['branch_target']))	# Kickoff Branch Change
 				return render_template('updater-status.html', page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
 
 		if('do_update' in r):
-			print(f'Updating. \nForm Data: {r}')
 			SetUpdaterInstallStatus(0, 'Starting Update...', '')
 			os.system('python3 %s %s %s &' % ('updater.py', '-u', update_data['branch_target']))  # Kickoff Update
 			return render_template('updater-status.html', page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
@@ -1528,66 +1676,12 @@ Metrics Routes
 def metrics_page(action=None):
 	global settings
 
-	metrics_data = ReadMetrics(all=True)
-
-	# Process Additional Metrics Information for Display
-	for index in range(0, len(metrics_data)):
-		# Convert Start Time
-		starttime = metrics_data[index]['starttime']
-		metrics_data[index]['starttime_c'] = epoch_to_time(starttime)
-		# Convert End Time
-		if(metrics_data[index]['endtime'] == 0):
-			endtime = 0
-		else: 
-			endtime = epoch_to_time(metrics_data[index]['endtime'])
-		metrics_data[index]['endtime_c'] = endtime
-		# Time in Mode
-		if(metrics_data[index]['mode'] == 'Stop'):
-			timeinmode = 'NA'
-		elif(metrics_data[index]['endtime'] == 0):
-			timeinmode = 'Active'
-		else:
-			seconds = int(metrics_data[index]['endtime'] - metrics_data[index]['starttime'])
-			if seconds > 60:
-				timeinmode = f'{int(seconds/60)} m {seconds % 60} s'
-			else:
-				timeinmode = f'{seconds} s'
-		metrics_data[index]['timeinmode'] = timeinmode 
-		# Convert Auger On Time
-		metrics_data[index]['augerontime_c'] = str(int(metrics_data[index]['augerontime'])) + ' s'
-		# Estimated Pellet Usage
-		grams = int(metrics_data[index]['augerontime'] * settings['globals']['augerrate'])
-		pounds = grams * 0.00220462
-		ounces = grams * 0.03527392
-		metrics_data[index]['estusage_m'] = f'{grams} grams'
-		metrics_data[index]['estusage_i'] = f'{pounds} pounds ({ounces} ounces)'
+	metrics_data = ProcessMetrics(ReadMetrics(all=True))
 
 	if (request.method == 'GET') and (action == 'export'):
-		exportfilename = "pifire_metrics.csv"
-		csvfile = open('/tmp/' + exportfilename, 'w')
-
-		list_length = len(metrics_data) # Length of list
-
-		if(list_length > 0):
-			# Build the header row
-			writeline=''
-			for item in range(0, len(metrics_items)):
-				writeline += f'{metrics_items[item][0]}, '
-			writeline += '\n'
-			csvfile.write(writeline)
-			for index in range(0, list_length):
-				writeline = ''
-				for item in range(0, len(metrics_items)):
-					writeline += f'{metrics_data[index][metrics_items[item][0]]}, '
-				writeline += '\n'
-				csvfile.write(writeline)
-		else:
-			writeline = 'No Data\n'
-			csvfile.write(writeline)
-
-		csvfile.close()
-
-		return send_file('/tmp/' + exportfilename, as_attachment=True, max_age=0)
+		filename = datetime.datetime.now().strftime('%Y%m%d-%H%M') + '-PiFire-Metrics-Export'
+		csvfilename = prepare_metrics_csv(metrics_data, filename)
+		return send_file(csvfilename, as_attachment=True, max_age=0)
 
 	return render_template('metrics.html', settings=settings, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'], metrics_data=metrics_data)
 
@@ -1664,15 +1758,16 @@ def prepare_data(num_items=10, reduce=True, datapoints=60):
 
 	return(data_blob)
 
-def prepare_annotations(displayed_starttime):
-	metrics_data = ReadMetrics(all=True)
+def prepare_annotations(displayed_starttime, metrics_data=[]):
+	if(metrics_data == []):
+		metrics_data = ReadMetrics(all=True)
 	annotation_json = {}
 	# Process Additional Metrics Information for Display
 	for index in range(0, len(metrics_data)):
 		# Check if metric falls in the displayed time window
 		if(metrics_data[index]['starttime'] > displayed_starttime):
 			# Convert Start Time
-			starttime = epoch_to_time(metrics_data[index]['starttime'])
+			# starttime = epoch_to_time(metrics_data[index]['starttime']/1000)
 			mode = metrics_data[index]['mode']
 			color = 'blue'
 			if mode == 'Startup':
@@ -1693,8 +1788,8 @@ def prepare_annotations(displayed_starttime):
 				color = 'purple'
 			annotation = {
 							'type' : 'line',
-							'xMin' : starttime,
-							'xMax' : starttime,
+							'xMin' : metrics_data[index]['starttime'],
+							'xMax' : metrics_data[index]['starttime'],
 							'borderColor' : color,
 							'borderWidth' : 2,
 							'label': {
@@ -1711,6 +1806,90 @@ def prepare_annotations(displayed_starttime):
 			annotation_json[f'event_{index}'] = annotation
 
 	return(annotation_json)
+
+def prepare_graph_csv(graph_data=[], graph_labels=[], filename=''):
+		if(graph_data == []):
+			graph_data = ReadHistory((settings['history_page']['minutes'] * 20))
+		else:
+			# Unpack data from dictionary to list
+			temp_list = []
+			for index in range(len(graph_data['time_labels'])):
+				temp_data = [str(int(graph_data['time_labels'][index])), str(graph_data['grill1_temp'][index]), str(graph_data['grill1_setpoint'][index]), str(graph_data['probe1_temp'][index]), str(graph_data['probe1_setpoint'][index]), str(graph_data['probe2_temp'][index]), str(graph_data['probe2_setpoint'][index])]
+				temp_list.append(temp_data)
+			graph_data = temp_list 
+
+		if(graph_labels == []):
+			labels = 'Time,Grill Temp,Grill SetTemp,Probe 1 Temp,Probe 1 SetTemp,Probe 2 Temp, Probe 2 SetTemp\n'
+		else:
+			labels = 'Time,' 
+			labels += graph_labels['grill1_label'] + ' Temp,'
+			labels += graph_labels['grill1_label'] + ' Setpoint,'
+			labels += graph_labels['probe1_label'] + ' Temp,'
+			labels += graph_labels['probe1_label'] + ' Setpoint,'
+			labels += graph_labels['probe2_label'] + ' Temp,'
+			labels += graph_labels['probe2_label'] + ' Setpoint\n'
+
+		if(filename == ''):
+			now = datetime.datetime.now()
+			filename = now.strftime('%Y%m%d-%H%M') + '-PiFire-Export'
+		else:
+			filename = filename.replace('.json', '')
+			filename = filename.replace('./history/', '')
+			filename += '-Pifire-Export'
+		
+		exportfilename = '/tmp/' + filename + ".csv"
+		
+		csvfile = open(exportfilename, "w")
+
+		list_length = len(graph_data)
+
+		if(list_length > 0):
+			writeline = labels
+			csvfile.write(writeline)
+			last = -1
+			for index in range(0, list_length):
+				if (int((index/list_length)*100) > last):
+					last = int((index/list_length)*100)
+				converted_dt = datetime.datetime.fromtimestamp(int(graph_data[index][0]) / 1000)
+				graph_data[index][0] = converted_dt.strftime('%Y-%m-%d %H:%M:%S')
+				writeline = ','.join(graph_data[index])
+				csvfile.write(writeline + '\n')
+		else:
+			writeline = 'No Data\n'
+			csvfile.write(writeline)
+
+		csvfile.close()
+
+		return(exportfilename)
+
+def prepare_metrics_csv(metrics_data, filename):
+	filename = filename.replace('.json', '')
+	filename = filename.replace('./history/', '')
+	filename = '/tmp/' + filename + '-PiFire-Metrics-Export.csv'
+
+	csvfile = open(filename, 'w')
+
+	list_length = len(metrics_data) # Length of list
+
+	if(list_length > 0):
+		# Build the header row
+		writeline=''
+		for item in range(0, len(metrics_items)):
+			writeline += f'{metrics_items[item][0]}, '
+		writeline += '\n'
+		csvfile.write(writeline)
+		for index in range(0, list_length):
+			writeline = ''
+			for item in range(0, len(metrics_items)):
+				writeline += f'{metrics_data[index][metrics_items[item][0]]}, '
+			writeline += '\n'
+			csvfile.write(writeline)
+	else:
+		writeline = 'No Data\n'
+		csvfile.write(writeline)
+
+	csvfile.close()
+	return(filename)
 
 def calc_shh_coefficients(T1, T2, T3, R1, R2, R3):
 	try: 
@@ -1744,7 +1923,6 @@ def calc_shh_coefficients(T1, T2, T3, R1, R2, R3):
 		# Step 6: A = Y1 - (B + L1^2*C) * L1
 		A = Y1 - ((B + (math.pow(L1,2) * C)) * L1)
 	except:
-		#print('An error occurred when calculating coefficients.')
 		A = 0
 		B = 0
 		C = 0
@@ -1782,7 +1960,6 @@ def tr_to_temp(Tr, a, b, c):
         tempC = tempK - 273.15 # Kelvin to Celsius
         tempF = tempC * (9/5) + 32 # Celsius to Farenheit
     except:
-        #print('Error occured while calculating temperature.')
         tempF = 0.0
     return int(tempF) # Return Calculated Temperature and Thermistor Value in Ohms
 
@@ -1793,10 +1970,6 @@ def str_td(td):
         a = "0" + a
     s2 = s[:-1] + [a]
     return ", ".join(s2)
-
-def epoch_to_time(epoch):
-	end_time =  datetime.datetime.fromtimestamp(epoch)
-	return end_time.strftime("%H:%M:%S")
 
 def zip_files_dir(dir_name):
 	memory_file = BytesIO()
@@ -2053,11 +2226,11 @@ def post_app_data(action=None, type=None, json_data=None):
 			return {'response': {'result':'success'}}
 		elif type == 'clear_events':
 			WriteLog('Clearing Events Log.')
-			os.system('rm /tmp/events.log')
+			os.remove('/tmp/events.log')
 			return {'response': {'result':'success'}}
 		elif type == 'clear_pelletdb':
 			WriteLog('Clearing Pellet Database.')
-			os.system('rm pelletdb.json')
+			os.remove('pelletdb.json')
 			return {'response': {'result':'success'}}
 		elif type == 'clear_pelletdb_log':
 			pelletdb = ReadPelletDB()
@@ -2068,7 +2241,7 @@ def post_app_data(action=None, type=None, json_data=None):
 		elif type == 'factory_defaults':
 			ReadHistory(0, flushhistory=True)
 			ReadControl(flush=True)
-			os.system('rm settings.json')
+			os.remove('settings.json')
 			settings = DefaultSettings()
 			control = DefaultControl()
 			WriteSettings(settings)

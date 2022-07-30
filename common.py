@@ -21,6 +21,9 @@ import math
 import redis
 import uuid
 import random
+import zipfile
+import pathlib
+import tempfile
 from uuid import getnode
 
 # *****************************************
@@ -312,7 +315,10 @@ metrics_items = [
 	('smart_start_profile', 0), # Smart Start Profile Selected
 	('startup_temp', 0), # Smart Start Start Up Temp
 	('p_mode', 0), # P_mode selected
-	('auger_cycle_time', 0),  # Auger Cycle Time 
+	('auger_cycle_time', 0),  # Auger Cycle Time
+	('pellet_level_start', 0),  # Pellet Level at the begining of this mode
+	('pellet_level_end', 0),  # Pellet Level at the end of this mode
+	('pellet_brand_type', '')  # Pellet Brand and Wood Type 
 ]
 
 def DefaultMetrics():
@@ -561,7 +567,7 @@ def WriteMetrics(metrics=DefaultMetrics(), flush=False, new_metric=False):
 			return
 
 	if new_metric:
-		metrics['starttime'] = time.time()
+		metrics['starttime'] = time.time() * 1000
 		metrics['id'] = generateUUID()
 		cmdsts.rpush('metrics:general', json.dumps(metrics))
 	else: 
@@ -786,7 +792,7 @@ def ReadHistory(num_items=0, flushhistory=False):
 			cmdsts.hset('control:current', 'Probe2Temp', 0)
 			event = 'WARNING: History data flushed.'
 			WriteLog(event)
-			WriteMetrics(flush=True)
+			WriteMetrics(flush=True)  # Flush all metrics when history is flushed
 	else:
 		if cmdsts.exists('control:history'):
 			list_length = cmdsts.llen('control:history') 
@@ -803,24 +809,22 @@ def ReadHistory(num_items=0, flushhistory=False):
 				datastruct = json.loads(data[index])
 				templist = [str(int(datastruct['T'])), str(datastruct['GT1']), str(datastruct['GSP1']), str(datastruct['PT1']), str(datastruct['PSP1']), str(datastruct['PT2']), str(datastruct['PSP2'])]
 				data_list.append(templist)
-				#data_list.append(data[index].split(' ', 6))  # Splits out each of the values into seperate list items 
 		else:
-			event = 'WARNING: History data is not present in database. Creating Data Structure.'
-			WriteLog(event)
-			# Create Entry in Database
-			TempStruct = {
-				'GrillTemp': 0, 
-				'GrillSetPoint': 0,
-				'Probe1Temp': 0, 
-				'Probe1SetPoint': 0, 
-				'Probe2Temp': 0, 
-				'Probe2SetPoint': 0,
+			# Return empty data
+			datastruct = {
+				'GT1': 0, 
+				'GSP1': 0,
+				'PT1': 0, 
+				'PSP1': 0, 
+				'PT2': 0, 
+				'PSP2': 0,
 				'GrillTr': 0,
 				'Probe1Tr': 0,
 				'Probe2Tr': 0
 			}
-			WriteHistory(TempStruct)
-			data_list = ReadHistory()
+			data_list = [[str(int(time.time()*1000)), str(datastruct['GT1']), str(datastruct['GSP1']), str(datastruct['PT1']), str(datastruct['PSP1']), str(datastruct['PT2']), str(datastruct['PSP2'])]]
+			tr_values = str(int(datastruct['GrillTr'])) + ' ' + str(int(datastruct['Probe1Tr'])) + ' ' + str(int(datastruct['Probe2Tr']))
+			cmdsts.set('control:tuning', tr_values)
 
 	return(data_list)
 
@@ -833,12 +837,12 @@ def WriteHistory(TempStruct, maxsizelines=28800, tuning_mode=False):
 	# *****************************************
 	global cmdsts 
 
-	timenow = datetime.datetime.now()
+	#timenow = datetime.datetime.now()
 	#datastring = timestr + ' ' + str(TempStruct['GrillTemp']) + ' ' + str(TempStruct['GrillSetPoint']) + ' ' + str(TempStruct['Probe1Temp']) + ' ' + str(TempStruct['Probe1SetPoint']) + ' ' + str(TempStruct['Probe2Temp']) + ' ' + str(TempStruct['Probe2SetPoint'])
 
 	# Create data structure for current temperature data and timestamp 
 	datastruct = {}
-	datastruct['T'] = int(timenow.timestamp() * 1000)
+	datastruct['T'] = int(time.time() * 1000)
 	datastruct['GT1'] = TempStruct['GrillTemp']
 	datastruct['GSP1'] = TempStruct['GrillSetPoint']
 	datastruct['PT1'] = TempStruct['Probe1Temp']
@@ -1032,3 +1036,216 @@ def SetUpdaterInstallStatus(percent, status, output):
 	cmdsts.set('updater:status', status)
 	cmdsts.set('updater:output', output)
 
+def WriteCookFile(): 
+	'''
+	This function gathers all of the data from the previous cook
+	from startup to stop mode, and saves this to a Cook File stored
+	at ./history/
+
+	The metrics and cook data are purged from memory, after stop mode is initiated.  
+	'''
+	global cmdsts
+
+	settings = ReadSettings()
+
+	cook_file_struct = {}
+
+	now = datetime.datetime.now()
+	nowstring = now.strftime('%Y-%m-%d--%H%M')
+	title = nowstring + '-CookFile'
+
+	historydata = cmdsts.lrange('control:history', 1, -1)
+
+	starttime = json.loads(historydata[0])
+	starttime = starttime['T']
+
+	endtime = json.loads(historydata[-1])
+	endtime = endtime['T']
+
+	cook_file_struct['metadata'] = {
+		"title" : title,
+		"starttime" : starttime,
+		"endtime" : endtime,
+		"units" : settings['globals']['units'],
+		"version" : "1.0"  #  PiFire Cook File Version
+	}
+
+	cook_file_struct['graph_data'] = {}
+	cook_file_struct['graph_data'] = {
+		"time_labels" : [], 
+        "grill1_temp" : [],
+        "probe1_temp" : [], 
+        "probe2_temp" : [], 
+        "grill1_setpoint" : [],
+        "probe1_setpoint" : [], 
+        "probe2_setpoint" : []
+	}
+
+	# Unpack data from json to list
+	for index in range(len(historydata)):
+		datastruct = json.loads(historydata[index])
+		cook_file_struct['graph_data']['time_labels'].append(datastruct['T'])
+		cook_file_struct['graph_data']['grill1_temp'].append(datastruct['GT1'])
+		cook_file_struct['graph_data']['probe1_temp'].append(datastruct['PT1'])
+		cook_file_struct['graph_data']['probe2_temp'].append(datastruct['PT2'])
+		cook_file_struct['graph_data']['grill1_setpoint'].append(datastruct['GSP1'])
+		cook_file_struct['graph_data']['probe1_setpoint'].append(datastruct['PSP1'])
+		cook_file_struct['graph_data']['probe2_setpoint'].append(datastruct['PSP2'])
+
+
+	cook_file_struct['graph_labels'] = {
+        "grill1_label" : "Grill", 
+        "probe1_label" : "Probe 1", 
+        "probe2_label" : "Probe 2"
+    }
+	
+	cook_file_struct['events'] = ProcessMetrics(ReadMetrics(all=True), augerrate=settings['globals']['augerrate'])
+
+	cook_file_struct['comments'] = []
+
+	cook_file_struct['assets'] = {}
+
+	# Write all data to a cook file in ./history/
+	json_data_string = json.dumps(cook_file_struct, indent=2, sort_keys=True)
+	with open(f'./history/{title}.json', 'w+') as cook_file:
+		cook_file.write(json_data_string)
+
+	# 1. Create all JSON data files
+	files_list = ['metadata', 'graph_data', 'graph_labels', 'events', 'comments', 'assets']
+	os.mkdir(f'./history/{title}')  # Make temporary folder for all files
+	for item in files_list:
+		json_data_string = json.dumps(cook_file_struct[item], indent=2, sort_keys=True)
+		filename = f'./history/{title}/{item}.json'
+		with open(filename, 'w+') as cook_file:
+			cook_file.write(json_data_string)
+	
+	# 2. Create empty data folders 
+	os.mkdir(f'./history/{title}/assets')
+
+	# 3. Create ZIP file of the folder 
+	directory = pathlib.Path(f'./history/{title}/')
+	filename = f'./history/{title}.pifire'
+
+	with zipfile.ZipFile(filename, "w", zipfile.ZIP_DEFLATED) as archive:
+		for file_path in directory.rglob("*"):
+			archive.write(file_path, arcname=file_path.relative_to(directory))
+
+	# 4. Cleanup temporary files
+	command = f'rm -rf ./history/{title}'
+	os.system(command)
+
+	# Delete Redis DB for history / current
+	ReadHistory(0, flushhistory=True)
+	# Flush metrics DB for tracking certain metrics
+	WriteMetrics(flush=True)
+
+def ReadCookFile(filename):
+	'''
+	Read FULL Cook File into Python Dictionary
+	'''
+	cook_file_struct = {}
+	status = 'OK'
+	json_types = ['metadata', 'graph_data', 'graph_labels', 'events', 'comments', 'assets']
+	for jsonfile in json_types:
+		cook_file_struct[jsonfile], status = ReadCFJSONData(filename, jsonfile)
+		if status != 'OK':
+			break  # Exit loop and function, error string in status
+
+	return(cook_file_struct, status)
+
+def ReadCFJSONData(filename, jsonfile):
+	'''
+	Read Cook File JSON data out of the zipped pifire cookfile:
+		Must specify the cook file name, and the jsonfile element to be extracted (without the .json extension)
+	'''
+	status = 'OK'
+	
+	try:
+		with zipfile.ZipFile(filename, mode="r") as archive:
+			json_string = archive.read(jsonfile + '.json')
+			dictionary = json.loads(json_string)
+	except zipfile.BadZipFile as error:
+		status = f'Error: {error}'
+		dictionary = {}
+	except json.decoder.JSONDecodeError:
+		status = 'Error: JSON Decoding Error.'
+		dictionary = {}
+	except:
+		status = 'Error: Unspecified'
+		dictionary = {}
+
+	return(dictionary, status)
+
+def UpdateCookFile(cookfiledata, cookfilename, jsonfile):
+	'''
+	Write an update to the cookfile
+	'''
+	status = 'OK'
+	jsonfilename = jsonfile + '.json'
+
+	# Borrowed from StackOverflow https://stackoverflow.com/questions/25738523/how-to-update-one-file-inside-zip-file
+	# Submitted by StackOverflow user Sebdelsol
+
+	# Start by creating a temporary file without the jsonfile that is being edited
+	tmpfd, tmpname = tempfile.mkstemp(dir=os.path.dirname(cookfilename))
+	os.close(tmpfd)
+	try:
+		# Create a temp copy of the archive without filename            
+		with zipfile.ZipFile(cookfilename, 'r') as zin:
+			with zipfile.ZipFile(tmpname, 'w') as zout:
+				zout.comment = zin.comment # Preserve the zip metadata comment
+				for item in zin.infolist():
+					if item.filename != jsonfilename:
+						zout.writestr(item, zin.read(item.filename))
+		# Replace original with the temp archive
+		os.remove(cookfilename)
+		os.rename(tmpname, cookfilename)
+		# Now add updated JSON file with its new data
+		with zipfile.ZipFile(cookfilename, mode='a', compression=zipfile.ZIP_DEFLATED) as zf:
+			zf.writestr(jsonfilename, json.dumps(cookfiledata, indent=2, sort_keys=True))
+
+	except zipfile.BadZipFile as error:
+		status = f'Error: {error}'
+	except:
+		status = 'Error: Unspecified'
+	
+	return(status)
+
+def ProcessMetrics(metrics_data, augerrate=0.3):
+	# Process Additional Metrics Information for Display
+	for index in range(0, len(metrics_data)):
+		# Convert Start Time
+		starttime = metrics_data[index]['starttime']
+		metrics_data[index]['starttime_c'] = epoch_to_time(starttime/1000)
+		# Convert End Time
+		if(metrics_data[index]['endtime'] == 0):
+			endtime = 0
+		else: 
+			endtime = epoch_to_time(metrics_data[index]['endtime']/1000)
+		metrics_data[index]['endtime_c'] = endtime
+		# Time in Mode
+		if(metrics_data[index]['mode'] == 'Stop'):
+			timeinmode = 'NA'
+		elif(metrics_data[index]['endtime'] == 0):
+			timeinmode = 'Active'
+		else:
+			seconds = int((metrics_data[index]['endtime']/1000) - (metrics_data[index]['starttime']/1000))
+			if seconds > 60:
+				timeinmode = f'{int(seconds/60)} m {seconds % 60} s'
+			else:
+				timeinmode = f'{seconds} s'
+		metrics_data[index]['timeinmode'] = timeinmode 
+		# Convert Auger On Time
+		metrics_data[index]['augerontime_c'] = str(int(metrics_data[index]['augerontime'])) + ' s'
+		# Estimated Pellet Usage
+		grams = int(metrics_data[index]['augerontime'] * augerrate)
+		pounds = grams * 0.00220462
+		ounces = grams * 0.03527392
+		metrics_data[index]['estusage_m'] = f'{grams} grams'
+		metrics_data[index]['estusage_i'] = f'{pounds} pounds ({ounces} ounces)'
+
+	return(metrics_data)
+
+def epoch_to_time(epoch):
+	end_time =  datetime.datetime.fromtimestamp(epoch)
+	return end_time.strftime("%H:%M:%S")

@@ -26,6 +26,13 @@ if ((probe2_settemp_list.reduce((a, b) => a + b, 0) == 0) || (probe2_hidden == t
 var temperatureCharts;
 var chartdata;
 
+// Delete Cook File Modal Data Transfer
+$('#delcookfilemodal').on('show.bs.modal', function (event) {
+	var cookfileselected = $(event.relatedTarget).data('val');
+	 $('#cookfileselected').html(cookfileselected);
+   $('#delcookfilename').val(cookfileselected);
+   });
+
 $(document).ready(function(){
 	chartdata = {
 		labels: label_list_num,
@@ -201,12 +208,21 @@ $(document).ready(function(){
 							pause: paused,
 							onRefresh: chart => {
 								$.get("/historyupdate/stream", function(data){
+									if (data.mode == 'Stop') {
+										$('#stopcardbody').show();
+										$('#graphcardbody').hide();
+										$('#graphcardfooter').hide();
+									} else {
+										$('#stopcardbody').hide();
+										$('#graphcardbody').show();
+										$('#graphcardfooter').show();
+									};
 									// Reverse logic for auto-refresh button
 									if ($("#autorefresh").val() == 'on') {
 										paused = true;
 										temperatureCharts.options.scales.x.realtime.pause = true;
-										document.getElementById("autorefresh").className = "btn btn-secondary text-light float-right";
-										document.getElementById("autorefresh").innerHTML = "<i class=\"fas fa-sync-alt\"></i> OFF";
+										document.getElementById("autorefresh").className = "btn btn-secondary text-light";
+										document.getElementById("autorefresh").innerHTML = "<i class=\"fas fa-sync-alt\"></i>&nbsp; Stream OFF";
 										return;
 									}
 									var dateNow = Date.now();
@@ -254,14 +270,14 @@ $(document).ready(function(){
 		if ($("#autorefresh").val() == 'off') {
 			$("#autorefresh").val('on');
 			temperatureCharts.options.scales.x.realtime.pause = true;
-			document.getElementById("autorefresh").className = "btn btn-secondary text-light float-right";
-			document.getElementById("autorefresh").innerHTML = "<i class=\"fas fa-sync-alt\"></i> OFF";
+			document.getElementById("autorefresh").className = "btn btn-secondary text-light";
+			document.getElementById("autorefresh").innerHTML = "<i class=\"fas fa-sync-alt\"></i>&nbsp;Stream OFF";
 			paused = true;
 		} else {
 			$("#autorefresh").val('off');
 			temperatureCharts.options.scales.x.realtime.pause = false;
-			document.getElementById("autorefresh").className = "btn btn-outline-primary border-white text-white float-right";
-			document.getElementById("autorefresh").innerHTML = "<i class=\"fas fa-sync-alt\"></i> ON";
+			document.getElementById("autorefresh").className = "btn btn-outline-primary border-white text-white";
+			document.getElementById("autorefresh").innerHTML = "<i class=\"fas fa-sync-alt\"></i>&nbsp;Stream ON";
 			paused = false;
 		};
 
@@ -321,5 +337,27 @@ $(document).ready(function(){
 			temperatureCharts.update();
 		};
 	});
+
+	// Get titles from cookfile metadata and update the table
+	var senddata = { 
+		'getTitles' : true
+	};
+	req = $.ajax({
+		url : '/cookfiledata',
+		type : 'POST',
+		data : JSON.stringify(senddata),
+		contentType: "application/json; charset=utf-8",
+		traditional: true,
+		success: function (data) {
+			var filenametag;
+			var title;
+			for (let i = 0; i < data.length; i++) {
+				filenametag = 'title_' + data[i].filename;
+				title = data[i].title;
+				document.getElementById(filenametag).innerHTML = title;
+			}; 
+		}
+	});
+
 }); // End of Document Ready Function 
 
