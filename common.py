@@ -1105,11 +1105,6 @@ def WriteCookFile():
 
 	cook_file_struct['assets'] = {}
 
-	# Write all data to a cook file in ./history/
-	json_data_string = json.dumps(cook_file_struct, indent=2, sort_keys=True)
-	with open(f'./history/{title}.json', 'w+') as cook_file:
-		cook_file.write(json_data_string)
-
 	# 1. Create all JSON data files
 	files_list = ['metadata', 'graph_data', 'graph_labels', 'events', 'comments', 'assets']
 	os.mkdir(f'./history/{title}')  # Make temporary folder for all files
