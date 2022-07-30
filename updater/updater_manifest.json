@@ -1,0 +1,18 @@
+{
+  "dependencies": {
+    "app": {
+      "py_dependencies": [
+        "flask_mobility",
+        "flask_socketio",
+        "flask_qrcode"
+      ],
+      "apt_dependencies": []
+    },
+    "control": {
+      "py_dependencies": [
+        "pushbullet.py"
+      ],
+      "apt_dependencies": []
+    }
+  }
+}
