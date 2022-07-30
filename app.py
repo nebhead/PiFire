@@ -152,6 +152,8 @@ def historypage(action=None):
 	control = ReadControl()
 
 	# Grab list of Historical Cook Files
+	if not os.path.exists(HISTORY_FOLDER):
+		os.mkdir(HISTORY_FOLDER)
 	dirfiles = os.listdir(HISTORY_FOLDER)
 	cookfiles = []
 	for file in dirfiles:
@@ -313,6 +315,8 @@ def cookfiledata(action=None):
 		
 		if('getTitles' in requestjson):
 			# Grab list of Historical Cook Files
+			if not os.path.exists(HISTORY_FOLDER):
+				os.mkdir(HISTORY_FOLDER)
 			dirfiles = os.listdir(HISTORY_FOLDER)
 			cookfiles = []
 			for file in dirfiles:
@@ -1235,6 +1239,8 @@ def adminpage(action=None):
 	global settings
 	pelletdb = ReadPelletDB()
 	notify = ''
+	if not os.path.exists(BACKUPPATH):
+		os.mkdir(BACKUPPATH)
 	files = os.listdir(BACKUPPATH)
 	for file in files:
 		if not allowed_file(file):
@@ -2125,6 +2131,8 @@ def get_app_data(action=None, type=None):
 			'mode' : control['mode'] }
 
 	elif action == 'backup_list':
+		if not os.path.exists(BACKUPPATH):
+			os.mkdir(BACKUPPATH)
 		files = os.listdir(BACKUPPATH)
 		for file in files[:]:
 			if not allowed_file(file):
