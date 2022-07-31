@@ -26,6 +26,8 @@ import pathlib
 import tempfile
 from uuid import getnode
 
+HISTORY_FOLDER = './history/'  # Path to historical cook files
+
 # *****************************************
 # Functions
 # *****************************************
@@ -1045,6 +1047,7 @@ def WriteCookFile():
 	The metrics and cook data are purged from memory, after stop mode is initiated.  
 	'''
 	global cmdsts
+	global HISTORY_FOLDER
 
 	settings = ReadSettings()
 
@@ -1107,26 +1110,28 @@ def WriteCookFile():
 
 	# 1. Create all JSON data files
 	files_list = ['metadata', 'graph_data', 'graph_labels', 'events', 'comments', 'assets']
-	os.mkdir(f'./history/{title}')  # Make temporary folder for all files
+	if not os.path.exists(HISTORY_FOLDER):
+		os.mkdir(HISTORY_FOLDER)
+	os.mkdir(f'{HISTORY_FOLDER}{title}')  # Make temporary folder for all files
 	for item in files_list:
 		json_data_string = json.dumps(cook_file_struct[item], indent=2, sort_keys=True)
-		filename = f'./history/{title}/{item}.json'
+		filename = f'{HISTORY_FOLDER}{title}/{item}.json'
 		with open(filename, 'w+') as cook_file:
 			cook_file.write(json_data_string)
 	
 	# 2. Create empty data folders 
-	os.mkdir(f'./history/{title}/assets')
+	os.mkdir(f'{HISTORY_FOLDER}{title}/assets')
 
 	# 3. Create ZIP file of the folder 
-	directory = pathlib.Path(f'./history/{title}/')
-	filename = f'./history/{title}.pifire'
+	directory = pathlib.Path(f'{HISTORY_FOLDER}{title}/')
+	filename = f'{HISTORY_FOLDER}{title}.pifire'
 
 	with zipfile.ZipFile(filename, "w", zipfile.ZIP_DEFLATED) as archive:
 		for file_path in directory.rglob("*"):
 			archive.write(file_path, arcname=file_path.relative_to(directory))
 
 	# 4. Cleanup temporary files
-	command = f'rm -rf ./history/{title}'
+	command = f'rm -rf {HISTORY_FOLDER}{title}'
 	os.system(command)
 
 	# Delete Redis DB for history / current
