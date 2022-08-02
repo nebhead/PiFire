@@ -821,12 +821,13 @@ def ReadHistory(num_items=0, flushhistory=False):
 		else:
 			# Return empty data
 			temp_dict = {
-				'GT1': 0, 
-				'GSP1': 0,
-				'PT1': 0, 
-				'PSP1': 0, 
-				'PT2': 0, 
-				'PSP2': 0,
+				'T' : [int(time.time() * 1000)], 
+				'GT1': [0], 
+				'GSP1': [0],
+				'PT1': [0], 
+				'PSP1': [0], 
+				'PT2': [0], 
+				'PSP2': [0],
 			}
 			tr_values = '0 0 0'
 			cmdsts.set('control:tuning', tr_values)
@@ -1073,7 +1074,8 @@ def WriteCookFile():
 		"starttime" : starttime,
 		"endtime" : endtime,
 		"units" : settings['globals']['units'],
-		"version" : "1.0"  #  PiFire Cook File Version
+		"id" : generateUUID(),
+		"version" : "1.0.0"  #  PiFire Cook File Version
 	}
 
 	cook_file_struct['graph_data'] = {}
