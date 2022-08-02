@@ -782,7 +782,7 @@ def ReadHistory(num_items=0, flushhistory=False):
 	# *****************************************
 	global cmdsts
 	
-	data_list = []  # Initialize data list
+	temp_dict = {}  # Initialize data list
 
 	# If a flushhistory is requested, then flush the control:history key (and data)
 	if flushhistory:
@@ -806,29 +806,32 @@ def ReadHistory(num_items=0, flushhistory=False):
 
 			data = cmdsts.lrange('control:history', liststart, -1)
 			
-			# Unpack data from json to list
+			''' Unpack data from json to dictionary '''
+
+			temp_dict = {}  # Create temporary dictionary to store all of the history data lists
+			temp_struct = json.loads(data[0])  # Load the initial history data into a temporary dictionary  
+			for key in temp_struct.keys():  # Iterate each of the keys
+				temp_dict[key] = []  # Create an empty list for each of the keys
+
 			for index in range(len(data)):
 				datastruct = json.loads(data[index])
-				templist = [str(int(datastruct['T'])), str(datastruct['GT1']), str(datastruct['GSP1']), str(datastruct['PT1']), str(datastruct['PSP1']), str(datastruct['PT2']), str(datastruct['PSP2'])]
-				data_list.append(templist)
+				for key, value in datastruct.items():
+					temp_dict[key].append(value)
+				#templist = [str(int(datastruct['T'])), str(datastruct['GT1']), str(datastruct['GSP1']), str(datastruct['PT1']), str(datastruct['PSP1']), str(datastruct['PT2']), str(datastruct['PSP2'])]
 		else:
 			# Return empty data
-			datastruct = {
+			temp_dict = {
 				'GT1': 0, 
 				'GSP1': 0,
 				'PT1': 0, 
 				'PSP1': 0, 
 				'PT2': 0, 
 				'PSP2': 0,
-				'GrillTr': 0,
-				'Probe1Tr': 0,
-				'Probe2Tr': 0
 			}
-			data_list = [[str(int(time.time()*1000)), str(datastruct['GT1']), str(datastruct['GSP1']), str(datastruct['PT1']), str(datastruct['PSP1']), str(datastruct['PT2']), str(datastruct['PSP2'])]]
-			tr_values = str(int(datastruct['GrillTr'])) + ' ' + str(int(datastruct['Probe1Tr'])) + ' ' + str(int(datastruct['Probe2Tr']))
+			tr_values = '0 0 0'
 			cmdsts.set('control:tuning', tr_values)
 
-	return(data_list)
+	return(temp_dict)
 
 def WriteHistory(TempStruct, maxsizelines=28800, tuning_mode=False):
 	# *****************************************

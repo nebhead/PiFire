@@ -342,9 +342,9 @@ def cookfiledata(action=None):
 
 		if('dl_eventfile' in requestform):
 			filename = requestform['dl_eventfile']
-			cookfiledata, status = ReadCookFile(filename)
+			cookfiledata, status = ReadCFJSONData(filename, 'events')
 			if(status == 'OK'):
-				csvfilename = prepare_metrics_csv(cookfiledata['events'], filename)
+				csvfilename = prepare_metrics_csv(cookfiledata, filename)
 				return send_file(csvfilename, as_attachment=True, max_age=0)
 
 		if('dl_graphfile' in requestform):
@@ -352,6 +352,7 @@ def cookfiledata(action=None):
 			filename = requestform['dl_graphfile']
 			cookfiledata, status = ReadCookFile(filename)
 			if(status == 'OK'):
+				cookfiledata['graph_data'] = ConvertLabels(cookfiledata['graph_data'])
 				csvfilename = prepare_graph_csv(cookfiledata['graph_data'], cookfiledata['graph_labels'], filename)
 				return send_file(csvfilename, as_attachment=True, max_age=0)
 
@@ -1708,7 +1709,7 @@ def prepare_data(num_items=10, reduce=True, datapoints=60):
 	global settings
 	units = settings['globals']['units']
 
-	data_list = ReadHistory(num_items)
+	data_struct = ReadHistory(num_items)
 
 	data_blob = {}
 
@@ -1720,7 +1721,7 @@ def prepare_data(num_items=10, reduce=True, datapoints=60):
 	data_blob['probe2_temp_list'] = []
 	data_blob['probe2_settemp_list'] = []
 	
-	list_length = len(data_list) # Length of list
+	list_length = len(data_struct['T']) # Length of list(s)
 
 	if((list_length < num_items) and (list_length > 0)):
 		num_items = list_length
@@ -1734,21 +1735,21 @@ def prepare_data(num_items=10, reduce=True, datapoints=60):
 		# Build all lists from file data
 		for index in range(list_length - num_items, list_length, step):
 			if(units == 'F'):
-				data_blob['label_time_list'].append(int(data_list[index][0]))  # Timestamp format is int, so convert from str
-				data_blob['grill_temp_list'].append(int(data_list[index][1]))
-				data_blob['grill_settemp_list'].append(int(data_list[index][2]))
-				data_blob['probe1_temp_list'].append(int(data_list[index][3]))
-				data_blob['probe1_settemp_list'].append(int(data_list[index][4]))
-				data_blob['probe2_temp_list'].append(int(data_list[index][5]))
-				data_blob['probe2_settemp_list'].append(int(data_list[index][6]))
+				data_blob['label_time_list'].append(int(data_struct['T'][index]))  # Timestamp format is int, so convert from str
+				data_blob['grill_temp_list'].append(int(data_struct['GT1'][index]))
+				data_blob['grill_settemp_list'].append(int(data_struct['GSP1'][index]))
+				data_blob['probe1_temp_list'].append(int(data_struct['PT1'][index]))
+				data_blob['probe1_settemp_list'].append(int(data_struct['PSP1'][index]))
+				data_blob['probe2_temp_list'].append(int(data_struct['PT2'][index]))
+				data_blob['probe2_settemp_list'].append(int(data_struct['PSP2'][index]))
 			else: 
-				data_blob['label_time_list'].append(int(data_list[index][0]))  # Timestamp format is int, so convert from str
-				data_blob['grill_temp_list'].append(float(data_list[index][1]))
-				data_blob['grill_settemp_list'].append(float(data_list[index][2]))
-				data_blob['probe1_temp_list'].append(float(data_list[index][3]))
-				data_blob['probe1_settemp_list'].append(float(data_list[index][4]))
-				data_blob['probe2_temp_list'].append(float(data_list[index][5]))
-				data_blob['probe2_settemp_list'].append(float(data_list[index][6]))
+				data_blob['label_time_list'].append(int(data_struct['T'][index]))  # Timestamp format is int, so convert from str
+				data_blob['grill_temp_list'].append(float(data_struct['GT1'][index]))
+				data_blob['grill_settemp_list'].append(float(data_struct['GSP1'][index]))
+				data_blob['probe1_temp_list'].append(float(data_struct['PT1'][index]))
+				data_blob['probe1_settemp_list'].append(float(data_struct['PSP1'][index]))
+				data_blob['probe2_temp_list'].append(float(data_struct['PT2'][index]))
+				data_blob['probe2_settemp_list'].append(float(data_struct['PSP2'][index]))
 	else:
 		now = datetime.datetime.now()
 		#timenow = now.strftime('%H:%M:%S')
@@ -1814,16 +1815,21 @@ def prepare_annotations(displayed_starttime, metrics_data=[]):
 	return(annotation_json)
 
 def prepare_graph_csv(graph_data=[], graph_labels=[], filename=''):
-		if(graph_data == []):
-			graph_data = ReadHistory((settings['history_page']['minutes'] * 20))
+		# Create filename if no name specified
+		if(filename == ''):
+			now = datetime.datetime.now()
+			filename = now.strftime('%Y%m%d-%H%M') + '-PiFire-Export'
 		else:
-			# Unpack data from dictionary to list
-			temp_list = []
-			for index in range(len(graph_data['time_labels'])):
-				temp_data = [str(int(graph_data['time_labels'][index])), str(graph_data['grill1_temp'][index]), str(graph_data['grill1_setpoint'][index]), str(graph_data['probe1_temp'][index]), str(graph_data['probe1_setpoint'][index]), str(graph_data['probe2_temp'][index]), str(graph_data['probe2_setpoint'][index])]
-				temp_list.append(temp_data)
-			graph_data = temp_list 
+			filename = filename.replace('.json', '')
+			filename = filename.replace('./history/', '')
+			filename += '-Pifire-Export'
+		
+		exportfilename = '/tmp/' + filename + ".csv"
+		
+		# Open CSV File for editing
+		csvfile = open(exportfilename, "w")
 
+		# Get labels 
 		if(graph_labels == []):
 			labels = 'Time,Grill Temp,Grill SetTemp,Probe 1 Temp,Probe 1 SetTemp,Probe 2 Temp, Probe 2 SetTemp\n'
 		else:
@@ -1835,19 +1841,10 @@ def prepare_graph_csv(graph_data=[], graph_labels=[], filename=''):
 			labels += graph_labels['probe2_label'] + ' Temp,'
 			labels += graph_labels['probe2_label'] + ' Setpoint\n'
 
-		if(filename == ''):
-			now = datetime.datetime.now()
-			filename = now.strftime('%Y%m%d-%H%M') + '-PiFire-Export'
-		else:
-			filename = filename.replace('.json', '')
-			filename = filename.replace('./history/', '')
-			filename += '-Pifire-Export'
+		if(graph_data == []):
+			graph_data = ReadHistory((settings['history_page']['minutes'] * 20))
 		
-		exportfilename = '/tmp/' + filename + ".csv"
-		
-		csvfile = open(exportfilename, "w")
-
-		list_length = len(graph_data)
+		list_length =len(graph_data['T'])
 
 		if(list_length > 0):
 			writeline = labels
@@ -1856,9 +1853,9 @@ def prepare_graph_csv(graph_data=[], graph_labels=[], filename=''):
 			for index in range(0, list_length):
 				if (int((index/list_length)*100) > last):
 					last = int((index/list_length)*100)
-				converted_dt = datetime.datetime.fromtimestamp(int(graph_data[index][0]) / 1000)
-				graph_data[index][0] = converted_dt.strftime('%Y-%m-%d %H:%M:%S')
-				writeline = ','.join(graph_data[index])
+				converted_dt = datetime.datetime.fromtimestamp(int(graph_data['T'][index]) / 1000)
+				timestr = converted_dt.strftime('%Y-%m-%d %H:%M:%S')
+				writeline = f"{timestr}, {graph_data['GT1'][index]}, {graph_data['GSP1'][index]}, {graph_data['PT1'][index]}, {graph_data['PSP1'][index]}, {graph_data['PT2'][index]}, {graph_data['PSP2'][index]}"
 				csvfile.write(writeline + '\n')
 		else:
 			writeline = 'No Data\n'
@@ -1867,6 +1864,21 @@ def prepare_graph_csv(graph_data=[], graph_labels=[], filename=''):
 		csvfile.close()
 
 		return(exportfilename)
+
+def ConvertLabels(indata):
+	'''
+	Temporary function to convert Grill Data Labels to Legacy Format
+	'''
+	outdata = {}
+	outdata['T'] = indata.pop('time_labels')
+	outdata['GT1'] = indata.pop('grill1_temp')
+	outdata['GSP1'] = indata.pop('grill1_setpoint')
+	outdata['PT1'] = indata.pop('probe1_temp')
+	outdata['PSP1'] = indata.pop('probe1_setpoint')
+	outdata['PT2'] = indata.pop('probe2_temp')
+	outdata['PSP2'] = indata.pop('probe2_setpoint')
+
+	return(outdata)
 
 def prepare_metrics_csv(metrics_data, filename):
 	filename = filename.replace('.json', '')
