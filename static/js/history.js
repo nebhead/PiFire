@@ -26,6 +26,8 @@ if ((probe2_settemp_list.reduce((a, b) => a + b, 0) == 0) || (probe2_hidden == t
 var temperatureCharts;
 var chartdata;
 
+var lastCookMode = 'PageLoad';
+
 // Delete Cook File Modal Data Transfer
 $('#delcookfilemodal').on('show.bs.modal', function (event) {
 	var cookfileselected = $(event.relatedTarget).data('val');
@@ -208,23 +210,32 @@ $(document).ready(function(){
 							pause: paused,
 							onRefresh: chart => {
 								$.get("/historyupdate/stream", function(data){
-									if (data.mode == 'Stop') {
+									if ((data.mode == 'Stop') && (data.mode != lastCookMode)) {
 										$('#stopcardbody').show();
 										$('#graphcardbody').hide();
 										$('#graphcardfooter').hide();
-									} else {
+										if (lastCookMode != 'PageLoad') {
+											// refresh file listing
+											gotoPage(1, true, 10);
+										};
+										lastCookMode = data.mode;
+										temperatureCharts.options.scales.x.realtime.pause = true;
+										paused = true;
+									} else if (data.mode != lastCookMode) {
 										$('#stopcardbody').hide();
 										$('#graphcardbody').show();
 										$('#graphcardfooter').show();
+										lastCookMode = data.mode;
+										// Reverse logic for auto-refresh button
+										if ($("#autorefresh").val() == 'on') {
+											paused = true;
+											temperatureCharts.options.scales.x.realtime.pause = true;
+										} else {
+											paused = false;
+											temperatureCharts.options.scales.x.realtime.pause = false;
+										};
 									};
-									// Reverse logic for auto-refresh button
-									if ($("#autorefresh").val() == 'on') {
-										paused = true;
-										temperatureCharts.options.scales.x.realtime.pause = true;
-										document.getElementById("autorefresh").className = "btn btn-secondary text-light";
-										document.getElementById("autorefresh").innerHTML = "<i class=\"fas fa-sync-alt\"></i>&nbsp; Stream OFF";
-										return;
-									}
+
 									var dateNow = Date.now();
 									// append the new label (time) to the label list
 									chart.data.labels.push(dateNow);
@@ -283,6 +294,15 @@ $(document).ready(function(){
 
 	});
 
+	// Reverse logic for auto-refresh button
+	if ($("#autorefresh").val() == 'on') {
+		paused = true;
+		temperatureCharts.options.scales.x.realtime.pause = true;
+	} else {
+		paused = false;
+		temperatureCharts.options.scales.x.realtime.pause = false;
+	};
+
 	// Changing the duration window with the slider
 	$("#durationWindowInput").change(function() {
 		var newDuration = $("#minutes").val();
@@ -338,26 +358,24 @@ $(document).ready(function(){
 		};
 	});
 
-	// Get titles from cookfile metadata and update the table
+	// Load the paginated cookfile list
 	var senddata = { 
-		'getTitles' : true
+		'cookfilelist' : true,
+		'page' : 1, 
+		'reverse' : true, 
+		'itemsperpage' : 10
 	};
-	req = $.ajax({
-		url : '/cookfiledata',
-		type : 'POST',
-		data : JSON.stringify(senddata),
-		contentType: "application/json; charset=utf-8",
-		traditional: true,
-		success: function (data) {
-			var filenametag;
-			var title;
-			for (let i = 0; i < data.length; i++) {
-				filenametag = 'title_' + data[i].filename;
-				title = data[i].title;
-				document.getElementById(filenametag).innerHTML = title;
-			}; 
-		}
-	});
+	$('#cookfilelist').load('/cookfiledata', senddata);
 
 }); // End of Document Ready Function 
 
+function gotoPage(pagenum, sortorder, itemsperpage) {
+	// Load updated paginated data
+	var senddata = { 
+		'cookfilelist' : true,
+		'page' : pagenum, 
+		'reverse' : sortorder, 
+		'itemsperpage' : itemsperpage
+	};
+	$('#cookfilelist').load('/cookfiledata', senddata)
+};

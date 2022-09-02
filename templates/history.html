@@ -9,11 +9,11 @@
 				<div class="card-header bg-primary text-white">
 					<strong><i class="fas fa-chart-line"></i>&nbsp; Current Status</strong>
 				</div> <!-- End of card header -->
-				<div class="card-body text-center" {% if page_theme == 'dark' %} style="background-color: #aaaaaa;"{% endif %} id="stopcardbody">
+				<div class="card-body text-center" {% if page_theme == 'dark' %} style="background-color: #aaaaaa;display:none;"{% endif %} id="stopcardbody">
 					<H4>Grill Inactive</H4>
 					<i>To view previous cook history info, scroll down to the 'View Historical Cook Data'.</i>
 				</div>
-				<div class="card-body" {% if page_theme == 'dark' %} style="background-color: #aaaaaa;"{% endif %} id="graphcardbody">
+				<div class="card-body" {% if page_theme == 'dark' %} style="background-color: #aaaaaa;display:none;"{% endif %} id="graphcardbody">
 					<div class="table-responsive">
 						<!-- Status Chart -->
 						<div style="min-height: 400px">
@@ -25,7 +25,7 @@
 						<label class="custom-control-label" for="annotation_enabled">Annotation Enable</label>
 					</div>
 				</div> <!-- End of card body -->
-				<div class="card-footer bg-light" id="graphcardfooter">
+				<div class="card-footer bg-light" id="graphcardfooter" style="display:none">
 					<form name="setmins" action="/history/setmins" method="POST">
 						<div class="input-group">
 							<input id="minutes" name="minutes" type="number" min="1" class="form-control" value="{{ num_mins }}" data-toggle="tooltip" title="Number of Minutes to Display (Note that if your datapoints value is higher than the default (60) in Settings, this may cause very slow loading with large datasets, especially on the RaspberryPi Zero)">
@@ -58,33 +58,7 @@
 				</div>
 				<div class="card-body">
 					<form name="managecookfile" action="/history/cookfile" method="POST">
-						<table class="table">
-							<thead class="thead-light">
-								<tr>
-								<th scope="col">Actions</th>
-								<th scope="col">Cook File</th>
-								<th scope="col">Title</th>
-								</tr>
-							</thead>
-							<tbody>
-								{% for filename in cookfiles|sort %}
-								<tr>
-									<td style="width: 20%">
-										<button class="btn btn-success btn-sm text-white" type="submit" id="opencookfile" name="opencookfile" value={{filename}} data-toggle="tooltip" title="Open File"><i class="far fa-folder-open"></i></button>
-										<button class="btn btn-primary btn-sm text-white" type="submit" id="dlcookfile" name="dlcookfile" value={{filename}} data-toggle="tooltip" title="Download File"><i class="fas fa-file-download"></i></button>
-										<button class="btn btn-secondary btn-sm text-white" type="submit" id="ulcookfile" name="ulcookfile" value={{filename}} data-toggle="tooltip" title="Send to Cloud" disabled><i class="fas fa-cloud-upload-alt"></i></button>
-										<button class="btn btn-danger btn-sm text-white" type="button" id="delcookfile" data-val="{{filename}}" data-toggle="modal" data-target="#delcookfilemodal"><i class="far fa-trash-alt"></i></button>
-									</td>
-									<td>{{ filename }}</td>
-									<td id="title_{{ filename }}">
-										<div class="spinner-border text-secondary" role="status">
-											<span class="sr-only">Loading...</span>
-										</div>
-									</td>
-								</tr>
-								{% endfor %}
-							</tbody>
-						</table>
+						<div id="cookfilelist"></div>
 						<div class="modal" id="delcookfilemodal">
 							<div class="modal-dialog">
 								<div class="modal-content">
@@ -153,6 +127,9 @@
 	<script src="{{ url_for('static', filename='js/chartjs-plugin-annotation.min.js') }}"></script>
 
 	<script>
+	// Pass image locations to a JS variable
+	var imagepath = "{{ url_for('static', filename='img/tmp/') }}";
+
 	var paused = false;
 
 	var annotation_enabled = true;
