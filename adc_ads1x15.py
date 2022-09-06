@@ -41,7 +41,7 @@ class ReadADC:
 	def adctotemp(self, adc_value, probe_profile):
 		#print('Probe: ' + probe_profile['name'])
 		#print("Adc_Value: " + str(adc_value) + '\n\n')
-		if(adc_value > 0) and (adc_value < (probe_profile['Vs'] * 100) * 0.99):
+		if(adc_value > 0) and (adc_value < (probe_profile['Vs'] * 1000) * 0.99):
 			# Voltage at the divider (i.e. input to the ADC)
 			Vo = (adc_value / 1000) # mV to V of ADC (at the divider)
 			
@@ -101,7 +101,7 @@ class ReadADC:
 			for index in range(4):
 				time.sleep(0.10)
 				readData = AnalogIn(self.ads, adc_ports[index])
-				adc_value[index] = math.floor(readData.voltage * 100)
+				adc_value[index] = math.floor(readData.voltage * 1000)
 		except Exception as errorString:
 			now = str(datetime.datetime.now())
 			now = now[0:19] # Truncate the microseconds
