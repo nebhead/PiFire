@@ -47,6 +47,23 @@
 					}
 				}
 			},
+			"ads1x15" : {
+				"friendly_name" : "ADS1x15",
+				"filename" : "ads1x15",
+				"description" : "This is an alternative module supporting the ADS1115 ADC based on Adafruit's Circuit Python implementation/module.  This version is still actively updated and may support a wider range of hardward.  Use this if you are having issues with the default ADS1115 module.",
+				"default" : false,
+				"image" : "ads1115.png",
+				"py_dependencies" : ["adafruit-circuitpython-ads1x15"], 
+				"apt_dependencies" : [],
+				"settings_dependencies" : {
+					"units" : {
+						"friendly_name" : "Temperature Units",
+						"description" : "Select the temperature units to use for PiFire globally.  (this can be modified in settings later)",
+						"options" : {"F" : "Farenheit", "C": "Celsius"},
+						"settings" : ["globals", "units"]
+					}
+				}
+			},
 			"prototype" : {
 				"friendly_name" : "Prototype",
 				"filename" : "prototype",

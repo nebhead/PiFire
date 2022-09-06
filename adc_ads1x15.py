@@ -12,7 +12,6 @@
 # Imported Libraries
 # *****************************************
 
-import ADS1115
 import time
 import math
 import datetime
