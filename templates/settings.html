@@ -30,7 +30,8 @@
         <i class="fas fa-bomb"></i>&nbsp; {{ alert['text'] }}
     </b>
 </div>
-{% endif %}{% endblock %}
+{% endif %}
+{% endblock %}
 
 {% block content %}
 <input type="hidden" id="units" name="units" value="{{ settings['globals']['units'] }}">
@@ -45,6 +46,9 @@
             <a class="nav-link" id="v-pills-units-tab" data-toggle="pill" href="#v-pills-units" role="tab" aria-controls="v-pills-units" aria-selected="false">Units</a>
             <a class="nav-link" id="v-pills-name-tab" data-toggle="pill" href="#v-pills-name" role="tab" aria-controls="v-pills-name" aria-selected="false">Grill Name</a>
             <a class="nav-link" id="v-pills-work-mode-tab" data-toggle="pill" href="#v-pills-work-mode" role="tab" aria-controls="v-pills-work-mode" aria-selected="false">Work Mode</a>
+            {% if settings['globals']['dc_fan'] %}
+            <a class="nav-link" id="v-pills-pwm-tab" data-toggle="pill" href="#v-pills-pwm" role="tab" aria-controls="v-pills-pwm" aria-selected="false">PWM Settings</a>
+            {% endif %}
             <a class="nav-link" id="v-pills-timers-tab" data-toggle="pill" href="#v-pills-timers" role="tab" aria-controls="v-pills-timers" aria-selected="false">Startup & Shutdown</a>
             <a class="nav-link" id="v-pills-history-tab" data-toggle="pill" href="#v-pills-history" role="tab" aria-controls="v-pills-history" aria-selected="false">History</a>
             <a class="nav-link" id="v-pills-safety-tab" data-toggle="pill" href="#v-pills-safety" role="tab" aria-controls="v-pills-safety" aria-selected="false">Safety</a>
@@ -54,8 +58,8 @@
         </div>
     </div>
     {% endif %}
-    <!-- ============================ Probe Settings =============================== -->
     <div class="{% if request.MOBILE %}col-12{% else %}col-9{% endif %}">
+        <!-- ============================ Probe Settings =============================== -->
         <div class="tab-content" id="v-pills-tabContent">
             <div class="tab-pane fade show active" id="v-pills-probes" role="tabpanel" aria-labelledby="v-pills-probes-tab">
                 <div class="card shadow">
@@ -65,125 +69,209 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <!-- Probe Settings Form Start -->
-                        <form name="probe_input" id="probe_form" action="/settings/probes" method="POST">
-                            <!-- Grill Probe Selection -->
-                            {% if settings['globals']['four_probes'] == True %}
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text">Grill Probe Selection</span>
-                                </div>
-                                <select class="form-control" name="grill_probes" id="grill_probes" onchange="this.form.submit()">
-                                    {% for index, data in settings['grill_probe_settings']['grill_probes'].items()|sort %}
-                                    {% if index == settings['grill_probe_settings']['grill_probe'] %}
-                                    <option value="{{ index }}" selected>{{ data['name'] }}</option>
-                                    {% else %}
-                                    <option value="{{ index }}">{{ data['name'] }}</option>
-                                    {% endif %} {% endfor %}
-                                </select>
+                        <div class="card shadow">
+                            <div class="card-header">
+                                <h5>
+                                    <i class="fa fa-tools"></i>&nbsp; Probe Types
+                                </h5>
                             </div>
-                            <!-- Grill Probe 1 Settings -->
-                            {% endif %}
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    {% if settings['globals']['four_probes'] == True %}
-                                    <span class="input-group-text">Grill Probe 1 Type</span>
-                                    {% else %}
-                                    <span class="input-group-text">Grill Probe Type</span>
+                            <div class="card-body">
+                                <!-- Probe Settings Form Start -->
+                                <form name="probe_input" id="probe_form" action="/settings/probes" method="POST">
+                                    <!-- Grill Probe Selection -->
+                                    {% if settings['globals']['four_probes'] %}
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">Grill Probe Selection</span>
+                                        </div>
+                                        <select class="form-control" name="grill_probes" id="grill_probes" onchange="this.form.submit()">
+                                            {% for index, data in settings['grill_probe_settings']['grill_probes'].items()|sort %}
+                                            {% if index == settings['grill_probe_settings']['grill_probe'] %}
+                                            <option value="{{ index }}" selected>{{ data['name'] }}</option>
+                                            {% else %}
+                                            <option value="{{ index }}">{{ data['name'] }}</option>
+                                            {% endif %} {% endfor %}
+                                        </select>
+                                    </div>
+                                    <!-- Grill Probe 1 Settings -->
                                     {% endif %}
-                                </div>
-                                <select class="form-control" name="grill_probe1_type" id="grill_probe1_type" onchange="this.form.submit()">
-                                    {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %}
-                                    {% if index == settings['probe_types']['grill1type'] %}
-                                    <option value="{{ index }}" selected>{{ data['name'] }}</option>
-                                    {% else %}
-                                    <option value="{{ index }}">{{ data['name'] }}</option>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            {% if settings['globals']['four_probes'] %}
+                                            <span class="input-group-text">Grill Probe 1 Type</span>
+                                            {% else %}
+                                            <span class="input-group-text">Grill Probe Type</span>
+                                            {% endif %}
+                                        </div>
+                                        <select class="form-control" name="grill_probe1_type" id="grill_probe1_type" onchange="this.form.submit()">
+                                            {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %}
+                                            {% if index == settings['probe_types']['grill1type'] %}
+                                            <option value="{{ index }}" selected>{{ data['name'] }}</option>
+                                            {% else %}
+                                            <option value="{{ index }}">{{ data['name'] }}</option>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                        <div class="input-group-append">
+                                            {% if settings['grill_probe_settings']['grill_probe_enabled'][0] == 1 or settings['grill_probe_settings']['grill_probe_enabled'][2] == 1 %}
+                                            <button type="submit" name="grill1enable" value="0" class="btn btn-success btn-sm float-right" disabled><i class="fas fa-eye"></i></button>
+                                            {% else %}
+                                            <button type="submit" name="grill1enable" value="1" class="btn btn-outline-secondary btn-sm float-right" disabled><i class="fas fa-eye-slash"></i></button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <!-- Grill Probe 2 Settings -->
+                                    {% if settings['globals']['four_probes'] %}
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">Grill Probe 2 Type</span>
+                                        </div>
+                                        <select class="form-control" name="grill_probe2_type" id="grill_probe2_type" onchange="this.form.submit()">
+                                            {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %}
+                                            {% if index == settings['probe_types']['grill2type'] %}
+                                            <option value="{{ index }}" selected>{{ data['name'] }}</option>
+                                            {% else %}
+                                            <option value="{{ index }}">{{ data['name'] }}</option>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                        <div class="input-group-append">
+                                            {% if settings['grill_probe_settings']['grill_probe_enabled'][1] == 1 or settings['grill_probe_settings']['grill_probe_enabled'][2] == 1 %}
+                                            <button type="submit" name="grill2enable" value="0" class="btn btn-success btn-sm float-right" disabled><i class="fas fa-eye"></i></button>
+                                            {% else %}
+                                            <button type="submit" name="grill2enable" value="1" class="btn btn-outline-secondary btn-sm float-right" disabled><i class="fas fa-eye-slash"></i></button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
                                     {% endif %}
-                                    {% endfor %}
-                                </select>
-                                <div class="input-group-append">
-                                    {% if settings['grill_probe_settings']['grill_probe_enabled'][0] == 1 or settings['grill_probe_settings']['grill_probe_enabled'][2] == 1 %}
-                                    <button type="submit" name="grill1enable" value="0" class="btn btn-success btn-sm float-right" disabled><i class="fas fa-eye"></i></button>
-                                    {% else %}
-                                    <button type="submit" name="grill1enable" value="1" class="btn btn-outline-secondary btn-sm float-right" disabled><i class="fas fa-eye-slash"></i></button>
-                                    {% endif %}
-                                </div>
+                                    <!-- Probe 1 Settings -->
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">Probe-1 Type</span>
+                                        </div>
+                                        <select class="form-control" name="probe1_type" id="probe1_type" onchange="this.form.submit()">
+                                            {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %}
+                                            {% if index == settings['probe_types']['probe1type'] %}
+                                            <option value="{{ index }}" selected>{{ data['name'] }}</option>
+                                            {% else %}
+                                            <option value="{{ index }}">{{ data['name'] }}</option>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                        <div class="input-group-append">
+                                            {% if settings['probe_settings']['probes_enabled'][1] == 1  %}
+                                            <button type="submit" name="probe1enable" value="0" class="btn btn-success btn-sm float-right"><i class="fas fa-eye"></i></button>
+                                            {% else %}
+                                            <button type="submit" name="probe1enable" value="1" class="btn btn-outline-secondary btn-sm float-right"><i class="fas fa-eye-slash"></i></button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <!-- Probe 2 Settings -->
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">Probe-2 Type</span>
+                                        </div>
+                                        <select class="form-control" name="probe2_type" id="probe2_type" onchange="this.form.submit()">
+                                            {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %}
+                                            {% if index == settings['probe_types']['probe2type'] %}
+                                            <option value="{{ index }}" selected>{{ data['name'] }}</option>
+                                            {% else %}
+                                            <option value="{{ index }}">{{ data['name'] }}</option>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                        <div class="input-group-append">
+                                            {% if settings['probe_settings']['probes_enabled'][2] == 1  %}
+                                            <button type="submit" name="probe2enable" value="0" class="btn btn-success btn-sm float-right"><i class="fas fa-eye"></i></button>
+                                            {% else %}
+                                            <button type="submit" name="probe2enable" value="1" class="btn btn-outline-secondary btn-sm float-right"><i class="fas fa-eye-slash"></i></button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </form>
+                            </div><!-- End of card body -->
+                        </div><!-- End of Card -->
+                        <br>
+                        <div class="card shadow">
+                            <div class="card-header">
+                                <h5>
+                                    <i class="fa fa-tools"></i>&nbsp; ADC Probe Assignment
+                                </h5>
                             </div>
-                            <!-- Grill Probe 2 Settings -->
-                            {% if settings['globals']['four_probes'] == True %}
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text">Grill Probe 2 Type</span>
-                                </div>
-                                <select class="form-control" name="grill_probe2_type" id="grill_probe2_type" onchange="this.form.submit()">
-                                    {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %}
-                                    {% if index == settings['probe_types']['grill2type'] %}
-                                    <option value="{{ index }}" selected>{{ data['name'] }}</option>
-                                    {% else %}
-                                    <option value="{{ index }}">{{ data['name'] }}</option>
+                            <div class="card-body">
+                                <form name="probes_adc" id="probes_adc_form" action="/settings/probes" method="POST">
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> Here you can map the ADC Inputs to the PiFire Probes. Most systems will use the default settings shown. If your probes are wired differently you can set the new values below. </i>
+                                    <br>
+                                    <br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            {% if settings['globals']['four_probes'] %}
+                                            <span class="input-group-text">Grill Probe One</span>
+                                            {% else %}
+                                            <span class="input-group-text">Grill Probe</span>
+                                            {% endif %}
+                                        </div>
+                                        <select class="form-control" name="adc_grill_probe_one" id="adc_grill_probe_one" onchange="this.form.submit()">
+                                            {% for option in settings['probe_settings']['probe_options'] %}
+                                            {% if option == settings['probe_settings']['probe_sources'][0] %}
+                                            <option value="{{ option }}" selected>{{ option }}</option>
+                                            {% else %}
+                                            <option value="{{ option }}">{{ option }}</option>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    {% if settings['globals']['four_probes'] %}
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">Grill Probe Two</span>
+                                        </div>
+                                        <select class="form-control" name="adc_grill_probe_two" id="grill_probe_two" onchange="this.form.submit()">
+                                            {% for option in settings['probe_settings']['probe_options'] %}
+                                            {% if option == settings['probe_settings']['probe_sources'][3] %}
+                                            <option value="{{ option }}" selected>{{ option }}</option>
+                                            {% else %}
+                                            <option value="{{ option }}">{{ option }}</option>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                    </div>
                                     {% endif %}
-                                    {% endfor %}
-                                </select>
-                                <div class="input-group-append">
-                                    {% if settings['grill_probe_settings']['grill_probe_enabled'][1] == 1 or settings['grill_probe_settings']['grill_probe_enabled'][2] == 1 %}
-                                    <button type="submit" name="grill2enable" value="0" class="btn btn-success btn-sm float-right" disabled><i class="fas fa-eye"></i></button>
-                                    {% else %}
-                                    <button type="submit" name="grill2enable" value="1" class="btn btn-outline-secondary btn-sm float-right" disabled><i class="fas fa-eye-slash"></i></button>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            {% endif %}
-                            <!-- Probe 1 Settings -->
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text">Probe-1 Type</span>
-                                </div>
-                                <select class="form-control" name="probe1_type" id="probe1_type" onchange="this.form.submit()">
-                                    {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %}
-                                    {% if index == settings['probe_types']['probe1type'] %}
-                                    <option value="{{ index }}" selected>{{ data['name'] }}</option>
-                                    {% else %}
-                                    <option value="{{ index }}">{{ data['name'] }}</option>
-                                    {% endif %}
-                                    {% endfor %}
-                                </select>
-                                <div class="input-group-append">
-                                    {% if settings['probe_settings']['probes_enabled'][1] == 1  %}
-                                    <button type="submit" name="probe1enable" value="0" class="btn btn-success btn-sm float-right"><i class="fas fa-eye"></i></button>
-                                    {% else %}
-                                    <button type="submit" name="probe1enable" value="1" class="btn btn-outline-secondary btn-sm float-right"><i class="fas fa-eye-slash"></i></button>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <!-- Probe 2 Settings -->
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text">Probe-2 Type</span>
-                                </div>
-                                <select class="form-control" name="probe2_type" id="probe2_type" onchange="this.form.submit()">
-                                    {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %}
-                                    {% if index == settings['probe_types']['probe2type'] %}
-                                    <option value="{{ index }}" selected>{{ data['name'] }}</option>
-                                    {% else %}
-                                    <option value="{{ index }}">{{ data['name'] }}</option>
-                                    {% endif %}
-                                    {% endfor %}
-                                </select>
-                                <div class="input-group-append">
-                                    {% if settings['probe_settings']['probes_enabled'][2] == 1  %}
-                                    <button type="submit" name="probe2enable" value="0" class="btn btn-success btn-sm float-right"><i class="fas fa-eye"></i></button>
-                                    {% else %}
-                                    <button type="submit" name="probe2enable" value="1" class="btn btn-outline-secondary btn-sm float-right"><i class="fas fa-eye-slash"></i></button>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <!-- End of card body -->
-                </div>
-                <!-- End of Card -->
-            </div>
-            <!-- End of Tab -->
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">Probe One</span>
+                                        </div>
+                                        <select class="form-control" name="adc_probe_one" id="probe_one" onchange="this.form.submit()">
+                                            {% for option in settings['probe_settings']['probe_options'] %}
+                                            {% if option == settings['probe_settings']['probe_sources'][1] %}
+                                            <option value="{{ option }}" selected>{{ option }}</option>
+                                            {% else %}
+                                            <option value="{{ option }}">{{ option }}</option>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">Probe Two</span>
+                                        </div>
+                                        <select class="form-control" name="adc_probe_two" id="probe_two" onchange="this.form.submit()">
+                                            {% for option in settings['probe_settings']['probe_options'] %}
+                                            {% if option == settings['probe_settings']['probe_sources'][2] %}
+                                            <option value="{{ option }}" selected>{{ option }}</option>
+                                            {% else %}
+                                            <option value="{{ option }}">{{ option }}</option>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </form>
+                            </div><!-- End of card body -->
+                        </div><!-- End of Card -->
+                    </div><!-- End of card body -->
+                </div><!-- End of Card -->
+            </div><!-- End of Tab -->
             <!-- ============================ Edit / Add / Delete Probe Profiles ========================== -->
             {% if request.MOBILE %}<br>{% endif %}
             <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-probe-profiles" role="tabpanel" aria-labelledby="v-pills-probe-profiles-tab">
@@ -350,12 +438,9 @@
                                 </div>
                             </form>
                         </div>
-                    </div>
-                    <!-- End of card body -->
-                </div>
-                <!-- End of Card -->
-            </div>
-            <!-- End of Tab -->
+                    </div><!-- End of card body -->
+                </div><!-- End of Card -->
+            </div><!-- End of Tab -->
             <!-- ============================ Select Temp Units ========================== -->
             {% if request.MOBILE %}<br>{% endif %}
             <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-units" role="tabpanel" aria-labelledby="v-pills-units-tab">
@@ -377,16 +462,13 @@
                             </div>
                             <span class="badge badge-warning">NOTE:</span>
                             <i class="small"> Changing the scale/units will restart the grill controller (stopping any currently running modes) and automatically erase history. </i>
-                        </div>
-                        <!-- End of card body -->
+                        </div><!-- End of card body -->
                         <div class="card-footer bg-light">
                             <button type="submit" class="btn btn-outline-primary">Save</button>
                         </div>
                     </form>
-                </div>
-                <!-- End of Card -->
-            </div>
-            <!-- End of Tab -->
+                </div><!-- End of Card -->
+            </div><!-- End of Tab -->
             <!-- ============================ Grill Name ========================== -->
             {% if request.MOBILE %}<br>{% endif %}
             <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-name" role="tabpanel" aria-labelledby="v-pills-name-tab">
@@ -405,179 +487,425 @@
                                 </div>
                                 <input id="grill_name" type="text" class="form-control" placeholder="{{ settings['globals']['grill_name'] }}" value="{{ settings['globals']['grill_name'] }}" name="grill_name">
                             </div>
-                        </div>
-                        <!-- End of card body -->
+                        </div><!-- End of card body -->
                         <div class="card-footer bg-light">
                             <button type="submit" class="btn btn-outline-primary">Save</button>
                         </div>
                     </form>
-                </div>
-                <!-- End of Card -->
-            </div>
-            <!-- End of Tab -->
+                </div><!-- End of Card -->
+            </div><!-- End of Tab -->
             <!-- ============================ Work Mode Settings ========================== -->
             {% if request.MOBILE %}<br>{% endif %}
             <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-work-mode" role="tabpanel" aria-labelledby="v-pills-work-mode-tab">
                 <div class="card shadow">
-                    <form name="cyclesettings" action="/settings/cycle" method="POST">
+                    <form name="cycle_settings" action="/settings/cycle" method="POST">
                         <div class="card-header bg-primary text-white">
                             <h5>
                                 <i class="fas fa-tools"></i>&nbsp; Work Mode Settings
                             </h5>
                         </div>
                         <div class="card-body">
-                            <h5>Startup / Smoke Mode Cycle Settings</h5>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text" data-toggle="tooltip" title="Auger-On Time for Smoke / Startup (seconds)[Default=15]">
-                                        <i class="far fa-clock"></i>&nbsp; Auger On Time </span>
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h5>
+                                        <i class="fas fa-play"></i>&nbsp; Startup / Smoke Mode Cycle Settings
+                                    </h5>
                                 </div>
-                                <input id="smokecycletime" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['SmokeCycleTime'] }}" value="{{ settings['cycle_data']['SmokeCycleTime'] }}" name="smokecycletime">
-                            </div>
-                            <span class="badge badge-warning">NOTE:</span>
-                            <i class="small"> More information about the PMode can be found <a href="http://tipsforbbq.com/Definition/Traeger-P-Setting" target="blank">here.</a> P-Mode is used for both Startup and Smoke modes, but not Hold mode. </i>
+                                <div class="card-body">
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Auger-On Time for Smoke / Startup (seconds)[Default=15]">
+                                                <i class="far fa-clock"></i>&nbsp; Auger On Time
+                                            </span>
+                                        </div>
+                                        <input id="smokecycletime" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['SmokeCycleTime'] }}" value="{{ settings['cycle_data']['SmokeCycleTime'] }}" name="smokecycletime">
+                                    </div>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> More information about the PMode can be found <a href="http://tipsforbbq.com/Definition/Traeger-P-Setting" target="blank">here.</a> P-Mode is used for both Startup and Smoke modes, but not Hold mode. </i>
+                                    <br>
+                                    <br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="(Auger-Off Time: Set P-Mode for Smoke Cycle (1-10)">
+                                                <i class="fas fa-cog"></i>&nbsp; P-Mode
+                                            </span>
+                                        </div>
+                                        <input id="pmode" type="number" min="0" max="9" class="form-control" placeholder="{{ settings['cycle_data']['PMode'] }}" value="{{ settings['cycle_data']['PMode'] }}" name="pmode">
+                                    </div>
+                                    <table class="table table-bordered">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>P-Mode</th>
+                                                <th>Auger ON Time</th>
+                                                <th>Auger OFF Time</th>
+                                            </tr>
+                                        </thead>
+                                        {% for row in range(10) %}
+                                        <tbody>
+                                        {% if row == settings['cycle_data']['PMode'] %}
+                                        <tr class="table-warning">
+                                            {% else %}
+                                        <tr>
+                                            {% endif %}
+                                            <td>{{ row }} {% if (row == 2) %}(Factory Default){% endif %}</td>
+                                            <td>{{ settings['cycle_data']['SmokeCycleTime'] }}</td>
+                                            <td>{{ (row * 10)+45 }} seconds</td>
+                                        </tr>
+                                        {% endfor %}
+                                        </tbody>
+                                    </table>
+                                    <br>
+                                </div><!-- End of card body -->
+                            </div><!-- End of Card -->
                             <br>
-                            <br>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text" data-toggle="tooltip" title="(Auger-Off Time: Set P-Mode for Smoke Cycle (1-10)">
-                                        <i class="fas fa-cog"></i>&nbsp; P-Mode </span>
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h5>
+                                        <i class="fas fa-fan"></i>&nbsp; Smoke Plus Settings (SMOKE & HOLD Mode) [Fan Cycling]
+                                    </h5>
                                 </div>
-                                <input id="pmode" type="number" min="0" max="9" class="form-control" placeholder="{{ settings['cycle_data']['PMode'] }}" value="{{ settings['cycle_data']['PMode'] }}" name="pmode">
-                            </div>
-                            <table class="table table-bordered">
-                                <thead class="thead-light">
-                                <tr>
-                                    <th>P-Mode</th>
-                                    <th>Auger ON Time</th>
-                                    <th>Auger OFF Time</th>
-                                </tr>
-                                </thead>
-                                {% for row in range(10) %}
-                                <tbody>
-                                {% if row == settings['cycle_data']['PMode'] %}
-                                <tr class="table-warning">
-                                    {% else %}
-                                <tr>
+                                <div class="card-body">
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small">Smoke Plus Mode can be toggled on/off by tapping the fan icon button on the dashboard. The icon will be highlighted blue indicating that smoke plus is enabled. Smoke Plus will cycle the fan on and off during smoke and hold mode to promote additional smoke generation. Fan cycling will only occur between the below min/max temperatures.</i>
+                                    <br>
+                                    <br>
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="default_smoke_plus" name="default_smoke_plus" {% if settings['smoke_plus']['enabled'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="default_smoke_plus">Smoke Plus Enabled by Default</label>
+                                    </div>
+                                    <br>
+                                    {% if settings['globals']['dc_fan'] %}
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small">Fan Ramping will ramp the fan from off to the desired duty cycle instead of just turning on to full speed during Smoke Plus cycling. You can control the ramp duration by setting the Fan ON Time below. The desired duty cycle can also be set below.</i>
+                                    <br>
+                                    <br>
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="sp_fan_ramp" name="sp_fan_ramp" {% if settings['smoke_plus']['fan_ramp'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="sp_fan_ramp">Fan Ramping Enabled</label>
+                                    </div>
+                                    <br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Duty cycle that will be used during fan ramping (percent) [Default: 75]">
+                                                <i class="far fa-clock"></i>&nbsp; Ramp Duty Cycle (%)
+                                            </span>
+                                        </div>
+                                        <input id="sp_duty_cycle" type="number" min="20" max="100" class="form-control" placeholder="{{ settings['smoke_plus']['duty_cycle'] }}" value="{{ settings['smoke_plus']['duty_cycle'] }}" name="sp_duty_cycle">
+                                    </div>
                                     {% endif %}
-                                    <td>{{ row }} {% if (row == 2) %}(Factory Default){% endif %}</td>
-                                    <td>{{ settings['cycle_data']['SmokeCycleTime'] }}</td>
-                                    <td>{{ (row * 10)+45 }} seconds</td>
-                                </tr>
-                                {% endfor %}
-                                </tbody>
-                            </table>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Number of seconds the fan will remain ON during fan cycling (seconds) [Default: 5]">
+                                                <i class="far fa-clock"></i>&nbsp; Fan ON Time (s)
+                                            </span>
+                                        </div>
+                                        <input id="sp_on_time" type="number" min="sp_fade_in.value" class="form-control" placeholder="{{ settings['smoke_plus']['on_time'] }}" value="{{ settings['smoke_plus']['on_time'] }}" name="sp_on_time">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Number of seconds the fan will remain OFF during fan cycling (seconds) [Default: 5]">
+                                                <i class="far fa-clock"></i>&nbsp; Fan OFF Time (s)
+                                            </span>
+                                        </div>
+                                        <input id="sp_off_time" type="number" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['off_time'] }}" value="{{ settings['smoke_plus']['off_time'] }}" name="sp_off_time">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Lowest temperature for Smoke Plus to operate. ({{settings['globals']['units']}}) [Default: 160F/71C]">
+                                                <i class="fas fa-temperature-high"></i>&nbsp; Min Operational Temp ({{settings['globals']['units']}})
+                                            </span>
+                                        </div>
+                                        <input id="sp_min_temp" type="number" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['min_temp'] }}" value="{{ settings['smoke_plus']['min_temp'] }}" name="sp_min_temp">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Highest temperature for Smoke Plus to operate. ({{settings['globals']['units']}}) [Default: 220F/104C]">
+                                                <i class="fas fa-temperature-high"></i>&nbsp; Max Operational Temp ({{settings['globals']['units']}})
+                                            </span>
+                                        </div>
+                                        <input id="sp_max_temp" type="number" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['max_temp'] }}" value="{{ settings['smoke_plus']['max_temp'] }}" name="sp_max_temp">
+                                    </div>
+                                </div><!-- End of card body -->
+                            </div><!-- End of Card -->
                             <br>
-                            <h5>Smoke Plus Settings (SMOKE & HOLD Mode) [Fan Cycling]</h5>
-                            <span class="badge badge-warning">NOTE:</span>
-                            <i class="small">Smoke Plus Mode can be toggled on/off by tapping the fan icon button on the dashboard. The icon will be highlighted blue indicating that smoke plus is enabled. Smoke Plus will cycle the fan on and off during smoke and hold mode to promote additional smoke generation. Fan cycling will only occur between the below min/max temperatures.</i>
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h5>
+                                        <i class="fas fa-tools"></i>&nbsp; PID Settings (HOLD Mode)
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Cycle Time for PID Controller (seconds)[Default=20]">
+                                                <i class="far fa-clock"></i>&nbsp; Cycle Time
+                                            </span>
+                                        </div>
+                                        <input id="holdcycletime" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['HoldCycleTime'] }}" value="{{ settings['cycle_data']['HoldCycleTime'] }}" name="holdcycletime">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Proportional Band - This is the temperature band centered around the set point, that the controller is active.  If the error is greater than PB/2, the command is 0.  If the error is less than PB/2, the command is 1.0 [Default=60.0]">
+                                                <i class="fas fa-wave-square"></i>&nbsp; Proportional Band (PB)
+                                            </span>
+                                        </div>
+                                        <input id="propband" type="number" min="1" step="0.1" class="form-control" placeholder="{{ settings['cycle_data']['PB'] }}" value="{{ settings['cycle_data']['PB'] }}" name="propband">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Integral Time - Time (in seconds) to eliminate the integral error. [Default=180.0]">
+                                                <i class="far fa-clock"></i>&nbsp; Integral Time (Ti)
+                                            </span>
+                                        </div>
+                                        <input id="integraltime" type="number" min="1" step="0.1" class="form-control" placeholder="{{ settings['cycle_data']['Ti'] }}" value="{{ settings['cycle_data']['Ti'] }}" name="integraltime">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Derivative Time - Time (in seconds) to predict the future value. [Default=45.0]">
+                                                <i class="far fa-clock"></i>&nbsp; Derivative Time (Td)
+                                            </span>
+                                        </div>
+                                        <input id="derivtime" type="number" min="1" step="0.1" class="form-control" placeholder="{{ settings['cycle_data']['Td'] }}" value="{{ settings['cycle_data']['Td'] }}" name="derivtime">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Min Cycle Ratio [Default=0.15]">
+                                                <i class="far fa-clock"></i>&nbsp; Min Cycle Ratio
+                                            </span>
+                                        </div>
+                                        <input id="u_min" type="number" min="0.05" step="0.01" class="form-control" placeholder="{{ settings['cycle_data']['u_min'] }}" value="{{ settings['cycle_data']['u_min'] }}" name="u_min">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Max Cycle Ratio [Default=1.0]">
+                                                <i class="far fa-clock"></i>&nbsp; Max Cycle Ratio
+                                            </span>
+                                        </div>
+                                        <input id="u_max" type="number" min="0.1" step="0.01" class="form-control" placeholder="{{ settings['cycle_data']['u_max'] }}" value="{{ settings['cycle_data']['u_max'] }}" name="u_max">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Center Ratio [Default=0.5]">
+                                                <i class="far fa-clock"></i>&nbsp; Center Ratio
+                                            </span>
+                                        </div>
+                                        <input id="center" type="number" min="0.1" step="0.01" class="form-control" placeholder="{{ settings['cycle_data']['center'] }}" value="{{ settings['cycle_data']['center'] }}" name="center">
+                                    </div>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> PID Settings will take effect on next Hold cycle that is started, if a cycle is currently running it would need to be restarted. More information on the PID control settings can be found <a href="http://engineeredmusings.com/pismoker/" target="blank">here.</a></i>
+                                    <br>
+                                </div><!-- End of card body -->
+                            </div><!-- End of Card -->
                             <br>
-                            <br>
-                            <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="defaultsmokeplus" name="defaultsmokeplus" {% if settings['smoke_plus']['enabled'] == True %}checked{% endif %}>
-                                <label class="custom-control-label" for="defaultsmokeplus">Smoke Plus Enabled by Default</label>
-                            </div>
-                            <br>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                            <span class="input-group-text" data-toggle="tooltip" title="Fan Cycle Time (seconds) [Default: 10]">
-                                <i class="far fa-clock"></i>&nbsp; Fan Cycle Time (s) </span>
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h5>
+                                        <i class="fas fa-tools"></i>&nbsp; Keep Warm Settings
+                                    </h5>
                                 </div>
-                                <input id="sp_cycle" type="number" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['cycle'] }}" value="{{ settings['smoke_plus']['cycle'] }}" name="sp_cycle">
-                            </div>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text" data-toggle="tooltip" title="Lowest temperature for Smoke Plus to operate. ({{settings['globals']['units']}}) [Default: 160F/71C]">
-                                        <i class="fas fa-temperature-high"></i>&nbsp; Min Oprerational Temp ({{settings['globals']['units']}}) </span>
-                                </div>
-                                <input id="minsptemp" type="number" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['min_temp'] }}" value="{{ settings['smoke_plus']['min_temp'] }}" name="minsptemp">
-                            </div>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text" data-toggle="tooltip" title="Highest temperature for Smoke Plus to operate. ({{settings['globals']['units']}}) [Default: 220F/104C]">
-                                        <i class="fas fa-temperature-high"></i>&nbsp; Max Oprerational Temp ({{settings['globals']['units']}}) </span>
-                                </div>
-                                <input id="maxsptemp" type="number" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['max_temp'] }}" value="{{ settings['smoke_plus']['max_temp'] }}" name="maxsptemp">
-                            </div>
-                            <br>
-                            <h5>PID Settings (HOLD Mode)</h5>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text" data-toggle="tooltip" title="Cycle Time for PID Controller (seconds)[Default=20]">
-                                        <i class="far fa-clock"></i>&nbsp; Cycle Time </span>
-                                </div>
-                                <input id="holdcycletime" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['HoldCycleTime'] }}" value="{{ settings['cycle_data']['HoldCycleTime'] }}" name="holdcycletime">
-                            </div>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text" data-toggle="tooltip" title="Proportional Band - This is the temperature band centered around the set point, that the controller is active.  If the error is greater than PB/2, the command is 0.  If the error is less than PB/2, the command is 1.0 [Default=60.0]">
-                                        <i class="fas fa-wave-square"></i>&nbsp; Proportional Band (PB) </span>
-                                </div>
-                                <input id="propband" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['PB'] }}" value="{{ settings['cycle_data']['PB'] }}" name="propband">
-                            </div>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text" data-toggle="tooltip" title="Integral Time - Time (in seconds) to eliminate the integral error. [Default=180.0]">
-                                        <i class="far fa-clock"></i>&nbsp; Integral Time (Ti) </span>
-                                </div>
-                                <input id="integraltime" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['Ti'] }}" value="{{ settings['cycle_data']['Ti'] }}" name="integraltime">
-                            </div>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text" data-toggle="tooltip" title="Derivative Time - Time (in seconds) to predict the future value. [Default=45.0]">
-                                        <i class="far fa-clock"></i>&nbsp; Derivative Time (Td) </span>
-                                </div>
-                                <input id="derivtime" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['Td'] }}" value="{{ settings['cycle_data']['Td'] }}" name="derivtime">
-                            </div>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text" data-toggle="tooltip" title="Min Cycle Ratio [Default=0.15]">
-                                        <i class="far fa-clock"></i>&nbsp; Min Cycle Ratio</span>
-                                </div>
-                                <input id="u_min" type="number" min="0.05" step="0.01" class="form-control" placeholder="{{ settings['cycle_data']['u_min'] }}" value="{{ settings['cycle_data']['u_min'] }}" name="u_min">
-                            </div>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text" data-toggle="tooltip" title="Max Cycle Ratio [Default=1.0]">
-                                        <i class="far fa-clock"></i>&nbsp; Max Cycle Ratio</span>
-                                </div>
-                                <input id="u_max" type="number" min="0.1" step="0.01" class="form-control" placeholder="{{ settings['cycle_data']['u_max'] }}" value="{{ settings['cycle_data']['u_max'] }}" name="u_max">
-                            </div>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text" data-toggle="tooltip" title="Center Ratio [Default=0.5]">
-                                        <i class="far fa-clock"></i>&nbsp; Center Ratio</span>
-                                </div>
-                                <input id="center" type="number" min="0.1" step="0.01" class="form-control" placeholder="{{ settings['cycle_data']['center'] }}" value="{{ settings['cycle_data']['center'] }}" name="center">
-                            </div>
-                            <span class="badge badge-warning">NOTE:</span>
-                            <i class="small"> If you are in hold mode currently, you will need to change to another mode and back into hold mode for this to take effect. More information on the PID control settings can be found <a href="http://engineeredmusings.com/pismoker/" target="blank">here.</a></i>
-                            <br><br>
-                            <h5>Keep Warm Settings</h5>
-                            <span class="badge badge-warning">NOTE:</span>
-                            <i class="small">The Keep Warm option will be activated when selected once a probe set point has been achieved or the set timer has expired. The Grill will exit the currently running mode then switch to Hold Mode and attempt to maintain the temperature set below. You can also enable or disable the Smoke Plus feature during Keep Warm.</i>
-                            <br><br>
-                            <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="keep_warm_s_plus" name="keep_warm_s_plus" {% if settings['keep_warm']['s_plus'] == True %}checked{% endif %}>
-                                <label class="custom-control-label" for="keep_warm_s_plus">Smoke Plus Enabled</label>
-                            </div>
-                            <br>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text" data-toggle="tooltip" title="Keep Warm Temperature ({{settings['globals']['units']}}) [Default: 165F/74C]">
-                                        <i class="fas fa-temperature-high"></i>&nbsp; Keep Warm Temp ({{settings['globals']['units']}})</span>
-                                </div>
-                                <input id="keep_warm_temp" type="number" min="1" class="form-control" placeholder="{{ settings['keep_warm']['temp'] }}" value="{{ settings['keep_warm']['temp'] }}" name="keep_warm_temp">
-                            </div>
-                        </div>
-                        <!-- End of card body -->
+                                <div class="card-body">
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small">The Keep Warm function will be activated when option is selected and a probe set point has been achieved or the set timer has expired. The Grill will exit the currently running mode and switch to Hold Mode then attempt to maintain the temperature set below. You can also enable or disable the Smoke Plus feature during Keep Warm.</i>
+                                    <br>
+                                    <br>
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="keep_warm_s_plus" name="keep_warm_s_plus" {% if settings['keep_warm']['s_plus'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="keep_warm_s_plus">Smoke Plus Enabled</label>
+                                    </div>
+                                    <br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Keep Warm Temperature ({{settings['globals']['units']}}) [Default: 165F/74C]">
+                                                <i class="fas fa-temperature-high"></i>&nbsp; Keep Warm Temp ({{settings['globals']['units']}})
+                                            </span>
+                                        </div>
+                                        <input id="keep_warm_temp" type="number" min="1" class="form-control" placeholder="{{ settings['keep_warm']['temp'] }}" value="{{ settings['keep_warm']['temp'] }}" name="keep_warm_temp">
+                                    </div>
+                                </div><!-- End of card body -->
+                            </div><!-- End of Card -->
+                        </div><!-- End of card body -->
                         <div class="card-footer bg-light">
                             <button type="submit" class="btn btn-outline-primary">Save</button>
                         </div>
                     </form>
-                </div>
-                <!-- End of Card -->
+                </div><!-- End of Card -->
+            </div><!-- End of Tab -->
+            <!-- ============================ PWM Settings ========================== -->
+            {% if settings['globals']['dc_fan'] %}
+            {% if request.MOBILE %}<br>{% endif %}
+            <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-pwm" role="tabpanel" aria-labelledby="v-pills-pwm-tab">
+                <div class="card shadow">
+                    <form name="pwm" action="/settings/pwm" method="POST">
+                        <div class="card-header bg-primary text-white">
+                            <h5>
+                                <i class="fas fa-tools"></i>&nbsp; PWM Settings
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Temp Fan Control Settings -->
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h5>
+                                        <i class="fas fa-tachometer-alt"></i>&nbsp; PWM Temp Control Settings
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="pwm_control" name="pwm_control" {% if settings['pwm']['pwm_control'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="pwm_control">Temp Control Enabled by Default</label>
+                                    </div>
+                                    <br>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small">If enabled PWM Temp Control will override Smoke Plus fan ramping. The fan will adjust with temperature and cycle on and off but will not ramp up to speed.</i>
+                                    <br>
+                                    <br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="How often the Fan Speed will be updated based on Temperature (seconds) [Default=10]">
+                                                <i class="far fa-clock"></i>&nbsp; Update Time (s)
+                                            </span>
+                                        </div>
+                                        <input id="pwm_update" type="number" min="1" class="form-control" placeholder="{{ settings['pwm']['update_time'] }}" value="{{ settings['pwm']['update_time'] }}" name="pwm_update">
+                                    </div>
+                                    <br>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small">If Current Grill Temp is over Set Temp Fan will be set to Minimum Duty Cycle. If the Grill temp is below the Set Temp the Duty Cycles below will be used. Example: If Current Grill Temp drops below Set Temp by 1-3 ° a 20% PWM will be set. If the Grill Temp drops below the Set Temp by 15° a 75% Duty Cycle will be set. </i>
+                                    <br>
+                                    <br>
+                                    <table class="table table-sm" id="duty_cycle_table">
+                                        <thead>
+                                        <tr>
+                                            <th scope="col">Action</th>
+                                            <th scope="col">Temp Range</th>
+                                            <th scope="col">Duty Cycle</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                        <tfoot>
+                                        <tr>
+                                            <td>
+                                                <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#dc_add_modal"><i class="fas fa-plus"></i></button>
+                                            </td>
+                                            <td></td>
+                                            <td></td>
+                                        </tr>
+                                        </tfoot>
+                                    </table>
+                                    <!-- Smart Start ADD Profile modal -->
+                                    <div class="modal fade" id="dc_add_modal" tabindex="-1" aria-labelledby="dc_add_modal_label" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="dc_add_modal_label">Add PWM Temp Profile</h5>
+                                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                        <span aria-hidden="true">&times;</span>
+                                                    </button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <span class="badge badge-warning">NOTE:</span>
+                                                    <i class="small">Enter a value greater than <span id="dc_add_temp">0</span>{{ settings['globals']['units'] }}</i>
+                                                    <br>
+                                                    <br>
+                                                    <div class="input-group mb-3">
+                                                        <div class="input-group-prepend">
+                                                            <span class="input-group-text" id="dc_temp_label">Temp Range ({{ settings['globals']['units'] }})</span>
+                                                        </div>
+                                                        <input type="number" class="form-control" value="5" min="1" max="100" name="dc_temp" id="dc_temp" aria-label="Temp Range" aria-describedby="dc_temp_label">
+                                                    </div>
+                                                    <div class="input-group mb-3">
+                                                        <div class="input-group-prepend">
+                                                            <span class="input-group-text" id="dc_duty_cycle_label">Duty Cycle (%)</span>
+                                                        </div>
+                                                        <input type="number" class="form-control" value="50" min="1" max="100" name="dc_duty_cycle" id="dc_duty_cycle" aria-label="Duty Cycle" aria-describedby="dc_duty_cycle_label">
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                    <button type="button" class="btn btn-primary" data-dismiss="modal" onClick="onAddPWM()">Save changes</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div><!-- End of Add Modal-->
+                                    <!-- Smart Start EDIT Profile modal -->
+                                    <div class="modal fade" id="dc_edit_modal" tabindex="-1" aria-labelledby="dc_edit_modal_label" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="dc_edit_modal_label">Edit PWM Temp Profile</h5>
+                                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                        <span aria-hidden="true">&times;</span>
+                                                    </button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <span class="badge badge-warning">NOTE:</span>
+                                                    <i class="small" id="dc_edit_range_text">Enter a value in the range <span id="dc_edit_range_min">0</span>-<span id="dc_edit_range_max">100</span>{{ settings['globals']['units'] }}</i>
+                                                    <br>
+                                                    <br>
+                                                    <div class="input-group mb-3">
+                                                        <div class="input-group-prepend">
+                                                            <span class="input-group-text" id="dc_edit_temp_label">Temp Range ({{ settings['globals']['units'] }})</span>
+                                                        </div>
+                                                        <input type="number" class="form-control" value="55" min="0" max="200" name="dc_edit_temp" id="dc_edit_temp" aria-label="Temp Range" aria-describedby="dc_edit_temp_label">
+                                                    </div>
+                                                    <div class="input-group mb-3">
+                                                        <div class="input-group-prepend">
+                                                            <span class="input-group-text" id="dc_edit_duty_cycle_label">Duty Cycle (%)</span>
+                                                        </div>
+                                                        <input type="number" class="form-control" value="50" min="1" max="100" name="dc_edit_duty_cycle" id="dc_edit_duty_cycle" aria-label="Duty Cycle" aria-describedby="dc_edit_duty_cycle_label">
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                    <button type="button" class="btn btn-primary" id="dc_save_edits" value="" data-dismiss="modal" onClick="saveChangesPWM(this.value)">Save changes</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div><!-- End of Edit Modal-->
+                                </div>
+                            </div>
+                            <br>
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h5>
+                                        <i class="fas fa-tools"></i>&nbsp; General Fan Settings
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="PWM Fan Frequency. This will vary with different fans. [Default=100]">
+                                                <i class="fas fa-wave-square"></i>&nbsp; Frequency (Hz)
+                                            </span>
+                                        </div>
+                                        <input id="frequency" type="number" min="1" class="form-control" placeholder="{{ settings['pwm']['frequency'] }}" value="{{ settings['pwm']['frequency'] }}" name="frequency">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="This is the minimum duty cycle that can be set. Some fans stall below a certain speed [Default=20]">
+                                                <i class="fas fa-tachometer-alt"></i>&nbsp; Min Duty Cycle
+                                            </span>
+                                        </div>
+                                        <input id="min_duty_cycle" type="number" min="1" max="100" class="form-control" placeholder="{{ settings['pwm']['min_duty_cycle'] }}" value="{{ settings['pwm']['min_duty_cycle'] }}" name="min_duty_cycle">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="This is the maximum duty cycle that can be set. Can limit fans that are overpowered. If Fan is too overpowered settings a Duty Cycle > 50% is not advised. It would be best to source a fan with less CFM. [Default=100]">
+                                                <i class="fas fa-tachometer-alt"></i>&nbsp; Max Duty Cycle
+                                            </span>
+                                        </div>
+                                        <input id="max_duty_cycle" type="number" min="50" max="100" class="form-control" placeholder="{{ settings['pwm']['max_duty_cycle'] }}" value="{{ settings['pwm']['max_duty_cycle'] }}" name="max_duty_cycle">
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!-- End of card body -->
+                        <div class="card-footer bg-light">
+                            <button type="submit" class="btn btn-outline-primary">Save</button>
+                        </div>
+                    </form>
+                </div><!-- End of Card -->
             </div>
+            {% endif %}
             <!-- End of Tab -->
             <!-- ============================ Startup/Shutdown Settings ========================== -->
             {% if request.MOBILE %}<br>{% endif %}
@@ -610,7 +938,6 @@
 								</div>
 							</div>
 							<br>
-							
 							<!-- Smart Start Settings -->
 							<div class="card shadow">
 								<div class="card-header">
@@ -621,10 +948,13 @@
 								<div class="card-body">
 									<span class="badge badge-warning">NOTE:</span>
 									<i class="small"> Smart Start will sample the temperature from your grill temperature probe on startup to determine the startup mode time and the Smoke mode cycle settings.  If this mode is enabled, it will override the above startup and smoke cycle settings.  Edit the profiles below to customize the behavior of startup. </i>
+                                    <br>
+                                    <br>
 									<div class="custom-control custom-switch">
-										<input type="checkbox" class="custom-control-input" id="smartstart_enable" name="smartstart_enable" {% if settings['smartstart']['enabled'] == True %}checked{% endif %}>
+										<input type="checkbox" class="custom-control-input" id="smartstart_enable" name="smartstart_enable" {% if settings['smartstart']['enabled'] %}checked{% endif %}>
 										<label class="custom-control-label" for="smartstart_enable">Smart Start Enabled</label>
-									</div><br>
+									</div>
+                                    <br>
 									<!-- Smart Start Profiles -->
 									<table class="table table-sm" id="smartStartTable">
 										<thead>
@@ -696,7 +1026,6 @@
 										</div>
 										</div>
 									</div><!-- End of Add Modal-->
-
                                     <!-- Smart Start EDIT Profile modal -->
 									<div class="modal fade" id="sstrt_edit_modal" tabindex="-1" aria-labelledby="sstrt_edit_modal_label" aria-hidden="true">
 										<div class="modal-dialog">
@@ -734,7 +1063,6 @@
 													</div>
 													<input type="number" class="form-control" value="2" min="0" max="9" name="edit_pMode" id="edit_pMode" aria-label="P-Mode" aria-describedby="edit_pModeLabel">
 												</div>
-
 											</div>
 											<div class="modal-footer">
 											<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -743,13 +1071,9 @@
 										</div>
 										</div>
 									</div><!-- End of Add Modal-->
-
 								</div><!-- End of Smart Start Settings Card Body -->
 							</div><!-- End of Smart Start Settings Card-->
 							<br>
-							<script>
-
-							</script>
 							<!-- Shutdown Settings -->
 							<div class="card shadow">
 								<div class="card-header">
@@ -757,7 +1081,7 @@
 										<i class="fas fa-flag-checkered"></i>&nbsp; Default Shutdown Settings
 									</h5>
 								</div>
-								<div class="card-body"> 
+								<div class="card-body">
 									<div class="input-group mb-3">
 										<div class="input-group-prepend">
 											<span class="input-group-text" data-toggle="tooltip" title="Shutdown timer (seconds) [Default=60]">
@@ -769,27 +1093,23 @@
 									<i class="small"> Amount of time fan will run after shutdown is selected </i>
 									<br>
 									<br>
-									<h5>Power Off Settings</h5>
-									<span class="badge badge-warning">NOTE:</span>
-									<i class="small"> When enabled the Raspberry Pi will auto power off after the Grill Shutdown Mode has ended</i>
-									<br>
-									<br>
 									<div class="custom-control custom-switch">
-										<input type="checkbox" class="custom-control-input" id="auto_power_off" name="auto_power_off" {% if settings['globals']['auto_power_off'] == True %}checked{% endif %}>
+										<input type="checkbox" class="custom-control-input" id="auto_power_off" name="auto_power_off" {% if settings['globals']['auto_power_off'] %}checked{% endif %}>
 										<label class="custom-control-label" for="auto_power_off">Auto Power Off</label>
 									</div>
+                                    <br>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> When enabled the Raspberry Pi will auto power off after the Grill Shutdown Mode has ended</i>
+                                    <br>
 								</div>
 							</div> <!-- End of Shutdown Settings Card-->
-                        </div>
-                        <!-- End of card body -->
+                        </div><!-- End of card body -->
                         <div class="card-footer bg-light">
                             <button type="submit" class="btn btn-outline-primary">Save</button>
                         </div>
                     </form>
-                </div>
-                <!-- End of Card -->
-            </div>
-            <!-- End of Tab -->
+                </div><!-- End of Card -->
+            </div><!-- End of Tab -->
             <!-- ============================ History Settings ========================== -->
             {% if request.MOBILE %}<br>{% endif %}
             <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-history" role="tabpanel" aria-labelledby="v-pills-history-tab">
@@ -816,7 +1136,7 @@
                                 <input id="datapoints" type="number" min="10" class="form-control" placeholder="{{ settings['history_page']['datapoints'] }}" value="{{ settings['history_page']['datapoints'] }}" name="datapoints">
                             </div>
                             <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="clearhistorystartup" name="clearhistorystartup" {% if settings['history_page']['clearhistoryonstart'] == True %}checked{% endif %}>
+                                <input type="checkbox" class="custom-control-input" id="clearhistorystartup" name="clearhistorystartup" {% if settings['history_page']['clearhistoryonstart'] %}checked{% endif %}>
                                 <label class="custom-control-label" for="clearhistorystartup">Clear History on Startup</label>
                             </div>
                             <br>
@@ -825,16 +1145,13 @@
                                 <label class="custom-control-label" for="historyautorefresh">History Auto-Refresh</label>
                             </div>
                             <br>
-                        </div>
-                        <!-- End of card body -->
+                        </div><!-- End of card body -->
                         <div class="card-footer bg-light">
                             <button type="submit" class="btn btn-outline-primary">Save</button>
                         </div>
                     </form>
-                </div>
-                <!-- End of Card -->
-            </div>
-            <!-- End of Tab -->
+                </div><!-- End of Card -->
+            </div><!-- End of Tab -->
             <!-- ============================ Safety Settings ========================== -->
             {% if request.MOBILE %}<br>{% endif %}
             <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-safety" role="tabpanel" aria-labelledby="v-pills-safety-tab">
@@ -873,23 +1190,21 @@
                                     <span class="input-group-text" data-toggle="tooltip" title="Maximum allowable temperature.  Shut down grill to prevent potential damage.">
                                         <i class="fas fa-temperature-high"></i>&nbsp; Max Operational Temp ({{settings['globals']['units']}})</span>
                                 </div>
-                                <input id="maxtemp" type="number" min="1" class="form-control" placeholder="{{ settings['safety']['maxtemp'] }}" value="{{ settings['safety']['mintemp'] }}" name="maxtemp">
+                                <input id="maxtemp" type="number" min="1" class="form-control" placeholder="{{ settings['safety']['maxtemp'] }}" value="{{ settings['safety']['maxtemp'] }}" name="maxtemp">
                             </div>
                             <span class="badge badge-warning">NOTE:</span>
                             <i class="small"> In an error condition (temp too low, temp too high) the grill will immediately shutdown and log the error in the events log. Notifications of an error will be sent if enabled. The Max Temp safety setting is also enabled in Monitor mode.</i>
                             <br>
+                            <br>
                             <span class="badge badge-danger">WARNING:</span>
                             <i class="small"> Safety features are not infallible and may not prevent safety issues with your grill in all cases. As with any grill, it is the operator's responsibility to monitor their equipment to ensure proper operational safety.</i>
-                        </div>
-                        <!-- End of card body -->
+                        </div><!-- End of card body -->
                         <div class="card-footer bg-light">
                             <button type="submit" class="btn btn-outline-primary">Save</button>
                         </div>
                     </form>
-                </div>
-                <!-- End of Card -->
-            </div>
-            <!-- End of Tab -->
+                </div><!-- End of Card -->
+            </div><!-- End of Tab -->
             <!-- ============================ Pellet Settings ========================== -->
             {% if request.MOBILE %}<br>{% endif %}
             <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-pellets" role="tabpanel" aria-labelledby="v-pills-pellets-tab">
@@ -901,49 +1216,75 @@
                             </h5>
                         </div>
                         <div class="card-body">
-                            <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="pelletwarning" name="pelletwarning" {% if settings['pelletlevel']['warning_enabled'] == True %}checked{% endif %}>
-                                <label class="custom-control-label" for="pelletwarning">Pellet Level Warning</label>
-                            </div>
-                            <br>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text" data-toggle="tooltip" title="Low pellet level warning percent">
-                                        <i class="fas fa-exclamation-triangle"></i>&nbsp; Level Warning %</span>
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h5>
+                                        <i class="fas fa-tools"></i>&nbsp; Pellet Warnings
+                                    </h5>
                                 </div>
-                                <input id="warninglevel" type="number" min="0" max="100" class="form-control" placeholder="{{ settings['pelletlevel']['warning_level'] }}" value="{{ settings['pelletlevel']['warning_level'] }}" name="warninglevel">
-                            </div>
-                            <span class="badge badge-warning">NOTE:</span>
-                            <i class="small"> Pellet levels below the input number will receive notifications every 20 minutes during a cook</i>
+                                <div class="card-body">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="pellet_warning" name="pellet_warning" {% if settings['pelletlevel']['warning_enabled'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="pellet_warning">Pellet Level Warning</label>
+                                    </div>
+                                    <br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="How often the pellet level will be checked for low levels and notifications sent. (minutes)">
+                                                <i class="far fa-clock"></i>&nbsp; Check Time (mins)
+                                            </span>
+                                        </div>
+                                        <input id="warning_time" type="number" min="5" max="240" class="form-control" placeholder="{{ settings['pelletlevel']['warning_time'] }}" value="{{ settings['pelletlevel']['warning_time'] }}" name="warning_time">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Low Pellet Level Warning (percent)">
+                                                <i class="fas fa-exclamation-triangle"></i>&nbsp; Level Warning (%)
+                                            </span>
+                                        </div>
+                                        <input id="warning_level" type="number" min="0" max="100" class="form-control" placeholder="{{ settings['pelletlevel']['warning_level'] }}" value="{{ settings['pelletlevel']['warning_level'] }}" name="warning_level">
+                                    </div>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> Pellet levels below the input percent will receive notifications every {{ settings['pelletlevel']['warning_time'] }} minutes during a cook</i>
+                                    <br>
+                                </div><!-- End of card body -->
+                            </div><!-- End of Card -->
                             <br>
-                            <br>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text" data-toggle="tooltip" title="Distance (cm) measured when the hopper is full.">
-                                        <i class="fas fa-level-up-alt"></i>&nbsp; Hopper Full Distance (cm)</span>
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h5>
+                                        <i class="fas fa-tools"></i>&nbsp; Pellet Levels
+                                    </h5>
                                 </div>
-                                <input id="full" type="number" min="0" max="100" class="form-control" placeholder="{{ settings['pelletlevel']['full'] }}" value="{{ settings['pelletlevel']['full'] }}" name="full">
-                            </div>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text" data-toggle="tooltip" title="Distance (cm) measured when the hopper is empty.">
-                                        <i class="fas fa-level-down-alt"></i>&nbsp; Hopper Empty Distance (cm)</span>
-                                </div>
-                                <input id="empty" type="number" min="1" max="100" class="form-control" placeholder="{{ settings['pelletlevel']['empty'] }}" value="{{ settings['pelletlevel']['empty'] }}" name="empty">
-                            </div>
-                            <span class="badge badge-warning">NOTE:</span>
-                            <i class="small"> The distance value for full must be smaller than the value for empty. </i>
-                            <br>
-                        </div>
-                        <!-- End of card body -->
+                                <div class="card-body">
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Distance (cm) measured when the hopper is full.">
+                                                <i class="fas fa-level-up-alt"></i>&nbsp; Hopper Full Distance (cm)
+                                            </span>
+                                        </div>
+                                        <input id="full" type="number" min="0" max="100" class="form-control" placeholder="{{ settings['pelletlevel']['full'] }}" value="{{ settings['pelletlevel']['full'] }}" name="full">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Distance (cm) measured when the hopper is empty.">
+                                                <i class="fas fa-level-down-alt"></i>&nbsp; Hopper Empty Distance (cm)
+                                            </span>
+                                        </div>
+                                        <input id="empty" type="number" min="1" max="100" class="form-control" placeholder="{{ settings['pelletlevel']['empty'] }}" value="{{ settings['pelletlevel']['empty'] }}" name="empty">
+                                    </div>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> The distance value for full must be smaller than the value for empty. </i>
+                                    <br>
+                                </div><!-- End of card body -->
+                            </div><!-- End of Card -->
+                        </div><!-- End of card body -->
                         <div class="card-footer bg-light">
                             <button type="submit" class="btn btn-outline-primary">Save</button>
                         </div>
                     </form>
-                </div>
-                <!-- End of Card -->
-            </div>
-            <!-- End of Tab -->
+                </div><!-- End of Card -->
+            </div><!-- End of Tab -->
             <!-- ============================ Page Settings ========================== -->
             {% if request.MOBILE %}<br>{% endif %}
             <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-theme" role="tabpanel" aria-labelledby="v-pills-theme-tab">
@@ -960,16 +1301,13 @@
                                 <label class="custom-control-label" for="darkmode">Enable Dark Mode</label>
                             </div>
                             <br>
-                        </div>
-                        <!-- End of card body -->
+                        </div><!-- End of card body -->
                         <div class="card-footer bg-light">
                             <button type="submit" class="btn btn-outline-primary">Save</button>
                         </div>
                     </form>
-                </div>
-                <!-- End of Card -->
-            </div>
-            <!-- End of Tab -->
+                </div><!-- End of Card -->
+            </div><!-- End of Tab -->
             <!-- ========================== Notification Settings ========================== -->
             {% if request.MOBILE %}<br>{% endif %}
             <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-notifications" role="tabpanel" aria-labelledby="v-pills-notifications-tab">
@@ -983,12 +1321,12 @@
                         <div class="card-body">
                             <!-- IFTTT WebHooks -->
                             <div class="card shadow-sm">
-                                <div class="card-header bg-light text-dark">
+                                <div class="card-header">
                                     <h5>IFTTT WebHooks</h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="custom-control custom-switch">
-                                        <input type="checkbox" class="custom-control-input" id="ifttt_enabled" name="ifttt_enabled" {% if settings['ifttt']['enabled'] == True %}checked{% endif %}>
+                                        <input type="checkbox" class="custom-control-input" id="ifttt_enabled" name="ifttt_enabled" {% if settings['ifttt']['enabled'] %}checked{% endif %}>
                                         <label class="custom-control-label" for="ifttt_enabled">IFTTT Enabled</label>
                                     </div>
                                     <br>
@@ -999,21 +1337,17 @@
                                         </div>
                                         <input id="iftttapi" type="text" class="form-control" name="iftttapi" value="{{settings['ifttt']['APIKey']}}">
                                     </div>
-                                    <span class="badge badge-warning">NOTE:</span>
-                                    <i class="small"> Leave blank to disable.</i>
-                                </div>
-                                <!-- End of card body -->
-                            </div>
-                            <!-- End of Card -->
+                                </div><!-- End of card body -->
+                            </div><!-- End of Card -->
                             <br>
                             <!-- PushOver Notifications -->
                             <div class="card shadow-sm">
-                                <div class="card-header bg-light text-dark">
+                                <div class="card-header">
                                     <h5>PushOver</h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="custom-control custom-switch">
-                                        <input type="checkbox" class="custom-control-input" id="pushover_enabled" name="pushover_enabled" {% if settings['pushover']['enabled'] == True %}checked{% endif %}>
+                                        <input type="checkbox" class="custom-control-input" id="pushover_enabled" name="pushover_enabled" {% if settings['pushover']['enabled'] %}checked{% endif %}>
                                         <label class="custom-control-label" for="pushover_enabled">PushOver Enabled</label>
                                     </div>
                                     <br>
@@ -1024,8 +1358,6 @@
                                         </div>
                                         <input id="pushover_apikey" type="text" class="form-control" name="pushover_apikey" value="{{settings['pushover']['APIKey']}}">
                                     </div>
-                                    <span class="badge badge-warning">NOTE:</span>
-                                    <i class="small"> Add commas for multiple user keys. Leave blank to disable.</i>
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">
@@ -1034,7 +1366,9 @@
                                         <input id="pushover_userkeys" type="text" class="form-control" name="pushover_userkeys" value="{{settings['pushover']['UserKeys']}}">
                                     </div>
                                     <span class="badge badge-warning">NOTE:</span>
-                                    <i class="small"> URL to be added to Pushover notifications.</i>
+                                    <i class="small"> Add commas for multiple user keys. Leave blank to disable.</i>
+                                    <br>
+                                    <br>
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">
@@ -1042,19 +1376,19 @@
                                         </div>
                                         <input id="pushover_publicurl" type="text" class="form-control" name="pushover_publicurl" value="{{settings['pushover']['PublicURL']}}">
                                     </div>
-                                </div>
-                                <!-- End of card body -->
-                            </div>
-                            <!-- End of Card -->
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> URL to be added to Pushover notifications.</i>
+                                </div><!-- End of card body -->
+                            </div><!-- End of Card -->
                             <br>
                             <!-- Pushbullet Notifications -->
                             <div class="card shadow-sm">
-                                <div class="card-header bg-light text-dark">
+                                <div class="card-header">
                                     <h5>Pushbullet</h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="custom-control custom-switch">
-                                        <input type="checkbox" class="custom-control-input" id="pushbullet_enabled" name="pushbullet_enabled" {% if settings['pushbullet']['enabled'] == True %}checked{% endif %}>
+                                        <input type="checkbox" class="custom-control-input" id="pushbullet_enabled" name="pushbullet_enabled" {% if settings['pushbullet']['enabled'] %}checked{% endif %}>
                                         <label class="custom-control-label" for="pushbullet_enabled">Pushbullet Enabled</label>
                                     </div>
                                     <br>
@@ -1065,8 +1399,6 @@
                                         </div>
                                         <input id="pushbullet_apikey" type="text" class="form-control" name="pushbullet_apikey" value="{{settings['pushbullet']['APIKey']}}">
                                     </div>
-                                    <span class="badge badge-warning">NOTE:</span>
-                                    <i class="small"> URL to be added to Pushbullet notifications.</i>
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">
@@ -1074,27 +1406,27 @@
                                         </div>
                                         <input id="pushbullet_publicurl" type="text" class="form-control" name="pushbullet_publicurl" value="{{settings['pushbullet']['PublicURL']}}">
                                     </div>
-                                </div>
-                                <!-- End of card body -->
-                            </div>
-                            <!-- End of Card -->
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> URL to be added to Pushbullet notifications.</i>
+                                </div><!-- End of card body -->
+                            </div><!-- End of Card -->
                             <br>
                             <!-- Android Push Notifications -->
                             <div class="card shadow-sm">
-                                <div class="card-header bg-light text-dark">
+                                <div class="card-header">
                                     <h5>Push Notifications</h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="custom-control custom-switch">
                                         <input type="checkbox" class="custom-control-input"
                                                id="onesignal_enabled"
-                                               name="onesignal_enabled" {% if settings['onesignal']['enabled'] == True %}checked{% endif %}>
+                                               name="onesignal_enabled" {% if settings['onesignal']['enabled'] %}checked{% endif %}>
                                         <label class="custom-control-label" for="onesignal_enabled">OneSignal Enabled</label>
                                     </div>
                                     <br>
                                     {% for index, data in settings['onesignal']['devices'].items()|sort %}
                                     <div class="card shadow">
-                                        <div class="card-header bg-light text-dark">
+                                        <div class="card-header bg-light text-white">
                                             <h5>
                                                 <a href="#edit_device{{ index }}" data-toggle="collapse">
                                                     {% if data['friendly_name'] == '' %}
@@ -1176,19 +1508,17 @@
                                     <span class="badge badge-warning">NOTE:</span>
                                     <i class="small"> You can download the Android application from <a href="https://github.com/weberbox/PiFire-Android" target="blank">Github</a> </i>
                                     <br>
-                                </div>
-                                <!-- End of card body -->
-                            </div>
-                            <!-- End of Card -->
+                                </div><!-- End of card body -->
+                            </div><!-- End of Card -->
                             <br>
                             <!-- InfluxDB Notifications -->
                             <div class="card shadow-sm">
-                                <div class="card-header bg-light text-dark">
+                                <div class="card-header">
                                     <h5>InfluxDB</h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="custom-control custom-switch">
-                                        <input type="checkbox" class="custom-control-input" id="influxdb_enabled" name="influxdb_enabled" {% if settings['influxdb']['enabled'] == True %}checked{% endif %}>
+                                        <input type="checkbox" class="custom-control-input" id="influxdb_enabled" name="influxdb_enabled" {% if settings['influxdb']['enabled'] %}checked{% endif %}>
                                         <label class="custom-control-label" for="influxdb_enabled">InfluxDB Enabled</label>
                                     </div>
                                     <br>
@@ -1220,439 +1550,21 @@
                                         </div>
                                         <input id="influxdb_bucket" type="text" class="form-control" name="influxdb_bucket" value="{{settings['influxdb']['bucket']}}">
                                     </div>
-                                </div>
-                                <!-- End of card body -->
-                            </div>
-                            <!-- End of Card -->
-                            <br>
-                        </div>
-                        <!-- End of card body -->
+                                </div><!-- End of card body -->
+                            </div><!-- End of Card -->
+                        </div><!-- End of card body -->
                         <div class="card-footer bg-light">
                             <button type="submit" class="btn btn-outline-primary">Save</button>
                         </div>
                     </form>
-                </div>
-                <!-- End of Card -->
-            </div>
-            <!-- End of Tab -->
+                </div><!-- End of Card -->
+            </div><!-- End of Tab -->
         </div>
     </div>
 </div>
 {% endblock %}
-{% block postcontainer %}{% endblock %}
+{% block postcontainer %}
+{% endblock %}
 {% block scripts %}
-<script>
-	// GLOBALS
-	// Get units
-	var units = document.getElementById("units").value;
-	var temps_list;
-	var profiles;
-
-	// Functions
-	function postSmartStartData(temps_list, profiles) {
-		var postdata = { 
-			'temps_list' : temps_list,
-			'profiles' : profiles,
-		};
-		
-		$.ajax({
-			url : '/settings/smartstart',
-			type : 'POST',
-			data : JSON.stringify(postdata),
-			contentType: "application/json; charset=utf-8",
-			traditional: true,
-			success: function (data) {
-				//console.log('POST data sent.');
-			}
-		});
-	};
-
-	function onDelete(td, rowSelected) {
-		if (confirm('Are you sure to delete this record ?')) {
-			if (rowSelected <= 1) {
-                alert('Cannot delete last two profiles.  You must have at least one profile enabled.  Action cancelled.')
-            } else if (rowSelected == profiles.length - 1) {
-                // Select Row to Delete
-                var delRow = td.parentElement.parentElement;
-                // Select Previous Row 
-                var prevRow = delRow.previousElementSibling;
-                document.getElementById("smartStartTable").deleteRow(delRow.rowIndex);
-                console.log('Row ' + rowSelected + ' Deleted.');
-                var delButtonHTML_enabled = '<button type="button" class="btn btn-danger btn-sm" id="sstrt_del_row" onClick="onDelete(this,' + (rowSelected-1) + ')"><i class="fas fa-trash-alt"></i></button>';
-                var delButtonHTML_disabled = '<button type="button" class="btn btn-secondary btn-sm" id="sstrt_del_row" data-toggle="tooltip" data-placement="top" title="This profile cannot be deleted." disabled><i class="fas fa-trash-alt"></i></button>';
-                var prevEditButtonHTML = '<button type="button" class="btn btn-warning btn-sm" onClick="onEdit(' + (rowSelected - 1) + ')" data-toggle="modal" data-target="#sstrt_edit_modal"><i class="fas fa-edit"></i></button> \n';
-                // If it's the previous profile is the second profile, disable the delete button
-                if (rowSelected - 1 == 1) {
-                    var delButtonHTML = delButtonHTML_disabled;
-                } else {
-                    var delButtonHTML = delButtonHTML_enabled;
-                };
-                prevRow.cells[0].innerHTML = prevEditButtonHTML + delButtonHTML;
-                if(rowSelected > 1) {
-                    prevRow.cells[1].innerHTML = '&gt ' + temps_list[rowSelected-2] + units;
-                    var newMinTemp = temps_list[rowSelected-2] + 1;
-                } else {
-                    prevRow.cells[1].innerHTML = '&gt ' + temps_list[rowSelected-1] + units;
-                    var newMinTemp = temps_list[rowSelected-1] + 1;
-                }
-
-                // Change minimum value for added items
-				$('#minTemp').val(newMinTemp);
-				document.getElementById("minTemp").min = newMinTemp;
-                $('#addMinTemp').html(newMinTemp - 1);
-
-                // Remove items from lists
-                if(rowSelected > 1) {
-                    var popped = temps_list.pop();
-                    console.log('Popped: ' + popped);
-                } 
-                profiles.pop();
-
-                // Save values to server
-                postSmartStartData(temps_list, profiles);
-            };
-		};
-	};
-
-	function onEdit(rowSelected) {
-        if (rowSelected == 0) {
-            // First Row Selected
-            var minTemp = 0;
-            var curTemp = temps_list[0];
-            if (temps_list.length > 1) {
-                var maxTemp = temps_list[1]-1;
-            } else {
-                var maxTemp = 1000;
-            }
-            document.getElementById("edit_minTemp").disabled = '';
-        } else if (rowSelected == profiles.length - 1) {
-            // Last Row Selected
-            // Disable editing min Temp
-            var minTemp = temps_list[rowSelected-1];
-            var curTemp = temps_list[rowSelected-1];
-            var maxTemp = minTemp;
-            document.getElementById("edit_minTemp").disabled = 'disabled';
-        } else if (rowSelected == profiles.length - 2) {
-            // Second to Last Row Selected
-            var minTemp = temps_list[rowSelected-1]+1;
-            var curTemp = temps_list[rowSelected];
-            var maxTemp = 1000;
-            document.getElementById("edit_minTemp").disabled = '';
-        } else {
-            // All other rows  
-            var minTemp = temps_list[rowSelected-1]+1;
-            var curTemp = temps_list[rowSelected];
-            var maxTemp = temps_list[rowSelected+1]-1;
-            document.getElementById("edit_minTemp").disabled = '';
-        }
-        var startupTime = profiles[rowSelected].startuptime; 
-        var augeronTime = profiles[rowSelected].augerontime; 
-        var pMode = profiles[rowSelected].p_mode;
-        
-		$('#edit_minTemp').val(curTemp);
-		document.getElementById("edit_minTemp").min = minTemp;
-		document.getElementById("edit_minTemp").max = maxTemp;
-
-        $('#edit_startupTime').val(startupTime);
-        $('#edit_augeronTime').val(augeronTime);
-        $('#edit_pMode').val(pMode);
-        $('#saveEdits').val(rowSelected);
-        if(rowSelected == profiles.length - 1) {
-            $('#edit_RangeText').html('No minimum temperature for the last profile.');
-        } else {
-            $('#edit_RangeText').html('Enter a value in the range <span id="editRangeMin">0</span>-<span id="editRangeMax">200</span>' + units);
-            $('#editRangeMin').html(minTemp);
-            $('#editRangeMax').html(maxTemp);
-        };
-
-		//console.log('Row Selected for Edit: ' + rowSelected);
-	};
-
-    function saveChanges(rowSelectedString) {
-        rowSelected = parseInt(rowSelectedString);
-
-        // Validate 
-        var newTemp = parseInt($('#edit_minTemp').val());
-        var valid = false;
-
-        // Check minTemp Value
-        if((rowSelected == 0)&&(temps_list.length > 1)) {
-            // If first row selected, and temperature list is longer than 1 set point
-            if((newTemp >= 0)&&(newTemp < temps_list[1])) {
-                valid = true;
-            };
-        } else if((rowSelected == 0)&&(temps_list.length == 1)) {
-            // If first row selected, and there is only one set point
-            valid = true;
-        } else if(rowSelected == profiles.length-1) {
-            // If last profile is selected
-            newTemp = temps_list[rowSelected-1];
-            valid = true;
-        } else if((newTemp > temps_list[rowSelected-1])&&(newTemp < temps_list[rowSelected+1])) {
-            // If inner rows are selected, check range
-            valid = true;
-        } else if((newTemp > temps_list[rowSelected-1])&&(rowSelected + 1 == temps_list.length)) {
-            // If second to last row is selected check greater than previous 
-            valid = true;
-        } else {
-            valid = false;
-            console.log('Failed Temperature Range Check.');
-        };
-
-        // Check startup time
-        var startuptime = parseInt($('#edit_startupTime').val());
-
-        if((startuptime < 30)||(startuptime > 1200)) {
-            valid = false;
-            console.log('Failed Startup Time Range Check.');
-        };
-
-        var augerontime = parseInt($('#edit_augeronTime').val());
-
-        if((augerontime < 1)||(augerontime > 1000)) {
-            valid = false;
-            console.log('Failed Auger On Time Range Check.');
-        }
-
-        var p_mode = parseInt($('#edit_pMode').val());
-
-        if((p_mode < 0) || (p_mode > 9)) {
-            valid = false;
-            console.log('Failed P-Mode Range Check.');
-        }
-
-        // If checks passed, send to server and update table 
-        if(valid) {
-            // Get data and send to server
-            if(rowSelected < profiles.length-1) {
-                temps_list[rowSelected] = newTemp;
-            };
-
-            profiles[rowSelected].startuptime = startuptime;
-            profiles[rowSelected].augerontime = augerontime;
-            profiles[rowSelected].p_mode = p_mode;
-            postSmartStartData(temps_list, profiles);
-            
-            // Update table with new data
-            var table = document.getElementById("smartStartTable").getElementsByTagName('tbody')[0];
-            var updateRow = table.rows[rowSelected];
-            
-            if(rowSelected == 0) {
-                // First row selected format with less than
-                updateRow.cells[1].innerHTML = newTemp + units + ' &lt';
-                if(profiles.length > 1) {
-                    var nextRow = table.rows[rowSelected+1];
-                    var nextTemp = temps_list[rowSelected+1];
-                    nextRow.cells[1].innerHTML = newTemp + units + ' - ' + nextTemp + units;
-                };
-            } else if (rowSelected == profiles.length-1) {
-                updateRow.cells[1].innerHTML = '&gt ' + newTemp + units;
-            } else {
-                // Middle rows format 
-                prevTemp = temps_list[rowSelected-1];
-                updateRow.cells[1].innerHTML = prevTemp + units + ' - ' + newTemp + units;
-                if (rowSelected == profiles.length-2) {
-                    // Second to last row selected format next row with greater than
-                    var nextRow = table.rows[rowSelected+1];
-                    nextRow.cells[1].innerHTML = '&gt ' + newTemp + units;
-                } else if(profiles.length > 1) {
-                    var nextRow = table.rows[rowSelected+1];
-                    var nextTemp = temps_list[rowSelected+1];
-                    nextRow.cells[1].innerHTML = newTemp + units + ' - ' + nextTemp + units;
-                };
-            };
-
-            updateRow.cells[2].innerHTML = startuptime + 's'; 
-            updateRow.cells[3].innerHTML = augerontime + 's'; 
-            updateRow.cells[4].innerHTML = p_mode; 
-
-            // Update Add Modal minTemp
-            if(rowSelected == temps_list.length) {
-                var newMinTemp = temps_list[rowSelected-1] + 1;
-                $('#minTemp').val(newMinTemp);
-                document.getElementById("minTemp").min = newMinTemp;
-                $('#addMinTemp').html(newMinTemp-1);
-            };
-        } else {
-            alert('Invalid Input Range for one of your values.  No changes saved.  Please try again.');
-        };
-    };
-
-	function addSmartStartProfile(data) {
-		var table = document.getElementById("smartStartTable").getElementsByTagName('tbody')[0];
-		var newRow = table.insertRow(table.length);
-        var lastRow = newRow.previousElementSibling;
-		var editButtonHTML = '<button type="button" class="btn btn-warning btn-sm" onClick="onEdit(' + data.rowSelected + ')" data-toggle="modal" data-target="#sstrt_edit_modal"><i class="fas fa-edit"></i></button> \n';
-		var delButtonHTML_enabled = '<button type="button" class="btn btn-danger btn-sm" id="sstrt_del_row" onClick="onDelete(this,' + data.rowSelected + ')"><i class="fas fa-trash-alt"></i></button>';
-        var delButtonHTML_disabled = '<button type="button" class="btn btn-secondary btn-sm" id="sstrt_del_row" data-toggle="tooltip" data-placement="top" title="This profile cannot be deleted." disabled><i class="fas fa-trash-alt"></i></button>';
-
-		if(data.position=='first' || data.position=='inner') {
-			cell0 = newRow.insertCell(0);
-			cell0.innerHTML = editButtonHTML + delButtonHTML_disabled;
-		} else {
-			cell0 = newRow.insertCell(0);
-			cell0.innerHTML = editButtonHTML + delButtonHTML_enabled;
-		}
-		if(data.position=='first') {
-			cell1 = newRow.insertCell(1);
-			cell1.innerHTML = data.tempMin + units + ' &lt';
-		} else if (data.position=='last') {
-			cell1 = newRow.insertCell(1);
-			cell1.innerHTML = '&gt ' + data.tempMin + units;
-            // Edit Previous Cells Buttons and Data
-            var prevEditButtonHTML = '<button type="button" class="btn btn-warning btn-sm" onClick="onEdit(' + (data.rowSelected - 1) + ')" data-toggle="modal" data-target="#sstrt_edit_modal"><i class="fas fa-edit"></i></button> \n';
-            lastRow.cells[0].innerHTML = prevEditButtonHTML + delButtonHTML_disabled;
-            lastRow.cells[1].innerHTML = data.tempMinPrevious + units + ' - ' + data.tempMin + units;
-		} else {
-			cell1 = newRow.insertCell(1);
-			cell1.innerHTML = data.tempMinPrevious + units + ' - ' + data.tempMin + units;
-		}
-		cell2 = newRow.insertCell(2);
-		cell2.innerHTML = data.startUpTime + 's';
-		cell3 = newRow.insertCell(3);
-		cell3.innerHTML = data.augerOnTime + 's';
-		cell4 = newRow.insertCell(4);
-		cell4.innerHTML = data.pMode;
-	};
-
-	function onAdd() {
-		var newRowNum = profiles.length;
-
-        if(temps_list.length > 1) {
-            var prevMinTemp = temps_list[newRowNum-2];
-        } else {
-            var prevMinTemp = temps_list[0];
-        }
-
-        // Validate Inputs
-        var valid = true;
-
-        // Check startup time
-        var startuptime = parseInt($('#startupTime').val());
-
-        if((startuptime < 30)||(startuptime > 1200)) {
-            valid = false;
-            console.log('Failed Startup Time Range Check.');
-        };
-
-        var augerontime = parseInt($('#augeronTime').val());
-
-        if((augerontime < 1)||(augerontime > 1000)) {
-            valid = false;
-            console.log('Failed Auger On Time Range Check.');
-        }
-
-        var p_mode = parseInt($('#pMode').val());
-
-        if((p_mode < 0) || (p_mode > 9)) {
-            valid = false;
-            console.log('Failed P-Mode Range Check.');
-        }
-
-        // If checks passed, send to server and update table 
-        if(valid) {
-            if(parseInt($("#minTemp").val()) > prevMinTemp){
-                profiles[newRowNum] = {};
-                profiles[newRowNum].startuptime = parseInt($("#startupTime").val());
-                profiles[newRowNum].p_mode = parseInt($("#pMode").val());
-                profiles[newRowNum].augerontime = parseInt($("#augeronTime").val());
-
-                temps_list[newRowNum-1] = parseInt($("#minTemp").val());
-                postSmartStartData(temps_list, profiles);
-                // Add HTML 
-                profile = {}
-                profile.rowSelected = newRowNum;
-                profile.numRows = profiles.length;
-                profile.position = 'last'; 
-                profile.tempMinPrevious = prevMinTemp 
-                profile.tempMin = temps_list[newRowNum-1]; 
-                
-                var newMinTemp = profile.tempMin + 1;
-                $('#minTemp').val(newMinTemp);
-                document.getElementById("minTemp").min = newMinTemp;
-                $('#addMinTemp').html(newMinTemp - 1);
-
-                profile.startUpTime = profiles[newRowNum].startuptime;
-                profile.augerOnTime = profiles[newRowNum].augerontime;
-                profile.pMode = profiles[newRowNum].p_mode;
-                addSmartStartProfile(profile);
-            } else {
-                alert('Minimum Temperature MUST be greater than the previous minimum temperature!  Not added.');
-            };
-        } else {
-            alert('Invalid Input Range for one of your values.  No changes saved.  Please try again.');
-        };
-	};
-
-	// On page load...
-	$(document).ready(function(){
-		// Select last pill 
-		$('a[data-toggle="pill"]').on('show.bs.tab', function(e) {
-            sessionStorage.setItem('activeTab', $(e.target).attr('href'));
-        });
-        var activeTab = sessionStorage.getItem('activeTab');
-        if(activeTab){
-            $('#v-pills-tab a[href="' + activeTab + '"]').tab('show');
-        }
-
-		// Prevent 'enter' from doing a form submit
-        $(window).keydown(function(event){
-            if(event.keyCode == 13) {
-            event.preventDefault();
-            return false;
-            }
-        });
-		
-        // Get Smart Start Data
-		$.ajax({
-			url : '/settings/smartstart',
-			type : 'GET',
-			contentType: "application/json; charset=utf-8",
-			traditional: true,
-			success: function (data) {
-				temps_list = data.temps_list;
-				profiles = data.profiles;
-				// Populate table with initial data
-				var profile = {};
-				for (let index = 0; index < profiles.length; index++) {
-					profile.rowSelected = index;
-					profile.numRows = profiles.length;
-					// Determine list position
-					if(index == 0) {
-						profile.position = 'first';
-					} else if (index == profiles.length - 1) {
-						profile.position = 'last';
-					} else {
-						profile.position = 'inner';
-					}
-					// Set previous temperature minimum value, for ranges
-					if(index > 0) {
-						profile.tempMinPrevious = temps_list[index-1];
-					} else {
-						profile.tempMinPrevious = temps_list[index];
-					}
-                    // If last profile and the list is greater than 1 profile long
-					if((index == profiles.length-1) && (profiles.length > 1)) {
-						profile.tempMin = temps_list[index-1];
-						profile.tempMinPrevious = temps_list[index-2];
-						// Set minimum value for next range to be the minimun of last range plus 1
-						var newMinTemp = temps_list[index-1] + 1;
-						$('#minTemp').val(newMinTemp);
-						document.getElementById("minTemp").min = newMinTemp;
-                        $('#addMinTemp').html(newMinTemp - 1);
-					} else {
-						profile.tempMin = temps_list[index];
-					};
-					profile.startUpTime = profiles[index].startuptime;
-					profile.augerOnTime = profiles[index].augerontime;
-					profile.pMode = profiles[index].p_mode;
-					addSmartStartProfile(profile);
-				}
-			}
-		});
-
-
-
-	}); // End of document ready function
-</script>
+<script src="{{ url_for('static', filename='js/settings.js') }}"></script>
 {% endblock %}

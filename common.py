@@ -21,15 +21,15 @@ import math
 import redis
 import uuid
 import random
-from uuid import getnode
 
 # *****************************************
 # Functions
 # *****************************************
 
-cmdsts = redis.StrictRedis('localhost', 6379, charset="utf-8", decode_responses=True)  # Setup Command / Status database connection
+# Setup Command / Status database connection
+cmdsts = redis.StrictRedis('localhost', 6379, charset="utf-8", decode_responses=True)
 
-def DefaultSettings():
+def default_settings():
 	settings = {}
 
 	settings['versions'] = {
@@ -37,17 +37,17 @@ def DefaultSettings():
 	}
 
 	settings['history_page'] = {
-		'minutes' : 15, # Sets default number of minutes to show in history
-		'clearhistoryonstart' : True, # Clear history when StartUp Mode selected
-		'autorefresh' : 'on', # Sets history graph to autorefresh ('live' graph)
-		'datapoints' : 60 # Number of datapoints to show on the history chart
+		'minutes' : 15, 				# Sets default number of minutes to show in history
+		'clearhistoryonstart' : True, 	# Clear history when StartUp Mode selected
+		'autorefresh' : 'on', 			# Sets history graph to auto refresh ('live' graph)
+		'datapoints' : 60 				# Number of data points to show on the history chart
 	}
 
 	settings['probe_settings'] = {
-		'probe_profiles' :  DefaultProbeProfiles(),
+		'probe_profiles' :  _default_probe_profiles(),
 		'probes_enabled' : [1,1,1],
-		# probe sources can be ADC0-3 or max31865
-		'probe_sources' : ['ADC0', 'ADC1', 'ADC2', 'ADC3']
+		'probe_sources' : ['ADC0', 'ADC1', 'ADC2', 'ADC3'], # Probe sources can be ADC0-3 or max31865
+		'probe_options' : ['ADC0', 'ADC1', 'ADC2', 'ADC3'] 	# Probe source options (max31865 can be added but requires spi-dev to be installed and control.py to be restarted to load the module)
 	}
 
 	settings['globals'] = {
@@ -61,32 +61,34 @@ def DefaultSettings():
 		'startup_timer' : 240,
 		'auto_power_off' : False,
 		'four_probes' : False,
+		'dc_fan': False,
+		'standalone': True,
 		'units' : 'F',
-		'augerrate' : 0.3,  # (grams per second) default auger load rate is 10 grams / 30 seconds
+		'augerrate' : 0.3,  		# (grams per second) default auger load rate is 10 grams / 30 seconds
 		'first_time_setup' : True,  # Set to True on first setup, to run wizard on load 
 	}
 
 	settings['ifttt'] = {
 		'enabled': False,
-		'APIKey': '' # API Key for WebMaker IFTTT App notification
+		'APIKey': '' 		# API Key for WebMaker IFTTT App notification
 	}
 
 	settings['pushbullet'] = {
 		'enabled': False,
-		'APIKey': '', # API Key for Pushbullet notifications
-		'PublicURL': '' # Used in Pushbullet notifications
+		'APIKey': '', 		# API Key for PushBullet notifications
+		'PublicURL': '' 	# Used in PushBullet notifications
 	}
 
 	settings['pushover'] = {
 		'enabled': False,
-		'APIKey': '', # API Key for Pushover notifications
-		'UserKeys': '', # Comma-separated list of user keys
-		'PublicURL': '' # Used in Pushover notifications
+		'APIKey': '', 		# API Key for Pushover notifications
+		'UserKeys': '', 	# Comma-separated list of user keys
+		'PublicURL': '' 	# Used in Pushover notifications
 	}
 
 	settings['onesignal'] = {
 		'enabled': False,
-		'uuid' : generateUUID(),
+		'uuid' : _generate_uuid(),
 		'app_id' : '',
 		'devices' : {}
 	}
@@ -107,7 +109,7 @@ def DefaultSettings():
 	}
 
 	settings['grill_probe_settings'] = {
-		'grill_probes': GrillProbes(),
+		'grill_probes': _default_grill_probes(),
 		'grill_probe' : 'grill_probe1',
 		'grill_probe_enabled' : [1,0,0]
 	}
@@ -116,12 +118,32 @@ def DefaultSettings():
 		'power' : 4,
 		'auger' : 14,
 		'fan' : 15,
-		'igniter' : 18
+		'igniter' : 18,
+		'dc_fan' : 26,
+		'pwm' : 13
 	}
 
 	settings['inpins'] = { 'selector' : 17 }
 
-	#PID controller based on proportional band in standard PID form https://en.wikipedia.org/wiki/PID_controller#Ideal_versus_standard_PID_form
+	settings['dev_pins'] = {	# Device Pin Assignment
+		'input': {
+			'up_clk': 16,		# Up Button or CLK for encoder
+			'enter_sw' : 21,	# Enter Button or SW for encoder
+			'down_dt' : 20		# Down Button or DT for encoder
+		},
+		'display': {
+			'led' : 5,			# ILI9341: LED	- ST7789: BL
+			'dc' : 24,			# ILI9341: DC	- ST7789: DC
+			'rst' : 25			# ILI9341: RST	- ST7789: RST
+		},
+		'distance': {
+			'trig': 23,			# For hcsr04
+			'echo' : 27			# For hcsr04
+		},
+	}
+
+	# PID controller based on proportional band in standard PID form
+	# https://en.wikipedia.org/wiki/PID_controller#Ideal_versus_standard_PID_form
 	# u = Kp (e(t)+ 1/Ti INT + Td de/dt)
 	# PB = Proportional Band
 	# Ti = Goal of eliminating in Ti seconds
@@ -133,7 +155,7 @@ def DefaultSettings():
 		'Td' : 45.0,
 		'HoldCycleTime' : 20,
 		'SmokeCycleTime' : 15,
-		'PMode' : 2,  # http://tipsforbbq.com/Definition/Traeger-P-Setting
+		'PMode' : 2,  			# http://tipsforbbq.com/Definition/Traeger-P-Setting
 		'u_min' : 0.15,
 		'u_max' : 1.0,
 		'center' : 0.5
@@ -145,26 +167,54 @@ def DefaultSettings():
 	}
 
 	settings['smoke_plus'] = {
-		'enabled' : False, # Sets default Enable/Disable (True = Enabled, False = Disabled)
-		'min_temp' : 160, # Minimum temperature to cycle fan on/off
-		'max_temp' : 220, # Maximum temperature to cycle fan on/off
-		'cycle' : 10,  # Number of seconds to cycle the fan on/off
-		'frequency' : 1, # For PWM, if implemented (Currently not used)
-		'duty_cycle' : 50 # For PWM, if implemented (Currently not used)
+		'enabled' : False, 		# Sets default Enable/Disable (True = Enabled, False = Disabled)
+		'min_temp' : 160, 		# Minimum temperature to cycle fan on/off
+		'max_temp' : 220, 		# Maximum temperature to cycle fan on/off
+		'on_time' : 5, 			# Number of seconds the fan will remain ON
+		'off_time' : 5, 		# Number of seconds the fan will remain OFF
+		'duty_cycle' : 75, 		# Duty cycle that will be used during fan ramping. 20-100%
+		'fan_ramp' : False 		# If enabled fan will ramp up to speed instead of just turning on
+	}
+
+	settings['pwm'] = {
+		'pwm_control': False,
+		'update_time' : 10,
+		'frequency' : 30, 		# PWM Fan Frequency. This may vary with different fans
+		'min_duty_cycle' : 20, 	# This is the minimum duty cycle that can be set. Some fans stall below a certain speed
+		'max_duty_cycle' : 100, # This is the maximum duty cycle that can be set. Can limit fans that are overpowered
+		'temp_range_list' : [3, 7, 10, 15],  # Temp Bands for Each Profile
+		'profiles' : [
+			{
+				'duty_cycle' : 20 		# Duty Cycle to set fan
+			},
+			{
+				'duty_cycle' : 35
+			},
+			{
+				'duty_cycle' : 50
+			},
+			{
+				'duty_cycle' : 75
+			},
+			{
+				'duty_cycle' : 100
+			}
+		]
 	}
 
 	settings['safety'] = {
-		'minstartuptemp' : 75, # User Defined. Minimum temperature allowed for startup.
+		'minstartuptemp' : 75, 	# User Defined. Minimum temperature allowed for startup.
 		'maxstartuptemp' : 100, # User Defined. Take this value if the startup temp is higher than maxstartuptemp
-		'maxtemp' : 550, # User Defined. If temp exceeds this value in any mode, shut off.  (including monitor mode)
-		'reigniteretries' : 1 # Number of tries to reignite the grill if it has gone below the safe temperature (set to 0 to disable)
+		'maxtemp' : 550, 		# User Defined. If temp exceeds value in any mode, shut off. (including monitor mode)
+		'reigniteretries' : 1 	# Number of tries to reignite grill if it has gone below the safe temp (0 to disable)
 	}
 
 	settings['pelletlevel'] = {
 		'warning_enabled' : True,
-		'warning_level' : 25,
-		'empty' : 22, # Number of centimeters from the sensor that indicates empty
-		'full' : 4  # Number of centimeters from the sensor that indicates full
+		'warning_level' : 25,	# Percent to begin low pellet warning notifications
+		'warning_time' : 20,	# Number of minutes to check for low pellets and send notification
+		'empty' : 22, 			# Number of centimeters from the sensor that indicates empty
+		'full' : 4  			# Number of centimeters from the sensor that indicates full
 	}
 
 	settings['modules'] = {
@@ -207,21 +257,22 @@ def DefaultSettings():
 
 	return settings
 
-def DefaultControl():
+def default_control():
 	control = {}
 
 	control['updated'] = True
 
 	control['mode'] = 'Stop'
 
-	settings = ReadSettings()
+	settings = read_settings()
 
-	if(settings['smoke_plus']['enabled'] == True):
-		control['s_plus'] = True # Smoke-Plus Feature Enable/Disable
-	else: 
-		control['s_plus'] = False # Smoke-Plus Feature Enable/Disable
+	control['s_plus'] = settings['smoke_plus']['enabled'] 		# Smoke-Plus Feature Enable/Disable
 
-	control['hopper_check'] = False # Trigger an synchronous hopper level check 
+	control['pwm_control'] = settings['pwm']['pwm_control'] 	# Temp Fan Control Enable/Disable
+
+	control['duty_cycle'] = settings['pwm']['max_duty_cycle'] 	# Set PWM Fan Duty Cycle
+
+	control['hopper_check'] = False 	# Trigger a synchronous hopper level check
 
 	control['recipe'] = ''
 
@@ -229,15 +280,19 @@ def DefaultControl():
 
 	control['probe_profile_update'] = False
 
-	control['units_change'] = False  # Used to indicate that a units change has been requested 
+	control['settings_update'] = False
 
-	control['tuning_mode'] = False  # Used to indicate tuning mode is enabled so that Tr values should be recorded (False by default)
+	control['distance_update'] = False
+
+	control['units_change'] = False  	# Used to indicate that a units change has been requested
+
+	control['tuning_mode'] = False  	# Used to set tuning mode enabled so Tr values will be recorded (False by default)
 
 	control['safety'] = {
-		'startuptemp' : 0, # Set by control function at startup
-		'afterstarttemp' : 0, # Set by control function during startup
+		'startuptemp' : 0, 		# Set by control function at startup
+		'afterstarttemp' : 0, 	# Set by control function during startup
 		'reigniteretries' : settings['safety']['reigniteretries'], # Set by user to attempt a re-ignite when the grill drops below a certain temp
-		'reignitelaststate' : 'Smoke' # Set by control function to remember the last state we were in when the temp dropped below safety levels 
+		'reignitelaststate' : 'Smoke' # Set by control function to remember the last state we were in when the temp dropped below safety levels
 	}
 
 	control['setpoints'] = {
@@ -276,7 +331,8 @@ def DefaultControl():
 		'fan' : False,
 		'auger' : False,
 		'igniter' : False,
-		'power' : False
+		'power' : False,
+		'pwm' : 100
 	}
 
 	control['errors'] = []
@@ -288,34 +344,34 @@ def DefaultControl():
 
 	return(control)
 
-'''
+"""
 List of Tuples ('metric_key', default_value)
  - This structure will be used to build the default metrics structure, and to export the data easily
  - To add a metric, simply add a tuple to this list.  
-'''
+"""
 metrics_items = [ 
 	('id', 0),
 	('starttime', 0),
-	('starttime_c', 0),  # Converted Start Time
+	('starttime_c', 0),  		# Converted Start Time
 	('endtime', 0),
-	('endtime_c', 0),  # Converted End Time
-	('timeinmode', 0),  # Calculated Time in Mode
+	('endtime_c', 0),  			# Converted End Time
+	('timeinmode', 0),  		# Calculated Time in Mode
 	('mode', ''),  
 	('augerontime', 0), 
-	('augerontime_c', 0),  # Converted Auger On Time
-	('estusage_m', ''),  # Estimated pellet usage in metric (grams)
-	('estusage_i', ''),  # Estimated pellet usage in pounds (and ounces)
+	('augerontime_c', 0), 		# Converted Auger On Time
+	('estusage_m', ''),  		# Estimated pellet usage in metric (grams)
+	('estusage_i', ''),  		# Estimated pellet usage in pounds (and ounces)
 	('fanontime', 0),
-	('fanontime_c', 0),  # Converted Fan On Time
+	('fanontime_c', 0),  		# Converted Fan On Time
 	('smokeplus', True), 
 	('grill_settemp', 0),
 	('smart_start_profile', 0), # Smart Start Profile Selected
-	('startup_temp', 0), # Smart Start Start Up Temp
-	('p_mode', 0), # P_mode selected
-	('auger_cycle_time', 0),  # Auger Cycle Time 
+	('startup_temp', 0), 		# Smart Start Start Up Temp
+	('p_mode', 0), 				# P_mode selected
+	('auger_cycle_time', 0),  	# Auger Cycle Time
 ]
 
-def DefaultMetrics():
+def default_metrics():
 	metrics = {}
 
 	for index in range(0, len(metrics_items)):
@@ -323,7 +379,7 @@ def DefaultMetrics():
 
 	return(metrics)
 
-def DefaultRecipes():
+def default_recipes():
 	recipes = {}
 
 	recipes['321ribs'] = {
@@ -333,29 +389,29 @@ def DefaultRecipes():
 		},
 		'steps' : {
 			'step_00': {
-				'smoke' : True, # Start with smoke temp for grill
-				'timer' : 180, # Go for three hours (180 mins)
+				'smoke' : True, 	# Start with smoke temp for grill
+				'timer' : 180, 		# Go for three hours (180 minutes)
 				'notify' : True,
-				'desciption' : 'Set grill to smoke at 165F.'
+				'description' : 'Set grill to smoke at 165F.'
 			},
 			'step_01': {
 				'grill_temp' : 275,
 				'notify' : True,
-				'timer' : 120, # Go for two hours (120 mins)
-				'desciption' : 'Wrap ribs and increase grill temp to 275F'
+				'timer' : 120, 		# Go for two hours (120 minutes)
+				'description' : 'Wrap ribs and increase grill temp to 275F'
 			},
 			'step_02': {
 				'grill_temp' : 300,
 				'timer' : 60,
 				'notify' : True,
-				'desciption' : 'Un-wrap ribs and increase grill temp to 300F'
+				'description' : 'Un-wrap ribs and increase grill temp to 300F'
 			}
 		}
 	}
 
 	return recipes
 
-def DefaultPellets():
+def default_pellets():
 	pelletdb = {}
 
 	now = str(datetime.datetime.now())
@@ -364,13 +420,34 @@ def DefaultPellets():
 	ID = ''.join(filter(str.isalnum, str(datetime.datetime.now())))
 
 	pelletdb['current'] = {
-		'pelletid' : ID,			# Pellet ID for the profile currently loaded
+		'pelletid' : ID,		# Pellet ID for the profile currently loaded
 		'hopper_level' : 100,	# Percentage of pellets remaining
-		'date_loaded' : now, 		# Date that current pellets loaded
+		'date_loaded' : now, 	# Date that current pellets loaded
 		'est_usage' : 0			# Estimated usage since loading (use auger load rate, and auger on time)
 	}
 
-	pelletdb['woods'] = ['Alder', 'Almond', 'Apple', 'Apricot', 'Blend', 'Competition', 'Cherry', 'Chestnut', 'Hickory', 'Lemon', 'Maple', 'Mesquite', 'Mulberry', 'Nectarine', 'Oak', 'Orange', 'Peach', 'Pear', 'Plum', 'Walnut' ]
+	pelletdb['woods'] = [
+		'Alder',
+		'Almond',
+		'Apple',
+		'Apricot',
+		'Blend',
+		'Competition',
+		'Cherry',
+		'Chestnut',
+		'Hickory',
+		'Lemon',
+		'Maple',
+		'Mesquite',
+		'Mulberry',
+		'Nectarine',
+		'Oak',
+		'Orange',
+		'Peach',
+		'Pear',
+		'Plum',
+		'Walnut'
+	]
 
 	pelletdb['brands'] = ['Generic', 'Custom']
 
@@ -380,7 +457,9 @@ def DefaultPellets():
 			'brand' : 'Generic', 
 			'wood' : 'Alder', 
 			'rating' : 4, 
-			'comments' : 'This is a placeholder profile.  Alder is generic and used in almost all pellets, regardless of the wood type indicated on the packaging.  It tends to burn consistantly and produces a mild smoke.',
+			'comments' : 'This is a placeholder profile.  Alder is generic and used in almost all pellets, '
+						'regardless of the wood type indicated on the packaging.  It tends to burn '
+						'consistently and produces a mild smoke.',
 		}
 	}
 
@@ -394,13 +473,13 @@ def DefaultPellets():
 
 	return pelletdb 
 
-def DefaultProbeProfiles():
+def _default_probe_profiles():
 
 	probe_profiles = {}
 
 	probe_profiles['TWPS00'] = {
 		'Vs' : 3.28,		# Vs = Voltage Source input to resistor divider
-		'Rd' : 10000,	# Divider Resistance Ohms (Default 10k Ohm)
+		'Rd' : 10000,		# Divider Resistance Ohms (Default 10k Ohm)
 		'A' : 7.3431401e-4,	# Coefficient A for SHH # from HeaterMeter?
 		'B' : 2.1574370e-4,	# Coefficient B for SHH
 		'C' : 9.5156860e-8,	# Coefficient C for SHH
@@ -408,8 +487,8 @@ def DefaultProbeProfiles():
 	}
 
 	probe_profiles['ET73-HM'] = {
-			'Vs' : 3.28,		# Vs = Voltage Source input to resistor divider
-			'Rd' : 10000,	# Divider Resistance Ohms (Default 10k Ohm)
+			'Vs' : 3.28,			# Vs = Voltage Source input to resistor divider
+			'Rd' : 10000,			# Divider Resistance Ohms (Default 10k Ohm)
 			'A' : 2.4723753e-04,	# Coefficient A for SHH # from HeaterMeter?
 			'B' : 2.3402251e-04,	# Coefficient B for SHH
 			'C' : 1.3879768e-07,	# Coefficient C for SHH
@@ -417,8 +496,8 @@ def DefaultProbeProfiles():
 	}
 
 	probe_profiles['iGrill-HM'] = {
-			'Vs' : 3.28,		# Vs = Voltage Source input to resistor divider
-			'Rd' : 10000,	# Divider Resistance Ohms (Default 10k Ohm)
+			'Vs' : 3.28,			# Vs = Voltage Source input to resistor divider
+			'Rd' : 10000,			# Divider Resistance Ohms (Default 10k Ohm)
 			'A' : 0.7739251279e-3,	# Coefficient A for SHH # from HeaterMeter?
 			'B' : 2.088025997e-4,	# Coefficient B for SHH
 			'C' : 1.154400438e-7,	# Coefficient C for SHH
@@ -444,16 +523,17 @@ def DefaultProbeProfiles():
 	}
 
 	probe_profiles['ET73-SP'] = {
-			'Vs' : 3.28,		# Vs = Voltage Source input to resistor divider
-			'Rd' : 10000,	# Divider Resistance Ohms (Default 10k Ohm)
-			'A' : 2.3067434E-4,		# from: https://github.com/skyeperry1/Maverick-ET-73-Meat-Probe-Arduino-Library/blob/master/ET73.h
+			'Vs' : 3.28,  # Vs = Voltage Source input to resistor divider
+			'Rd' : 10000,  # Divider Resistance Ohms (Default 10k Ohm)
+			# from: https://github.com/skyeperry1/Maverick-ET-73-Meat-Probe-Arduino-Library/blob/master/ET73.h
+			'A' : 2.3067434E-4,
 			'B' : 2.3696596E-4,
 			'C' : 1.2636414E-7,
 			'name' : 'ET-73-skyeperry1'
 	}
 	return probe_profiles
 
-def GrillProbes():
+def _default_grill_probes():
 
 	grill_probes = {}
 
@@ -471,14 +551,25 @@ def GrillProbes():
 
 	return grill_probes
 
-def generateUUID():
+def _generate_uuid():
+	"""
+	Generate a uuid based on mac address and random int
+
+	:return: A string uuid
+	"""
 	node = uuid.getnode()
 	rand_int = random.randint(100, 200)
 	generated_uuid = uuid.uuid1(node + rand_int)
 
 	return str(generated_uuid)
 
-def ReadControl(flush=False):
+def read_control(flush=False):
+	"""
+	Read Control from Redis DB
+
+	:param flush: True to clean control. False otherwise
+	:return: control
+	"""
 	global cmdsts
 
 	try:
@@ -490,30 +581,41 @@ def ReadControl(flush=False):
 			cmdsts.config_set('appendonly', 'no')
 			cmdsts.config_set('save', '')
 
-			control = DefaultControl()
-			WriteControl(control)
+			control = default_control()
+			write_control(control)
 		else: 
 			control = json.loads(cmdsts.get('control:general'))
 	except:
-		control = DefaultControl()
+		control = default_control()
 
 	return(control)
 
-def WriteControl(control):
+def write_control(control):
+	"""
+	Read Control from Redis DB
+
+	:param control: Control
+	"""
 	global cmdsts
 
 	cmdsts.set('control:general', json.dumps(control))
 
-def ReadErrors(flush=False):
+def read_errors(flush=False):
+	"""
+	Read Errors from Redis DB
+
+	:param flush: True to clear errors. False otherwise
+	:return: errors
+	"""
 	global cmdsts
 
 	try:
 		if flush:
-			# Remove all control structures in Redis DB (not history or current)
+			# Remove all error structures in Redis DB
 			cmdsts.delete('errors')
 
 			errors = []
-			WriteErrors(errors)
+			write_errors(errors)
 		else: 
 			errors = json.loads(cmdsts.get('errors'))
 	except:
@@ -521,16 +623,26 @@ def ReadErrors(flush=False):
 
 	return(errors)
 
-def WriteErrors(errors):
+def write_errors(errors):
+	"""
+	Write Errors to Redis DB
+
+	:param errors: Errors
+	"""
 	global cmdsts
 
 	cmdsts.set('errors', json.dumps(errors))
 
-def ReadMetrics(all=False):
+def read_metrics(all=False):
+	"""
+	Read Metrics from Redis DB
+
+	:param all: True to read entire list. False for top of list.
+	"""
 	global cmdsts
 
 	if not(cmdsts.exists('metrics:general')):
-		WriteMetrics(flush=True)
+		write_metrics(flush=True)
 		return([])
 	
 	if all: 
@@ -545,11 +657,18 @@ def ReadMetrics(all=False):
 	# Read current Metrics Record (i.e. top of the list)
 	return(json.loads(cmdsts.lindex('metrics:general', -1)))
 
-def WriteMetrics(metrics=DefaultMetrics(), flush=False, new_metric=False):
+def write_metrics(metrics=default_metrics(), flush=False, new_metric=False):
+	"""
+	Write metrics to Redis DB
+
+	:param metrics: Metrics Data
+	:param flush: True to clear metrics. False otherwise
+	:param new_metric:
+	"""
 	global cmdsts
 
 	if(flush or not(cmdsts.exists('metrics:general'))):
-		# Remove all control structures in Redis DB (not history or current)
+		# Remove all metrics structures in Redis DB
 		cmdsts.delete('metrics:general')
 
 		# The following set's no persistence so that we don't get writes to the disk / SDCard 
@@ -562,57 +681,58 @@ def WriteMetrics(metrics=DefaultMetrics(), flush=False, new_metric=False):
 
 	if new_metric:
 		metrics['starttime'] = time.time()
-		metrics['id'] = generateUUID()
+		metrics['id'] = _generate_uuid()
 		cmdsts.rpush('metrics:general', json.dumps(metrics))
 	else: 
 		cmdsts.rpop('metrics:general')
 		cmdsts.rpush('metrics:general', json.dumps(metrics))
 
-def ReadSettings(filename='settings.json'):
-	# *****************************************
-	# Read Settings from file
-	# *****************************************
+def read_settings(filename='settings.json'):
+	"""
+	Read Settings from file
+
+	:param filename: Filename to use (default settings.json)
+	"""
 
 	# Get latest settings format
-	settings = DefaultSettings()
+	settings = default_settings()
 
 	try:
 		json_data_file = os.fdopen(os.open(filename, os.O_RDONLY))
-		#json_data_file = open("settings.json", "r")
 		json_data_string = json_data_file.read()
 		settings_struct = json.loads(json_data_string)
 		json_data_file.close()
 
 	except(IOError, OSError):
 		# Default settings
-		settings = DefaultSettings()
+		settings = default_settings()
 		# Issue with reading states JSON, so create one/write new one
-		WriteSettings(settings)
+		write_settings(settings)
 		return(settings)
 	except(ValueError):
 		# A ValueError Exception occurs when multiple accesses collide, this code attempts a retry.
 		event = 'ERROR: Value Error Exception - JSONDecodeError reading settings.json'
-		WriteLog(event)
+		write_log(event)
 		json_data_file.close()
 		# Retry Reading Settings
-		settings_struct = ReadSettings(filename=filename) 
+		settings_struct = read_settings(filename=filename)
 
 	# Overlay the read values over the top of the default settings
 	#  This ensures that any NEW fields are captured.  
 	update_settings = False # set flag in case an update needs to be written back
 
 	# If default version is different from what is currently saved, update version in saved settings
-	if('versions' not in settings_struct.keys()):
+	if 'versions' not in settings_struct.keys():
 		settings_struct['versions'] = {
 			'server' : settings['versions']['server']
 		}
 		update_settings = True
-	elif(settings_struct['versions']['server'] != settings['versions']['server']):
+	elif settings_struct['versions']['server'] != settings['versions']['server']:
 		settings_struct['versions']['server'] = settings['versions']['server']
 		update_settings = True
 
 	# Prevent the wizard from popping up on existing installations
-	if('first_time_setup' not in settings_struct['globals'].keys()):
+	if 'first_time_setup' not in settings_struct['globals'].keys():
 		settings_struct['globals']['first_time_setup'] = False
 		update_settings = True
 		print(' ===  DEBUG: Setting First Time Setup to False!! ')
@@ -623,31 +743,36 @@ def ReadSettings(filename='settings.json'):
 				if subkey not in settings_struct[key].keys():
 					update_settings = True
 			settings[key].update(settings_struct.get(key, {}))
-		else: 
-			update_settings = True 
+		else:
+			update_settings = True
 
-	if (update_settings) or (filename != 'settings.json'): # If any of the keys were added, then write back the changes 
-		WriteSettings(settings)
-		#print('key mismatch - update flag set')
-	
+	if update_settings or filename != 'settings.json': # If any of the keys were added, then write back the changes
+		write_settings(settings)
+	#print('key mismatch - update flag set')
+
 	return(settings)
 
-def WriteSettings(settings):
-	# *****************************************
-	# Write all settings to JSON file
-	# *****************************************
+def write_settings(settings):
+	"""
+	Write all settings to JSON file
+
+	:param settings: Settings
+
+	"""
 	settings['lastupdated']['time'] = math.trunc(time.time())
 
 	json_data_string = json.dumps(settings, indent=2, sort_keys=True)
 	with open("settings.json", 'w') as settings_file:
 		settings_file.write(json_data_string)
 
-def ReadRecipes():
-	# *****************************************
-	# Read RecipeDB from File
-	# *****************************************
+def read_recipes():
+	"""
+	Read RecipeDB from File
 
-	# Read all lines of recipes.json into an list(array)
+	:return: Recipes
+	"""
+
+	# Read all lines of recipes.json into a list(array)
 	try:
 		json_data_file = os.fdopen(os.open('recipes.json', os.O_RDONLY))
 		#json_data_file = open("recipes.json", "r")
@@ -656,37 +781,40 @@ def ReadRecipes():
 		json_data_file.close()
 	except(IOError, OSError):
 		# Issue with reading JSON, so create one/write new one
-		recipes = DefaultRecipes()
-		WriteRecipes(recipes)
+		recipes = default_recipes()
+		write_recipes(recipes)
 
 	return(recipes)
 
-def WriteRecipes(recipes):
-	# *****************************************
-	# Write RecipeDB to JSON file
-	# *****************************************
+def write_recipes(recipes):
+	"""
+	Write RecipeDB to JSON file
+
+	:param recipes: Recipes
+	"""
 	json_data_string = json.dumps(recipes)
 	with open("recipes.json", 'w') as recipes_file:
 		recipes_file.write(json_data_string)
 
-def ReadPelletDB(filename='pelletdb.json'):
-	# *****************************************
-	# Read Pellet DataBase from file
-	# *****************************************
+def read_pellet_db(filename='pelletdb.json'):
+	"""
+	Read Pellet DataBase from file
 
-	pelletdb = DefaultPellets()
+	:param filename: Filename to use (default pelletdb.json)
+	"""
 
-	# Read all lines of pelletdb.json into an list(array)
+	pelletdb = default_pellets()
+
+	# Read all lines of pelletdb.json into a list(array)
 	try:
 		json_data_file = os.fdopen(os.open(filename, os.O_RDONLY))
-		#json_data_file = open("pelletdb.json", "r")
 		json_data_string = json_data_file.read()
 		pelletdb_struct = json.loads(json_data_string)
 		json_data_file.close()
 	except(IOError, OSError):
 		# Issue with reading JSON, so create one/write new one
-		pelletdb = DefaultPellets()
-		WritePelletDB(pelletdb)
+		pelletdb = default_pellets()
+		write_pellet_db(pelletdb)
 		return(pelletdb)
 
 	# Overlay the read values over the top of the default values
@@ -700,29 +828,28 @@ def ReadPelletDB(filename='pelletdb.json'):
 			update_db = True 
 
 	# If any of the keys were added or if restoring from file, then write back the changes 
-	if (update_db) or (filename != 'pelletdb.json'): 
-		WritePelletDB(pelletdb)
+	if update_db or filename != 'pelletdb.json':
+		write_pellet_db(pelletdb)
 
 	return(pelletdb)
 
-def WritePelletDB(pelletdb):
-	# *****************************************
-	# Write Pellet DataBase to JSON file
-	# *****************************************
+def write_pellet_db(pelletdb):
+	"""
+	Write Pellet DataBase to JSON file
+
+	:param pelletdb: Pellet Database
+	"""
 	json_data_string = json.dumps(pelletdb, indent=2, sort_keys=True)
 	with open("pelletdb.json", 'w') as json_file:
 		json_file.write(json_data_string)
 
-def ReadLog():
-	# *****************************************
-	# Function: ReadLog
-	# Input: none
-	# Output:
-	# Description: Read event.log and populate
-	#  an array of events.
-	# *****************************************
+def read_log():
+	"""
+	Read event.log and populate an array of events.
 
-	# Read all lines of events.log into an list(array)
+	:return: (event_list, num_events)
+	"""
+	# Read all lines of events.log into a list(array)
 	try:
 		with open('/tmp/events.log') as event_file:
 			event_lines = event_file.readlines()
@@ -743,20 +870,19 @@ def ReadLog():
 		event_list.insert(0, event_lines[x].split(" ",2))
 
 	# Error handling if number of events is less than 10, fill array with empty
-	if (num_events < 10):
+	if num_events < 10:
 		for line in range((10-num_events)):
 			event_list.append(["--------","--:--:--","---"])
 		num_events = 10
 
 	return(event_list, num_events)
 
-def WriteLog(event):
-	# *****************************************
-	# Function: WriteLog
-	# Input: str event
-	# Description: Write event to event.log
-	#  Event should be a string.
-	# *****************************************
+def write_log(event):
+	"""
+	Write event to event.log
+
+	:param event: String event
+	"""
 	now = str(datetime.datetime.now())
 	now = now[0:19] # Truncate the microseconds
 
@@ -764,14 +890,28 @@ def WriteLog(event):
 	logfile.write(now + ' ' + event + '\n')
 	logfile.close()
 
-def ReadHistory(num_items=0, flushhistory=False):
-	# *****************************************
-	# Function: ReadHistory
-	# Input: num_items (items from end of the history)
-	# Output: data_list
-	# Description: Read history.log and populate
-	#  a list of data
-	# *****************************************
+def write_event(settings, event):
+	"""
+	Send event to log and console if debug mode enabled or only to log if
+	string does not begin with *
+
+	:param settings: Settings
+	:param event: String event
+	"""
+	if settings['globals']['debug_mode']:
+		print(event)
+		write_log(event)
+	elif not event.startswith('*'):
+		write_log(event)
+
+def read_history(num_items=0, flushhistory=False):
+	"""
+	Read history from Redis DB and populate a list of data
+
+	:param num_items: Items from end of the history
+	:param flushhistory: True to clean history / current. False otherwise
+	:return: List of history items
+	"""
 	global cmdsts
 	
 	data_list = []  # Initialize data list
@@ -785,28 +925,28 @@ def ReadHistory(num_items=0, flushhistory=False):
 			cmdsts.hset('control:current', 'Probe1Temp', 0)
 			cmdsts.hset('control:current', 'Probe2Temp', 0)
 			event = 'WARNING: History data flushed.'
-			WriteLog(event)
-			WriteMetrics(flush=True)
+			write_log(event)
+			write_metrics(flush=True)
 	else:
 		if cmdsts.exists('control:history'):
 			list_length = cmdsts.llen('control:history') 
 
 			if((num_items > 0) and (list_length < num_items)) or (num_items == 0):
-				liststart = 0
+				list_start = 0
 			else: 
-				liststart = list_length - num_items 
+				list_start = list_length - num_items
 
-			data = cmdsts.lrange('control:history', liststart, -1)
+			data = cmdsts.lrange('control:history', list_start, -1)
 			
 			# Unpack data from json to list
 			for index in range(len(data)):
 				datastruct = json.loads(data[index])
-				templist = [str(int(datastruct['T'])), str(datastruct['GT1']), str(datastruct['GSP1']), str(datastruct['PT1']), str(datastruct['PSP1']), str(datastruct['PT2']), str(datastruct['PSP2'])]
-				data_list.append(templist)
-				#data_list.append(data[index].split(' ', 6))  # Splits out each of the values into seperate list items 
+				temp_list = [str(int(datastruct['T'])), str(datastruct['GT1']), str(datastruct['GSP1']), str(datastruct['PT1']), str(datastruct['PSP1']), str(datastruct['PT2']), str(datastruct['PSP2'])]
+				data_list.append(temp_list)
+				#data_list.append(data[index].split(' ', 6))  # Splits out each of the values into separate list items
 		else:
 			event = 'WARNING: History data is not present in database. Creating Data Structure.'
-			WriteLog(event)
+			write_log(event)
 			# Create Entry in Database
 			TempStruct = {
 				'GrillTemp': 0, 
@@ -819,32 +959,34 @@ def ReadHistory(num_items=0, flushhistory=False):
 				'Probe1Tr': 0,
 				'Probe2Tr': 0
 			}
-			WriteHistory(TempStruct)
-			data_list = ReadHistory()
+			write_history(TempStruct)
+			data_list = read_history()
 
 	return(data_list)
 
-def WriteHistory(TempStruct, maxsizelines=28800, tuning_mode=False):
-	# *****************************************
-	# Function: WriteHistory
-	# Input: TempStruct
-	# Description: Write event to history.log AND current.log
-	#  Event should be a string.
-	# *****************************************
-	global cmdsts 
+def write_history(temp_struct, maxsizelines=28800, tuning_mode=False):
+	"""
+	Write History to Redis DB
 
-	timenow = datetime.datetime.now()
-	#datastring = timestr + ' ' + str(TempStruct['GrillTemp']) + ' ' + str(TempStruct['GrillSetPoint']) + ' ' + str(TempStruct['Probe1Temp']) + ' ' + str(TempStruct['Probe1SetPoint']) + ' ' + str(TempStruct['Probe2Temp']) + ' ' + str(TempStruct['Probe2SetPoint'])
+	:param temp_struct: TempStruct
+	:param maxsizelines: Maximum Line Size (Default 28800)
+	:param tuning_mode: True to populate tuning data otherwise False
+	"""
+	global cmdsts
 
-	# Create data structure for current temperature data and timestamp 
+	time_now = datetime.datetime.now()
+	#time_str = str(int(time_now.timestamp() * 1000))
+	#datastring = time_str + ' ' + str(temp_struct['GrillTemp']) + ' ' + str(temp_struct['GrillSetPoint']) + ' ' + str(temp_struct['Probe1Temp']) + ' ' + str(temp_struct['Probe1SetPoint']) + ' ' + str(temp_struct['Probe2Temp']) + ' ' + str(temp_struct['Probe2SetPoint'])
+
+	# Create data structure for current temperature data and timestamp
 	datastruct = {}
-	datastruct['T'] = int(timenow.timestamp() * 1000)
-	datastruct['GT1'] = TempStruct['GrillTemp']
-	datastruct['GSP1'] = TempStruct['GrillSetPoint']
-	datastruct['PT1'] = TempStruct['Probe1Temp']
-	datastruct['PSP1'] = TempStruct['Probe1SetPoint']
-	datastruct['PT2'] = TempStruct['Probe2Temp']
-	datastruct['PSP2'] = TempStruct['Probe2SetPoint']
+	datastruct['T'] = int(time_now.timestamp() * 1000)
+	datastruct['GT1'] = temp_struct['GrillTemp']
+	datastruct['GSP1'] = temp_struct['GrillSetPoint']
+	datastruct['PT1'] = temp_struct['Probe1Temp']
+	datastruct['PSP1'] = temp_struct['Probe1SetPoint']
+	datastruct['PT2'] = temp_struct['Probe2Temp']
+	datastruct['PSP2'] = temp_struct['Probe2SetPoint']
 
 	# Push data string to the list in the last position
 	cmdsts.rpush('control:history', json.dumps(datastruct))
@@ -854,28 +996,28 @@ def WriteHistory(TempStruct, maxsizelines=28800, tuning_mode=False):
 		cmdsts.lpop('control:history')
 
 	# Set current values in the control:current hash
-	cmdsts.hset('control:current', 'GrillTemp', TempStruct['GrillTemp'])
-	cmdsts.hset('control:current', 'Probe1Temp', TempStruct['Probe1Temp'])
-	cmdsts.hset('control:current', 'Probe2Temp', TempStruct['Probe2Temp'])
+	cmdsts.hset('control:current', 'GrillTemp', temp_struct['GrillTemp'])
+	cmdsts.hset('control:current', 'Probe1Temp', temp_struct['Probe1Temp'])
+	cmdsts.hset('control:current', 'Probe2Temp', temp_struct['Probe2Temp'])
 
 	# If in tuning mode, populate the Tr data in the database 
-	if(tuning_mode):
-		tr_values = str(int(TempStruct['GrillTr'])) + ' ' + str(int(TempStruct['Probe1Tr'])) + ' ' + str(int(TempStruct['Probe2Tr']))
+	if tuning_mode:
+		tr_values = str(int(temp_struct['GrillTr'])) + ' ' + str(int(temp_struct['Probe1Tr'])) + ' ' + str(int(
+			temp_struct['Probe2Tr']))
 		cmdsts.set('control:tuning', tr_values)
 
-def ReadCurrent(zero_out=False):
-	# *****************************************
-	# Function: ReadCurrent
-	# Input: none
-	# Output: cur_probe_temps []
-	# Description: Read current.log and populate
-	#  a list of data
-	# *****************************************
+def read_current(zero_out=False):
+	"""
+	Read current.log and populate a list of data
+
+	:param zero_out: True to zero out current. False otherwise
+	:return: Current Probe Temps [0, 0, 0]
+	"""
 	global cmdsts
 	
 	cur_probe_temps = [0, 0, 0]
 
-	if (not cmdsts.exists('control:current')) or (zero_out):
+	if not cmdsts.exists('control:current') or zero_out:
 		cmdsts.hset('control:current', 'GrillTemp', 0)
 		cmdsts.hset('control:current', 'Probe1Temp', 0)
 		cmdsts.hset('control:current', 'Probe2Temp', 0)
@@ -886,38 +1028,50 @@ def ReadCurrent(zero_out=False):
 	
 	return(cur_probe_temps)
 
-def ReadTr():
-	# *****************************************
-	# Function: ReadTr
-	# Input: none
-	# Output: cur_probe_tr []
-	# Description: Read tr.log and populate
-	#  a list of data
-	# *****************************************
+def read_tr():
+	"""
+	Read tr from Redis DB and populate a list of data
+
+	:return: cur_probe_tr
+	"""
 	global cmdsts
 	try:
 		tr_data = cmdsts.get('control:tuning')
 	except:
 		cur_probe_tr = [0,0,0]
-		WriteLog('WARNING: Issue reading tr data from database.')
+		write_log('WARNING: Issue reading tr data from database.')
 		return(cur_probe_tr)
 
-	if tr_data != None: 
-		cur_probe_tr = tr_data.split(' ',2) # Splits out each of the values into seperate list items
+	if tr_data is not None:
+		cur_probe_tr = tr_data.split(' ',2) # Splits out each of the values into separate list items
 	else: 
 		cur_probe_tr = [0,0,0]  # If data isn't available from database yet, output 0's
 
 	return(cur_probe_tr)
 
 def convert_temp(units, temp):
+	"""
+	Convert Temp Based on Units
+
+	:param units: Units C or F
+	:param temp: Temp to Convert
+	:return: Converted Temp
+	"""
 	if units == 'F':
 		temp_out = int(temp * (9/5) + 32) # Celsius to Fahrenheit
 	else:
-		temp_out = int((temp - 32) * (5/9)) # Fahrenheit to Celcius 
+		temp_out = int((temp - 32) * (5/9)) # Fahrenheit to Celsius
 	return(temp_out)
 
 def convert_settings_units(units, settings):
-	settings['globals']['units'] = units 
+	"""
+	Convert Settings Units
+
+	:param units: Units C or F
+	:param settings: Settings
+	:return: Updated Settings
+	"""
+	settings['globals']['units'] = units
 	settings['safety']['maxstartuptemp'] = convert_temp(units, settings['safety']['maxstartuptemp'])
 	settings['safety']['maxtemp'] = convert_temp(units, settings['safety']['maxtemp'])
 	settings['safety']['minstartuptemp'] = convert_temp(units, settings['safety']['minstartuptemp'])
@@ -925,30 +1079,43 @@ def convert_settings_units(units, settings):
 	settings['smoke_plus']['min_temp'] = convert_temp(units, settings['smoke_plus']['min_temp'])
 	settings['keep_warm']['temp'] = convert_temp(units, settings['keep_warm']['temp'])
 	for temp in range(0, len(settings['smartstart']['temp_range_list'])):
-		settings['smartstart']['temp_range_list'][temp] = convert_temp(units, settings['smartstart']['temp_range_list'][temp])
+		settings['smartstart']['temp_range_list'][temp] = convert_temp(
+			units, settings['smartstart']['temp_range_list'][temp])
 	return(settings)
 
-'''
-is_raspberrypi() function borrowed from user https://raspberrypi.stackexchange.com/users/126953/chris
-  in post: https://raspberrypi.stackexchange.com/questions/5100/detect-that-a-python-program-is-running-on-the-pi
-'''
-def isRaspberryPi():
+# **************************************
+# is_raspberrypi() function borrowed from user https://raspberrypi.stackexchange.com/users/126953/chris
+# in post: https://raspberrypi.stackexchange.com/questions/5100/detect-that-a-python-program-is-running-on-the-pi
+# **************************************
+def is_raspberry_pi():
+	"""
+	Check if device is a Raspberry Pi
+
+	:return: True if Raspberry Pi. False otherwise
+	"""
 	try:
 		with io.open('/sys/firmware/devicetree/base/model', 'r') as m:
 			if 'raspberry pi' in m.read().lower(): return True
-	except Exception: pass
+	except Exception:
+		pass
 	return False
 
 def restart_scripts():
+	"""
+	Restart the Control and WebApp Scripts
+	"""
 	print('[DEBUG MSG] Restarting Scripts... ')
 	command = "sleep 3 && sudo service supervisor restart &"
-	if(isRaspberryPi()):
+	if is_raspberry_pi():
 		os.system(command)
 
-def ReadWizard(filename='wizard/wizard_manifest.json'):
-	'''
-		Read Wizard Manifest Data from file
-	'''
+def read_wizard(filename='wizard/wizard_manifest.json'):
+	"""
+	Read Wizard Manifest Data from file
+
+	:param filename: Filename to use (default wizard/wizard_manifest.json)
+	:return: Wizard Data
+	"""
 	try:
 		json_data_file = os.fdopen(os.open(filename, os.O_RDONLY))
 		json_data_string = json_data_file.read()
@@ -956,7 +1123,7 @@ def ReadWizard(filename='wizard/wizard_manifest.json'):
 		json_data_file.close()
 	except(IOError, OSError):
 		event = 'ERROR: Could not read from wizard manifest.'
-		WriteLog(event)
+		write_log(event)
 		wizard = {
 			"modules" : {}
 		}
@@ -964,39 +1131,65 @@ def ReadWizard(filename='wizard/wizard_manifest.json'):
 	except(ValueError):
 		# A ValueError Exception occurs when multiple accesses collide, this code attempts a retry.
 		event = 'ERROR: Value Error Exception - JSONDecodeError reading wizard_manifest.json'
-		WriteLog(event)
+		write_log(event)
 		json_data_file.close()
 		# Retry Reading Settings
-		wizard = ReadWizard(filename=filename) 
+		wizard = read_wizard(filename=filename)
 
 	return(wizard)
 
-def LoadWizardInstallInfo():
-	global cmdsts
-	wizardInstallInfo = json.loads(cmdsts.get('wizard:install'))
-	return(wizardInstallInfo)
+def load_wizard_install_info():
+	"""
+	Load Wizard Install Info from Redis DB
 
-def StoreWizardInstallInfo(wizardInstallInfo):
+	:return: wizard_install_info
+	"""
 	global cmdsts
-	cmdsts.set('wizard:install', json.dumps(wizardInstallInfo))
+	wizard_install_info = json.loads(cmdsts.get('wizard:install'))
+	return(wizard_install_info)
 
-def GetWizardInstallStatus():
+def store_wizard_install_info(wizard_install_info):
+	"""
+	Write Wizard Install Info to Redis DB
+
+	:param wizard_install_info: Wizard Install Info
+	:return:
+	"""
+	global cmdsts
+	cmdsts.set('wizard:install', json.dumps(wizard_install_info))
+
+def get_wizard_install_status():
+	"""
+	Read Wizard Install Status from Redis DB
+
+	:return: Wizard Install (Percent, Status, Output)
+	"""
 	global cmdsts 
 	percent = cmdsts.get('wizard:percent')
 	status = cmdsts.get('wizard:status')
 	output = cmdsts.get('wizard:output')
 	return(percent, status, output)
 
-def SetWizardInstallStatus(percent, status, output):
+def set_wizard_install_status(percent, status, output):
+	"""
+	Write Wizard Install Status to Redis DB
+
+	:param percent: Percent Complete
+	:param status: Current Status
+	:param output: Output
+	"""
 	global cmdsts 
 	cmdsts.set('wizard:percent', percent)
 	cmdsts.set('wizard:status', status)
 	cmdsts.set('wizard:output', output)
 
-def ReadDepedencies(filename='updater/updater_manifest.json'):
-	'''
-		Read Updater Manifest Data from file
-	'''
+def read_dependencies(filename='updater/updater_manifest.json'):
+	"""
+	Read Updater Manifest Data from file
+
+	:param filename: updater_manifest.json filename
+	:return: Dependencies
+	"""
 	try:
 		json_data_file = os.fdopen(os.open(filename, os.O_RDONLY))
 		json_data_string = json_data_file.read()
@@ -1004,7 +1197,7 @@ def ReadDepedencies(filename='updater/updater_manifest.json'):
 		json_data_file.close()
 	except(IOError, OSError):
 		event = 'ERROR: Could not read from updater manifest.'
-		WriteLog(event)
+		write_log(event)
 		dependencies = {
 			"dependencies" : {}
 		}
@@ -1012,23 +1205,34 @@ def ReadDepedencies(filename='updater/updater_manifest.json'):
 	except(ValueError):
 		# A ValueError Exception occurs when multiple accesses collide, this code attempts a retry.
 		event = 'ERROR: Value Error Exception - JSONDecodeError reading updater_manifest.json'
-		WriteLog(event)
+		write_log(event)
 		json_data_file.close()
 		# Retry Reading Settings
-		dependencies = ReadDepedencies(filename=filename)
+		dependencies = read_dependencies(filename=filename)
 
 	return(dependencies)
 
-def GetUpdaterInstallStatus():
+def get_updater_install_status():
+	"""
+	Read Updater Install Status from Redis DB
+
+	:return: Wizard Updater (Percent, Status, Output)
+	"""
 	global cmdsts
 	percent = cmdsts.get('updater:percent')
 	status = cmdsts.get('updater:status')
 	output = cmdsts.get('updater:output')
 	return(percent, status, output)
 
-def SetUpdaterInstallStatus(percent, status, output):
+def set_updater_install_status(percent, status, output):
+	"""
+	Write Updater Install Status to Redis DB
+
+	:param percent: Percent Complete
+	:param status: Current Status
+	:param output: Output
+	"""
 	global cmdsts
 	cmdsts.set('updater:percent', percent)
 	cmdsts.set('updater:status', status)
 	cmdsts.set('updater:output', output)
-

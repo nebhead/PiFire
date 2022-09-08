@@ -14,7 +14,7 @@
 
 class Display:
 
-	def __init__(self, buttonslevel='HIGH', rotation=0, units='F'):
+	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F'):
 		self.display_splash()
 		self.units = units 
 
@@ -30,12 +30,12 @@ class Display:
 		print('* Mode: ' + str(status_data['mode']))
 		notification = False 
 		for item in status_data['notify_req']:
-			if status_data['notify_req'][item] == True:
+			if status_data['notify_req'][item]:
 				notification = True
-		if notification == True:
+		if notification:
 			print('* Notifications: True')
 		for item in status_data['outpins']:
-			if status_data['outpins'][item] == 0:
+			if status_data['outpins'][item]:
 				print('* ' + str(item) + ' ON')
 		print('==================')
 

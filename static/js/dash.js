@@ -105,7 +105,7 @@ function updateCards(data, init) {
 		};
 
 		// *************************  
-		// Probe 1 Temperature Card 
+		// Probe 2 Temperature Card
 		// *************************  
 		var probe2_temp = 0;
 		var probe2_text = 'OFF';
@@ -182,6 +182,7 @@ function updateDashButtons(data) {
             document.getElementById("stop_inactive_btn").className = "btn btn-danger border border-secondary";
             $("#active_group").hide();
 			$("#splus_btn").hide();
+			$("#pwm_control_btn").hide();
             $("#smoke_inactive_btn").hide();
             $("#hold_inactive_btn").hide();
             $("#inactive_group").show();
@@ -191,6 +192,7 @@ function updateDashButtons(data) {
             document.getElementById("monitor_btn").className = "btn btn-secondary border border-secondary";
             $("#active_group").hide();
 			$("#splus_btn").hide();
+			$("#pwm_control_btn").hide();
             $("#inactive_group").show();
             $("#smoke_inactive_btn").hide();
             $("#hold_inactive_btn").hide();
@@ -199,6 +201,7 @@ function updateDashButtons(data) {
             document.getElementById("startup_btn").className = "btn btn-success border border-secondary";
             $("#active_group").hide();
 			$("#splus_btn").hide();
+			$("#pwm_control_btn").hide();
 			$("#inactive_group").show();
 			$("#smoke_inactive_btn").show();
 			$("#hold_inactive_btn").show();
@@ -210,6 +213,7 @@ function updateDashButtons(data) {
             $("#active_group").show();
             $("#stop_btn").hide();
 			$("#splus_btn").show();
+			$("#pwm_control_btn").hide();
 			// This is required when automatically transitioning from another mode to this mode
 			if(data.splus == true) {
 				document.getElementById("splus_btn").className = "btn btn-success border border-secondary";
@@ -226,6 +230,7 @@ function updateDashButtons(data) {
             $("#stop_btn").hide();
             $("#error_btn").hide();
 			$("#splus_btn").show();
+			$("#pwm_control_btn").show();
 			// This is required when automatically transitioning from another mode to this mode
 			if(data.splus == true) {
 				document.getElementById("splus_btn").className = "btn btn-success border border-secondary";
@@ -236,11 +241,20 @@ function updateDashButtons(data) {
 				//document.getElementById("splus_btn").value = "true";
 				$("#splus_btn").val("true");
 			};
+			// This is required when automatically transitioning from another mode to this mode
+			if(data.pwm_control == true) {
+				document.getElementById("pwm_control_btn").className = "btn btn-success border border-secondary";
+				$("#pwm_control_btn").val("false");
+			} else {
+				document.getElementById("pwm_control_btn").className = "btn btn-outline-primary border border-secondary text-secondary";
+				$("#pwm_control_btn").val("true");
+			};
 			document.getElementById("hold_btn").className = "btn btn-secondary border border-secondary text-white";
 			$("#hold_btn").html(data.set_points['grill'] + "°" + units);
         } else if (data.current_mode == 'Shutdown') {
 			$("#inactive_group").hide();
 			$("#splus_btn").hide();
+			$("#pwm_control_btn").hide();
 			$("#active_group").show();
 			$("#stop_btn").show();
 			$("#error_btn").hide();
@@ -249,6 +263,7 @@ function updateDashButtons(data) {
 			document.getElementById("stop_inactive_btn").className = "btn btn-danger border border-secondary";
 			$("#active_group").hide();
 			$("#splus_btn").hide();
+			$("#pwm_control_btn").hide();
 			$("#smoke_inactive_btn").hide();
 			$("#hold_inactive_btn").hide();
 			$("#inactive_group").show();
@@ -259,6 +274,7 @@ function updateDashButtons(data) {
 			$("#active_group").hide();
 			$("#inactive_group").hide();
 			$("#splus_btn").hide();
+			$("#pwm_control_btn").hide();
 			$("#smoke_inactive_btn").hide();
 			$("#hold_inactive_btn").hide();
 			$("#monitor_btn").hide();
@@ -266,7 +282,7 @@ function updateDashButtons(data) {
 		};
 
         if ((data.current_mode == 'Smoke') || (data.current_mode == 'Hold')) {
-            if(data.splus == true) {
+            if (data.splus == true) {
                 $("#splus_btn").show();
                 document.getElementById("splus_btn").className = "btn btn-success border border-secondary";
             } else {
@@ -276,14 +292,27 @@ function updateDashButtons(data) {
         } else {
             $("#splus_btn").hide();
         };
+
+        if (data.current_mode == 'Hold') {
+            if (data.pwm_control == true) {
+                $("#pwm_control_btn").show();
+                document.getElementById("pwm_control_btn").className = "btn btn-success border border-secondary";
+            } else {
+                $("#pwm_control_btn").show();
+                document.getElementById("pwm_control_btn").className = "btn btn-outline-primary border border-secondary text-secondary";
+            };
+        } else {
+            $("#pwm_control_btn").hide();
+        };
 };
 
 var splusState = true;
 var splusDefault = true;
+var pwm_control_state = true;
 var last_mode = "Stop";
 
 $(document).ready(function(){
-    // Get Intial Dash Data
+    // Get Initial Dash Data
     req = $.ajax({
         url : '/dashdata',
         type : 'GET'
@@ -297,10 +326,13 @@ $(document).ready(function(){
         //  data.current_mode
         //  data.notify_req
         //  data.splus
+        //  data.splus_default
+        //  data.pwm_control
 		var init = true;
 		last_mode = data.current_mode;
         splusState = data.splus;
 		splusDefault = data.splus_default;
+		pwm_control_state = data.pwm_control
 		last_grill_setpoint = data.set_points['grill'];
 
 		updateCards(data, init);
@@ -321,8 +353,9 @@ $(document).ready(function(){
 				updateCards(data);
 
                 // Update dock buttons if mode changed
-                if((data.current_mode != last_mode) || (data.splus != splusState)){
-					// Dim relavant button for last_mode
+                if((data.current_mode != last_mode) || (data.splus != splusState) ||
+                		(data.pwm_control != pwm_control_state)) {
+					// Dim relevant button for last_mode
                     if(last_mode == 'Startup') {
                         document.getElementById("startup_btn").className = "btn btn-outline-success border border-secondary";
                     } else if (last_mode == 'Monitor') {
@@ -341,6 +374,7 @@ $(document).ready(function(){
                     last_mode = data.current_mode;
 					splusState = data.splus;
 					splusDefault = data.splus_default;
+					pwm_control_state = data.pwm_control;
 					updateDashButtons(data);
 				};
 				if((data.current_mode == 'Hold') && (data.set_points['grill'] != last_grill_setpoint)) {
@@ -484,6 +518,27 @@ $(document).ready(function(){
             traditional: true,
             success: function (data) {
                 console.log('Smoke Plus Toggle Requested.');
+            }
+		});
+	});
+
+	$("#pwm_control_btn").click(function(){
+		// Toggle based on current value of this button
+		if(pwm_control_state == true) {
+			var postdata = { 'pwm_control' : false };
+			console.log('pwm_control_state = ' + pwm_control_state + ' Requesting false.');
+		} else {
+			var postdata = { 'pwm_control' : true };
+			console.log('pwm_control_state = ' + pwm_control_state + ' Requesting true.');
+		};
+		req = $.ajax({
+			url : '/api/control',
+			type : 'POST',
+			data : JSON.stringify(postdata),
+			contentType: "application/json; charset=utf-8",
+			traditional: true,
+			success: function (data) {
+                console.log('Temp PWM Fan Toggle Requested.');
             }
 		});
 	});

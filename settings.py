@@ -13,7 +13,7 @@
 # Imported Libraries
 # *****************************************
 
-from common import ReadSettings, WriteSettings, convert_settings_units, convert_temp  # Common Library for writing settings
+from common import read_settings, write_settings, convert_settings_units  # Common Library for writing settings
 import argparse 
 
 # Options
@@ -44,61 +44,61 @@ parser.add_argument('-u','--units',type=str, help='Update the units to be used f
 
 args = parser.parse_args()
 
-settings = ReadSettings()
+settings = read_settings()
 
-if(args.grillplat):
+if args.grillplat:
 	grillplat = args.grillplat
 	print(f"\n * Modifying Grill Platform from {settings['modules']['grillplat']} to {grillplat}")
-	settings['modules']['grillplat'] = grillplat 
-	WriteSettings(settings)
+	settings['modules']['grillplat'] = grillplat
+	write_settings(settings)
 
-if(args.adc):
+if args.adc:
 	adc = args.adc
 	print(f"\n * Modifying ADC from {settings['modules']['adc']} to {adc}")
-	settings['modules']['adc'] = adc 
-	WriteSettings(settings)
+	settings['modules']['adc'] = adc
+	write_settings(settings)
 
-if(args.display):
+if args.display:
 	display = args.display
 	print(f"\n * Modifying Display from {settings['modules']['display']} to {display}")
-	settings['modules']['display'] = display 
-	WriteSettings(settings)
+	settings['modules']['display'] = display
+	write_settings(settings)
 
-if(args.range):
+if args.range:
 	range = args.range
 	print(f"\n * Modifying Range Sensor from {settings['modules']['dist']} to {range}")
-	settings['modules']['dist'] = range 
-	WriteSettings(settings)
+	settings['modules']['dist'] = range
+	write_settings(settings)
 
-if(args.version):
+if args.version:
 	version = args.version
 	print(f"\nModifying Server Version {settings['versions']['server']} to {version}")
 	settings['versions']['server'] = version
-	WriteSettings(settings)
+	write_settings(settings)
 
-if(args.triggerlevel):
+if args.triggerlevel:
 	triggerlevel = args.triggerlevel 
 	print(f"\n * Modifying Trigger Level from {settings['globals']['triggerlevel']} to {triggerlevel}")
 	settings['globals']['triggerlevel'] = triggerlevel
-	WriteSettings(settings)
+	write_settings(settings)
 
-if(args.buttonslevel):
+if args.buttonslevel:
 	buttonslevel = args.buttonslevel 
 	print(f"\n * Modifying Buttons Level from {settings['globals']['buttonslevel']} to {buttonslevel}")
 	settings['globals']['buttonslevel'] = buttonslevel
-	WriteSettings(settings)
+	write_settings(settings)
 
-if(args.units):
+if args.units:
 	units = args.units 
-	if(units == 'C') and (settings['globals']['units'] == 'F'):
+	if units == 'C' and settings['globals']['units'] == 'F':
 		print(f"\n * Modifying temperature units from {settings['globals']['units']} to {units}")
 		settings = convert_settings_units('C', settings)
-		WriteSettings(settings)
-	elif(units == 'F') and (settings['globals']['units'] == 'C'):
+		write_settings(settings)
+	elif units == 'F' and settings['globals']['units'] == 'C':
 		print(f"\n * Modifying temperature units from {settings['globals']['units']} to {units}")
 		settings = convert_settings_units('F', settings)
-		WriteSettings(settings)
-	elif(units == settings['globals']['units']):
+		write_settings(settings)
+	elif units == settings['globals']['units']:
 		print(f"\n * Temperature units already set to {settings['globals']['units']}. No action taken.")
 	else: 
 		print(f"\n * Temperature units {units} not recognized. No action taken.")
