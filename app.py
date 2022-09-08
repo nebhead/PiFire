@@ -276,6 +276,7 @@ def history_update(action=None):
 
 	elif action == 'refresh':
 		# POST - Get number of minutes into the history to refresh the history chart
+		control = read_control()
 		request_json = request.json
 		if 'num_mins' in request_json:
 			num_items = int(request_json['num_mins']) * 20  # Calculate number of items requested
