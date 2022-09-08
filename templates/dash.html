@@ -1,12 +1,12 @@
 {% extends 'base.html' %} 
 
 {% block cssextend %}
-	<!-- Circliful CSS -->
-	{% if page_theme == 'dark' %}
-	<link rel="stylesheet" href="{{ url_for('static', filename='css/dark.main.css') }}" type="text/css" /> 
-	{% else %}
-	<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" type="text/css" />
-	{% endif %}
+<!-- Circliful CSS -->
+{% if page_theme == 'dark' %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dark.main.css') }}" type="text/css" />
+{% else %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" type="text/css" />
+{% endif %}
 {% endblock %} 
 
 {% block title %}Dashboard{% endblock %} 
@@ -22,28 +22,26 @@
 				<div id="GrillTempCircle"></div>
 			</div> <!-- End of card body -->
 			{% if probes_enabled[0] == 1 %}
-				<div class="card-footer text-center">
-					<form name="input" action="/dash/setnotify" method="POST">
-					<div class="btn-group">
-						<button type="button" class="btn btn-outline-primary"><i class="fas fa-temperature-high"></i> <b>Grill</b></button>
-						<a href="/settings" class="btn btn-outline-primary" role="button"><i class="fas fa-cog"></i></a>
-						<button type="button" class="btn btn-outline-primary" id="grill_notify_btn" data-toggle="modal" data-target="#grillnotifyModal"><i class="far fa-bell-slash"></i></button>
-					</div>
-					</form>
+			<div class="card-footer text-center">
+				<div class="btn-group">
+					<button type="button" class="btn btn-outline-primary"><i class="fas fa-temperature-high"></i> <b>Grill</b></button>
+					<a href="/settings" class="btn btn-outline-primary" role="button"><i class="fas fa-cog"></i></a>
+					<button type="button" class="btn btn-outline-primary" id="grill_notify_btn" data-toggle="modal" data-target="#grillnotifyModal"><i class="far fa-bell-slash"></i></button>
 				</div>
+			</div>
 			{% else %}
-				<div class="card-footer text-center">
-					<div class="btn-group">
-						<button type="button" class="btn btn-outline-secondary"><i class="fas fa-temperature-high"></i> Grill Off</button>
-						<a href="/settings" class="btn btn-outline-secondary" role="button"><i class="fas fa-cog"></i></a>
-						<a href="/settings" class="btn btn-outline-secondary" role="button"><i class="far fa-bell-slash"></i></a>
-					</div>
+			<div class="card-footer text-center">
+				<div class="btn-group">
+					<button type="button" {% if page_theme == 'dark' %} class="btn btn-outline-light" {% else %} class="btn btn-outline-secondary"{% endif %}><i class="fas fa-temperature-high"></i> Grill Off</button>
+					<a href="/settings" {% if page_theme == 'dark' %} class="btn btn-outline-light" {% else %} class="btn btn-outline-secondary"{% endif %} role="button"><i class="fas fa-cog"></i></a>
+					<a href="/settings" {% if page_theme == 'dark' %} class="btn btn-outline-light" {% else %} class="btn btn-outline-secondary"{% endif %} role="button"><i class="far fa-bell-slash"></i></a>
 				</div>
+			</div>
 			{% endif %}
 		</div> <!-- End of card -->
 	</div> <!-- End of Column -->
-<br>
-<br>
+	<br>
+	<br>
 	<!-- Probe 1 Card -->
 	<div class="col-lg-4 col-md-6 col-sm-12">
 		<div class="card shadow mt-4">
@@ -52,27 +50,25 @@
 			</div> <!-- End of card body -->
 			{% if probes_enabled[1] == 1 %}
 			<div class="card-footer text-center">
-				<form name="input" action="/dash/setnotify" method="POST">
 				<div class="btn-group">
 					<button type="button" class="btn btn-outline-primary"><i class="fas fa-temperature-high"></i> <b>Probe 1</b></button>
 					<a href="/settings" class="btn btn-outline-primary" role="button"><i class="fas fa-cog"></i></a>
 					<button type="button" class="btn btn-outline-primary" id="probe1_notify_btn" data-toggle="modal" data-target="#probe1notifyModal"><i class="far fa-bell-slash"></i></button>
-					</div>
-				</form>
+				</div>
 			</div>
 			{% else %}
 			<div class="card-footer text-center">
 				<div class="btn-group">
-					<button type="button" class="btn btn-outline-secondary"><i class="fas fa-temperature-high"></i> Probe 1 Off</button>
-					<a href="/settings" class="btn btn-outline-secondary" role="button"><i class="fas fa-cog"></i></a>
-					<a href="/settings" class="btn btn-outline-secondary" role="button"><i class="far fa-bell-slash"></i></a>
+					<button type="button" {% if page_theme == 'dark' %} class="btn btn-outline-light" {% else %} class="btn btn-outline-secondary"{% endif %}><i class="fas fa-temperature-high"></i> Probe 1 Off</button>
+					<a href="/settings" {% if page_theme == 'dark' %} class="btn btn-outline-light" {% else %} class="btn btn-outline-secondary"{% endif %} role="button"><i class="fas fa-cog"></i></a>
+					<a href="/settings" {% if page_theme == 'dark' %} class="btn btn-outline-light" {% else %} class="btn btn-outline-secondary"{% endif %} role="button"><i class="far fa-bell-slash"></i></a>
 				</div>
 			</div>
 			{% endif %}
 		</div> <!-- End of card -->
 	</div> <!-- End of Column -->
-<br>
-<br>
+	<br>
+	<br>
 	<!-- Probe 2 Card -->
 	<div class="col-lg-4 col-md-6 col-sm-12">
 		<div class="card shadow mt-4">
@@ -81,27 +77,25 @@
 			</div> <!-- End of card body -->
 			{% if probes_enabled[2] == 1 %}
 			<div class="card-footer text-center">
-				<form name="input" action="/dash/setnotify" method="POST">
 				<div class="btn-group">
 					<button type="button" class="btn btn-outline-primary"><i class="fas fa-temperature-high"></i> <b>Probe 2</b></button>
 					<a href="/settings" class="btn btn-outline-primary" role="button"><i class="fas fa-cog"></i></a>
 					<button type="button" class="btn btn-outline-primary" id="probe2_notify_btn" data-toggle="modal" data-target="#probe2notifyModal"><i class="far fa-bell-slash"></i></button>
 				</div>
-				</form>
 			</div>
 			{% else %}
 			<div class="card-footer text-center">
 				<div class="btn-group">
-					<button type="button" class="btn btn-outline-secondary"><i class="fas fa-temperature-high"></i> Probe 2 Off</button>
-					<a href="/settings" class="btn btn-outline-secondary" role="button"><i class="fas fa-cog"></i></a>
-					<a href="/settings" class="btn btn-outline-secondary" role="button"><i class="far fa-bell-slash"></i></a>
+					<button type="button" {% if page_theme == 'dark' %} class="btn btn-outline-light" {% else %} class="btn btn-outline-secondary"{% endif %}><i class="fas fa-temperature-high"></i> Probe 2 Off</button>
+					<a href="/settings" {% if page_theme == 'dark' %} class="btn btn-outline-light" {% else %} class="btn btn-outline-secondary"{% endif %} role="button"><i class="fas fa-cog"></i></a>
+					<a href="/settings" {% if page_theme == 'dark' %} class="btn btn-outline-light" {% else %} class="btn btn-outline-secondary"{% endif %} role="button"><i class="far fa-bell-slash"></i></a>
 				</div>
 			</div>
 			{% endif %}					
 		</div> <!-- End of card -->
 	</div> <!-- End of Column -->
-<br>
-<br>
+	<br>
+	<br>
 </div> <!-- End of Row -->
 
 <!-- Grill Notify Modal -->
@@ -115,12 +109,23 @@
 			</div>
 			<!-- Modal body -->
 			<div class="modal-body text-center">
+				{% if units == 'F' %}
+					{% if set_points['grill'] == 0 %}
+					<h1><output name="grilltempOutput" id="grilltempOutputId">125</output>°{{ units }}</h1>
+					<input type="range" class="custom-range" min="125" max="500" value="125" id="grilltempInputId" name="grilltempInputRange" oninput="grilltempOutputId.value = grilltempInputId.value">
+					{% else %}
 					<h1><output name="grilltempOutput" id="grilltempOutputId">{{ set_points['grill'] }}</output>°{{ units }}</h1>
-					{% if units == 'F' %}
 					<input type="range" class="custom-range" min="125" max="500" value="{{ set_points['grill'] }}" id="grilltempInputId" name="grilltempInputRange" oninput="grilltempOutputId.value = grilltempInputId.value">
-					{% else %} 
+					{% endif %}
+				{% else %}
+					{% if set_points['grill'] == 0 %}
+					<h1><output name="grilltempOutput" id="grilltempOutputId">50</output>°{{ units }}</h1>
+					<input type="range" class="custom-range" min="50" max="260" value="50" id="grilltempInputId" name="grilltempInputRange" oninput="grilltempOutputId.value = grilltempInputId.value">
+					{% else %}
+					<h1><output name="grilltempOutput" id="grilltempOutputId">{{ set_points['grill'] }}</output>°{{ units }}</h1>
 					<input type="range" class="custom-range" min="50" max="260" value="{{ set_points['grill'] }}" id="grilltempInputId" name="grilltempInputRange" oninput="grilltempOutputId.value = grilltempInputId.value">
-					{% endif %}	 
+					{% endif %}
+				{% endif %}
 			</div>
 			<!-- Modal footer -->
 			<div class="modal-footer">
@@ -291,6 +296,10 @@
 
 		<!-- Smoke Plus -->
 		<button type="button" data-toggle="tooltip" title="Smoke Plus" class="btn btn-outline-primary border border-secondary text-secondary" id="splus_btn" name="setmodesmokeplus" value="true" style="display:none"><i class="fas fa-fan"></i></button>
+		<!-- Temp Fan Control -->
+		{% if dc_fan %}
+		<button type="button" data-toggle="tooltip" title="Temp Fan Control" class="btn btn-outline-primary border border-secondary text-secondary" id="pwm_control_btn" name="pwm_control" value="true" style="display:none"><i class="fas fa-tachometer-alt"></i></button>
+		{% endif %}
 		<!-- ERROR Button Indicator -->
 		<button type="button" data-toggle="tooltip" title="Error!" class="btn text-white" id="error_btn" name="error_btn" value="true" style="display:none"><i class="fas fa-exclamation-triangle"></i></button>
 	</span>
@@ -308,12 +317,23 @@
 			</div>
 			<!-- Modal body -->
 			<div class="modal-body text-center">
-					<h1><output name="tempOutput" id="tempOutputId">{{ set_points['grill'] }}</output>°{{ units }}</h1>
-					{% if units == 'F' %}
-					<input type="range" class="custom-range" min="125" max="500" value="{{ set_points['grill'] }}" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
+				{% if units == 'F' %}
+					{% if set_points['grill'] == 0 %}
+					<h1><output name="tempOutput" id="tempOutputId">125</output>°{{ units }}</h1>
+					<input type="range" class="custom-range" min="125" max="500" value="125" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
 					{% else %}
+					<h1><output name="tempOutput" id="tempOutputId">{{ set_points['grill'] }}</output>°{{ units }}</h1>
+					<input type="range" class="custom-range" min="125" max="500" value="{{ set_points['grill'] }}" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
+					{% endif %}
+				{% else %}
+					{% if set_points['grill'] == 0 %}
+					<h1><output name="tempOutput" id="tempOutputId">50</output>°{{ units }}</h1>
+					<input type="range" class="custom-range" min="50" max="260" value="50" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
+					{% else %}
+					<h1><output name="tempOutput" id="tempOutputId">{{ set_points['grill'] }}</output>°{{ units }}</h1>
 					<input type="range" class="custom-range" min="50" max="260" value="{{ set_points['grill'] }}" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
 					{% endif %}
+				{% endif %}
 				</div>
 			<!-- Modal footer -->
 			<div class="modal-footer">

@@ -7,6 +7,13 @@
 			<br>
 			{{ moduleData['description'] }}
 			<br>
+			{% if moduleData['notes'] %}
+			<br>
+			<span class="badge badge-warning">NOTE:</span>
+			<i class="small"> {{ moduleData['notes'] }} </i>
+			<br>
+			<br>
+			{% endif %}
 		</div>
 	</div>
 	{% if moduleData['settings_dependencies'] != {} %}
@@ -20,9 +27,9 @@
 		</thead>
 		<tbody>
 			{% for setting in moduleData['settings_dependencies'] %}
-			<tr>
+			<tr {% if moduleData['settings_dependencies'][setting]['hidden'] %} hidden {% endif %}>
 				<td>{{ moduleData['settings_dependencies'][setting]['friendly_name'] }}</td>
-				<td>						
+				<td>
 					<select class="form-control" id="{{ moduleSection }}_{{ setting }}" name="{{ moduleSection }}_{{ setting }}">
 					{% for option in moduleData['settings_dependencies'][setting]['options'] %}
 						<option value="{{ option }}">{{ moduleData['settings_dependencies'][setting]['options'][option] }}</option>
@@ -34,5 +41,5 @@
 			{% endfor %}
 		</tbody>
 	</table>
-	{% endif %}						
+	{% endif %}
 </div>

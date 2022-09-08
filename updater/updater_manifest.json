@@ -9,9 +9,7 @@
       "apt_dependencies": []
     },
     "control": {
-      "py_dependencies": [
-        "pushbullet.py"
-      ],
+      "py_dependencies": [],
       "apt_dependencies": []
     }
   }

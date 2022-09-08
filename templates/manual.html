@@ -7,12 +7,14 @@
 
 		<div class="col">
 			<div class="card shadow">
-			<div class="card-body">
+				<div class="card-body">
 					<form name="ManualMode" method="POST">
 						{% if control['mode'] == 'Manual' %}
-						<button type="submit" class="btn btn-success btn-block shadow" name="setmode" value="stop">Manual Mode Selected</button>
+						<button type="submit" class="btn btn-success btn-block shadow" name="setmode"
+								value="stop">Turn Off Manual Mode</button>
 						{% else %}
-						<button type="submit" class="btn btn-secondary btn-block shadow" name="setmode" value="manual">Turn on Manual Mode</button>
+						<button type="submit" class="btn btn-secondary btn-block shadow" name="setmode"
+								value="manual">Turn On Manual Mode</button>
 						{% endif %}
 					</form>
 
@@ -22,37 +24,66 @@
 					<form name="ChangeValues" method="POST">
 						<div class="btn-group">
 							{% if control['manual']['fan'] == False %}
-							<button type="submit" data-toggle="tooltip" title="FAN" class="btn btn-outline-primary" name="change_output_fan" value='on'><i class="fas fa-fan"></i></button>
+							<button type="submit" data-toggle="tooltip" title="FAN" class="btn btn-outline-primary"
+									name="change_output_fan" value='on'><i class="fas fa-fan"></i></button>
 							{% else %}
-							<button type="submit" data-toggle="tooltip" title="FAN" class="btn btn-primary" name="change_output_fan" value='off'><i class="fas fa-fan"></i></button>
+							<button type="submit" data-toggle="tooltip" title="FAN" class="btn btn-primary"
+									name="change_output_fan" value='off'><i class="fas fa-fan"></i></button>
 							{% endif %}
 
 							{% if control['manual']['auger'] == False %}
-							<button type="submit" data-toggle="tooltip" title="AUGER" class="btn btn-outline-primary" name="change_output_auger" value='on'><i class="fas fa-play-circle"></i></button>
+							<button type="submit" data-toggle="tooltip" title="AUGER" class="btn btn-outline-primary"
+									name="change_output_auger" value='on'><i class="fas fa-play-circle"></i></button>
 							{% else %}
-							<button type="submit" data-toggle="tooltip" title="AUGER" class="btn btn-primary" name="change_output_auger" value='off'><i class="fas fa-play-circle"></i></button>
+							<button type="submit" data-toggle="tooltip" title="AUGER" class="btn btn-primary"
+									name="change_output_auger" value='off'><i class="fas fa-play-circle"></i></button>
 							{% endif %}
 
 							{% if control['manual']['igniter'] == False %}
-							<button type="submit" data-toggle="tooltip" title="IGNITER" class="btn btn-outline-primary" name="change_output_igniter" value='on'><i class="fas fa-fire"></i></button>
+							<button type="submit" data-toggle="tooltip" title="IGNITER" class="btn btn-outline-primary"
+									name="change_output_igniter" value='on'><i class="fas fa-fire"></i></button>
 							{% else %}
-							<button type="submit" data-toggle="tooltip" title="IGNITER" class="btn btn-primary" name="change_output_igniter" value='off'><i class="fas fa-fire"></i></button>
+							<button type="submit" data-toggle="tooltip" title="IGNITER" class="btn btn-primary"
+									name="change_output_igniter" value='off'><i class="fas fa-fire"></i></button>
 							{% endif %}
 
 							{% if control['manual']['power'] == False %}
-							<button type="submit" data-toggle="tooltip" title="POWER" class="btn btn-outline-primary" name="change_output_power" value='on'><i class="fas fa-power-off"></i></button>
+							<button type="submit" data-toggle="tooltip" title="POWER" class="btn btn-outline-primary"
+									name="change_output_power" value='on'><i class="fas fa-power-off"></i></button>
 							{% else %}
-							<button type="submit" data-toggle="tooltip" title="POWER" class="btn btn-primary" name="change_output_power" value='off'><i class="fas fa-power-off"></i></button>
+							<button type="submit" data-toggle="tooltip" title="POWER" class="btn btn-primary"
+									name="change_output_power" value='off'><i class="fas fa-power-off"></i></button>
 							{% endif %}
 						</div>
 					</form>
 
 					{% else %}
-					Enable Manual Mode Expose Buttons
+					Enable Manual Mode to Expose Buttons
 					{% endif %}
 
 				</div>
 			</div> <!-- End of card -->
+			<br>
+			<br>
+			{% if settings['globals']['dc_fan'] and control['manual']['fan'] %}
+			<div class="card shadow">
+				<form name="ChangePWM" method="POST">
+					<div class="card-header bg-primary text-white">
+						<h5>
+							<i class="fas fa-tachometer-alt"></i>&nbsp; Fan Speed
+						</h5>
+					</div>
+					<div class="card-body text-center">
+						<h1><output name="duty_cycle_output" id="duty_cycle_output_id">
+							{{ control['manual']['pwm'] }}</output>%</h1>
+						<input type="range" class="custom-range" min="0" max="100"
+							   value="{{ control['manual']['pwm'] }}" id="duty_cycle_id" name="duty_cycle_range"
+							   oninput="duty_cycle_output_id.value = duty_cycle_id.value" onchange="form.submit()">
+					</div>
+					<!-- End of card body -->
+				</form>
+			</div> <!-- End of card -->
+			{% endif %}
 		</div> <!-- End of Column -->
 
 	</div> <!-- End of Row -->

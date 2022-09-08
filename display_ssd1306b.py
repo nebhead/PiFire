@@ -25,7 +25,7 @@ from luma.core.interface.serial import i2c
 from luma.core.render import canvas
 from luma.oled.device import ssd1306
 from PIL import Image, ImageDraw, ImageFont
-from common import ReadControl, WriteControl  # Common Library for WebUI and Control Program
+from common import read_control, write_control  # Common Library for WebUI and Control Program
 from gpiozero import Button
 
 '''
@@ -38,11 +38,11 @@ class Display:
 		self.dev_pins = dev_pins
 		self.buttonslevel = buttonslevel
 		self.units = units
-		self.displayactive = False
+		self.display_active = False
 		self.in_data = None
 		self.status_data = None
-		self.displaytimeout = None 
-		self.displaycommand = 'splash'
+		self.display_timeout = None
+		self.display_command = 'splash'
 
 		# Init Display Device, Input Device, Assets
 		self._init_globals()
@@ -76,16 +76,11 @@ class Display:
 		self.input_counter = 0
 
 		# ==== Buttons Setup =====
-		if self.buttonslevel == 'HIGH':
-			# Defines for input buttons level HIGH
-			self.BUTTON_INPUT = True
-		else:
-			# Defines for input buttons level LOW
-			self.BUTTON_INPUT = False
+		self.pull_up = self.buttonslevel == 'HIGH'
 
-		self.up_button = Button(pin=self.up, pull_up=self.BUTTON_INPUT, hold_time=0.25, hold_repeat=True)
-		self.down_button = Button(pin=self.down, pull_up=self.BUTTON_INPUT, hold_time=0.25, hold_repeat=True) 
-		self.enter_button = Button(pin=self.enter, pull_up=self.BUTTON_INPUT)
+		self.up_button = Button(pin=self.up, pull_up=self.pull_up, hold_time=0.25, hold_repeat=True)
+		self.down_button = Button(pin=self.down, pull_up=self.pull_up, hold_time=0.25, hold_repeat=True)
+		self.enter_button = Button(pin=self.enter, pull_up=self.pull_up)
 
 		# Init Menu Structures
 		self._init_menu()
@@ -97,9 +92,9 @@ class Display:
 		self.down_button.when_held = self._down_callback
 
 	def _init_menu(self):
-		self.menuactive = False
-		self.menutime = 0
-		self.menuitem = ''
+		self.menu_active = False
+		self.menu_time = 0
+		self.menu_item = ''
 
 		self.menu = {}
 
@@ -155,55 +150,55 @@ class Display:
 		self.menu['current']['option'] = 0  # Current option in current mode
 
 	def _display_loop(self):
-		'''
+		"""
 		Main display loop
-		'''
+		"""
 		while True:
 			self._event_detect()
 
-			if self.displaytimeout:
-				if time.time() > self.displaytimeout:
-					self.displaycommand = 'clear'
+			if self.display_timeout:
+				if time.time() > self.display_timeout:
+					self.display_command = 'clear'
 
-			if self.displaycommand == 'clear':
-				self.displayactive = False
-				self.displaytimeout = None 
-				self.displaycommand = None
+			if self.display_command == 'clear':
+				self.display_active = False
+				self.display_timeout = None
+				self.display_command = None
 				self._display_clear()
 
-			if self.displaycommand == 'splash':
-				self.displayactive = True
+			if self.display_command == 'splash':
+				self.display_active = True
 				self._display_splash()
-				self.displaytimeout = time.time() + 3
-				self.displaycommand = None
+				self.display_timeout = time.time() + 3
+				self.display_command = None
 				time.sleep(3) # Hold splash screen for 3 seconds
 
-			if self.displaycommand == 'text': 
-				self.displayactive = True
+			if self.display_command == 'text':
+				self.display_active = True
 				self._display_text()
-				self.displaycommand = None
-				self.displaytimeout = time.time() + 10 
+				self.display_command = None
+				self.display_timeout = time.time() + 10
 
-			if self.displaycommand == 'network':
-				self.displayactive = True
+			if self.display_command == 'network':
+				self.display_active = True
 				s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 				s.connect(("8.8.8.8", 80))
-				networkip = s.getsockname()[0]
-				if (networkip != ''):
-					self._display_network(networkip)
-					self.displaytimeout = time.time() + 30
-					self.displaycommand = None
+				network_ip = s.getsockname()[0]
+				if network_ip != '':
+					self._display_network(network_ip)
+					self.display_timeout = time.time() + 30
+					self.display_command = None
 				else:
 					self.display_text("No IP Found")
 
-			if self.menuactive and not self.displaytimeout:
-				if time.time() - self.menutime > 5:
-					self.menuactive = False
+			if self.menu_active and not self.display_timeout:
+				if time.time() - self.menu_time > 5:
+					self.menu_active = False
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
-					self.displaycommand = 'clear'
-			elif (not self.displaytimeout) and (self.displayactive):
-				if (self.in_data is not None) and (self.status_data is not None):
+					self.display_command = 'clear'
+			elif not self.display_timeout and self.display_active:
+				if self.in_data is not None and self.status_data is not None:
 					self._display_current(self.in_data, self.status_data)
 			
 			time.sleep(0.1)
@@ -227,7 +222,7 @@ class Display:
 		self._init_splash()
 
 	def _init_splash(self):
-		self.splash = Image.open('color-boot-splash.png') \
+		self.splash = Image.open('static/img/display/color-boot-splash.png') \
 			.transform(self.SIZE, Image.AFFINE, (1, 0, 0, 0, 1, 0), Image.BILINEAR) \
 			.convert("L")  # \ .convert(self.DEVICE_MODE)
 		self.splashSize = self.splash.size
@@ -243,14 +238,14 @@ class Display:
 	def _display_text(self):
 		with canvas(self.device) as draw:
 			font = ImageFont.truetype("impact.ttf", 42)
-			(font_width, font_height) = font.getsize(self.displaydata)
-			draw.text((128//2 - font_width//2, 64//2 - font_height//2), self.displaydata, font=font, fill=255)
+			(font_width, font_height) = font.getsize(self.display_data)
+			draw.text((128//2 - font_width//2, 64//2 - font_height//2), self.display_data, font=font, fill=255)
 
 
-	def _display_network(self, networkip):
+	def _display_network(self, network_ip):
 		# Create canvas
 		img = Image.new('1', (self.WIDTH, self.HEIGHT), color=1)
-		img_qr = qrcode.make('http://' + networkip)
+		img_qr = qrcode.make('http://' + network_ip)
 		img_qr_width, img_qr_height = img_qr.size
 		img_qr_width *= 2
 		img_qr_height *= 2
@@ -264,7 +259,7 @@ class Display:
 	def _display_current(self, in_data, status_data):
 		with canvas(self.device) as draw:
 			# Grill Temperature (Large Centered) 
-			if(self.units == 'F'):
+			if self.units == 'F':
 				font = ImageFont.truetype("impact.ttf", 42)
 			else:
 				font = ImageFont.truetype("impact.ttf", 38)
@@ -272,15 +267,15 @@ class Display:
 			(font_width, font_height) = font.getsize(text)
 			draw.text((128//2 - font_width//2,0), text, font=font, fill=255)
 			# Active Outputs F = Fan, I = Igniter, A = Auger (Upper Left)
-			font = ImageFont.truetype("FA-Free-Solid.otf", 24)
-			if(status_data['outpins']['fan']==0):
+			font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 24)
+			if status_data['outpins']['fan']:
 				text = '\uf863'
 				draw.text((0, 0), text, font=font, fill=255)
-			if(status_data['outpins']['igniter']==0):
+			if status_data['outpins']['igniter']:
 				text = '\uf46a'
 				(font_width, font_height) = font.getsize(text)
 				draw.text((0, 5 + (64//2 - font_height//2)), text, font=font, fill=255)
-			if(status_data['outpins']['auger']==0):
+			if status_data['outpins']['auger']:
 				text = '\uf101'
 				(font_width, font_height) = font.getsize(text)
 				draw.text((128 - font_width, 5 + (64//2 - font_height//2)), text, font=font, fill=255)
@@ -290,10 +285,10 @@ class Display:
 			(font_width, font_height) = font.getsize(text)
 			draw.text((128//2 - font_width//2, 64 - font_height), text, font=font, fill=255)
 			# Notification Indicator (Upper Right)
-			font = ImageFont.truetype("FA-Free-Solid.otf", 24)
+			font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 24)
 			text = ' '
 			for item in status_data['notify_req']:
-				if status_data['notify_req'][item] == True:
+				if status_data['notify_req'][item]:
 					text = '\uf0f3'
 			(font_width, font_height) = font.getsize(text)
 			draw.text((128 - font_width, 0), text, font=font, fill=255)
@@ -302,37 +297,38 @@ class Display:
 	 ====================== Input & Menu Code ========================
 	'''
 	def _event_detect(self):
-		'''
-		Called to detect input events from buttons, encoder, touch, etc. 
-		'''
+		"""
+		Called to detect input events from buttons, encoder, touch, etc.
+		"""
 		if self.input_event:
-			command = self.input_event  # Put into variable, just in case an interrupt changes this value spurriously
-			self.displaytimeout = None  # If something is being displayed i.e. text, network, splash then override this
+			command = self.input_event  # Put into variable, just in case an interrupt changes this value spuriously
+			self.display_timeout = None  # If something is being displayed i.e. text, network, splash then override this
 
 			if command not in ['UP', 'DOWN', 'ENTER']:
 				return
 
-			self.displaycommand = None
-			self.displaydata = None 
+			self.display_command = None
+			self.display_data = None
 			self.input_event=None
-			self.menuactive = True
-			self.menutime = time.time()
+			self.menu_active = True
+			self.menu_time = time.time()
 			self._menu_display(command)
 			self.input_counter = 0
 
 	def _menu_display(self, action):
-		self.displayactive = True
+		self.display_active = True
 		# If menu is not currently being displayed, check mode and draw menu
-		if(self.menu['current']['mode'] == 'none'):  
-			control = ReadControl()
-			if (control['mode'] == 'Stop' or control['mode'] == 'Error' or control['mode'] == 'Monitor'): # If in an inactive mode
+		if self.menu['current']['mode'] == 'none':
+			control = read_control()
+			# If in an inactive mode
+			if control['mode'] == 'Stop' or control['mode'] == 'Error' or control['mode'] == 'Monitor':
 				self.menu['current']['mode'] = 'inactive'
 			else:  # Use the active menu
 				self.menu['current']['mode'] = 'active'
 			self.menu['current']['option'] = 0 # Set the menu option to the very first item in the list 
 		# If selecting the 'grill_hold_value', take action based on button press was
-		elif(self.menu['current']['mode'] == 'grill_hold_value'):
-			if(self.units == 'F'):
+		elif self.menu['current']['mode'] == 'grill_hold_value':
+			if self.units == 'F':
 				stepValue = 5  # change in temp each time button pressed 
 				minTemp = 120 # minimum temperature set for hold
 				maxTemp = 500 # maximum temperature set for hold
@@ -349,133 +345,134 @@ class Display:
 			else:
 				stepValue *= 6 
 
-			if (action == 'DOWN'):
+			if action == 'DOWN':
 				self.menu['current']['option'] -= stepValue	# Step down by stepValue degrees
-				if(self.menu['current']['option'] <= minTemp):
+				if self.menu['current']['option'] <= minTemp:
 					self.menu['current']['option'] = maxTemp # Roll over to maxTemp if you go less than 120. 
-			elif (action == 'UP'):
+			elif action == 'UP':
 				self.menu['current']['option'] += stepValue	# Step up by stepValue degrees
-				if(self.menu['current']['option'] > maxTemp):
+				if self.menu['current']['option'] > maxTemp:
 					self.menu['current']['option'] = minTemp # Roll over to minTemp if you go greater than 500. 
-			elif (action == 'ENTER'):
-				control = ReadControl()
+			elif action == 'ENTER':
+				control = read_control()
 				control['setpoints']['grill'] = self.menu['current']['option']
 				control['updated'] = True
 				control['mode'] = 'Hold'
-				WriteControl(control)
+				write_control(control)
 				self.menu['current']['mode'] = 'none'
 				self.menu['current']['option'] = 0
-				self.menuactive = False
-				self.menutime = 0
+				self.menu_active = False
+				self.menu_time = 0
 				self.clear_display()
 		# If selecting either active menu items or inactive menu items, take action based on what the button press was
 		else: 
-			if (action == 'DOWN'):
+			if action == 'DOWN':
 				self.menu['current']['option'] -= 1
-				if(self.menu['current']['option'] < 0): # Check to make sure we haven't gone past 0
+				if self.menu['current']['option'] < 0: # Check to make sure we haven't gone past 0
 					self.menu['current']['option'] = len(self.menu[self.menu['current']['mode']])-1
-				tempvalue = self.menu['current']['option']
-				tempmode = self.menu['current']['mode']
+				temp_value = self.menu['current']['option']
+				temp_mode = self.menu['current']['mode']
 				index = 0
 				selected = 'undefined'
-				for item in self.menu[tempmode]:
-					if(index == tempvalue):
+				for item in self.menu[temp_mode]:
+					if index == temp_value:
 						selected = item 
 						break
 					index += 1
-			elif (action == 'UP'):
+			elif action == 'UP':
 				self.menu['current']['option'] += 1
-				if(self.menu['current']['option'] == len(self.menu[self.menu['current']['mode']])): # Check to make sure we haven't gone past the end of the menu
+				# Check to make sure we haven't gone past the end of the menu
+				if self.menu['current']['option'] == len(self.menu[self.menu['current']['mode']]):
 					self.menu['current']['option'] = 0
-				tempvalue = self.menu['current']['option']
-				tempmode = self.menu['current']['mode']
+				temp_value = self.menu['current']['option']
+				temp_mode = self.menu['current']['mode']
 				index = 0
 				selected = 'undefined'
-				for item in self.menu[tempmode]:
-					if(index == tempvalue):
+				for item in self.menu[temp_mode]:
+					if index == temp_value:
 						selected = item 
 						break
 					index += 1
-			elif (action == 'ENTER'):
+			elif action == 'ENTER':
 				index = 0
 				selected = 'undefined'
 				for item in self.menu[self.menu['current']['mode']]:
-					if(index == self.menu['current']['option']):
+					if index == self.menu['current']['option']:
 						selected = item 
 						break
 					index += 1
 				# Inactive Mode Items
-				if(selected == 'Startup'):
+				if selected == 'Startup':
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
-					self.menuactive = False
-					self.menutime = 0
-					control = ReadControl()
+					self.menu_active = False
+					self.menu_time = 0
+					control = read_control()
 					control['updated'] = True
 					control['mode'] = 'Startup'
-					WriteControl(control)
-				elif(selected == 'Monitor'):
+					write_control(control)
+				elif selected == 'Monitor':
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
-					self.menuactive = False
-					self.menutime = 0
-					control = ReadControl()
+					self.menu_active = False
+					self.menu_time = 0
+					control = read_control()
 					control['updated'] = True
 					control['mode'] = 'Monitor'
-					WriteControl(control)
-				elif(selected == 'Stop'):
+					write_control(control)
+				elif selected == 'Stop':
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
-					self.menuactive = False
-					self.menutime = 0
+					self.menu_active = False
+					self.menu_time = 0
 					self.clear_display()
-					control = ReadControl()
+					control = read_control()
 					control['updated'] = True
 					control['mode'] = 'Stop'
-					WriteControl(control)
+					write_control(control)
 				# Active Mode
-				elif(selected == 'Shutdown'):
+				elif selected == 'Shutdown':
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
-					self.menuactive = False
-					self.menutime = 0
+					self.menu_active = False
+					self.menu_time = 0
 					self.clear_display()
-					control = ReadControl()
+					control = read_control()
 					control['updated'] = True
 					control['mode'] = 'Shutdown'
-					WriteControl(control)
-				elif(selected == 'Hold'):
+					write_control(control)
+				elif selected == 'Hold':
 					self.menu['current']['mode'] = 'grill_hold_value'
-					if(self.units == 'F'):
+					if self.units == 'F':
 						self.menu['current']['option'] = 225  # start at 225 for F
 					else: 
 						self.menu['current']['option'] = 100  # start at 100 for C
-				elif(selected == 'Smoke'):
+				elif selected == 'Smoke':
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
-					self.menuactive = False
-					self.menutime = 0
+					self.menu_active = False
+					self.menu_time = 0
 					self.clear_display()
-					control = ReadControl()
+					control = read_control()
 					control['updated'] = True
 					control['mode'] = 'Smoke'
-					WriteControl(control)
-				elif(selected == 'SmokePlus'):
+					write_control(control)
+				elif selected == 'SmokePlus':
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
-					self.menuactive = False
-					self.menutime = 0
+					self.menu_active = False
+					self.menu_time = 0
 					self.clear_display()
-					control = ReadControl()
-					if(control['s_plus'] == True):
+					control = read_control()
+					if control['s_plus']:
 						control['s_plus'] = False
 					else:
 						control['s_plus'] = True
-					WriteControl(control)
-				elif (selected == 'Network'):
+					write_control(control)
+				elif selected == 'Network':
 					self.display_network()
 
-		if(self.menu['current']['mode'] == 'grill_hold_value'):
+		if self.menu['current']['mode'] == 'grill_hold_value':
 			with canvas(self.device) as draw:
 				# Grill Temperature (Large Centered) 
 				font = ImageFont.truetype("impact.ttf", 42)
@@ -490,27 +487,27 @@ class Display:
 				draw.text((128//2 - font_width//2, 64 - font_height), text, font=font, fill=255)
 
 				# Up / Down Arrows (Middle Right)
-				font = ImageFont.truetype("FA-Free-Solid.otf", 30)
+				font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 30)
 				text = '\uf0dc' # FontAwesome Icon Sort (Up/Down Arrows)
 				(font_width, font_height) = font.getsize(text)
 				draw.text(((128 - font_width), (64//2 - font_height//2)), text, font=font, fill=255)
-		elif(self.menu['current']['mode'] != 'none'):
+		elif self.menu['current']['mode'] != 'none':
 			with canvas(self.device) as draw:
 				# Menu Option (Large Top Center) 
 				index = 0
 				selected = 'undefined'
 				for item in self.menu[self.menu['current']['mode']]:
-					if(index == self.menu['current']['option']):
+					if index == self.menu['current']['option']:
 						selected = item 
 						break
 					index += 1
-				font = ImageFont.truetype("FA-Free-Solid.otf", 42)
+				font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 42)
 				text = self.menu[self.menu['current']['mode']][selected]['icon']
 				(font_width, font_height) = font.getsize(text)
 				draw.text((128//2 - font_width//2,0), text, font=font, fill=255)
 				# Draw a Plus Icon over the top of the Smoke Icon
-				if(selected == 'SmokePlus'): 
-					font = ImageFont.truetype("FA-Free-Solid.otf", 32)
+				if selected == 'SmokePlus':
+					font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 32)
 					text = '\uf067' # FontAwesome Icon for PLUS 
 					(font_width, font_height) = font.getsize(text)
 					draw.text((128//2 - font_width//2,4), text, font=font, fill=0)
@@ -522,7 +519,7 @@ class Display:
 				draw.text((128//2 - font_width//2, 64 - font_height), text, font=font, fill=255)
 
 				# Up / Down Arrows (Middle Right)
-				font = ImageFont.truetype("FA-Free-Solid.otf", 30)
+				font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 30)
 				text = '\uf0dc' # FontAwesome Icon Sort (Up/Down Arrows)
 				(font_width, font_height) = font.getsize(text)
 				draw.text(((128 - font_width), (64//2 - font_height//2)), text, font=font, fill=255)
@@ -533,35 +530,35 @@ class Display:
 	'''
 
 	def display_status(self, in_data, status_data):
-		'''
-		- Updates the current data for the display loop, if in a work mode 
-		'''
+		"""
+		- Updates the current data for the display loop, if in a work mode
+		"""
 		self.units = status_data['units']
-		self.displayactive = True
+		self.display_active = True
 		self.in_data = in_data 
 		self.status_data = status_data 
 
 	def display_splash(self):
-		''' 
-		- Calls Splash Screen 
-		'''
-		self.displaycommand = 'splash'
+		"""
+		- Calls Splash Screen
+		"""
+		self.display_command = 'splash'
 
 	def clear_display(self):
-		''' 
-		- Clear display and turn off backlight 
-		'''
-		self.displaycommand = 'clear'
+		"""
+		- Clear display and turn off backlight
+		"""
+		self.display_command = 'clear'
 
 	def display_text(self, text):
-		''' 
-		- Display some text 
-		'''
-		self.displaycommand = 'text'
-		self.displaydata = text
+		"""
+		- Display some text
+		"""
+		self.display_command = 'text'
+		self.display_data = text
 
 	def display_network(self):
-		''' 
-		- Display Network IP QR Code 
-		'''
-		self.displaycommand = 'network'
+		"""
+		- Display Network IP QR Code
+		"""
+		self.display_command = 'network'

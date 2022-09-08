@@ -22,16 +22,19 @@ class ReadADC:
 	def __init__(self, grill_probe1_profile, grill_probe2_profile, probe_01_profile, probe_02_profile, units='F'):
 		self.ads = ADS1115.ADS1115()
 		self.units = units
-		self.SetProfiles(grill_probe1_profile, grill_probe2_profile, probe_01_profile, probe_02_profile)
-
-	def SetProfiles(self, grill_probe1_profile, grill_probe2_profile, probe_01_profile, probe_02_profile):
 		self.grill_probe1_profile = grill_probe1_profile
 		self.grill_probe2_profile = grill_probe2_profile
 		self.probe_01_profile = probe_01_profile
 		self.probe_02_profile = probe_02_profile
 
-	def adctotemp(self, adc_value, probe_profile):
-		if(adc_value > 0) and (adc_value < (probe_profile['Vs'] * 1000) * 0.99):
+	def set_profiles(self, grill_probe1_profile, grill_probe2_profile, probe_01_profile, probe_02_profile):
+		self.grill_probe1_profile = grill_probe1_profile
+		self.grill_probe2_profile = grill_probe2_profile
+		self.probe_01_profile = probe_01_profile
+		self.probe_02_profile = probe_02_profile
+
+	def __adc_to_temp(self, adc_value, probe_profile):
+		if adc_value > 0 and (adc_value < (probe_profile['Vs'] * 1000) * 0.99):
 			# Voltage at the divider (i.e. input to the ADC)
 			Vo = (adc_value / 1000) # mV to V of ADC (at the divider)
 
@@ -48,7 +51,7 @@ class ReadADC:
 			b = probe_profile['B']
 			c = probe_profile['C']
 
-		    #Steinhart Hart Equation
+			#Steinhart Hart Equation
 
 			# 1/T = A + B(ln(R)) + C(ln(R))^3
 
@@ -80,7 +83,7 @@ class ReadADC:
 		else: 
 			return tempC, Tr  # Return Calculated Temperature and Thermistor Value in Ohms
 
-	def ReadAllPorts(self):
+	def read_all_ports(self):
 		adc_value = [0,0,0,0]
 
 		try:
@@ -103,13 +106,13 @@ class ReadADC:
 			return(adc_data)
 
 		adc_data = {}
-		adc_data['Grill1Temp'], adc_data['Grill1Tr'] = self.adctotemp(adc_value[0], self.grill_probe1_profile)
+		adc_data['Grill1Temp'], adc_data['Grill1Tr'] = self.__adc_to_temp(adc_value[0], self.grill_probe1_profile)
 
-		adc_data['Probe1Temp'], adc_data['Probe1Tr'] = self.adctotemp(adc_value[1], self.probe_01_profile)
+		adc_data['Probe1Temp'], adc_data['Probe1Tr'] = self.__adc_to_temp(adc_value[1], self.probe_01_profile)
 
-		adc_data['Probe2Temp'], adc_data['Probe2Tr'] = self.adctotemp(adc_value[2], self.probe_02_profile)
+		adc_data['Probe2Temp'], adc_data['Probe2Tr'] = self.__adc_to_temp(adc_value[2], self.probe_02_profile)
 
-		adc_data['Grill2Temp'], adc_data['Grill2Tr'] = self.adctotemp(adc_value[3], self.grill_probe2_profile)
+		adc_data['Grill2Temp'], adc_data['Grill2Tr'] = self.__adc_to_temp(adc_value[3], self.grill_probe2_profile)
 
 		return (adc_data)
 

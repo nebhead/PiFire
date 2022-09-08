@@ -24,7 +24,7 @@ import threading
 from luma.core.interface.serial import spi
 from luma.lcd.device import ili9341
 from PIL import Image, ImageDraw, ImageFont
-from common import ReadControl, WriteControl  # Common Library for WebUI and Control Program
+from common import read_control, write_control  # Common Library for WebUI and Control Program
 from pyky040 import pyky040
 
 '''
@@ -37,11 +37,11 @@ class Display:
 		self.dev_pins = dev_pins
 		self.rotation = rotation
 		self.units = units
-		self.displayactive = False
+		self.display_active = False
 		self.in_data = None
 		self.status_data = None
-		self.displaytimeout = None 
-		self.displaycommand = 'splash'
+		self.display_timeout = None
+		self.display_command = 'splash'
 
 		# Init Display Device, Input Device, Assets
 		self._init_globals()
@@ -68,7 +68,6 @@ class Display:
 						  reset_hold_time=0.2, reset_release_time=0.2)
 		self.device = ili9341(self.serial, active_low=False, width=self.WIDTH, height=self.HEIGHT, gpio_LIGHT=led_pin,
 							  rotate=self.rotation)
-
 		# Setup & Start Display Loop Thread 
 		display_thread = threading.Thread(target=self._display_loop)
 		display_thread.start()
@@ -94,9 +93,9 @@ class Display:
 		encoder_thread.start()
 
 	def _init_menu(self):
-		self.menuactive = False
-		self.menutime = 0
-		self.menuitem = ''
+		self.menu_active = False
+		self.menu_time = 0
+		self.menu_item = ''
 
 		self.menu = {}
 
@@ -152,53 +151,53 @@ class Display:
 		self.menu['current']['option'] = 0  # Current option in current mode
 
 	def _display_loop(self):
-		'''
+		"""
 		Main display loop
-		'''
+		"""
 		while True:
 			self._event_detect()
 
-			if self.displaytimeout:
-				if time.time() > self.displaytimeout:
-					self.displaytimeout = None
+			if self.display_timeout:
+				if time.time() > self.display_timeout:
+					self.display_timeout = None
 
-			if self.displaycommand == 'clear':
-				self.displayactive = False
-				self.displaytimeout = None 
-				self.displaycommand = None
+			if self.display_command == 'clear':
+				self.display_active = False
+				self.display_timeout = None
+				self.display_command = None
 				self._display_clear()
 
-			if self.displaycommand == 'splash':
+			if self.display_command == 'splash':
 				self._display_splash()
-				self.displaytimeout = time.time() + 3
-				self.displaycommand = 'clear'
+				self.display_timeout = time.time() + 3
+				self.display_command = 'clear'
 				time.sleep(3) # Hold splash screen for 3 seconds
 
-			if self.displaycommand == 'text': 
+			if self.display_command == 'text':
 				self._display_text()
-				self.displaycommand = None
-				self.displaytimeout = time.time() + 10 
+				self.display_command = None
+				self.display_timeout = time.time() + 10
 
-			if self.displaycommand == 'network':
+			if self.display_command == 'network':
 				s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 				s.connect(("8.8.8.8", 80))
-				networkip = s.getsockname()[0]
-				if (networkip != ''):
-					self._display_network(networkip)
-					self.displaytimeout = time.time() + 30
-					self.displaycommand = None
+				network_ip = s.getsockname()[0]
+				if network_ip != '':
+					self._display_network(network_ip)
+					self.display_timeout = time.time() + 30
+					self.display_command = None
 				else:
 					self.display_text("No IP Found")
 
-			if self.menuactive and not self.displaytimeout:
-				if time.time() - self.menutime > 5:
-					self.menuactive = False
+			if self.menu_active and not self.display_timeout:
+				if time.time() - self.menu_time > 5:
+					self.menu_active = False
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
-					if not self.displayactive:
-						self.displaycommand = 'clear'
-			elif (not self.displaytimeout) and (self.displayactive):
-				if (self.in_data is not None) and (self.status_data is not None):
+					if not self.display_active:
+						self.display_command = 'clear'
+			elif not self.display_timeout and self.display_active:
+				if self.in_data is not None and self.status_data is not None:
 					self._display_current(self.in_data, self.status_data)
 
 			time.sleep(0.1)
@@ -225,11 +224,11 @@ class Display:
 		self._init_splash()
 
 	def _init_background(self):
-		self.background = Image.open('background.jpg')
+		self.background = Image.open('static/img/display/background.jpg')
 		self.background = self.background.resize((self.WIDTH, self.HEIGHT))
 	
 	def _init_splash(self):
-		self.splash = Image.open('color-boot-splash.png')
+		self.splash = Image.open('static/img/display/color-boot-splash.png')
 		(self.splash_width, self.splash_height) = self.splash.size
 		self.splash_width *= 2
 		self.splash_height *= 2
@@ -247,22 +246,24 @@ class Display:
 
 	def _create_icon(self, charid, size, color):
 		# Get font and character size 
-		font = ImageFont.truetype("FA-Free-Solid.otf", size)
+		font = ImageFont.truetype("static/font/FA-Free-Solid.otf", size)
 		# Create canvas
-		iconcanvas = Image.new('RGBa', font.getsize(charid))
+		icon_canvas = Image.new('RGBa', font.getsize(charid))
 		# Create drawing object
-		draw = ImageDraw.Draw(iconcanvas)
+		draw = ImageDraw.Draw(icon_canvas)
 		draw.text((0, 0), charid, font=font, fill=color)
-		iconcanvas = iconcanvas.crop(iconcanvas.getbbox())
-		return(iconcanvas)	
+		icon_canvas = icon_canvas.crop(icon_canvas.getbbox())
+		return(icon_canvas)
 
 	def _paste_icon(self, icon, canvas, position, rotation, bgcolor):
-		# First fill the background 
-		bgfill = ImageDraw.Draw(canvas)
+		# First fill the background
+		bg_fill = ImageDraw.Draw(canvas)
 		# Rotate the icon
 		icon = icon.rotate(rotation)
 		(icon_width, icon_height) = icon.size
-		#bgfill.rectangle([(position[0], position[1]), (position[0] + icon_width, position[1] + icon_height)], fill=bgcolor)
+		#bg_fill.rectangle([(position[0], position[1]), (position[0] + icon_width, position[1] + icon_height)],
+		# fill=bgcolor)
+
 		# Set the position & paste the icon onto the canvas
 		canvas.paste(icon, position, icon)
 		return(canvas)
@@ -276,11 +277,12 @@ class Display:
 		# Draw Rounded Rectangle Border
 		drawing = self._rounded_rectangle(drawing, (
 			self.WIDTH // 8 - 22, self.HEIGHT // 6 - 22, self.WIDTH // 8 + 22, self.HEIGHT // 6 + 22), 5,
-										icon_color)
+										  icon_color)
 		# Fill Rectangle with Black
 		drawing = self._rounded_rectangle(drawing, (
 			self.WIDTH // 8 - 20, self.HEIGHT // 6 - 20, self.WIDTH // 8 + 20, self.HEIGHT // 6 + 20), 5,
-										(0, 0, 0))
+										  (0, 0, 0))
+
 		# Create Icon Image
 		icon = self._create_icon(icon_char, 36, icon_color)
 		position = (self.WIDTH // 8 - 18, self.HEIGHT // 6 - 18)
@@ -296,15 +298,17 @@ class Display:
 		# Draw Rounded Rectangle Border
 		drawing = self._rounded_rectangle(drawing, (
 			self.WIDTH // 8 - 22, self.HEIGHT // 2.5 - 22, self.WIDTH // 8 + 22, self.HEIGHT // 2.5 + 22), 5,
-										icon_color_tuple)
+										  icon_color_tuple)
 		# Fill Rectangle with Black
 		drawing = self._rounded_rectangle(drawing, (
 			self.WIDTH // 8 - 20, self.HEIGHT // 2.5 - 20, self.WIDTH // 8 + 20, self.HEIGHT // 2.5 + 20), 5,
-										(0, 0, 0))
+										  (0, 0, 0))
+
 		# Create Icon Image
 		icon = self._create_icon(icon_char, 36, icon_color_tuple)
 		(icon_width, icon_height) = icon.size 
-		position = ((self.WIDTH // 8 - 18) + (icon_width // 8) + self.auger_step, (int(self.HEIGHT // 2.5) - 18) + (icon_height // 3))
+		position = ((self.WIDTH // 8 - 18) + (icon_width // 8) + self.auger_step, (int(self.HEIGHT // 2.5) - 18) +
+					(icon_height // 3))
 		canvas = self._paste_icon(icon, canvas, position, 0, (0,0,0))
 		return(canvas)
 
@@ -337,15 +341,16 @@ class Display:
 		draw = ImageDraw.Draw(img)
 
 		font = ImageFont.truetype("impact.ttf", 42)
-		(font_width, font_height) = font.getsize(self.displaydata)
-		draw.text((self.WIDTH // 2 - font_width // 2, self.HEIGHT // 2 - font_height // 2), self.displaydata, font=font, fill=255)
+		(font_width, font_height) = font.getsize(self.display_data)
+		draw.text((self.WIDTH // 2 - font_width // 2, self.HEIGHT // 2 - font_height // 2), self.display_data,
+				  font=font, fill=255)
 
 		self._display_canvas(img)
 
-	def _display_network(self, networkip):
+	def _display_network(self, network_ip):
 		# Create canvas
 		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(255, 255, 255))
-		img_qr = qrcode.make('http://' + networkip)
+		img_qr = qrcode.make('http://' + network_ip)
 		img_qr_width, img_qr_height = img_qr.size
 		img_qr_width *= 2
 		img_qr_height *= 2
@@ -357,7 +362,7 @@ class Display:
 		self._display_canvas(img)
 
 	def _display_current(self, in_data, status_data):
-		if (self.menuactive == False):
+		if not self.menu_active:
 			# Create canvas
 			img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
 
@@ -377,14 +382,14 @@ class Display:
 			else:
 				endpoint = ((360 * in_data['GrillTemp']) // 300) + 90
 			draw.pieslice((80, 10, 240, 170), start=90, end=endpoint, fill=(200, 0, 0))  # Red Arc for Temperature
-			if (in_data['GrillSetPoint'] > 0) and (status_data['mode'] == 'Hold'):
+			if in_data['GrillSetPoint'] > 0 and status_data['mode'] == 'Hold':
 				if self.units == 'F':
 					setpoint = ((360 * in_data['GrillSetPoint']) // 600) + 90
 				else:
 					setpoint = ((360 * in_data['GrillSetPoint']) // 300) + 90
 				draw.pieslice((80, 10, 240, 170), start=setpoint - 2, end=setpoint + 2,
 							  fill=(0, 200, 255))  # Blue Arc for SetPoint
-			if (in_data['GrillNotifyPoint'] > 0) and (status_data['notify_req']['grill']):
+			if in_data['GrillNotifyPoint'] > 0 and status_data['notify_req']['grill']:
 				if self.units == 'F':
 					setpoint = ((360 * in_data['GrillNotifyPoint']) // 600) + 90
 				else:
@@ -402,7 +407,7 @@ class Display:
 			draw.text((self.WIDTH // 2 - font_width // 2, 20), text, font=font, fill=(255, 255, 255))
 
 			# Grill Set Point (Small Centered Top)
-			if (in_data['GrillSetPoint'] > 0) and (status_data['mode'] == 'Hold'):
+			if in_data['GrillSetPoint'] > 0 and status_data['mode'] == 'Hold':
 				font = ImageFont.truetype("trebuc.ttf", 16)
 				text = ">" + str(in_data['GrillSetPoint'])[:5] + "<"
 				(font_width, font_height) = font.getsize(text)
@@ -410,7 +415,7 @@ class Display:
 						  fill=(0, 200, 255))
 
 			# Grill Temperature (Large Centered)
-			if (self.units == 'F'):
+			if self.units == 'F':
 				font = ImageFont.truetype("trebuc.ttf", 80)
 				text = str(in_data['GrillTemp'])[:5]
 				(font_width, font_height) = font.getsize(text)
@@ -438,7 +443,7 @@ class Display:
 				endpoint = ((360 * in_data['Probe1Temp']) // 150) + 90
 			draw.pieslice((10, self.HEIGHT // 2 + 10, 110, self.HEIGHT // 2 + 110), start=90, end=endpoint,
 						  fill=(3, 161, 252))
-			if (in_data['Probe1SetPoint'] > 0):
+			if in_data['Probe1SetPoint'] > 0:
 				if self.units == 'F':
 					setpoint = ((360 * in_data['Probe1SetPoint']) // 300) + 90
 				else:
@@ -455,7 +460,7 @@ class Display:
 					  fill=(255, 255, 255))
 
 			# PROBE1 Temperature (Large Centered)
-			if (self.units == 'F'):
+			if self.units == 'F':
 				font = ImageFont.truetype("trebuc.ttf", 36)
 			else:
 				font = ImageFont.truetype("trebuc.ttf", 30)
@@ -465,7 +470,7 @@ class Display:
 					  fill=(255, 255, 255))
 
 			# PROBE1 Set Point (Small Centered Bottom)
-			if (in_data['Probe1SetPoint'] > 0):
+			if in_data['Probe1SetPoint'] > 0:
 				font = ImageFont.truetype("trebuc.ttf", 16)
 				text = ">" + str(in_data['Probe1SetPoint'])[:5] + "<"
 				(font_width, font_height) = font.getsize(text)
@@ -483,7 +488,7 @@ class Display:
 				endpoint = ((360 * in_data['Probe2Temp']) // 150) + 90
 			draw.pieslice((self.WIDTH - 110, self.HEIGHT // 2 + 10, self.WIDTH - 10, self.HEIGHT // 2 + 110), start=90,
 						  end=endpoint, fill=(3, 161, 252))
-			if (in_data['Probe2SetPoint'] > 0):
+			if in_data['Probe2SetPoint'] > 0:
 				if self.units == 'F':
 					setpoint = ((360 * in_data['Probe2SetPoint']) // 300) + 90
 				else:
@@ -501,7 +506,7 @@ class Display:
 					  fill=(255, 255, 255))
 
 			# PROBE2 Temperature (Large Centered)
-			if (self.units == 'F'):
+			if self.units == 'F':
 				font = ImageFont.truetype("trebuc.ttf", 36)
 			else:
 				font = ImageFont.truetype("trebuc.ttf", 30)
@@ -511,7 +516,7 @@ class Display:
 					  fill=(255, 255, 255))
 
 			# PROBE2 Set Point (Small Centered Bottom)
-			if (in_data['Probe2SetPoint'] > 0):
+			if in_data['Probe2SetPoint'] > 0:
 				font = ImageFont.truetype("trebuc.ttf", 16)
 				text = ">" + str(in_data['Probe2SetPoint'])[:5] + "<"
 				(font_width, font_height) = font.getsize(text)
@@ -520,7 +525,7 @@ class Display:
 
 			# Active Outputs
 			''' Test of pulsing color '''
-			if self.inc_pulse_color == True: 
+			if self.inc_pulse_color:
 				if self.icon_color < 200:
 					self.icon_color += 20
 				else: 
@@ -533,14 +538,14 @@ class Display:
 				else: 
 					self.icon_color -= 20 
 
-			font = ImageFont.truetype("FA-Free-Solid.otf", 36)
-			if (status_data['outpins']['fan'] == 0):
+			font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 36)
+			if status_data['outpins']['fan']:
 				# F = Fan (Upper Left), 40x40, origin 10,10
 				self._draw_fan_icon(img)
 				self.fan_rotation += 30 
 				if self.fan_rotation >= 360: 
 					self.fan_rotation = 0
-			if (status_data['outpins']['igniter'] == 0):
+			if status_data['outpins']['igniter']:
 				# I = Igniter(Center Right)
 				text = '\uf46a'
 				(font_width, font_height) = font.getsize(text)
@@ -552,7 +557,7 @@ class Display:
 					self.HEIGHT // 2.5 + 20), 5, (0, 0, 0))
 				draw.text((7 * (self.WIDTH // 8) - font_width // 2, self.HEIGHT // 2.5 - font_height // 2), text,
 						  font=font, fill=(255, self.icon_color, 0))
-			if (status_data['outpins']['auger'] == 0):
+			if status_data['outpins']['auger']:
 				# A = Auger (Center Left)
 				self._draw_auger_icon(img)
 				self.auger_step += 1 
@@ -562,10 +567,10 @@ class Display:
 			# Notification Indicator (Right)
 			show_notify_indicator = False
 			for item in status_data['notify_req']:
-				if status_data['notify_req'][item] == True:
+				if status_data['notify_req'][item]:
 					show_notify_indicator = True
-			if (show_notify_indicator == True):
-				font = ImageFont.truetype("FA-Free-Solid.otf", 36)
+			if show_notify_indicator:
+				font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 36)
 				text = '\uf0f3'
 				(font_width, font_height) = font.getsize(text)
 				draw = self._rounded_rectangle(draw, (
@@ -579,21 +584,20 @@ class Display:
 				draw.text((7 * (self.WIDTH // 8) - font_width // 2 + 1, self.HEIGHT // 6 - font_height // 2), text,
 						  font=font, fill=(255, 255, 0))
 
-			# Smoke Plus Inidicator
-			if (status_data['s_plus'] == True) and (
-					(status_data['mode'] == 'Smoke') or (status_data['mode'] == 'Hold')):
+			# Smoke Plus Indicator
+			if status_data['s_plus'] and (status_data['mode'] == 'Smoke' or status_data['mode'] == 'Hold'):
 				draw = self._rounded_rectangle(draw, (
 					7 * (self.WIDTH // 8) - 22, self.HEIGHT // 2.5 - 22, 7 * (self.WIDTH // 8) + 22,
 					self.HEIGHT // 2.5 + 22), 5, (150, 0, 255))
 				draw = self._rounded_rectangle(draw, (
 					7 * (self.WIDTH // 8) - 20, self.HEIGHT // 2.5 - 20, 7 * (self.WIDTH // 8) + 20,
 					self.HEIGHT // 2.5 + 20), 5, (0, 0, 0))
-				font = ImageFont.truetype("FA-Free-Solid.otf", 32)
+				font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 32)
 				text = '\uf0c2'  # FontAwesome Icon for Cloud (Smoke)
 				(font_width, font_height) = font.getsize(text)
 				draw.text((7 * (self.WIDTH // 8) - font_width // 2, self.HEIGHT // 2.5 - font_height // 2), text,
 						  font=font, fill=(100, 0, 255))
-				font = ImageFont.truetype("FA-Free-Solid.otf", 24)
+				font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 24)
 				text = '\uf067'  # FontAwesome Icon for PLUS
 				(font_width, font_height) = font.getsize(text)
 				draw.text((7 * (self.WIDTH // 8) - font_width // 2, self.HEIGHT // 2.5 - font_height // 2 + 3), text,
@@ -603,9 +607,9 @@ class Display:
 			font = ImageFont.truetype("trebuc.ttf", 16)
 			text = "Hopper:" + str(status_data['hopper_level']) + "%"
 			(font_width, font_height) = font.getsize(text)
-			if (status_data['hopper_level'] > 70):
+			if status_data['hopper_level'] > 70:
 				hopper_color = (0, 255, 0)
-			elif (status_data['hopper_level'] > 30):
+			elif status_data['hopper_level'] > 30:
 				hopper_color = (255, 150, 0)
 			else:
 				hopper_color = (255, 0, 0)
@@ -637,40 +641,40 @@ class Display:
 	 ====================== Input & Menu Code ========================
 	'''
 	def _event_detect(self):
-		'''
-		Called to detect input events from buttons, encoder, touch, etc. 
-		'''
+		"""
+		Called to detect input events from buttons, encoder, touch, etc.
+		"""
 		command = self.input_event  # Save to variable to prevent spurious changes 
 		if command:
-			self.displaytimeout = None  # If something is being displayed i.e. text, network, splash then override this
+			self.display_timeout = None  # If something is being displayed i.e. text, network, splash then override this
 
-			if (command != 'ENTER') and (self.input_counter == 0):
+			if command != 'ENTER' and self.input_counter == 0:
 				return
 			else: 
 				if command not in ['UP', 'DOWN', 'ENTER']:
 					return
 
-				self.displaycommand = None
-				self.displaydata = None 
+				self.display_command = None
+				self.display_data = None
 				self.input_event=None
-				self.menuactive = True
-				self.menutime = time.time()
+				self.menu_active = True
+				self.menu_time = time.time()
 				self._menu_display(command)
 				self.input_counter = 0
 
 	def _menu_display(self, action):
 		# If menu is not currently being displayed, check mode and draw menu
-		if (self.menu['current']['mode'] == 'none'):
-			control = ReadControl()
-			if (control['mode'] == 'Stop' or control['mode'] == 'Error' or control[
-				'mode'] == 'Monitor'):  # If in an inactive mode
+		if self.menu['current']['mode'] == 'none':
+			control = read_control()
+			# If in an inactive mode
+			if control['mode'] == 'Stop' or control['mode'] == 'Error' or control['mode'] == 'Monitor':
 				self.menu['current']['mode'] = 'inactive'
 			else:  # Use the active menu
 				self.menu['current']['mode'] = 'active'
 			self.menu['current']['option'] = 0  # Set the menu option to the very first item in the list
 		# If selecting the 'grill_hold_value', take action based on button press was
-		elif (self.menu['current']['mode'] == 'grill_hold_value'):
-			if (self.units == 'F'):
+		elif self.menu['current']['mode'] == 'grill_hold_value':
+			if self.units == 'F':
 				stepValue = 5  # change in temp each time button pressed
 				minTemp = 120  # minimum temperature set for hold
 				maxTemp = 500  # maximum temperature set for hold
@@ -687,135 +691,135 @@ class Display:
 			else:
 				stepValue *= 6 
 
-			if (action == 'DOWN'):
+			if action == 'DOWN':
 				self.menu['current']['option'] -= stepValue  # Step down by stepValue degrees
-				if (self.menu['current']['option'] <= minTemp):
+				if self.menu['current']['option'] <= minTemp:
 					self.menu['current']['option'] = maxTemp  # Roll over to maxTemp if you go less than 120.
-			elif (action == 'UP'):
+			elif action == 'UP':
 				self.menu['current']['option'] += stepValue  # Step up by stepValue degrees
-				if (self.menu['current']['option'] > maxTemp):
+				if self.menu['current']['option'] > maxTemp:
 					self.menu['current']['option'] = minTemp  # Roll over to minTemp if you go greater than 500.
-			elif (action == 'ENTER'):
-				control = ReadControl()
+			elif action == 'ENTER':
+				control = read_control()
 				control['setpoints']['grill'] = self.menu['current']['option']
 				control['updated'] = True
 				control['mode'] = 'Hold'
-				WriteControl(control)
+				write_control(control)
 				self.menu['current']['mode'] = 'none'
 				self.menu['current']['option'] = 0
-				self.menuactive = False
-				self.menutime = 0
+				self.menu_active = False
+				self.menu_time = 0
 		# If selecting either active menu items or inactive menu items, take action based on what the button press was
 		else:
-			if (action == 'DOWN'):
+			if action == 'DOWN':
 				self.menu['current']['option'] -= 1
-				if (self.menu['current']['option'] < 0):  # Check to make sure we haven't gone past 0
+				if self.menu['current']['option'] < 0:  # Check to make sure we haven't gone past 0
 					self.menu['current']['option'] = len(self.menu[self.menu['current']['mode']]) - 1
-				tempvalue = self.menu['current']['option']
-				tempmode = self.menu['current']['mode']
+				temp_value = self.menu['current']['option']
+				temp_mode = self.menu['current']['mode']
 				index = 0
 				selected = 'undefined'
-				for item in self.menu[tempmode]:
-					if (index == tempvalue):
+				for item in self.menu[temp_mode]:
+					if (index == temp_value):
 						selected = item
 						break
 					index += 1
-			elif (action == 'UP'):
+			elif action == 'UP':
 				self.menu['current']['option'] += 1
-				if (self.menu['current']['option'] == len(self.menu[self.menu['current'][
-					'mode']])):  # Check to make sure we haven't gone past the end of the menu
+				# Check to make sure we haven't gone past the end of the menu
+				if self.menu['current']['option'] == len(self.menu[self.menu['current']['mode']]):
 					self.menu['current']['option'] = 0
-				tempvalue = self.menu['current']['option']
-				tempmode = self.menu['current']['mode']
+				temp_value = self.menu['current']['option']
+				temp_mode = self.menu['current']['mode']
 				index = 0
 				selected = 'undefined'
-				for item in self.menu[tempmode]:
-					if (index == tempvalue):
+				for item in self.menu[temp_mode]:
+					if index == temp_value:
 						selected = item
 						break
 					index += 1
-			elif (action == 'ENTER'):
+			elif action == 'ENTER':
 				index = 0
 				selected = 'undefined'
 				for item in self.menu[self.menu['current']['mode']]:
-					if (index == self.menu['current']['option']):
+					if index == self.menu['current']['option']:
 						selected = item
 						break
 					index += 1
 				# Inactive Mode Items
-				if (selected == 'Startup'):
-					self.displayactive = True
+				if selected == 'Startup':
+					self.display_active = True
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
-					self.menuactive = False
-					self.menutime = 0
-					control = ReadControl()
+					self.menu_active = False
+					self.menu_time = 0
+					control = read_control()
 					control['updated'] = True
 					control['mode'] = 'Startup'
-					WriteControl(control)
-				elif (selected == 'Monitor'):
-					self.displayactive = True
+					write_control(control)
+				elif selected == 'Monitor':
+					self.display_active = True
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
-					self.menuactive = False
-					self.menutime = 0
-					control = ReadControl()
+					self.menu_active = False
+					self.menu_time = 0
+					control = read_control()
 					control['updated'] = True
 					control['mode'] = 'Monitor'
-					WriteControl(control)
-				elif (selected == 'Stop'):
+					write_control(control)
+				elif selected == 'Stop':
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
-					self.menuactive = False
-					self.menutime = 0
+					self.menu_active = False
+					self.menu_time = 0
 					self.clear_display()
-					control = ReadControl()
+					control = read_control()
 					control['updated'] = True
 					control['mode'] = 'Stop'
-					WriteControl(control)
+					write_control(control)
 				# Active Mode
-				elif (selected == 'Shutdown'):
-					self.displayactive = True
+				elif selected == 'Shutdown':
+					self.display_active = True
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
-					self.menuactive = False
-					self.menutime = 0
-					control = ReadControl()
+					self.menu_active = False
+					self.menu_time = 0
+					control = read_control()
 					control['updated'] = True
 					control['mode'] = 'Shutdown'
-					WriteControl(control)
-				elif (selected == 'Hold'):
-					self.displayactive = True
+					write_control(control)
+				elif selected == 'Hold':
+					self.display_active = True
 					self.menu['current']['mode'] = 'grill_hold_value'
 					if self.in_data['GrillSetPoint'] == 0:
-						if (self.units == 'F'):
+						if self.units == 'F':
 							self.menu['current']['option'] = 200  # start at 200 for F
 						else:
 							self.menu['current']['option'] = 100  # start at 100 for C
 					else:
 						self.menu['current']['option'] = self.in_data['GrillSetPoint']
-				elif (selected == 'Smoke'):
-					self.displayactive = True
+				elif selected == 'Smoke':
+					self.display_active = True
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
-					self.menuactive = False
-					self.menutime = 0
-					control = ReadControl()
+					self.menu_active = False
+					self.menu_time = 0
+					control = read_control()
 					control['updated'] = True
 					control['mode'] = 'Smoke'
-					WriteControl(control)
-				elif (selected == 'SmokePlus'):
+					write_control(control)
+				elif selected == 'SmokePlus':
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
-					self.menuactive = False
-					self.menutime = 0
-					control = ReadControl()
-					if (control['s_plus'] == True):
+					self.menu_active = False
+					self.menu_time = 0
+					control = read_control()
+					if control['s_plus']:
 						control['s_plus'] = False
 					else:
 						control['s_plus'] = True
-					WriteControl(control)
-				elif (selected == 'Network'):
+					write_control(control)
+				elif selected == 'Network':
 					self.display_network()
 
 		# Create canvas
@@ -826,7 +830,7 @@ class Display:
 		# Create drawing object
 		draw = ImageDraw.Draw(img)
 
-		if (self.menu['current']['mode'] == 'grill_hold_value'):
+		if self.menu['current']['mode'] == 'grill_hold_value':
 			# Grill Temperature (Large Centered)
 			font = ImageFont.truetype("trebuc.ttf", 120)
 			text = str(self.menu['current']['option'])
@@ -847,23 +851,23 @@ class Display:
 			draw.text((self.WIDTH // 2 - font_width // 2, (self.HEIGHT // 8) * 6.25), text, font=font,
 					  fill=(255, 255, 255))
 
-		elif (self.menu['current']['mode'] != 'none'):
+		elif self.menu['current']['mode'] != 'none':
 			# Menu Option (Large Top Center)
 			index = 0
 			selected = 'undefined'
 			for item in self.menu[self.menu['current']['mode']]:
-				if (index == self.menu['current']['option']):
+				if index == self.menu['current']['option']:
 					selected = item
 					break
 				index += 1
-			font = ImageFont.truetype("FA-Free-Solid.otf", 120)
+			font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 120)
 			text = self.menu[self.menu['current']['mode']][selected]['icon']
 			(font_width, font_height) = font.getsize(text)
 			draw.text((self.WIDTH // 2 - font_width // 2, self.HEIGHT // 2.5 - font_height // 2), text, font=font,
 					  fill=(255, 255, 255))
 			# Draw a Plus Icon over the top of the Smoke Icon
-			if (selected == 'SmokePlus'):
-				font = ImageFont.truetype("FA-Free-Solid.otf", 80)
+			if selected == 'SmokePlus':
+				font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 80)
 				text = '\uf067'  # FontAwesome Icon for PLUS
 				(font_width, font_height) = font.getsize(text)
 				draw.text((self.WIDTH // 2 - font_width // 2, self.HEIGHT // 2.5 - font_height // 2), text, font=font,
@@ -892,7 +896,7 @@ class Display:
 			down_color = (255, 255, 0)
 
 		# Up / Down Arrows (Middle Right)
-		font = ImageFont.truetype("FA-Free-Solid.otf", 80)
+		font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 80)
 		text = '\uf0de'  # FontAwesome Icon Sort (Up Arrow)
 		(font_width, font_height) = font.getsize(text)
 		draw.text(((self.WIDTH - (font_width // 2) ** 1.3), (self.HEIGHT // 2.5 - font_height // 2)), text,
@@ -907,7 +911,7 @@ class Display:
 		time.sleep(0.05)
 
 		# Up / Down Arrows (Middle Right)
-		font = ImageFont.truetype("FA-Free-Solid.otf", 80)
+		font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 80)
 		text = '\uf0de'  # FontAwesome Icon Sort (Up Arrow)
 		(font_width, font_height) = font.getsize(text)
 		draw.text(((self.WIDTH - (font_width // 2) ** 1.3), (self.HEIGHT // 2.5 - font_height // 2)), text,
@@ -925,35 +929,35 @@ class Display:
 	'''
 
 	def display_status(self, in_data, status_data):
-		'''
-		- Updates the current data for the display loop, if in a work mode 
-		'''
+		"""
+		- Updates the current data for the display loop, if in a work mode
+		"""
 		self.units = status_data['units']
-		self.displayactive = True
+		self.display_active = True
 		self.in_data = in_data 
 		self.status_data = status_data 
 
 	def display_splash(self):
-		''' 
-		- Calls Splash Screen 
-		'''
-		self.displaycommand = 'splash'
+		"""
+		- Calls Splash Screen
+		"""
+		self.display_command = 'splash'
 
 	def clear_display(self):
-		''' 
-		- Clear display and turn off backlight 
-		'''
-		self.displaycommand = 'clear'
+		"""
+		- Clear display and turn off backlight
+		"""
+		self.display_command = 'clear'
 
 	def display_text(self, text):
-		''' 
-		- Display some text 
-		'''
-		self.displaycommand = 'text'
-		self.displaydata = text
+		"""
+		- Display some text
+		"""
+		self.display_command = 'text'
+		self.display_data = text
 
 	def display_network(self):
-		''' 
-		- Display Network IP QR Code 
-		'''
-		self.displaycommand = 'network'
+		"""
+		- Display Network IP QR Code
+		"""
+		self.display_command = 'network'
