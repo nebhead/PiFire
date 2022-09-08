@@ -131,7 +131,7 @@
 				"apt_dependencies" : [],
 				"settings_dependencies" : {
 					"units" : {
-						"friendly_name" : "Temperature Units",
+						"friendly_name" : "Temp Units",
 						"description" : "Select the temperature units to use for PiFire globally.  (this can be modified in settings later)",
 						"options" : {"F" : "Farenheit", "C": "Celsius"},
 						"settings" : ["globals", "units"]
