@@ -561,7 +561,7 @@ def _default_grill_probes():
 
 	return grill_probes
 
-def default_cookfilestruct():
+def _default_cookfilestruct():
 	settings = read_settings()
 
 	cookfilestruct = {}
@@ -1289,7 +1289,7 @@ def set_updater_install_status(percent, status, output):
 	cmdsts.set('updater:status', status)
 	cmdsts.set('updater:output', output)
 
-def WriteCookFile(): 
+def write_cookfile(): 
 	'''
 	This function gathers all of the data from the previous cook
 	from startup to stop mode, and saves this to a Cook File stored
@@ -1318,7 +1318,7 @@ def WriteCookFile():
 
 	#thumbnail_UUID = generateUUID()
 
-	cook_file_struct = default_cookfilestruct()
+	cook_file_struct = _default_cookfilestruct()
 
 	cook_file_struct['metadata']['title'] = title
 	cook_file_struct['metadata']['starttime'] = starttime
@@ -1335,7 +1335,7 @@ def WriteCookFile():
 		cook_file_struct['graph_data']['probe1_setpoint'].append(datastruct['PSP1'])
 		cook_file_struct['graph_data']['probe2_setpoint'].append(datastruct['PSP2'])
 
-	cook_file_struct['events'] = ProcessMetrics(read_metrics(all=True), augerrate=settings['globals']['augerrate'])
+	cook_file_struct['events'] = process_metrics(read_metrics(all=True), augerrate=settings['globals']['augerrate'])
 
 	# 1. Create all JSON data files
 	files_list = ['metadata', 'graph_data', 'graph_labels', 'events', 'comments', 'assets']
@@ -1371,7 +1371,7 @@ def WriteCookFile():
 	# Flush metrics DB for tracking certain metrics
 	write_metrics(flush=True)
 
-def ReadCookFile(filename):
+def read_cookfile(filename):
 	'''
 	Read FULL Cook File into Python Dictionary
 	'''
@@ -1381,7 +1381,7 @@ def ReadCookFile(filename):
 	status = 'OK'
 	json_types = ['metadata', 'graph_data', 'graph_labels', 'events', 'comments', 'assets']
 	for jsonfile in json_types:
-		cook_file_struct[jsonfile], status = ReadCFJSONData(filename, jsonfile)
+		cook_file_struct[jsonfile], status = read_cf_json_data(filename, jsonfile)
 		if jsonfile == 'metadata':
 			fileversion = semantic_ver_to_list(cook_file_struct['metadata']['version'])
 			minfileversion = semantic_ver_to_list(settings['versions']['cookfile']) # Minimum file version to load assets
@@ -1392,7 +1392,7 @@ def ReadCookFile(filename):
 
 	return(cook_file_struct, status)
 
-def ReadCFJSONData(filename, jsonfile, unpackassets=True):
+def read_cf_json_data(filename, jsonfile, unpackassets=True):
 	'''
 	Read Cook File JSON data out of the zipped pifire cookfile:
 		Must specify the cook file name, and the jsonfile element to be extracted (without the .json extension)
@@ -1452,7 +1452,7 @@ def ReadCFJSONData(filename, jsonfile, unpackassets=True):
 
 	return(dictionary, status)
 
-def UpdateCookFile(cookfiledata, cookfilename, jsonfile):
+def update_cookfile(cookfiledata, cookfilename, jsonfile):
 	'''
 	Write an update to the cookfile
 	'''
@@ -1491,11 +1491,11 @@ def upgrade_cookfile(cookfilename):
 	settings = read_settings()
 
 	status = 'OK'
-	cookfilestruct = default_cookfilestruct()
+	cookfilestruct = _default_cookfilestruct()
 	
 	json_types = ['metadata', 'graph_data', 'graph_labels', 'events', 'comments', 'assets']
 	for jsonfile in json_types:
-		jsondata, status = ReadCFJSONData(cookfilename, jsonfile, unpackassets=False)
+		jsondata, status = read_cf_json_data(cookfilename, jsonfile, unpackassets=False)
 		if status != 'OK':
 			break  # Exit loop and function, error string in status
 		elif jsonfile == 'metadata':
@@ -1514,17 +1514,17 @@ def upgrade_cookfile(cookfilename):
 		else:
 			cookfilestruct[jsonfile] = jsondata
 		# Update the original file with new data
-		UpdateCookFile(cookfilestruct[jsonfile], cookfilename, jsonfile)
+		update_cookfile(cookfilestruct[jsonfile], cookfilename, jsonfile)
 
 	return(cookfilestruct, status)
 
 def fixup_assets(cookfilename):
 	#print(f'\n\nFixing up {cookfilename}\n')
-	cookfilestruct, status = ReadCookFile(cookfilename)
+	cookfilestruct, status = read_cookfile(cookfilename)
 	if status != 'OK':
 		#print(f'Status Message after initial read: {status} \n')
 		if 'assets' in status:
-			cookfilestruct['assets'], status = ReadCFJSONData(cookfilename, 'assets', unpackassets=False)
+			cookfilestruct['assets'], status = read_cf_json_data(cookfilename, 'assets', unpackassets=False)
 			#print(f'Status Message after forcing assets read: {status} \n')
 
 	# Loop through assets list, check actual files exist, remove from assets list if not 
@@ -1592,21 +1592,21 @@ def fixup_assets(cookfilename):
 				#print(f'Removed {asset} from comment# {index}')
 
 	# TODO Update cookfile with fixed up assets
-	UpdateCookFile(cookfilestruct['assets'], cookfilename, 'assets')
+	update_cookfile(cookfilestruct['assets'], cookfilename, 'assets')
 	status = 'OK'
 	#print(f'New cookfilestruct:\n{cookfilestruct["assets"]}')
 	return(cookfilestruct, status)
 
 def remove_assets(cookfilename, assetlist):
 	status = 'OK'
-	metadata, status = ReadCFJSONData(cookfilename, 'metadata')
-	comments, status = ReadCFJSONData(cookfilename, 'comments')
-	assets, status = ReadCFJSONData(cookfilename, 'assets', unpackassets=False)
+	metadata, status = read_cf_json_data(cookfilename, 'metadata')
+	comments, status = read_cf_json_data(cookfilename, 'comments')
+	assets, status = read_cf_json_data(cookfilename, 'assets', unpackassets=False)
 
 	# Check Thumbnail against assetlist
 	if metadata['thumbnail'] in assetlist:
 		metadata['thumbnail'] = ''
-		UpdateCookFile(metadata, cookfilename, 'metadata')
+		update_cookfile(metadata, cookfilename, 'metadata')
 
 	# Check Comment Assets against assetlist
 	modified = False
@@ -1616,7 +1616,7 @@ def remove_assets(cookfilename, assetlist):
 				comments[index]['assets'].remove(asset)
 				modified = True 
 	if modified:
-		UpdateCookFile(comments, cookfilename, 'comments')
+		update_cookfile(comments, cookfilename, 'comments')
 
 	# Check Asset.json against assetlist 
 	modified = False 
@@ -1626,7 +1626,7 @@ def remove_assets(cookfilename, assetlist):
 			assets.remove(asset)
 			modified = True
 	if modified:
-		UpdateCookFile(assets, cookfilename, 'assets')
+		update_cookfile(assets, cookfilename, 'assets')
 
 	# Traverse list of asset files from the compressed file, remove asset and thumb
 	try: 
@@ -1653,7 +1653,7 @@ def remove_assets(cookfilename, assetlist):
 
 	return status
 
-def ProcessMetrics(metrics_data, augerrate=0.3):
+def process_metrics(metrics_data, augerrate=0.3):
 	# Process Additional Metrics Information for Display
 	for index in range(0, len(metrics_data)):
 		# Convert Start Time

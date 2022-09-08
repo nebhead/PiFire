@@ -168,10 +168,10 @@ def history_page(action=None):
 				return redirect('/history')
 			if('opencookfile' in response):
 				cookfilename = HISTORY_FOLDER + response['opencookfile']
-				cookfilestruct, status = ReadCookFile(cookfilename)
+				cookfilestruct, status = read_cookfile(cookfilename)
 				if(status == 'OK'):
 					events = cookfilestruct['events']
-					event_totals = prepare_event_totals(events)
+					event_totals = _prepare_event_totals(events)
 					comments = cookfilestruct['comments']
 					for comment in comments:
 						comment['text'] = comment['text'].replace('\n', '<br>')
@@ -209,7 +209,7 @@ def history_page(action=None):
 					read_history(0, flushhistory=True)
 
 	elif (request.method == 'GET') and (action == 'export'):
-		exportfilename = prepare_graph_csv()
+		exportfilename = _prepare_graph_csv()
 		return send_file(exportfilename, as_attachment=True, max_age=0)
 
 	num_items = settings['history_page']['minutes'] * 20
@@ -312,7 +312,7 @@ def cookfiledata(action=None):
 		requestjson = request.json
 		if('full_graph' in requestjson):
 			filename = requestjson['filename']
-			cookfiledata, status = ReadCookFile(filename)
+			cookfiledata, status = read_cookfile(filename)
 
 			if(status == 'OK'):
 				annotations = _prepare_annotations(0, cookfiledata['events'])
@@ -339,7 +339,7 @@ def cookfiledata(action=None):
 			assetlist = []
 			cookfilename = requestjson['cookfilename']
 			commentid = requestjson['commentid']
-			comments, status = ReadCFJSONData(cookfilename, 'comments')
+			comments, status = read_cf_json_data(cookfilename, 'comments')
 			for comment in comments:
 				if comment['id'] == commentid:
 					assetlist = comment['assets']
@@ -352,8 +352,8 @@ def cookfiledata(action=None):
 			cookfilename = requestjson['cookfilename']
 			commentid = requestjson['commentid']
 			
-			assets, status = ReadCFJSONData(cookfilename, 'assets')
-			metadata, status = ReadCFJSONData(cookfilename, 'metadata')
+			assets, status = read_cf_json_data(cookfilename, 'assets')
+			metadata, status = read_cf_json_data(cookfilename, 'metadata')
 			for asset in assets:
 				asset_object = {
 					'assetname' : asset['filename'],
@@ -364,7 +364,7 @@ def cookfiledata(action=None):
 
 			# Grab list of selected assets in comment currently
 			selectedassets = []
-			comments, status = ReadCFJSONData(cookfilename, 'comments')
+			comments, status = read_cf_json_data(cookfilename, 'comments')
 			for comment in comments:
 				if comment['id'] == commentid:
 					selectedassets = comment['assets']
@@ -381,7 +381,7 @@ def cookfiledata(action=None):
 			# Grab list of all assets in file, build assetlist
 			assetlist = []
 			cookfilename = requestjson['cookfilename']
-			assets, status = ReadCFJSONData(cookfilename, 'assets')
+			assets, status = read_cf_json_data(cookfilename, 'assets')
 
 			for asset in assets:
 				asset_object = {
@@ -398,7 +398,7 @@ def cookfiledata(action=None):
 			commentid = requestjson['commentid']
 			cookfilename = requestjson['cookfilename']
 
-			comments, status = ReadCFJSONData(cookfilename, 'comments')
+			comments, status = read_cf_json_data(cookfilename, 'comments')
 			if status == 'OK':
 				assetlist = []
 				for comment in comments:
@@ -438,18 +438,18 @@ def cookfiledata(action=None):
 
 		if('dl_eventfile' in requestform):
 			filename = requestform['dl_eventfile']
-			cookfiledata, status = ReadCFJSONData(filename, 'events')
+			cookfiledata, status = read_cf_json_data(filename, 'events')
 			if(status == 'OK'):
-				csvfilename = prepare_metrics_csv(cookfiledata, filename)
+				csvfilename = _prepare_metrics_csv(cookfiledata, filename)
 				return send_file(csvfilename, as_attachment=True, max_age=0)
 
 		if('dl_graphfile' in requestform):
 			# Download CSV of the Graph Data Only
 			filename = requestform['dl_graphfile']
-			cookfiledata, status = ReadCookFile(filename)
+			cookfiledata, status = read_cookfile(filename)
 			if(status == 'OK'):
-				cookfiledata['graph_data'] = ConvertLabels(cookfiledata['graph_data'])
-				csvfilename = prepare_graph_csv(cookfiledata['graph_data'], cookfiledata['graph_labels'], filename)
+				cookfiledata['graph_data'] = _convert_labels(cookfiledata['graph_data'])
+				csvfilename = _prepare_graph_csv(cookfiledata['graph_data'], cookfiledata['graph_labels'], filename)
 				return send_file(csvfilename, as_attachment=True, max_age=0)
 
 		if('ulcookfilereq' in requestform):
@@ -472,12 +472,12 @@ def cookfiledata(action=None):
 			filename = requestform['filename']
 			# Reload Cook File
 			cookfilename = HISTORY_FOLDER + filename
-			cookfilestruct, status = ReadCookFile(cookfilename)
+			cookfilestruct, status = read_cookfile(cookfilename)
 			if status=='OK':
 				cookfilestruct['metadata']['thumbnail'] = thumbnail
-				UpdateCookFile(cookfilestruct['metadata'], HISTORY_FOLDER + filename, 'metadata')
+				update_cookfile(cookfilestruct['metadata'], HISTORY_FOLDER + filename, 'metadata')
 				events = cookfilestruct['events']
-				event_totals = prepare_event_totals(events)
+				event_totals = _prepare_event_totals(events)
 				comments = cookfilestruct['comments']
 				for comment in comments:
 					comment['text'] = comment['text'].replace('\n', '<br>')
@@ -512,7 +512,7 @@ def cookfiledata(action=None):
 			for remotefile in uploadedfiles:
 				if (remotefile.filename != ''):
 					# Reload Cook File
-					cookfilestruct, status = ReadCookFile(cookfilename)
+					cookfilestruct, status = read_cookfile(cookfilename)
 					parent_id = cookfilestruct['metadata']['id']
 					tmp_path = f'/tmp/pifire/{parent_id}'
 					if not os.path.exists(tmp_path):
@@ -522,17 +522,17 @@ def cookfiledata(action=None):
 						filename = secure_filename(remotefile.filename)
 						pathfile = os.path.join(tmp_path, filename)
 						remotefile.save(pathfile)
-						asset_id, asset_filetype = AddCFAsset(cookfilename, tmp_path, filename)
+						asset_id, asset_filetype = _add_cf_asset(cookfilename, tmp_path, filename)
 						if 'ulthumbfn' in requestform:
-							set_thumbnail(cookfilename, f'{asset_id}.{asset_filetype}')
+							_set_thumbnail(cookfilename, f'{asset_id}.{asset_filetype}')
 						#  Reload all of the data
-						cookfilestruct, status = ReadCookFile(cookfilename)
+						cookfilestruct, status = read_cookfile(cookfilename)
 					else:
 						errors.append('Disallowed File Upload.')
 
 			if(status == 'OK'):
 				events = cookfilestruct['events']
-				event_totals = prepare_event_totals(events)
+				event_totals = _prepare_event_totals(events)
 				comments = cookfilestruct['comments']
 				for comment in comments:
 					comment['text'] = comment['text'].replace('\n', '<br>')
@@ -554,12 +554,12 @@ def cookfiledata(action=None):
 			page = int(requestform['page'])
 			reverse = True if requestform['reverse'] == 'true' else False
 			itemsperpage = int(requestform['itemsperpage'])
-			filelist = get_cookfilelist()
+			filelist = _get_cookfilelist()
 			cookfilelist = []
 			for filename in filelist:
 				cookfilelist.append({'filename' : filename, 'title' : '', 'thumbnail' : ''})
-			paginated_cookfile = paginate_list(cookfilelist, 'filename', reverse, itemsperpage, page)
-			paginated_cookfile['displaydata'] = get_cookfilelist_details(paginated_cookfile['displaydata'])
+			paginated_cookfile = _paginate_list(cookfilelist, 'filename', reverse, itemsperpage, page)
+			paginated_cookfile['displaydata'] = _get_cookfilelist_details(paginated_cookfile['displaydata'])
 			return render_template('_cookfilelist.html', pgntdcf = paginated_cookfile)
 
 		if('repairCF' in requestform):
@@ -596,7 +596,7 @@ def cookfiledata(action=None):
 					grill_name=settings['globals']['grill_name'])
 			else: 
 				events = cookfilestruct['events']
-				event_totals = prepare_event_totals(events)
+				event_totals = _prepare_event_totals(events)
 				comments = cookfilestruct['comments']
 				for comment in comments:
 					comment['text'] = comment['text'].replace('\n', '<br>')
@@ -632,7 +632,7 @@ def cookfiledata(action=None):
 					grill_name=settings['globals']['grill_name'])
 			else: 
 				events = cookfilestruct['events']
-				event_totals = prepare_event_totals(events)
+				event_totals = _prepare_event_totals(events)
 				comments = cookfilestruct['comments']
 				for comment in comments:
 					comment['text'] = comment['text'].replace('\n', '<br>')
@@ -655,7 +655,7 @@ def cookfiledata(action=None):
 			filenameonly = requestform['delmedialist']
 			assetlist = requestform['delAssetlist'].split(',') if requestform['delAssetlist'] != '' else []
 			status = remove_assets(cookfilename, assetlist)
-			cookfilestruct, status = ReadCookFile(cookfilename)
+			cookfilestruct, status = read_cookfile(cookfilename)
 			if status != 'OK':
 				errors.append(status)
 				if 'version' in status:
@@ -670,7 +670,7 @@ def cookfiledata(action=None):
 					grill_name=settings['globals']['grill_name'])
 			else: 
 				events = cookfilestruct['events']
-				event_totals = prepare_event_totals(events)
+				event_totals = _prepare_event_totals(events)
 				comments = cookfilestruct['comments']
 				for comment in comments:
 					comment['text'] = comment['text'].replace('\n', '<br>')
@@ -699,7 +699,7 @@ def updatecookdata(action=None):
 		requestjson = request.json 
 		if('comments' in requestjson):
 			filename = requestjson['filename']
-			cookfiledata, status = ReadCFJSONData(filename, 'comments')
+			cookfiledata, status = read_cf_json_data(filename, 'comments')
 
 			if('commentnew' in requestjson):
 				now = datetime.datetime.now()
@@ -711,14 +711,14 @@ def updatecookdata(action=None):
 				comment_struct['time'] = now.strftime('%H:%M')
 				comment_struct['assets'] = []
 				cookfiledata.append(comment_struct)
-				result = UpdateCookFile(cookfiledata, filename, 'comments')
+				result = update_cookfile(cookfiledata, filename, 'comments')
 				if(result == 'OK'):
 					return jsonify({'result' : 'OK', 'newcommentid' : comment_struct['id'], 'newcommentdt': comment_struct['date'] + ' ' + comment_struct['time']})
 			if('delcomment' in requestjson):
 				for item in cookfiledata:
 					if item['id'] == requestjson['delcomment']:
 						cookfiledata.remove(item)
-						result = UpdateCookFile(cookfiledata, filename, 'comments')
+						result = update_cookfile(cookfiledata, filename, 'comments')
 						if(result == 'OK'):
 							return jsonify({'result' : 'OK'})
 			if('editcomment' in requestjson):
@@ -731,17 +731,17 @@ def updatecookdata(action=None):
 						now = datetime.datetime.now()
 						item['text'] = requestjson['text']
 						item['edited'] = now.strftime('%Y-%m-%d %H:%M')
-						result = UpdateCookFile(cookfiledata, filename, 'comments')
+						result = update_cookfile(cookfiledata, filename, 'comments')
 						if(result == 'OK'):
 							return jsonify({'result' : 'OK', 'text' : item['text'].replace('\n', '<br>'), 'edited' : item['edited'], 'datetime' : item['date'] + ' ' + item['time']})
 		
 		if('metadata' in requestjson):
 			filename = requestjson['filename']
-			cookfiledata, status = ReadCFJSONData(filename, 'metadata')
+			cookfiledata, status = read_cf_json_data(filename, 'metadata')
 			if(status == 'OK'):
 				if('editTitle' in requestjson):
 					cookfiledata['title'] = requestjson['editTitle']
-					result = UpdateCookFile(cookfiledata, filename, 'metadata')
+					result = update_cookfile(cookfiledata, filename, 'metadata')
 					if(result == 'OK'):
 						return jsonify({'result' : 'OK'})
 					else: 
@@ -749,21 +749,21 @@ def updatecookdata(action=None):
 		
 		if('graph_labels' in requestjson):
 			filename = requestjson['filename']
-			cookfiledata, status = ReadCFJSONData(filename, 'graph_labels')
+			cookfiledata, status = read_cf_json_data(filename, 'graph_labels')
 			if(status == 'OK'):
 				if('grill1_label' in requestjson):
 					cookfiledata['grill1_label'] = requestjson['grill1_label']
-					result = UpdateCookFile(cookfiledata, filename, 'graph_labels')
+					result = update_cookfile(cookfiledata, filename, 'graph_labels')
 					if(result == 'OK'):
 						return jsonify({'result' : 'OK'})
 				if('probe1_label' in requestjson):
 					cookfiledata['probe1_label'] = requestjson['probe1_label']
-					result = UpdateCookFile(cookfiledata, filename, 'graph_labels')
+					result = update_cookfile(cookfiledata, filename, 'graph_labels')
 					if(result == 'OK'):
 						return jsonify({'result' : 'OK'})
 				if('probe2_label' in requestjson):
 					cookfiledata['probe2_label'] = requestjson['probe2_label']
-					result = UpdateCookFile(cookfiledata, filename, 'graph_labels')
+					result = update_cookfile(cookfiledata, filename, 'graph_labels')
 					if(result == 'OK'):
 						return jsonify({'result' : 'OK'})
 			else:
@@ -774,16 +774,16 @@ def updatecookdata(action=None):
 			assetfilename = requestjson['assetfilename']
 			commentid = requestjson['commentid']
 			state = requestjson['state']
-			comments, status = ReadCFJSONData(filename, 'comments')
+			comments, status = read_cf_json_data(filename, 'comments')
 			result = 'OK'
 			for index in range(0, len(comments)):
 				if comments[index]['id'] == commentid:
 					if assetfilename in comments[index]['assets'] and state == 'selected':
 						comments[index]['assets'].remove(assetfilename)
-						result = UpdateCookFile(comments, filename, 'comments')
+						result = update_cookfile(comments, filename, 'comments')
 					elif assetfilename not in comments[index]['assets'] and state == 'unselected':
 						comments[index]['assets'].append(assetfilename)
-						result = UpdateCookFile(comments, filename, 'comments')
+						result = update_cookfile(comments, filename, 'comments')
 					break
 
 			return jsonify({'result' : result})
@@ -2073,11 +2073,11 @@ Metrics Routes
 def metrics_page(action=None):
 	global settings
 
-	metrics_data = ProcessMetrics(read_metrics(all=True))
+	metrics_data = process_metrics(read_metrics(all=True))
 
 	if (request.method == 'GET') and (action == 'export'):
 		filename = datetime.datetime.now().strftime('%Y%m%d-%H%M') + '-PiFire-Metrics-Export'
-		csvfilename = prepare_metrics_csv(metrics_data, filename)
+		csvfilename = _prepare_metrics_csv(metrics_data, filename)
 		return send_file(csvfilename, as_attachment=True, max_age=0)
 
 	return render_template('metrics.html', settings=settings, page_theme=settings['globals']['page_theme'], 
@@ -2211,7 +2211,7 @@ def _prepare_annotations(displayed_starttime, metrics_data=[]):
 
 	return(annotation_json)
 
-def prepare_graph_csv(graph_data=[], graph_labels=[], filename=''):
+def _prepare_graph_csv(graph_data=[], graph_labels=[], filename=''):
 		# Create filename if no name specified
 		if(filename == ''):
 			now = datetime.datetime.now()
@@ -2262,7 +2262,7 @@ def prepare_graph_csv(graph_data=[], graph_labels=[], filename=''):
 
 		return(exportfilename)
 
-def ConvertLabels(indata):
+def _convert_labels(indata):
 	'''
 	Temporary function to convert Grill Data Labels to Legacy Format
 	'''
@@ -2277,7 +2277,7 @@ def ConvertLabels(indata):
 
 	return(outdata)
 
-def prepare_metrics_csv(metrics_data, filename):
+def _prepare_metrics_csv(metrics_data, filename):
 	filename = filename.replace('.json', '')
 	filename = filename.replace('./history/', '')
 	filename = '/tmp/' + filename + '-PiFire-Metrics-Export.csv'
@@ -2306,7 +2306,7 @@ def prepare_metrics_csv(metrics_data, filename):
 	csvfile.close()
 	return(filename)
 
-def prepare_event_totals(events):
+def _prepare_event_totals(events):
 	auger_time = 0
 	for index in range(0, len(events)):
 		auger_time += events[index]['augerontime']
@@ -2329,7 +2329,7 @@ def prepare_event_totals(events):
 
 	return(event_totals)
 
-def AddCFAsset(cookfilename, assetpath, assetfile):
+def _add_cf_asset(cookfilename, assetpath, assetfile):
 	#  Guess the filetype
 	filetype = assetfile.rsplit('.', 1)[1].lower()
 	#  Create new asset ID
@@ -2341,25 +2341,25 @@ def AddCFAsset(cookfilename, assetpath, assetfile):
 			'type' : filetype
 		}
 	#  Read current asset.json
-	assets, status = ReadCFJSONData(cookfilename, 'assets')
+	assets, status = read_cf_json_data(cookfilename, 'assets')
 	
 	if status == 'OK':
 		#  Append the new asset information to the file
 		assets.append(newasset)
 		#  Update cookfile with new asset information
-		UpdateCookFile(assets, cookfilename, 'assets')
+		update_cookfile(assets, cookfilename, 'assets')
 		#  Rename asset file to [asset_id].[filetype]
 		fullsize = f'{assetpath}/{asset_id}.{filetype}'
 		os.rename(os.path.join(assetpath, assetfile), fullsize)
 
 		#  Rotate image if needed
-		rotate_image(assetpath, asset_id, filetype)
+		_rotate_image(assetpath, asset_id, filetype)
 
 		#  Create a thumbnail from the image
-		thumbpathname, status = create_thumbnail(assetpath, asset_id, filetype)
+		thumbpathname, status = _create_thumbnail(assetpath, asset_id, filetype)
 
 		#  Resize original image
-		status = resize_image(assetpath, asset_id, filetype, max_size=(800, 600))
+		status = _resize_image(assetpath, asset_id, filetype, max_size=(800, 600))
 
 		#  Add the files to the zipfile
 		with zipfile.ZipFile(cookfilename, 'a') as archive:
@@ -2371,7 +2371,7 @@ def AddCFAsset(cookfilename, assetpath, assetfile):
 
 	return(asset_id, filetype)
 
-def rotate_image(filepath, asset_id, filetype):
+def _rotate_image(filepath, asset_id, filetype):
 	status = 'OK'
 	'''
 		Rotates the image if necessary.	
@@ -2413,7 +2413,7 @@ def rotate_image(filepath, asset_id, filetype):
 
 	return status
 
-def create_thumbnail(filepath, asset_id, filetype, crop=True):
+def _create_thumbnail(filepath, asset_id, filetype, crop=True):
 	status = 'OK'
 	#  Import PIL for image manipulations
 	from PIL import Image
@@ -2443,7 +2443,7 @@ def create_thumbnail(filepath, asset_id, filetype, crop=True):
 
 	return(thumbpathname, status)
 
-def resize_image(assetpath, asset_id, filetype, max_size=(800, 600)):
+def _resize_image(assetpath, asset_id, filetype, max_size=(800, 600)):
 	status = 'OK'
 	#  Import PIL for image manipulations
 	from PIL import Image, ImageOps
@@ -2457,18 +2457,18 @@ def resize_image(assetpath, asset_id, filetype, max_size=(800, 600)):
 
 	return(status)
 
-def set_thumbnail(cookfilename, thumbfilename):
+def _set_thumbnail(cookfilename, thumbfilename):
 	'''
 	cookfilename = name of the cookfile that is being edited
 	thumbfilename = filename of the thumbnail image which is being set
 		without the assets/thumbs/ folder in the path 
 	'''
-	metadata, status = ReadCFJSONData(cookfilename, 'metadata')
+	metadata, status = read_cf_json_data(cookfilename, 'metadata')
 	if status=='OK':
 		metadata['thumbnail'] = f'{thumbfilename}'
-		UpdateCookFile(metadata, cookfilename, 'metadata')
+		update_cookfile(metadata, cookfilename, 'metadata')
 
-def unpack_thumb(thumbname, filename):
+def _unpack_thumb(thumbname, filename):
 	try:
 		with zipfile.ZipFile(filename, mode="r") as archive:
 			thumb = archive.read(f'assets/thumbs/{thumbname}')  # Read bytes into variable
@@ -2497,7 +2497,7 @@ def unpack_thumb(thumbname, filename):
 	
 	return path_filename 
 
-def paginate_list(datalist, sortkey='', reversesortorder=False, itemsperpage=10, page=1):
+def _paginate_list(datalist, sortkey='', reversesortorder=False, itemsperpage=10, page=1):
 	if sortkey != '':
 		#  Sort list if key is specified
 		tempdatalist = sorted(datalist, key=lambda d: d[sortkey], reverse=reversesortorder)
@@ -2542,7 +2542,7 @@ def paginate_list(datalist, sortkey='', reversesortorder=False, itemsperpage=10,
 
 	return (pagination)
 
-def get_cookfilelist(folder=HISTORY_FOLDER):
+def _get_cookfilelist(folder=HISTORY_FOLDER):
 	# Grab list of Historical Cook Files
 	if not os.path.exists(folder):
 		os.mkdir(folder)
@@ -2553,13 +2553,13 @@ def get_cookfilelist(folder=HISTORY_FOLDER):
 			cookfiles.append(file)
 	return(cookfiles)
 
-def get_cookfilelist_details(cookfilelist):
+def _get_cookfilelist_details(cookfilelist):
 	cookfiledetails = []
 	for item in cookfilelist:
 		filename = HISTORY_FOLDER + item['filename']
-		cookfiledata, status = ReadCFJSONData(filename, 'metadata')
+		cookfiledata, status = read_cf_json_data(filename, 'metadata')
 		if(status == 'OK'):
-			thumbnail = unpack_thumb(cookfiledata['thumbnail'], filename) if ('thumbnail' in cookfiledata) else ''
+			thumbnail = _unpack_thumb(cookfiledata['thumbnail'], filename) if ('thumbnail' in cookfiledata) else ''
 			cookfiledetails.append({'filename' : item['filename'], 'title' : cookfiledata['title'], 'thumbnail' : thumbnail})
 		else:
 			cookfiledetails.append({'filename' : item['filename'], 'title' : 'ERROR', 'thumbnail' : ''})

@@ -986,7 +986,7 @@ while True:
 				metrics = read_metrics()
 				metrics['mode'] = 'Stop'
 				write_metrics(metrics)
-				WriteCookFile()
+				write_cookfile()
 
 			if control['status'] == 'monitor' and control['mode'] == 'Error':
 				grill_platform.power_on()
