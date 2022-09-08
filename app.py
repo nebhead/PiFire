@@ -23,6 +23,7 @@ import threading
 import zipfile
 from threading import Thread
 from datetime import datetime
+from common import _generate_uuid, _epoch_to_time
 from updater import *  # Library for doing project updates from GitHub
 
 BACKUP_PATH = './backups/'  # Path to backups of settings.json, pelletdb.json
@@ -154,9 +155,9 @@ def timer():
 @app.route('/history/<action>', methods=['POST','GET'])
 @app.route('/history', methods=['POST','GET'])
 def history_page(action=None):
-
 	global settings
 	control = read_control()
+	errors = []
 
 	if request.method == 'POST':
 		response = request.form
@@ -175,8 +176,8 @@ def history_page(action=None):
 					for comment in comments:
 						comment['text'] = comment['text'].replace('\n', '<br>')
 					metadata = cookfilestruct['metadata']
-					metadata['starttime'] = epoch_to_time(metadata['starttime'] / 1000)
-					metadata['endtime'] = epoch_to_time(metadata['endtime'] / 1000)
+					metadata['starttime'] = _epoch_to_time(metadata['starttime'] / 1000)
+					metadata['endtime'] = _epoch_to_time(metadata['endtime'] / 1000)
 					labels = cookfilestruct['graph_labels']
 					assets = cookfilestruct['assets']
 					filenameonly = response['opencookfile']
@@ -211,39 +212,12 @@ def history_page(action=None):
 		exportfilename = prepare_graph_csv()
 		return send_file(exportfilename, as_attachment=True, max_age=0)
 
-		exportfilename = "export.csv"
-		csvfile = open('/tmp/'+exportfilename, "w")
-
-		list_length = len(data_list) # Length of list
-
-		if(list_length > 0):
-			# Build Time_List, Settemp_List, Probe_List, cur_probe_temps
-			writeline = 'Time,Grill Temp,Grill SetTemp,Probe 1 Temp,Probe 1 SetTemp,Probe 2 Temp, Probe 2 SetTemp\n'
-			csvfile.write(writeline)
-			last = -1
-			for index in range(0, list_length):
-				if (int((index/list_length)*100) > last):
-					#print('Generating Data: ' + str(int((index/list_length)*100)) + "%")
-					last = int((index/list_length)*100)
-				# Convert time data to datetime format
-				converted_dt = datetime.datetime.fromtimestamp(int(data_list[index][0]) / 1000)
-				data_list[index][0] = converted_dt.strftime('%Y-%m-%d %H:%M:%S')
-				writeline = ','.join(data_list[index])
-				csvfile.write(writeline + '\n')
-		else:
-			writeline = 'No Data\n'
-			csvfile.write(writeline)
-
-		csvfile.close()
-
-		return send_file('/tmp/'+exportfilename, as_attachment=True, max_age=0)
-
 	num_items = settings['history_page']['minutes'] * 20
 	probes_enabled = settings['probe_settings']['probes_enabled']
 
 	data_blob = _prepare_data(num_items, True, settings['history_page']['datapoints'])
 
-	autorefresh = settings['history_page']['autorefresh']
+	auto_refresh = settings['history_page']['autorefresh']
 
 	# Calculate Displayed Start Time
 	displayed_starttime = time.time() - (settings['history_page']['minutes'] * 60)
@@ -340,7 +314,7 @@ def cookfiledata(action=None):
 			cookfiledata, status = ReadCookFile(filename)
 
 			if(status == 'OK'):
-				annotations = prepare_annotations(0, cookfiledata['events'])
+				annotations = _prepare_annotations(0, cookfiledata['events'])
 
 				json_data = { 
 					'GT1_label' : cookfiledata['graph_labels']['grill1_label'],
@@ -484,7 +458,7 @@ def cookfiledata(action=None):
 			if (remotefile.filename != ''):
 				# If the user does not select a file, the browser submits an
 				# empty file without a filename.
-				if remotefile and allowed_file(remotefile.filename):
+				if remotefile and _allowed_file(remotefile.filename):
 					filename = secure_filename(remotefile.filename)
 					remotefile.save(os.path.join(app.config['HISTORY_FOLDER'], filename))
 				else:
@@ -507,8 +481,8 @@ def cookfiledata(action=None):
 				for comment in comments:
 					comment['text'] = comment['text'].replace('\n', '<br>')
 				metadata = cookfilestruct['metadata']
-				metadata['starttime'] = epoch_to_time(metadata['starttime'] / 1000)
-				metadata['endtime'] = epoch_to_time(metadata['endtime'] / 1000)
+				metadata['starttime'] = _epoch_to_time(metadata['starttime'] / 1000)
+				metadata['endtime'] = _epoch_to_time(metadata['endtime'] / 1000)
 				labels = cookfilestruct['graph_labels']
 				assets = cookfilestruct['assets']
 				
@@ -543,7 +517,7 @@ def cookfiledata(action=None):
 					if not os.path.exists(tmp_path):
 						os.mkdir(tmp_path)
 
-					if remotefile and allowed_file(remotefile.filename):
+					if remotefile and _allowed_file(remotefile.filename):
 						filename = secure_filename(remotefile.filename)
 						pathfile = os.path.join(tmp_path, filename)
 						remotefile.save(pathfile)
@@ -562,8 +536,8 @@ def cookfiledata(action=None):
 				for comment in comments:
 					comment['text'] = comment['text'].replace('\n', '<br>')
 				metadata = cookfilestruct['metadata']
-				metadata['starttime'] = epoch_to_time(metadata['starttime'] / 1000)
-				metadata['endtime'] = epoch_to_time(metadata['endtime'] / 1000)
+				metadata['starttime'] = _epoch_to_time(metadata['starttime'] / 1000)
+				metadata['endtime'] = _epoch_to_time(metadata['endtime'] / 1000)
 				labels = cookfilestruct['graph_labels']
 				assets = cookfilestruct['assets']
 
@@ -626,8 +600,8 @@ def cookfiledata(action=None):
 				for comment in comments:
 					comment['text'] = comment['text'].replace('\n', '<br>')
 				metadata = cookfilestruct['metadata']
-				metadata['starttime'] = epoch_to_time(metadata['starttime'] / 1000)
-				metadata['endtime'] = epoch_to_time(metadata['endtime'] / 1000)
+				metadata['starttime'] = _epoch_to_time(metadata['starttime'] / 1000)
+				metadata['endtime'] = _epoch_to_time(metadata['endtime'] / 1000)
 				labels = cookfilestruct['graph_labels']
 				assets = cookfilestruct['assets']
 
@@ -662,8 +636,8 @@ def cookfiledata(action=None):
 				for comment in comments:
 					comment['text'] = comment['text'].replace('\n', '<br>')
 				metadata = cookfilestruct['metadata']
-				metadata['starttime'] = epoch_to_time(metadata['starttime'] / 1000)
-				metadata['endtime'] = epoch_to_time(metadata['endtime'] / 1000)
+				metadata['starttime'] = _epoch_to_time(metadata['starttime'] / 1000)
+				metadata['endtime'] = _epoch_to_time(metadata['endtime'] / 1000)
 				labels = cookfilestruct['graph_labels']
 				assets = cookfilestruct['assets']
 
@@ -700,8 +674,8 @@ def cookfiledata(action=None):
 				for comment in comments:
 					comment['text'] = comment['text'].replace('\n', '<br>')
 				metadata = cookfilestruct['metadata']
-				metadata['starttime'] = epoch_to_time(metadata['starttime'] / 1000)
-				metadata['endtime'] = epoch_to_time(metadata['endtime'] / 1000)
+				metadata['starttime'] = _epoch_to_time(metadata['starttime'] / 1000)
+				metadata['endtime'] = _epoch_to_time(metadata['endtime'] / 1000)
 				labels = cookfilestruct['graph_labels']
 				assets = cookfilestruct['assets']
 
@@ -730,7 +704,7 @@ def updatecookdata(action=None):
 				now = datetime.datetime.now()
 				comment_struct = {}
 				comment_struct['text'] = requestjson['commentnew']
-				comment_struct['id'] = generateUUID()
+				comment_struct['id'] = _generate_uuid()
 				comment_struct['edited'] = ''
 				comment_struct['date'] = now.strftime('%Y-%m-%d')
 				comment_struct['time'] = now.strftime('%H:%M')
@@ -1758,9 +1732,9 @@ def admin_page(action=None):
 			elif remote_file.filename != '':
 				# If the user does not select a file, the browser submits an
 				# empty file without a filename.
-				if remotefile and allowed_file(remotefile.filename):
-					filename = secure_filename(remotefile.filename)
-					remotefile.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+				if remote_file and _allowed_file(remote_file.filename):
+					filename = secure_filename(remote_file.filename)
+					remote_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 					#print(f'{filename} saved to {BACKUPPATH}')
 					notify = "success"
 					pelletdb = read_pellet_db(filename=BACKUP_PATH+filename)
@@ -2098,14 +2072,15 @@ Metrics Routes
 def metrics_page(action=None):
 	global settings
 
-	metrics_data = ProcessMetrics(ReadMetrics(all=True))
+	metrics_data = ProcessMetrics(read_metrics(all=True))
 
 	if (request.method == 'GET') and (action == 'export'):
 		filename = datetime.datetime.now().strftime('%Y%m%d-%H%M') + '-PiFire-Metrics-Export'
 		csvfilename = prepare_metrics_csv(metrics_data, filename)
 		return send_file(csvfilename, as_attachment=True, max_age=0)
 
-	return render_template('metrics.html', settings=settings, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'], metrics_data=metrics_data)
+	return render_template('metrics.html', settings=settings, page_theme=settings['globals']['page_theme'], 
+							grill_name=settings['globals']['grill_name'], metrics_data=metrics_data)
 
 '''
 Supporting Functions
@@ -2130,7 +2105,7 @@ def _prepare_data(num_items=10, reduce=True, data_points=60):
 	global settings
 	units = settings['globals']['units']
 
-	data_list = read_history(num_items)
+	data_struct = read_history(num_items)
 
 	data_blob = {}
 
@@ -2186,16 +2161,16 @@ def _prepare_data(num_items=10, reduce=True, data_points=60):
 
 	return(data_blob)
 
-def prepare_annotations(displayed_starttime, metrics_data=[]):
+def _prepare_annotations(displayed_starttime, metrics_data=[]):
 	if(metrics_data == []):
-	metrics_data = read_metrics(all=True)
+		metrics_data = read_metrics(all=True)
 	annotation_json = {}
 	# Process Additional Metrics Information for Display
 	for index in range(0, len(metrics_data)):
 		# Check if metric falls in the displayed time window
 		if metrics_data[index]['starttime'] > displayed_starttime:
 			# Convert Start Time
-			# starttime = epoch_to_time(metrics_data[index]['starttime']/1000)
+			# starttime = _epoch_to_time(metrics_data[index]['starttime']/1000)
 			mode = metrics_data[index]['mode']
 			color = 'blue'
 			if mode == 'Startup':
@@ -2263,7 +2238,7 @@ def prepare_graph_csv(graph_data=[], graph_labels=[], filename=''):
 			labels += graph_labels['probe2_label'] + ' Setpoint\n'
 
 		if(graph_data == []):
-			graph_data = ReadHistory()
+			graph_data = read_history()
 		
 		list_length =len(graph_data['T'])
 
@@ -2357,7 +2332,7 @@ def AddCFAsset(cookfilename, assetpath, assetfile):
 	#  Guess the filetype
 	filetype = assetfile.rsplit('.', 1)[1].lower()
 	#  Create new asset ID
-	asset_id = generateUUID()
+	asset_id = _generate_uuid()
 	#  Create new asset structure
 	newasset = {
 			'id' : asset_id,
@@ -2496,7 +2471,7 @@ def unpack_thumb(thumbname, filename):
 	try:
 		with zipfile.ZipFile(filename, mode="r") as archive:
 			thumb = archive.read(f'assets/thumbs/{thumbname}')  # Read bytes into variable
-			tmp_id = generateUUID()
+			tmp_id = _generate_uuid()
 
 			if not os.path.exists(f'/tmp/pifire'):
 				os.mkdir(f'/tmp/pifire')
@@ -2589,7 +2564,7 @@ def get_cookfilelist_details(cookfilelist):
 			cookfiledetails.append({'filename' : item['filename'], 'title' : 'ERROR', 'thumbnail' : ''})
 	return(cookfiledetails)
 
-def calc_shh_coefficients(T1, T2, T3, R1, R2, R3):
+def _calc_shh_coefficients(t1, t2, t3, r1, r2, r3):
 	try: 
 		# Convert Temps from Fahrenheit to Kelvin
 		t1 = ((t1 - 32) * (5 / 9)) + 273.15
@@ -2670,10 +2645,6 @@ def _str_td(td):
 		a = "0" + a
 	s2 = s[:-1] + [a]
 	return ", ".join(s2)
-
-def _epoch_to_time(epoch):
-	end_time = datetime.datetime.fromtimestamp(epoch)
-	return end_time.strftime("%H:%M:%S")
 
 def _zip_files_dir(dir_name):
 	memory_file = BytesIO()

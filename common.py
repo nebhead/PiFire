@@ -562,7 +562,7 @@ def _default_grill_probes():
 	return grill_probes
 
 def default_cookfilestruct():
-	settings = ReadSettings()
+	settings = read_settings()
 
 	cookfilestruct = {}
 
@@ -572,7 +572,7 @@ def default_cookfilestruct():
 		'endtime' : '',
 		'units' : settings['globals']['units'],
 		'thumbnail' : '',  # UUID of the thumbnail for this cook file - found in assets
-		'id' : generateUUID(),
+		'id' : _generate_uuid(),
 		'version' : settings['versions']['cookfile']  #  PiFire Cook File Version
 	}
 	
@@ -1021,11 +1021,12 @@ def write_history(temp_struct, maxsizelines=28800, tuning_mode=False):
 
 	:param temp_struct: TempStruct
 	:param maxsizelines: Maximum Line Size (Default 28800)
-	"""
 	:param tuning_mode: True to populate tuning data otherwise False
+	"""
+	
 	global cmdsts
 
-	time_now = datetime.datetime.now()
+	#time_now = datetime.datetime.now()
 	#time_str = str(int(time_now.timestamp() * 1000))
 	#datastring = time_str + ' ' + str(temp_struct['GrillTemp']) + ' ' + str(temp_struct['GrillSetPoint']) + ' ' + str(temp_struct['Probe1Temp']) + ' ' + str(temp_struct['Probe1SetPoint']) + ' ' + str(temp_struct['Probe2Temp']) + ' ' + str(temp_struct['Probe2SetPoint'])
 
@@ -1299,7 +1300,7 @@ def WriteCookFile():
 	global cmdsts
 	global HISTORY_FOLDER
 
-	settings = ReadSettings()
+	settings = read_settings()
 
 	cook_file_struct = {}
 
@@ -1334,7 +1335,7 @@ def WriteCookFile():
 		cook_file_struct['graph_data']['probe1_setpoint'].append(datastruct['PSP1'])
 		cook_file_struct['graph_data']['probe2_setpoint'].append(datastruct['PSP2'])
 
-	cook_file_struct['events'] = ProcessMetrics(ReadMetrics(all=True), augerrate=settings['globals']['augerrate'])
+	cook_file_struct['events'] = ProcessMetrics(read_metrics(all=True), augerrate=settings['globals']['augerrate'])
 
 	# 1. Create all JSON data files
 	files_list = ['metadata', 'graph_data', 'graph_labels', 'events', 'comments', 'assets']
@@ -1366,15 +1367,15 @@ def WriteCookFile():
 	os.system(command)
 
 	# Delete Redis DB for history / current
-	ReadHistory(0, flushhistory=True)
+	read_history(0, flushhistory=True)
 	# Flush metrics DB for tracking certain metrics
-	WriteMetrics(flush=True)
+	write_metrics(flush=True)
 
 def ReadCookFile(filename):
 	'''
 	Read FULL Cook File into Python Dictionary
 	'''
-	settings = ReadSettings()
+	settings = read_settings()
 
 	cook_file_struct = {}
 	status = 'OK'
@@ -1487,7 +1488,7 @@ def UpdateCookFile(cookfiledata, cookfilename, jsonfile):
 	return(status)
 
 def upgrade_cookfile(cookfilename):
-	settings = ReadSettings()
+	settings = read_settings()
 
 	status = 'OK'
 	cookfilestruct = default_cookfilestruct()
@@ -1657,12 +1658,12 @@ def ProcessMetrics(metrics_data, augerrate=0.3):
 	for index in range(0, len(metrics_data)):
 		# Convert Start Time
 		starttime = metrics_data[index]['starttime']
-		metrics_data[index]['starttime_c'] = epoch_to_time(starttime/1000)
+		metrics_data[index]['starttime_c'] = _epoch_to_time(starttime/1000)
 		# Convert End Time
 		if(metrics_data[index]['endtime'] == 0):
 			endtime = 0
 		else: 
-			endtime = epoch_to_time(metrics_data[index]['endtime']/1000)
+			endtime = _epoch_to_time(metrics_data[index]['endtime']/1000)
 		metrics_data[index]['endtime_c'] = endtime
 		# Time in Mode
 		if(metrics_data[index]['mode'] == 'Stop'):
@@ -1687,7 +1688,7 @@ def ProcessMetrics(metrics_data, augerrate=0.3):
 
 	return(metrics_data)
 
-def epoch_to_time(epoch):
+def _epoch_to_time(epoch):
 	end_time =  datetime.datetime.fromtimestamp(epoch)
 	return end_time.strftime("%H:%M:%S")
 
