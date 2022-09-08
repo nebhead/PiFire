@@ -21,6 +21,12 @@ import math
 import redis
 import uuid
 import random
+import zipfile
+import pathlib
+import tempfile
+import shutil
+
+HISTORY_FOLDER = './history/'  # Path to historical cook files
 
 # *****************************************
 # Functions
@@ -33,7 +39,8 @@ def default_settings():
 	settings = {}
 
 	settings['versions'] = {
-		'server' : "1.3.5"
+		'server' : "1.3.5",
+		'cookfile' : "1.0.1"  # Current cookfile format version
 	}
 
 	settings['history_page'] = {
@@ -366,9 +373,12 @@ metrics_items = [
 	('smokeplus', True), 
 	('grill_settemp', 0),
 	('smart_start_profile', 0), # Smart Start Profile Selected
-	('startup_temp', 0), 		# Smart Start Start Up Temp
-	('p_mode', 0), 				# P_mode selected
-	('auger_cycle_time', 0),  	# Auger Cycle Time
+	('startup_temp', 0), # Smart Start Start Up Temp
+	('p_mode', 0), # P_mode selected
+	('auger_cycle_time', 0),  # Auger Cycle Time
+	('pellet_level_start', 0),  # Pellet Level at the begining of this mode
+	('pellet_level_end', 0),  # Pellet Level at the end of this mode
+	('pellet_brand_type', '')  # Pellet Brand and Wood Type 
 ]
 
 def default_metrics():
@@ -551,6 +561,45 @@ def _default_grill_probes():
 
 	return grill_probes
 
+def default_cookfilestruct():
+	settings = ReadSettings()
+
+	cookfilestruct = {}
+
+	cookfilestruct['metadata'] = {
+		'title' : '',
+		'starttime' : '',
+		'endtime' : '',
+		'units' : settings['globals']['units'],
+		'thumbnail' : '',  # UUID of the thumbnail for this cook file - found in assets
+		'id' : generateUUID(),
+		'version' : settings['versions']['cookfile']  #  PiFire Cook File Version
+	}
+	
+	cookfilestruct['graph_data'] = {
+		"time_labels" : [], 
+        "grill1_temp" : [],
+        "probe1_temp" : [], 
+        "probe2_temp" : [], 
+        "grill1_setpoint" : [],
+        "probe1_setpoint" : [], 
+        "probe2_setpoint" : []
+	}
+
+	cookfilestruct['graph_labels'] = {
+        "grill1_label" : "Grill", 
+        "probe1_label" : "Probe 1", 
+        "probe2_label" : "Probe 2"
+    }
+	
+	cookfilestruct['events'] = []
+
+	cookfilestruct['comments'] = []
+
+	cookfilestruct['assets'] = []
+
+	return cookfilestruct
+
 def _generate_uuid():
 	"""
 	Generate a uuid based on mac address and random int
@@ -680,7 +729,7 @@ def write_metrics(metrics=default_metrics(), flush=False, new_metric=False):
 			return
 
 	if new_metric:
-		metrics['starttime'] = time.time()
+		metrics['starttime'] = time.time() * 1000
 		metrics['id'] = _generate_uuid()
 		cmdsts.rpush('metrics:general', json.dumps(metrics))
 	else: 
@@ -914,7 +963,7 @@ def read_history(num_items=0, flushhistory=False):
 	"""
 	global cmdsts
 	
-	data_list = []  # Initialize data list
+	temp_dict = {}  # Initialize data list
 
 	# If a flushhistory is requested, then flush the control:history key (and data)
 	if flushhistory:
@@ -938,31 +987,33 @@ def read_history(num_items=0, flushhistory=False):
 
 			data = cmdsts.lrange('control:history', list_start, -1)
 			
-			# Unpack data from json to list
+			''' Unpack data from json to dictionary '''
+
+			temp_dict = {}  # Create temporary dictionary to store all of the history data lists
+			temp_struct = json.loads(data[0])  # Load the initial history data into a temporary dictionary  
+			for key in temp_struct.keys():  # Iterate each of the keys
+				temp_dict[key] = []  # Create an empty list for each of the keys
+
 			for index in range(len(data)):
 				datastruct = json.loads(data[index])
-				temp_list = [str(int(datastruct['T'])), str(datastruct['GT1']), str(datastruct['GSP1']), str(datastruct['PT1']), str(datastruct['PSP1']), str(datastruct['PT2']), str(datastruct['PSP2'])]
-				data_list.append(temp_list)
-				#data_list.append(data[index].split(' ', 6))  # Splits out each of the values into separate list items
+				for key, value in datastruct.items():
+					temp_dict[key].append(value)
+				#templist = [str(int(datastruct['T'])), str(datastruct['GT1']), str(datastruct['GSP1']), str(datastruct['PT1']), str(datastruct['PSP1']), str(datastruct['PT2']), str(datastruct['PSP2'])]
 		else:
-			event = 'WARNING: History data is not present in database. Creating Data Structure.'
-			write_log(event)
-			# Create Entry in Database
-			TempStruct = {
-				'GrillTemp': 0, 
-				'GrillSetPoint': 0,
-				'Probe1Temp': 0, 
-				'Probe1SetPoint': 0, 
-				'Probe2Temp': 0, 
-				'Probe2SetPoint': 0,
-				'GrillTr': 0,
-				'Probe1Tr': 0,
-				'Probe2Tr': 0
+			# Return empty data
+			temp_dict = {
+				'T' : [int(time.time() * 1000)], 
+				'GT1': [0], 
+				'GSP1': [0],
+				'PT1': [0], 
+				'PSP1': [0], 
+				'PT2': [0], 
+				'PSP2': [0],
 			}
-			write_history(TempStruct)
-			data_list = read_history()
+			tr_values = '0 0 0'
+			cmdsts.set('control:tuning', tr_values)
 
-	return(data_list)
+	return(temp_dict)
 
 def write_history(temp_struct, maxsizelines=28800, tuning_mode=False):
 	"""
@@ -970,8 +1021,8 @@ def write_history(temp_struct, maxsizelines=28800, tuning_mode=False):
 
 	:param temp_struct: TempStruct
 	:param maxsizelines: Maximum Line Size (Default 28800)
-	:param tuning_mode: True to populate tuning data otherwise False
 	"""
+	:param tuning_mode: True to populate tuning data otherwise False
 	global cmdsts
 
 	time_now = datetime.datetime.now()
@@ -980,7 +1031,7 @@ def write_history(temp_struct, maxsizelines=28800, tuning_mode=False):
 
 	# Create data structure for current temperature data and timestamp
 	datastruct = {}
-	datastruct['T'] = int(time_now.timestamp() * 1000)
+	datastruct['T'] = int(time.time() * 1000)
 	datastruct['GT1'] = temp_struct['GrillTemp']
 	datastruct['GSP1'] = temp_struct['GrillSetPoint']
 	datastruct['PT1'] = temp_struct['Probe1Temp']
@@ -1236,3 +1287,420 @@ def set_updater_install_status(percent, status, output):
 	cmdsts.set('updater:percent', percent)
 	cmdsts.set('updater:status', status)
 	cmdsts.set('updater:output', output)
+
+def WriteCookFile(): 
+	'''
+	This function gathers all of the data from the previous cook
+	from startup to stop mode, and saves this to a Cook File stored
+	at ./history/
+
+	The metrics and cook data are purged from memory, after stop mode is initiated.  
+	'''
+	global cmdsts
+	global HISTORY_FOLDER
+
+	settings = ReadSettings()
+
+	cook_file_struct = {}
+
+	now = datetime.datetime.now()
+	nowstring = now.strftime('%Y-%m-%d--%H%M')
+	title = nowstring + '-CookFile'
+
+	historydata = cmdsts.lrange('control:history', 1, -1)
+
+	starttime = json.loads(historydata[0])
+	starttime = starttime['T']
+
+	endtime = json.loads(historydata[-1])
+	endtime = endtime['T']
+
+	#thumbnail_UUID = generateUUID()
+
+	cook_file_struct = default_cookfilestruct()
+
+	cook_file_struct['metadata']['title'] = title
+	cook_file_struct['metadata']['starttime'] = starttime
+	cook_file_struct['metadata']['endtime'] = endtime
+
+	# Unpack data from json to list
+	for index in range(len(historydata)):
+		datastruct = json.loads(historydata[index])
+		cook_file_struct['graph_data']['time_labels'].append(datastruct['T'])
+		cook_file_struct['graph_data']['grill1_temp'].append(datastruct['GT1'])
+		cook_file_struct['graph_data']['probe1_temp'].append(datastruct['PT1'])
+		cook_file_struct['graph_data']['probe2_temp'].append(datastruct['PT2'])
+		cook_file_struct['graph_data']['grill1_setpoint'].append(datastruct['GSP1'])
+		cook_file_struct['graph_data']['probe1_setpoint'].append(datastruct['PSP1'])
+		cook_file_struct['graph_data']['probe2_setpoint'].append(datastruct['PSP2'])
+
+	cook_file_struct['events'] = ProcessMetrics(ReadMetrics(all=True), augerrate=settings['globals']['augerrate'])
+
+	# 1. Create all JSON data files
+	files_list = ['metadata', 'graph_data', 'graph_labels', 'events', 'comments', 'assets']
+	if not os.path.exists(HISTORY_FOLDER):
+		os.mkdir(HISTORY_FOLDER)
+	os.mkdir(f'{HISTORY_FOLDER}{title}')  # Make temporary folder for all files
+	for item in files_list:
+		json_data_string = json.dumps(cook_file_struct[item], indent=2, sort_keys=True)
+		filename = f'{HISTORY_FOLDER}{title}/{item}.json'
+		with open(filename, 'w+') as cook_file:
+			cook_file.write(json_data_string)
+	
+	# 2. Create empty data folder(s) & add default data 
+	os.mkdir(f'{HISTORY_FOLDER}{title}/assets')
+	os.mkdir(f'{HISTORY_FOLDER}{title}/assets/thumbs')
+	#shutil.copy2('./static/img/pifire-cf-thumb.png', f'{HISTORY_FOLDER}{title}/assets/{thumbnail_UUID}.png')
+	#shutil.copy2('./static/img/pifire-cf-thumb.png', f'{HISTORY_FOLDER}{title}/assets/thumbs/{thumbnail_UUID}.png')
+
+	# 3. Create ZIP file of the folder 
+	directory = pathlib.Path(f'{HISTORY_FOLDER}{title}/')
+	filename = f'{HISTORY_FOLDER}{title}.pifire'
+
+	with zipfile.ZipFile(filename, "w", zipfile.ZIP_DEFLATED) as archive:
+		for file_path in directory.rglob("*"):
+			archive.write(file_path, arcname=file_path.relative_to(directory))
+
+	# 4. Cleanup temporary files
+	command = f'rm -rf {HISTORY_FOLDER}{title}'
+	os.system(command)
+
+	# Delete Redis DB for history / current
+	ReadHistory(0, flushhistory=True)
+	# Flush metrics DB for tracking certain metrics
+	WriteMetrics(flush=True)
+
+def ReadCookFile(filename):
+	'''
+	Read FULL Cook File into Python Dictionary
+	'''
+	settings = ReadSettings()
+
+	cook_file_struct = {}
+	status = 'OK'
+	json_types = ['metadata', 'graph_data', 'graph_labels', 'events', 'comments', 'assets']
+	for jsonfile in json_types:
+		cook_file_struct[jsonfile], status = ReadCFJSONData(filename, jsonfile)
+		if jsonfile == 'metadata':
+			fileversion = semantic_ver_to_list(cook_file_struct['metadata']['version'])
+			minfileversion = semantic_ver_to_list(settings['versions']['cookfile']) # Minimum file version to load assets
+			if not ( (fileversion[0] >= minfileversion[0]) and (fileversion[1] >= minfileversion[1]) and (fileversion[2] >= minfileversion[2]) ):
+				status = 'WARNING: Older cookfile version format! '
+		if status != 'OK':
+			break  # Exit loop and function, error string in status
+
+	return(cook_file_struct, status)
+
+def ReadCFJSONData(filename, jsonfile, unpackassets=True):
+	'''
+	Read Cook File JSON data out of the zipped pifire cookfile:
+		Must specify the cook file name, and the jsonfile element to be extracted (without the .json extension)
+	'''
+	status = 'OK'
+	
+	try:
+		with zipfile.ZipFile(filename, mode="r") as archive:
+			json_string = archive.read(jsonfile + '.json')
+			dictionary = json.loads(json_string)
+			# If this is the assets file, load the assets into the temporary folder
+			if jsonfile == 'assets' and unpackassets:
+				json_string = archive.read('metadata.json')
+				metadata = json.loads(json_string)
+				parent_id = metadata['id']  # Get parent id for this cookfile and store all images in parent_id folder
+
+				for asset in range(0, len(dictionary)):
+					#  Get asset file information
+					mediafile = dictionary[asset]['filename']
+					id = dictionary[asset]['id']
+					filetype = dictionary[asset]['type']
+					#  Read the file(s) into memory
+					data = archive.read(f'assets/{mediafile}')  # Read bytes into variable
+					thumb = archive.read(f'assets/thumbs/{mediafile}')  # Read bytes into variable
+					if not os.path.exists(f'/tmp/pifire'):
+						os.mkdir(f'/tmp/pifire')
+					if not os.path.exists(f'/tmp/pifire/{parent_id}'):
+						os.mkdir(f'/tmp/pifire/{parent_id}')
+					if not os.path.exists(f'/tmp/pifire/{parent_id}/thumbs'):
+						os.mkdir(f'/tmp/pifire/{parent_id}/thumbs')
+					#  Write fullsize image to disk
+					destination = open(f'/tmp/pifire/{parent_id}/{id}.{filetype}', "wb")  # Write bytes to proper destination
+					destination.write(data)
+					destination.close()
+					#  Write thumbnail image to disk
+					destination = open(f'/tmp/pifire/{parent_id}/thumbs/{id}.{filetype}', "wb")  # Write bytes to proper destination
+					destination.write(thumb)
+					destination.close()
+
+					if not os.path.exists('./static/img/tmp'):
+						os.mkdir(f'./static/img/tmp')
+					if not os.path.exists(f'./static/img/tmp/{parent_id}'):
+						os.symlink(f'/tmp/pifire/{parent_id}', f'./static/img/tmp/{parent_id}')
+
+	except zipfile.BadZipFile as error:
+		status = f'Error: {error}'
+		dictionary = {}
+	except json.decoder.JSONDecodeError:
+		status = 'Error: JSON Decoding Error.'
+		dictionary = {}
+	except:
+		if jsonfile == 'assets':
+			status = 'Error: Error opening assets.'
+		else:
+			status = 'Error: Unspecified'
+		dictionary = {}
+
+	return(dictionary, status)
+
+def UpdateCookFile(cookfiledata, cookfilename, jsonfile):
+	'''
+	Write an update to the cookfile
+	'''
+	status = 'OK'
+	jsonfilename = jsonfile + '.json'
+
+	# Borrowed from StackOverflow https://stackoverflow.com/questions/25738523/how-to-update-one-file-inside-zip-file
+	# Submitted by StackOverflow user Sebdelsol
+
+	# Start by creating a temporary file without the jsonfile that is being edited
+	tmpfd, tmpname = tempfile.mkstemp(dir=os.path.dirname(cookfilename))
+	os.close(tmpfd)
+	try:
+		# Create a temp copy of the archive without filename            
+		with zipfile.ZipFile(cookfilename, 'r') as zin:
+			with zipfile.ZipFile(tmpname, 'w') as zout:
+				zout.comment = zin.comment # Preserve the zip metadata comment
+				for item in zin.infolist():
+					if item.filename != jsonfilename:
+						zout.writestr(item, zin.read(item.filename))
+		# Replace original with the temp archive
+		os.remove(cookfilename)
+		os.rename(tmpname, cookfilename)
+		# Now add updated JSON file with its new data
+		with zipfile.ZipFile(cookfilename, mode='a', compression=zipfile.ZIP_DEFLATED) as zf:
+			zf.writestr(jsonfilename, json.dumps(cookfiledata, indent=2, sort_keys=True))
+
+	except zipfile.BadZipFile as error:
+		status = f'Error: {error}'
+	except:
+		status = 'Error: Unspecified'
+	
+	return(status)
+
+def upgrade_cookfile(cookfilename):
+	settings = ReadSettings()
+
+	status = 'OK'
+	cookfilestruct = default_cookfilestruct()
+	
+	json_types = ['metadata', 'graph_data', 'graph_labels', 'events', 'comments', 'assets']
+	for jsonfile in json_types:
+		jsondata, status = ReadCFJSONData(cookfilename, jsonfile, unpackassets=False)
+		if status != 'OK':
+			break  # Exit loop and function, error string in status
+		elif jsonfile == 'metadata':
+			# Update to the latest cookfile version
+			jsondata['version'] = settings['versions']['cookfile']
+			cookfilestruct[jsonfile].update(jsondata)
+		elif jsonfile == 'comments':
+			# Add assets list to each comment v1.0 -> v1.0.1+ 
+			for index, comment in enumerate(jsondata):
+				if not 'assets' in comment.keys():
+					jsondata[index]['assets'] = []
+			cookfilestruct[jsonfile] = jsondata
+		elif jsonfile == 'assets' and jsondata == {}:
+			# Some version 1.0 files may have an empty assets file with a dictionary instead of a list
+			pass
+		else:
+			cookfilestruct[jsonfile] = jsondata
+		# Update the original file with new data
+		UpdateCookFile(cookfilestruct[jsonfile], cookfilename, jsonfile)
+
+	return(cookfilestruct, status)
+
+def fixup_assets(cookfilename):
+	#print(f'\n\nFixing up {cookfilename}\n')
+	cookfilestruct, status = ReadCookFile(cookfilename)
+	if status != 'OK':
+		#print(f'Status Message after initial read: {status} \n')
+		if 'assets' in status:
+			cookfilestruct['assets'], status = ReadCFJSONData(cookfilename, 'assets', unpackassets=False)
+			#print(f'Status Message after forcing assets read: {status} \n')
+
+	# Loop through assets list, check actual files exist, remove from assets list if not 
+	#   - Get file list from cookfile / assets
+	assetlist = []
+	thumblist = []
+	with zipfile.ZipFile(cookfilename, mode="r") as archive:
+		for item in archive.infolist():
+			if 'assets' in item.filename:
+				if item.filename == 'assets/':
+					pass
+				elif item.filename == 'assets.json':
+					pass
+				elif item.filename == 'assets/thumbs/':
+					pass
+				elif 'thumbs' in item.filename:
+					thumblist.append(item.filename.replace('assets/thumbs/', ''))
+				else: 
+					assetlist.append(item.filename.replace('assets/', ''))
+	
+	#   - Loop through asset list / compare with file list
+	#print(f'Asset List: {assetlist}')
+	#print(f'Thumblist List: {thumblist}')
+	#print(f'cookfilestruct["assets"] = {cookfilestruct["assets"]}\n')
+	
+	for asset in cookfilestruct['assets']:
+		if asset['filename'] not in assetlist:
+			#print(f'Found missing asset! Filename: {asset["filename"]}')
+			#print(f'Removing from asset.json')
+			cookfilestruct['assets'].remove(asset)
+		else: 
+			for item in assetlist:
+				if asset['filename'] in item:
+					#print(f'Removing {item} from the assetlist.')
+					assetlist.remove(item)
+					break 
+
+	# Loop through remaining files in assets list and populate
+	#print(f'cookfilestruct["assets"] = {cookfilestruct["assets"]}\n')
+	for filename in assetlist:
+		asset = {
+			'id' : filename.rsplit('.', 1)[0].lower(),
+			'filename' : filename.replace(HISTORY_FOLDER, ''),
+			'type' : filename.rsplit('.', 1)[1].lower()
+		}
+		cookfilestruct['assets'].append(asset)
+		#print(f'Adding missing asset to asset.json: {asset}')
+
+	# Check Metadata Thumbnail if asset exists 
+	thumbnail = cookfilestruct['metadata']['thumbnail']
+	assetlist = []
+	for asset in cookfilestruct['assets']:
+		assetlist.append(asset['filename'])
+
+	if thumbnail != '' and thumbnail not in assetlist:
+		#print(f'Thumbnail not found in assets.json.  Removing.')
+		cookfilestruct['metadata']['thumbnail'] = ''
+
+	# Loop through comments and check if asset lists contain valid assets, remove if not 
+	comments = cookfilestruct['comments']
+	for index, comment in enumerate(comments):
+		for asset in comment['assets']: 
+			if asset not in assetlist:
+				cookfilestruct['comments'][index]['assets'].remove(asset)
+				#print(f'Removed {asset} from comment# {index}')
+
+	# TODO Update cookfile with fixed up assets
+	UpdateCookFile(cookfilestruct['assets'], cookfilename, 'assets')
+	status = 'OK'
+	#print(f'New cookfilestruct:\n{cookfilestruct["assets"]}')
+	return(cookfilestruct, status)
+
+def remove_assets(cookfilename, assetlist):
+	status = 'OK'
+	metadata, status = ReadCFJSONData(cookfilename, 'metadata')
+	comments, status = ReadCFJSONData(cookfilename, 'comments')
+	assets, status = ReadCFJSONData(cookfilename, 'assets', unpackassets=False)
+
+	# Check Thumbnail against assetlist
+	if metadata['thumbnail'] in assetlist:
+		metadata['thumbnail'] = ''
+		UpdateCookFile(metadata, cookfilename, 'metadata')
+
+	# Check Comment Assets against assetlist
+	modified = False
+	for index, comment in enumerate(comments):
+		for asset in comment['assets']:
+			if asset in assetlist:
+				comments[index]['assets'].remove(asset)
+				modified = True 
+	if modified:
+		UpdateCookFile(comments, cookfilename, 'comments')
+
+	# Check Asset.json against assetlist 
+	modified = False 
+	tempassets = assets.copy()
+	for asset in tempassets:
+		if asset['filename'] in assetlist:
+			assets.remove(asset)
+			modified = True
+	if modified:
+		UpdateCookFile(assets, cookfilename, 'assets')
+
+	# Traverse list of asset files from the compressed file, remove asset and thumb
+	try: 
+		tmpdir = f'/tmp/pifire/{metadata["id"]}'
+		if not os.path.exists(tmpdir):
+			os.mkdir(tmpdir)
+		with zipfile.ZipFile(cookfilename, mode="r") as archive:
+			new_archive = zipfile.ZipFile (f'{tmpdir}/new.pifire', 'w', zipfile.ZIP_DEFLATED)
+			for item in archive.infolist():
+				remove = False 
+				for asset in assetlist:
+					if asset in item.filename: 
+						remove = True
+						break 
+				if not remove:
+					buffer = archive.read(item.filename)
+					new_archive.writestr(item, buffer)
+			new_archive.close()
+
+		os.remove(cookfilename)
+		shutil.move(f'{tmpdir}/new.pifire', cookfilename)
+	except:
+		status = "Error:  Error removing assets from file."
+
+	return status
+
+def ProcessMetrics(metrics_data, augerrate=0.3):
+	# Process Additional Metrics Information for Display
+	for index in range(0, len(metrics_data)):
+		# Convert Start Time
+		starttime = metrics_data[index]['starttime']
+		metrics_data[index]['starttime_c'] = epoch_to_time(starttime/1000)
+		# Convert End Time
+		if(metrics_data[index]['endtime'] == 0):
+			endtime = 0
+		else: 
+			endtime = epoch_to_time(metrics_data[index]['endtime']/1000)
+		metrics_data[index]['endtime_c'] = endtime
+		# Time in Mode
+		if(metrics_data[index]['mode'] == 'Stop'):
+			timeinmode = 'NA'
+		elif(metrics_data[index]['endtime'] == 0):
+			timeinmode = 'Active'
+		else:
+			seconds = int((metrics_data[index]['endtime']/1000) - (metrics_data[index]['starttime']/1000))
+			if seconds > 60:
+				timeinmode = f'{int(seconds/60)} m {seconds % 60} s'
+			else:
+				timeinmode = f'{seconds} s'
+		metrics_data[index]['timeinmode'] = timeinmode 
+		# Convert Auger On Time
+		metrics_data[index]['augerontime_c'] = str(int(metrics_data[index]['augerontime'])) + ' s'
+		# Estimated Pellet Usage
+		grams = int(metrics_data[index]['augerontime'] * augerrate)
+		pounds = round(grams * 0.00220462, 2)
+		ounces = round(grams * 0.03527392, 2)
+		metrics_data[index]['estusage_m'] = f'{grams} grams'
+		metrics_data[index]['estusage_i'] = f'{pounds} pounds ({ounces} ounces)'
+
+	return(metrics_data)
+
+def epoch_to_time(epoch):
+	end_time =  datetime.datetime.fromtimestamp(epoch)
+	return end_time.strftime("%H:%M:%S")
+
+def semantic_ver_to_list(version_string):
+	# Count number of '.' in string
+	decimal_count = version_string.count('.')
+	ver_list = version_string.split('.')
+
+	if decimal_count == 0:
+		ver_list = [0, 0, 0]
+	elif decimal_count < 2:
+		ver_list.append('0')
+
+	ver_list = list(map(int, ver_list))
+
+	return(ver_list)

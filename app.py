@@ -27,13 +27,15 @@ from updater import *  # Library for doing project updates from GitHub
 
 BACKUP_PATH = './backups/'  # Path to backups of settings.json, pelletdb.json
 UPLOAD_FOLDER = BACKUP_PATH  # Point uploads to the backup path
-ALLOWED_EXTENSIONS = {'json'}
+HISTORY_FOLDER = './history/'  # Path to historical cook files
+ALLOWED_EXTENSIONS = {'json', 'pifire', 'jpg', 'jpeg', 'png', 'gif', 'bmp'}
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
 QRcode(app)
 Mobility(app)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['HISTORY_FOLDER'] = HISTORY_FOLDER
 
 @app.route('/')
 def index():
@@ -158,9 +160,44 @@ def history_page(action=None):
 
 	if request.method == 'POST':
 		response = request.form
-		if action == 'setmins':
-			if 'minutes' in response:
-				if response['minutes'] != '':
+		if(action == 'cookfile'):
+			if('delcookfile' in response):
+				filename = './history/' + response["delcookfile"]
+				os.remove(filename)
+				return redirect('/history')
+			if('opencookfile' in response):
+				cookfilename = HISTORY_FOLDER + response['opencookfile']
+				cookfilestruct, status = ReadCookFile(cookfilename)
+				if(status == 'OK'):
+					events = cookfilestruct['events']
+					event_totals = prepare_event_totals(events)
+					comments = cookfilestruct['comments']
+					for comment in comments:
+						comment['text'] = comment['text'].replace('\n', '<br>')
+					metadata = cookfilestruct['metadata']
+					metadata['starttime'] = epoch_to_time(metadata['starttime'] / 1000)
+					metadata['endtime'] = epoch_to_time(metadata['endtime'] / 1000)
+					labels = cookfilestruct['graph_labels']
+					assets = cookfilestruct['assets']
+					filenameonly = response['opencookfile']
+					return render_template('cookfile.html', settings=settings, cookfilename=cookfilename, filenameonly=filenameonly, events=events, event_totals=event_totals, comments=comments, metadata=metadata, labels=labels, assets=assets, errors=errors, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
+				else:
+					errors.append(status)
+					if 'version' in status:
+						errortype = 'version'
+					elif 'asset' in status: 
+						errortype = 'asset'
+					else: 
+						errortype = 'other'
+					return render_template('cferror.html', settings=settings, cookfilename=cookfilename, errortype=errortype, errors=errors, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
+			if('dlcookfile' in response):
+				filename = './history/' + response['dlcookfile']
+				return send_file(filename, as_attachment=True, max_age=0)
+
+		if(action == 'setmins'):
+			if('minutes' in response):
+				if(response['minutes'] != ''):
+					num_items = int(response['minutes']) * 20
 					settings['history_page']['minutes'] = int(response['minutes'])
 					write_settings(settings)
 
@@ -170,18 +207,19 @@ def history_page(action=None):
 					write_log('Clearing History Log.')
 					read_history(0, flushhistory=True)
 
-	elif request.method == 'GET' and action == 'export':
-		data_list = read_history((settings['history_page']['minutes'] * 20))
+	elif (request.method == 'GET') and (action == 'export'):
+		exportfilename = prepare_graph_csv()
+		return send_file(exportfilename, as_attachment=True, max_age=0)
 
-		export_filename = "export.csv"
-		csvfile = open('/tmp/' + export_filename, "w")
+		exportfilename = "export.csv"
+		csvfile = open('/tmp/'+exportfilename, "w")
 
 		list_length = len(data_list) # Length of list
 
-		if (list_length > 0):
-			# Build Time_List, Set temp_List, Probe_List, cur_probe_temps
-			write_line = 'Time,Grill Temp,Grill SetTemp,Probe 1 Temp,Probe 1 SetTemp,Probe 2 Temp, Probe 2 SetTemp\n'
-			csvfile.write(write_line)
+		if(list_length > 0):
+			# Build Time_List, Settemp_List, Probe_List, cur_probe_temps
+			writeline = 'Time,Grill Temp,Grill SetTemp,Probe 1 Temp,Probe 1 SetTemp,Probe 2 Temp, Probe 2 SetTemp\n'
+			csvfile.write(writeline)
 			last = -1
 			for index in range(0, list_length):
 				if (int((index/list_length)*100) > last):
@@ -190,24 +228,22 @@ def history_page(action=None):
 				# Convert time data to datetime format
 				converted_dt = datetime.datetime.fromtimestamp(int(data_list[index][0]) / 1000)
 				data_list[index][0] = converted_dt.strftime('%Y-%m-%d %H:%M:%S')
-				write_line = ','.join(data_list[index])
-				csvfile.write(write_line + '\n')
+				writeline = ','.join(data_list[index])
+				csvfile.write(writeline + '\n')
 		else:
-			write_line = 'No Data\n'
-			csvfile.write(write_line)
+			writeline = 'No Data\n'
+			csvfile.write(writeline)
 
 		csvfile.close()
 
-		return send_file('/tmp/' + export_filename, as_attachment=True, max_age=0)
+		return send_file('/tmp/'+exportfilename, as_attachment=True, max_age=0)
 
 	num_items = settings['history_page']['minutes'] * 20
 	probes_enabled = settings['probe_settings']['probes_enabled']
 
 	data_blob = _prepare_data(num_items, True, settings['history_page']['datapoints'])
 
-	auto_refresh = settings['history_page']['autorefresh']
-	if control['mode'] == 'Stop':
-		auto_refresh = 'off'
+	autorefresh = settings['history_page']['autorefresh']
 
 	# Calculate Displayed Start Time
 	displayed_starttime = time.time() - (settings['history_page']['minutes'] * 60)
@@ -259,7 +295,8 @@ def history_update(action=None):
 			'probe1_settemp' : set_temps[1], 
 			'probe2_temp' : int(float(cur_probe_temps[2])), 
 			'probe2_settemp' : set_temps[2],
-			'annotations' : annotations
+			'annotations' : annotations,
+			'mode' : control['mode']
 		}
 		return jsonify(json_data)
 
@@ -284,23 +321,500 @@ def history_update(action=None):
 				'probe2_temp_list' : data_blob['probe2_temp_list'],
 				'probe2_settemp_list' : data_blob['probe2_settemp_list'],
 				'label_time_list' : data_blob['label_time_list'], 
-				'annotations' : annotations
+				'annotations' : annotations, 
+				'mode' : control['mode']
 			}
 			return jsonify(json_data)
+	return jsonify({'status' : 'ERROR'})
 
-	# Legacy Flow - Which may eventually be retired
-	num_items = settings['history_page']['minutes'] * 20
-	data_blob = _prepare_data(num_items, True, settings['history_page']['datapoints'])
-	for index in range(0, len(data_blob['label_time_list'])): 
-		data_blob['label_time_list'][index] = datetime.datetime.fromtimestamp(
-			int(data_blob['label_time_list'][index]) / 1000).strftime('%H:%M:%S')
-	return jsonify({ 'grill_temp_list' : data_blob['grill_temp_list'],
-					 'grill_settemp_list' : data_blob['grill_settemp_list'],
-					 'probe1_temp_list' : data_blob['probe1_temp_list'],
-					 'probe1_settemp_list' : data_blob['probe1_settemp_list'],
-					 'probe2_temp_list' : data_blob['probe2_temp_list'],
-					 'probe2_settemp_list' : data_blob['probe2_settemp_list'],
-					 'label_time_list' : data_blob['label_time_list'] })
+@app.route('/cookfiledata', methods=['POST', 'GET'])
+def cookfiledata(action=None):
+	global settings 
+
+	errors = []
+	
+	if(request.method == 'POST') and ('json' in request.content_type):
+		requestjson = request.json
+		if('full_graph' in requestjson):
+			filename = requestjson['filename']
+			cookfiledata, status = ReadCookFile(filename)
+
+			if(status == 'OK'):
+				annotations = prepare_annotations(0, cookfiledata['events'])
+
+				json_data = { 
+					'GT1_label' : cookfiledata['graph_labels']['grill1_label'],
+					'GSP1_label' : cookfiledata['graph_labels']['grill1_label'] + " SetPoint",
+					'PT1_label' : cookfiledata['graph_labels']['probe1_label'],
+					'PSP1_label' : cookfiledata['graph_labels']['probe1_label'] + " SetPoint",
+					'PT2_label' : cookfiledata['graph_labels']['probe2_label'],
+					'PSP2_label' : cookfiledata['graph_labels']['probe2_label'] + " SetPoint",
+					'GT1_data' : cookfiledata['graph_data']['grill1_temp'], 
+					'GSP1_data' : cookfiledata['graph_data']['grill1_setpoint'], 
+					'PT1_data' : cookfiledata['graph_data']['probe1_temp'], 
+					'PT2_data' : cookfiledata['graph_data']['probe2_temp'], 
+					'PSP1_data' : cookfiledata['graph_data']['probe1_setpoint'],
+					'PSP2_data' : cookfiledata['graph_data']['probe2_setpoint'],
+					'time_labels' : cookfiledata['graph_data']['time_labels'],
+					'annotations' : annotations
+				}
+				return jsonify(json_data)
+
+		if('getcommentassets' in requestjson):
+			assetlist = []
+			cookfilename = requestjson['cookfilename']
+			commentid = requestjson['commentid']
+			comments, status = ReadCFJSONData(cookfilename, 'comments')
+			for comment in comments:
+				if comment['id'] == commentid:
+					assetlist = comment['assets']
+					break
+			return jsonify({'result' : 'OK', 'assetlist' : assetlist})
+
+		if('managemediacomment' in requestjson):
+			# Grab list of all assets in file, build assetlist
+			assetlist = []
+			cookfilename = requestjson['cookfilename']
+			commentid = requestjson['commentid']
+			
+			assets, status = ReadCFJSONData(cookfilename, 'assets')
+			metadata, status = ReadCFJSONData(cookfilename, 'metadata')
+			for asset in assets:
+				asset_object = {
+					'assetname' : asset['filename'],
+					'assetid' : asset['id'],
+					'selected' : False
+				}
+				assetlist.append(asset_object)
+
+			# Grab list of selected assets in comment currently
+			selectedassets = []
+			comments, status = ReadCFJSONData(cookfilename, 'comments')
+			for comment in comments:
+				if comment['id'] == commentid:
+					selectedassets = comment['assets']
+					break 
+
+			# For each item in asset list, if in comment, mark selected
+			for object in assetlist:
+				if object['assetname'] in selectedassets:
+					object['selected'] = True 
+
+			return jsonify({'result' : 'OK', 'assetlist' : assetlist}) 
+
+		if('getallmedia' in requestjson):
+			# Grab list of all assets in file, build assetlist
+			assetlist = []
+			cookfilename = requestjson['cookfilename']
+			assets, status = ReadCFJSONData(cookfilename, 'assets')
+
+			for asset in assets:
+				asset_object = {
+					'assetname' : asset['filename'],
+					'assetid' : asset['id'],
+				}
+				assetlist.append(asset_object)
+
+			return jsonify({'result' : 'OK', 'assetlist' : assetlist}) 
+
+		if('navimage' in requestjson):
+			direction = requestjson['navimage']
+			mediafilename = requestjson['mediafilename'] 
+			commentid = requestjson['commentid']
+			cookfilename = requestjson['cookfilename']
+
+			comments, status = ReadCFJSONData(cookfilename, 'comments')
+			if status == 'OK':
+				assetlist = []
+				for comment in comments:
+					if comment['id'] == commentid:
+						assetlist = comment['assets']
+						break 
+				current = 0
+				found = False 
+				for index in range(0, len(assetlist)):
+					if assetlist[index] == mediafilename:
+						current = index
+						found = True 
+						break 
+				
+				if found and direction == 'next':
+					if current == len(assetlist)-1:
+						mediafilename = assetlist[0]
+					else:
+						mediafilename = assetlist[current+1]
+					return jsonify({'result' : 'OK', 'mediafilename' : mediafilename})
+				elif found and direction == 'prev':
+					if current == 0:
+						mediafilename = assetlist[-1]
+					else:
+						mediafilename = assetlist[current-1]
+					return jsonify({'result' : 'OK', 'mediafilename' : mediafilename})
+
+		errors.append('Something unexpected has happened.')
+		return jsonify({'result' : 'ERROR', 'errors' : errors})
+
+	if(request.method == 'POST') and ('form' in request.content_type):
+		requestform = request.form 
+		if('dl_cookfile' in requestform):
+			# Download the full JSON Cook File Locally
+			filename = requestform['dl_cookfile']
+			return send_file(filename, as_attachment=True, max_age=0)
+
+		if('dl_eventfile' in requestform):
+			filename = requestform['dl_eventfile']
+			cookfiledata, status = ReadCFJSONData(filename, 'events')
+			if(status == 'OK'):
+				csvfilename = prepare_metrics_csv(cookfiledata, filename)
+				return send_file(csvfilename, as_attachment=True, max_age=0)
+
+		if('dl_graphfile' in requestform):
+			# Download CSV of the Graph Data Only
+			filename = requestform['dl_graphfile']
+			cookfiledata, status = ReadCookFile(filename)
+			if(status == 'OK'):
+				cookfiledata['graph_data'] = ConvertLabels(cookfiledata['graph_data'])
+				csvfilename = prepare_graph_csv(cookfiledata['graph_data'], cookfiledata['graph_labels'], filename)
+				return send_file(csvfilename, as_attachment=True, max_age=0)
+
+		if('ulcookfilereq' in requestform):
+			# Assume we have request.files and localfile in response
+			remotefile = request.files['ulcookfile']
+			
+			if (remotefile.filename != ''):
+				# If the user does not select a file, the browser submits an
+				# empty file without a filename.
+				if remotefile and allowed_file(remotefile.filename):
+					filename = secure_filename(remotefile.filename)
+					remotefile.save(os.path.join(app.config['HISTORY_FOLDER'], filename))
+				else:
+					print('Disallowed File Upload.')
+					errors.append('Disallowed File Upload.')
+				return redirect('/history')
+
+		if('thumbSelected' in requestform):
+			thumbnail = requestform['thumbSelected']
+			filename = requestform['filename']
+			# Reload Cook File
+			cookfilename = HISTORY_FOLDER + filename
+			cookfilestruct, status = ReadCookFile(cookfilename)
+			if status=='OK':
+				cookfilestruct['metadata']['thumbnail'] = thumbnail
+				UpdateCookFile(cookfilestruct['metadata'], HISTORY_FOLDER + filename, 'metadata')
+				events = cookfilestruct['events']
+				event_totals = prepare_event_totals(events)
+				comments = cookfilestruct['comments']
+				for comment in comments:
+					comment['text'] = comment['text'].replace('\n', '<br>')
+				metadata = cookfilestruct['metadata']
+				metadata['starttime'] = epoch_to_time(metadata['starttime'] / 1000)
+				metadata['endtime'] = epoch_to_time(metadata['endtime'] / 1000)
+				labels = cookfilestruct['graph_labels']
+				assets = cookfilestruct['assets']
+				
+				return render_template('cookfile.html', settings=settings, \
+					cookfilename=cookfilename, filenameonly=filename, \
+					events=events, event_totals=event_totals, \
+					comments=comments, metadata=metadata, labels=labels, \
+					assets=assets, errors=errors, \
+					page_theme=settings['globals']['page_theme'], \
+					grill_name=settings['globals']['grill_name'])
+
+		if('ulmediafn' in requestform) or ('ulthumbfn' in requestform):
+			# Assume we have request.files and localfile in response
+			if 'ulmediafn' in requestform:
+				#uploadedfile = request.files['ulmedia']
+				uploadedfiles = request.files.getlist('ulmedia')
+				cookfilename = HISTORY_FOLDER + requestform['ulmediafn']
+				filenameonly = requestform['ulmediafn']
+			else: 
+				uploadedfile = request.files['ulthumbnail']
+				cookfilename = HISTORY_FOLDER + requestform['ulthumbfn']
+				filenameonly = requestform['ulthumbfn']
+				uploadedfiles = [uploadedfile]
+
+			status = 'ERROR'
+			for remotefile in uploadedfiles:
+				if (remotefile.filename != ''):
+					# Reload Cook File
+					cookfilestruct, status = ReadCookFile(cookfilename)
+					parent_id = cookfilestruct['metadata']['id']
+					tmp_path = f'/tmp/pifire/{parent_id}'
+					if not os.path.exists(tmp_path):
+						os.mkdir(tmp_path)
+
+					if remotefile and allowed_file(remotefile.filename):
+						filename = secure_filename(remotefile.filename)
+						pathfile = os.path.join(tmp_path, filename)
+						remotefile.save(pathfile)
+						asset_id, asset_filetype = AddCFAsset(cookfilename, tmp_path, filename)
+						if 'ulthumbfn' in requestform:
+							set_thumbnail(cookfilename, f'{asset_id}.{asset_filetype}')
+						#  Reload all of the data
+						cookfilestruct, status = ReadCookFile(cookfilename)
+					else:
+						errors.append('Disallowed File Upload.')
+
+			if(status == 'OK'):
+				events = cookfilestruct['events']
+				event_totals = prepare_event_totals(events)
+				comments = cookfilestruct['comments']
+				for comment in comments:
+					comment['text'] = comment['text'].replace('\n', '<br>')
+				metadata = cookfilestruct['metadata']
+				metadata['starttime'] = epoch_to_time(metadata['starttime'] / 1000)
+				metadata['endtime'] = epoch_to_time(metadata['endtime'] / 1000)
+				labels = cookfilestruct['graph_labels']
+				assets = cookfilestruct['assets']
+
+				return render_template('cookfile.html', settings=settings, \
+					cookfilename=cookfilename, filenameonly=filenameonly, \
+					events=events, event_totals=event_totals, \
+					comments=comments, metadata=metadata, labels=labels, \
+					assets=assets, errors=errors, \
+					page_theme=settings['globals']['page_theme'], \
+					grill_name=settings['globals']['grill_name'])
+
+		if('cookfilelist' in requestform):
+			page = int(requestform['page'])
+			reverse = True if requestform['reverse'] == 'true' else False
+			itemsperpage = int(requestform['itemsperpage'])
+			filelist = get_cookfilelist()
+			cookfilelist = []
+			for filename in filelist:
+				cookfilelist.append({'filename' : filename, 'title' : '', 'thumbnail' : ''})
+			paginated_cookfile = paginate_list(cookfilelist, 'filename', reverse, itemsperpage, page)
+			paginated_cookfile['displaydata'] = get_cookfilelist_details(paginated_cookfile['displaydata'])
+			return render_template('_cookfilelist.html', pgntdcf = paginated_cookfile)
+
+		if('repairCF' in requestform):
+			cookfilename = requestform['repairCF']
+			filenameonly = requestform['repairCF'].replace(HISTORY_FOLDER, '')
+			cookfilestruct, status = upgrade_cookfile(cookfilename)
+			if status != 'OK':
+				errors.append(status)
+				if 'version' in status:
+					errortype = 'version'
+				elif 'asset' in status: 
+					errortype = 'asset'
+				else: 
+					errortype = 'other'
+				errors.append('Repair Failed.')
+				return render_template('cferror.html', settings=settings, \
+					cookfilename=cookfilename, errortype=errortype, \
+					errors=errors, page_theme=settings['globals']['page_theme'], \
+					grill_name=settings['globals']['grill_name'])
+			# Fix issues with assets
+			cookfilestruct, status = fixup_assets(cookfilename)
+			if status != 'OK':
+				errors.append(status)
+				if 'version' in status:
+					errortype = 'version'
+				elif 'asset' in status: 
+					errortype = 'asset'
+				else: 
+					errortype = 'other'
+				errors.append('Repair Failed.')
+				return render_template('cferror.html', settings=settings, \
+					cookfilename=cookfilename, errortype=errortype, \
+					errors=errors, page_theme=settings['globals']['page_theme'], \
+					grill_name=settings['globals']['grill_name'])
+			else: 
+				events = cookfilestruct['events']
+				event_totals = prepare_event_totals(events)
+				comments = cookfilestruct['comments']
+				for comment in comments:
+					comment['text'] = comment['text'].replace('\n', '<br>')
+				metadata = cookfilestruct['metadata']
+				metadata['starttime'] = epoch_to_time(metadata['starttime'] / 1000)
+				metadata['endtime'] = epoch_to_time(metadata['endtime'] / 1000)
+				labels = cookfilestruct['graph_labels']
+				assets = cookfilestruct['assets']
+
+				return render_template('cookfile.html', settings=settings, \
+					cookfilename=cookfilename, filenameonly=filenameonly, \
+					events=events, event_totals=event_totals, \
+					comments=comments, metadata=metadata, labels=labels, \
+					assets=assets, errors=errors, \
+					page_theme=settings['globals']['page_theme'], \
+					grill_name=settings['globals']['grill_name'])
+
+		if('upgradeCF' in requestform):
+			cookfilename = requestform['upgradeCF']
+			filenameonly = requestform['upgradeCF'].replace(HISTORY_FOLDER, '')
+			cookfilestruct, status = upgrade_cookfile(cookfilename)
+			if status != 'OK':
+				errors.append(status)
+				if 'version' in status:
+					errortype = 'version'
+				elif 'asset' in status: 
+					errortype = 'asset'
+				else: 
+					errortype = 'other'
+				return render_template('cferror.html', settings=settings, \
+					cookfilename=cookfilename, errortype=errortype, \
+					errors=errors, page_theme=settings['globals']['page_theme'], \
+					grill_name=settings['globals']['grill_name'])
+			else: 
+				events = cookfilestruct['events']
+				event_totals = prepare_event_totals(events)
+				comments = cookfilestruct['comments']
+				for comment in comments:
+					comment['text'] = comment['text'].replace('\n', '<br>')
+				metadata = cookfilestruct['metadata']
+				metadata['starttime'] = epoch_to_time(metadata['starttime'] / 1000)
+				metadata['endtime'] = epoch_to_time(metadata['endtime'] / 1000)
+				labels = cookfilestruct['graph_labels']
+				assets = cookfilestruct['assets']
+
+				return render_template('cookfile.html', settings=settings, \
+					cookfilename=cookfilename, filenameonly=filenameonly, \
+					events=events, event_totals=event_totals, \
+					comments=comments, metadata=metadata, labels=labels, \
+					assets=assets, errors=errors, \
+					page_theme=settings['globals']['page_theme'], \
+					grill_name=settings['globals']['grill_name'])
+
+		if('delmedialist' in requestform):
+			cookfilename = HISTORY_FOLDER + requestform['delmedialist']
+			filenameonly = requestform['delmedialist']
+			assetlist = requestform['delAssetlist'].split(',') if requestform['delAssetlist'] != '' else []
+			status = remove_assets(cookfilename, assetlist)
+			cookfilestruct, status = ReadCookFile(cookfilename)
+			if status != 'OK':
+				errors.append(status)
+				if 'version' in status:
+					errortype = 'version'
+				elif 'asset' in status: 
+					errortype = 'asset'
+				else: 
+					errortype = 'other'
+				return render_template('cferror.html', settings=settings, \
+					cookfilename=cookfilename, errortype=errortype, \
+					errors=errors, page_theme=settings['globals']['page_theme'], \
+					grill_name=settings['globals']['grill_name'])
+			else: 
+				events = cookfilestruct['events']
+				event_totals = prepare_event_totals(events)
+				comments = cookfilestruct['comments']
+				for comment in comments:
+					comment['text'] = comment['text'].replace('\n', '<br>')
+				metadata = cookfilestruct['metadata']
+				metadata['starttime'] = epoch_to_time(metadata['starttime'] / 1000)
+				metadata['endtime'] = epoch_to_time(metadata['endtime'] / 1000)
+				labels = cookfilestruct['graph_labels']
+				assets = cookfilestruct['assets']
+
+				return render_template('cookfile.html', settings=settings, \
+					cookfilename=cookfilename, filenameonly=filenameonly, \
+					events=events, event_totals=event_totals, \
+					comments=comments, metadata=metadata, labels=labels, \
+					assets=assets, errors=errors, \
+					page_theme=settings['globals']['page_theme'], \
+					grill_name=settings['globals']['grill_name'])
+
+	errors.append('Something unexpected has happened.')
+	return jsonify({'result' : 'ERROR', 'errors' : errors})
+
+@app.route('/updatecookfile', methods=['POST','GET'])
+def updatecookdata(action=None):
+	global settings 
+
+	if(request.method == 'POST'):
+		requestjson = request.json 
+		if('comments' in requestjson):
+			filename = requestjson['filename']
+			cookfiledata, status = ReadCFJSONData(filename, 'comments')
+
+			if('commentnew' in requestjson):
+				now = datetime.datetime.now()
+				comment_struct = {}
+				comment_struct['text'] = requestjson['commentnew']
+				comment_struct['id'] = generateUUID()
+				comment_struct['edited'] = ''
+				comment_struct['date'] = now.strftime('%Y-%m-%d')
+				comment_struct['time'] = now.strftime('%H:%M')
+				comment_struct['assets'] = []
+				cookfiledata.append(comment_struct)
+				result = UpdateCookFile(cookfiledata, filename, 'comments')
+				if(result == 'OK'):
+					return jsonify({'result' : 'OK', 'newcommentid' : comment_struct['id'], 'newcommentdt': comment_struct['date'] + ' ' + comment_struct['time']})
+			if('delcomment' in requestjson):
+				for item in cookfiledata:
+					if item['id'] == requestjson['delcomment']:
+						cookfiledata.remove(item)
+						result = UpdateCookFile(cookfiledata, filename, 'comments')
+						if(result == 'OK'):
+							return jsonify({'result' : 'OK'})
+			if('editcomment' in requestjson):
+				for item in cookfiledata:
+					if item['id'] == requestjson['editcomment']:
+						return jsonify({'result' : 'OK', 'text' : item['text']})
+			if('savecomment' in requestjson):
+				for item in cookfiledata:
+					if item['id'] == requestjson['savecomment']:
+						now = datetime.datetime.now()
+						item['text'] = requestjson['text']
+						item['edited'] = now.strftime('%Y-%m-%d %H:%M')
+						result = UpdateCookFile(cookfiledata, filename, 'comments')
+						if(result == 'OK'):
+							return jsonify({'result' : 'OK', 'text' : item['text'].replace('\n', '<br>'), 'edited' : item['edited'], 'datetime' : item['date'] + ' ' + item['time']})
+		
+		if('metadata' in requestjson):
+			filename = requestjson['filename']
+			cookfiledata, status = ReadCFJSONData(filename, 'metadata')
+			if(status == 'OK'):
+				if('editTitle' in requestjson):
+					cookfiledata['title'] = requestjson['editTitle']
+					result = UpdateCookFile(cookfiledata, filename, 'metadata')
+					if(result == 'OK'):
+						return jsonify({'result' : 'OK'})
+					else: 
+						print(f'Result: {result}')
+		
+		if('graph_labels' in requestjson):
+			filename = requestjson['filename']
+			cookfiledata, status = ReadCFJSONData(filename, 'graph_labels')
+			if(status == 'OK'):
+				if('grill1_label' in requestjson):
+					cookfiledata['grill1_label'] = requestjson['grill1_label']
+					result = UpdateCookFile(cookfiledata, filename, 'graph_labels')
+					if(result == 'OK'):
+						return jsonify({'result' : 'OK'})
+				if('probe1_label' in requestjson):
+					cookfiledata['probe1_label'] = requestjson['probe1_label']
+					result = UpdateCookFile(cookfiledata, filename, 'graph_labels')
+					if(result == 'OK'):
+						return jsonify({'result' : 'OK'})
+				if('probe2_label' in requestjson):
+					cookfiledata['probe2_label'] = requestjson['probe2_label']
+					result = UpdateCookFile(cookfiledata, filename, 'graph_labels')
+					if(result == 'OK'):
+						return jsonify({'result' : 'OK'})
+			else:
+				print(f'ERROR: {status}')
+
+		if('media' in requestjson):
+			filename = requestjson['filename']
+			assetfilename = requestjson['assetfilename']
+			commentid = requestjson['commentid']
+			state = requestjson['state']
+			comments, status = ReadCFJSONData(filename, 'comments')
+			result = 'OK'
+			for index in range(0, len(comments)):
+				if comments[index]['id'] == commentid:
+					if assetfilename in comments[index]['assets'] and state == 'selected':
+						comments[index]['assets'].remove(assetfilename)
+						result = UpdateCookFile(comments, filename, 'comments')
+					elif assetfilename not in comments[index]['assets'] and state == 'unselected':
+						comments[index]['assets'].append(assetfilename)
+						result = UpdateCookFile(comments, filename, 'comments')
+					break
+
+			return jsonify({'result' : result})
+
+	return jsonify({'result' : 'ERROR'})
+	
 
 @app.route('/tuning/<action>', methods=['POST','GET'])
 @app.route('/tuning', methods=['POST','GET'])
@@ -626,7 +1140,6 @@ def pellets_page(action=None):
 @app.route('/recipes', methods=['POST','GET'])
 def recipes_page(action=None):
 
-	#print('Recipes Page')
 	# Show current recipes
 	# Add a recipe
 	# Delete a Recipe
@@ -1073,7 +1586,6 @@ def settings_page(action=None):
 		return(jsonify({'temps_list' : temps, 'profiles' : profiles}))
 
 	if request.method == 'POST' and action == 'smartstart':
-		#print(f'\nGot POST Request: \n{request.json}')
 		response = request.json 
 		settings['smartstart']['temp_range_list'] = response['temps_list']
 		settings['smartstart']['profiles'] = response['profiles']
@@ -1246,9 +1758,10 @@ def admin_page(action=None):
 			elif remote_file.filename != '':
 				# If the user does not select a file, the browser submits an
 				# empty file without a filename.
-				if remote_file and _allowed_file(remote_file.filename):
-					filename = secure_filename(remote_file.filename)
-					remote_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+				if remotefile and allowed_file(remotefile.filename):
+					filename = secure_filename(remotefile.filename)
+					remotefile.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+					#print(f'{filename} saved to {BACKUPPATH}')
 					notify = "success"
 					pelletdb = read_pellet_db(filename=BACKUP_PATH+filename)
 					write_pellet_db(pelletdb)
@@ -1423,7 +1936,6 @@ def wizard(action=None):
 			write_settings(settings)
 			return redirect('/')
 		if action=='finish':
-			print(f'Finishing. \n Form Data: {r}')
 			wizardInstallInfo = prepare_wizard_data(r)
 			store_wizard_install_info(wizardInstallInfo)
 			set_wizard_install_status(0, 'Starting Install...', '')
@@ -1547,14 +2059,12 @@ def update_page(action=None):
 									   page_theme=settings['globals']['page_theme'], update_data=update_data,
 									   grill_name=settings['globals']['grill_name'])
 			else:
-				print(f'Changing Branch. \nForm Data: {r["branch_target"]}')
 				set_updater_install_status(0, 'Starting Branch Change...', '')
 				os.system('python3 %s %s %s &' % ('updater.py', '-b', r['branch_target']))	# Kickoff Branch Change
 				return render_template('updater-status.html', page_theme=settings['globals']['page_theme'],
 									   grill_name=settings['globals']['grill_name'])
 
 		if 'do_update' in r:
-			print(f'Updating. \nForm Data: {r}')
 			set_updater_install_status(0, 'Starting Update...', '')
 			os.system('python3 %s %s %s &' % ('updater.py', '-u', update_data['branch_target']))  # Kickoff Update
 			return render_template('updater-status.html', page_theme=settings['globals']['page_theme'],
@@ -1588,69 +2098,14 @@ Metrics Routes
 def metrics_page(action=None):
 	global settings
 
-	metrics_data = read_metrics(all=True)
+	metrics_data = ProcessMetrics(ReadMetrics(all=True))
 
-	# Process Additional Metrics Information for Display
-	for index in range(0, len(metrics_data)):
-		# Convert Start Time
-		start_time = metrics_data[index]['starttime']
-		metrics_data[index]['starttime_c'] = _epoch_to_time(start_time)
-		# Convert End Time
-		if metrics_data[index]['endtime'] == 0:
-			end_time = 0
-		else:
-			end_time = _epoch_to_time(metrics_data[index]['endtime'])
-		metrics_data[index]['endtime_c'] = end_time
-		# Time in Mode
-		if metrics_data[index]['mode'] == 'Stop':
-			time_in_mode = 'NA'
-		elif metrics_data[index]['endtime'] == 0:
-			time_in_mode = 'Active'
-		else:
-			seconds = int(metrics_data[index]['endtime'] - metrics_data[index]['starttime'])
-			if seconds > 60:
-				time_in_mode = f'{int(seconds/60)} m {seconds % 60} s'
-			else:
-				time_in_mode = f'{seconds} s'
-		metrics_data[index]['timeinmode'] = time_in_mode
-		# Convert Auger On Time
-		metrics_data[index]['augerontime_c'] = str(int(metrics_data[index]['augerontime'])) + ' s'
-		# Estimated Pellet Usage
-		grams = int(metrics_data[index]['augerontime'] * settings['globals']['augerrate'])
-		pounds = grams * 0.00220462
-		ounces = grams * 0.03527392
-		metrics_data[index]['estusage_m'] = f'{grams} grams'
-		metrics_data[index]['estusage_i'] = f'{pounds} pounds ({ounces} ounces)'
+	if (request.method == 'GET') and (action == 'export'):
+		filename = datetime.datetime.now().strftime('%Y%m%d-%H%M') + '-PiFire-Metrics-Export'
+		csvfilename = prepare_metrics_csv(metrics_data, filename)
+		return send_file(csvfilename, as_attachment=True, max_age=0)
 
-	if request.method == 'GET' and action == 'export':
-		export_filename = "pifire_metrics.csv"
-		csvfile = open('/tmp/' + export_filename, 'w')
-
-		list_length = len(metrics_data) # Length of list
-
-		if list_length > 0:
-			# Build the header row
-			write_line=''
-			for item in range(0, len(metrics_items)):
-				write_line += f'{metrics_items[item][0]}, '
-			write_line += '\n'
-			csvfile.write(write_line)
-			for index in range(0, list_length):
-				write_line = ''
-				for item in range(0, len(metrics_items)):
-					write_line += f'{metrics_data[index][metrics_items[item][0]]}, '
-				write_line += '\n'
-				csvfile.write(write_line)
-		else:
-			write_line = 'No Data\n'
-			csvfile.write(write_line)
-
-		csvfile.close()
-
-		return send_file('/tmp/' + export_filename, as_attachment=True, max_age=0)
-
-	return render_template('metrics.html', settings=settings, page_theme=settings['globals']['page_theme'],
-						   grill_name=settings['globals']['grill_name'], metrics_data=metrics_data)
+	return render_template('metrics.html', settings=settings, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'], metrics_data=metrics_data)
 
 '''
 Supporting Functions
@@ -1687,7 +2142,7 @@ def _prepare_data(num_items=10, reduce=True, data_points=60):
 	data_blob['probe2_temp_list'] = []
 	data_blob['probe2_settemp_list'] = []
 	
-	list_length = len(data_list) # Length of list
+	list_length = len(data_struct['T']) # Length of list(s)
 
 	if (list_length < num_items) and (list_length > 0):
 		num_items = list_length
@@ -1701,23 +2156,21 @@ def _prepare_data(num_items=10, reduce=True, data_points=60):
 		# Build all lists from file data
 		for index in range(list_length - num_items, list_length, step):
 			if(units == 'F'):
-				# Timestamp format is int, so convert from str
-				data_blob['label_time_list'].append(int(data_list[index][0]))
-				data_blob['grill_temp_list'].append(int(data_list[index][1]))
-				data_blob['grill_settemp_list'].append(int(data_list[index][2]))
-				data_blob['probe1_temp_list'].append(int(data_list[index][3]))
-				data_blob['probe1_settemp_list'].append(int(data_list[index][4]))
-				data_blob['probe2_temp_list'].append(int(data_list[index][5]))
-				data_blob['probe2_settemp_list'].append(int(data_list[index][6]))
-			else:
-				# Timestamp format is int, so convert from str
-				data_blob['label_time_list'].append(int(data_list[index][0]))
-				data_blob['grill_temp_list'].append(float(data_list[index][1]))
-				data_blob['grill_settemp_list'].append(float(data_list[index][2]))
-				data_blob['probe1_temp_list'].append(float(data_list[index][3]))
-				data_blob['probe1_settemp_list'].append(float(data_list[index][4]))
-				data_blob['probe2_temp_list'].append(float(data_list[index][5]))
-				data_blob['probe2_settemp_list'].append(float(data_list[index][6]))
+				data_blob['label_time_list'].append(int(data_struct['T'][index]))  # Timestamp format is int, so convert from str
+				data_blob['grill_temp_list'].append(int(data_struct['GT1'][index]))
+				data_blob['grill_settemp_list'].append(int(data_struct['GSP1'][index]))
+				data_blob['probe1_temp_list'].append(int(data_struct['PT1'][index]))
+				data_blob['probe1_settemp_list'].append(int(data_struct['PSP1'][index]))
+				data_blob['probe2_temp_list'].append(int(data_struct['PT2'][index]))
+				data_blob['probe2_settemp_list'].append(int(data_struct['PSP2'][index]))
+			else: 
+				data_blob['label_time_list'].append(int(data_struct['T'][index]))  # Timestamp format is int, so convert from str
+				data_blob['grill_temp_list'].append(float(data_struct['GT1'][index]))
+				data_blob['grill_settemp_list'].append(float(data_struct['GSP1'][index]))
+				data_blob['probe1_temp_list'].append(float(data_struct['PT1'][index]))
+				data_blob['probe1_settemp_list'].append(float(data_struct['PSP1'][index]))
+				data_blob['probe2_temp_list'].append(float(data_struct['PT2'][index]))
+				data_blob['probe2_settemp_list'].append(float(data_struct['PSP2'][index]))
 	else:
 		now = datetime.datetime.now()
 		#time_now = now.strftime('%H:%M:%S')
@@ -1733,7 +2186,8 @@ def _prepare_data(num_items=10, reduce=True, data_points=60):
 
 	return(data_blob)
 
-def _prepare_annotations(displayed_starttime):
+def prepare_annotations(displayed_starttime, metrics_data=[]):
+	if(metrics_data == []):
 	metrics_data = read_metrics(all=True)
 	annotation_json = {}
 	# Process Additional Metrics Information for Display
@@ -1741,7 +2195,7 @@ def _prepare_annotations(displayed_starttime):
 		# Check if metric falls in the displayed time window
 		if metrics_data[index]['starttime'] > displayed_starttime:
 			# Convert Start Time
-			start_time = _epoch_to_time(metrics_data[index]['starttime'])
+			# starttime = epoch_to_time(metrics_data[index]['starttime']/1000)
 			mode = metrics_data[index]['mode']
 			color = 'blue'
 			if mode == 'Startup':
@@ -1762,8 +2216,8 @@ def _prepare_annotations(displayed_starttime):
 				color = 'purple'
 			annotation = {
 							'type' : 'line',
-							'xMin' : start_time,
-							'xMax' : start_time,
+							'xMin' : metrics_data[index]['starttime'],
+							'xMax' : metrics_data[index]['starttime'],
 							'borderColor' : color,
 							'borderWidth' : 2,
 							'label': {
@@ -1781,7 +2235,361 @@ def _prepare_annotations(displayed_starttime):
 
 	return(annotation_json)
 
-def _calc_shh_coefficients(t1, t2, t3, r1, r2, r3):
+def prepare_graph_csv(graph_data=[], graph_labels=[], filename=''):
+		# Create filename if no name specified
+		if(filename == ''):
+			now = datetime.datetime.now()
+			filename = now.strftime('%Y%m%d-%H%M') + '-PiFire-Export'
+		else:
+			filename = filename.replace('.json', '')
+			filename = filename.replace('./history/', '')
+			filename += '-Pifire-Export'
+		
+		exportfilename = '/tmp/' + filename + ".csv"
+		
+		# Open CSV File for editing
+		csvfile = open(exportfilename, "w")
+
+		# Get labels 
+		if(graph_labels == []):
+			labels = 'Time,Grill Temp,Grill SetTemp,Probe 1 Temp,Probe 1 SetTemp,Probe 2 Temp, Probe 2 SetTemp\n'
+		else:
+			labels = 'Time,' 
+			labels += graph_labels['grill1_label'] + ' Temp,'
+			labels += graph_labels['grill1_label'] + ' Setpoint,'
+			labels += graph_labels['probe1_label'] + ' Temp,'
+			labels += graph_labels['probe1_label'] + ' Setpoint,'
+			labels += graph_labels['probe2_label'] + ' Temp,'
+			labels += graph_labels['probe2_label'] + ' Setpoint\n'
+
+		if(graph_data == []):
+			graph_data = ReadHistory()
+		
+		list_length =len(graph_data['T'])
+
+		if(list_length > 0):
+			writeline = labels
+			csvfile.write(writeline)
+			last = -1
+			for index in range(0, list_length):
+				if (int((index/list_length)*100) > last):
+					last = int((index/list_length)*100)
+				converted_dt = datetime.datetime.fromtimestamp(int(graph_data['T'][index]) / 1000)
+				timestr = converted_dt.strftime('%Y-%m-%d %H:%M:%S')
+				writeline = f"{timestr}, {graph_data['GT1'][index]}, {graph_data['GSP1'][index]}, {graph_data['PT1'][index]}, {graph_data['PSP1'][index]}, {graph_data['PT2'][index]}, {graph_data['PSP2'][index]}"
+				csvfile.write(writeline + '\n')
+		else:
+			writeline = 'No Data\n'
+			csvfile.write(writeline)
+
+		csvfile.close()
+
+		return(exportfilename)
+
+def ConvertLabels(indata):
+	'''
+	Temporary function to convert Grill Data Labels to Legacy Format
+	'''
+	outdata = {}
+	outdata['T'] = indata.pop('time_labels')
+	outdata['GT1'] = indata.pop('grill1_temp')
+	outdata['GSP1'] = indata.pop('grill1_setpoint')
+	outdata['PT1'] = indata.pop('probe1_temp')
+	outdata['PSP1'] = indata.pop('probe1_setpoint')
+	outdata['PT2'] = indata.pop('probe2_temp')
+	outdata['PSP2'] = indata.pop('probe2_setpoint')
+
+	return(outdata)
+
+def prepare_metrics_csv(metrics_data, filename):
+	filename = filename.replace('.json', '')
+	filename = filename.replace('./history/', '')
+	filename = '/tmp/' + filename + '-PiFire-Metrics-Export.csv'
+
+	csvfile = open(filename, 'w')
+
+	list_length = len(metrics_data) # Length of list
+
+	if(list_length > 0):
+		# Build the header row
+		writeline=''
+		for item in range(0, len(metrics_items)):
+			writeline += f'{metrics_items[item][0]}, '
+		writeline += '\n'
+		csvfile.write(writeline)
+		for index in range(0, list_length):
+			writeline = ''
+			for item in range(0, len(metrics_items)):
+				writeline += f'{metrics_data[index][metrics_items[item][0]]}, '
+			writeline += '\n'
+			csvfile.write(writeline)
+	else:
+		writeline = 'No Data\n'
+		csvfile.write(writeline)
+
+	csvfile.close()
+	return(filename)
+
+def prepare_event_totals(events):
+	auger_time = 0
+	for index in range(0, len(events)):
+		auger_time += events[index]['augerontime']
+
+	auger_time = int(auger_time)
+	event_totals = {}
+	event_totals['augerontime'] = f'{auger_time} s'
+
+	grams = int(auger_time * settings['globals']['augerrate'])
+	pounds = round(grams * 0.00220462, 2)
+	ounces = round(grams * 0.03527392, 2)
+	event_totals['estusage_m'] = f'{grams} grams'
+	event_totals['estusage_i'] = f'{pounds} pounds ({ounces} ounces)'
+
+	seconds = int((events[-1]['starttime']/1000) - (events[0]['starttime']/1000))
+	if seconds > 60:
+		event_totals['cooktime'] = f'{int(seconds/60)} m {seconds % 60} s'
+	else:
+		event_totals['cooktime'] = f'{seconds} s'
+
+	return(event_totals)
+
+def AddCFAsset(cookfilename, assetpath, assetfile):
+	#  Guess the filetype
+	filetype = assetfile.rsplit('.', 1)[1].lower()
+	#  Create new asset ID
+	asset_id = generateUUID()
+	#  Create new asset structure
+	newasset = {
+			'id' : asset_id,
+			'filename' : asset_id + f'.{filetype}',
+			'type' : filetype
+		}
+	#  Read current asset.json
+	assets, status = ReadCFJSONData(cookfilename, 'assets')
+	
+	if status == 'OK':
+		#  Append the new asset information to the file
+		assets.append(newasset)
+		#  Update cookfile with new asset information
+		UpdateCookFile(assets, cookfilename, 'assets')
+		#  Rename asset file to [asset_id].[filetype]
+		fullsize = f'{assetpath}/{asset_id}.{filetype}'
+		os.rename(os.path.join(assetpath, assetfile), fullsize)
+
+		#  Rotate image if needed
+		rotate_image(assetpath, asset_id, filetype)
+
+		#  Create a thumbnail from the image
+		thumbpathname, status = create_thumbnail(assetpath, asset_id, filetype)
+
+		#  Resize original image
+		status = resize_image(assetpath, asset_id, filetype, max_size=(800, 600))
+
+		#  Add the files to the zipfile
+		with zipfile.ZipFile(cookfilename, 'a') as archive:
+			if status=='OK':
+				archive.write(thumbpathname, arcname=f'assets/thumbs/{asset_id}.{filetype}')
+			archive.write(fullsize, arcname=f'assets/{asset_id}.{filetype}')
+	else: 
+		print(f'status: {status}')
+
+	return(asset_id, filetype)
+
+def rotate_image(filepath, asset_id, filetype):
+	status = 'OK'
+	'''
+		Rotates the image if necessary.	
+	'''
+	#  Import PIL for image manipulations
+	from PIL import Image, ExifTags
+
+	try:
+		#  Load image into memory
+		imagefile = f'{filepath}/{asset_id}.{filetype}'
+		image = Image.open(imagefile)
+
+		for orientation in ExifTags.TAGS.keys():
+			if ExifTags.TAGS[orientation]=='Orientation':
+				break
+		
+		exif = image._getexif()
+
+		if(exif is not None):
+			rotate = True
+			if exif[orientation] == 3:
+				image=image.rotate(180, expand=True)
+			elif exif[orientation] == 6:
+				image=image.rotate(270, expand=True)
+			elif exif[orientation] == 8:
+				image=image.rotate(90, expand=True)
+			else:
+				rotate=False
+			
+			if rotate:
+				image.save(imagefile)
+		
+		image.close()
+	
+	except (AttributeError, KeyError, IndexError):
+		status = 'ERROR: Rotation Failed.'
+	except:
+		status = 'ERROR: Rotation Failed, Unspecified Error.'
+
+	return status
+
+def create_thumbnail(filepath, asset_id, filetype, crop=True):
+	status = 'OK'
+	#  Import PIL for image manipulations
+	from PIL import Image
+	#  Load image into memory
+	imagefile = f'{filepath}/{asset_id}.{filetype}'
+	image = Image.open(imagefile)
+	width, height = image.size
+
+	#  Crop Image 
+	if crop:
+		if width > height:
+			image = image.crop((width//2 - height//2, 0, width//2 + height//2, height))
+		elif height > width:
+			image = image.crop((0, height//2 - width//2, width, height//2 + width//2))
+		#  Get new width & height
+		width, height = image.size
+
+	#  Resize Image to 128px x 128px unless it's already the right size
+	if (width != 128) and (height != 128):
+		image = image.resize((128, 128))
+
+	#  Save thumb image in filepath + /thumbs
+	if not os.path.exists(f'{filepath}/thumbs'):
+		os.mkdir(f'{filepath}/thumbs')
+	thumbpathname = f'{filepath}/thumbs/{asset_id}.{filetype}'
+	image.save(thumbpathname)
+
+	return(thumbpathname, status)
+
+def resize_image(assetpath, asset_id, filetype, max_size=(800, 600)):
+	status = 'OK'
+	#  Import PIL for image manipulations
+	from PIL import Image, ImageOps
+	#  Load image into memory
+	imagefile = f'{assetpath}/{asset_id}.{filetype}'
+	image = Image.open(imagefile)
+	#  Resizes image to fit into max_size and maintains aspect ratio
+	image = ImageOps.contain(image, max_size)
+	#  Saves the image file
+	image.save(imagefile)
+
+	return(status)
+
+def set_thumbnail(cookfilename, thumbfilename):
+	'''
+	cookfilename = name of the cookfile that is being edited
+	thumbfilename = filename of the thumbnail image which is being set
+		without the assets/thumbs/ folder in the path 
+	'''
+	metadata, status = ReadCFJSONData(cookfilename, 'metadata')
+	if status=='OK':
+		metadata['thumbnail'] = f'{thumbfilename}'
+		UpdateCookFile(metadata, cookfilename, 'metadata')
+
+def unpack_thumb(thumbname, filename):
+	try:
+		with zipfile.ZipFile(filename, mode="r") as archive:
+			thumb = archive.read(f'assets/thumbs/{thumbname}')  # Read bytes into variable
+			tmp_id = generateUUID()
+
+			if not os.path.exists(f'/tmp/pifire'):
+				os.mkdir(f'/tmp/pifire')
+
+			if not os.path.exists(f'/tmp/pifire/{tmp_id}'):
+				os.mkdir(f'/tmp/pifire/{tmp_id}')
+
+			#  Write fullsize image to disk
+			destination = open(f'/tmp/pifire/{tmp_id}/{thumbname}', "wb")  # Write bytes to proper destination
+			destination.write(thumb)
+			destination.close()
+			path_filename = f'{tmp_id}/{thumbname}'
+
+			#  Create temporary folder for the thumbnail
+			if not os.path.exists('./static/img/tmp'):
+				os.mkdir(f'./static/img/tmp')
+			if not os.path.exists(f'./static/img/tmp/{tmp_id}'):
+				os.symlink(f'/tmp/pifire/{tmp_id}', f'./static/img/tmp/{tmp_id}')
+
+	except:
+		path_filename = ''
+	
+	return path_filename 
+
+def paginate_list(datalist, sortkey='', reversesortorder=False, itemsperpage=10, page=1):
+	if sortkey != '':
+		#  Sort list if key is specified
+		tempdatalist = sorted(datalist, key=lambda d: d[sortkey], reverse=reversesortorder)
+	else:
+		#  If no key, reverse list if specified, or keep order 
+		if reversesortorder:
+			datalist.reverse()
+		tempdatalist = datalist.copy()
+	listlength = len(tempdatalist)
+	if listlength <= itemsperpage:
+		curpage = 1
+		prevpage = 1 
+		nextpage = 1 
+		lastpage = 1
+		displaydata = tempdatalist.copy()
+	else: 
+		lastpage = (listlength // itemsperpage) + ((listlength % itemsperpage) > 0)
+		if (lastpage < page):
+			curpage = lastpage
+			prevpage = curpage - 1 if curpage > 1 else 1
+			nextpage = curpage + 1 if curpage < lastpage else lastpage 
+		else: 
+			curpage = page if page > 0 else 1
+			prevpage = curpage - 1 if curpage > 1 else 1
+			nextpage = curpage + 1 if curpage < lastpage else lastpage 
+		#  Calculate starting / ending position and create list with that data
+		start = itemsperpage * (curpage - 1)  # Get starting position 
+		end = start + itemsperpage # Get ending position 
+		displaydata = tempdatalist.copy()[start:end]
+
+	reverse = 'true' if reversesortorder else 'false'
+
+	pagination = {
+		'displaydata' : displaydata,
+		'curpage' : curpage,
+		'prevpage' : prevpage,
+		'nextpage' : nextpage, 
+		'lastpage' : lastpage,
+		'reverse' : reverse,
+		'itemspage' : itemsperpage
+	}
+
+	return (pagination)
+
+def get_cookfilelist(folder=HISTORY_FOLDER):
+	# Grab list of Historical Cook Files
+	if not os.path.exists(folder):
+		os.mkdir(folder)
+	dirfiles = os.listdir(folder)
+	cookfiles = []
+	for file in dirfiles:
+		if file.endswith('.pifire'):
+			cookfiles.append(file)
+	return(cookfiles)
+
+def get_cookfilelist_details(cookfilelist):
+	cookfiledetails = []
+	for item in cookfilelist:
+		filename = HISTORY_FOLDER + item['filename']
+		cookfiledata, status = ReadCFJSONData(filename, 'metadata')
+		if(status == 'OK'):
+			thumbnail = unpack_thumb(cookfiledata['thumbnail'], filename) if ('thumbnail' in cookfiledata) else ''
+			cookfiledetails.append({'filename' : item['filename'], 'title' : cookfiledata['title'], 'thumbnail' : thumbnail})
+		else:
+			cookfiledetails.append({'filename' : item['filename'], 'title' : 'ERROR', 'thumbnail' : ''})
+	return(cookfiledetails)
+
+def calc_shh_coefficients(T1, T2, T3, R1, R2, R3):
 	try: 
 		# Convert Temps from Fahrenheit to Kelvin
 		t1 = ((t1 - 32) * (5 / 9)) + 273.15
