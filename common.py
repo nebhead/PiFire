@@ -1705,3 +1705,16 @@ def semantic_ver_to_list(version_string):
 	ver_list = list(map(int, ver_list))
 
 	return(ver_list)
+
+def seconds_to_string(seconds):
+	m, s = divmod(seconds, 60)
+	h, m = divmod(m, 60)
+
+	if h > 0:
+		time_string = f'{h}h {m}m {s}s'
+	elif m > 0:
+		time_string = f'{m}m {s}s'
+	else: 
+		time_string = f'{s}s'
+
+	return time_string 

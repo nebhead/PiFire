@@ -2310,10 +2310,10 @@ def _prepare_event_totals(events):
 	auger_time = 0
 	for index in range(0, len(events)):
 		auger_time += events[index]['augerontime']
-
 	auger_time = int(auger_time)
+
 	event_totals = {}
-	event_totals['augerontime'] = f'{auger_time} s'
+	event_totals['augerontime'] = seconds_to_string(auger_time)
 
 	grams = int(auger_time * settings['globals']['augerrate'])
 	pounds = round(grams * 0.00220462, 2)
@@ -2322,10 +2322,11 @@ def _prepare_event_totals(events):
 	event_totals['estusage_i'] = f'{pounds} pounds ({ounces} ounces)'
 
 	seconds = int((events[-1]['starttime']/1000) - (events[0]['starttime']/1000))
-	if seconds > 60:
-		event_totals['cooktime'] = f'{int(seconds/60)} m {seconds % 60} s'
-	else:
-		event_totals['cooktime'] = f'{seconds} s'
+	
+	event_totals['cooktime'] = seconds_to_string(seconds)
+
+	event_totals['pellet_level_start'] = events[0]['pellet_level_start']
+	event_totals['pellet_level_end'] = events[-2]['pellet_level_end']
 
 	return(event_totals)
 

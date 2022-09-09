@@ -364,6 +364,11 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 	metrics['mode'] = str(control['mode'])
 	metrics['smokeplus'] = control['s_plus'] 
 	metrics['grill_settemp'] = control['setpoints']['grill']
+	metrics['pellet_level_start'] = pelletdb['current']['hopper_level']
+	current_pellet_id = pelletdb['current']['pelletid']
+	pellet_brand = pelletdb['archive'][current_pellet_id]['brand']
+	pellet_type = pelletdb['archive'][current_pellet_id]['wood']
+	metrics['pellet_brand_type'] = f'{pellet_brand} {pellet_type}'
 	write_metrics(metrics)
 
 	if mode in ('Startup', 'Reignite'):
@@ -555,7 +560,7 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 		if control['hopper_check'] or (now - hopper_toggle_time) > 300:
 			pelletdb = read_pellet_db()
 			# Get current hopper level and save it to the current pellet information
-			pelletdb['current']['hopper_level'] = dist_device.get_level()
+			pelletdb['current']['hopper_level'] = dist_device.get_level()			
 			write_pellet_db(pelletdb)
 			hopper_toggle_time = now
 			write_event(settings, "* Hopper Level Checked @ " + str(pelletdb['current']['hopper_level']) + "%")
@@ -859,6 +864,7 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 
 	# Log the end time
 	metrics['endtime'] = time.time()
+	metrics['pellet_level_end'] = pelletdb['current']['hopper_level']
 	write_metrics(metrics)
 
 	return ()
