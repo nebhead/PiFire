@@ -892,10 +892,14 @@ def write_pellet_db(pelletdb):
 	with open("pelletdb.json", 'w') as json_file:
 		json_file.write(json_data_string)
 
-def read_log():
+def read_log(legacy=True):
 	"""
 	Read event.log and populate an array of events.
 
+	if legacy=true:
+	:return: (event_list, num_events)
+
+	if legacy=false:
 	:return: (event_list, num_events)
 	"""
 	# Read all lines of events.log into a list(array)
@@ -915,14 +919,19 @@ def read_log():
 	# Get number of events
 	num_events = len(event_lines)
 
-	for x in range(num_events):
-		event_list.insert(0, event_lines[x].split(" ",2))
+	if legacy:
+		for x in range(num_events):
+			event_list.insert(0, event_lines[x].split(" ",2))
 
-	# Error handling if number of events is less than 10, fill array with empty
-	if num_events < 10:
-		for line in range((10-num_events)):
-			event_list.append(["--------","--:--:--","---"])
-		num_events = 10
+		# Error handling if number of events is less than 10, fill array with empty
+		if num_events < 10:
+			for line in range((10-num_events)):
+				event_list.append(["--------","--:--:--","---"])
+			num_events = 10
+	else:
+		for x in range(num_events):
+			event_list.append(event_lines[x].split(" ",2))
+		return event_list
 
 	return(event_list, num_events)
 

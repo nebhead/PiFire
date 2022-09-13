@@ -949,13 +949,21 @@ def probe2_tr():
 @app.route('/events/<action>', methods=['POST','GET'])
 @app.route('/events', methods=['POST','GET'])
 def events_page(action=None):
-	# Show list of logged events and debug event list
-	event_list, num_events = read_log()
 	global settings
 
+	if(request.method == 'POST') and ('form' in request.content_type):
+		requestform = request.form 
+		if 'eventslist' in requestform:
+			event_list = read_log(legacy=False)
+			page = int(requestform['page'])
+			reverse = True if requestform['reverse'] == 'true' else False
+			itemsperpage = int(requestform['itemsperpage'])
+			pgntd_data = _paginate_list(event_list, reversesortorder=reverse, itemsperpage=itemsperpage, page=page)
+			return render_template('_events_list.html', pgntd_data = pgntd_data)
+		else:
+			return ('Error')
+
 	return render_template('events.html',
-						   event_list=event_list,
-						   num_events=num_events,
 						   page_theme=settings['globals']['page_theme'],
 						   grill_name=settings['globals']['grill_name'])
 
