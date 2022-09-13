@@ -560,7 +560,7 @@ def cookfiledata(action=None):
 				cookfilelist.append({'filename' : filename, 'title' : '', 'thumbnail' : ''})
 			paginated_cookfile = _paginate_list(cookfilelist, 'filename', reverse, itemsperpage, page)
 			paginated_cookfile['displaydata'] = _get_cookfilelist_details(paginated_cookfile['displaydata'])
-			return render_template('_cookfilelist.html', pgntdcf = paginated_cookfile)
+			return render_template('_cookfile_list.html', pgntdcf = paginated_cookfile)
 
 		if('repairCF' in requestform):
 			cookfilename = requestform['repairCF']
