@@ -320,10 +320,10 @@
 				{% if units == 'F' %}
 					{% if set_points['grill'] == 0 %}
 					<h1><output name="tempOutput" id="tempOutputId">125</output>°{{ units }}</h1>
-					<input type="range" class="custom-range" min="125" max="500" value="125" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
+					<input type="range" class="custom-range" min="125" max="600" step="5" value="125" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
 					{% else %}
 					<h1><output name="tempOutput" id="tempOutputId">{{ set_points['grill'] }}</output>°{{ units }}</h1>
-					<input type="range" class="custom-range" min="125" max="500" value="{{ set_points['grill'] }}" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
+					<input type="range" class="custom-range" min="125" max="600" step="5" value="{{ set_points['grill'] }}" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
 					{% endif %}
 				{% else %}
 					{% if set_points['grill'] == 0 %}

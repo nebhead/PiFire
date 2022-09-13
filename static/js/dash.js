@@ -11,10 +11,18 @@ function updateCards(data, init) {
 			var grillPercent = 0;
 		} else if(units == 'F'){
 			// if units are F, adjust circle temp bar where max is 600F
-			var grillPercent = ((data.cur_probe_temps[0] * 100) / 600);
+			if(data.cur_probe_temps[0] >= 600) {
+				var grillPercent = 99;
+			} else {
+				var grillPercent = ((data.cur_probe_temps[0] * 100) / 600);
+			};
 		} else {
 			// if units are C, adjust circle temp bar where max is 300C
-			var grillPercent = ((data.cur_probe_temps[0] * 100) / 300);
+			if(data.cur_probe_temps[0] >= 300) {
+				var grillPercent = 99;
+			} else {
+				var grillPercent = ((data.cur_probe_temps[0] * 100) / 300);
+			};
 		};
 		if (init) {
 			GrillTempCircle = circliful.newCircle({
@@ -74,10 +82,18 @@ function updateCards(data, init) {
 			var probe1Percent = 0;
 		} else if(units == 'F'){
 			// if units are F, adjust circle temp bar where max is 300F
-			var probe1Percent = ((probe1_temp * 100) / 300);
+			if(probe1_temp >= 300) {
+				var probe1Percent = 99;
+			} else {
+				var probe1Percent = ((probe1_temp * 100) / 300);
+			};
 		} else {
 			// if units are C, adjust circle temp bar where max is 150C
-			var probe1Percent = ((probe1_temp * 100) / 150);
+			if(probe1_temp >= 150) {
+				var probe1Percent = 99;
+			} else {
+				var probe1Percent = ((probe1_temp * 100) / 150);
+			};
 		};
 
 		if (init) {
@@ -131,10 +147,18 @@ function updateCards(data, init) {
 			var probe2Percent = 0;
 		} else if(units == 'F'){
 			// if units are F, adjust circle temp bar where max is 300F
-			var probe2Percent = ((probe2_temp * 100) / 300);
+			if(probe2_temp >= 300) {
+				var probe2Percent = 99;
+			} else {
+				var probe2Percent = ((probe2_temp * 100) / 300);
+			};
 		} else {
 			// if units are C, adjust circle temp bar where max is 150C
-			var probe2Percent = ((probe2_temp * 100) / 150);
+			if(probe2_temp >= 150) {
+				var probe2Percent = 99;
+			} else {
+				var probe2Percent = ((probe2_temp * 100) / 150);
+			};
 		};
 
 		if (init) {
