@@ -53,7 +53,13 @@ def dash():
 	control = read_control()
 	errors = read_errors()
 
-	return render_template('dash.html',
+	dash_template = 'dash_default.html'
+	for dash in settings['dashboard']['dashboards']:
+		if dash['name'] == settings['dashboard']['current']:
+			dash_template = dash['html_name']
+			break
+
+	return render_template(dash_template,
 						   set_points=control['setpoints'],
 						   notify_req=control['notify_req'],
 						   probes_enabled=settings['probe_settings']['probes_enabled'],
@@ -1450,6 +1456,14 @@ def settings_page(action=None):
 
 		write_settings(settings)
 		write_control(control)
+
+	if request.method == 'POST' and action == 'dashboard':
+		response = request.form
+		if _is_not_blank(response, 'dashboardSelect'):
+			settings['dashboard']['current'] = response['dashboardSelect']
+			write_settings(settings)
+			event['type'] = 'updated'
+			event['text'] = 'Successfully updated dashboard settings.'
 
 	if request.method == 'POST' and action == 'history':
 		response = request.form

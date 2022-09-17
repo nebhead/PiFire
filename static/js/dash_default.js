@@ -201,12 +201,14 @@ function updateHopperStatus(data) {
 };
 
 function updateDashButtons(data) {
-        // Setup Dash Buttons
+        //Check if pwm_control_btn exists
+		var pwmButton = document.getElementById("pwm_control_btn");
+		// Setup Dash Buttons
         if (data.current_mode == "Stop") {
             document.getElementById("stop_inactive_btn").className = "btn btn-danger border border-secondary";
             $("#active_group").hide();
 			$("#splus_btn").hide();
-			$("#pwm_control_btn").hide();
+			if(pwmButton != null) {$("#pwm_control_btn").hide();};
             $("#smoke_inactive_btn").hide();
             $("#hold_inactive_btn").hide();
             $("#inactive_group").show();
@@ -216,7 +218,7 @@ function updateDashButtons(data) {
             document.getElementById("monitor_btn").className = "btn btn-secondary border border-secondary";
             $("#active_group").hide();
 			$("#splus_btn").hide();
-			$("#pwm_control_btn").hide();
+			if(pwmButton != null) {$("#pwm_control_btn").hide();};
             $("#inactive_group").show();
             $("#smoke_inactive_btn").hide();
             $("#hold_inactive_btn").hide();
@@ -225,7 +227,7 @@ function updateDashButtons(data) {
             document.getElementById("startup_btn").className = "btn btn-success border border-secondary";
             $("#active_group").hide();
 			$("#splus_btn").hide();
-			$("#pwm_control_btn").hide();
+			if(pwmButton != null) {$("#pwm_control_btn").hide();};
 			$("#inactive_group").show();
 			$("#smoke_inactive_btn").show();
 			$("#hold_inactive_btn").show();
@@ -237,12 +239,12 @@ function updateDashButtons(data) {
             $("#active_group").show();
             $("#stop_btn").hide();
 			$("#splus_btn").show();
-			$("#pwm_control_btn").hide();
+			if(pwmButton != null) {$("#pwm_control_btn").hide();};
 			// This is required when automatically transitioning from another mode to this mode
 			if(data.splus == true) {
-				document.getElementById("splus_btn").className = "btn btn-success border border-secondary";
+				document.getElementById("splus_btn").className = "btn btn-success border border-secondary shadow";
 			} else {
-				document.getElementById("splus_btn").className = "btn btn-outline-primary border border-secondary text-secondary";
+				document.getElementById("splus_btn").className = "btn btn-outline-primary border border-secondary text-secondary shadow";
 			};
             $("#error_btn").hide();
         } else if (data.current_mode == 'Hold') {
@@ -254,31 +256,33 @@ function updateDashButtons(data) {
             $("#stop_btn").hide();
             $("#error_btn").hide();
 			$("#splus_btn").show();
-			$("#pwm_control_btn").show();
+			if(pwmButton != null) {$("#pwm_control_btn").show();};
 			// This is required when automatically transitioning from another mode to this mode
 			if(data.splus == true) {
-				document.getElementById("splus_btn").className = "btn btn-success border border-secondary";
+				document.getElementById("splus_btn").className = "btn btn-success border border-secondary shadow";
 				//document.getElementById("splus_btn").value = "false";
 				$("#splus_btn").val("false");
 			} else {
-				document.getElementById("splus_btn").className = "btn btn-outline-primary border border-secondary text-secondary";
+				document.getElementById("splus_btn").className = "btn btn-outline-primary border border-secondary text-secondary shadow";
 				//document.getElementById("splus_btn").value = "true";
 				$("#splus_btn").val("true");
 			};
 			// This is required when automatically transitioning from another mode to this mode
-			if(data.pwm_control == true) {
-				document.getElementById("pwm_control_btn").className = "btn btn-success border border-secondary";
-				$("#pwm_control_btn").val("false");
-			} else {
-				document.getElementById("pwm_control_btn").className = "btn btn-outline-primary border border-secondary text-secondary";
-				$("#pwm_control_btn").val("true");
+			if(pwmButton != null) {
+				if(data.pwm_control == true) {
+					document.getElementById("pwm_control_btn").className = "btn btn-success border border-secondary";
+					$("#pwm_control_btn").val("false");
+				} else {
+					document.getElementById("pwm_control_btn").className = "btn btn-outline-primary border border-secondary text-secondary";
+					$("#pwm_control_btn").val("true");
+				};
 			};
 			document.getElementById("hold_btn").className = "btn btn-secondary border border-secondary text-white";
 			$("#hold_btn").html(data.set_points['grill'] + "°" + units);
         } else if (data.current_mode == 'Shutdown') {
 			$("#inactive_group").hide();
 			$("#splus_btn").hide();
-			$("#pwm_control_btn").hide();
+			if(pwmButton != null) {$("#pwm_control_btn").hide();};
 			$("#active_group").show();
 			$("#stop_btn").show();
 			$("#error_btn").hide();
@@ -287,7 +291,7 @@ function updateDashButtons(data) {
 			document.getElementById("stop_inactive_btn").className = "btn btn-danger border border-secondary";
 			$("#active_group").hide();
 			$("#splus_btn").hide();
-			$("#pwm_control_btn").hide();
+			if(pwmButton != null) {$("#pwm_control_btn").hide();};
 			$("#smoke_inactive_btn").hide();
 			$("#hold_inactive_btn").hide();
 			$("#inactive_group").show();
@@ -298,7 +302,7 @@ function updateDashButtons(data) {
 			$("#active_group").hide();
 			$("#inactive_group").hide();
 			$("#splus_btn").hide();
-			$("#pwm_control_btn").hide();
+			if(pwmButton != null) {$("#pwm_control_btn").hide();};
 			$("#smoke_inactive_btn").hide();
 			$("#hold_inactive_btn").hide();
 			$("#monitor_btn").hide();
@@ -308,26 +312,28 @@ function updateDashButtons(data) {
         if ((data.current_mode == 'Smoke') || (data.current_mode == 'Hold')) {
             if (data.splus == true) {
                 $("#splus_btn").show();
-                document.getElementById("splus_btn").className = "btn btn-success border border-secondary";
+                document.getElementById("splus_btn").className = "btn btn-success border border-secondary shadow";
             } else {
                 $("#splus_btn").show();
-                document.getElementById("splus_btn").className = "btn btn-outline-primary border border-secondary text-secondary";
+                document.getElementById("splus_btn").className = "btn btn-outline-primary border border-secondary text-secondary shadow";
             };
         } else {
             $("#splus_btn").hide();
         };
 
-        if (data.current_mode == 'Hold') {
-            if (data.pwm_control == true) {
-                $("#pwm_control_btn").show();
-                document.getElementById("pwm_control_btn").className = "btn btn-success border border-secondary";
-            } else {
-                $("#pwm_control_btn").show();
-                document.getElementById("pwm_control_btn").className = "btn btn-outline-primary border border-secondary text-secondary";
-            };
-        } else {
-            $("#pwm_control_btn").hide();
-        };
+		if(pwmButton != null) {
+			if (data.current_mode == 'Hold') {
+				if (data.pwm_control == true) {
+					$("#pwm_control_btn").show();
+					document.getElementById("pwm_control_btn").className = "btn btn-success border border-secondary";
+				} else {
+					$("#pwm_control_btn").show();
+					document.getElementById("pwm_control_btn").className = "btn btn-outline-primary border border-secondary text-secondary";
+				};
+			} else {
+				$("#pwm_control_btn").hide();
+			};
+		};
 };
 
 var splusState = true;

@@ -50,6 +50,7 @@
             <a class="nav-link" id="v-pills-pwm-tab" data-toggle="pill" href="#v-pills-pwm" role="tab" aria-controls="v-pills-pwm" aria-selected="false">PWM Settings</a>
             {% endif %}
             <a class="nav-link" id="v-pills-timers-tab" data-toggle="pill" href="#v-pills-timers" role="tab" aria-controls="v-pills-timers" aria-selected="false">Startup & Shutdown</a>
+            <a class="nav-link" id="v-pills-dash-tab" data-toggle="pill" href="#v-pills-dash" role="tab" aria-controls="v-pills-dash" aria-selected="false">Dashboard</a>
             <a class="nav-link" id="v-pills-history-tab" data-toggle="pill" href="#v-pills-history" role="tab" aria-controls="v-pills-history" aria-selected="false">History</a>
             <a class="nav-link" id="v-pills-safety-tab" data-toggle="pill" href="#v-pills-safety" role="tab" aria-controls="v-pills-safety" aria-selected="false">Safety</a>
             <a class="nav-link" id="v-pills-pellets-tab" data-toggle="pill" href="#v-pills-pellets" role="tab" aria-controls="v-pills-pellets" aria-selected="false">Pellets</a>
@@ -1110,6 +1111,35 @@
                     </form>
                 </div><!-- End of Card -->
             </div><!-- End of Tab -->
+            
+            <!-- ============================ Dashboard Settings ========================== -->
+            {% if request.MOBILE %}<br>{% endif %}
+            <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-dash" role="tabpanel" aria-labelledby="v-pills-dash-tab">
+                <div class="card shadow">
+                    <form name="miscsettings" action="/settings/dashboard" method="POST">
+                        <div class="card-header bg-primary text-white">
+                            <h5>
+                                <i class="fas fa-tools"></i>&nbsp; Dashboard Settings
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="dashboardSelect">Select Dashboard</label>
+                                <select class="form-control" id="dashboardSelect" name="dashboardSelect">
+                                    {% for dashboard in settings['dashboard']['dashboards'] %}
+                                    <option value="{{ dashboard['name'] }}"{% if dashboard['name'] == settings['dashboard']['current'] %} selected{% endif %}>{{ dashboard['name'] }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div><!-- End of card body -->
+                        <div class="card-footer bg-light">
+                            <button type="submit" class="btn btn-outline-primary">Save</button>
+                        </div>
+                    </form>
+                </div><!-- End of Card -->
+            </div><!-- End of Tab -->
+
+
             <!-- ============================ History Settings ========================== -->
             {% if request.MOBILE %}<br>{% endif %}
             <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-history" role="tabpanel" aria-labelledby="v-pills-history-tab">

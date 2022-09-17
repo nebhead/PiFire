@@ -262,6 +262,20 @@ def default_settings():
 		]
 	}
 
+	settings['dashboard'] = {
+		'current' : 'Default', 
+		'dashboards' : [
+			{	'name' : 'Default',
+				'friendly_name' : 'Default/Classic Dashboard', 
+				'html_name' : 'dash_default.html'
+			},
+			{	'name' : 'Modern',
+				'friendly_name' : 'Modern Dashboard', 
+				'html_name' : 'dash_default.html'
+			},
+		]
+	}
+
 	return settings
 
 def default_control():

@@ -295,11 +295,13 @@
 		</div> <!-- End of Button Group -->
 
 		<!-- Smoke Plus -->
-		<button type="button" data-toggle="tooltip" title="Smoke Plus" class="btn btn-outline-primary border border-secondary text-secondary" id="splus_btn" name="setmodesmokeplus" value="true" style="display:none"><i class="fas fa-fan"></i></button>
+		<button type="button" data-toggle="tooltip" title="Smoke Plus" class="btn btn-outline-primary border border-secondary text-secondary shadow" id="splus_btn" name="setmodesmokeplus" value="true" style="display:none"><i class="fas fa-fan"></i></button>
 		<!-- Temp Fan Control -->
 		{% if dc_fan %}
-		<button type="button" data-toggle="tooltip" title="Temp Fan Control" class="btn btn-outline-primary border border-secondary text-secondary" id="pwm_control_btn" name="pwm_control" value="true" style="display:none"><i class="fas fa-tachometer-alt"></i></button>
+		<button type="button" data-toggle="tooltip" title="Temp Fan Control" class="btn btn-outline-primary border border-secondary text-secondary shadow" id="pwm_control_btn" name="pwm_control" value="true" style="display:none"><i class="fas fa-tachometer-alt"></i></button>
 		{% endif %}
+
+
 		<!-- ERROR Button Indicator -->
 		<button type="button" data-toggle="tooltip" title="Error!" class="btn text-white" id="error_btn" name="error_btn" value="true" style="display:none"><i class="fas fa-exclamation-triangle"></i></button>
 	</span>
@@ -347,8 +349,8 @@
 
 {% block scripts %}
 	<script> 
-	var units = '{{ units }}'; 
+	var units = '{{ units }}';
 	</script>
 	<script src="{{ url_for('static', filename='js/circliful1.js') }}"></script>
-	<script src="{{ url_for('static', filename='js/dash.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/dash_default.js') }}"></script>
 {% endblock %}
