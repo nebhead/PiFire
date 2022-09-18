@@ -21,6 +21,7 @@ from werkzeug.utils import secure_filename
 from collections.abc import Mapping
 import threading
 import zipfile
+import pathlib
 from threading import Thread
 from datetime import datetime
 from common import _generate_uuid, _epoch_to_time
