@@ -1702,11 +1702,8 @@ def admin_page(action=None):
 									   grill_name=settings['globals']['grill_name'])
 
 		if 'download_logs' in response:
-			time_now = datetime.datetime.now()
-			time_str = time_now.strftime('%m-%d-%y_%H%M%S') # Truncate the microseconds
-			file_name = 'PiFire_Logs_' + time_str + '.zip'
-			zip_file = _zip_files_dir('logs')
-			return send_file(zip_file, as_attachment=True, attachment_filename=file_name, max_age=0)
+			zip_file = _zip_files_logs('logs')
+			return send_file(zip_file, as_attachment=True, max_age=0)
 		
 		if 'backupsettings' in response:
 			time_now = datetime.datetime.now()
@@ -2678,6 +2675,16 @@ def _zip_files_dir(dir_name):
 				zipf.write(os.path.join(root, file))
 	memory_file.seek(0)
 	return memory_file
+
+def _zip_files_logs(dir_name):
+	time_now = datetime.datetime.now()
+	time_str = time_now.strftime('%m-%d-%y_%H%M%S') # Truncate the microseconds
+	file_name = f'/tmp/PiFire_Logs_{time_str}.zip'
+	directory = pathlib.Path(f'{dir_name}')
+	with zipfile.ZipFile(file_name, "w", zipfile.ZIP_DEFLATED) as archive:
+		for file_path in directory.rglob("*"):
+			archive.write(file_path, arcname=file_path.relative_to(directory))
+	return file_name
 
 def _deep_dict_update(orig_dict, new_dict):
 	for key, value in new_dict.items():
