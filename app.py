@@ -31,6 +31,7 @@ BACKUP_PATH = './backups/'  # Path to backups of settings.json, pelletdb.json
 UPLOAD_FOLDER = BACKUP_PATH  # Point uploads to the backup path
 HISTORY_FOLDER = './history/'  # Path to historical cook files
 ALLOWED_EXTENSIONS = {'json', 'pifire', 'jpg', 'jpeg', 'png', 'gif', 'bmp'}
+server_status = 'available'
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
@@ -1614,12 +1615,12 @@ def settings_page(action=None):
 @app.route('/admin/<action>', methods=['POST','GET'])
 @app.route('/admin', methods=['POST','GET'])
 def admin_page(action=None):
-
-	control = read_control()
-
+	global server_status
 	global settings
+	control = read_control()
 	pelletdb = read_pellet_db()
 	notify = ''
+
 	if not os.path.exists(BACKUP_PATH):
 		os.mkdir(BACKUP_PATH)
 	files = os.listdir(BACKUP_PATH)
@@ -1632,6 +1633,7 @@ def admin_page(action=None):
 		write_log(event)
 		if is_raspberry_pi():
 			os.system("sleep 3 && sudo reboot &")
+		server_status = 'rebooting'
 		return render_template('shutdown.html', action=action, page_theme=settings['globals']['page_theme'],
 							   grill_name=settings['globals']['grill_name'])
 
@@ -1640,12 +1642,14 @@ def admin_page(action=None):
 		write_log(event)
 		if is_raspberry_pi():
 			os.system("sleep 3 && sudo shutdown -h now &")
+		server_status = 'shutdown'
 		return render_template('shutdown.html', action=action, page_theme=settings['globals']['page_theme'],
 							   grill_name=settings['globals']['grill_name'])
 
 	elif action == 'restart':
 		event = "Admin: Restart Server"
 		write_log(event)
+		server_status = 'restarting'
 		restart_scripts()
 		return render_template('shutdown.html', action=action, page_theme=settings['globals']['page_theme'],
 							   grill_name=settings['globals']['grill_name'])
@@ -1698,6 +1702,7 @@ def admin_page(action=None):
 				control = default_control()
 				write_settings(settings)
 				write_control(control)
+				server_status = 'restarting'
 				restart_scripts()
 				return render_template('shutdown.html', action='restart', page_theme=settings['globals']['page_theme'],
 									   grill_name=settings['globals']['grill_name'])
@@ -1850,10 +1855,13 @@ def manual_page(action=None):
 @app.route('/api', methods=['POST','GET'])
 def api_page(action=None):
 	global settings
+	global server_status
 
 	if request.method == 'GET':
 		if action == 'settings':
 			return jsonify({'settings':settings}), 201
+		elif action == 'server':
+			return jsonify({'server_status' : server_status}), 201
 		elif action == 'control':
 			control=read_control()
 			return jsonify({'control':control}), 201

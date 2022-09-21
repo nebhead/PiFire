@@ -1,18 +1,5 @@
 {% extends 'base.html' %} 
 
-{% block head %}
-	<!-- Redirects on Action -->
-	{% if "shutdown" in action %}
-    <meta http-equiv="refresh" content="30;url=/" />
-    {% elif "reboot" in action %}
-    <meta http-equiv="refresh" content="30;url=/" />
-    {% elif "restart" in action %}
-    <meta http-equiv="refresh" content="30;url=/" />
-	{% else %}
-    <meta http-equiv="refresh" content="3;url=/" />
-    {% endif %}
-{% endblock %}
-
 {% block title %}
 	{% if "shutdown" in action %}
 	Shutting Down
@@ -33,6 +20,7 @@
 	{% if "shutdown" in action %}
 		<center>
 			<H1>Shutting Down...</H1><br>
+			Feel free to close this page.
 		</center>
 	{% elif "reboot" in action %}
 		<center>
@@ -52,4 +40,27 @@
 			<div class="spinner-border text-primary" style="width: 4rem; height: 4rem;"></div>
 		</div>
 	</div>
+{% endblock %}
+
+{% block scripts %} 
+<script>
+	var action = "{{ action }}";
+	$( document ).ready(function() {
+		setInterval(function(){
+			req = $.ajax({
+				url : '/api/server',
+				type : 'GET',
+				contentType: "application/json; charset=utf-8",
+				traditional: true,
+				success: function (data) {
+					//console.log(data);
+					if(data.server_status == 'available') {
+						//redirect to dashboard 
+						location.href = '/';
+					}
+				}
+			});
+		}, 1000);
+	});
+</script>
 {% endblock %}
