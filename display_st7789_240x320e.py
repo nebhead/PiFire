@@ -17,6 +17,7 @@ PiFire Display Interface Library
  Imported Libraries
 '''
 import threading
+import time
 import ST7789 as ST7789
 from display_base_240x320 import DisplayBase
 from PIL import Image
