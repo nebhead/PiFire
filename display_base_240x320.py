@@ -788,6 +788,14 @@ class DisplayBase:
 		size = (26, 26)
 		self._text_circle(draw, position, size, text)
 
+		# Display Countdown for Startup / Reignite / Shutdown
+		if status_data['mode'] in ['Startup', 'Reignite', 'Shutdown']:
+			duration = status_data['start_duration'] if status_data['mode'] in ['Startup', 'Reignite'] else status_data['shutdown_duration']
+			countdown = int(duration - (time.time() - status_data['start_time']))
+			text = f'{countdown}s'
+			center_point = (self.WIDTH // 2, self.HEIGHT // 2 - 100)
+			self._text_rectangle(draw, center_point, text, 26, text_color=(0,200,0), fill_color=(0,0,0), outline_color=(0, 200, 0))
+
 		# Display Final Screen
 		self._display_canvas(img)
 

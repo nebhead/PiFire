@@ -465,6 +465,7 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 				send_notifications("Grill_Error_03", control, settings, pelletdb)
 
 	# Apply Smart Start Settings if Enabled 
+	startup_timer = settings['globals']['startup_timer']
 	if settings['smartstart']['enabled'] and mode in ('Startup', 'Reignite', 'Smoke'):
 		# If Startup, then save initial temperature & select the profile
 		if mode in ('Startup', 'Reignite'):
@@ -484,6 +485,7 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 		OffTime = 45 + (settings['smartstart']['profiles'][profile_selected]['p_mode'] * 10)  # Auger Off Time
 		CycleTime = OnTime + OffTime  # Total Cycle Time
 		CycleRatio = OnTime / CycleTime  # Ratio of OnTime to CycleTime
+		startup_timer = settings['smartstart']['profiles'][profile_selected]['startuptime']
 		# Write Metrics
 		metrics['smart_start_profile'] = profile_selected
 		metrics['startup_temp'] = control['smartstart']['startuptemp']
@@ -705,6 +707,9 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 		# Send Current Status / Temperature Data to Display Device every 0.5 second (Display Refresh)
 		if (now - display_toggle_time) > 0.5:
 			status_data = _get_status(grill_platform, control, settings, pelletdb)
+			status_data['start_time'] = start_time
+			status_data['start_duration'] = startup_timer
+			status_data['shutdown_duration'] = settings['globals']['shutdown_timer']
 			display_device.display_status(in_data, status_data)
 			display_toggle_time = time.time()  # Reset the display_toggle_time to current time
 
