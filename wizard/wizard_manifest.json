@@ -170,7 +170,7 @@
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
 						"description" : "Select the display rotation angle (Usually 0 degrees)",
-						"options" : {"0" : "0 degrees", "2": "180 degrees"},
+						"options" : {"0" : "0 degrees", "1": "90 degrees", "2": "180 degrees", "3": "270 degrees"},
 						"settings" : ["globals", "disp_rotation"]
 					}
 				}
@@ -188,7 +188,7 @@
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
 						"description" : "Select the display rotation angle (Usually 0 degrees)",
-						"options" : {"0" : "0 degrees", "2": "180 degrees"},
+						"options" : {"0" : "0 degrees", "1": "90 degrees", "2": "180 degrees", "3": "270 degrees"},
 						"settings" : ["globals", "disp_rotation"]
 					}
 				}
@@ -206,7 +206,7 @@
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
 						"description" : "Select the display rotation angle (Usually 0 degrees)",
-						"options" : {"0" : "0 degrees", "2": "180 degrees"},
+						"options" : {"0" : "0 degrees", "1": "90 degrees", "2": "180 degrees", "3": "270 degrees"},
 						"settings" : ["globals", "disp_rotation"]
 					}
 				}
@@ -224,7 +224,7 @@
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
 						"description" : "Select the display rotation angle (Usually 0 degrees)",
-						"options" : {"0" : "0 degrees", "2": "180 degrees"},
+						"options" : {"0" : "0 degrees", "1": "90 degrees", "2": "180 degrees", "3": "270 degrees"},
 						"settings" : ["globals", "disp_rotation"]
 					},
 					"buttonslevel" : {
@@ -248,7 +248,7 @@
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
 						"description" : "Select the display rotation angle (Usually 0 degrees)",
-						"options" : {"0" : "0 degrees", "180": "180 degrees"},
+						"options" : {"0" : "0 degrees", "90": "90 degrees", "180": "180 degrees", "270": "270 degrees"},
 						"settings" : ["globals", "disp_rotation"]
 					},
 					"buttonslevel" : {
@@ -272,7 +272,7 @@
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
 						"description" : "Select the display rotation angle (Usually 0 degrees)",
-						"options" : {"0" : "0 degrees", "180": "180 degrees"},
+						"options" : {"0" : "0 degrees", "90": "90 degrees", "180": "180 degrees", "270": "270 degrees"},
 						"settings" : ["globals", "disp_rotation"]
 					}
 				}
@@ -290,7 +290,7 @@
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
 						"description" : "Select the display rotation angle (Usually 0 degrees)",
-						"options" : {"0" : "0 degrees", "180": "180 degrees"},
+						"options" : {"0" : "0 degrees", "90": "90 degrees", "180": "180 degrees", "270": "270 degrees"},
 						"settings" : ["globals", "disp_rotation"]
 					}
 				}
@@ -333,7 +333,14 @@
 				"image" : "pygame.png",
 				"py_dependencies" : ["pygame", "pillow==9.1.1"], 
 				"apt_dependencies" : [],
-				"settings_dependencies" : {}			
+				"settings_dependencies" : {
+					"disp_rotation" : {
+						"friendly_name" : "Display Rotation",
+						"description" : "Select the display rotation angle (Usually 0 degrees)",
+						"options" : {"0" : "0 degrees", "90": "90 degrees", "180": "180 degrees", "270": "270 degrees"},
+						"settings" : ["globals", "disp_rotation"]
+					}
+				}
 			},
 			"pygame_240x320b" : {
 				"friendly_name" : "Pygame Test Module 240x320px w/Button Input",
@@ -343,7 +350,14 @@
 				"image" : "pygame.png",
 				"py_dependencies" : ["pygame", "pillow==9.1.1"], 
 				"apt_dependencies" : [],
-				"settings_dependencies" : {}			
+				"settings_dependencies" : {
+					"disp_rotation" : {
+						"friendly_name" : "Display Rotation",
+						"description" : "Select the display rotation angle (Usually 0 degrees)",
+						"options" : {"0" : "0 degrees", "90": "90 degrees", "180": "180 degrees", "270": "270 degrees"},
+						"settings" : ["globals", "disp_rotation"]
+					}
+				}
 			},
 			"ssd1306" : {
 				"friendly_name" : "SSD1306 OLED 64x128px",

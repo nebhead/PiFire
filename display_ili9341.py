@@ -37,7 +37,7 @@ class Display(DisplayBase):
 
 		self.serial = spi(port=0, device=0, gpio_DC=dc_pin, gpio_RST=rst_pin, bus_speed_hz=32000000,
 						  reset_hold_time=0.2, reset_release_time=0.2)
-		self.device = ili9341(self.serial, active_low=False, width=self.WIDTH, height=self.HEIGHT, gpio_LIGHT=led_pin,
+		self.device = ili9341(self.serial, active_low=False, width=320, height=240, gpio_LIGHT=led_pin,
 							  rotate=self.rotation)
 
 		# Setup & Start Display Loop Thread 

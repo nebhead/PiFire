@@ -48,9 +48,20 @@ class DisplayBase:
 		self._init_display_device()
 
 	def _init_globals(self):
-		# Init constants and variables 
-		self.WIDTH = 320
-		self.HEIGHT = 240
+		# Init constants and variables
+		'''
+		0 = Zero Degrees Rotation
+		90, 1 = 90 Degrees Rotation (Pimoroni Libraries, Luma.LCD Libraries)
+		180, 2 = 180 Degrees Rotation (Pimoroni Libraries, Luma.LCD Libraries)
+		270, 3 = 270 Degrees Rotation (Pimoroni Libraries, Luma.LCD Libraries)
+		'''
+		if self.rotation in [90, 270, 1, 3]:
+			self.WIDTH = 240
+			self.HEIGHT = 320
+		else:
+			self.WIDTH = 320
+			self.HEIGHT = 240
+
 		self.inc_pulse_color = True 
 		self.icon_color = 100
 		self.fan_rotation = 0
@@ -235,7 +246,41 @@ class DisplayBase:
 		draw.pieslice([(x1 - rad * 2, y1 - rad * 2), (x1, y1)], 0, 90, fill=fill)
 		draw.pieslice([(x0, y1 - rad * 2), (x0 + rad * 2, y1)], 90, 180, fill=fill)
 		draw.pieslice([(x1 - rad * 2, y0), (x1, y0 + rad * 2)], 270, 360, fill=fill)
-		return (draw)
+
+	def _text_circle(self, draw, position, size, text, fg_color=(255,255,255), bg_color=(0,0,0)):
+		# Draw outline with fg_color
+		coords = (position[0], position[1], position[0] + size[0], position[1] + size[1])
+		draw.ellipse(coords, fill=fg_color)
+		# Fill circle with Center with bg_color
+		fill_coords = (coords[0]+2, coords[1]+2, coords[2]-2, coords[3]-2)
+		draw.ellipse(fill_coords, fill=bg_color)
+		# Place Text
+		font_point_size = round(size[1] * 0.6)  # Convert size to height of circle * font point ratio 0.6
+		font = ImageFont.truetype("trebuc.ttf", font_point_size)
+		(font_width, font_height) = font.getsize(text)  # Grab the width of the text
+		label_x = position[0] + (size[0] // 2) - (font_width // 2)
+		label_y = position[1] + round((size[1] // 2) - (font_point_size // 2))  
+		label_origin = (label_x, label_y)
+		draw.text(label_origin, text, font=font, fill=fg_color)
+
+	def _text_rectangle(self, draw, center_point, text, font_point_size, text_color, fill_color, outline_color):
+		# Create drawing object
+		vertical_margin = 5
+		horizontal_margin = 10
+		border = 2
+		rad = 5
+
+		font = ImageFont.truetype("trebuc.ttf", font_point_size)
+		(font_width, font_height) = font.getsize(text)  # Grab the width of the text
+
+		size = (font_width + horizontal_margin + border, font_height + vertical_margin + border)
+		outside_coords = (center_point[0] - (size[0] // 2), center_point[1] - (size[1] // 2), center_point[0] + (size[0] // 2), center_point[1] + (size[1] // 2))
+		inside_coords = (outside_coords[0] + border, outside_coords[1] + border, outside_coords[2] - border, outside_coords[3] - border)
+		self._rounded_rectangle(draw, outside_coords, rad, outline_color)
+		self._rounded_rectangle(draw, inside_coords, rad, fill_color)
+		draw.text((center_point[0] - (font_width // 2), center_point[1] - (font_height // 1.75)), text, font=font, fill=text_color)
+
+		#return draw
 
 	def _create_icon(self, charid, size, color):
 		# Get font and character size 
@@ -248,61 +293,236 @@ class DisplayBase:
 		icon_canvas = icon_canvas.crop(icon_canvas.getbbox())
 		return(icon_canvas)
 
-	def _paste_icon(self, icon, canvas, position, rotation, bgcolor):
-		# First fill the background
-		bg_fill = ImageDraw.Draw(canvas)
+	def _paste_icon(self, icon, canvas, position, rotation):
 		# Rotate the icon
 		icon = icon.rotate(rotation)
-		(icon_width, icon_height) = icon.size
-		#bg_fill.rectangle([(position[0], position[1]), (position[0] + icon_width, position[1] + icon_height)],
-		# fill=bgcolor)
-
 		# Set the position & paste the icon onto the canvas
 		canvas.paste(icon, position, icon)
 		return(canvas)
 
-	def _draw_fan_icon(self, canvas):
+	def _draw_fan_icon(self, canvas, position):
+		draw = ImageDraw.Draw(canvas)
 		# F = Fan (Upper Left)
 		icon_char = '\uf863'
 		icon_color = (0, self.icon_color, 255)
 
-		drawing = ImageDraw.Draw(canvas)
 		# Draw Rounded Rectangle Border
-		drawing = self._rounded_rectangle(drawing, (
-			self.WIDTH // 8 - 22, self.HEIGHT // 6 - 22, self.WIDTH // 8 + 22, self.HEIGHT // 6 + 22), 5,
-										  icon_color)
+		self._rounded_rectangle(draw, 
+			(position[0], position[1], 
+			position[0] + 42, position[1] + 42), 
+			5, icon_color)
+
 		# Fill Rectangle with Black
-		drawing = self._rounded_rectangle(drawing, (
-			self.WIDTH // 8 - 20, self.HEIGHT // 6 - 20, self.WIDTH // 8 + 20, self.HEIGHT // 6 + 20), 5,
-										  (0, 0, 0))
+		self._rounded_rectangle(draw, 
+			(position[0] + 2, position[1] + 2, 
+			position[0] + 40, position[1] + 40), 
+			5, (0,0,0))
 
 		# Create Icon Image
 		icon = self._create_icon(icon_char, 36, icon_color)
-		position = (self.WIDTH // 8 - 18, self.HEIGHT // 6 - 18)
-		canvas = self._paste_icon(icon, canvas, position, self.fan_rotation, (0,0,0))
-		return(canvas)
+		icon_position = (position[0] + 4, position[1] + 4)
+		canvas = self._paste_icon(icon, canvas, icon_position, self.fan_rotation)
 
-	def _draw_auger_icon(self, canvas):
+		# Increment Fan Rotation 
+		self.fan_rotation += 30 
+		if self.fan_rotation >= 360: 
+			self.fan_rotation = 0
+
+		return canvas
+
+	def _draw_auger_icon(self, canvas, position):
+		# Create a drawing object
+		draw = ImageDraw.Draw(canvas)
+
 		# A = Auger (Center Left)
 		icon_char = '\uf101'
-		icon_color_tuple = (0, self.icon_color, 0)
-		# Create a drawing object
-		drawing = ImageDraw.Draw(canvas)
+		icon_color = (0, self.icon_color, 0)
+
 		# Draw Rounded Rectangle Border
-		drawing = self._rounded_rectangle(drawing, (
-			self.WIDTH // 8 - 22, self.HEIGHT // 2.5 - 22, self.WIDTH // 8 + 22, self.HEIGHT // 2.5 + 22), 5,
-										  icon_color_tuple)
+		self._rounded_rectangle(draw, 
+			(position[0], position[1], 
+			position[0] + 42, position[1] + 42), 
+			5, icon_color)
+
 		# Fill Rectangle with Black
-		drawing = self._rounded_rectangle(drawing, (
-			self.WIDTH // 8 - 20, self.HEIGHT // 2.5 - 20, self.WIDTH // 8 + 20, self.HEIGHT // 2.5 + 20), 5,
-										  (0, 0, 0))
+		self._rounded_rectangle(draw, 
+			(position[0] + 2, position[1] + 2, 
+			position[0] + 40, position[1] + 40), 
+			5, (0,0,0))
 
 		# Create Icon Image
-		icon = self._create_icon(icon_char, 36, icon_color_tuple)
-		(icon_width, icon_height) = icon.size 
-		position = ((self.WIDTH // 8 - 18) + (icon_width // 8) + self.auger_step, (int(self.HEIGHT // 2.5) - 18) +
-					(icon_height // 3))
-		canvas = self._paste_icon(icon, canvas, position, 0, (0,0,0))
+		icon = self._create_icon(icon_char, 36, icon_color)
+		icon_position = (position[0] + 7 + self.auger_step, position[1] + 10)
+		canvas = self._paste_icon(icon, canvas, icon_position, 0)
+
+		self.auger_step += 1 
+		if self.auger_step >= 3: 
+			self.auger_step = 0
+
+		return canvas
+
+	def _draw_ignitor_icon(self, canvas, position):
+		# Create a drawing object
+		draw = ImageDraw.Draw(canvas)
+
+		# I = Ignitor  (Center Right)
+		icon_char = '\uf46a'
+		icon_color = (255, self.icon_color, 0)
+
+		# Draw Rounded Rectangle Border
+		self._rounded_rectangle(draw, 
+			(position[0], position[1], 
+			position[0] + 42, position[1] + 42), 
+			5, icon_color)
+
+		# Fill Rectangle with Black
+		self._rounded_rectangle(draw, 
+			(position[0] + 2, position[1] + 2, 
+			position[0] + 40, position[1] + 40), 
+			5, (0,0,0))
+
+		# Create Icon Image
+		icon = self._create_icon(icon_char, 36, icon_color)
+		icon_position = (position[0] + 8, position[1] + 4)
+		canvas = self._paste_icon(icon, canvas, icon_position, 0)
+
+		return canvas
+
+	def _draw_notify_icon(self, canvas, position):
+		# Create a drawing object
+		draw = ImageDraw.Draw(canvas)
+
+		# I = Ignitor  (Center Right)
+		icon_char = '\uf0f3'
+		icon_color = (255,255, 0)
+
+		# Draw Rounded Rectangle Border
+		self._rounded_rectangle(draw, 
+			(position[0], position[1], 
+			position[0] + 42, position[1] + 42), 
+			5, icon_color)
+
+		# Fill Rectangle with Black
+		self._rounded_rectangle(draw, 
+			(position[0] + 2, position[1] + 2, 
+			position[0] + 40, position[1] + 40), 
+			5, (0,0,0))
+
+		# Create Icon Image
+		icon = self._create_icon(icon_char, 36, icon_color)
+		icon_position = (position[0] + 6, position[1] + 3)
+		canvas = self._paste_icon(icon, canvas, icon_position, 0)
+
+		return canvas
+
+	def _draw_splus_icon(self, canvas, position):
+		# Create a drawing object
+		draw = ImageDraw.Draw(canvas)
+
+		# S = Smoke Plus  (Center Right)
+		icon_color = (150, 0, 255)
+
+		# Draw Rounded Rectangle Border
+		self._rounded_rectangle(draw, 
+			(position[0], position[1], 
+			position[0] + 42, position[1] + 42), 
+			5, icon_color)
+
+		# Fill Rectangle with Black
+		self._rounded_rectangle(draw, 
+			(position[0] + 2, position[1] + 2, 
+			position[0] + 40, position[1] + 40), 
+			5, (0,0,0))
+
+		# Create Smoke Plus Icon Image (cloud + plus)
+		font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 32)
+		text = '\uf0c2'  # FontAwesome Icon for Cloud (Smoke)
+		draw.text((position[0] + 2, position[1] + 6), text,
+					font=font, fill=(100, 0, 255))
+		font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 24)
+		text = '\uf067'  # FontAwesome Icon for PLUS
+		draw.text((position[0] + 10, position[1] + 10), text,
+					font=font, fill=(0, 0, 0))
+
+		return canvas
+
+	def _draw_gauge(self, canvas, position, size, fg_color, bg_color, percents, temps, label, sp1_color=(0, 200, 255), sp2_color=(255, 255, 0)):
+		# Create drawing object
+		draw = ImageDraw.Draw(canvas)
+		# bgcolor = (50, 50, 50)  # Grey
+		# fgcolor = (200, 0, 0)  # Red
+		# percents = [temperature, setpoint1, setpoint2]
+		# temps = [current, setpoint1, setpoint2]
+		# sp1_color = (0, 200, 255)  # Cyan 
+		# sp2_color = (255, 255, 0)  # Yellow
+		fill_color = (0, 0, 0)  # Black 
+
+		# Draw Background Line
+		coords = (position[0], position[1], position[0] + size[0], position[1] + size[1])
+		draw.ellipse(coords, fill=bg_color)
+
+		# Draw Arc for Temperature (Percent)
+		if (percents[0] > 0) and (percents[0] < 100):
+			endpoint = (360 * (percents[0] / 100)) + 90 
+		elif (percents[0] <= 0):
+			endpoint = 0
+		else:
+			endpoint = 360 + 90 
+		draw.pieslice(coords, start=90, end=endpoint, fill=fg_color)
+
+		# Draw Tic for Setpoint[1] 
+		if percents[1] > 0:
+			if percents[1] < 100:
+				setpoint = (360 * (percents[1] / 100)) + 90 
+			else: 
+				setpoint = 360 + 90 
+			draw.pieslice(coords, start=setpoint - 2, end=setpoint + 2, fill=sp1_color)
+
+		# Draw Tic for Setpoint[2] 
+		if percents[2] > 0:
+			if percents[2] < 100:
+				setpoint = (360 * (percents[2] / 100)) + 90 
+			else: 
+				setpoint = 360 + 90 
+			draw.pieslice(coords, start=setpoint - 2, end=setpoint + 2, fill=sp2_color)
+
+		# Fill Circle with Center with black
+		fill_coords = (coords[0]+10, coords[1]+10, coords[2]-10, coords[3]-10)
+		draw.ellipse(fill_coords, fill=fill_color)
+
+		# Gauge Label
+		font_point_size = round((size[1] * 0.75) / 4) + 1 # Convert size to height of circle * font point ratio / 8
+		font = ImageFont.truetype("trebuc.ttf", font_point_size)
+		(font_width, font_height) = font.getsize(label)  # Grab the width of the text
+		label_x = position[0] + (size[0] // 2) - (font_width // 2)
+		label_y = position[1] + (round(((size[1] * 0.75) / 8) * 6.6))
+		label_origin = (label_x, label_y)
+		draw.text(label_origin, label, font=font, fill=(255, 255, 255))
+
+		# SetPoint1 Label 
+		if percents[1] > 0:
+			sp1_label = f'>{temps[1]}<'
+			font_point_size = round((size[1] * 0.75) / 4) - 1  # Convert size to height of circle * font point ratio
+			font = ImageFont.truetype("trebuc.ttf", font_point_size)
+			(font_width, font_height) = font.getsize(sp1_label)  # Grab the width of the text
+			label_x = position[0] + (size[0] // 2) - (font_width // 2)
+			label_y = position[1] + round((size[1] * 0.75) / 8)  
+			label_origin = (label_x, label_y)
+			draw.text(label_origin, sp1_label, font=font, fill=sp1_color)
+
+		# Current Temperature (Large Centered)
+		cur_temp = str(temps[0])[:5]
+		if self.units == 'F':
+			font_point_size = round(size[1] * 0.45)  # Convert size to height of circle * font point ratio / 8
+		else:
+			font_point_size = round(size[1] * 0.3)  # Convert size to height of circle * font point ratio / 8
+		font = ImageFont.truetype("trebuc.ttf", font_point_size)
+		(font_width, font_height) = font.getsize(cur_temp)  # Grab the width of the text
+		label_x = position[0] + (size[0] // 2) - (font_width // 2)
+		label_y = position[1] + ((size[1] // 2) - (font_point_size // 1.5))  
+		label_origin = (label_x, label_y)
+		draw.text(label_origin, cur_temp, font=font, fill=(255,255,255))
+
 		return(canvas)
 
 	def _display_clear(self):
@@ -367,158 +587,121 @@ class DisplayBase:
 		# Create drawing object
 		draw = ImageDraw.Draw(img)
 
-		# Grill Temp Circle
-		draw.ellipse((80, 10, 240, 170), fill=(50, 50, 50))  # Grey Background Circle
-		if in_data['GrillTemp'] < 0:
-			endpoint = 0
+		# ======== Grill Temp Circle Gauge ========
+		position = (self.WIDTH // 2 - 80, self.HEIGHT // 2 - 110)
+		size = (160, 160)
+		bg_color = (50, 50, 50)  # Grey
+		fg_color = (200, 0, 0)  # Red
+
+		label = 'Grill'
+		
+		# percents = [temperature, setpoint1, setpoint2]
+		temps = [0,0,0]
+		percents = [0,0,0]
+
+		temps[0] = in_data['GrillTemp']
+		if in_data['GrillTemp'] <= 0:
+			percents[0] = 0
 		elif self.units == 'F':
-			endpoint = ((360 * in_data['GrillTemp']) // 600) + 90
+			percents[0] = round((in_data['GrillTemp'] / 600) * 100)  # F Temp Range [0 - 600F] for Grill
 		else:
-			endpoint = ((360 * in_data['GrillTemp']) // 300) + 90
-		draw.pieslice((80, 10, 240, 170), start=90, end=endpoint, fill=(200, 0, 0))  # Red Arc for Temperature
-		if in_data['GrillSetPoint'] > 0 and status_data['mode'] == 'Hold':
-			if self.units == 'F':
-				setpoint = ((360 * in_data['GrillSetPoint']) // 600) + 90
-			else:
-				setpoint = ((360 * in_data['GrillSetPoint']) // 300) + 90
-			draw.pieslice((80, 10, 240, 170), start=setpoint - 2, end=setpoint + 2,
-							fill=(0, 200, 255))  # Blue Arc for SetPoint
-		if in_data['GrillNotifyPoint'] > 0 and status_data['notify_req']['grill']:
-			if self.units == 'F':
-				setpoint = ((360 * in_data['GrillNotifyPoint']) // 600) + 90
-			else:
-				setpoint = ((360 * in_data['GrillNotifyPoint']) // 300) + 90
-			draw.pieslice((80, 10, 240, 170), start=setpoint - 2, end=setpoint + 2,
-							fill=(255, 255, 0))  # Yellow Arc for Notify Point
+			percents[0] = round((in_data['GrillTemp'] / 300) * 100)  # C Temp Range [0 - 300C] for Grill 
 
-		draw.ellipse((90, 20, 230, 160), fill=(0, 0, 0))  # Black Circle for Center
+		temps[1] = in_data['GrillSetPoint']
+		if in_data['GrillSetPoint'] <= 0:
+			percents[1] = 0
+		elif self.units == 'F' and status_data['mode'] == 'Hold':
+			percents[1] = round((in_data['GrillSetPoint'] / 600) * 100)  # F Temp Range [0 - 600F] for Grill
+		elif self.units == 'C' and status_data['mode'] == 'Hold':
+			percents[1] = round((in_data['GrillSetPoint'] / 300) * 100)  # C Temp Range [0 - 300C] for Grill 
 
-
-		# Grill Temp Label
-		font = ImageFont.truetype("trebuc.ttf", 16)
-		text = "Grill"
-		(font_width, font_height) = font.getsize(text)
-		draw.text((self.WIDTH // 2 - font_width // 2, 20), text, font=font, fill=(255, 255, 255))
-
-		# Grill Set Point (Small Centered Top)
-		if in_data['GrillSetPoint'] > 0 and status_data['mode'] == 'Hold':
-			font = ImageFont.truetype("trebuc.ttf", 16)
-			text = ">" + str(in_data['GrillSetPoint'])[:5] + "<"
-			(font_width, font_height) = font.getsize(text)
-			draw.text((self.WIDTH // 2 - font_width // 2, 45 - font_height // 2), text, font=font,
-						fill=(0, 200, 255))
-
-		# Grill Temperature (Large Centered)
-		if self.units == 'F':
-			font = ImageFont.truetype("trebuc.ttf", 80)
-			text = str(in_data['GrillTemp'])[:5]
-			(font_width, font_height) = font.getsize(text)
-			draw.text((self.WIDTH // 2 - font_width // 2, 40), text, font=font, fill=(255, 255, 255))
-		else:
-			font = ImageFont.truetype("trebuc.ttf", 55)
-			text = str(in_data['GrillTemp'])[:5]
-			(font_width, font_height) = font.getsize(text)
-			draw.text((self.WIDTH // 2 - font_width // 2, 56), text, font=font, fill=(255, 255, 255))
-
-		# Draw Grill Temp Scale Label
-		text = "°" + self.units
-		font = ImageFont.truetype("trebuc.ttf", 24)
-		(font_width, font_height) = font.getsize(text)
-		draw.text((self.WIDTH // 2 - font_width // 2, self.HEIGHT // 2 - font_height // 2 + 10), text, font=font,
-					fill=(255, 255, 255))
-
-		# PROBE1 Temp Circle
-		draw.ellipse((10, self.HEIGHT // 2 + 10, 110, self.HEIGHT // 2 + 110), fill=(50, 50, 50))
-		if in_data['Probe1Temp'] < 0:
-			endpoint = 0
+		temps[2] = in_data['GrillNotifyPoint']
+		if in_data['GrillNotifyPoint'] <= 0:
+			percents[2] = 0
 		elif self.units == 'F':
-			endpoint = ((360 * in_data['Probe1Temp']) // 300) + 90
+			percents[2] = round((in_data['GrillNotifyPoint'] / 600) * 100)  # F Temp Range [0 - 600F] for Grill
 		else:
-			endpoint = ((360 * in_data['Probe1Temp']) // 150) + 90
-		draw.pieslice((10, self.HEIGHT // 2 + 10, 110, self.HEIGHT // 2 + 110), start=90, end=endpoint,
-						fill=(3, 161, 252))
-		if in_data['Probe1SetPoint'] > 0:
-			if self.units == 'F':
-				setpoint = ((360 * in_data['Probe1SetPoint']) // 300) + 90
-			else:
-				setpoint = ((360 * in_data['Probe1SetPoint']) // 150) + 90
-			draw.pieslice((10, self.HEIGHT // 2 + 10, 110, self.HEIGHT // 2 + 110), start=setpoint - 2,
-							end=setpoint + 2, fill=(255, 255, 0))  # Yellow Arc for SetPoint
-		draw.ellipse((20, self.HEIGHT // 2 + 20, 100, self.HEIGHT // 2 + 100), fill=(0, 0, 0))
+			percents[2] = round((in_data['GrillNotifyPoint'] / 300) * 100)  # C Temp Range [0 - 300C] for Grill 
 
-		# PROBE1 Temp Label
-		font = ImageFont.truetype("trebuc.ttf", 16)
-		text = "Probe-1"
-		(font_width, font_height) = font.getsize(text)
-		draw.text((60 - font_width // 2, self.HEIGHT // 2 + 40 - font_height // 2), text, font=font,
-					fill=(255, 255, 255))
+		# Draw the Grill Gauge w/Labels
+		img = self._draw_gauge(img, position, size, fg_color, bg_color, 
+			percents, temps, label)
 
-		# PROBE1 Temperature (Large Centered)
-		if self.units == 'F':
-			font = ImageFont.truetype("trebuc.ttf", 36)
-		else:
-			font = ImageFont.truetype("trebuc.ttf", 30)
-		text = str(in_data['Probe1Temp'])[:5]
-		(font_width, font_height) = font.getsize(text)
-		draw.text((60 - font_width // 2, self.HEIGHT // 2 + 60 - font_height // 2), text, font=font,
-					fill=(255, 255, 255))
+		# ======== Probe1 Temp Circle Gauge ========
+		position = (10, self.HEIGHT - 110)
+		size = (100, 100)
+		bg_color = (50, 50, 50)  # Grey
+		fg_color = (3, 161, 252)  # Blue
 
-		# PROBE1 Set Point (Small Centered Bottom)
-		if in_data['Probe1SetPoint'] > 0:
-			font = ImageFont.truetype("trebuc.ttf", 16)
-			text = ">" + str(in_data['Probe1SetPoint'])[:5] + "<"
-			(font_width, font_height) = font.getsize(text)
-			draw.text((60 - font_width // 2, self.HEIGHT // 2 + 85 - font_height // 2), text, font=font,
-						fill=(0, 200, 255))
+		label = 'P1'
+		
+		# temp, percents = [current temperature, setpoint1, setpoint2]
+		temps = [0,0,0]
+		percents = [0,0,0]
 
-		# PROBE2 Temp Circle
-		draw.ellipse((self.WIDTH - 110, self.HEIGHT // 2 + 10, self.WIDTH - 10, self.HEIGHT // 2 + 110),
-						fill=(50, 50, 50))
-		if in_data['Probe2Temp'] < 0:
-			endpoint = 0
+		temps[0] = in_data['Probe1Temp']
+		if in_data['Probe1Temp'] <= 0:
+			percents[0] = 0
 		elif self.units == 'F':
-			endpoint = ((360 * in_data['Probe2Temp']) // 300) + 90
+			percents[0] = round((in_data['Probe1Temp'] / 300) * 100)  # F Temp Range [0 - 300F] for probe
 		else:
-			endpoint = ((360 * in_data['Probe2Temp']) // 150) + 90
-		draw.pieslice((self.WIDTH - 110, self.HEIGHT // 2 + 10, self.WIDTH - 10, self.HEIGHT // 2 + 110), start=90,
-						end=endpoint, fill=(3, 161, 252))
-		if in_data['Probe2SetPoint'] > 0:
-			if self.units == 'F':
-				setpoint = ((360 * in_data['Probe2SetPoint']) // 300) + 90
-			else:
-				setpoint = ((360 * in_data['Probe2SetPoint']) // 150) + 90
-			draw.pieslice((self.WIDTH - 110, self.HEIGHT // 2 + 10, self.WIDTH - 10, self.HEIGHT // 2 + 110),
-							start=setpoint - 2, end=setpoint + 2, fill=(255, 255, 0))  # Yellow Arc for SetPoint
-		draw.ellipse((self.WIDTH - 100, self.HEIGHT // 2 + 20, self.WIDTH - 20, self.HEIGHT // 2 + 100),
-						fill=(0, 0, 0))
+			percents[0] = round((in_data['Probe1Temp'] / 150) * 100)  # C Temp Range [0 - 150C] for probe
 
-		# PROBE2 Temp Label
-		font = ImageFont.truetype("trebuc.ttf", 16)
-		text = "Probe-2"
-		(font_width, font_height) = font.getsize(text)
-		draw.text((self.WIDTH - 60 - font_width // 2, self.HEIGHT // 2 + 40 - font_height // 2), text, font=font,
-					fill=(255, 255, 255))
+		temps[1] = in_data['Probe1SetPoint']
+		if in_data['Probe1SetPoint'] <= 0:
+			percents[1] = 0
+		elif self.units == 'F':
+			percents[1] = round((in_data['Probe1SetPoint'] / 300) * 100)  # F Temp Range [0 - 300F] for probe
+		elif self.units == 'C':
+			percents[1] = round((in_data['Probe1SetPoint'] / 150) * 100)  # C Temp Range [0 - 150C] for probe 
 
-		# PROBE2 Temperature (Large Centered)
-		if self.units == 'F':
-			font = ImageFont.truetype("trebuc.ttf", 36)
+		# No SetPoint2 on Probes
+		temps[2] = 0
+		percents[2] = 0
+
+		# Draw the Probe1 Gauge w/Labels - Use Yellow as the SetPoint Color
+		img = self._draw_gauge(img, position, size, fg_color, bg_color, 
+			percents, temps, label, sp1_color=(255, 255, 0))
+
+		# ======== Probe2 Temp Circle Gauge ========
+		position = (self.WIDTH - 110, self.HEIGHT - 110)
+		size = (100, 100)
+		bg_color = (50, 50, 50)  # Grey
+		fg_color = (3, 161, 252)  # Blue
+
+		label = 'P2'
+		
+		# temp, percents = [current temperature, setpoint1, setpoint2]
+		temps = [0,0,0]
+		percents = [0,0,0]
+
+		temps[0] = in_data['Probe2Temp']
+		if in_data['Probe2Temp'] <= 0:
+			percents[0] = 0
+		elif self.units == 'F':
+			percents[0] = round((in_data['Probe2Temp'] / 300) * 100)  # F Temp Range [0 - 300F] for probe
 		else:
-			font = ImageFont.truetype("trebuc.ttf", 30)
-		text = str(in_data['Probe2Temp'])[:5]
-		(font_width, font_height) = font.getsize(text)
-		draw.text((self.WIDTH - 60 - font_width // 2, self.HEIGHT // 2 + 60 - font_height // 2), text, font=font,
-					fill=(255, 255, 255))
+			percents[0] = round((in_data['Probe2Temp'] / 150) * 100)  # C Temp Range [0 - 150C] for probe
 
-		# PROBE2 Set Point (Small Centered Bottom)
-		if (in_data['Probe2SetPoint'] > 0):
-			font = ImageFont.truetype("trebuc.ttf", 16)
-			text = ">" + str(in_data['Probe2SetPoint'])[:5] + "<"
-			(font_width, font_height) = font.getsize(text)
-			draw.text((self.WIDTH - 60 - font_width // 2, self.HEIGHT // 2 + 85 - font_height // 2), text,
-						font=font, fill=(0, 200, 255))
+		temps[1] = in_data['Probe2SetPoint']
+		if in_data['Probe2SetPoint'] <= 0:
+			percents[1] = 0
+		elif self.units == 'F':
+			percents[1] = round((in_data['Probe2SetPoint'] / 300) * 100)  # F Temp Range [0 - 300F] for probe
+		elif self.units == 'C':
+			percents[1] = round((in_data['Probe2SetPoint'] / 150) * 100)  # C Temp Range [0 - 150C] for probe 
 
-		# Active Outputs
-		''' Test of pulsing color '''
+		# No SetPoint2 on Probes
+		temps[2] = 0
+		percents[2] = 0
+
+		# Draw the Probe1 Gauge w/Labels - Use Yellow as the SetPoint Color
+		img = self._draw_gauge(img, position, size, fg_color, bg_color, 
+			percents, temps, label, sp1_color=(255, 255, 0))
+
+		# Display Icons for Active Outputs
+
+		# Pulse Color for some Icons
 		if self.inc_pulse_color:
 			if self.icon_color < 200:
 				self.icon_color += 20
@@ -532,103 +715,80 @@ class DisplayBase:
 			else: 
 				self.icon_color -= 20 
 
-		font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 36)
 		if status_data['outpins']['fan']:
-			# F = Fan (Upper Left), 40x40, origin 10,10
-			self._draw_fan_icon(img)
-			self.fan_rotation += 30 
-			if self.fan_rotation >= 360: 
-				self.fan_rotation = 0
+			# F = Fan (Upper Left), position (10,10)
+			if self.WIDTH == 240:
+				self._draw_fan_icon(img, (10, 50))
+			else:
+				self._draw_fan_icon(img, (10, 10))
+
 		if status_data['outpins']['igniter']:
 			# I = Igniter(Center Right)
-			text = '\uf46a'
-			(font_width, font_height) = font.getsize(text)
-			draw = self._rounded_rectangle(draw, (
-				7 * (self.WIDTH // 8) - 22, self.HEIGHT // 2.5 - 22, 7 * (self.WIDTH // 8) + 22,
-					self.HEIGHT // 2.5 + 22), 5, (255, self.icon_color, 0))
-			draw = self._rounded_rectangle(draw, (
-				7 * (self.WIDTH // 8) - 20, self.HEIGHT // 2.5 - 20, 7 * (self.WIDTH // 8) + 20,
-				self.HEIGHT // 2.5 + 20), 5, (0, 0, 0))
-			draw.text((7 * (self.WIDTH // 8) - font_width // 2, self.HEIGHT // 2.5 - font_height // 2), text,
-						  font=font, fill=(255, self.icon_color, 0))
+			if self.WIDTH == 240:
+				self._draw_ignitor_icon(img, (self.WIDTH - 52, 170))
+			else:
+				self._draw_ignitor_icon(img, (self.WIDTH - 52, 60))
+		
 		if status_data['outpins']['auger']:
 			# A = Auger (Center Left)
-			self._draw_auger_icon(img)
-			self.auger_step += 1 
-			if self.auger_step >= 3: 
-				self.auger_step = 0
+			if self.WIDTH == 240:
+				self._draw_auger_icon(img, (10, 170))
+			else:
+				self._draw_auger_icon(img, (10, 60))
 
 		# Notification Indicator (Right)
 		show_notify_indicator = False
+		notify_count = 0
 		for item in status_data['notify_req']:
 			if status_data['notify_req'][item]:
 				show_notify_indicator = True
+				notify_count += 1
+
 		if show_notify_indicator:
-			font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 36)
-			text = '\uf0f3'
-			(font_width, font_height) = font.getsize(text)
-			draw = self._rounded_rectangle(draw, (
-				7 * (self.WIDTH // 8) - 22, self.HEIGHT // 6 - 22, 7 * (self.WIDTH // 8) + 22,
-				self.HEIGHT // 6 + 22),
-											5, (255, 255, 0))
-			draw = self._rounded_rectangle(draw, (
-				7 * (self.WIDTH // 8) - 20, self.HEIGHT // 6 - 20, 7 * (self.WIDTH // 8) + 20,
-				self.HEIGHT // 6 + 20),
-											5, (0, 0, 0))
-			draw.text((7 * (self.WIDTH // 8) - font_width // 2 + 1, self.HEIGHT // 6 - font_height // 2), text,
-						font=font, fill=(255, 255, 0))
+			if self.WIDTH == 240:
+				self._draw_notify_icon(img, (self.WIDTH - 52, 50))
+			else: 
+				self._draw_notify_icon(img, (self.WIDTH - 52, 10))
+
+			if notify_count > 1:
+				self._text_circle(draw, (self.WIDTH - 24, 40), (22, 22), str(notify_count), fg_color=(255, 255, 255), bg_color=(200, 0, 0))
 
 		# Smoke Plus Indicator
 		if status_data['s_plus'] and (status_data['mode'] == 'Smoke' or status_data['mode'] == 'Hold'):
-			draw = self._rounded_rectangle(draw, (
-				7 * (self.WIDTH // 8) - 22, self.HEIGHT // 2.5 - 22, 7 * (self.WIDTH // 8) + 22,
-				self.HEIGHT // 2.5 + 22), 5, (150, 0, 255))
-			draw = self._rounded_rectangle(draw, (
-				7 * (self.WIDTH // 8) - 20, self.HEIGHT // 2.5 - 20, 7 * (self.WIDTH // 8) + 20,
-				self.HEIGHT // 2.5 + 20), 5, (0, 0, 0))
-			font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 32)
-			text = '\uf0c2'  # FontAwesome Icon for Cloud (Smoke)
-			(font_width, font_height) = font.getsize(text)
-			draw.text((7 * (self.WIDTH // 8) - font_width // 2, self.HEIGHT // 2.5 - font_height // 2), text,
-						font=font, fill=(100, 0, 255))
-			font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 24)
-			text = '\uf067'  # FontAwesome Icon for PLUS
-			(font_width, font_height) = font.getsize(text)
-			draw.text((7 * (self.WIDTH // 8) - font_width // 2, self.HEIGHT // 2.5 - font_height // 2 + 3), text,
-						font=font, fill=(0, 0, 0))
+			if self.WIDTH == 240:
+				self._draw_splus_icon(img, (self.WIDTH - 52, 170))
+			else:
+				self._draw_splus_icon(img, (self.WIDTH - 52, 60))
 
 		# Grill Hopper Level (Lower Center)
-		font = ImageFont.truetype("trebuc.ttf", 16)
 		text = "Hopper:" + str(status_data['hopper_level']) + "%"
-		(font_width, font_height) = font.getsize(text)
 		if status_data['hopper_level'] > 70:
 			hopper_color = (0, 255, 0)
 		elif status_data['hopper_level'] > 30:
 			hopper_color = (255, 150, 0)
 		else:
 			hopper_color = (255, 0, 0)
-		draw = self._rounded_rectangle(draw, (
-			self.WIDTH // 2 - font_width // 2 - 7, 156 - font_height // 2, self.WIDTH // 2 + font_width // 2 + 7,
-			166 + font_height // 2), 5, hopper_color)
-		draw = self._rounded_rectangle(draw, (
-			self.WIDTH // 2 - font_width // 2 - 5, 158 - font_height // 2, self.WIDTH // 2 + font_width // 2 + 5,
-			164 + font_height // 2), 5, (0, 0, 0))
-		draw.text((self.WIDTH // 2 - font_width // 2, 160 - font_height // 2), text, font=font, fill=hopper_color)
+		if self.WIDTH == 240:
+			center_point = self.WIDTH // 2, self.HEIGHT - 14
+		else:
+			center_point = self.WIDTH // 2, (self.HEIGHT // 2) + 64
+		self._text_rectangle(draw, center_point, text, 16, hopper_color, (0,0,0), hopper_color)
 
 		# Current Mode (Bottom Center)
-		font = ImageFont.truetype("trebuc.ttf", 36)
 		text = status_data['mode']  # + ' Mode'
-		(font_width, font_height) = font.getsize(text)
-		draw = self._rounded_rectangle(draw, (
-			self.WIDTH // 2 - font_width // 2 - 7, self.HEIGHT - font_height - 2,
-			self.WIDTH // 2 + font_width // 2 + 7,
-			self.HEIGHT - 2), 5, (3, 161, 252))
-		draw = self._rounded_rectangle(draw, (
-			self.WIDTH // 2 - font_width // 2 - 5, self.HEIGHT - font_height, self.WIDTH // 2 + font_width // 2 + 5,
-			self.HEIGHT - 4), 5, (255, 255, 255))
-		draw.text((self.WIDTH // 2 - font_width // 2, self.HEIGHT - font_height - 6), text, font=font,
-					fill=(0, 0, 0))
+		if self.WIDTH == 240:
+			center_point = (self.WIDTH // 2, 22)
+		else:
+			center_point = (self.WIDTH // 2, self.HEIGHT - 22)
+		self._text_rectangle(draw, center_point, text, 32, text_color=(0,0,0), fill_color=(255,255,255), outline_color=(3, 161, 252))
 
+		# Draw Units Circle
+		text = f'°{self.units}'
+		position = ((self.WIDTH // 2) - 13, (self.HEIGHT // 2) + 24)
+		size = (26, 26)
+		self._text_circle(draw, position, size, text)
+
+		# Display Final Screen
 		self._display_canvas(img)
 
 	'''
@@ -811,10 +971,15 @@ class DisplayBase:
 
 		if self.menu['current']['mode'] == 'grill_hold_value':
 			# Grill Temperature (Large Centered)
-			font = ImageFont.truetype("trebuc.ttf", 120)
+			font_point_size = 80 if self.WIDTH == 240 else 120 
+			font = ImageFont.truetype("trebuc.ttf", font_point_size)
 			text = str(self.menu['current']['option'])
 			(font_width, font_height) = font.getsize(text)
-			draw.text((self.WIDTH // 2 - font_width // 2, self.HEIGHT // 3 - font_height // 2), text, font=font,
+			if self.WIDTH == 240:
+				draw.text((self.WIDTH // 2 - font_width // 2 - 20, self.HEIGHT // 2.5 - font_height // 2), text, font=font,
+					  fill=(255, 255, 255))
+			else:
+				draw.text((self.WIDTH // 2 - font_width // 2, self.HEIGHT // 3 - font_height // 2), text, font=font,
 					  fill=(255, 255, 255))
 
 			# Current Mode (Bottom Center)
@@ -839,14 +1004,16 @@ class DisplayBase:
 					selected = item
 					break
 				index += 1
-			font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 120)
+			font_point_size = 80 if self.WIDTH == 240 else 120 
+			font = ImageFont.truetype("static/font/FA-Free-Solid.otf", font_point_size)
 			text = self.menu[self.menu['current']['mode']][selected]['icon']
 			(font_width, font_height) = font.getsize(text)
 			draw.text((self.WIDTH // 2 - font_width // 2, self.HEIGHT // 2.5 - font_height // 2), text, font=font,
 					  fill=(255, 255, 255))
 			# Draw a Plus Icon over the top of the Smoke Icon
 			if selected == 'SmokePlus':
-				font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 80)
+				font_point_size = 60 if self.WIDTH == 240 else 80
+				font = ImageFont.truetype("static/font/FA-Free-Solid.otf", font_point_size)
 				text = '\uf067'  # FontAwesome Icon for PLUS
 				(font_width, font_height) = font.getsize(text)
 				draw.text((self.WIDTH // 2 - font_width // 2, self.HEIGHT // 2.5 - font_height // 2), text, font=font,
@@ -875,7 +1042,8 @@ class DisplayBase:
 			down_color = (255, 255, 0)
 
 		# Up / Down Arrows (Middle Right)
-		font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 80)
+		font_point_size = 80 if self.WIDTH == 240 else 60 
+		font = ImageFont.truetype("static/font/FA-Free-Solid.otf", font_point_size)
 		text = '\uf0de'  # FontAwesome Icon Sort (Up Arrow)
 		(font_width, font_height) = font.getsize(text)
 		draw.text(((self.WIDTH - (font_width // 2) ** 1.3), (self.HEIGHT // 2.5 - font_height // 2)), text,
@@ -890,7 +1058,8 @@ class DisplayBase:
 		time.sleep(0.05)
 
 		# Up / Down Arrows (Middle Right)
-		font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 80)
+		font_point_size = 80 if self.WIDTH == 240 else 60 
+		font = ImageFont.truetype("static/font/FA-Free-Solid.otf", font_point_size)
 		text = '\uf0de'  # FontAwesome Icon Sort (Up Arrow)
 		(font_width, font_height) = font.getsize(text)
 		draw.text(((self.WIDTH - (font_width // 2) ** 1.3), (self.HEIGHT // 2.5 - font_height // 2)), text,
