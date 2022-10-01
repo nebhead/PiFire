@@ -16,6 +16,7 @@ import datetime
 import time
 import requests
 import json
+import apprise
 from common import write_event, write_settings, write_control
 
 
@@ -216,6 +217,8 @@ def _build_notification(notify_event, control, settings, pelletdb):
 		query_args = {"value1": 'Unknown Notification issue'}
 		write_event(settings, body_message)
 
+	if settings['apprise']['locations'] != '' and settings['apprise']['enabled']:
+		_send_apprise_notifications(settings, title_message, body_message)
 	if settings['ifttt']['APIKey'] != '' and settings['ifttt']['enabled']:
 		_send_ifttt_notification(settings, notify_event, query_args)
 	if settings['pushbullet']['APIKey'] != '' and settings['pushbullet']['enabled']:
@@ -225,6 +228,25 @@ def _build_notification(notify_event, control, settings, pelletdb):
 		_send_pushover_notification(settings, title_message, body_message)
 	if settings['onesignal']['app_id'] != '' and settings['onesignal']['enabled']:
 		_send_onesignal_notification(settings, title_message, body_message, channel)
+
+
+def _send_apprise_notifications(settings, title_message, body_message):
+	"""
+	Send Apprise Notifications
+
+	:param settings: Settings
+	:param title_message: Message Title
+	:param body_message: Message Body
+	"""
+	appriseHandler = apprise.Apprise()
+
+	for location in settings['apprise']['locations']:
+		appriseHandler.add(location)
+
+	result = appriseHandler.notify(
+		title=title_message,
+		body=body_message,
+	)
 
 
 def _send_pushover_notification(settings, title_message, body_message):

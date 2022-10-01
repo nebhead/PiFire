@@ -75,6 +75,11 @@ def default_settings():
 		'first_time_setup' : True,  # Set to True on first setup, to run wizard on load 
 	}
 
+	settings['apprise'] = {
+		'enabled': False,
+		'locations': {} 		# list of locations
+	}
+
 	settings['ifttt'] = {
 		'enabled': False,
 		'APIKey': '' 		# API Key for WebMaker IFTTT App notification

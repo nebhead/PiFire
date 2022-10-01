@@ -82,6 +82,7 @@ $SUDO pip3 install gpiozero
 $SUDO pip3 install redis
 $SUDO pip3 install uuid
 $SUDO pip3 install influxdb-client[ciso]
+$SUDO pip3 install apprise
 
 # Setup config.txt to enable busses 
 clear
