@@ -9,7 +9,9 @@
       "apt_dependencies": []
     },
     "control": {
-      "py_dependencies": [],
+      "py_dependencies": [
+        "apprise"
+      ],
       "apt_dependencies": []
     }
   }
