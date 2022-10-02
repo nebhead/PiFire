@@ -746,4 +746,23 @@ $(document).ready(function() {
 		}
 	});
 
+    $('button[name=addAppriseLocation]').click(function(e) {
+        e.preventDefault();
+        $('.appriselocation').last().clone(true) //set withDataAndEvents to true in .clone to include event handlers
+            .find("input:text").val("").end()
+            .insertAfter($('.appriselocation').last());
+    });
+
+    $('button[name=appriseDeleteRow]').click(function(e) {
+        e.preventDefault();
+        if($(this).parent().parent().find("input:text").val().length > 0) {
+            if(confirm('Row is not empty, are you sure?')) {
+                $(this).parent().parent().remove();
+            }
+        }
+        else {
+            $(this).parent().parent().remove();
+        }
+    });
+
 }); // End of document ready function

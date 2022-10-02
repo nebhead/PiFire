@@ -1221,6 +1221,12 @@ def settings_page(action=None):
 	if request.method == 'POST' and action == 'notify':
 		response = request.form
 
+		if _is_checked(response, 'apprise_enabled'):
+			settings['apprise']['enabled'] = True
+		else:
+			settings['apprise']['enabled'] = False
+		if 'appriselocations' in response:
+			settings['apprise']['locations'] = response.getlist('appriselocations')
 		if _is_checked(response, 'ifttt_enabled'):
 			settings['ifttt']['enabled'] = True
 		else:

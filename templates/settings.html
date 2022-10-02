@@ -1349,6 +1349,43 @@
                             </h5>
                         </div>
                         <div class="card-body">
+                            <!-- Apprise Notifications -->
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h5>Apprise Notifications</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="apprise_enabled" name="apprise_enabled" {% if settings['apprise']['enabled'] == True %}checked{% endif %}>
+                                        <label class="custom-control-label" for="apprise_enabled">Apprise Enabled</label>
+                                    </div>
+                                    <br>
+                                    {% if settings['apprise']['locations']|length %}
+                                    {% for location in settings['apprise']['locations'] %}<div class="input-group mb-3 appriselocation">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-link"></i>&nbsp; Location</span>
+                                        </div>
+                                        <input id="appriselocations" type="text" class="form-control" name="appriselocations" value="{{location}}">
+                                        <div class="input-group-append">
+                                            <button type="button" name="appriseDeleteRow" class="btn btn-danger"><i class="fas fa-minus"></i></button>
+                                        </div>
+                                    </div>{% endfor %}
+                                    {% else %}<div class="input-group mb-3 appriselocation">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-link"></i>&nbsp; Location</span>
+                                        </div>
+                                        <input id="appriselocations" type="text" class="form-control" name="appriselocations" value="">
+                                    </div>{% endif %}
+                                    <div class="mb-3 text-right">
+                                        <button type="button" name="addAppriseLocation" class="btn btn-primary"><i class="fas fa-plus"></i> Add Location</button>
+                                    </div>
+                                </div>
+                                <!-- End of card body -->
+                            </div>
+                            <!-- End of Card -->
+                            <br>
                             <!-- IFTTT WebHooks -->
                             <div class="card shadow-sm">
                                 <div class="card-header">
