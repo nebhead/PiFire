@@ -107,7 +107,7 @@
 			"ads1115" : {
 				"friendly_name" : "ADS1115",
 				"filename" : "ads1115",
-				"description" : "This is the default PiFire module supporting the ADS1115 ADC.  Most configurations will use this module for probe input.",
+				"description" : "This is the default PiFire module supporting the ADS1115 16-Bit ADC.  Most configurations will use this module for probe input.  If you experience trouble with this module, try the Adafruit modules.  There has been rumors of sellers shipping ADS1015 12-Bit ADC's instead of the ADS1115 16-Bit ADC's.  If you got one of these, you can try the 1015 library instead.",
 				"default" : true,
 				"image" : "ads1115.png",
 				"py_dependencies" : ["ADS1115"], 
@@ -121,10 +121,27 @@
 					}
 				}
 			},
-			"ads1x15" : {
-				"friendly_name" : "ADS1x15",
-				"filename" : "ads1x15",
-				"description" : "This is an alternative module supporting the ADS1115 ADC based on Adafruit's Circuit Python implementation/module.  This version is still actively updated and may support a wider range of hardward.  Use this if you are having issues with the default ADS1115 module.",
+			"ads1015_adafruit" : {
+				"friendly_name" : "ADS1015 Adafruit",
+				"filename" : "ads1015_adafruit",
+				"description" : "This module supports the ADS1015 12-Bit ADC based on Adafruit's Circuit Python implementation/module.  This version can also be used with the ADS1115, as it is backward compatible.  Some fidelity may be lost due to the fact that the ADC has less bits to measure with, however in testing it seems to be reasonably good.  Use this if you are having issues with the default ADS1115 module.",
+				"default" : false,
+				"image" : "ads1115.png",
+				"py_dependencies" : ["adafruit-circuitpython-ads1x15"], 
+				"apt_dependencies" : [],
+				"settings_dependencies" : {
+					"units" : {
+						"friendly_name" : "Temp Units",
+						"description" : "Select the temperature units to use for PiFire globally.  (this can be modified in settings later)",
+						"options" : {"F" : "Farenheit", "C": "Celsius"},
+						"settings" : ["globals", "units"]
+					}
+				}
+			},
+			"ads1115_adafruit" : {
+				"friendly_name" : "ADS1115 Adafruit",
+				"filename" : "ads1115_adafruit",
+				"description" : "This is an alternative module supporting the ADS1115 16-Bit ADC based on Adafruit's Circuit Python implementation/module.  This version is still actively updated and may support a wider range of hardward.  Use this if you are having issues with the default ADS1115 module.  There has been rumors of sellers shipping ADS1015 12-Bit ADC's instead of the ADS1115 16-Bit ADC's.  If you got one of these, you can try the ADS1015 Adafruit library instead.",
 				"default" : false,
 				"image" : "ads1115.png",
 				"py_dependencies" : ["adafruit-circuitpython-ads1x15"], 
