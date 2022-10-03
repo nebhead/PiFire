@@ -464,10 +464,10 @@ class DisplayBase:
 		# Draw Arc for Temperature (Percent)
 		if (percents[0] > 0) and (percents[0] < 100):
 			endpoint = (360 * (percents[0] / 100)) + 90 
-		elif (percents[0] <= 0):
-			endpoint = 0
+		elif percents[0] > 100:
+			endpoint = 360 + 90
 		else:
-			endpoint = 360 + 90 
+			endpoint = 90 
 		draw.pieslice(coords, start=90, end=endpoint, fill=fg_color)
 
 		# Draw Tic for Setpoint[1] 
