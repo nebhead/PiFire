@@ -1457,6 +1457,9 @@ def settings_page(action=None):
 		else:
 			settings['smartstart']['enabled'] = False
 
+		settings['start_to_mode']['after_startup_mode'] = response['after_startup_mode']
+		settings['start_to_mode']['grill1_setpoint'] = int(response['startup_mode_grill1_setpoint'])
+		
 		event['type'] = 'updated'
 		event['text'] = 'Successfully updated startup/shutdown settings.'
 

@@ -927,16 +927,37 @@
 									</h5>
 								</div>
 								<div class="card-body">
-									<div class="input-group mb-3">
+									<span class="badge badge-warning">NOTE:</span>
+									<i class="small"> Amount of time for startup before transitioning to next mode or attempting a reignite</i>
+                                    <div class="input-group mb-3">
 										<div class="input-group-prepend">
 											<span class="input-group-text" data-toggle="tooltip" title="Startup timer (seconds) [Default=240]">
 												<i class="far fa-clock"></i>&nbsp; Startup Timer (seconds)</span>
 										</div>
 										<input id="startup_timer" type="number" min="1" class="form-control" placeholder="{{ settings['globals']['startup_timer'] }}" value="{{ settings['globals']['startup_timer'] }}" name="startup_timer">
 									</div>
+
 									<span class="badge badge-warning">NOTE:</span>
-									<i class="small"> Amount of time for startup before transitioning to smoke or attempting a reignite</i>
-								</div>
+									<i class="small"> Select what mode to transition to after initial startup. Default is 'Smoke Mode'.</i>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                          <label class="input-group-text" for="after_startup_mode">Goto Mode After Startup: </label>
+                                        </div>
+                                        <select class="custom-select" id="after_startup_mode" name="after_startup_mode">
+                                          <option value="Smoke" {% if settings['start_to_mode']['after_startup_mode'] == 'Smoke' %}selected{% endif %}>Smoke Mode</option>
+                                          <option value="Hold" {% if settings['start_to_mode']['after_startup_mode'] == 'Hold' %}selected{% endif %}>Hold Mode</option>
+                                        </select>
+                                    </div>
+
+                                    <div id="startup_hold_value_input" class="input-group mb-3"{% if settings['start_to_mode']['after_startup_mode'] != 'Hold' %} style="display:none"{% endif %}>
+										<div class="input-group-prepend">
+											<span class="input-group-text" data-toggle="tooltip" title="Setpoint Temperature for Hold Mode">
+                                                <i class="fas fa-temperature-low"></i>&nbsp; Hold Temp</span>
+										</div>
+										<input id="startup_timer" type="number" min="{{ settings['safety']['maxstartuptemp'] }}" max="{{ settings['safety']['maxtemp'] }}" class="form-control" value="{{ settings['start_to_mode']['grill1_setpoint'] }}" name="startup_mode_grill1_setpoint">
+                                    </div>
+
+                                </div>
 							</div>
 							<br>
 							<!-- Smart Start Settings -->

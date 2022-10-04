@@ -874,6 +874,15 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 
 	return ()
 
+def _next_mode(next_mode, setpoint=0):			
+	control = read_control()
+	# If no other request, then transition to next mode, otherwise exit
+	if not control['updated']:
+		control['mode'] = next_mode
+		control['setpoints']['grill'] = setpoint  # If next mode is 'Hold'
+		control['updated'] = True 
+		write_control(control)
+	return control 
 
 def _recipe_mode(grill_platform, adc_device, display_device, dist_device):
 	"""
@@ -967,7 +976,7 @@ while True:
 		write_control(control)
 
 	if control['updated']:
-		write_event(settings, '* Updated Flag Captured.')
+		write_event(settings, f'* Control Settings Updated.  Mode: {control["mode"]}, Units Change: {control["units_change"]} ')
 		# Clear control flag
 		control['updated'] = False  # Reset Control Updated to False
 		write_control(control)  # Commit change in 'updated' status to the file
@@ -1011,6 +1020,7 @@ while True:
 				control = read_control(flush=True)
 				control['updated'] = False
 				control['tuning_mode'] = False  # Turn off Tuning Mode on Stop just in case it is on
+				control['next_mode'] = 'Stop'
 				write_control(control)
 			else:
 				write_event(settings, 'ERROR: An error has occurred, Stop Mode enabled.')
@@ -1020,6 +1030,7 @@ while True:
 				control['status'] = 'inactive'
 				control['tuning_mode'] = False  # Turn off Tuning Mode on Stop just in case it is on
 				control['updated'] = False
+				control['next_mode'] = 'Stop'
 				write_control(control)
 
 			read_current(zero_out=True)  # Zero out the current values
@@ -1030,56 +1041,67 @@ while True:
 				write_event(settings, "Warning: PiFire is set to OFF. This doesn't prevent startup, "
 									   "but this means the switch won't behave as normal.")
 			settings = read_settings()
-			if settings['history_page']['clearhistoryonstart']:
-				write_event(settings, '* Clearing History and Current Log on Startup Mode.')
-				read_history(0, flushhistory=True)  # Clear all history
+			# Clear History (in the case it wasn't already cleared fromt he last run)
+			write_event(settings, '* Clearing History and Current Log on Startup Mode.')
+			read_history(0, flushhistory=True)  # Clear all history
+			# Setup Next Mode (after startup mode)
+			control['next_mode'] = settings['start_to_mode']['after_startup_mode']
+			write_control(control)
+			# Call Work Cycle for Startup Mode
 			_work_cycle('Startup', grill_platform, adc_device, display_device, dist_device)
-			control = read_control()
-			# If mode is Startup, then assume you can transition into smoke mode
-			if control['mode'] == 'Startup':
-				control['mode'] = 'Smoke'  # Set status to active
-				write_control(control)
-				_work_cycle('Smoke', grill_platform, adc_device, display_device, dist_device)
+			# TODO: Implement Next Mode
+			# Select Next Mode
+			settings = read_settings()
+			_next_mode(control['next_mode'], setpoint=settings['start_to_mode']['grill1_setpoint'])			
+
 		# Smoke (smoke cycle)
 		elif control['mode'] == 'Smoke':
+			control['next_mode'] = 'Stop'
+			write_control(control)
 			_work_cycle('Smoke', grill_platform, adc_device, display_device, dist_device)
+			_next_mode(control['next_mode'])			
+
 		# Hold (hold at setpoint)
 		elif control['mode'] == 'Hold':
+			control['next_mode'] = 'Stop'
+			write_control(control)
 			_work_cycle('Hold', grill_platform, adc_device, display_device, dist_device)
+			_next_mode(control['next_mode'])			
+
 		# Shutdown (shutdown sequence)
 		elif control['mode'] == 'Shutdown':
+			control['next_mode'] = 'Stop'
+			write_control(control)
 			_work_cycle('Shutdown', grill_platform, adc_device, display_device, dist_device)
-			control = read_control()
-			if control['mode'] == 'Shutdown':
-				control['mode'] = 'Stop'  # Set mode to Stop
-				control['updated'] = True
-				write_control(control)
-				if settings['globals']['auto_power_off']:
-					write_event(settings, 'Shutdown mode ended powering off grill')
-					os.system("sleep 3 && sudo shutdown -h now &")
-		# e. Monitor (monitor the OEM controller)
+			_next_mode(control['next_mode'])			
+			if settings['globals']['auto_power_off']:
+				write_event(settings, 'Shutdown mode ended powering off grill')
+				os.system("sleep 3 && sudo shutdown -h now &")
+
+		# Monitor (monitor the OEM controller)
 		elif control['mode'] == 'Monitor':
 			control['status'] = 'monitor'  # Set status to monitor
 			write_control(control)
 			_work_cycle('Monitor', grill_platform, adc_device, display_device, dist_device)
+
+		# Manual Mode
 		elif control['mode'] == 'Manual':
 			_work_cycle('Manual', grill_platform, adc_device, display_device, dist_device)
+		
+		# Recipe Mode (TBD)
 		elif control['mode'] == 'Recipe':
 			_recipe_mode(grill_platform, adc_device, display_device, dist_device)
+		
 		# Reignite (reignite sequence)
 		elif control['mode'] == 'Reignite':
 			if (not standalone) and (not grill_platform.get_input_status()):
 				write_event(settings, "Warning: PiFire is set to OFF. This doesn't prevent reignite, "
 									   "but this means the switch won't behave as normal.")
-			_work_cycle('Reignite', grill_platform, adc_device, display_device, dist_device)
-			control = read_control()
-			last_mode = control['safety']['reignitelaststate']
-			if last_mode == 'Hold':
-				control['mode'] = 'Hold'  # Set status to active
-			else:
-				control['mode'] = 'Smoke'  # Set status to active
+			control['next_mode'] = control['safety']['reignitelaststate']
+			setpoint = control['setpoints']['grill']
 			write_control(control)
-			_work_cycle(control['mode'], grill_platform, adc_device, display_device, dist_device)
+			_work_cycle('Reignite', grill_platform, adc_device, display_device, dist_device)
+			_next_mode(control['next_mode'], setpoint=setpoint)
 
 	time.sleep(0.1)
 # ===================

@@ -267,6 +267,11 @@ def default_settings():
 		]
 	}
 
+	settings['start_to_mode'] = {
+		'after_startup_mode' : 'Smoke',
+		'grill1_setpoint' : 165  # If Hold, set the setpoint
+	}
+
 	settings['dashboard'] = {
 		'current' : 'Default', 
 		'dashboards' : [
@@ -289,6 +294,8 @@ def default_control():
 	control['updated'] = True
 
 	control['mode'] = 'Stop'
+
+	control['next_mode'] = 'Stop'
 
 	settings = read_settings()
 

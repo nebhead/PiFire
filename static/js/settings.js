@@ -765,4 +765,13 @@ $(document).ready(function() {
         }
     });
 
+	$('#after_startup_mode').change(function() {
+		var mode = $('#after_startup_mode').val();
+		if(mode == 'Hold') {
+			$('#startup_hold_value_input').slideDown();
+		} else {
+			$('#startup_hold_value_input').slideUp();
+		};
+	});
+
 }); // End of document ready function
