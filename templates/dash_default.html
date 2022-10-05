@@ -278,6 +278,23 @@
 	{% endif %}
 
 	<span class="navbar-text">
+		
+		<!-- Prime Options -->
+		<div id="prime_group" class="btn-group dropup shadow" style="display:none" data-toggle="tooltip" data-placement="top" title="Prime the Firepot">
+			<button type="button" class="btn btn-outline-primary border border-secondary dropdown-toggle" id="prime_btn" data-toggle="dropdown" aria-expanded="false">
+				<i class="fas fa-angle-double-right"></i>
+			</button>
+			<div class="dropdown-menu">
+			  <!-- Dropdown menu links -->
+			  <button class="dropdown-item" type="button" onclick="setPrime(10, 'Stop')">Prime 10g</button>
+			  <button class="dropdown-item" type="button" onclick="setPrime(25, 'Stop')">Prime 25g</button>
+			  <button class="dropdown-item" type="button" onclick="setPrime(50, 'Stop')">Prime 50g</button>
+			  <button class="dropdown-item" type="button" onclick="setPrime(10, 'Startup')">Prime 10g & Startup</button>
+			  <button class="dropdown-item" type="button" onclick="setPrime(25, 'Startup')">Prime 25g & Startup</button>
+			  <button class="dropdown-item" type="button" onclick="setPrime(50, 'Startup')">Prime 50g & Startup</button>
+			</div>
+		</div>
+		  
 		<!-- Dash Controls -->
 		<div id="inactive_group" class="btn-group shadow" style="display:none">
 			<button type="button" data-toggle="tooltip" title="Startup" class="btn btn-outline-success border border-secondary" id="startup_btn" name="setmodestartup" value="true"><i class="fas fa-play"></i></button>
@@ -300,7 +317,6 @@
 		{% if dc_fan %}
 		<button type="button" data-toggle="tooltip" title="Temp Fan Control" class="btn btn-outline-primary border border-secondary text-secondary shadow" id="pwm_control_btn" name="pwm_control" value="true" style="display:none"><i class="fas fa-tachometer-alt"></i></button>
 		{% endif %}
-
 
 		<!-- ERROR Button Indicator -->
 		<button type="button" data-toggle="tooltip" title="Error!" class="btn text-white" id="error_btn" name="error_btn" value="true" style="display:none"><i class="fas fa-exclamation-triangle"></i></button>

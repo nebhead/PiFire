@@ -354,6 +354,10 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 		_start_fan(settings)
 		grill_platform.power_on()
 		write_event(settings, '* Power ON, Fan ON, Igniter OFF, Auger OFF')
+	elif mode in ('Prime'):
+		grill_platform.fan_off()
+		grill_platform.power_on()
+		write_event(settings, '* Power ON, Fan OFF, Igniter OFF, Auger OFF')
 	else: # (Monitor, Manual)
 		grill_platform.fan_off()
 		grill_platform.power_off()
@@ -374,7 +378,7 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 	if mode in ('Startup', 'Reignite'):
 		grill_platform.igniter_on()
 		write_event(settings, '* Igniter ON')
-	if mode in ('Startup', 'Reignite', 'Smoke', 'Hold'):
+	if mode in ('Startup', 'Reignite', 'Smoke', 'Hold', 'Prime'):
 		grill_platform.auger_on()
 		write_event(settings, '* Auger ON')
 
@@ -399,6 +403,14 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 		write_event(settings, '* On Time = ' + str(OnTime) + ', OffTime = ' + str(OffTime) + ', CycleTime = ' + str(
 			CycleTime) + ', CycleRatio = ' + str(CycleRatio))
 
+	if mode == 'Prime':
+		auger_rate = settings['globals']['augerrate']
+		prime_amount = control['prime_amount']
+		prime_duration = int(prime_amount / auger_rate) # Auger On Time = Prime Amount (Grams) / (Grams per Second)
+		OnTime = prime_duration
+		OffTime = 1  # Auger Off Time
+		CycleTime = OnTime + OffTime  # Total Cycle Time
+		CycleRatio = OnTime / CycleTime  # Ratio of OnTime to CycleTime
 
 	# Initialize all temperature variables
 	AvgGT = TempQueue(units=settings['globals']['units'])
@@ -619,7 +631,7 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 				write_control(control)
 
 		# Change Auger State based on Cycle Time
-		if mode in ('Startup', 'Reignite', 'Smoke', 'Hold'):
+		if mode in ('Startup', 'Reignite', 'Smoke', 'Hold', 'Prime'):
 			# If Auger is OFF and time since toggle is greater than Off Time
 			if not current_output_status['auger'] and (now - auger_toggle_time) > (CycleTime * (1 - CycleRatio)):
 				grill_platform.auger_on()
@@ -710,6 +722,8 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 			status_data['start_time'] = start_time
 			status_data['start_duration'] = startup_timer
 			status_data['shutdown_duration'] = settings['globals']['shutdown_timer']
+			status_data['prime_duration'] = prime_duration if mode == 'Prime' else 0  # Enable Timer for Prime Mode 
+			status_data['prime_amount'] = prime_amount if mode == 'Prime' else 0  # Enable Display of Prime Amount
 			display_device.display_status(in_data, status_data)
 			display_toggle_time = time.time()  # Reset the display_toggle_time to current time
 
@@ -836,6 +850,10 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 		if mode == 'Shutdown' and (now - start_time) > settings['globals']['shutdown_timer']:
 			break
 
+		# Check if prime time has elapsed
+		if mode == 'Prime' and (now - start_time) > prime_duration:
+			break
+
 		# Max Temp Safety Control
 		if AvgGT.average() > settings['safety']['maxtemp']:
 			display_device.display_text('ERROR')
@@ -857,15 +875,21 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 
 	write_event(settings, '* Auger OFF, Igniter OFF')
 
-	if mode in ('Shutdown', 'Monitor', 'Manual'):
+	if mode in ('Shutdown', 'Monitor', 'Manual', 'Prime'):
 		grill_platform.fan_off()
 		grill_platform.power_off()
 		write_event(settings, '* Fan OFF, Power OFF')
+	
 	if mode in ('Startup', 'Reignite'):
 		control['safety']['afterstarttemp'] = AvgGT.average()
 		write_control(control)
 
 	write_event(settings, mode + ' mode ended.')
+
+	# Save Pellets Used
+	pelletdb = read_pellet_db()
+	pelletdb['current']['est_usage'] += metrics['augerontime'] * settings['globals']['augerrate'] 
+	write_pellet_db(pelletdb)
 
 	# Log the end time
 	metrics['endtime'] = time.time()
@@ -1035,6 +1059,17 @@ while True:
 
 			read_current(zero_out=True)  # Zero out the current values
 
+		# Prime (dump preset amount of pellets into the firepot)
+		elif control['mode'] == 'Prime':
+			if not standalone and not grill_platform.get_input_status():
+				write_event(settings, "Warning: PiFire is set to OFF. This doesn't prevent startup, "
+									   "but this means the switch won't behave as normal.")
+			# Call Work Cycle for Startup Mode
+			_work_cycle('Prime', grill_platform, adc_device, display_device, dist_device)
+			# Select Next Mode
+			settings = read_settings()
+			_next_mode(control['next_mode'], setpoint=settings['start_to_mode']['grill1_setpoint'])			
+
 		# Startup (startup sequence)
 		elif control['mode'] == 'Startup':
 			if not standalone and not grill_platform.get_input_status():
@@ -1049,22 +1084,17 @@ while True:
 			write_control(control)
 			# Call Work Cycle for Startup Mode
 			_work_cycle('Startup', grill_platform, adc_device, display_device, dist_device)
-			# TODO: Implement Next Mode
 			# Select Next Mode
 			settings = read_settings()
 			_next_mode(control['next_mode'], setpoint=settings['start_to_mode']['grill1_setpoint'])			
 
 		# Smoke (smoke cycle)
 		elif control['mode'] == 'Smoke':
-			control['next_mode'] = 'Stop'
-			write_control(control)
 			_work_cycle('Smoke', grill_platform, adc_device, display_device, dist_device)
 			_next_mode(control['next_mode'])			
 
 		# Hold (hold at setpoint)
 		elif control['mode'] == 'Hold':
-			control['next_mode'] = 'Stop'
-			write_control(control)
 			_work_cycle('Hold', grill_platform, adc_device, display_device, dist_device)
 			_next_mode(control['next_mode'])			
 

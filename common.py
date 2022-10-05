@@ -375,6 +375,8 @@ def default_control():
 		'profile_selected' : 0
 	}
 
+	control['prime_amount'] = 10  # Default Prime Amount in Grams
+
 	return(control)
 
 """

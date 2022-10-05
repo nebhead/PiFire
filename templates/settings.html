@@ -1329,6 +1329,31 @@
                                     <br>
                                 </div><!-- End of card body -->
                             </div><!-- End of Card -->
+                            <br>
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h5>
+                                        <i class="fas fa-tools"></i>&nbsp; Auger Rate
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Auger Rate = grams / second">
+                                                <i class="fas fa-angle-double-right"></i>&nbsp; Auger Rate (g/s)
+                                            </span>
+                                        </div>
+                                        <input id="auger_rate" type="number" min="0" step="0.05" class="form-control" value="{{ settings['globals']['augerrate'] }}" name="auger_rate">
+                                    </div>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> This value is used to calculate how long to run the auger when priming, and to calculate estimated pellet usage.
+                                    This value can be tuned for your auger speed, by going into manual mode and running the auger for 10 seconds, then weighing the pellets
+                                    that have been dispensed into the firepot.  For example, if you run the auger for 10 seconds and 3 grams of pellets are dispensed, then
+                                    the calculation would be 3g / 10s = 0.3.  That means 0.3 grams are dispensed per second of auger on time.     
+                                    </i>
+                                    <br>
+                                </div>
+                            </div>
                         </div><!-- End of card body -->
                         <div class="card-footer bg-light">
                             <button type="submit" class="btn btn-outline-primary">Save</button>

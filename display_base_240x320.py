@@ -93,6 +93,10 @@ class DisplayBase:
 				'displaytext': 'Startup',
 				'icon': '\uf04b'  # FontAwesome Play Icon
 			},
+			'Prime': {
+				'displaytext': 'Prime',
+				'icon': '\uf101'  # FontAwesome Double Arrow Right Icon
+			},
 			'Monitor': {
 				'displaytext': 'Monitor',
 				'icon': '\uf530'  # FontAwesome Glasses Icon
@@ -134,6 +138,33 @@ class DisplayBase:
 				'icon': '\uf1eb'  # FontAwesome Wifi Icon
 			}
 		}
+
+		self.menu['prime_selection'] = {
+			'Prime_10' : {
+				'displaytext': '\u00BB10g',
+				'icon': '10'
+			},
+			'Prime_25' : {
+				'displaytext': '\u00BB25g',
+				'icon': '25'
+			},
+			'Prime_50' : {
+				'displaytext': '\u00BB50g',
+				'icon': '50'
+			},
+			'Prime_10_Start' : {
+				'displaytext': '\u00BB10g & Start',
+				'icon': '10'
+			},
+			'Prime_25_Start' : {
+				'displaytext': '\u00BB25g & Start',
+				'icon': '25'
+			},
+			'Prime_50_Start' : {
+				'displaytext': '\u00BB50g & Start',
+				'icon': '50'
+			}
+		}
 		self.menu['current'] = {}
 		self.menu['current']['mode'] = 'none'  # Current Menu Mode (inactive, active)
 		self.menu['current']['option'] = 0  # Current option in current mode
@@ -149,6 +180,8 @@ class DisplayBase:
 			if self.display_timeout:
 				if time.time() > self.display_timeout:
 					self.display_timeout = None
+					if not self.display_active:
+						self.display_command = 'clear'
 
 			if self.display_command == 'clear':
 				self.display_active = False
@@ -788,9 +821,15 @@ class DisplayBase:
 		size = (26, 26)
 		self._text_circle(draw, position, size, text)
 
-		# Display Countdown for Startup / Reignite / Shutdown
-		if status_data['mode'] in ['Startup', 'Reignite', 'Shutdown']:
-			duration = status_data['start_duration'] if status_data['mode'] in ['Startup', 'Reignite'] else status_data['shutdown_duration']
+		# Display Countdown for Startup / Reignite / Shutdown / Prime
+		if status_data['mode'] in ['Startup', 'Reignite', 'Shutdown', 'Prime']:
+			if status_data['mode'] in ['Startup', 'Reignite']: 
+				duration = status_data['start_duration'] 
+			elif status_data['mode'] in ['Prime']: 
+				duration = status_data['prime_duration']
+			else: 
+				duration =status_data['shutdown_duration']
+			
 			countdown = int(duration - (time.time() - status_data['start_time']))
 			text = f'{countdown}s'
 			center_point = (self.WIDTH // 2, self.HEIGHT // 2 - 100)
@@ -814,7 +853,7 @@ class DisplayBase:
 		if self.menu['current']['mode'] == 'none':
 			control = read_control()
 			# If in an inactive mode
-			if control['mode'] == 'Stop' or control['mode'] == 'Error' or control['mode'] == 'Monitor':
+			if control['mode'] in ['Stop', 'Error', 'Monitor', 'Prime']:
 				self.menu['current']['mode'] = 'inactive'
 			else:  # Use the active menu
 				self.menu['current']['mode'] = 'active'
@@ -968,6 +1007,30 @@ class DisplayBase:
 					write_control(control)
 				elif selected == 'Network':
 					self.display_network()
+				elif selected == 'Prime':
+					self.menu['current']['mode'] = 'prime_selection'
+					self.menu['current']['option'] = 0
+				elif 'Prime_' in selected:
+					control = read_control()
+					if '50' in selected:
+						control['prime_amount'] = 25
+					elif '25' in selected:
+						control['prime_amount'] = 25
+					else:
+						control['prime_amount'] = 10
+
+					if 'Start' in selected:
+						control['next_mode'] = 'Startup'
+					else:
+						control['next_mode'] = 'Stop'
+					self.display_active = True
+					self.menu['current']['mode'] = 'none'
+					self.menu['current']['option'] = 0
+					self.menu_active = False
+					self.menu_time = 0
+					control['updated'] = True
+					control['mode'] = 'Prime'
+					write_control(control)
 
 		# Create canvas
 		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))

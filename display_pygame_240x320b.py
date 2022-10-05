@@ -73,6 +73,8 @@ class Display(DisplayBase):
 			if self.display_timeout:
 				if time.time() > self.display_timeout:
 					self.display_timeout = None
+					if not self.display_active:
+						self.display_command = 'clear'
 
 			if self.display_command == 'clear':
 				self.display_active = False

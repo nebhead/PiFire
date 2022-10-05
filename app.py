@@ -1554,6 +1554,8 @@ def settings_page(action=None):
 		if _is_not_blank(response, 'full'):
 			settings['pelletlevel']['full'] = int(response['full'])
 			control['distance_update'] = True
+		if _is_not_blank(response, 'auger_rate'):
+			settings['globals']['augerrate'] = float(response['auger_rate'])
 
 		event['type'] = 'updated'
 		event['text'] = 'Successfully updated pellet settings.'

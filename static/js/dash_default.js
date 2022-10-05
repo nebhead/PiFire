@@ -214,6 +214,7 @@ function updateDashButtons(data) {
             $("#inactive_group").show();
 			$("#monitor_btn").show();
 			$("#error_btn").hide();
+			$("#prime_group").show();
         } else if (data.current_mode == 'Monitor') {
             document.getElementById("monitor_btn").className = "btn btn-secondary border border-secondary";
             $("#active_group").hide();
@@ -223,6 +224,7 @@ function updateDashButtons(data) {
             $("#smoke_inactive_btn").hide();
             $("#hold_inactive_btn").hide();
             $("#error_btn").hide();
+			$("#prime_group").hide();
         } else if ((data.current_mode == 'Startup') || (data.current_mode == 'Reignite')) {
             document.getElementById("startup_btn").className = "btn btn-success border border-secondary";
             $("#active_group").hide();
@@ -233,6 +235,7 @@ function updateDashButtons(data) {
 			$("#hold_inactive_btn").show();
 			$("#monitor_btn").hide();
 			$("#error_btn").hide();
+			$("#prime_group").hide();
         } else if (data.current_mode == 'Smoke') {
             document.getElementById("smoke_btn").className = "btn btn-warning border border-secondary";
             $("#inactive_group").hide();
@@ -247,6 +250,7 @@ function updateDashButtons(data) {
 				document.getElementById("splus_btn").className = "btn btn-outline-primary border border-secondary text-secondary shadow";
 			};
             $("#error_btn").hide();
+			$("#prime_group").hide();
         } else if (data.current_mode == 'Hold') {
             document.getElementById("hold_btn").className = "btn btn-secondary border border-secondary text-white";
 			$("#hold_btn").html(data.set_points['grill'] + "°" + units);
@@ -256,6 +260,7 @@ function updateDashButtons(data) {
             $("#stop_btn").hide();
             $("#error_btn").hide();
 			$("#splus_btn").show();
+			$("#prime_group").hide();
 			if(pwmButton != null) {$("#pwm_control_btn").show();};
 			// This is required when automatically transitioning from another mode to this mode
 			if(data.splus == true) {
@@ -286,6 +291,7 @@ function updateDashButtons(data) {
 			$("#active_group").show();
 			$("#stop_btn").show();
 			$("#error_btn").hide();
+			$("#prime_group").hide();
 			document.getElementById("shutdown_btn").className = "btn btn-danger border border-secondary";
         } else if (data.current_mode == 'Error') {
 			document.getElementById("stop_inactive_btn").className = "btn btn-danger border border-secondary";
@@ -297,6 +303,7 @@ function updateDashButtons(data) {
 			$("#inactive_group").show();
 			$("#monitor_btn").show();
 			$("#error_btn").show();
+			$("#prime_group").show();
 			document.getElementById("error_btn").className = "btn btn-danger border border-warning text-warning";
 		} else if (data.current_mode == 'Manual') {
 			$("#active_group").hide();
@@ -307,7 +314,19 @@ function updateDashButtons(data) {
 			$("#hold_inactive_btn").hide();
 			$("#monitor_btn").hide();
 			$("#error_btn").hide();
-		};
+			$("#prime_group").hide();
+		} else if (data.current_mode == 'Prime') {
+            document.getElementById("prime_btn").className = "btn btn-primary border border-secondary dropdown-toggle text-white";
+            $("#active_group").hide();
+			$("#splus_btn").hide();
+			if(pwmButton != null) {$("#pwm_control_btn").hide();};
+			$("#inactive_group").show();
+			$("#smoke_inactive_btn").hide();
+			$("#hold_inactive_btn").hide();
+			$("#monitor_btn").show();
+			$("#error_btn").hide();
+			$("#prime_group").show();
+        };
 
         if ((data.current_mode == 'Smoke') || (data.current_mode == 'Hold')) {
             if (data.splus == true) {
@@ -399,7 +418,10 @@ $(document).ready(function(){
                         document.getElementById("shutdown_btn").className = "btn btn-outline-danger border border-secondary";
                     } else if (last_mode == 'Stop') {
                         document.getElementById("stop_inactive_btn").className = "btn btn-outline-secondary border border-secondary";
+                    } else if (last_mode == 'Prime') {
+                        document.getElementById("prime_btn").className = "btn btn-outline-primary border border-secondary dropdown-toggle";
                     };
+
                     // Reset last_mode to current_mode
                     last_mode = data.current_mode;
 					splusState = data.splus;
@@ -811,3 +833,22 @@ $(document).ready(function(){
 	});
 
 }); // End of Document Ready Function
+
+function setPrime(prime_amount, next_mode) {
+	var postdata = { 
+		'updated' : true,
+		'mode' : 'Prime',
+		'prime_amount' : prime_amount,
+		'next_mode' : next_mode	
+	};
+	req = $.ajax({
+		url : '/api/control',
+		type : 'POST',
+		data : JSON.stringify(postdata),
+		contentType: "application/json; charset=utf-8",
+		traditional: true,
+		success: function (data) {
+			console.log('Prime Mode Requested.');
+		}
+	});
+};
