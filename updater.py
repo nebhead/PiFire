@@ -179,10 +179,24 @@ def get_remote_version():
 		result = 'ERROR Getting Remote URL.'
 	return(result, error_msg)
 
+def get_current_tag():
+	error_msg = ''
+	command = ['git', 'describe', '--tags']
+	tag = subprocess.run(command, capture_output=True, text=True)
+	if tag.returncode == 0:
+		result = tag.stdout.replace('\n', '')
+	else: 
+		result = 'ERROR Getting Log.'
+		error_msg = tag.stderr.replace('\n', '<br>')
+	return(result, error_msg)
+
 def get_update_data(settings):
 	# Populate Update Data Structure
 	update_data = {}
-	update_data['version'] = settings['versions']['server']
+	tag, error_msg = get_current_tag()
+	if error_msg != '':
+		write_log(error_msg)
+	update_data['version'] = f'v{settings["versions"]["server"]} ({tag})'
 	update_data['branch_target'], error_msg = get_branch()
 	if error_msg != '':
 		write_log(error_msg)
