@@ -992,6 +992,7 @@ def pellets_page(action=None):
 		if 'load_profile' in response:
 			if response['load_profile'] == 'true':
 				pelletdb['current']['pelletid'] = response['load_id']
+				pelletdb['current']['est_usage'] = 0
 				control = read_control()
 				control['hopper_check'] = True
 				write_control(control)
@@ -1074,7 +1075,8 @@ def pellets_page(action=None):
 				write_control(control)
 				now = str(datetime.datetime.now())
 				now = now[0:19] # Truncate the microseconds
-				pelletdb['current']['date_loaded'] = now 
+				pelletdb['current']['date_loaded'] = now
+				pelletdb['current']['est_usage'] = 0
 				pelletdb['log'][now] = profile_id
 				event['text'] = 'Successfully added profile and loaded.'
 
@@ -1121,9 +1123,18 @@ def pellets_page(action=None):
 				event['type'] = 'error'
 				event['text'] = 'Item not found in pellet log.'
 
+	grams = pelletdb['current']['est_usage']
+	pounds = round(grams * 0.00220462, 2)
+	ounces = round(grams * 0.03527392, 2)
+	est_usage_imperial = f'{pounds} lbs' if pounds > 1 else f'{ounces} ozs'
+	est_usage_metric = f'{round(grams, 2)} g' if grams < 1000 else f'{round(grams / 1000, 2)} kg'
+
 	return render_template('pellets.html',
 						   alert=event,
 						   pelletdb=pelletdb,
+						   est_usage_imperial=est_usage_imperial,
+						   est_usage_metric=est_usage_metric,
+						   units=settings['globals']['units'],
 						   page_theme=settings['globals']['page_theme'],
 						   grill_name=settings['globals']['grill_name'])
 

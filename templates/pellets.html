@@ -119,6 +119,21 @@
             <div class="card-footer text-center">
                 <a href="/pellets/hopperlevel" class="btn btn-outline-primary" role="button">Refresh Status</a>
             </div>
+        </div><br>
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5><i class="fas fa-angle-double-right"></i>&nbsp; Estimated Usage Since Reload</h5>
+            </div>
+            <div class="card-body text-center">
+                <!-- Estimated Usage-->
+                {% if units == 'F' %}
+                <h1>{{ est_usage_imperial }}</h1>
+                <small>{{est_usage_metric }}</small>
+                {% else %}  
+                <h1>{{ est_usage_metric }}</h1>
+                <small>{{est_usage_imperial }}</small>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
