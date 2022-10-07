@@ -239,17 +239,19 @@ def _send_apprise_notifications(settings, title_message, body_message):
 	:param body_message: Message Body
 	"""
 
-	write_event(settings, "Sending Apprise Notifications: " + ", ".join(settings['apprise']['locations']))
-	appriseHandler = apprise.Apprise()
+	if(len(settings['apprise']['locations'])):
+		write_event(settings, "Sending Apprise Notifications: " + ", ".join(settings['apprise']['locations']))
+		appriseHandler = apprise.Apprise()
 
-	for location in settings['apprise']['locations']:
-		appriseHandler.add(location)
+		for location in settings['apprise']['locations']:
+			appriseHandler.add(location)
 
-	result = appriseHandler.notify(
-		title=title_message,
-		body=body_message,
-	)
-
+		result = appriseHandler.notify(
+			title=title_message,
+			body=body_message,
+		)
+	else:
+		write_event(settings, "No Apprise Locations Configured")
 
 def _send_pushover_notification(settings, title_message, body_message):
 	"""
