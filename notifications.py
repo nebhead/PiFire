@@ -238,6 +238,8 @@ def _send_apprise_notifications(settings, title_message, body_message):
 	:param title_message: Message Title
 	:param body_message: Message Body
 	"""
+
+	write_event(settings, "Sending Apprise Notifications: " + ", ".join(settings['apprise']['locations']))
 	appriseHandler = apprise.Apprise()
 
 	for location in settings['apprise']['locations']:

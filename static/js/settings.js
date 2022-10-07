@@ -756,12 +756,18 @@ $(document).ready(function() {
     $('button[name=appriseDeleteRow]').click(function(e) {
         e.preventDefault();
         if($(this).parent().parent().find("input:text").val().length > 0) {
-            if(confirm('Row is not empty, are you sure?')) {
-                $(this).parent().parent().remove();
+            if(confirm('Row is not empty, are you sure?')) { //input has text in it, verify
+                if($('.appriselocation').length > 1) { //only delete if more than row, keeps interface readier for use
+                    $(this).parent().parent().remove();
+                }
+                else {
+                    $(this).parent().parent().find("input:text").val("")
+                }
             }
         }
-        else {
+        else if($('.appriselocation').length > 1) { //only delete if more than row, keeps interface readier for use
             $(this).parent().parent().remove();
+
         }
     });
 
