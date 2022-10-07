@@ -1412,7 +1412,7 @@
                                             <span class="input-group-text">
                                                 <i class="fas fa-link"></i>&nbsp; Location</span>
                                         </div>
-                                        <input id="appriselocations" type="text" class="form-control" name="appriselocations" value="{{location}}">
+                                        <input id="appriselocations" type="text" class="form-control" name="appriselocations" value="{{location}}" placeholder="format://user@location/authorization">
                                         <div class="input-group-append">
                                             <button type="button" name="appriseDeleteRow" class="btn btn-danger"><i class="fas fa-minus"></i></button>
                                         </div>
@@ -1422,7 +1422,10 @@
                                             <span class="input-group-text">
                                                 <i class="fas fa-link"></i>&nbsp; Location</span>
                                         </div>
-                                        <input id="appriselocations" type="text" class="form-control" name="appriselocations" value="">
+                                        <input id="appriselocations" type="text" class="form-control" name="appriselocations" value="" placeholder="format://user@location/authorization">
+                                        <div class="input-group-append">
+                                            <button type="button" name="appriseDeleteRow" class="btn btn-danger"><i class="fas fa-minus"></i></button>
+                                        </div>
                                     </div>{% endif %}
                                     <div class="mb-3 text-right">
                                         <button type="button" name="addAppriseLocation" class="btn btn-primary"><i class="fas fa-plus"></i> Add Location</button>
