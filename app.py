@@ -1226,7 +1226,11 @@ def settings_page(action=None):
 		else:
 			settings['apprise']['enabled'] = False
 		if 'appriselocations' in response:
-			settings['apprise']['locations'] = response.getlist('appriselocations')
+			locations = []
+			for location in response.getlist('appriselocations'):
+				if(len(location)):
+					locations.append(location)
+			settings['apprise']['locations'] = locations
 		else:
 			settings['apprise']['locations'] = []
 		if _is_checked(response, 'ifttt_enabled'):
