@@ -1347,61 +1347,62 @@ def write_cookfile():
 
 	historydata = cmdsts.lrange('control:history', 1, -1)
 
-	starttime = json.loads(historydata[0])
-	starttime = starttime['T']
+	if len(historydata):
+		starttime = json.loads(historydata[0])
+		starttime = starttime['T']
 
-	endtime = json.loads(historydata[-1])
-	endtime = endtime['T']
+		endtime = json.loads(historydata[-1])
+		endtime = endtime['T']
 
-	#thumbnail_UUID = generateUUID()
+		#thumbnail_UUID = generateUUID()
 
-	cook_file_struct = _default_cookfilestruct()
+		cook_file_struct = _default_cookfilestruct()
 
-	cook_file_struct['metadata']['title'] = title
-	cook_file_struct['metadata']['starttime'] = starttime
-	cook_file_struct['metadata']['endtime'] = endtime
+		cook_file_struct['metadata']['title'] = title
+		cook_file_struct['metadata']['starttime'] = starttime
+		cook_file_struct['metadata']['endtime'] = endtime
 
-	# Unpack data from json to list
-	for index in range(len(historydata)):
-		datastruct = json.loads(historydata[index])
-		cook_file_struct['graph_data']['time_labels'].append(datastruct['T'])
-		cook_file_struct['graph_data']['grill1_temp'].append(datastruct['GT1'])
-		cook_file_struct['graph_data']['probe1_temp'].append(datastruct['PT1'])
-		cook_file_struct['graph_data']['probe2_temp'].append(datastruct['PT2'])
-		cook_file_struct['graph_data']['grill1_setpoint'].append(datastruct['GSP1'])
-		cook_file_struct['graph_data']['probe1_setpoint'].append(datastruct['PSP1'])
-		cook_file_struct['graph_data']['probe2_setpoint'].append(datastruct['PSP2'])
+		# Unpack data from json to list
+		for index in range(len(historydata)):
+			datastruct = json.loads(historydata[index])
+			cook_file_struct['graph_data']['time_labels'].append(datastruct['T'])
+			cook_file_struct['graph_data']['grill1_temp'].append(datastruct['GT1'])
+			cook_file_struct['graph_data']['probe1_temp'].append(datastruct['PT1'])
+			cook_file_struct['graph_data']['probe2_temp'].append(datastruct['PT2'])
+			cook_file_struct['graph_data']['grill1_setpoint'].append(datastruct['GSP1'])
+			cook_file_struct['graph_data']['probe1_setpoint'].append(datastruct['PSP1'])
+			cook_file_struct['graph_data']['probe2_setpoint'].append(datastruct['PSP2'])
 
-	cook_file_struct['events'] = process_metrics(read_metrics(all=True), augerrate=settings['globals']['augerrate'])
+		cook_file_struct['events'] = process_metrics(read_metrics(all=True), augerrate=settings['globals']['augerrate'])
 
-	# 1. Create all JSON data files
-	files_list = ['metadata', 'graph_data', 'graph_labels', 'events', 'comments', 'assets']
-	if not os.path.exists(HISTORY_FOLDER):
-		os.mkdir(HISTORY_FOLDER)
-	os.mkdir(f'{HISTORY_FOLDER}{title}')  # Make temporary folder for all files
-	for item in files_list:
-		json_data_string = json.dumps(cook_file_struct[item], indent=2, sort_keys=True)
-		filename = f'{HISTORY_FOLDER}{title}/{item}.json'
-		with open(filename, 'w+') as cook_file:
-			cook_file.write(json_data_string)
-	
-	# 2. Create empty data folder(s) & add default data 
-	os.mkdir(f'{HISTORY_FOLDER}{title}/assets')
-	os.mkdir(f'{HISTORY_FOLDER}{title}/assets/thumbs')
-	#shutil.copy2('./static/img/pifire-cf-thumb.png', f'{HISTORY_FOLDER}{title}/assets/{thumbnail_UUID}.png')
-	#shutil.copy2('./static/img/pifire-cf-thumb.png', f'{HISTORY_FOLDER}{title}/assets/thumbs/{thumbnail_UUID}.png')
+		# 1. Create all JSON data files
+		files_list = ['metadata', 'graph_data', 'graph_labels', 'events', 'comments', 'assets']
+		if not os.path.exists(HISTORY_FOLDER):
+			os.mkdir(HISTORY_FOLDER)
+		os.mkdir(f'{HISTORY_FOLDER}{title}')  # Make temporary folder for all files
+		for item in files_list:
+			json_data_string = json.dumps(cook_file_struct[item], indent=2, sort_keys=True)
+			filename = f'{HISTORY_FOLDER}{title}/{item}.json'
+			with open(filename, 'w+') as cook_file:
+				cook_file.write(json_data_string)
+		
+		# 2. Create empty data folder(s) & add default data 
+		os.mkdir(f'{HISTORY_FOLDER}{title}/assets')
+		os.mkdir(f'{HISTORY_FOLDER}{title}/assets/thumbs')
+		#shutil.copy2('./static/img/pifire-cf-thumb.png', f'{HISTORY_FOLDER}{title}/assets/{thumbnail_UUID}.png')
+		#shutil.copy2('./static/img/pifire-cf-thumb.png', f'{HISTORY_FOLDER}{title}/assets/thumbs/{thumbnail_UUID}.png')
 
-	# 3. Create ZIP file of the folder 
-	directory = pathlib.Path(f'{HISTORY_FOLDER}{title}/')
-	filename = f'{HISTORY_FOLDER}{title}.pifire'
+		# 3. Create ZIP file of the folder 
+		directory = pathlib.Path(f'{HISTORY_FOLDER}{title}/')
+		filename = f'{HISTORY_FOLDER}{title}.pifire'
 
-	with zipfile.ZipFile(filename, "w", zipfile.ZIP_DEFLATED) as archive:
-		for file_path in directory.rglob("*"):
-			archive.write(file_path, arcname=file_path.relative_to(directory))
+		with zipfile.ZipFile(filename, "w", zipfile.ZIP_DEFLATED) as archive:
+			for file_path in directory.rglob("*"):
+				archive.write(file_path, arcname=file_path.relative_to(directory))
 
-	# 4. Cleanup temporary files
-	command = f'rm -rf {HISTORY_FOLDER}{title}'
-	os.system(command)
+		# 4. Cleanup temporary files
+		command = f'rm -rf {HISTORY_FOLDER}{title}'
+		os.system(command)
 
 	# Delete Redis DB for history / current
 	read_history(0, flushhistory=True)
