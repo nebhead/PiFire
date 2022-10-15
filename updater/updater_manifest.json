@@ -10,7 +10,7 @@
     },
     "control": {
       "py_dependencies": [
-        "pushbullet.py"
+        "apprise"
       ],
       "apt_dependencies": []
     }

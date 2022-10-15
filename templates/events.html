@@ -12,72 +12,20 @@
 					<h5><i class="fas fa-list"></i>&nbsp; Event Log</h5>
 				</div>
 				<div class="card-body">
-					<!-- Events Go Here -->
-					<div class="table-responsive">
-						<table class="table table-striped">
-							<thead>
-							<tr>
-								<th>Date</th>
-								<th>Time</th>
-								<th>Event</th>
-							</tr>
-							</thead>
-							<tbody>
-							{% for row in range(num_events) %}
-								{% if "Script Starting" in event_list[row][2] %}
-								<tr class="table-success">
-								{% elif "Mode started" in event_list[row][2] %}
-								<tr class="table-info">
-								{% elif "Script ended" in event_list[row][2] %}
-								<tr class="table-danger">
-								{% elif "ERROR" in event_list[row][2] %}
-								<tr class="table-danger">
-								{% elif "Mode ended" in event_list[row][2] %}
-								<tr class="table-warning">
-								{% elif "WARNING" in event_list[row][2] %}
-								<tr class="table-warning">
-								{% else %}
-								<tr>
-								{% endif %}
-
-								{% for column in range(3) %}
-								<td> {{ event_list[row][column] }} </td>
-								{% endfor %}
-							</tr>
-							{% endfor %}
-							</tbody>
-						</table>
+					<div id="events_list">
+						<div class="text-center">
+							<div class="spinner-border text-primary" role="status">
+								<span class="sr-only">Loading...</span>
+							</div>
+						</div>
 					</div>
 				</div> <!-- End of card body -->
-				<div class="card-footer bg-light">
-					End of File.
-				</div>
 			</div> <!-- End of Card -->
 		</div> <!-- End of Column -->
 	</div> <!-- End of Row -->
 
-	<br>
-	<br>
-	<br>
 {% endblock %}
 
-{% block postcontainer %}
-
-<div class="container">
-	{% if page_theme == 'dark' %}
-	<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #aaaaaa;">
-	{% else %}
-	<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #dddddd;">
-	{% endif %}
-		<span class="navbar-text">
-			<!-- Refresh Section -->
-			<div class="row">
-				<div class="col">
-					<a href="/events" class="btn btn-outline-success shadow" role="button"><i class="fas fa-sync-alt"></i></a>
-				</div> <!-- End of Column -->
-			</div> <!-- End of Row -->
-		</span>
-	</nav>
-</div>
-
+{% block scripts %}
+	<script src="{{ url_for('static', filename='js/events.js') }}"></script>
 {% endblock %}

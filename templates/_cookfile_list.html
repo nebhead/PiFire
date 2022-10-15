@@ -1,0 +1,90 @@
+<table class="table">
+    <thead class="thead-light">
+        <tr>
+        <th scope="col">Actions</th>
+        <th scope="col">File Name</th>
+        <th scope="col">Title</th>
+        <th scope="col">Thumbnail</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in pgntdcf['displaydata'] %}
+        <tr>
+            <td style="width: 20%">
+                <button class="btn btn-success btn-sm text-white" type="submit" id="opencookfile" name="opencookfile" value="{{ item['filename'] }}" data-toggle="tooltip" title="Open File"><i class="far fa-folder-open"></i></button>
+                <button class="btn btn-primary btn-sm text-white" type="submit" id="dlcookfile" name="dlcookfile" value="{{ item['filename'] }}" data-toggle="tooltip" title="Download File"><i class="fas fa-file-download"></i></button>
+                <button class="btn btn-secondary btn-sm text-white" type="submit" id="ulcookfile" name="ulcookfile" value="{{ item['filename'] }}" data-toggle="tooltip" title="Send to Cloud" disabled><i class="fas fa-cloud-upload-alt"></i></button>
+                <button class="btn btn-danger btn-sm text-white" type="button" id="delcookfile" data-val="{{ item['filename'] }}" data-toggle="modal" data-target="#delcookfilemodal"><i class="far fa-trash-alt"></i></button>
+            </td>
+            <td>{{ item['filename'] }}</td>
+            <td>{{ item['title'] }}</td>
+            <td>
+                {% if item['thumbnail'] == '' %}
+                <img src="{{ url_for('static', filename='img/pifire-cf-thumb.png') }}" class="rounded" alt="thumbnail" width="48" height="48"> 
+                {% else %}
+                <img src="{{ url_for('static', filename='img/tmp/' + item['thumbnail']) }}" class="rounded" alt="thumbnail" width="48" height="48"> 
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<!-- Pagination -->
+<div class="btn-toolbar" role="toolbar" aria-label="Pagination">
+    <div class="btn-group mr-2" role="group" aria-label="Previous Group">
+      <button type="button" class="btn btn-outline-primary" onclick="gotoPage(1, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})">First</button>
+      <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntdcf['prevpage'] }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})"><i class="fas fa-angle-left"></i></button>
+    </div>
+    <div class="btn-group mr-2" role="group" aria-label="Page Group">
+      {% if pgntdcf['curpage'] == 2 %}
+        <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntdcf['curpage'] - 1 }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})">
+            {{ pgntdcf['curpage'] - 1}}
+        </button>
+      {% elif pgntdcf['curpage'] > 2 %}
+        <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntdcf['curpage'] - 2 }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})">
+            {{ pgntdcf['curpage'] - 2}}
+        </button>
+        <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntdcf['curpage'] - 1 }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})">
+            {{ pgntdcf['curpage'] - 1}}
+        </button>
+      {% endif %}
+        <button type="button" class="btn btn-primary"><strong>{{ pgntdcf['curpage'] }}</strong></button>
+      {% if pgntdcf['curpage'] <= pgntdcf['lastpage'] - 2 %}
+        <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntdcf['curpage'] + 1 }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})">
+            {{ pgntdcf['curpage'] + 1}}
+        </button>
+        <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntdcf['curpage'] +2 }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})">
+            {{ pgntdcf['curpage'] + 2}}
+        </button>
+      {% elif pgntdcf['curpage'] == pgntdcf['lastpage'] - 1 %}
+        <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntdcf['curpage'] + 1 }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})">
+            {{ pgntdcf['curpage'] + 1}}
+        </button>
+      {% endif %}
+    </div>
+    <div class="btn-group" role="group" aria-label="Next Group">
+      <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntdcf['nextpage'] }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})"><i class="fas fa-angle-right"></i></button>
+      <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntdcf['lastpage'] }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})">Last</button>
+    </div>
+    &nbsp;
+    <div class="btn-group" role="group" aria-label="Sort Group">
+        {% if pgntdcf['reverse'] == 'true' %}
+        <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntdcf['curpage'] }}, false, {{ pgntdcf['itemspage'] }})"><i class="fas fa-sort-numeric-up-alt"></i>&nbsp; Sort</button>
+        {% else %} 
+        <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntdcf['curpage'] }}, true, {{ pgntdcf['itemspage'] }})"><i class="fas fa-sort-numeric-down"></i>&nbsp; Sort</button>
+        {% endif %}
+    </div>
+    &nbsp;
+    <div class="dropdown">
+        <button class="btn btn-outline-primary dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">
+          {{ pgntdcf['itemspage'] }}
+        </button>
+        <div class="dropdown-menu">
+          <button class="dropdown-item{% if pgntdcf['itemspage'] == 5 %} active{% endif %}" type="button" onclick="gotoPage({{ pgntdcf['curpage'] }}, {{ pgntdcf['reverse'] }}, 5)">5</button>
+          <button class="dropdown-item{% if pgntdcf['itemspage'] == 10 %} active{% endif %}" type="button" onclick="gotoPage({{ pgntdcf['curpage'] }}, {{ pgntdcf['reverse'] }}, 10)">10</button>
+          <button class="dropdown-item{% if pgntdcf['itemspage'] == 25 %} active{% endif %}" type="button" onclick="gotoPage({{ pgntdcf['curpage'] }}, {{ pgntdcf['reverse'] }}, 25)">25</button>
+          <button class="dropdown-item{% if pgntdcf['itemspage'] == 50 %} active{% endif %}" type="button" onclick="gotoPage({{ pgntdcf['curpage'] }}, {{ pgntdcf['reverse'] }}, 50)">50</button>
+          <button class="dropdown-item{% if pgntdcf['itemspage'] == 100 %} active{% endif %}" type="button" onclick="gotoPage({{ pgntdcf['curpage'] }}, {{ pgntdcf['reverse'] }}, 100)">100</button>
+        </div>
+    </div>
+</div>
