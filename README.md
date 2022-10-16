@@ -22,21 +22,24 @@ Just as with the PiSmoker project, I had a few goals in mind.  I also wanted to 
 	* _Shutdown Mode_ (auger off, fan on) to burn off pellets after cook is completed
 	* _Monitor Mode_ - See temperatures of grill / probes and get notifications if using another controller or if just checking the temperatures any time.  
 	* _Manual Mode_ - Control fan, auger and igniter manually.  
+	*  __NEW:__ _Prime_ - Allows you to prime the firepot with pellets prior to a cook.  
 * Supports several different OLED and LCD screens
 	* SSD1306 OLED Display
 	* ST7789 TFT Display
-	* ILI9341 TFT Display
+	* ILI9341 TFT Display (now with more rotation options)
 * Physical Button Input / Control (depending on the display, three button inputs)
+* Encoder support for, so you can control your grill with a spinny knob.
 * One (1) Grill Probe and Two (2) Food Probes
 	* Tunable probe inputs to allow for many different probe manufacturers
 	* Probe tuning tool to help develop probe profiles
+	* NEW - Up to two (2) grill probes if using the correct PCB design.
 * Cook Timer
 * Notifications (Grill / Food Probes / Timer)
-	* Supports IFTTT, Pushover, and Pushbullet Notification Services 
+	* Supports Apprise, IFTTT, Pushover, and Pushbullet Notification Services
 * Smoke Plus Feature to deliver more smoke during Smoke / Hold modes
 * Safety settings to prevent over-temp, startup failure, or firepot flameout (and overload)
-* Temperature History for all probes / set points
-* Wood Pellet Tracking Manager
+* __NEW__ Save temperature history for all probes / set points to a cook file that can be updated with images, notes, and even downloaded to your devices.
+* Wood Pellet Tracking Manager - Now includes estimates of pellet usage.
 * Pellet Level Sensor Support
 	* VL53L0X Time of Flight Sensor
 	* HCSR04 Ultrasonic Sensor
@@ -87,16 +90,22 @@ And if you're interested in seeing more builds from other users, we have a discu
 
 The full documentation has been moved to a GitHub page here: [https://nebhead.github.io/PiFire/](https://nebhead.github.io/PiFire/)
 
+### Discord
+I've added a discord server [here](https://discord.gg/F9mbCrbrZS) which can be a great resource for all who want to get more information, want to share their own builds, or just chat about pellet cooking.  Looking forward to seeing you there. 
+
 ### Updates
 
 * 9/2020 - Initial Release
 * 12/2020 - Moved documentation to [https://nebhead.github.io/PiFire/](https://nebhead.github.io/PiFire/)
 * 11/2021 - Many new features, bug fixes, and improvements.  New hardware support etc. which have been in incorporated over the last year, have been mreged from the development branch
-* **4/2022** - Release v1.3.1 - Another HUGE release with many new features including an updater, a new configuration wizard, bug fixes, Smart Start feature and much, much more!   
+* 4/2022 - Release v1.3.1 - Another HUGE release with many new features including an updater, a new configuration wizard, bug fixes, Smart Start feature and much, much more!
+* 6/2022 - Release v1.3.3 - Lot's of changes for this latest stable release for June 2022. It's been a busy couple of months and we've had a few bug fixes pulled into this latest version, including an installer bug. The display modules have been completely overhauled in this latest release to improve responsiveness and capabilities. We've added a module for the ILI1394 with rotary encoder support, which is a nice option for those who like to use a dial with push button to interface the menu system. When doing the update, consider doing a full reboot (instead of just restarting the server) to ensure connected display devices are fully reset.
+* 7/2022 - Release v1.3.4 - Another monthly release with some bug fixes and some new features. The biggest new feature of this month was the addition of Annotations in the history graph. This gives you helpful tags on the graph (see below) with indicators of the mode changes. Of course you can turn this off in the history page if you don't like it.
+* **10/2022** - Release v1.3.5 - Bug fixes, feature refinements and brand new features galore in this latest release.  Added a new ADS1115 module (using Adafruits Circuit Python), due to some reports of issues with the existing ADS1115 module. These can be optionally selected in the configuration wizard.  PWM Fan Support and a boatload of code cleanup was introduced, thanks to contributor @weberbox.  Support for saving cook files was introduced in this version, so that you can go back to older cooks, edit some of the information and add images and comments.  Added a Prime Mode to allow you to prime the fire pot with pellets prior to a cook, and even prime & startup.  Added estimated pellet usage to the pellet manager, which will attempt to track just how many pellets you have used since your last load of pellets.  Added Apprise notification capability thanks to contributor @calonmerc.  320x200 displays have been update and added timers to specific modes. And even more!  
 
 ### Credits
 
-Web Application created by Ben Parmeter, copyright 2020, 2021. Check out my other projects on [github](https://github.com/nebhead). If you enjoy this software and feel the need to donate a cup of coffee, a frosty beer or a bottle of wine to the developer you can click [here](https://paypal.me/benparmeter).
+Web Application created by Ben Parmeter, copyright 2020, 2021, 2022. Check out my other projects on [github](https://github.com/nebhead). If you enjoy this software and feel the need to donate a cup of coffee, a frosty beer or a bottle of wine to the developer you can click [here](https://paypal.me/benparmeter).
 
 Of course, none of this project would be available without the wonderful and amazing folks below.  If I forgot anyone please don't hesitate to let me know.  
 
