@@ -3057,6 +3057,7 @@ def post_app_data(action=None, type=None, json_data=None):
 				now = str(datetime.datetime.now())
 				now = now[0:19]
 				pelletdb['current']['date_loaded'] = now
+				pelletdb['current']['est_usage'] = 0
 				pelletdb['log'][now] = request['pellets_action']['profile']
 				control = read_control()
 				control['hopper_check'] = True
@@ -3116,6 +3117,7 @@ def post_app_data(action=None, type=None, json_data=None):
 				now = str(datetime.datetime.now())
 				now = now[0:19]
 				pelletdb['current']['date_loaded'] = now
+				pelletdb['current']['est_usage'] = 0
 				pelletdb['log'][now] = profile_id
 				write_pellet_db(pelletdb)
 				return {'response': {'result':'success'}}
