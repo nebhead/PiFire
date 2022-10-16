@@ -39,7 +39,7 @@ def default_settings():
 	settings = {}
 
 	settings['versions'] = {
-		'server' : "1.3.5",
+		'server' : "1.3.6",
 		'cookfile' : "1.0.1"  # Current cookfile format version
 	}
 
