@@ -892,7 +892,7 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 	write_pellet_db(pelletdb)
 
 	# Log the end time
-	metrics['endtime'] = time.time()
+	metrics['endtime'] = time.time() * 1000
 	metrics['pellet_level_end'] = pelletdb['current']['hopper_level']
 	write_metrics(metrics)
 
