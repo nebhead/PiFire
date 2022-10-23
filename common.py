@@ -170,7 +170,10 @@ def default_settings():
 		'PMode' : 2,  			# http://tipsforbbq.com/Definition/Traeger-P-Setting
 		'u_min' : 0.15,
 		'u_max' : 1.0,
-		'center' : 0.5
+		'center' : 0.5, 
+		'LidOpenDetectEnabled' : False,  #  Enable Lid Open Detection
+		'LidOpenThreshold' : 15,	 #  Percentage drop in temperature from the hold temp, to trigger lid open event
+		'LidOpenPauseTime' : 60  #  Number of seconds to pause when a lid open event is detected 
 	}
 
 	settings['keep_warm'] = {

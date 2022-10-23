@@ -1401,6 +1401,14 @@ def settings_page(action=None):
 			settings['cycle_data']['u_max'] = float(response['u_max'])
 		if _is_not_blank(response, 'center'):
 			settings['cycle_data']['center'] = float(response['center'])
+		if _is_checked(response, 'lid_open_detect_enable'):
+			settings['cycle_data']['LidOpenDetectEnabled'] = True
+		else:
+			settings['cycle_data']['LidOpenDetectEnabled'] = False
+		if _is_not_blank(response, 'lid_open_threshold'):
+			settings['cycle_data']['LidOpenThreshold'] = int(response['lid_open_threshold'])
+		if _is_not_blank(response, 'lid_open_pausetime'):
+			settings['cycle_data']['LidOpenPauseTime'] = int(response['lid_open_pausetime'])
 		if _is_not_blank(response, 'sp_on_time'):
 			settings['smoke_plus']['on_time'] = int(response['sp_on_time'])
 		if _is_not_blank(response, 'sp_off_time'):
@@ -1425,7 +1433,9 @@ def settings_page(action=None):
 			settings['keep_warm']['s_plus'] = True
 		else:
 			settings['keep_warm']['s_plus'] = False
-				
+
+
+
 		event['type'] = 'updated'
 		event['text'] = 'Successfully updated cycle settings.'
 

@@ -828,12 +828,19 @@ class DisplayBase:
 			elif status_data['mode'] in ['Prime']: 
 				duration = status_data['prime_duration']
 			else: 
-				duration =status_data['shutdown_duration']
+				duration = status_data['shutdown_duration']
 			
-			countdown = int(duration - (time.time() - status_data['start_time']))
+			countdown = int(duration - (time.time() - status_data['start_time'])) if int(duration - (time.time() - status_data['start_time'])) > 0 else 0
 			text = f'{countdown}s'
 			center_point = (self.WIDTH // 2, self.HEIGHT // 2 - 100)
 			self._text_rectangle(draw, center_point, text, 26, text_color=(0,200,0), fill_color=(0,0,0), outline_color=(0, 200, 0))
+
+		if status_data['mode'] in ['Hold']:
+			if status_data['lid_open_detected']:
+				duration = int(status_data['lid_open_endtime'] - time.time()) if int(status_data['lid_open_endtime'] - time.time()) > 0 else 0
+				text = f'Lid Pause {duration}s'
+				center_point = (self.WIDTH // 2, self.HEIGHT // 2 - 100)
+				self._text_rectangle(draw, center_point, text, 18, text_color=(0,200,0), fill_color=(0,0,0), outline_color=(0, 200, 0))
 
 		# Display Final Screen
 		self._display_canvas(img)

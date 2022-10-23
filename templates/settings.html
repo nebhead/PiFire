@@ -694,7 +694,33 @@
                                     </div>
                                     <span class="badge badge-warning">NOTE:</span>
                                     <i class="small"> PID Settings will take effect on next Hold cycle that is started, if a cycle is currently running it would need to be restarted. More information on the PID control settings can be found <a href="http://engineeredmusings.com/pismoker/" target="blank">here.</a></i>
+                                    <br><br>
+                                    <!-- LID OPEN EVENT DETECT SETTINGS -->
+                                    <span class="badge badge-primary">Lid Open Detection</span><br>
+                                    <i class="small">If enabled, the system will attempt to determine if the lid was opened and temporarily suspend the PID.  If the temperature drops below the threshold (percentage of the hold temperature), a lid open event is triggered.  Once lid open is detected, it will pause the PID for the specified amount of seconds.</i>
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="lid_open_detect_enable" name="lid_open_detect_enable" {% if settings['cycle_data']['LidOpenDetectEnabled'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="lid_open_detect_enable">Auto Lid Open Detection</label>
+                                    </div>
                                     <br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Percentage of hold set temperature threshold to trigger lid open detection.">
+                                                <i class="fas fa-percent"></i>&nbsp; Lid Open Threshold Percentage
+                                            </span>
+                                        </div>
+                                        <input id="lid_open_threshold" type="number" min="1" step="1" max="80" class="form-control" placeholder="{{ settings['cycle_data']['LidOpenThreshold'] }}" value="{{ settings['cycle_data']['LidOpenThreshold'] }}" name="lid_open_threshold">
+                                    </div>
+
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Time in seconds to pause the PID when lid open detected.">
+                                                <i class="fas fa-clock"></i>&nbsp; Lid Open Pause Time (s)
+                                            </span>
+                                        </div>
+                                        <input id="lid_open_pausetime" type="number" min="10" step="1" max="1000" class="form-control" placeholder="{{ settings['cycle_data']['LidOpenPauseTime'] }}" value="{{ settings['cycle_data']['LidOpenPauseTime'] }}" name="lid_open_pausetime">
+                                    </div>
+
                                 </div><!-- End of card body -->
                             </div><!-- End of Card -->
                             <br>

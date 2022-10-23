@@ -397,6 +397,8 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 		OffTime = settings['cycle_data']['HoldCycleTime'] * (1 - settings['cycle_data']['u_min'])  # Auger Off Time
 		CycleTime = settings['cycle_data']['HoldCycleTime']  # Total Cycle Time
 		CycleRatio = settings['cycle_data']['u_min']  # Ratio of OnTime to CycleTime
+		LidOpenDetect = False
+		LidOpenEventExpires = 0
 		PIDControl = pid.PID(settings['cycle_data']['PB'], settings['cycle_data']['Ti'], settings['cycle_data']['Td'],
 							 settings['cycle_data']['center'])
 		PIDControl.set_target(control['setpoints']['grill'])  # Initialize with setpoint for grill
@@ -639,7 +641,7 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 				write_event(settings, '* Cycle Event: Auger On')
 				# Reset Cycle Time for HOLD Mode
 				if mode == 'Hold':
-					CycleRatio = PIDControl.update(AvgGT.average())
+					CycleRatio = settings['cycle_data']['u_min'] if LidOpenDetect else PIDControl.update(AvgGT.average())
 					CycleRatio = max(CycleRatio, settings['cycle_data']['u_min'])
 					CycleRatio = min(CycleRatio, settings['cycle_data']['u_max'])
 					OnTime = settings['cycle_data']['HoldCycleTime'] * CycleRatio
@@ -724,6 +726,8 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 			status_data['shutdown_duration'] = settings['globals']['shutdown_timer']
 			status_data['prime_duration'] = prime_duration if mode == 'Prime' else 0  # Enable Timer for Prime Mode 
 			status_data['prime_amount'] = prime_amount if mode == 'Prime' else 0  # Enable Display of Prime Amount
+			status_data['lid_open_detected'] = LidOpenDetect if mode == 'Hold' else False
+			status_data['lid_open_endtime'] = LidOpenEventExpires if mode == 'Hold' else 0
 			display_device.display_status(in_data, status_data)
 			display_toggle_time = time.time()  # Reset the display_toggle_time to current time
 
@@ -754,6 +758,19 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 			# Check if target temperature has been achieved before utilizing Smoke Plus Mode
 			if mode == 'Hold' and AvgGT.average() >= control['setpoints']['grill'] and not target_temp_achieved:
 				target_temp_achieved = True
+
+			# Check if a lid open event has occurred only after hold mode has been achieved
+			if target_temp_achieved and settings['cycle_data']['LidOpenDetectEnabled'] and (AvgGT.average() < (control['setpoints']['grill'] * ((100 - settings['cycle_data']['LidOpenThreshold']) / 100))):
+				LidOpenDetect = True
+				grill_platform.auger_off()
+				_start_fan(settings)
+				auger_toggle_time = now 
+				LidOpenEventExpires = now + settings['cycle_data']['LidOpenPauseTime']
+				target_temp_achieved = False
+
+			# Clear Lid Open Detect Event, Reset 
+			if LidOpenDetect and time.time() > LidOpenEventExpires:
+				LidOpenDetect = False
 
 			# If PWM Fan Control enabled set duty_cycle based on temperature
 			if (dc_fan and mode == 'Hold' and control['pwm_control'] and
