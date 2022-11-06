@@ -769,8 +769,9 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 				target_temp_achieved = False
 
 			# Clear Lid Open Detect Event, Reset 
-			if LidOpenDetect and time.time() > LidOpenEventExpires:
-				LidOpenDetect = False
+			if mode == 'Hold':
+				if LidOpenDetect and time.time() > LidOpenEventExpires:
+					LidOpenDetect = False
 
 			# If PWM Fan Control enabled set duty_cycle based on temperature
 			if (dc_fan and mode == 'Hold' and control['pwm_control'] and
@@ -1073,6 +1074,8 @@ while True:
 				control['updated'] = False
 				control['next_mode'] = 'Stop'
 				write_control(control)
+				time.sleep(3)
+				display_device.clear_display()  
 
 			read_current(zero_out=True)  # Zero out the current values
 
