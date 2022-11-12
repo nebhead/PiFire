@@ -22,6 +22,10 @@ import pid  # Library for calculating PID setpoints
 from common import *  # Common Library for WebUI and Control Program
 from notifications import *
 from temp_queue import TempQueue
+from file_recipes import convert_recipe_units
+from file_cookfile import create_cookfile
+from file_common import read_json_file_data
+from os.path import exists
 
 '''
 Read and initialize Settings, Control, History, Metrics, and Error Data
@@ -290,7 +294,7 @@ def _get_status(grill_platform, control, settings, pelletdb):
 		except KeyError:
 			continue
 
-	status_data['mode'] = control['mode']  # Get current mode
+	#status_data['mode'] = control['mode']  # Get current mode
 	status_data['notify_req'] = control['notify_req']  # Get any flagged notifications
 	status_data['timer'] = control['timer']  # Get the timer information
 	status_data['ipaddress'] = '192.168.10.43'  # Future implementation (TODO)
@@ -336,6 +340,36 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 
 	write_event(settings, mode + ' Mode started.')
 
+	# Pre-Loop Setup Recipe Triggers
+	if control['mode'] == "Recipe":
+		if mode in ['Smoke', 'Hold']:
+			recipe_trigger_set = False
+			# If requested, set Timer Trigger
+			if control['recipe']['step_data']['timer'] > 0:
+				# Set notify/trigger for timer
+				control['notify_req']['timer'] = True
+				timer_start = time.time()
+				control['timer']['start'] = timer_start
+				control['timer']['paused'] = 0
+				control['timer']['end'] = timer_start + (control['recipe']['step_data']['timer'] * 60)
+				control['timer']['shutdown'] = False
+				control['notify_data']['timer_shutdown'] = False
+				control['notify_data']['timer_keep_warm'] = False
+				recipe_trigger_set = True 
+
+			# If requested, set Probe Temp Triggers
+			for probe, value in control['recipe']['step_data']['trigger_temps'].items():
+				if value > 0:
+					# Set notify/trigger for probe
+					control['setpoints'][probe] = value
+					control['notify_req'][probe] = True
+					recipe_trigger_set = True 
+
+			if recipe_trigger_set: 
+				write_control(control)
+			else: 
+				write_event(settings, 'WARNING: No trigger set for Hold/Smoke mode in recipe.')
+			
 	# Get ON/OFF Switch state and set as last state
 	last = grill_platform.get_input_status()
 
@@ -365,7 +399,7 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 
 	write_metrics(new_metric=True)
 	metrics = read_metrics()
-	metrics['mode'] = str(control['mode'])
+	metrics['mode'] = mode
 	metrics['smokeplus'] = control['s_plus'] 
 	metrics['grill_settemp'] = control['setpoints']['grill']
 	metrics['pellet_level_start'] = pelletdb['current']['hopper_level']
@@ -721,6 +755,12 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 		# Send Current Status / Temperature Data to Display Device every 0.5 second (Display Refresh)
 		if (now - display_toggle_time) > 0.5:
 			status_data = _get_status(grill_platform, control, settings, pelletdb)
+			status_data['mode'] = mode
+			status_data['recipe'] = True if control['mode'] == 'Recipe' else False
+			if control['mode'] == 'Recipe':
+				status_data['recipe_paused'] = True if control['recipe']['step_data']['triggered'] and control['recipe']['step_data']['pause'] else False
+			else: 
+				status_data['recipe_paused'] = False
 			status_data['start_time'] = start_time
 			status_data['start_duration'] = startup_timer
 			status_data['shutdown_duration'] = settings['globals']['shutdown_timer']
@@ -881,6 +921,23 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 			send_notifications("Grill_Error_01", control, settings, pelletdb)
 			break
 
+		# End of Loop Recipe Check
+		if control['mode'] == 'Recipe':
+			# If a recipe event was triggered and no pause is requested
+			if control['recipe']['step_data']['triggered'] and not control['recipe']['step_data']['pause']:
+				# If a notification / message was requested
+				if control['recipe']['step_data']['notify']:
+					send_notifications('Recipe_Step_Message', control, settings, pelletdb)
+				# Exit the main work cycle
+				break
+			# If a recipe event was triggered and a pause was requested
+			elif control['recipe']['step_data']['triggered'] and control['recipe']['step_data']['pause']:
+				# If notification / message was requested, notify and clear notification 
+				if control['recipe']['step_data']['notify']:
+					send_notifications('Recipe_Step_Message', control, settings, pelletdb)
+					control['recipe']['step_data']['notify'] = False 
+				# Continue until 'pause' variable is cleared 
+
 		time.sleep(0.05)
 
 	# *********
@@ -926,7 +983,7 @@ def _next_mode(next_mode, setpoint=0):
 		write_control(control)
 	return control 
 
-def _recipe_mode(grill_platform, adc_device, display_device, dist_device):
+def _recipe_mode(grill_platform, adc_device, display_device, dist_device, start_step=0):
 	"""
 	Recipe Mode Control
 
@@ -938,31 +995,78 @@ def _recipe_mode(grill_platform, adc_device, display_device, dist_device):
 	settings = read_settings()
 	write_event(settings, 'Recipe Mode started.')
 
-	# Find Recipe
+	# Find Recipe File
 	control = read_control()
-	recipe_name = control['recipe']
-	cookbook = read_recipes()
+	recipe_file = control['recipe']['filename']
 
-	if recipe_name in cookbook:
-		recipe = cookbook[recipe_name]
-		write_event(settings, '* Found recipe: ' + recipe_name)
+	if not exists(recipe_file):
+		# File not found, exit
+		write_event(settings, f'Recipe file {recipe_file} not found!')
+		return()
 
-	# Execute Recipe Steps
-	# for(item in recipe['steps'].sort()):
-	# 	if('grill_temp' in recipe['steps'][item]):
-	# 		temp = recipe['steps'][item]['grill_temp']
-	# 		notify = recipe['steps'][item]['notify']
-	# 		desc = recipe['steps'][item]['description']
-	# 		write_event(settings, item + ': Setting Grill Temp: ' + str(temp) + 'F, Notify: ' + str(
-	# 			notify) + ', Desc: ' + desc)
+	# 1. Read metadata from the recipe file
+	metadata, status = read_json_file_data(recipe_file, 'metadata')
+	if status != 'OK':
+		write_event(settings, f'Failed to load metadata for {recipe_file}.')
+		return()
+	
+	# 2. Read recipe steps (& other data) from the recipe file
+	recipe, status = read_json_file_data(recipe_file, 'recipe')
+	if status != 'OK':
+		write_event(settings, f'Failed to load recipe data for {recipe_file}.')
+		return()
 
-	# Read Control, Check for updates, break
-	# Read Switch, Check if changed to off, break
-	else:
-		# Error Recipe Not Found
-		write_event(settings, 'Recipe not found')
+	# 3. Check and convert temperature units, if there is a mismatch
+	if settings['globals']['units'] != metadata['units']:
+		recipe = convert_recipe_units(recipe, settings['globals']['units'])
 
-	write_event(settings, 'Recipe mode ended.')
+	num_steps = len(recipe['steps'])
+	step_num = start_step  # Start at step 0 by default unless requested to start at a later step
+
+	# 4. Walk through steps, and execute work cycle
+	while (step_num < num_steps):
+		# 4a. Setup all step data and write to control
+		control['recipe']['step'] = step_num 
+		control['recipe']['step_data'] = recipe['steps'][step_num]
+		control['recipe']['step_data']['triggered'] = False
+		control['setpoints']['grill'] = recipe['steps'][step_num]['hold_temp']  # Set Hold Temp if applicable.  
+		control['updated'] = False  # Clear Updated Flag if Set
+		write_control(control)
+		# 4b. Start the recipe step work cycle
+		_work_cycle(recipe['steps'][step_num]['mode'], grill_platform, adc_device, display_device, dist_device)
+		
+		# 4c. If reignite is required, run a reignite cycle and retry current step
+		control = read_control()
+		if control['mode'] == 'Reignite' and control['updated']:
+			control['updated'] = False
+			control['mode'] = 'Recipe'
+			write_control(control)
+			_work_cycle('Reignite', grill_platform, adc_device, display_device, dist_device)
+			control = read_control()
+			if control['updated'] and control['mode'] != 'Recipe':
+				# If another mode was requested (or an error occurred) then exit recipe mode
+				write_event(settings, f'Recipe mode cancelled due to mode change: {control["mode"]}')
+				break
+			# 4c-2. Rerun current step
+		# 4d. If another mode was requested (or an error occurred) then exit recipe mode
+		elif control['mode'] != 'Recipe' and control['updated']:
+			write_event(settings, f'Recipe mode cancelled due to mode change: {control["mode"]}')
+			break
+		else:
+			# 4e. Continue to next step number
+			step_num += 1
+	
+	# 5. Clean up control data and exit
+	control['recipe']['step'] = 0
+	control['recipe']['step_data'] = {}
+	control['recipe']['filename'] = ''
+
+	# If recipe is exiting normally (i.e. no other mode requested, then initiate stop mode)
+	if not control['updated'] or (step_num == num_steps):
+		control['updated'] = True
+		control['mode'] = 'Stop'
+		write_event(settings, 'Recipe mode ended.')
+	write_control(control)
 
 	return()
 
@@ -1048,7 +1152,8 @@ while True:
 				metrics = read_metrics()
 				metrics['mode'] = 'Stop'
 				write_metrics(metrics)
-				write_cookfile()
+				raw_history = read_raw_history()
+				create_cookfile(raw_history)
 
 			if control['status'] == 'monitor' and control['mode'] == 'Error':
 				grill_platform.power_on()
@@ -1063,6 +1168,7 @@ while True:
 				control['updated'] = False
 				control['tuning_mode'] = False  # Turn off Tuning Mode on Stop just in case it is on
 				control['next_mode'] = 'Stop'
+				control['safety']['reigniteretries'] = settings['safety']['reigniteretries']  # Reset retry counter to default
 				write_control(control)
 			else:
 				write_event(settings, 'ERROR: An error has occurred, Stop Mode enabled.')
@@ -1073,6 +1179,7 @@ while True:
 				control['tuning_mode'] = False  # Turn off Tuning Mode on Stop just in case it is on
 				control['updated'] = False
 				control['next_mode'] = 'Stop'
+				control['safety']['reigniteretries'] = settings['safety']['reigniteretries']  # Reset retry counter to default
 				write_control(control)
 				time.sleep(3)
 				display_device.clear_display()  
@@ -1138,9 +1245,9 @@ while True:
 		elif control['mode'] == 'Manual':
 			_work_cycle('Manual', grill_platform, adc_device, display_device, dist_device)
 		
-		# Recipe Mode (TBD)
+		# Recipe Mode
 		elif control['mode'] == 'Recipe':
-			_recipe_mode(grill_platform, adc_device, display_device, dist_device)
+			_recipe_mode(grill_platform, adc_device, display_device, dist_device, start_step=control['recipe']['start_step'])
 		
 		# Reignite (reignite sequence)
 		elif control['mode'] == 'Reignite':

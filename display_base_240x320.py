@@ -139,6 +139,30 @@ class DisplayBase:
 			}
 		}
 
+		self.menu['active_recipe'] = {
+			# List of options for the 'active' menu.  This is the second level menu of options while running.
+			'NextStep': {
+				'displaytext': 'Next Recipe Step',
+				'icon': '\uf051'  # FontAwesome Step Forward Icon
+			},
+			'Shutdown': {
+				'displaytext': 'Shutdown',
+				'icon': '\uf11e'  # FontAwesome Finish Icon
+			},
+			'Stop': {
+				'displaytext': 'Stop',
+				'icon': '\uf04d'  # FontAwesome Stop Icon
+			},
+			'SmokePlus': {
+				'displaytext': 'Toggle Smoke+',
+				'icon': '\uf0c2'  # FontAwesome Cloud Icon
+			},
+			'Network': {
+				'displaytext': 'IP QR Code',
+				'icon': '\uf1eb'  # FontAwesome Wifi Icon
+			}
+		}
+
 		self.menu['prime_selection'] = {
 			'Prime_10' : {
 				'displaytext': '\u00BB10g',
@@ -425,7 +449,7 @@ class DisplayBase:
 		# Create a drawing object
 		draw = ImageDraw.Draw(canvas)
 
-		# I = Ignitor  (Center Right)
+		# Notification Bell
 		icon_char = '\uf0f3'
 		icon_color = (255,255, 0)
 
@@ -444,6 +468,60 @@ class DisplayBase:
 		# Create Icon Image
 		icon = self._create_icon(icon_char, 36, icon_color)
 		icon_position = (position[0] + 6, position[1] + 3)
+		canvas = self._paste_icon(icon, canvas, icon_position, 0)
+
+		return canvas
+
+	def _draw_recipe_icon(self, canvas, position):
+		# Create a drawing object
+		draw = ImageDraw.Draw(canvas)
+
+		# Recipe Icon
+		icon_char = '\uf46d'
+		icon_color = (255,255, 0)
+
+		# Draw Rounded Rectangle Border
+		self._rounded_rectangle(draw, 
+			(position[0], position[1], 
+			position[0] + 42, position[1] + 42), 
+			5, icon_color)
+
+		# Fill Rectangle with Black
+		self._rounded_rectangle(draw, 
+			(position[0] + 2, position[1] + 2, 
+			position[0] + 40, position[1] + 40), 
+			5, (0,0,0))
+
+		# Create Icon Image
+		icon = self._create_icon(icon_char, 32, icon_color)
+		icon_position = (position[0] + 9, position[1] + 5)
+		canvas = self._paste_icon(icon, canvas, icon_position, 0)
+
+		return canvas
+
+	def _draw_pause_icon(self, canvas, position):
+		# Create a drawing object
+		draw = ImageDraw.Draw(canvas)
+
+		# Recipe Pause Icon
+		icon_char = '\uf04c'
+		icon_color = (255,self.icon_color, 0)
+
+		# Draw Rounded Rectangle Border
+		self._rounded_rectangle(draw, 
+			(position[0], position[1], 
+			position[0] + 42, position[1] + 42), 
+			5, icon_color)
+
+		# Fill Rectangle with Black
+		self._rounded_rectangle(draw, 
+			(position[0] + 2, position[1] + 2, 
+			position[0] + 40, position[1] + 40), 
+			5, (0,0,0))
+
+		# Create Icon Image
+		icon = self._create_icon(icon_char, 28, icon_color)
+		icon_position = (position[0] + 9, position[1] + 9)
 		canvas = self._paste_icon(icon, canvas, icon_position, 0)
 
 		return canvas
@@ -777,7 +855,19 @@ class DisplayBase:
 				show_notify_indicator = True
 				notify_count += 1
 
-		if show_notify_indicator:
+		if status_data['recipe_paused']:
+			if self.WIDTH == 240:
+				self._draw_pause_icon(img, (self.WIDTH - 52, 50))
+			else: 
+				self._draw_pause_icon(img, (self.WIDTH - 52, 10))
+
+		elif status_data['recipe']:
+			if self.WIDTH == 240:
+				self._draw_recipe_icon(img, (self.WIDTH - 52, 50))
+			else: 
+				self._draw_recipe_icon(img, (self.WIDTH - 52, 10))
+
+		elif show_notify_indicator:
 			if self.WIDTH == 240:
 				self._draw_notify_icon(img, (self.WIDTH - 52, 50))
 			else: 
@@ -835,6 +925,7 @@ class DisplayBase:
 			center_point = (self.WIDTH // 2, self.HEIGHT // 2 - 100)
 			self._text_rectangle(draw, center_point, text, 26, text_color=(0,200,0), fill_color=(0,0,0), outline_color=(0, 200, 0))
 
+		# Lid open detection timer display
 		if status_data['mode'] in ['Hold']:
 			if status_data['lid_open_detected']:
 				duration = int(status_data['lid_open_endtime'] - time.time()) if int(status_data['lid_open_endtime'] - time.time()) > 0 else 0
@@ -862,8 +953,11 @@ class DisplayBase:
 			# If in an inactive mode
 			if control['mode'] in ['Stop', 'Error', 'Monitor', 'Prime']:
 				self.menu['current']['mode'] = 'inactive'
+			elif control['mode'] in ['Recipe']:
+				self.menu['current']['mode'] = 'active_recipe'
 			else:  # Use the active menu
 				self.menu['current']['mode'] = 'active'
+
 			self.menu['current']['option'] = 0  # Set the menu option to the very first item in the list
 		# If selecting the 'grill_hold_value', take action based on button press was
 		elif self.menu['current']['mode'] == 'grill_hold_value':
@@ -1038,6 +1132,27 @@ class DisplayBase:
 					control['updated'] = True
 					control['mode'] = 'Prime'
 					write_control(control)
+				elif 'NextStep' in selected:
+					self.display_active = True
+					self.menu['current']['mode'] = 'none'
+					self.menu['current']['option'] = 0
+					self.menu_active = False
+					self.menu_time = 0
+					control = read_control()
+					# Check if currently in 'Paused' Status
+					if 'triggered' in control['recipe']['step_data'] and 'pause' in control['recipe']['step_data']:
+						if control['recipe']['step_data']['triggered'] and control['recipe']['step_data']['pause']:
+							# 'Unpause' Recipe 
+							control['recipe']['step_data']['pause'] = False
+							write_control(control)
+						else:
+							# User is forcing next step
+							control['updated'] = True
+							write_control(control)
+					else:
+						# User is forcing next step
+						control['updated'] = True
+						write_control(control)
 
 		# Create canvas
 		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))

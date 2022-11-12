@@ -40,6 +40,9 @@ def check_notify(in_data, control, settings, pelletdb, grill_platform):
 	if control['notify_req']['grill']:
 		if in_data['GrillTemp'] >= control['setpoints']['grill_notify']:
 			control['notify_req']['grill'] = False
+			if control['mode'] == 'Recipe':
+				if control['recipe']['step_data']['trigger_temps']['grill'] > 0:
+					control['recipe']['step_data']['triggered'] = True 
 			write_control(control)
 			send_notifications("Grill_Temp_Achieved", control, settings, pelletdb)
 
@@ -55,6 +58,9 @@ def check_notify(in_data, control, settings, pelletdb, grill_platform):
 				control['setpoints']['grill'] = settings['keep_warm']['temp']
 				control['s_plus'] = settings['keep_warm']['s_plus']
 				control['updated'] = True
+			if control['mode'] == 'Recipe':
+				if control['recipe']['step_data']['trigger_temps']['probe1'] > 0:
+					control['recipe']['step_data']['triggered'] = True 
 			control['notify_data']['p1_shutdown'] = False
 			control['notify_data']['p1_keep_warm'] = False
 			write_control(control)
@@ -71,6 +77,9 @@ def check_notify(in_data, control, settings, pelletdb, grill_platform):
 				control['setpoints']['grill'] = settings['keep_warm']['temp']
 				control['s_plus'] = settings['keep_warm']['s_plus']
 				control['updated'] = True
+			if control['mode'] == 'Recipe':
+				if control['recipe']['step_data']['trigger_temps']['probe2'] > 0:
+					control['recipe']['step_data']['triggered'] = True 
 			control['notify_data']['p2_shutdown'] = False
 			control['notify_data']['p2_keep_warm'] = False
 			write_control(control)
@@ -86,6 +95,9 @@ def check_notify(in_data, control, settings, pelletdb, grill_platform):
 				control['setpoints']['grill'] = settings['keep_warm']['temp']
 				control['s_plus'] = settings['keep_warm']['s_plus']
 				control['updated'] = True
+			if control['mode'] == 'Recipe':
+				if control['recipe']['step_data']['timer'] > 0:
+					control['recipe']['step_data']['triggered'] = True 
 			control['notify_req']['timer'] = False
 			control['timer']['start'] = 0
 			control['timer']['paused'] = 0
@@ -209,6 +221,12 @@ def _build_notification(notify_event, control, settings, pelletdb):
 		body_message = "Your grill has experienced a warning condition. Please check the logs. " + str(now)
 		channel = 'pifire_error_alerts'
 		query_args = {"value1": 'General Warning.'}
+		write_event(settings, body_message)
+	elif "Recipe_Step_Message" in notify_event:
+		title_message = "Recipe Message"
+		body_message = control['recipe']['step_data']['message'] + str(now)
+		channel = 'pifire_recipe_message'
+		query_args = {"value1": control['recipe']['step_data']['message']}
 		write_event(settings, body_message)
 	else:
 		title_message = "PiFire: Unknown Notification issue"

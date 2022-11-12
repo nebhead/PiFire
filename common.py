@@ -21,12 +21,6 @@ import math
 import redis
 import uuid
 import random
-import zipfile
-import pathlib
-import tempfile
-import shutil
-
-HISTORY_FOLDER = './history/'  # Path to historical cook files
 
 # *****************************************
 # Functions
@@ -40,7 +34,8 @@ def default_settings():
 
 	settings['versions'] = {
 		'server' : "1.3.6",
-		'cookfile' : "1.0.1"  # Current cookfile format version
+		'cookfile' : "1.0.1",  # Current cookfile format version
+		'recipe' : "1.0.0"  # Current recipe file format version
 	}
 
 	settings['history_page'] = {
@@ -100,7 +95,7 @@ def default_settings():
 
 	settings['onesignal'] = {
 		'enabled': False,
-		'uuid' : _generate_uuid(),
+		'uuid' : generate_uuid(),
 		'app_id' : '',
 		'devices' : {}
 	}
@@ -292,6 +287,8 @@ def default_settings():
 	return settings
 
 def default_control():
+	settings = read_settings()
+
 	control = {}
 
 	control['updated'] = True
@@ -299,8 +296,6 @@ def default_control():
 	control['mode'] = 'Stop'
 
 	control['next_mode'] = 'Stop'
-
-	settings = read_settings()
 
 	control['s_plus'] = settings['smoke_plus']['enabled'] 		# Smoke-Plus Feature Enable/Disable
 
@@ -310,7 +305,12 @@ def default_control():
 
 	control['hopper_check'] = False 	# Trigger a synchronous hopper level check
 
-	control['recipe'] = ''
+	control['recipe'] = {
+		'filename' : '',
+		'start_step' : 0,
+		'step' : 0,
+		'step_data' : {}
+	}
 
 	control['status'] = ''
 
@@ -419,38 +419,6 @@ def default_metrics():
 		metrics[metrics_items[index][0]] = metrics_items[index][1]
 
 	return(metrics)
-
-def default_recipes():
-	recipes = {}
-
-	recipes['321ribs'] = {
-		'metadata': {
-			'display_name': '3-2-1 Baby Back Ribs',
-			'image': ''
-		},
-		'steps' : {
-			'step_00': {
-				'smoke' : True, 	# Start with smoke temp for grill
-				'timer' : 180, 		# Go for three hours (180 minutes)
-				'notify' : True,
-				'description' : 'Set grill to smoke at 165F.'
-			},
-			'step_01': {
-				'grill_temp' : 275,
-				'notify' : True,
-				'timer' : 120, 		# Go for two hours (120 minutes)
-				'description' : 'Wrap ribs and increase grill temp to 275F'
-			},
-			'step_02': {
-				'grill_temp' : 300,
-				'timer' : 60,
-				'notify' : True,
-				'description' : 'Un-wrap ribs and increase grill temp to 300F'
-			}
-		}
-	}
-
-	return recipes
 
 def default_pellets():
 	pelletdb = {}
@@ -592,46 +560,7 @@ def _default_grill_probes():
 
 	return grill_probes
 
-def _default_cookfilestruct():
-	settings = read_settings()
-
-	cookfilestruct = {}
-
-	cookfilestruct['metadata'] = {
-		'title' : '',
-		'starttime' : '',
-		'endtime' : '',
-		'units' : settings['globals']['units'],
-		'thumbnail' : '',  # UUID of the thumbnail for this cook file - found in assets
-		'id' : _generate_uuid(),
-		'version' : settings['versions']['cookfile']  #  PiFire Cook File Version
-	}
-	
-	cookfilestruct['graph_data'] = {
-		"time_labels" : [], 
-        "grill1_temp" : [],
-        "probe1_temp" : [], 
-        "probe2_temp" : [], 
-        "grill1_setpoint" : [],
-        "probe1_setpoint" : [], 
-        "probe2_setpoint" : []
-	}
-
-	cookfilestruct['graph_labels'] = {
-        "grill1_label" : "Grill", 
-        "probe1_label" : "Probe 1", 
-        "probe2_label" : "Probe 2"
-    }
-	
-	cookfilestruct['events'] = []
-
-	cookfilestruct['comments'] = []
-
-	cookfilestruct['assets'] = []
-
-	return cookfilestruct
-
-def _generate_uuid():
+def generate_uuid():
 	"""
 	Generate a uuid based on mac address and random int
 
@@ -761,7 +690,7 @@ def write_metrics(metrics=default_metrics(), flush=False, new_metric=False):
 
 	if new_metric:
 		metrics['starttime'] = time.time() * 1000
-		metrics['id'] = _generate_uuid()
+		metrics['id'] = generate_uuid()
 		cmdsts.rpush('metrics:general', json.dumps(metrics))
 	else: 
 		cmdsts.rpop('metrics:general')
@@ -844,37 +773,6 @@ def write_settings(settings):
 	json_data_string = json.dumps(settings, indent=2, sort_keys=True)
 	with open("settings.json", 'w') as settings_file:
 		settings_file.write(json_data_string)
-
-def read_recipes():
-	"""
-	Read RecipeDB from File
-
-	:return: Recipes
-	"""
-
-	# Read all lines of recipes.json into a list(array)
-	try:
-		json_data_file = os.fdopen(os.open('recipes.json', os.O_RDONLY))
-		#json_data_file = open("recipes.json", "r")
-		json_data_string = json_data_file.read()
-		recipes = json.loads(json_data_string)
-		json_data_file.close()
-	except(IOError, OSError):
-		# Issue with reading JSON, so create one/write new one
-		recipes = default_recipes()
-		write_recipes(recipes)
-
-	return(recipes)
-
-def write_recipes(recipes):
-	"""
-	Write RecipeDB to JSON file
-
-	:param recipes: Recipes
-	"""
-	json_data_string = json.dumps(recipes)
-	with open("recipes.json", 'w') as recipes_file:
-		recipes_file.write(json_data_string)
 
 def read_pellet_db(filename='pelletdb.json'):
 	"""
@@ -1097,6 +995,10 @@ def write_history(temp_struct, maxsizelines=28800, tuning_mode=False):
 		tr_values = str(int(temp_struct['GrillTr'])) + ' ' + str(int(temp_struct['Probe1Tr'])) + ' ' + str(int(
 			temp_struct['Probe2Tr']))
 		cmdsts.set('control:tuning', tr_values)
+
+def read_raw_history():
+	global cmdsts
+	return cmdsts.lrange('control:history', 1, -1)
 
 def read_current(zero_out=False):
 	"""
@@ -1328,371 +1230,6 @@ def set_updater_install_status(percent, status, output):
 	cmdsts.set('updater:percent', percent)
 	cmdsts.set('updater:status', status)
 	cmdsts.set('updater:output', output)
-
-def write_cookfile(): 
-	'''
-	This function gathers all of the data from the previous cook
-	from startup to stop mode, and saves this to a Cook File stored
-	at ./history/
-
-	The metrics and cook data are purged from memory, after stop mode is initiated.  
-	'''
-	global cmdsts
-	global HISTORY_FOLDER
-
-	settings = read_settings()
-
-	cook_file_struct = {}
-
-	now = datetime.datetime.now()
-	nowstring = now.strftime('%Y-%m-%d--%H%M')
-	title = nowstring + '-CookFile'
-
-	historydata = cmdsts.lrange('control:history', 1, -1)
-
-	if len(historydata):
-		starttime = json.loads(historydata[0])
-		starttime = starttime['T']
-
-		endtime = json.loads(historydata[-1])
-		endtime = endtime['T']
-
-		#thumbnail_UUID = generateUUID()
-
-		cook_file_struct = _default_cookfilestruct()
-
-		cook_file_struct['metadata']['title'] = title
-		cook_file_struct['metadata']['starttime'] = starttime
-		cook_file_struct['metadata']['endtime'] = endtime
-
-		# Unpack data from json to list
-		for index in range(len(historydata)):
-			datastruct = json.loads(historydata[index])
-			cook_file_struct['graph_data']['time_labels'].append(datastruct['T'])
-			cook_file_struct['graph_data']['grill1_temp'].append(datastruct['GT1'])
-			cook_file_struct['graph_data']['probe1_temp'].append(datastruct['PT1'])
-			cook_file_struct['graph_data']['probe2_temp'].append(datastruct['PT2'])
-			cook_file_struct['graph_data']['grill1_setpoint'].append(datastruct['GSP1'])
-			cook_file_struct['graph_data']['probe1_setpoint'].append(datastruct['PSP1'])
-			cook_file_struct['graph_data']['probe2_setpoint'].append(datastruct['PSP2'])
-
-		cook_file_struct['events'] = process_metrics(read_metrics(all=True), augerrate=settings['globals']['augerrate'])
-
-		# 1. Create all JSON data files
-		files_list = ['metadata', 'graph_data', 'graph_labels', 'events', 'comments', 'assets']
-		if not os.path.exists(HISTORY_FOLDER):
-			os.mkdir(HISTORY_FOLDER)
-		os.mkdir(f'{HISTORY_FOLDER}{title}')  # Make temporary folder for all files
-		for item in files_list:
-			json_data_string = json.dumps(cook_file_struct[item], indent=2, sort_keys=True)
-			filename = f'{HISTORY_FOLDER}{title}/{item}.json'
-			with open(filename, 'w+') as cook_file:
-				cook_file.write(json_data_string)
-		
-		# 2. Create empty data folder(s) & add default data 
-		os.mkdir(f'{HISTORY_FOLDER}{title}/assets')
-		os.mkdir(f'{HISTORY_FOLDER}{title}/assets/thumbs')
-		#shutil.copy2('./static/img/pifire-cf-thumb.png', f'{HISTORY_FOLDER}{title}/assets/{thumbnail_UUID}.png')
-		#shutil.copy2('./static/img/pifire-cf-thumb.png', f'{HISTORY_FOLDER}{title}/assets/thumbs/{thumbnail_UUID}.png')
-
-		# 3. Create ZIP file of the folder 
-		directory = pathlib.Path(f'{HISTORY_FOLDER}{title}/')
-		filename = f'{HISTORY_FOLDER}{title}.pifire'
-
-		with zipfile.ZipFile(filename, "w", zipfile.ZIP_DEFLATED) as archive:
-			for file_path in directory.rglob("*"):
-				archive.write(file_path, arcname=file_path.relative_to(directory))
-
-		# 4. Cleanup temporary files
-		command = f'rm -rf {HISTORY_FOLDER}{title}'
-		os.system(command)
-
-	# Delete Redis DB for history / current
-	read_history(0, flushhistory=True)
-	# Flush metrics DB for tracking certain metrics
-	write_metrics(flush=True)
-
-def read_cookfile(filename):
-	'''
-	Read FULL Cook File into Python Dictionary
-	'''
-	settings = read_settings()
-
-	cook_file_struct = {}
-	status = 'OK'
-	json_types = ['metadata', 'graph_data', 'graph_labels', 'events', 'comments', 'assets']
-	for jsonfile in json_types:
-		cook_file_struct[jsonfile], status = read_cf_json_data(filename, jsonfile)
-		if jsonfile == 'metadata':
-			fileversion = semantic_ver_to_list(cook_file_struct['metadata']['version'])
-			minfileversion = semantic_ver_to_list(settings['versions']['cookfile']) # Minimum file version to load assets
-			if not ( (fileversion[0] >= minfileversion[0]) and (fileversion[1] >= minfileversion[1]) and (fileversion[2] >= minfileversion[2]) ):
-				status = 'WARNING: Older cookfile version format! '
-		if status != 'OK':
-			break  # Exit loop and function, error string in status
-
-	return(cook_file_struct, status)
-
-def read_cf_json_data(filename, jsonfile, unpackassets=True):
-	'''
-	Read Cook File JSON data out of the zipped pifire cookfile:
-		Must specify the cook file name, and the jsonfile element to be extracted (without the .json extension)
-	'''
-	status = 'OK'
-	
-	try:
-		with zipfile.ZipFile(filename, mode="r") as archive:
-			json_string = archive.read(jsonfile + '.json')
-			dictionary = json.loads(json_string)
-			# If this is the assets file, load the assets into the temporary folder
-			if jsonfile == 'assets' and unpackassets:
-				json_string = archive.read('metadata.json')
-				metadata = json.loads(json_string)
-				parent_id = metadata['id']  # Get parent id for this cookfile and store all images in parent_id folder
-
-				for asset in range(0, len(dictionary)):
-					#  Get asset file information
-					mediafile = dictionary[asset]['filename']
-					id = dictionary[asset]['id']
-					filetype = dictionary[asset]['type']
-					#  Read the file(s) into memory
-					data = archive.read(f'assets/{mediafile}')  # Read bytes into variable
-					thumb = archive.read(f'assets/thumbs/{mediafile}')  # Read bytes into variable
-					if not os.path.exists(f'/tmp/pifire'):
-						os.mkdir(f'/tmp/pifire')
-					if not os.path.exists(f'/tmp/pifire/{parent_id}'):
-						os.mkdir(f'/tmp/pifire/{parent_id}')
-					if not os.path.exists(f'/tmp/pifire/{parent_id}/thumbs'):
-						os.mkdir(f'/tmp/pifire/{parent_id}/thumbs')
-					#  Write fullsize image to disk
-					destination = open(f'/tmp/pifire/{parent_id}/{id}.{filetype}', "wb")  # Write bytes to proper destination
-					destination.write(data)
-					destination.close()
-					#  Write thumbnail image to disk
-					destination = open(f'/tmp/pifire/{parent_id}/thumbs/{id}.{filetype}', "wb")  # Write bytes to proper destination
-					destination.write(thumb)
-					destination.close()
-
-					if not os.path.exists('./static/img/tmp'):
-						os.mkdir(f'./static/img/tmp')
-					if not os.path.exists(f'./static/img/tmp/{parent_id}'):
-						os.symlink(f'/tmp/pifire/{parent_id}', f'./static/img/tmp/{parent_id}')
-
-	except zipfile.BadZipFile as error:
-		status = f'Error: {error}'
-		dictionary = {}
-	except json.decoder.JSONDecodeError:
-		status = 'Error: JSON Decoding Error.'
-		dictionary = {}
-	except:
-		if jsonfile == 'assets':
-			status = 'Error: Error opening assets.'
-		else:
-			status = 'Error: Unspecified'
-		dictionary = {}
-
-	return(dictionary, status)
-
-def update_cookfile(cookfiledata, cookfilename, jsonfile):
-	'''
-	Write an update to the cookfile
-	'''
-	status = 'OK'
-	jsonfilename = jsonfile + '.json'
-
-	# Borrowed from StackOverflow https://stackoverflow.com/questions/25738523/how-to-update-one-file-inside-zip-file
-	# Submitted by StackOverflow user Sebdelsol
-
-	# Start by creating a temporary file without the jsonfile that is being edited
-	tmpfd, tmpname = tempfile.mkstemp(dir=os.path.dirname(cookfilename))
-	os.close(tmpfd)
-	try:
-		# Create a temp copy of the archive without filename            
-		with zipfile.ZipFile(cookfilename, 'r') as zin:
-			with zipfile.ZipFile(tmpname, 'w') as zout:
-				zout.comment = zin.comment # Preserve the zip metadata comment
-				for item in zin.infolist():
-					if item.filename != jsonfilename:
-						zout.writestr(item, zin.read(item.filename))
-		# Replace original with the temp archive
-		os.remove(cookfilename)
-		os.rename(tmpname, cookfilename)
-		# Now add updated JSON file with its new data
-		with zipfile.ZipFile(cookfilename, mode='a', compression=zipfile.ZIP_DEFLATED) as zf:
-			zf.writestr(jsonfilename, json.dumps(cookfiledata, indent=2, sort_keys=True))
-
-	except zipfile.BadZipFile as error:
-		status = f'Error: {error}'
-	except:
-		status = 'Error: Unspecified'
-	
-	return(status)
-
-def upgrade_cookfile(cookfilename):
-	settings = read_settings()
-
-	status = 'OK'
-	cookfilestruct = _default_cookfilestruct()
-	
-	json_types = ['metadata', 'graph_data', 'graph_labels', 'events', 'comments', 'assets']
-	for jsonfile in json_types:
-		jsondata, status = read_cf_json_data(cookfilename, jsonfile, unpackassets=False)
-		if status != 'OK':
-			break  # Exit loop and function, error string in status
-		elif jsonfile == 'metadata':
-			# Update to the latest cookfile version
-			jsondata['version'] = settings['versions']['cookfile']
-			cookfilestruct[jsonfile].update(jsondata)
-		elif jsonfile == 'comments':
-			# Add assets list to each comment v1.0 -> v1.0.1+ 
-			for index, comment in enumerate(jsondata):
-				if not 'assets' in comment.keys():
-					jsondata[index]['assets'] = []
-			cookfilestruct[jsonfile] = jsondata
-		elif jsonfile == 'assets' and jsondata == {}:
-			# Some version 1.0 files may have an empty assets file with a dictionary instead of a list
-			pass
-		else:
-			cookfilestruct[jsonfile] = jsondata
-		# Update the original file with new data
-		update_cookfile(cookfilestruct[jsonfile], cookfilename, jsonfile)
-
-	return(cookfilestruct, status)
-
-def fixup_assets(cookfilename):
-	#print(f'\n\nFixing up {cookfilename}\n')
-	cookfilestruct, status = read_cookfile(cookfilename)
-	if status != 'OK':
-		#print(f'Status Message after initial read: {status} \n')
-		if 'assets' in status:
-			cookfilestruct['assets'], status = read_cf_json_data(cookfilename, 'assets', unpackassets=False)
-			#print(f'Status Message after forcing assets read: {status} \n')
-
-	# Loop through assets list, check actual files exist, remove from assets list if not 
-	#   - Get file list from cookfile / assets
-	assetlist = []
-	thumblist = []
-	with zipfile.ZipFile(cookfilename, mode="r") as archive:
-		for item in archive.infolist():
-			if 'assets' in item.filename:
-				if item.filename == 'assets/':
-					pass
-				elif item.filename == 'assets.json':
-					pass
-				elif item.filename == 'assets/thumbs/':
-					pass
-				elif 'thumbs' in item.filename:
-					thumblist.append(item.filename.replace('assets/thumbs/', ''))
-				else: 
-					assetlist.append(item.filename.replace('assets/', ''))
-	
-	#   - Loop through asset list / compare with file list
-	#print(f'Asset List: {assetlist}')
-	#print(f'Thumblist List: {thumblist}')
-	#print(f'cookfilestruct["assets"] = {cookfilestruct["assets"]}\n')
-	
-	for asset in cookfilestruct['assets']:
-		if asset['filename'] not in assetlist:
-			#print(f'Found missing asset! Filename: {asset["filename"]}')
-			#print(f'Removing from asset.json')
-			cookfilestruct['assets'].remove(asset)
-		else: 
-			for item in assetlist:
-				if asset['filename'] in item:
-					#print(f'Removing {item} from the assetlist.')
-					assetlist.remove(item)
-					break 
-
-	# Loop through remaining files in assets list and populate
-	#print(f'cookfilestruct["assets"] = {cookfilestruct["assets"]}\n')
-	for filename in assetlist:
-		asset = {
-			'id' : filename.rsplit('.', 1)[0].lower(),
-			'filename' : filename.replace(HISTORY_FOLDER, ''),
-			'type' : filename.rsplit('.', 1)[1].lower()
-		}
-		cookfilestruct['assets'].append(asset)
-		#print(f'Adding missing asset to asset.json: {asset}')
-
-	# Check Metadata Thumbnail if asset exists 
-	thumbnail = cookfilestruct['metadata']['thumbnail']
-	assetlist = []
-	for asset in cookfilestruct['assets']:
-		assetlist.append(asset['filename'])
-
-	if thumbnail != '' and thumbnail not in assetlist:
-		#print(f'Thumbnail not found in assets.json.  Removing.')
-		cookfilestruct['metadata']['thumbnail'] = ''
-
-	# Loop through comments and check if asset lists contain valid assets, remove if not 
-	comments = cookfilestruct['comments']
-	for index, comment in enumerate(comments):
-		for asset in comment['assets']: 
-			if asset not in assetlist:
-				cookfilestruct['comments'][index]['assets'].remove(asset)
-				#print(f'Removed {asset} from comment# {index}')
-
-	# TODO Update cookfile with fixed up assets
-	update_cookfile(cookfilestruct['assets'], cookfilename, 'assets')
-	status = 'OK'
-	#print(f'New cookfilestruct:\n{cookfilestruct["assets"]}')
-	return(cookfilestruct, status)
-
-def remove_assets(cookfilename, assetlist):
-	status = 'OK'
-	metadata, status = read_cf_json_data(cookfilename, 'metadata')
-	comments, status = read_cf_json_data(cookfilename, 'comments')
-	assets, status = read_cf_json_data(cookfilename, 'assets', unpackassets=False)
-
-	# Check Thumbnail against assetlist
-	if metadata['thumbnail'] in assetlist:
-		metadata['thumbnail'] = ''
-		update_cookfile(metadata, cookfilename, 'metadata')
-
-	# Check Comment Assets against assetlist
-	modified = False
-	for index, comment in enumerate(comments):
-		for asset in comment['assets']:
-			if asset in assetlist:
-				comments[index]['assets'].remove(asset)
-				modified = True 
-	if modified:
-		update_cookfile(comments, cookfilename, 'comments')
-
-	# Check Asset.json against assetlist 
-	modified = False 
-	tempassets = assets.copy()
-	for asset in tempassets:
-		if asset['filename'] in assetlist:
-			assets.remove(asset)
-			modified = True
-	if modified:
-		update_cookfile(assets, cookfilename, 'assets')
-
-	# Traverse list of asset files from the compressed file, remove asset and thumb
-	try: 
-		tmpdir = f'/tmp/pifire/{metadata["id"]}'
-		if not os.path.exists(tmpdir):
-			os.mkdir(tmpdir)
-		with zipfile.ZipFile(cookfilename, mode="r") as archive:
-			new_archive = zipfile.ZipFile (f'{tmpdir}/new.pifire', 'w', zipfile.ZIP_DEFLATED)
-			for item in archive.infolist():
-				remove = False 
-				for asset in assetlist:
-					if asset in item.filename: 
-						remove = True
-						break 
-				if not remove:
-					buffer = archive.read(item.filename)
-					new_archive.writestr(item, buffer)
-			new_archive.close()
-
-		os.remove(cookfilename)
-		shutil.move(f'{tmpdir}/new.pifire', cookfilename)
-	except:
-		status = "Error:  Error removing assets from file."
-
-	return status
 
 def process_metrics(metrics_data, augerrate=0.3):
 	# Process Additional Metrics Information for Display
