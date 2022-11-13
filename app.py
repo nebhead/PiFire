@@ -1145,13 +1145,8 @@ def pellets_page(action=None):
 
 @app.route('/recipes', methods=['POST','GET'])
 def recipes_page(action=None):
-
-	# Show current recipes
-	# Add a recipe
-	# Delete a Recipe
-	# Run a Recipe
 	global settings
-
+	# Placholder for Recipe UI
 	return render_template('recipes.html',
 						   page_theme=settings['globals']['page_theme'],
 						   grill_name=settings['globals']['grill_name'])
