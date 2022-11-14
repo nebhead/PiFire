@@ -1518,8 +1518,18 @@ def settings_page(action=None):
 		if _is_not_blank(response, 'datapoints'):
 			settings['history_page']['datapoints'] = int(response['datapoints'])
 
-		event['type'] = 'updated'
-		event['text'] = 'Successfully updated history settings.'
+		# This check should be the last in this group
+		if control['mode'] != 'Stop' and _is_checked(response, 'ext_data') != settings['globals']['ext_data']:
+			event['type'] = 'error'
+			event['text'] = 'This setting cannot be changed in any active mode.  Stop the grill and try again.'
+		else: 
+			if _is_checked(response, 'ext_data'):
+				settings['globals']['ext_data'] = True
+			else:
+				settings['globals']['ext_data'] = False 
+
+			event['type'] = 'updated'
+			event['text'] = 'Successfully updated history settings.'
 
 		write_settings(settings)
 
@@ -2277,6 +2287,8 @@ def _prepare_annotations(displayed_starttime, metrics_data=[]):
 	return(annotation_json)
 
 def _prepare_graph_csv(graph_data=[], graph_labels=[], filename=''):
+		standard_data_keys = ['T', 'GT1', 'GSP1', 'PT1', 'PSP1', 'PT2', 'PSP2']  # Standard Labels / Data To Export
+		
 		# Create filename if no name specified
 		if(filename == ''):
 			now = datetime.datetime.now()
@@ -2291,9 +2303,9 @@ def _prepare_graph_csv(graph_data=[], graph_labels=[], filename=''):
 		# Open CSV File for editing
 		csvfile = open(exportfilename, "w")
 
-		# Get labels 
+		# Get / Set Standard Labels 
 		if(graph_labels == []):
-			labels = 'Time,Grill Temp,Grill SetTemp,Probe 1 Temp,Probe 1 SetTemp,Probe 2 Temp, Probe 2 SetTemp\n'
+			labels = 'Time,Grill Temp,Grill SetTemp,Probe 1 Temp,Probe 1 SetTemp,Probe 2 Temp, Probe 2 SetTemp'
 		else:
 			labels = 'Time,' 
 			labels += graph_labels['grill1_label'] + ' Temp,'
@@ -2301,12 +2313,23 @@ def _prepare_graph_csv(graph_data=[], graph_labels=[], filename=''):
 			labels += graph_labels['probe1_label'] + ' Temp,'
 			labels += graph_labels['probe1_label'] + ' Setpoint,'
 			labels += graph_labels['probe2_label'] + ' Temp,'
-			labels += graph_labels['probe2_label'] + ' Setpoint\n'
+			labels += graph_labels['probe2_label'] + ' Setpoint'
 
 		if(graph_data == []):
 			graph_data = read_history()
 		
-		list_length =len(graph_data['T'])
+		# Get the length of the data (number of captured events)
+		list_length = len(graph_data['T'])
+
+		# Add any additional label data if it exists
+		ext_keys = []
+		for key in graph_data.keys():
+			if key not in standard_data_keys:
+				labels += f', {key}'
+				ext_keys.append(key)
+
+		# End the labels line
+		labels += '\n'
 
 		if(list_length > 0):
 			writeline = labels
@@ -2318,6 +2341,10 @@ def _prepare_graph_csv(graph_data=[], graph_labels=[], filename=''):
 				converted_dt = datetime.datetime.fromtimestamp(int(graph_data['T'][index]) / 1000)
 				timestr = converted_dt.strftime('%Y-%m-%d %H:%M:%S')
 				writeline = f"{timestr}, {graph_data['GT1'][index]}, {graph_data['GSP1'][index]}, {graph_data['PT1'][index]}, {graph_data['PSP1'][index]}, {graph_data['PT2'][index]}, {graph_data['PSP2'][index]}"
+				# Add any additional data if keys exist
+				if ext_keys != []:
+					for key in ext_keys:
+						writeline += f', {graph_data[key][index]}'
 				csvfile.write(writeline + '\n')
 		else:
 			writeline = 'No Data\n'
@@ -2339,6 +2366,14 @@ def _convert_labels(indata):
 	outdata['PSP1'] = indata.pop('probe1_setpoint')
 	outdata['PT2'] = indata.pop('probe2_temp')
 	outdata['PSP2'] = indata.pop('probe2_setpoint')
+
+	# For any additional keys (extended data)
+	ext_keys = []
+	for key in indata.keys():
+		ext_keys.append(key)
+	
+	for key in ext_keys: 
+		outdata[key] = indata.pop(key)
 
 	return(outdata)
 

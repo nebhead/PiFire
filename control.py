@@ -420,7 +420,7 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 		OnTime = settings['cycle_data']['SmokeCycleTime']  # Auger On Time (Default 15s)
 		OffTime = 45 + (settings['cycle_data']['PMode'] * 10)  # Auger Off Time
 		CycleTime = OnTime + OffTime  # Total Cycle Time
-		CycleRatio = OnTime / CycleTime  # Ratio of OnTime to CycleTime
+		CycleRatio = RawCycleRatio = OnTime / CycleTime  # Ratio of OnTime to CycleTime
 		# Write Metrics (note these will be overwritten if smart start is enabled)
 		metrics['p_mode'] = settings['cycle_data']['PMode']
 		metrics['auger_cycle_time'] = settings['cycle_data']['SmokeCycleTime']
@@ -430,7 +430,7 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 		OnTime = settings['cycle_data']['HoldCycleTime'] * settings['cycle_data']['u_min']  # Auger On Time
 		OffTime = settings['cycle_data']['HoldCycleTime'] * (1 - settings['cycle_data']['u_min'])  # Auger Off Time
 		CycleTime = settings['cycle_data']['HoldCycleTime']  # Total Cycle Time
-		CycleRatio = settings['cycle_data']['u_min']  # Ratio of OnTime to CycleTime
+		CycleRatio = RawCycleRatio = settings['cycle_data']['u_min']  # Ratio of OnTime to CycleTime
 		LidOpenDetect = False
 		LidOpenEventExpires = 0
 		PIDControl = pid.PID(settings['cycle_data']['PB'], settings['cycle_data']['Ti'], settings['cycle_data']['Td'],
@@ -446,7 +446,7 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 		OnTime = prime_duration
 		OffTime = 1  # Auger Off Time
 		CycleTime = OnTime + OffTime  # Total Cycle Time
-		CycleRatio = OnTime / CycleTime  # Ratio of OnTime to CycleTime
+		CycleRatio = RawCycleRatio = OnTime / CycleTime  # Ratio of OnTime to CycleTime
 
 	# Initialize all temperature variables
 	AvgGT = TempQueue(units=settings['globals']['units'])
@@ -532,7 +532,7 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 		OnTime = settings['smartstart']['profiles'][profile_selected]['augerontime']  # Auger On Time (Default 15s)
 		OffTime = 45 + (settings['smartstart']['profiles'][profile_selected]['p_mode'] * 10)  # Auger Off Time
 		CycleTime = OnTime + OffTime  # Total Cycle Time
-		CycleRatio = OnTime / CycleTime  # Ratio of OnTime to CycleTime
+		CycleRatio = RawCycleRatio = OnTime / CycleTime  # Ratio of OnTime to CycleTime
 		startup_timer = settings['smartstart']['profiles'][profile_selected]['startuptime']
 		# Write Metrics
 		metrics['smart_start_profile'] = profile_selected
@@ -675,7 +675,7 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 				write_event(settings, '* Cycle Event: Auger On')
 				# Reset Cycle Time for HOLD Mode
 				if mode == 'Hold':
-					CycleRatio = settings['cycle_data']['u_min'] if LidOpenDetect else PIDControl.update(AvgGT.average())
+					CycleRatio = RawCycleRatio = settings['cycle_data']['u_min'] if LidOpenDetect else PIDControl.update(AvgGT.average())
 					CycleRatio = max(CycleRatio, settings['cycle_data']['u_min'])
 					CycleRatio = min(CycleRatio, settings['cycle_data']['u_max'])
 					OnTime = settings['cycle_data']['HoldCycleTime'] * CycleRatio
@@ -748,6 +748,11 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 
 		in_data['Probe1Tr'] = adc_data['Probe1Tr']  # For Temp Resistance Tuning
 		in_data['Probe2Tr'] = adc_data['Probe2Tr']  # For Temp Resistance Tuning
+
+		# If Extended Data Mode is Enabled, Populate Extra Data Here
+		if settings['globals']['ext_data']:
+			in_data['CR'] = CycleRatio if 'CycleRatio' in locals() else 0
+			in_data['RCR'] = RawCycleRatio if 'RawCycleRatio' in locals() else 0
 
 		# Check to see if there are any pending notifications (i.e. Timer / Temperature Settings)
 		control = check_notify(in_data, control, settings, pelletdb, grill_platform)
@@ -892,7 +897,8 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 		# Write History after 3 seconds has passed
 		if (now - temp_toggle_time) > 3:
 			temp_toggle_time = time.time()
-			write_history(in_data, tuning_mode=control['tuning_mode'])
+			ext_data = True if settings['globals']['ext_data'] else False  # If passing in extended data, set to True
+			write_history(in_data, tuning_mode=control['tuning_mode'], ext_data=ext_data)
 
 		# Check if startup time has elapsed since startup/reignite mode started
 		if mode in ('Startup', 'Reignite'):

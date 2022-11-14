@@ -68,6 +68,7 @@ def default_settings():
 		'units' : 'F',
 		'augerrate' : 0.3,  		# (grams per second) default auger load rate is 10 grams / 30 seconds
 		'first_time_setup' : True,  # Set to True on first setup, to run wizard on load 
+		'ext_data' : False,  # Set to True to allow tracking of extended data.  More data will be stored in the history database and can be reviewed in the CSV.
 	}
 
 	settings['apprise'] = {
@@ -936,7 +937,6 @@ def read_history(num_items=0, flushhistory=False):
 				datastruct = json.loads(data[index])
 				for key, value in datastruct.items():
 					temp_dict[key].append(value)
-				#templist = [str(int(datastruct['T'])), str(datastruct['GT1']), str(datastruct['GSP1']), str(datastruct['PT1']), str(datastruct['PSP1']), str(datastruct['PT2']), str(datastruct['PSP2'])]
 		else:
 			# Return empty data
 			temp_dict = {
@@ -953,7 +953,7 @@ def read_history(num_items=0, flushhistory=False):
 
 	return(temp_dict)
 
-def write_history(temp_struct, maxsizelines=28800, tuning_mode=False):
+def write_history(temp_struct, maxsizelines=28800, tuning_mode=False, ext_data=False):
 	"""
 	Write History to Redis DB
 
@@ -977,6 +977,12 @@ def write_history(temp_struct, maxsizelines=28800, tuning_mode=False):
 	datastruct['PSP1'] = temp_struct['Probe1SetPoint']
 	datastruct['PT2'] = temp_struct['Probe2Temp']
 	datastruct['PSP2'] = temp_struct['Probe2SetPoint']
+
+	if ext_data:
+		# For any key/value pairs that were passed in, and not in the above standard values, add them to the database
+		for key in temp_struct.keys():
+			if key not in ['GrillTemp', 'GrillSetPoint', 'Probe1Temp', 'Probe1SetPoint', 'Probe2Temp', 'Probe2SetPoint']:
+				datastruct[key] = temp_struct[key]
 
 	# Push data string to the list in the last position
 	cmdsts.rpush('control:history', json.dumps(datastruct))

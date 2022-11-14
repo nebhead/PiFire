@@ -91,13 +91,19 @@ def create_cookfile(historydata):
 		endtime = json.loads(historydata[-1])
 		endtime = endtime['T']
 
-		#thumbnail_UUID = generateUUID()
-
 		cook_file_struct = _default_cookfilestruct()
 
 		cook_file_struct['metadata']['title'] = title
 		cook_file_struct['metadata']['starttime'] = starttime
 		cook_file_struct['metadata']['endtime'] = endtime
+
+		standard_data_keys = ['T', 'GT1', 'GSP1', 'PT1', 'PSP1', 'PT2', 'PSP2']  # Standard Labels / Data To Export
+		# Add any extended keys if they exists
+		ext_keys = []
+		for key in json.loads(historydata[0]).keys():
+			if key not in standard_data_keys:
+				ext_keys.append(key)
+				cook_file_struct['graph_data'][key] = []
 
 		# Unpack data from json to list
 		for index in range(len(historydata)):
@@ -109,6 +115,9 @@ def create_cookfile(historydata):
 			cook_file_struct['graph_data']['grill1_setpoint'].append(datastruct['GSP1'])
 			cook_file_struct['graph_data']['probe1_setpoint'].append(datastruct['PSP1'])
 			cook_file_struct['graph_data']['probe2_setpoint'].append(datastruct['PSP2'])
+			# Add any extended keys
+			for key in ext_keys:
+				cook_file_struct['graph_data'][key].append(datastruct[key])
 
 		cook_file_struct['events'] = process_metrics(read_metrics(all=True), augerrate=settings['globals']['augerrate'])
 

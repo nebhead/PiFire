@@ -1222,6 +1222,14 @@
                                 <label class="custom-control-label" for="historyautorefresh">History Auto-Refresh</label>
                             </div>
                             <br>
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="ext_data" name="ext_data" {% if settings['globals']['ext_data'] %}checked{% endif %}>
+                                <label class="custom-control-label" for="ext_data">Track Extended Data<br>
+                                    <span class="badge badge-warning">DEBUG</span> 
+                                    <i>Extended data is stored in the database, and exported to cookfile/CSV files for debug purposes.  This setting can only be changed when the grill is inactive (i.e. 'Stop' mode). </i>
+                                </label>
+                            </div>
+                            <br>
                         </div><!-- End of card body -->
                         <div class="card-footer bg-light">
                             <button type="submit" class="btn btn-outline-primary">Save</button>
