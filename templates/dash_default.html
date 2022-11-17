@@ -24,7 +24,7 @@
 			{% if probes_enabled[0] == 1 %}
 			<div class="card-footer text-center">
 				<div class="btn-group">
-					<button type="button" class="btn btn-outline-primary"><i class="fas fa-temperature-high"></i> <b>Grill</b></button>
+					<button type="button" class="btn btn-outline-primary" id="grill_title_btn" data-toggle="modal" data-target="#probeTitleModal"><i class="fas fa-temperature-high"></i> <b>Grill</b></button>
 					<a href="/settings" class="btn btn-outline-primary" role="button"><i class="fas fa-cog"></i></a>
 					<button type="button" class="btn btn-outline-primary" id="grill_notify_btn" data-toggle="modal" data-target="#grillnotifyModal"><i class="far fa-bell-slash"></i></button>
 				</div>
@@ -51,7 +51,7 @@
 			{% if probes_enabled[1] == 1 %}
 			<div class="card-footer text-center">
 				<div class="btn-group">
-					<button type="button" class="btn btn-outline-primary"><i class="fas fa-temperature-high"></i> <b>Probe 1</b></button>
+					<button type="button" class="btn btn-outline-primary" id="probe1_title_btn" data-toggle="modal" data-target="#probeTitleModal"><i class="fas fa-temperature-high"></i> <b>Probe 1</b></button>
 					<a href="/settings" class="btn btn-outline-primary" role="button"><i class="fas fa-cog"></i></a>
 					<button type="button" class="btn btn-outline-primary" id="probe1_notify_btn" data-toggle="modal" data-target="#probe1notifyModal"><i class="far fa-bell-slash"></i></button>
 				</div>
@@ -78,7 +78,7 @@
 			{% if probes_enabled[2] == 1 %}
 			<div class="card-footer text-center">
 				<div class="btn-group">
-					<button type="button" class="btn btn-outline-primary"><i class="fas fa-temperature-high"></i> <b>Probe 2</b></button>
+					<button type="button" class="btn btn-outline-primary" id="probe2_title_btn" data-toggle="modal" data-target="#probeTitleModal"><i class="fas fa-temperature-high"></i> <b>Probe 2</b></button>
 					<a href="/settings" class="btn btn-outline-primary" role="button"><i class="fas fa-cog"></i></a>
 					<button type="button" class="btn btn-outline-primary" id="probe2_notify_btn" data-toggle="modal" data-target="#probe2notifyModal"><i class="far fa-bell-slash"></i></button>
 				</div>
@@ -97,6 +97,45 @@
 	<br>
 	<br>
 </div> <!-- End of Row -->
+
+<!-- Probe Title Modal -->
+<div class="modal" id="probeTitleModal">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<!-- Modal Header -->
+			<div class="modal-header">
+				<h4 class="modal-title"><i class="fas fa-thermometer"></i> Probe Titles</h4>
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+			</div>
+			<!-- Modal body -->
+			<div class="modal-body">
+				<div class="input-group mb-3">
+					<div class="input-group-prepend">
+						<span class="input-group-text" id="probe_title_grill_label">Grill</span>
+					</div>
+					<input id="grillTitleId" type="text" class="form-control" maxlength="12" placeholder="{{ control['probe_titles']['grill_title'] }}" value="{{ control['probe_titles']['grill_title'] }}" name="grill_title">
+				</div>
+				<div class="input-group mb-3">
+					<div class="input-group-prepend">
+						<span class="input-group-text" id="probe_title_p1_label">Probe 1</span>
+					</div>
+					<input id="probeOneTitleId" type="text" class="form-control" maxlength="12" placeholder="{{ control['probe_titles']['probe1_title'] }}" value="{{ control['probe_titles']['probe1_title'] }}" name="probe1_title">
+				</div>
+				<div class="input-group mb-3">
+					<div class="input-group-prepend">
+						<span class="input-group-text" id="probe_title_p2_label">Probe 2</span>
+					</div>
+					<input id="probeTwoTitleId" type="text" class="form-control" maxlength="12" placeholder="{{ control['probe_titles']['probe2_title'] }}" value="{{ control['probe_titles']['probe2_title'] }}" name="probe2_title">
+				</div>
+			</div>
+			<!-- Modal footer -->
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+				<button type="button" class="btn btn-primary" id="probe_title_save" data-dismiss="modal">Save</button>
+			</div>
+		</div>
+	</div>
+</div>
 
 <!-- Grill Notify Modal -->
 <div class="modal" id="grillnotifyModal">

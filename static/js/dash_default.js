@@ -54,6 +54,12 @@ function updateCards(data, init) {
             // Change the text to show bell with slash
 			$("#grill_notify_btn").html("<i class=\"far fa-bell-slash\"></i>");
         };
+
+        // Update Probe Title
+        var grill_title = document.getElementById("grill_title_btn")
+        if (grill_title != null && data.probe_titles['grill_title'] != grill_title.value) {
+            $("#grill_title_btn").html("<i class=\"fas fa-temperature-high\"></i> <b>" + data.probe_titles['grill_title'] + "</b>");
+        }
 		
 		// *************************  
 		// Probe 1 Temperature Card 
@@ -120,6 +126,12 @@ function updateCards(data, init) {
 			]);
 		};
 
+		// Update Probe Title
+		var probe1_title = document.getElementById("probe1_title_btn")
+		if (probe1_title != null && data.probe_titles['probe1_title'] != probe1_title.value) {
+            $("#probe1_title_btn").html("<i class=\"fas fa-temperature-high\"></i> <b>" + data.probe_titles['probe1_title'] + "</b>");
+		}
+
 		// *************************  
 		// Probe 2 Temperature Card
 		// *************************  
@@ -184,6 +196,12 @@ function updateCards(data, init) {
 				{ type: "text", value: "OFF" }
 			]);
 		};
+
+		// Update Probe Title
+		var probe2_title = document.getElementById("probe2_title_btn")
+		if (probe2_title != null && data.probe_titles['probe2_title'] != probe2_title.value) {
+            $("#probe2_title_btn").html("<i class=\"fas fa-temperature-high\"></i> <b>" + data.probe_titles['probe2_title'] + "</b>");
+		}
 
 };
 
@@ -614,6 +632,30 @@ $(document).ready(function(){
             success: function (data) {
                 console.log('Hold Mode Requested. ' + setPoint + units);
 				$("#hold_btn").html(setPoint + "°" + units);
+            }
+		});
+	});
+
+	$("#probe_title_save").click(function(){
+		var grillTitle = $("#grillTitleId").val();
+		var probeOneTitle = $("#probeOneTitleId").val();
+		var probeTwoTitle = $("#probeTwoTitleId").val();
+
+		var postdata = {
+			'probe_titles' : {
+				'grill_title' : grillTitle.trim() !== '' ?  grillTitle : "Grill",
+				'probe1_title' : probeOneTitle.trim() !== '' ?  probeOneTitle : "Probe 1",
+				'probe2_title' : probeTwoTitle.trim() !== '' ?  probeTwoTitle : "Probe 2",
+			}
+		};
+		req = $.ajax({
+			url : '/api/control',
+            type : 'POST',
+            data : JSON.stringify(postdata),
+            contentType: "application/json; charset=utf-8",
+            traditional: true,
+            success: function (data) {
+                console.log('Probe Titles Updated.');
             }
 		});
 	});

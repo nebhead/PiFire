@@ -87,7 +87,8 @@ def dash_data():
 					 'current_mode' : control['mode'], 'set_points' : control['setpoints'],
 					 'notify_req' : control['notify_req'], 'splus' : control['s_plus'],
 					 'splus_default' : settings['smoke_plus']['enabled'],
-					 'pwm_control' : control['pwm_control'] })
+					 'pwm_control' : control['pwm_control'],
+					 'probe_titles' :  control['probe_titles']})
 
 @app.route('/hopperlevel')
 def hopper_level():
@@ -2656,6 +2657,10 @@ def emit_dash_data():
 			'grill' : bool(probes_enabled[0]),
 			'probe1' : bool(probes_enabled[1]),
 			'probe2' : bool(probes_enabled[2]) }
+		probe_titles = {
+			'grill_title' : control['probe_titles']['grill_title'],
+			'probe1_title' : control['probe_titles']['probe1_title'],
+			'probe2_title' : control['probe_titles']['probe2_title'] }
 
 		if control['timer']['end'] - time.time() > 0 or bool(control['timer']['paused']):
 			timer_info = {
@@ -2677,6 +2682,7 @@ def emit_dash_data():
 		current_data = {
 			'cur_probe_temps' : current_temps,
 			'probes_enabled' : enabled_probes,
+			'probe_titles' : probe_titles,
 			'set_points' : control['setpoints'],
 			'notify_req' : control['notify_req'],
 			'notify_data' : control['notify_data'],
