@@ -374,6 +374,12 @@ def default_control():
 
 	control['errors'] = []
 
+	control['probe_titles'] = {
+		'grill_title' : 'Grill',
+		'probe1_title' : 'Probe 1',
+		'probe2_title' : 'Probe 2',
+	}
+
 	control['smartstart'] = {
 		'startuptemp' : 0,
 		'profile_selected' : 0
