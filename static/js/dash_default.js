@@ -126,11 +126,11 @@ function updateCards(data, init) {
 			]);
 		};
 
-		// Update Probe Title
-		var probe1_title = document.getElementById("probe1_title_btn")
-		if (probe1_title != null && data.probe_titles['probe1_title'] != probe1_title.value) {
+        // Update Probe Title
+        var probe1_title = document.getElementById("probe1_title_btn")
+        if (probe1_title != null && data.probe_titles['probe1_title'] != probe1_title.value) {
             $("#probe1_title_btn").html("<i class=\"fas fa-temperature-high\"></i> <b>" + data.probe_titles['probe1_title'] + "</b>");
-		}
+        }
 
 		// *************************  
 		// Probe 2 Temperature Card
@@ -197,11 +197,11 @@ function updateCards(data, init) {
 			]);
 		};
 
-		// Update Probe Title
-		var probe2_title = document.getElementById("probe2_title_btn")
-		if (probe2_title != null && data.probe_titles['probe2_title'] != probe2_title.value) {
+        // Update Probe Title
+        var probe2_title = document.getElementById("probe2_title_btn")
+        if (probe2_title != null && data.probe_titles['probe2_title'] != probe2_title.value) {
             $("#probe2_title_btn").html("<i class=\"fas fa-temperature-high\"></i> <b>" + data.probe_titles['probe2_title'] + "</b>");
-		}
+        }
 
 };
 
@@ -650,11 +650,11 @@ $(document).ready(function(){
 		};
 		req = $.ajax({
 			url : '/api/control',
-            type : 'POST',
-            data : JSON.stringify(postdata),
-            contentType: "application/json; charset=utf-8",
-            traditional: true,
-            success: function (data) {
+			type : 'POST',
+			data : JSON.stringify(postdata),
+			contentType: "application/json; charset=utf-8",
+			traditional: true,
+			success: function (data) {
                 console.log('Probe Titles Updated.');
             }
 		});
