@@ -1,9 +1,11 @@
-import statistics
+#!/usr/bin/env python3
 
 '''
-Class to track temperature averages coming from the ADC and 
-handle errors gracefully (hopefully).  
+	Class to track temperature averages coming from the probes and 
+	handle errors gracefully (hopefully).  
 '''
+
+import statistics
 
 class TempQueue():
 	def __init__(self, qlength=10, units='F'):

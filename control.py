@@ -20,8 +20,8 @@
 import importlib
 import pid  # Library for calculating PID setpoints
 from common import *  # Common Library for WebUI and Control Program
+from probes_main import ProbesMain  # Probe device libary: loads probe devices and maps them to ports
 from notifications import *
-from temp_queue import TempQueue
 from file_recipes import convert_recipe_units
 from file_cookfile import create_cookfile
 from file_common import read_json_file_data
@@ -95,16 +95,16 @@ except:
 		raise
 
 '''
-Set up Probes Input (ADC) Module
+Set up Probes Input Module
 '''
 try: 
-	probes_input = settings['modules']['adc']
-	filename = 'adc_' + wizard_data['modules']['probes'][probes_input]['filename']
-	ProbesModule = importlib.import_module(filename)
+	probe_complex = ProbesMain(settings["probe_settings"]["probe_map"], settings['globals']['units'])
 
 except:
-	ProbesModule = importlib.import_module('adc_prototype')
-	error_event = f'An error occurred loading the [{settings["modules"]["adc"]}] probes module.  The prototype ' \
+	settings['probe_settings']['probe_map'] = default_probe_map(settings["probe_settings"]['probe_profiles'])
+	write_settings(settings)
+	probe_complex = ProbesMain(settings["probe_settings"]["probe_map"], settings['globals']['units'])
+	error_event = f'An error occurred loading the probes module(s).  The prototype ' \
 		f'module has been loaded instead.  This sometimes means that the hardware is not connected ' \
 		f'properly, or the module is not configured.  Please run the configuration wizard again from ' \
 		f'the admin panel to fix this issue.'
@@ -113,44 +113,6 @@ except:
 	write_event(settings, error_event)
 	if settings['globals']['debug_mode']:
 		raise
-
-# Start ADC object and set profiles
-grill1type = settings['probe_types']['grill1type']
-grill2type = settings['probe_types']['grill2type']
-probe1type = settings['probe_types']['probe1type']
-probe2type = settings['probe_types']['probe2type']
-
-try:
-	adc_device = ProbesModule.ReadADC(
-					settings['probe_settings']['probe_profiles'][grill1type],
-					settings['probe_settings']['probe_profiles'][grill2type],
-					settings['probe_settings']['probe_profiles'][probe1type],
-					settings['probe_settings']['probe_profiles'][probe2type], 
-					units=settings['globals']['units'])
-except:
-	from adc_prototype import ReadADC  # Simulated Library for controlling the grill platform
-	adc_device = ReadADC(
-					settings['probe_settings']['probe_profiles'][grill1type],
-					settings['probe_settings']['probe_profiles'][grill2type],
-					settings['probe_settings']['probe_profiles'][probe1type],
-					settings['probe_settings']['probe_profiles'][probe2type], 
-					units=settings['globals']['units'])
-	
-	error_event = f'An error occurred configuring the [{settings["modules"]["adc"]}] probes object.  The prototype' \
-		f' module has been loaded instead.  This sometimes means that the hardware is not connected ' \
-		f'properly, or the module is not configured.  Please run the configuration wizard again from ' \
-		f'the admin panel to fix this issue.'
-	errors.append(error_event)
-	write_errors(errors)
-	write_event(settings, error_event)
-	if settings['globals']['debug_mode']:
-		raise
-
-for probe_source in settings['probe_settings']['probe_sources']:
-	# if any of the probes uses max31865 then load the library
-	if 'max31865' in probe_source:
-		from adc_max31865 import probe_max31865_read
-		break
 
 '''
 Set up Display Module
@@ -239,39 +201,11 @@ pelletdb['current']['hopper_level'] = dist_device.get_level()
 write_pellet_db(pelletdb)
 write_event(settings, "* Hopper Level Checked @ " + str(pelletdb['current']['hopper_level']) + "%")
 
-# *****************************************
-# Function Definitions
-# *****************************************
-def _read_probes(settings, adc_device, units):
-	"""
-	Read Probes from ADC and/or max31865
-
-	:param settings: Settings
-	:param adc_device: ADC Device
-	:param units: Units C or F
-	:return: probe_data
-	"""
-	adc_data = adc_device.read_all_ports()
-
-	probe_data = {}
-
-	probe_ids = ['Grill1', 'Probe1', 'Probe2', 'Grill2']
-	adc_properties = ['Temp', 'Tr']
-	adc_probe_indices = ['Grill1', 'Probe1', 'Probe2', 'Grill2']
-	for idx, probe_source in enumerate(settings['probe_settings']['probe_sources']):
-		if 'ADC' in probe_source and len(probe_source) > 3:
-			# Map ADC probes to the output probes. i.e. ADC0 is adc_probe_indices[0] => 'Grill' so if this is
-			# defined for first source map Grill to Grill. If ADC1 in first source map it to Probe1
-			source_index = int(probe_source[3:])
-			for p in adc_properties:
-				probe_data[probe_ids[idx] + p] = adc_data[adc_probe_indices[source_index] + p]
-		elif 'max31865' in probe_source:
-			temperature, resistance = probe_max31865_read(units=units)
-			probe_data[probe_ids[idx] + adc_properties[0]] = temperature
-			probe_data[probe_ids[idx] + adc_properties[1]] = resistance
-
-	return probe_data
-
+'''
+*****************************************
+ 	Function Definitions
+*****************************************
+'''
 
 def _get_status(grill_platform, control, settings, pelletdb):
 	"""
@@ -322,13 +256,13 @@ def _start_fan(settings, duty_cycle=None):
 		grill_platform.fan_on()
 
 
-def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
+def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device):
 	"""
 	Work Cycle Function
 
 	:param mode: Requested Mode
 	:param grill_platform: Grill Platform
-	:param adc_device: ADC Device
+	:param probe_complex: ADC Device
 	:param display_device: Display Device
 	:param dist_device: Distance Device
 	"""
@@ -448,49 +382,21 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 		CycleTime = OnTime + OffTime  # Total Cycle Time
 		CycleRatio = RawCycleRatio = OnTime / CycleTime  # Ratio of OnTime to CycleTime
 
-	# Initialize all temperature variables
-	AvgGT = TempQueue(units=settings['globals']['units'])
-	AvgP1 = TempQueue(units=settings['globals']['units'])
-	AvgP2 = TempQueue(units=settings['globals']['units'])
-
 	# Check pellets level notification upon starting cycle
 	check_notify_pellets(control, settings, pelletdb)
 
-	# Collect Initial Temperature Information
-	# Get Probe Types From Settings
-	grill1type = settings['probe_types']['grill1type']
-	grill2type = settings['probe_types']['grill2type']
-	probe1type = settings['probe_types']['probe1type']
-	probe2type = settings['probe_types']['probe2type']
-
-	adc_device.set_profiles(settings['probe_settings']['probe_profiles'][grill1type],
-						   settings['probe_settings']['probe_profiles'][grill2type],
-						   settings['probe_settings']['probe_profiles'][probe1type],
-						   settings['probe_settings']['probe_profiles'][probe2type])
-
-	adc_data = _read_probes(settings, adc_device, units)
-
-	if settings['globals']['four_probes']:
-		if settings['grill_probe_settings']['grill_probe_enabled'][2] == 1:
-			AvgGT.enqueue((adc_data['Grill1Temp'] + adc_data['Grill2Temp']) / 2)
-		elif settings['grill_probe_settings']['grill_probe_enabled'][1] == 1:
-			AvgGT.enqueue(adc_data['Grill2Temp'])
-		else:
-			AvgGT.enqueue(adc_data['Grill1Temp'])
-	else:
-		AvgGT.enqueue(adc_data['Grill1Temp'])
-
-	AvgP1.enqueue(adc_data['Probe1Temp'])
-	AvgP2.enqueue(adc_data['Probe2Temp'])
+	# Get initial probe sensor data, temperatures 
+	sensor_data = probe_complex.read_probes()
+	ptemp = list(sensor_data['primary'].values())[0]  # Primary Temperature or the Pit Temperature
 
 	status = 'Active'
 
 	# Safety Controls
 	if mode in ('Startup', 'Reignite'):
-		control['safety']['startuptemp'] = int(max((AvgGT.average() * 0.9), settings['safety']['minstartuptemp']))
+		control['safety']['startuptemp'] = int(max((ptemp * 0.9), settings['safety']['minstartuptemp']))
 		control['safety']['startuptemp'] = int(
 			min(control['safety']['startuptemp'], settings['safety']['maxstartuptemp']))
-		control['safety']['afterstarttemp'] = AvgGT.average()
+		control['safety']['afterstarttemp'] = ptemp
 		write_control(control)
 	# Check if the temperature of the grill dropped below the startuptemp
 	elif mode in ('Smoke', 'Hold'):
@@ -517,7 +423,7 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 	if settings['smartstart']['enabled'] and mode in ('Startup', 'Reignite', 'Smoke'):
 		# If Startup, then save initial temperature & select the profile
 		if mode in ('Startup', 'Reignite'):
-			control['smartstart']['startuptemp'] = int(AvgGT.average())
+			control['smartstart']['startuptemp'] = int(ptemp)
 			# Cycle through profiles, and set profile if startup temperature falls below the minimum temperature
 			for profile_selected in range(0, len(settings['smartstart']['temp_range_list'])):
 				if control['smartstart']['startuptemp'] < settings['smartstart']['temp_range_list'][profile_selected]:
@@ -675,7 +581,7 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 				write_event(settings, '* Cycle Event: Auger On')
 				# Reset Cycle Time for HOLD Mode
 				if mode == 'Hold':
-					CycleRatio = RawCycleRatio = settings['cycle_data']['u_min'] if LidOpenDetect else PIDControl.update(AvgGT.average())
+					CycleRatio = RawCycleRatio = settings['cycle_data']['u_min'] if LidOpenDetect else PIDControl.update(ptemp)
 					CycleRatio = max(CycleRatio, settings['cycle_data']['u_min'])
 					CycleRatio = min(CycleRatio, settings['cycle_data']['u_max'])
 					OnTime = settings['cycle_data']['HoldCycleTime'] * CycleRatio
@@ -699,55 +605,26 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 			settings = read_settings()
 			control['probe_profile_update'] = False
 			write_control(control)
-			# Get new probe profiles
-			grill1type = settings['probe_types']['grill1type']
-			grill2type = settings['probe_types']['grill2type']
-			probe1type = settings['probe_types']['probe1type']
-			probe2type = settings['probe_types']['probe2type']
-			# Add new probe profiles to ADC Object
-			adc_device.set_profiles(settings['probe_settings']['probe_profiles'][grill1type],
-								   settings['probe_settings']['probe_profiles'][grill2type],
-								   settings['probe_settings']['probe_profiles'][probe1type],
-								   settings['probe_settings']['probe_profiles'][probe2type])
+			# Add new probe profiles to probe complex object
+			probe_complex.update_probe_profiles(settings['probe_settings']['probe_map']['probe_info'])
 
 		# Get temperatures from all probes
-		adc_data = _read_probes(settings, adc_device, units)
-
-		# Test temperature data returned for errors (+/- 20% Temp Variance), and average the data since last reading
-		if settings['globals']['four_probes']:
-			if settings['grill_probe_settings']['grill_probe_enabled'][2] == 1:
-				AvgGT.enqueue((adc_data['Grill1Temp'] + adc_data['Grill2Temp']) / 2 )
-			elif settings['grill_probe_settings']['grill_probe_enabled'][1] == 1:
-				AvgGT.enqueue(adc_data['Grill2Temp'])
-			else:
-				AvgGT.enqueue(adc_data['Grill1Temp'])
-		else:
-			AvgGT.enqueue(adc_data['Grill1Temp'])
-
-		AvgP1.enqueue(adc_data['Probe1Temp'])
-		AvgP2.enqueue(adc_data['Probe2Temp'])
+		sensor_data = probe_complex.read_probes()
+		ptemp = list(sensor_data['primary'].values())[0]  # Primary Temperature or the Pit Temperature
 
 		in_data = {}
-		in_data['GrillTemp'] = AvgGT.average()
+		in_data['GrillTemp'] = ptemp
 		in_data['GrillSetPoint'] = control['setpoints']['grill']
-		in_data['Probe1Temp'] = AvgP1.average()
+		in_data['Probe1Temp'] = list(sensor_data['food'].values())[0]
 		in_data['Probe1SetPoint'] = control['setpoints']['probe1']
-		in_data['Probe2Temp'] = AvgP2.average()
+		in_data['Probe2Temp'] = list(sensor_data['food'].values())[1]
+
 		in_data['Probe2SetPoint'] = control['setpoints']['probe2']
 		in_data['GrillNotifyPoint'] = control['setpoints']['grill_notify']
 
-		if settings['globals']['four_probes']:
-			if settings['grill_probe_settings']['grill_probe_enabled'][2] == 1:
-				in_data['GrillTr'] = 0 # This is an average of two probes, so it should be disabled for editing.
-			elif settings['grill_probe_settings']['grill_probe_enabled'][1] == 1:
-				in_data['GrillTr'] = adc_data['Grill2Tr']  # For Temp Resistance Tuning
-			else:
-				in_data['GrillTr'] = adc_data['Grill1Tr']  # For Temp Resistance Tuning
-		else:
-			in_data['GrillTr'] = adc_data['Grill1Tr']  # For Temp Resistance Tuning
-
-		in_data['Probe1Tr'] = adc_data['Probe1Tr']  # For Temp Resistance Tuning
-		in_data['Probe2Tr'] = adc_data['Probe2Tr']  # For Temp Resistance Tuning
+		in_data['GrillTr'] = list(sensor_data['tr'].values())[0]  # For Temp Resistance Tuning
+		in_data['Probe1Tr'] = list(sensor_data['tr'].values())[1]  # For Temp Resistance Tuning
+		in_data['Probe2Tr'] = list(sensor_data['tr'].values())[2]  # For Temp Resistance Tuning
 
 		# If Extended Data Mode is Enabled, Populate Extra Data Here
 		if settings['globals']['ext_data']:
@@ -778,9 +655,9 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 
 		# Safety Controls
 		if mode in ('Startup', 'Reignite'):
-			control['safety']['afterstarttemp'] = AvgGT.average()
+			control['safety']['afterstarttemp'] = ptemp
 		elif mode in ('Smoke', 'Hold'):
-			if AvgGT.average() < control['safety']['startuptemp']:
+			if ptemp < control['safety']['startuptemp']:
 				if control['safety']['reigniteretries'] == 0:
 					display_device.display_text('ERROR')
 					control['mode'] = 'Error'
@@ -801,11 +678,11 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 
 		if mode in ('Smoke', 'Hold'):
 			# Check if target temperature has been achieved before utilizing Smoke Plus Mode
-			if mode == 'Hold' and AvgGT.average() >= control['setpoints']['grill'] and not target_temp_achieved:
+			if mode == 'Hold' and ptemp >= control['setpoints']['grill'] and not target_temp_achieved:
 				target_temp_achieved = True
 
 			# Check if a lid open event has occurred only after hold mode has been achieved
-			if target_temp_achieved and settings['cycle_data']['LidOpenDetectEnabled'] and (AvgGT.average() < (control['setpoints']['grill'] * ((100 - settings['cycle_data']['LidOpenThreshold']) / 100))):
+			if target_temp_achieved and settings['cycle_data']['LidOpenDetectEnabled'] and (ptemp < (control['setpoints']['grill'] * ((100 - settings['cycle_data']['LidOpenThreshold']) / 100))):
 				LidOpenDetect = True
 				grill_platform.auger_off()
 				_start_fan(settings)
@@ -822,13 +699,13 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 			if (dc_fan and mode == 'Hold' and control['pwm_control'] and
 					(now - fan_update_time) > settings['pwm']['update_time']):
 				fan_update_time = now
-				if AvgGT.average() > control['setpoints']['grill']:
+				if ptemp > control['setpoints']['grill']:
 					control['duty_cycle'] = settings['pwm']['min_duty_cycle']
 					write_control(control)
 				else:
 					# Cycle through profiles, and set duty cycle if setpoint temp is within range
 					for temp_profile in range(0, len(settings['pwm']['temp_range_list'])):
-						if ((control['setpoints']['grill'] - AvgGT.average()) <=
+						if ((control['setpoints']['grill'] - ptemp) <=
 								settings['pwm']['temp_range_list'][temp_profile]):
 							duty_cycle = settings['pwm']['profiles'][temp_profile]['duty_cycle']
 							duty_cycle = max(duty_cycle, settings['pwm']['min_duty_cycle'])
@@ -844,8 +721,8 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 			if (mode == 'Smoke' or (mode == 'Hold' and target_temp_achieved)) and control['s_plus']:
 				# If Temperature is > settings['smoke_plus']['max_temp']
 				# or Temperature is < settings['smoke_plus']['min_temp'] then turn on fan
-				if (AvgGT.average() > settings['smoke_plus']['max_temp'] or
-						AvgGT.average() < settings['smoke_plus']['min_temp']):
+				if (ptemp > settings['smoke_plus']['max_temp'] or
+						ptemp < settings['smoke_plus']['min_temp']):
 					if not current_output_status['fan']:
 						_start_fan(settings, control['duty_cycle'])
 						write_event(settings, '* Smoke Plus: Over or Under Temp Fan ON')
@@ -919,7 +796,7 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 			break
 
 		# Max Temp Safety Control
-		if AvgGT.average() > settings['safety']['maxtemp']:
+		if ptemp > settings['safety']['maxtemp']:
 			display_device.display_text('ERROR')
 			control['mode'] = 'Error'
 			control['updated'] = True
@@ -962,7 +839,7 @@ def _work_cycle(mode, grill_platform, adc_device, display_device, dist_device):
 		write_event(settings, '* Fan OFF, Power OFF')
 	
 	if mode in ('Startup', 'Reignite'):
-		control['safety']['afterstarttemp'] = AvgGT.average()
+		control['safety']['afterstarttemp'] = ptemp
 		write_control(control)
 
 	write_event(settings, mode + ' mode ended.')
@@ -989,12 +866,12 @@ def _next_mode(next_mode, setpoint=0):
 		write_control(control)
 	return control 
 
-def _recipe_mode(grill_platform, adc_device, display_device, dist_device, start_step=0):
+def _recipe_mode(grill_platform, probe_complex, display_device, dist_device, start_step=0):
 	"""
 	Recipe Mode Control
 
 	:param grill_platform: Grill Platform
-	:param adc_device: ADC Device
+	:param probe_complex: ADC Device
 	:param display_device: Display Device
 	:param dist_device: Distance Device
 	"""
@@ -1039,7 +916,7 @@ def _recipe_mode(grill_platform, adc_device, display_device, dist_device, start_
 		control['updated'] = False  # Clear Updated Flag if Set
 		write_control(control)
 		# 4b. Start the recipe step work cycle
-		_work_cycle(recipe['steps'][step_num]['mode'], grill_platform, adc_device, display_device, dist_device)
+		_work_cycle(recipe['steps'][step_num]['mode'], grill_platform, probe_complex, display_device, dist_device)
 		
 		# 4c. If reignite is required, run a reignite cycle and retry current step
 		control = read_control()
@@ -1047,7 +924,7 @@ def _recipe_mode(grill_platform, adc_device, display_device, dist_device, start_
 			control['updated'] = False
 			control['mode'] = 'Recipe'
 			write_control(control)
-			_work_cycle('Reignite', grill_platform, adc_device, display_device, dist_device)
+			_work_cycle('Reignite', grill_platform, probe_complex, display_device, dist_device)
 			control = read_control()
 			if control['updated'] and control['mode'] != 'Recipe':
 				# If another mode was requested (or an error occurred) then exit recipe mode
@@ -1137,7 +1014,7 @@ while True:
 			write_event(settings, '* Changing Base Units.')
 			settings = read_settings()
 			# Update ADC object and set profiles
-			adc_device.update_units(settings['globals']['units'])
+			probe_complex.update_units(settings['globals']['units'])
 			control['mode'] = 'Stop'  # Stop any activity
 			control['units_change'] = False
 			read_history(0, flushhistory=True)  # Clear history data
@@ -1198,7 +1075,7 @@ while True:
 				write_event(settings, "Warning: PiFire is set to OFF. This doesn't prevent startup, "
 									   "but this means the switch won't behave as normal.")
 			# Call Work Cycle for Startup Mode
-			_work_cycle('Prime', grill_platform, adc_device, display_device, dist_device)
+			_work_cycle('Prime', grill_platform, probe_complex, display_device, dist_device)
 			# Select Next Mode
 			settings = read_settings()
 			_next_mode(control['next_mode'], setpoint=settings['start_to_mode']['grill1_setpoint'])			
@@ -1216,26 +1093,26 @@ while True:
 			control['next_mode'] = settings['start_to_mode']['after_startup_mode']
 			write_control(control)
 			# Call Work Cycle for Startup Mode
-			_work_cycle('Startup', grill_platform, adc_device, display_device, dist_device)
+			_work_cycle('Startup', grill_platform, probe_complex, display_device, dist_device)
 			# Select Next Mode
 			settings = read_settings()
 			_next_mode(control['next_mode'], setpoint=settings['start_to_mode']['grill1_setpoint'])			
 
 		# Smoke (smoke cycle)
 		elif control['mode'] == 'Smoke':
-			_work_cycle('Smoke', grill_platform, adc_device, display_device, dist_device)
+			_work_cycle('Smoke', grill_platform, probe_complex, display_device, dist_device)
 			_next_mode(control['next_mode'])			
 
 		# Hold (hold at setpoint)
 		elif control['mode'] == 'Hold':
-			_work_cycle('Hold', grill_platform, adc_device, display_device, dist_device)
+			_work_cycle('Hold', grill_platform, probe_complex, display_device, dist_device)
 			_next_mode(control['next_mode'])			
 
 		# Shutdown (shutdown sequence)
 		elif control['mode'] == 'Shutdown':
 			control['next_mode'] = 'Stop'
 			write_control(control)
-			_work_cycle('Shutdown', grill_platform, adc_device, display_device, dist_device)
+			_work_cycle('Shutdown', grill_platform, probe_complex, display_device, dist_device)
 			_next_mode(control['next_mode'])			
 			if settings['globals']['auto_power_off']:
 				write_event(settings, 'Shutdown mode ended powering off grill')
@@ -1245,15 +1122,15 @@ while True:
 		elif control['mode'] == 'Monitor':
 			control['status'] = 'monitor'  # Set status to monitor
 			write_control(control)
-			_work_cycle('Monitor', grill_platform, adc_device, display_device, dist_device)
+			_work_cycle('Monitor', grill_platform, probe_complex, display_device, dist_device)
 
 		# Manual Mode
 		elif control['mode'] == 'Manual':
-			_work_cycle('Manual', grill_platform, adc_device, display_device, dist_device)
+			_work_cycle('Manual', grill_platform, probe_complex, display_device, dist_device)
 		
 		# Recipe Mode
 		elif control['mode'] == 'Recipe':
-			_recipe_mode(grill_platform, adc_device, display_device, dist_device, start_step=control['recipe']['start_step'])
+			_recipe_mode(grill_platform, probe_complex, display_device, dist_device, start_step=control['recipe']['start_step'])
 		
 		# Reignite (reignite sequence)
 		elif control['mode'] == 'Reignite':
@@ -1263,7 +1140,7 @@ while True:
 			control['next_mode'] = control['safety']['reignitelaststate']
 			setpoint = control['setpoints']['grill']
 			write_control(control)
-			_work_cycle('Reignite', grill_platform, adc_device, display_device, dist_device)
+			_work_cycle('Reignite', grill_platform, probe_complex, display_device, dist_device)
 			_next_mode(control['next_mode'], setpoint=setpoint)
 
 	time.sleep(0.1)

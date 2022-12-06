@@ -33,7 +33,7 @@ def default_settings():
 	settings = {}
 
 	settings['versions'] = {
-		'server' : "1.3.6",
+		'server' : "1.5.0",
 		'cookfile' : "1.0.1",  # Current cookfile format version
 		'recipe' : "1.0.0"  # Current recipe file format version
 	}
@@ -45,12 +45,9 @@ def default_settings():
 		'datapoints' : 60 				# Number of data points to show on the history chart
 	}
 
-	settings['probe_settings'] = {
-		'probe_profiles' :  _default_probe_profiles(),
-		'probes_enabled' : [1,1,1],
-		'probe_sources' : ['ADC0', 'ADC1', 'ADC2', 'ADC3'], # Probe sources can be ADC0-3 or max31865
-		'probe_options' : ['ADC0', 'ADC1', 'ADC2', 'ADC3'] 	# Probe source options (max31865 can be added but requires spi-dev to be installed and control.py to be restarted to load the module)
-	}
+	settings['probe_settings'] = {}
+	settings['probe_settings']['probe_profiles'] = _default_probe_profiles()
+	settings['probe_settings']['probe_map'] = default_probe_map(settings['probe_settings']['probe_profiles'])
 
 	settings['globals'] = {
 		'grill_name' : '',
@@ -107,19 +104,6 @@ def default_settings():
 		'token': '',
 		'org': '',
 		'bucket': ''
-	}
-
-	settings['probe_types'] = {
-		'grill1type' : 'PT-1000-OEM',
-		'grill2type' : 'TWPS00',
-		'probe1type' : 'TWPS00',
-		'probe2type' : 'TWPS00'
-	}
-
-	settings['grill_probe_settings'] = {
-		'grill_probes': _default_grill_probes(),
-		'grill_probe' : 'grill_probe1',
-		'grill_probe_enabled' : [1,0,0]
 	}
 
 	settings['outpins'] = {
@@ -499,54 +483,61 @@ def _default_probe_profiles():
 		'A' : 7.3431401e-4,	# Coefficient A for SHH # from HeaterMeter?
 		'B' : 2.1574370e-4,	# Coefficient B for SHH
 		'C' : 9.5156860e-8,	# Coefficient C for SHH
-		'name' : 'Thermoworks-Pro-Series-HeaterMeter'
+		'name' : 'Thermoworks-Pro-Series-HeaterMeter', 
+		'id' : 'TWPS00'
 	}
 
 	probe_profiles['ET73-HM'] = {
-			'Vs' : 3.28,			# Vs = Voltage Source input to resistor divider
-			'Rd' : 10000,			# Divider Resistance Ohms (Default 10k Ohm)
-			'A' : 2.4723753e-04,	# Coefficient A for SHH # from HeaterMeter?
-			'B' : 2.3402251e-04,	# Coefficient B for SHH
-			'C' : 1.3879768e-07,	# Coefficient C for SHH
-			'name' : 'ET-73-Heatermeter'
+		'Vs' : 3.28,			# Vs = Voltage Source input to resistor divider
+		'Rd' : 10000,			# Divider Resistance Ohms (Default 10k Ohm)
+		'A' : 2.4723753e-04,	# Coefficient A for SHH # from HeaterMeter?
+		'B' : 2.3402251e-04,	# Coefficient B for SHH
+		'C' : 1.3879768e-07,	# Coefficient C for SHH
+		'name' : 'ET-73-Heatermeter', 
+		'id' : 'ET73-HM'
 	}
 
 	probe_profiles['iGrill-HM'] = {
-			'Vs' : 3.28,			# Vs = Voltage Source input to resistor divider
-			'Rd' : 10000,			# Divider Resistance Ohms (Default 10k Ohm)
-			'A' : 0.7739251279e-3,	# Coefficient A for SHH # from HeaterMeter?
-			'B' : 2.088025997e-4,	# Coefficient B for SHH
-			'C' : 1.154400438e-7,	# Coefficient C for SHH
-			'name' : 'iGrill-Heatermeter'
+		'Vs' : 3.28,			# Vs = Voltage Source input to resistor divider
+		'Rd' : 10000,			# Divider Resistance Ohms (Default 10k Ohm)
+		'A' : 0.7739251279e-3,	# Coefficient A for SHH # from HeaterMeter?
+		'B' : 2.088025997e-4,	# Coefficient B for SHH
+		'C' : 1.154400438e-7,	# Coefficient C for SHH
+		'name' : 'iGrill-Heatermeter', 
+		'id' : 'iGrill-HM'
 	}
 
-	probe_profiles["PT-1000-OEM"] = {
-			"Vs": 3.28,
-			"Rd": 10000,
-			"A": 0.04136906456,
-			"B": -0.00677987613,
-			"C": 2.760294589e-05,
-			"name": "PT-1000-Grill-Probe-OEM" # This profile was for the original probe on my Traeger
+	probe_profiles['PT-1000-OEM'] = {
+		'Vs': 3.28,
+		'Rd': 10000,
+		'A': 0.04136906456,
+		'B': -0.00677987613,
+		'C': 2.760294589e-05,
+		'name': 'PT-1000-Grill-Probe-OEM', # This profile was for the original probe on my Traeger
+		'id' : 'PT-1000-OEM'
 	}
 
-	probe_profiles["PT-1000-PiFire"] = {
-			"Vs": 3.28,
-			"Rd": 10000,
-			"A": 0.05469905897345206,
-			"B": -0.009473055040089443,
-			"C": 4.3768560703857386e-5,
-			"name": "PT-1000-Grill-Probe-PiFire" # This profile is for a replacement PT-1000 grill probe
+	probe_profiles['PT-1000-PiFire'] = {
+		'Vs': 3.28,
+		'Rd': 10000,
+		'A': 0.05469905897345206,
+		'B': -0.009473055040089443,
+		'C': 4.3768560703857386e-5,
+		'name': "PT-1000-Grill-Probe-PiFire", # This profile is for a replacement PT-1000 grill probe
+		'id' : 'PT-1000-PiFire'
 	}
 
 	probe_profiles['ET73-SP'] = {
-			'Vs' : 3.28,  # Vs = Voltage Source input to resistor divider
-			'Rd' : 10000,  # Divider Resistance Ohms (Default 10k Ohm)
-			# from: https://github.com/skyeperry1/Maverick-ET-73-Meat-Probe-Arduino-Library/blob/master/ET73.h
-			'A' : 2.3067434E-4,
-			'B' : 2.3696596E-4,
-			'C' : 1.2636414E-7,
-			'name' : 'ET-73-skyeperry1'
+		'Vs' : 3.28,  # Vs = Voltage Source input to resistor divider
+		'Rd' : 10000,  # Divider Resistance Ohms (Default 10k Ohm)
+		# from: https://github.com/skyeperry1/Maverick-ET-73-Meat-Probe-Arduino-Library/blob/master/ET73.h
+		'A' : 2.3067434E-4,
+		'B' : 2.3696596E-4,
+		'C' : 1.2636414E-7,
+		'name' : 'ET-73-skyeperry1',
+		'id' : 'ET73-SP'
 	}
+
 	return probe_profiles
 
 def _default_grill_probes():
@@ -566,6 +557,50 @@ def _default_grill_probes():
 	}
 
 	return grill_probes
+
+def default_probe_map(probe_profiles):
+
+	probe_devices = []
+
+	device = {
+			'device' : 'proto_adc',   # Unique name for the device
+			'module' : 'prototype',  # Module to support the hardware device
+			'ports' : ['ADC0', 'ADC1', 'ADC2', 'ADC3'],    # Optionally define ports, otherwise, leave this up to the module to define
+			'config' : {}  # Optional configuration data to pass to the module
+		}
+	
+	probe_devices.append(device)
+
+	probe_info = []
+
+	grill_probe = {
+			'type' : 'Primary',
+			'label' : 'Grill',
+			'profile' : probe_profiles['PT-1000-PiFire'],
+			'device' : 'proto_adc',
+			'port' : 'ADC0',
+			'enabled' : True
+		}
+
+	probe_info.append(grill_probe)
+
+	for index in range(1,4):
+		probe = {
+				'type' : 'Food',
+				'label' : f'Probe-{index}',
+				'profile' : probe_profiles['TWPS00'],
+				'device' : 'proto_adc',
+				'port' : f'ADC{index}',
+				'enabled' : True
+			}
+		probe_info.append(probe)
+
+	probe_map = {
+		"probe_devices" : probe_devices,
+		"probe_info" : probe_info
+	}
+
+	return probe_map
 
 def generate_uuid():
 	"""
