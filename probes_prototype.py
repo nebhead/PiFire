@@ -7,6 +7,19 @@ PiFire Probes Prototype Module
 
 Description: 
   This module simulates an ADC/RTD Device and returns temperature data.
+	
+	Ex Device Definition: 
+	
+	device = {
+			'device' : 'your_device_name',	# Unique name for the device
+			'module' : 'prototype',  			# Must be populated for this module to load properly
+			'ports' : ['ADC0', 'ADC1', 'ADC2', 'ADC3'], # This should be defined by the user with the number of ports desired
+			'config' : {} 
+		}
+
+	Note: This prototype module will calculate temperature based on the probe profiles, just like for the ADS1115 probes.  
+	To get proper output, primary ports should use the "PT-1000-Grill-Probe-OEM" probe profile.  All other ports should use the 
+	"Thermoworks-Pro-Series-HeaterMeter" probe profile. 
 
 '''
 

@@ -7,6 +7,15 @@ PiFire Probes ADS1115 Adafruit Module
 
 Description: 
   This module utilizes the adafruit ADS1115 hardware and returns temperature data.
+	
+	Ex Device Definition: 
+	
+	device = {
+			'device' : 'your_device_name',	# Unique name for the device
+			'module' : 'ads1115_adafruit',	# Must be populated for this module to load properly
+			'ports' : ['ADC0', 'ADC1', 'ADC2', 'ADC3'], # This is defined in the module, so this does not need to be defined.
+			'config' : {} 
+		}
 
 '''
 

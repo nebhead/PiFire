@@ -6,8 +6,20 @@ PiFire Probes Virtual Probe Averaging Module
 *****************************************
 
 Description: 
-  This module simulates an ADC/RTD Device and returns temperature data.
-
+  This module is a virtual probe device that will average any number of other probe inputs.  Probe labels must be define in config data.
+	
+	Ex Device Definition: 
+	
+	device = {
+			'device' : 'your_device_name',	# Unique name for the device
+			'module' : 'virtual_average',	# Must be populated for this module to load properly
+			'ports' : ['VIRT0'], 			# A port must be defined, with the labels of the probes to average together in config data
+			'config' : {
+			  "avg_probes" : {
+              	"VIRT0" : ["Grill-1", "Grill-2"]	# Port and list of probe labels to average
+            }
+			} 
+		}
 '''
 
 '''

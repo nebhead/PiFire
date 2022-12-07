@@ -1,25 +1,53 @@
-import logging.config
-import math
-import time
+#!/usr/bin/env python3
+
+'''
+*****************************************
+PiFire Probes MAX31865 Module 
+*****************************************
+
+Description: 
+  This module utilizes the MAX31865 hardware and returns temperature data.
+	Depends on: pip3 install adafruit-circuitpython-max31865 
+
+	Ex Device Definition: 
+	
+	device = {
+			'device' : 'your_device_name',	# Unique name for the device
+			'module' : 'max31865',  		# Must be populated for this module to load properly
+			'ports' : ['RTD0'],    			# This is defined in the module, so this does not need to be defined.
+			'config' : {
+				'cs' : 1, 					# SPI Chip Select (Defaults to 1)
+				'rtd_nominal' : 100, 		# RTD Nominal (Defaults to 100)
+				'ref_resistor' : 430, 		# Reference Resistor (Defaults to 430)
+				'wires' : 2					# Number of RTD Probe Wires (Defaults to 2)
+			} 
+		}
+
+'''
+
+'''
+*****************************************
+ Imported Libraries
+*****************************************
+'''
 
 import spidev
+import time
+import math
+from probes_base import ProbeInterface
 
-# Start logging
-logger = logging.getLogger(__name__)
-
-# Register and other constant values:
-
+'''
+*****************************************
+ Class Definitions 
+*****************************************
+'''
+# Register and other constant values
 _RTD_A = 3.9083e-3
 _RTD_B = -5.775e-7
 
-
-# Datasheet https://datasheets.maximintegrated.com/en/ds/MAX31865.pdf
-class MAX31865:
-
-	def __init__(self, cs, rtd_nominal=100,
-				 ref_resistor=430.0,
-				 wires=2):
-
+class RTDDevice():
+	''' MAX31865 Device Based on the Adafruit Module '''
+	def __init__(self, cs, rtd_nominal=100, ref_resistor=430.0, wires=2):
 		self.cs = cs
 		self.wires = wires
 
@@ -36,7 +64,7 @@ class MAX31865:
 		self.spi.mode = 0b01
 
 		self.config()
-
+	
 	def config(self):
 		# Config
 		# V_Bias (1=on)
@@ -62,7 +90,6 @@ class MAX31865:
 
 		# Check fault
 		if lsb & 0b00000001:
-			logger.debug('Fault Detected SPI %i', self.cs)
 			self.get_fault()
 
 		adc = ((msb << 8) + lsb) >> 1  # Shift MSB up 8 bits, add to LSB, remove fault bit (last bit)
@@ -132,7 +159,7 @@ class MAX31865:
 
 	def get_fault(self):
 		fault = self.spi.xfer2([0x07, 0x00])[1]
-
+		''' Removed logging temporarily until testing 
 		if fault & 0b10000000:
 			logger.debug('Fault SPI %i: RTD High Threshold', self.cs)
 		if fault & 0b01000000:
@@ -145,16 +172,40 @@ class MAX31865:
 			logger.debug('Fault SPI %i: RTDIN- < 0.85 x V_BIAS (FORCE- Open)', self.cs)
 		if fault & 0b00000100:
 			logger.debug('Fault SPI %i: Overvoltage/undervoltage fault', self.cs)
+		'''
 
 	def close(self):
 		self.spi.close()
 
+class ReadProbes(ProbeInterface):
 
-max_probe = MAX31865(1, 100, 430.0, True)
+	def __init__(self, probe_info, device_info, units):
+		super().__init__(probe_info, device_info, units)
 
+	def _init_device(self):
+		self.time_delay = 0
+		self.device_info['ports'] = ['RTD0']
+		cs = self.device_info['config'].get('cs', default=1)
+		rtd_nominal = self.device_info['config'].get('rtd_nominal', default=100)
+		ref_resistor = self.device_info['config'].get('ref_resistor', default=430)
+		wires = self.device_info['config'].get('wires', default=2)
+		self.device = RTDDevice(cs, rtd_nominal, ref_resistor, wires)
 
-def probe_max31865_read(units='F'):
-	if units == 'F':
-		return max_probe.fahrenheit_resistance
-	else:
-		return max_probe.celsius_resistance
+	def read_all_ports(self, output_data):
+		''' Read temperature from device '''
+		tempC = round(self.device.temperature, 1)
+		tempF = int(tempC * (9/5) + 32) # Celsius to Farenheit
+		port = self.device_info['ports'][0]
+
+		''' Read resistance from device '''
+		self.output_data['tr'][self.port_map[port]] = self.device.resistance
+
+		''' Get average temperature from the queue and store it in the output data structure'''
+		if port == self.primary_port:
+			self.output_data['primary'][self.port_map[port]] = tempF if self.units == 'F' else tempC
+		elif port in self.food_ports:
+			self.output_data['food'][self.port_map[port]] = tempF if self.units == 'F' else tempC
+		elif port in self.aux_ports:
+			self.output_data['aux'][self.port_map[port]] = tempF if self.units == 'F' else tempC
+		
+		return self.output_data
