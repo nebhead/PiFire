@@ -12,50 +12,122 @@
 # Imported Libraries
 # *****************************************
 
+import curses
+import time
+
 class Display:
 
 	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F'):
-		self.display_splash()
 		self.units = units 
+		curses.wrapper(self._curses_main)
+		curses.curs_set(0)  # Invisible Cursor 
+		curses.start_color()  # Init Color
+		curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLUE)
+		curses.init_pair(2, curses.COLOR_CYAN, curses.COLOR_BLACK)
+		curses.init_pair(3, curses.COLOR_WHITE, curses.COLOR_BLACK)
+		curses.init_pair(4, curses.COLOR_BLACK, curses.COLOR_WHITE)
+		self.display_splash()
+
+
+	def _curses_main(self, screen):
+		self.screen = screen
 
 	def display_status(self, in_data, status_data):
-		units = status_data['units']
-		print('====[Display]=====')
-		print('* Grill Temp: ' + str(in_data['GrillTemp'])[:5] + units)
-		print('* Grill SetPoint: ' + str(in_data['GrillSetPoint']) + units)
-		print('* Probe1 Temp: ' + str(in_data['Probe1Temp'])[:5] + units)
-		print('* Probe1 SetPoint: ' + str(in_data['Probe1SetPoint']) + units)
-		print('* Probe2 Temp: ' + str(in_data['Probe2Temp'])[:5] + units)
-		print('* Probe2 SetPoint: ' + str(in_data['Probe2SetPoint']) + units)
-		print('* Mode: ' + str(status_data['mode']))
-		notification = False 
-		for item in status_data['notify_req']:
-			if status_data['notify_req'][item]:
-				notification = True
-		if notification:
-			print('* Notifications: True')
+		''' Screen Box '''
+		self.screen.clear()
+		num_rows, num_cols = self.screen.getmaxyx()
+		self.screen.box()
+		title = f"| Mode: {status_data['mode']} |"
+		title_col = (num_cols // 2) - (len(title) // 2)
+		self.screen.addstr(0, title_col, title)
+
+		''' Temp Info '''
+		line = 1
+		for index, group in enumerate(in_data['probe_history']):
+			for item in in_data['probe_history'][group]:
+				if group != 'tr':
+					display_text = f"{item}: {in_data['probe_history'][group][item]} {self.units}"
+					self.screen.addstr(line, 3, display_text)
+					if group == 'primary':
+						display_text = f"{item} Setpoint: {in_data['primary_setpoint']} {self.units} Target: {in_data['notify_targets'][item]} {self.units}"
+					else: 
+						display_text = f"{item} Target: {in_data['notify_targets'][item]} {self.units}"
+					self.screen.addstr(line, (num_cols // 2), display_text)
+					line += 1
+
+		''' Notification Info '''
+		line += 1
+		line_bak = line
+
+		for index, item in enumerate(status_data['notify_data']):
+			if item['req']:
+				display_text = f" * {item['label']} Notify"
+				self.screen.addstr(line, (num_cols // 2), display_text)
+				line += 1
+
+		''' Active Hardware Pins '''
+		line = line_bak 
 		for item in status_data['outpins']:
 			if status_data['outpins'][item]:
-				print('* ' + str(item) + ' ON')
-		print('==================')
+				display_text = f"{item}: ON"
+				self.screen.addstr(line, 3, display_text)
+			else:
+				display_text = f"{item}: OFF"
+				self.screen.addstr(line, 3, display_text)
+			line += 1
+
+		''' Show Pellet Level '''
+		line += 1
+		display_text = f'Pellet Level: {status_data["hopper_level"]}%'
+		self.screen.addstr(line, 3, display_text)
+		
+		''' Show the screen '''
+		self.screen.refresh()
 
 	def display_splash(self):
-		print('  (        (')
-		print('  )\ )     )\ )')
-		print(' (()/( (  (()/(  (   (      (')
-		print('  /(_)))\  /(_)) )\  )(    ))\ ')
-		print(' (_)) ((_)(_))_|((_)(()\  /((_) ')
-		print(' | _ \ (_)| |_   (_) ((_)(_)) ')
-		print(' |  _/ | || __|  | || \'_|/ -_)  ')
-		print(' |_|   |_||_|    |_||_|  \___|  ')
+		splash_str = []
+		splash_str.append('  (        (')
+		splash_str.append('  )\ )     )\ )')
+		splash_str.append(' (()/( (  (()/(  (   (      (')
+		splash_str.append('  /(_)))\  /(_)) )\  )(    ))\ ')
+		splash_str.append(' (_)) ((_)(_))_|((_)(()\  /((_) ')
+		splash_str.append(' | _ \ (_)| |_   (_) ((_)(_)) ')
+		splash_str.append(' |  _/ | || __|  | || \'_|/ -_) ')
+		splash_str.append(' |_|   |_||_|    |_||_|  \___|  ')
+		self.screen.clear()
+		num_rows, num_cols = self.screen.getmaxyx()
+		self.screen.box()
+		title = '| PiFire Display |'
+		title_col = (num_cols // 2) - (len(title) // 2)
+		self.screen.addstr(0, title_col, title)
+		splash_str_start = (num_cols // 2) - (len(splash_str[7]) // 2)
+		splash_color = curses.color_pair(2)
+		for line in range(0, len(splash_str)):
+			self.screen.addstr(line+3, splash_str_start, splash_str[line], splash_color)
+		self.screen.refresh()
+		time.sleep(1)
 
 	def clear_display(self):
-		print('[Display] Clear Display Command Sent')
+		''' Screen Box '''
+		self.screen.clear()
+		num_rows, num_cols = self.screen.getmaxyx()
+		self.screen.box()
+		title = '| PiFire Display |'
+		title_col = (num_cols // 2) - (len(title) // 2)
+		self.screen.addstr(0, title_col, title)
+
+		self.screen.refresh()
 
 	def display_text(self, text):
-		print('====[Display]=====')
-		print('* Text: ' + str(text))
-		print('==================')
+		self.screen.clear()
+		num_rows, num_cols = self.screen.getmaxyx()
+		self.screen.box()
+		title = 'PiFire Display'
+		title_col = (num_cols // 2) - (len(title) // 2)
+		self.screen.addstr(0, title_col, title)
+		text_str_start = (num_cols // 2) - (len(text) // 2)
+		self.screen.addstr(3, text_str_start, text)
+		self.screen.refresh()
 
 	def display_network(self):
 		pass

@@ -59,51 +59,12 @@ def default_settings():
 		'shutdown_timer' : 60,
 		'startup_timer' : 240,
 		'auto_power_off' : False,
-		'four_probes' : False,
 		'dc_fan': False,
 		'standalone': True,
 		'units' : 'F',
 		'augerrate' : 0.3,  		# (grams per second) default auger load rate is 10 grams / 30 seconds
 		'first_time_setup' : True,  # Set to True on first setup, to run wizard on load 
 		'ext_data' : False,  # Set to True to allow tracking of extended data.  More data will be stored in the history database and can be reviewed in the CSV.
-	}
-
-	settings['apprise'] = {
-		'enabled': False,
-		'locations': {} 		# list of locations
-	}
-
-	settings['ifttt'] = {
-		'enabled': False,
-		'APIKey': '' 		# API Key for WebMaker IFTTT App notification
-	}
-
-	settings['pushbullet'] = {
-		'enabled': False,
-		'APIKey': '', 		# API Key for PushBullet notifications
-		'PublicURL': '' 	# Used in PushBullet notifications
-	}
-
-	settings['pushover'] = {
-		'enabled': False,
-		'APIKey': '', 		# API Key for Pushover notifications
-		'UserKeys': '', 	# Comma-separated list of user keys
-		'PublicURL': '' 	# Used in Pushover notifications
-	}
-
-	settings['onesignal'] = {
-		'enabled': False,
-		'uuid' : generate_uuid(),
-		'app_id' : '',
-		'devices' : {}
-	}
-
-	settings['influxdb'] = {
-		'enabled': False,
-		'url': '',
-		'token': '',
-		'org': '',
-		'bucket': ''
 	}
 
 	settings['outpins'] = {
@@ -252,7 +213,7 @@ def default_settings():
 
 	settings['start_to_mode'] = {
 		'after_startup_mode' : 'Smoke',
-		'grill1_setpoint' : 165  # If Hold, set the setpoint
+		'primary_setpoint' : 165  # If Hold, set the setpoint
 	}
 
 	settings['dashboard'] = {
@@ -269,7 +230,52 @@ def default_settings():
 		]
 	}
 
+	settings['notify_services'] = default_notify_services()
+
 	return settings
+
+def default_notify_services():
+	services = {}
+
+	services['apprise'] = {
+		'enabled': False,
+		'locations': {} 		# list of locations
+	}
+
+	services['ifttt'] = {
+		'enabled': False,
+		'APIKey': '' 		# API Key for WebMaker IFTTT App notification
+	}
+
+	services['pushbullet'] = {
+		'enabled': False,
+		'APIKey': '', 		# API Key for PushBullet notifications
+		'PublicURL': '' 	# Used in PushBullet notifications
+	}
+
+	services['pushover'] = {
+		'enabled': False,
+		'APIKey': '', 		# API Key for Pushover notifications
+		'UserKeys': '', 	# Comma-separated list of user keys
+		'PublicURL': '' 	# Used in Pushover notifications
+	}
+
+	services['onesignal'] = {
+		'enabled': False,
+		'uuid' : generate_uuid(),
+		'app_id' : '',
+		'devices' : {}
+	}
+
+	services['influxdb'] = {
+		'enabled': False,
+		'url': '',
+		'token': '',
+		'org': '',
+		'bucket': ''
+	}
+
+	return services
 
 def default_control():
 	settings = read_settings()
@@ -316,29 +322,9 @@ def default_control():
 		'reignitelaststate' : 'Smoke' # Set by control function to remember the last state we were in when the temp dropped below safety levels
 	}
 
-	control['setpoints'] = {
-		'grill' : 0,
-		'probe1' : 0,
-		'probe2' : 0,
-		'grill_notify' : 0
-	}
+	control['primary_setpoint'] = 0		# Setpoint Temperature for Primary Probe (i.e. Grill Probe)
 
-	control['notify_req'] = {
-		'grill' : False,
-		'probe1' : False,
-		'probe2' : False,
-		'timer' : False
-	}
-
-	control['notify_data'] = {
-		'hopper_low' : False,
-		'p1_shutdown' : False,
-		'p2_shutdown' : False,
-		'timer_shutdown' : False,
-		'p1_keep_warm' : False,
-		'p2_keep_warm' : False,
-		'timer_keep_warm' : False
-	}
+	control['notify_data'] = default_notify(settings)
 
 	control['timer'] = {
 		'start' : 0,
@@ -358,12 +344,6 @@ def default_control():
 
 	control['errors'] = []
 
-	control['probe_titles'] = {
-		'grill_title' : 'Grill',
-		'probe1_title' : 'Probe 1',
-		'probe2_title' : 'Probe 2',
-	}
-
 	control['smartstart'] = {
 		'startuptemp' : 0,
 		'profile_selected' : 0
@@ -372,6 +352,62 @@ def default_control():
 	control['prime_amount'] = 10  # Default Prime Amount in Grams
 
 	return(control)
+
+def default_notify(settings):
+	notify_data = []
+	''' Get list of Probes '''
+
+	probe_list = get_probe_list(settings)
+
+	''' Build list of probe notification data '''
+
+	for probe in probe_list:
+		notify_info = {
+			'label' : probe,
+			'type' : 'probe', 
+			'req' : False, 
+			'target' : 0, 
+			'shutdown' : False,
+			'keep_warm' : False, 
+		}
+		notify_data.append(notify_info)
+
+	''' Add Timer notification data to list '''
+	notify_info = {
+		'label' : 'Timer',
+		'type' : 'timer', 
+		'req' : False,
+		'shutdown' : False,
+		'keep_warm' : False, 
+	}
+	notify_data.append(notify_info)
+	
+	''' Add Hopper notification data to list '''
+	notify_info = {
+		'label' : 'Hopper',
+		'type' : 'hopper', 
+		'req' : settings['pelletlevel']['warning_enabled'], 
+		'last_check' : 0, 
+		'shutdown' : False,
+		'keep_warm' : False, 
+	}
+	notify_data.append(notify_info)
+
+	return notify_data
+
+def get_probe_list(settings):
+	probe_list = [] 
+	for probe in settings['probe_settings']['probe_map']['probe_info']:
+		probe_list.append(probe['label'])
+
+	return probe_list
+
+def get_notify_targets(notify_data):
+	notify_targets = {}
+	for item in notify_data:
+		if item['type'] == 'probe':
+			notify_targets[item['label']] = item['target']
+	return notify_targets
 
 """
 List of Tuples ('metric_key', default_value)
@@ -393,7 +429,7 @@ metrics_items = [
 	('fanontime', 0),
 	('fanontime_c', 0),  		# Converted Fan On Time
 	('smokeplus', True), 
-	('grill_settemp', 0),
+	('primary_setpoint', 0),
 	('smart_start_profile', 0), # Smart Start Profile Selected
 	('startup_temp', 0), # Smart Start Start Up Temp
 	('p_mode', 0), # P_mode selected
@@ -937,24 +973,19 @@ def read_history(num_items=0, flushhistory=False):
 	"""
 	Read history from Redis DB and populate a list of data
 
-	:param num_items: Items from end of the history
-	:param flushhistory: True to clean history / current. False otherwise
-	:return: List of history items
+	:param num_items: Items from end of the history (set to 0 for all items)
+	:param flushhistory: True=flush history & current, False=normal history read
+	:return: List of history dictionaries (each list item is timestamped 'T')
 	"""
 	global cmdsts
 	
-	temp_dict = {}  # Initialize data list
+	datalist = []  # Initialize data list
 
 	# If a flushhistory is requested, then flush the control:history key (and data)
 	if flushhistory:
 		if cmdsts.exists('control:history'):
 			cmdsts.delete('control:history')  # deletes the history
-			# These lines set the current temps to zero
-			cmdsts.hset('control:current', 'GrillTemp', 0)
-			cmdsts.hset('control:current', 'Probe1Temp', 0)
-			cmdsts.hset('control:current', 'Probe2Temp', 0)
-			event = 'WARNING: History data flushed.'
-			write_log(event)
+			read_current(zero_out=True)  # zero-out current data
 			write_metrics(flush=True)
 	else:
 		if cmdsts.exists('control:history'):
@@ -967,63 +998,53 @@ def read_history(num_items=0, flushhistory=False):
 
 			data = cmdsts.lrange('control:history', list_start, -1)
 			
-			''' Unpack data from json to dictionary '''
-
-			temp_dict = {}  # Create temporary dictionary to store all of the history data lists
-			temp_struct = json.loads(data[0])  # Load the initial history data into a temporary dictionary  
-			for key in temp_struct.keys():  # Iterate each of the keys
-				temp_dict[key] = []  # Create an empty list for each of the keys
-
+			''' Unpack data to list of dictionaries '''
 			for index in range(len(data)):
-				datastruct = json.loads(data[index])
-				for key, value in datastruct.items():
-					temp_dict[key].append(value)
-		else:
-			# Return empty data
-			temp_dict = {
-				'T' : [int(time.time() * 1000)], 
-				'GT1': [0], 
-				'GSP1': [0],
-				'PT1': [0], 
-				'PSP1': [0], 
-				'PT2': [0], 
-				'PSP2': [0],
-			}
-			tr_values = '0 0 0'
-			cmdsts.set('control:tuning', tr_values)
+				datalist.append(json.loads(data[index]))
+			
+	return(datalist)
 
-	return(temp_dict)
+	# TODO: Move to App for Interpretation of the data into graphs
+	temp_dict = {}  # Create temporary dictionary to store all of the history data lists
+	temp_struct = json.loads(data[0])  # Load the initial history data into a temporary dictionary  
+	for key in temp_struct.keys():  # Iterate each of the keys
+		if key == 'T':
+			temp_dict['T'] = []
+		elif key in ['P', 'F', 'PSP', 'NSP', 'EXD']:
+			temp_dict[key] = {}
+			for subkey in temp_struct[key]:
+				temp_dict[key][subkey] = []
+				subkey
+		else: 
+			temp_dict[key] = []  # Create an empty list for any other keys
 
-def write_history(temp_struct, maxsizelines=28800, tuning_mode=False, ext_data=False):
+	for index in range(len(data)):
+		datastruct = json.loads(data[index])
+		for key, value in datastruct.items():
+			temp_dict[key].append(value)
+
+def write_history(in_data, maxsizelines=28800, tuning_mode=False, ext_data=False):
 	"""
 	Write History to Redis DB
 
-	:param temp_struct: TempStruct
+	:param in_data: History data to be written to the database 
 	:param maxsizelines: Maximum Line Size (Default 28800)
 	:param tuning_mode: True to populate tuning data otherwise False
+	:param ext_data: Extended data to be written to the databse 
 	"""
 	
 	global cmdsts
 
-	#time_now = datetime.datetime.now()
-	#time_str = str(int(time_now.timestamp() * 1000))
-	#datastring = time_str + ' ' + str(temp_struct['GrillTemp']) + ' ' + str(temp_struct['GrillSetPoint']) + ' ' + str(temp_struct['Probe1Temp']) + ' ' + str(temp_struct['Probe1SetPoint']) + ' ' + str(temp_struct['Probe2Temp']) + ' ' + str(temp_struct['Probe2SetPoint'])
-
 	# Create data structure for current temperature data and timestamp
 	datastruct = {}
 	datastruct['T'] = int(time.time() * 1000)
-	datastruct['GT1'] = temp_struct['GrillTemp']
-	datastruct['GSP1'] = temp_struct['GrillSetPoint']
-	datastruct['PT1'] = temp_struct['Probe1Temp']
-	datastruct['PSP1'] = temp_struct['Probe1SetPoint']
-	datastruct['PT2'] = temp_struct['Probe2Temp']
-	datastruct['PSP2'] = temp_struct['Probe2SetPoint']
+	datastruct['P'] = in_data['probe_history']['primary']  # Contains primary probe temperature [key:value]
+	datastruct['F'] = in_data['probe_history']['food']  # Contains food probe temperature(s) [key:value pairs]
+	datastruct['PSP'] = in_data['primary_setpoint']  # Setpoint for the primary probe (non-notify setpoint) [value]
+	datastruct['NT'] = in_data['notify_targets']  # Notification Target Temps for all probes
 
 	if ext_data:
-		# For any key/value pairs that were passed in, and not in the above standard values, add them to the database
-		for key in temp_struct.keys():
-			if key not in ['GrillTemp', 'GrillSetPoint', 'Probe1Temp', 'Probe1SetPoint', 'Probe2Temp', 'Probe2SetPoint']:
-				datastruct[key] = temp_struct[key]
+		datastruct['EXD'] = in_data['ext_data']
 
 	# Push data string to the list in the last position
 	cmdsts.rpush('control:history', json.dumps(datastruct))
@@ -1032,63 +1053,61 @@ def write_history(temp_struct, maxsizelines=28800, tuning_mode=False, ext_data=F
 	if cmdsts.llen('control:history') > maxsizelines:
 		cmdsts.lpop('control:history')
 
-	# Set current values in the control:current hash
-	cmdsts.hset('control:current', 'GrillTemp', temp_struct['GrillTemp'])
-	cmdsts.hset('control:current', 'Probe1Temp', temp_struct['Probe1Temp'])
-	cmdsts.hset('control:current', 'Probe2Temp', temp_struct['Probe2Temp'])
+	# Set current values in control:current
+	current = {}
+	current['P'] = in_data['probe_history']['primary']
+	current['F'] = in_data['probe_history']['food']
+	cmdsts.set('control:current', json.dumps(current))
 
 	# If in tuning mode, populate the Tr data in the database 
 	if tuning_mode:
-		tr_values = str(int(temp_struct['GrillTr'])) + ' ' + str(int(temp_struct['Probe1Tr'])) + ' ' + str(int(
-			temp_struct['Probe2Tr']))
-		cmdsts.set('control:tuning', tr_values)
+		cmdsts.set('control:tuning', json.dumps(in_data['probe_history']['tr']))
 
+'''
 def read_raw_history():
 	global cmdsts
 	return cmdsts.lrange('control:history', 1, -1)
+'''
 
 def read_current(zero_out=False):
 	"""
 	Read current.log and populate a list of data
 
 	:param zero_out: True to zero out current. False otherwise
-	:return: Current Probe Temps [0, 0, 0]
+	:return: Current probe temps structure
 	"""
 	global cmdsts
 	
-	cur_probe_temps = [0, 0, 0]
-
-	if not cmdsts.exists('control:current') or zero_out:
-		cmdsts.hset('control:current', 'GrillTemp', 0)
-		cmdsts.hset('control:current', 'Probe1Temp', 0)
-		cmdsts.hset('control:current', 'Probe2Temp', 0)
+	if not cmdsts.exists('control:current'):
+		current = {}
 	else:
-		cur_probe_temps[0] = cmdsts.hget('control:current', 'GrillTemp')
-		cur_probe_temps[1] = cmdsts.hget('control:current', 'Probe1Temp')
-		cur_probe_temps[2] = cmdsts.hget('control:current', 'Probe2Temp')
+		current = json.loads(cmdsts.get('control:current'))
+
+	if zero_out:
+		if 'P' in current.keys():
+			for probe in current['P']: 
+				current['P'][probe] = 0
+		if 'F' in current.keys():
+			for probe in current['F']: 
+				current['F'][probe] = 0
+		cmdsts.set('control:current', json.dumps(current))
 	
-	return(cur_probe_temps)
+	return(current)
 
 def read_tr():
 	"""
-	Read tr from Redis DB and populate a list of data
+	Read tr from Redis DB and return structure
 
-	:return: cur_probe_tr
+	:return: Current probe Tr values structure
 	"""
 	global cmdsts
-	try:
-		tr_data = cmdsts.get('control:tuning')
-	except:
-		cur_probe_tr = [0,0,0]
-		write_log('WARNING: Issue reading tr data from database.')
-		return(cur_probe_tr)
-
-	if tr_data is not None:
-		cur_probe_tr = tr_data.split(' ',2) # Splits out each of the values into separate list items
+	
+	if not cmdsts.exists('control:tuning'):
+		tr_data = {}
 	else: 
-		cur_probe_tr = [0,0,0]  # If data isn't available from database yet, output 0's
+		tr_data = json.loads(cmdsts.get('control:tuning'))
 
-	return(cur_probe_tr)
+	return(tr_data)
 
 def convert_temp(units, temp):
 	"""

@@ -11,10 +11,10 @@ class InfluxNotificationHandler:
 
 		t1 = threading.Thread(target=self.publishing_thread, daemon=True,
 							  args=(
-								  settings['influxdb']['url'],
-								  settings['influxdb']['token'],
-								  settings['influxdb']['org'],
-								  settings['influxdb']['bucket']))
+								  settings['notify_services']['influxdb']['url'],
+								  settings['notify_services']['influxdb']['token'],
+								  settings['notify_services']['influxdb']['org'],
+								  settings['notify_services']['influxdb']['bucket']))
 		t1.start()
 
 	def publishing_thread(self, url, token, org, bucket):
@@ -64,6 +64,7 @@ class InfluxNotificationHandler:
 				return data[k]
 			return default
 
+		# TODO: Fixup these outputs
 		p = Point(name).time(time=datetime.utcnow()) \
 			.field("GrillTemp", float(get_or_default(in_data, 'GrillTemp', 0.0))) \
 			.field('GrillSetPoint', float(get_or_default(in_data, 'GrillSetPoint', 0.0))) \

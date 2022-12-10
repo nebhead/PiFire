@@ -22,13 +22,13 @@ class Display:
 		pass 
 
 	def display_splash(self):
-		print('[Splash] PiFire Display Starting Up')
+		pass
 
 	def clear_display(self):
-		print('[Display] Clear Display Command Sent')
+		pass
 
 	def display_text(self, text):
-		print(f'[Display] {text}')
+		pass
 
 	def display_network(self):
-		print(f'[Display] Network')
+		pass 

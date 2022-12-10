@@ -102,7 +102,7 @@ try:
 
 except:
 	settings['probe_settings']['probe_map'] = default_probe_map(settings["probe_settings"]['probe_profiles'])
-	write_settings(settings)
+	#write_settings(settings)
 	probe_complex = ProbesMain(settings["probe_settings"]["probe_map"], settings['globals']['units'])
 	error_event = f'An error occurred loading the probes module(s).  The prototype ' \
 		f'module has been loaded instead.  This sometimes means that the hardware is not connected ' \
@@ -206,38 +206,6 @@ write_event(settings, "* Hopper Level Checked @ " + str(pelletdb['current']['hop
  	Function Definitions
 *****************************************
 '''
-
-def _get_status(grill_platform, control, settings, pelletdb):
-	"""
-	Get Status Details for Display Function
-
-	:param grill_platform: Grill Platform
-	:param control: Control
-	:param settings: Settings
-	:param pelletdb: Pellet DB
-	:return: status_data
-	"""
-	status_data = {}
-	status_data['outpins'] = {}
-
-	current = grill_platform.get_output_status()  # Get current pin settings
-
-	for item in settings['outpins']:
-		try:
-			status_data['outpins'][item] = current[item]
-		except KeyError:
-			continue
-
-	#status_data['mode'] = control['mode']  # Get current mode
-	status_data['notify_req'] = control['notify_req']  # Get any flagged notifications
-	status_data['timer'] = control['timer']  # Get the timer information
-	status_data['ipaddress'] = '192.168.10.43'  # Future implementation (TODO)
-	status_data['s_plus'] = control['s_plus']
-	status_data['hopper_level'] = pelletdb['current']['hopper_level']
-	status_data['units'] = settings['globals']['units']
-
-	return (status_data)
-
 def _start_fan(settings, duty_cycle=None):
 	"""
 	Check for DC Fan and set duty cycle when turning ON otherwise turn AC fan ON normally.
@@ -281,23 +249,28 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			# If requested, set Timer Trigger
 			if control['recipe']['step_data']['timer'] > 0:
 				# Set notify/trigger for timer
-				control['notify_req']['timer'] = True
-				timer_start = time.time()
-				control['timer']['start'] = timer_start
-				control['timer']['paused'] = 0
-				control['timer']['end'] = timer_start + (control['recipe']['step_data']['timer'] * 60)
-				control['timer']['shutdown'] = False
-				control['notify_data']['timer_shutdown'] = False
-				control['notify_data']['timer_keep_warm'] = False
-				recipe_trigger_set = True 
+				for index, item in enumerate(control['notify_data']):
+					if item['type'] == 'timer':
+						control['notify_data'][index]['req'] = True
+						timer_start = time.time()
+						control['timer']['start'] = timer_start
+						control['timer']['paused'] = 0
+						control['timer']['end'] = timer_start + (control['recipe']['step_data']['timer'] * 60)
+						control['timer']['shutdown'] = False
+						control['notify_data'][index]['shutdown'] = False
+						control['notify_data'][index]['keep_warm'] = False
+						recipe_trigger_set = True 
 
 			# If requested, set Probe Temp Triggers
 			for probe, value in control['recipe']['step_data']['trigger_temps'].items():
 				if value > 0:
 					# Set notify/trigger for probe
-					control['setpoints'][probe] = value
-					control['notify_req'][probe] = True
-					recipe_trigger_set = True 
+					for index, item in enumerate(control['notify_data']):
+						if item['type'] == 'probe' and item['label'] == probe:
+							control['notify_data'][index]['target'] = value
+							control['notify_data'][index]['req'] = True
+							recipe_trigger_set = True
+							break 
 
 			if recipe_trigger_set: 
 				write_control(control)
@@ -335,7 +308,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	metrics = read_metrics()
 	metrics['mode'] = mode
 	metrics['smokeplus'] = control['s_plus'] 
-	metrics['grill_settemp'] = control['setpoints']['grill']
+	metrics['primary_setpoint'] = control['primary_setpoint']
 	metrics['pellet_level_start'] = pelletdb['current']['hopper_level']
 	current_pellet_id = pelletdb['current']['pelletid']
 	pellet_brand = pelletdb['archive'][current_pellet_id]['brand']
@@ -369,7 +342,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		LidOpenEventExpires = 0
 		PIDControl = pid.PID(settings['cycle_data']['PB'], settings['cycle_data']['Ti'], settings['cycle_data']['Td'],
 							 settings['cycle_data']['center'])
-		PIDControl.set_target(control['setpoints']['grill'])  # Initialize with setpoint for grill
+		PIDControl.set_target(control['primary_setpoint'])  # Initialize with setpoint for grill
 		write_event(settings, '* On Time = ' + str(OnTime) + ', OffTime = ' + str(OffTime) + ', CycleTime = ' + str(
 			CycleTime) + ', CycleRatio = ' + str(CycleRatio))
 
@@ -381,9 +354,6 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		OffTime = 1  # Auger Off Time
 		CycleTime = OnTime + OffTime  # Total Cycle Time
 		CycleRatio = RawCycleRatio = OnTime / CycleTime  # Ratio of OnTime to CycleTime
-
-	# Check pellets level notification upon starting cycle
-	check_notify_pellets(control, settings, pelletdb)
 
 	# Get initial probe sensor data, temperatures 
 	sensor_data = probe_complex.read_probes()
@@ -468,9 +438,6 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	# Set time since last control check
 	control_check_time = start_time
 
-	# Set time since last pellet level check
-	pellets_check_time = start_time
-
 	# Set time since fan speed update
 	fan_update_time = start_time
 
@@ -502,11 +469,6 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		if (now - control_check_time) > 0.1:
 			control = read_control()
 			control_check_time = now
-
-		# Check for pellet level notifications
-		if (now - pellets_check_time) > (settings['pelletlevel']['warning_time'] * 60):
-			check_notify_pellets(control, settings, pelletdb)
-			pellets_check_time = now
 
 		# Check if new mode has been requested
 		if control['updated']:
@@ -613,36 +575,29 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		ptemp = list(sensor_data['primary'].values())[0]  # Primary Temperature or the Pit Temperature
 
 		in_data = {}
-		in_data['GrillTemp'] = ptemp
-		in_data['GrillSetPoint'] = control['setpoints']['grill']
-		in_data['Probe1Temp'] = list(sensor_data['food'].values())[0]
-		in_data['Probe1SetPoint'] = control['setpoints']['probe1']
-		in_data['Probe2Temp'] = list(sensor_data['food'].values())[1]
-
-		in_data['Probe2SetPoint'] = control['setpoints']['probe2']
-		in_data['GrillNotifyPoint'] = control['setpoints']['grill_notify']
-
-		in_data['GrillTr'] = list(sensor_data['tr'].values())[0]  # For Temp Resistance Tuning
-		in_data['Probe1Tr'] = list(sensor_data['tr'].values())[1]  # For Temp Resistance Tuning
-		in_data['Probe2Tr'] = list(sensor_data['tr'].values())[2]  # For Temp Resistance Tuning
+		in_data['probe_history'] = sensor_data 
+		in_data['primary_setpoint'] = control['primary_setpoint']
+		in_data['notify_targets'] = get_notify_targets(control['notify_data'])
 
 		# If Extended Data Mode is Enabled, Populate Extra Data Here
 		if settings['globals']['ext_data']:
-			in_data['CR'] = CycleRatio if 'CycleRatio' in locals() else 0
-			in_data['RCR'] = RawCycleRatio if 'RawCycleRatio' in locals() else 0
+			in_data['ext_data']['CR'] = CycleRatio if 'CycleRatio' in locals() else 0
+			in_data['ext_data']['RCR'] = RawCycleRatio if 'RawCycleRatio' in locals() else 0
+			in_data['ext_data']['Aux'] = sensor_data['aux']
 
 		# Check to see if there are any pending notifications (i.e. Timer / Temperature Settings)
 		control = check_notify(in_data, control, settings, pelletdb, grill_platform)
 
 		# Send Current Status / Temperature Data to Display Device every 0.5 second (Display Refresh)
 		if (now - display_toggle_time) > 0.5:
-			status_data = _get_status(grill_platform, control, settings, pelletdb)
+			status_data = {} 
+			status_data['notify_data'] = control['notify_data']  # Get any flagged notifications
+			status_data['timer'] = control['timer']  # Get the timer information
+			status_data['s_plus'] = control['s_plus']
+			status_data['hopper_level'] = pelletdb['current']['hopper_level']
+			status_data['units'] = settings['globals']['units']
 			status_data['mode'] = mode
 			status_data['recipe'] = True if control['mode'] == 'Recipe' else False
-			if control['mode'] == 'Recipe':
-				status_data['recipe_paused'] = True if control['recipe']['step_data']['triggered'] and control['recipe']['step_data']['pause'] else False
-			else: 
-				status_data['recipe_paused'] = False
 			status_data['start_time'] = start_time
 			status_data['start_duration'] = startup_timer
 			status_data['shutdown_duration'] = settings['globals']['shutdown_timer']
@@ -650,6 +605,17 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			status_data['prime_amount'] = prime_amount if mode == 'Prime' else 0  # Enable Display of Prime Amount
 			status_data['lid_open_detected'] = LidOpenDetect if mode == 'Hold' else False
 			status_data['lid_open_endtime'] = LidOpenEventExpires if mode == 'Hold' else 0
+			if control['mode'] == 'Recipe':
+				status_data['recipe_paused'] = True if control['recipe']['step_data']['triggered'] and control['recipe']['step_data']['pause'] else False
+			else: 
+				status_data['recipe_paused'] = False
+			status_data['outpins'] = {}
+			current = grill_platform.get_output_status()  # Get current pin settings
+			for item in settings['outpins']:
+				try:
+					status_data['outpins'][item] = current[item]
+				except KeyError:
+					continue
 			display_device.display_status(in_data, status_data)
 			display_toggle_time = time.time()  # Reset the display_toggle_time to current time
 
@@ -678,11 +644,11 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 
 		if mode in ('Smoke', 'Hold'):
 			# Check if target temperature has been achieved before utilizing Smoke Plus Mode
-			if mode == 'Hold' and ptemp >= control['setpoints']['grill'] and not target_temp_achieved:
+			if mode == 'Hold' and ptemp >= control['primary_setpoint'] and not target_temp_achieved:
 				target_temp_achieved = True
 
 			# Check if a lid open event has occurred only after hold mode has been achieved
-			if target_temp_achieved and settings['cycle_data']['LidOpenDetectEnabled'] and (ptemp < (control['setpoints']['grill'] * ((100 - settings['cycle_data']['LidOpenThreshold']) / 100))):
+			if target_temp_achieved and settings['cycle_data']['LidOpenDetectEnabled'] and (ptemp < (control['primary_setpoint'] * ((100 - settings['cycle_data']['LidOpenThreshold']) / 100))):
 				LidOpenDetect = True
 				grill_platform.auger_off()
 				_start_fan(settings)
@@ -699,13 +665,13 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			if (dc_fan and mode == 'Hold' and control['pwm_control'] and
 					(now - fan_update_time) > settings['pwm']['update_time']):
 				fan_update_time = now
-				if ptemp > control['setpoints']['grill']:
+				if ptemp > control['primary_setpoint']:
 					control['duty_cycle'] = settings['pwm']['min_duty_cycle']
 					write_control(control)
 				else:
 					# Cycle through profiles, and set duty cycle if setpoint temp is within range
 					for temp_profile in range(0, len(settings['pwm']['temp_range_list'])):
-						if ((control['setpoints']['grill'] - ptemp) <=
+						if ((control['primary_setpoint'] - ptemp) <=
 								settings['pwm']['temp_range_list'][temp_profile]):
 							duty_cycle = settings['pwm']['profiles'][temp_profile]['duty_cycle']
 							duty_cycle = max(duty_cycle, settings['pwm']['min_duty_cycle'])
@@ -861,7 +827,7 @@ def _next_mode(next_mode, setpoint=0):
 	# If no other request, then transition to next mode, otherwise exit
 	if not control['updated']:
 		control['mode'] = next_mode
-		control['setpoints']['grill'] = setpoint  # If next mode is 'Hold'
+		control['primary_setpoint'] = setpoint  # If next mode is 'Hold'
 		control['updated'] = True 
 		write_control(control)
 	return control 
@@ -912,7 +878,7 @@ def _recipe_mode(grill_platform, probe_complex, display_device, dist_device, sta
 		control['recipe']['step'] = step_num 
 		control['recipe']['step_data'] = recipe['steps'][step_num]
 		control['recipe']['step_data']['triggered'] = False
-		control['setpoints']['grill'] = recipe['steps'][step_num]['hold_temp']  # Set Hold Temp if applicable.  
+		control['primary_setpoint'] = recipe['steps'][step_num]['hold_temp']  # Set Hold Temp if applicable.  
 		control['updated'] = False  # Clear Updated Flag if Set
 		write_control(control)
 		# 4b. Start the recipe step work cycle
@@ -976,16 +942,17 @@ while True:
 	control = read_control()
 
 	# Check if there is a timer running, see if it has expired, send notification and reset
-	if control['notify_req']['timer']:
-		if time.time() >= control['timer']['end']:
-			send_notifications("Timer_Expired", control, settings, pelletdb)
-			control['notify_req']['timer'] = False
-			control['timer']['start'] = 0
-			control['timer']['paused'] = 0
-			control['timer']['end'] = 0
-			control['notify_data']['timer_shutdown'] = False
-			control['notify_data']['timer_keep_warm'] = False
-			write_control(control)
+	for index, item in enumerate(control['notify_data']):
+		if item['type'] == 'timer' and item['req']:
+			if time.time() >= control['timer']['end']:
+				send_notifications("Timer_Expired", control, settings, pelletdb)
+				control['notify_data'][index]['req'] = False
+				control['timer']['start'] = 0
+				control['timer']['paused'] = 0
+				control['timer']['end'] = 0
+				control['notify_data'][index]['shutdown'] = False
+				control['notify_data'][index]['keep_warm'] = False
+				write_control(control)
 
 	# Check if user changed hopper levels and update if required
 	if control['distance_update']:
@@ -1035,8 +1002,8 @@ while True:
 				metrics = read_metrics()
 				metrics['mode'] = 'Stop'
 				write_metrics(metrics)
-				raw_history = read_raw_history()
-				create_cookfile(raw_history)
+				all_history = read_history(num_items=0)
+				#TODO create_cookfile(all_history)
 
 			if control['status'] == 'monitor' and control['mode'] == 'Error':
 				grill_platform.power_on()
@@ -1078,7 +1045,7 @@ while True:
 			_work_cycle('Prime', grill_platform, probe_complex, display_device, dist_device)
 			# Select Next Mode
 			settings = read_settings()
-			_next_mode(control['next_mode'], setpoint=settings['start_to_mode']['grill1_setpoint'])			
+			_next_mode(control['next_mode'], setpoint=settings['start_to_mode']['primary_setpoint'])			
 
 		# Startup (startup sequence)
 		elif control['mode'] == 'Startup':
@@ -1096,7 +1063,7 @@ while True:
 			_work_cycle('Startup', grill_platform, probe_complex, display_device, dist_device)
 			# Select Next Mode
 			settings = read_settings()
-			_next_mode(control['next_mode'], setpoint=settings['start_to_mode']['grill1_setpoint'])			
+			_next_mode(control['next_mode'], setpoint=settings['start_to_mode']['primary_setpoint'])			
 
 		# Smoke (smoke cycle)
 		elif control['mode'] == 'Smoke':
@@ -1138,7 +1105,7 @@ while True:
 				write_event(settings, "Warning: PiFire is set to OFF. This doesn't prevent reignite, "
 									   "but this means the switch won't behave as normal.")
 			control['next_mode'] = control['safety']['reignitelaststate']
-			setpoint = control['setpoints']['grill']
+			setpoint = control['primary_setpoint']
 			write_control(control)
 			_work_cycle('Reignite', grill_platform, probe_complex, display_device, dist_device)
 			_next_mode(control['next_mode'], setpoint=setpoint)
