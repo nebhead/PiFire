@@ -12,7 +12,7 @@
 #
 # *****************************************
 
-from flask import Flask, request, abort, render_template, make_response, send_file, jsonify, redirect
+from flask import Flask, request, abort, render_template, make_response, send_file, jsonify, redirect, render_template_string
 from flask_mobility import Mobility
 from flask_socketio import SocketIO
 from flask_qrcode import QRcode
@@ -65,30 +65,11 @@ def dash():
 			break
 
 	return render_template(dash_template,
-						   set_points=control['setpoints'],
-						   notify_req=control['notify_req'],
-						   probes_enabled=settings['probe_settings']['probes_enabled'],
+						   settings=settings,
 						   control=control,
+						   errors=errors,
 						   page_theme=settings['globals']['page_theme'],
-						   grill_name=settings['globals']['grill_name'],
-						   units=settings['globals']['units'],
-						   dc_fan=settings['globals']['dc_fan'],
-						   errors=errors)
-
-@app.route('/dashdata')
-def dash_data():
-	global settings
-	control = read_control()
-
-	probes_enabled = settings['probe_settings']['probes_enabled']
-	cur_probe_temps = read_current()
-
-	return jsonify({ 'cur_probe_temps' : cur_probe_temps, 'probes_enabled' : probes_enabled,
-					 'current_mode' : control['mode'], 'set_points' : control['setpoints'],
-					 'notify_req' : control['notify_req'], 'splus' : control['s_plus'],
-					 'splus_default' : settings['smoke_plus']['enabled'],
-					 'pwm_control' : control['pwm_control'],
-					 'probe_titles' :  control['probe_titles']})
+						   grill_name=settings['globals']['grill_name'])
 
 @app.route('/hopperlevel')
 def hopper_level():
@@ -107,8 +88,11 @@ def timer():
 						 'end' : control['timer']['end'], 'shutdown': control['timer']['shutdown']})
 	elif request.method == "POST": 
 		if 'input' in request.form:
+			for index, notify_obj in enumerate(control['notify_data']):
+				if notify_obj['type'] == 'timer':
+					break 
 			if 'timer_start' == request.form['input']: 
-				control['notify_req']['timer'] = True
+				control['notify_data'][index]['req'] = True
 				# If starting new timer
 				if control['timer']['paused'] == 0:
 					now = time.time()
@@ -121,14 +105,14 @@ def timer():
 						control['timer']['end'] = now + 60
 					if 'shutdownTimer' in request.form:
 						if request.form['shutdownTimer'] == 'true':
-							control['notify_data']['timer_shutdown'] = True
+							control['notify_data'][index]['shutdown'] = True
 						else: 
-							control['notify_data']['timer_shutdown'] = False
+							control['notify_data'][index]['shutdown'] = False
 					if 'keepWarmTimer' in request.form:
 						if request.form['keepWarmTimer'] == 'true':
-							control['notify_data']['timer_keep_warm'] = True
+							control['notify_data'][index]['keep_warm'] = True
 						else:
-							control['notify_data']['timer_keep_warm'] = False
+							control['notify_data'][index]['keep_warm'] = False
 					write_log('Timer started.  Ends at: ' + _epoch_to_time(control['timer']['end']))
 					write_control(control)
 				else:	# If Timer was paused, restart with new end time.
@@ -139,27 +123,26 @@ def timer():
 					write_control(control)
 			elif 'timer_pause' == request.form['input']:
 				if control['timer']['start'] != 0:
-					control['notify_req']['timer'] = False
+					control['notify_data'][index]['req'] = False
 					now = time.time()
 					control['timer']['paused'] = now
 					write_log('Timer paused.')
 					write_control(control)
 				else:
-					control['notify_req']['timer'] = False
+					control['notify_data'][index]['req'] = False
 					control['timer']['start'] = 0
 					control['timer']['end'] = 0
 					control['timer']['paused'] = 0
-					control['notify_data']['timer_shutdown'] = False
-					control['notify_data']['timer_keep_warm'] = False
+					control['notify_data'][index]['shutdown'] = False
+					control['notify_data'][index]['keep_warm'] = False
 					write_log('Timer cleared.')
 					write_control(control)
 			elif 'timer_stop' == request.form['input']:
-				control['notify_req']['timer'] = False
+				control['notify_data'][index]['req'] = False
 				control['timer']['start'] = 0
 				control['timer']['end'] = 0
-				control['timer']['paused'] = 0
-				control['notify_data']['timer_shutdown'] = False
-				control['notify_data']['timer_keep_warm'] = False
+				control['notify_data'][index]['shutdown'] = False
+				control['notify_data'][index]['keep_warm'] = False
 				write_log('Timer stopped.')
 				write_control(control)
 		return jsonify({'result':'success'})
@@ -1914,25 +1897,34 @@ def api_page(action=None):
 			control=read_control()
 			return jsonify({'control':control}), 201
 		elif action == 'current':
-			current = read_current()
-			current_temps = {
-				'grill_temp' : int(float(current[0])),
-				'probe1_temp' : int(float(current[1])),
-				'probe2_temp' : int(float(current[2]))
-			}
+			''' Only fetch data from RedisDB or locally available, to improve performance '''
+			current_temps = read_current()
 			control = read_control()
-			current_setpoints = control['setpoints']
-			pelletdb = read_pellet_db()
+			''' Create string of probes that can be hashed to ensure UI integrity '''
+			probe_string = ''
+			for group in current_temps:
+				for probe in current_temps[group]:
+					probe_string += probe
+			probe_string += settings['globals']['units']
+
+			primary_setpoint = control['primary_setpoint']
+			notify_data = control['notify_data']
+
 			status = {}
 			status['mode'] = control['mode']
 			status['status'] = control['status']
 			status['s_plus'] = control['s_plus']
 			status['units'] = settings['globals']['units']
 			status['name'] = settings['globals']['grill_name']
-			status['pelletlevel'] = pelletdb['current']['hopper_level']
+			status['primary_setpoint'] = control['primary_setpoint']
+			status['ui_hash'] = hash(probe_string)
+			return jsonify({'current':current_temps, 'primary_setpoint':primary_setpoint, 'notify_data':notify_data, 'status':status}), 201
+		elif action == 'hopper':
+			pelletdb = read_pellet_db()
+			pelletlevel = pelletdb['current']['hopper_level']
 			pelletid = pelletdb['current']['pelletid']
-			status['pellets'] = f'{pelletdb["archive"][pelletid]["brand"]} {pelletdb["archive"][pelletid]["wood"]}'
-			return jsonify({'current':current_temps, 'setpoints':current_setpoints, 'status':status}), 201
+			pellets = f'{pelletdb["archive"][pelletid]["brand"]} {pelletdb["archive"][pelletid]["wood"]}'
+			return jsonify({'hopper_level': pelletlevel, 'hopper_pellets': pellets}) 
 		else:
 			return jsonify({'Error':'Received GET request, without valid action'}), 404
 	elif request.method == 'POST':
@@ -1952,7 +1944,7 @@ def api_page(action=None):
 				control = read_control()
 				for key in control.keys():
 					if key in request_json.keys():
-						if key in ['setpoints', 'safety', 'notify_req', 'notify_data', 'timer', 'manual']:
+						if key in ['safety', 'timer', 'manual']:
 							control[key].update(request_json.get(key, {}))
 						else:
 							control[key] = request_json[key]

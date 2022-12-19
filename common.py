@@ -363,7 +363,8 @@ def default_notify(settings):
 
 	for probe in probe_list:
 		notify_info = {
-			'label' : probe,
+			'label' : probe[0],
+			'name' : probe[1], 
 			'type' : 'probe', 
 			'req' : False, 
 			'target' : 0, 
@@ -398,7 +399,7 @@ def default_notify(settings):
 def get_probe_list(settings):
 	probe_list = [] 
 	for probe in settings['probe_settings']['probe_map']['probe_info']:
-		probe_list.append(probe['label'])
+		probe_list.append((probe['label'] , probe['name']))
 
 	return probe_list
 
@@ -576,24 +577,6 @@ def _default_probe_profiles():
 
 	return probe_profiles
 
-def _default_grill_probes():
-
-	grill_probes = {}
-
-	grill_probes['grill_probe1'] = {
-		'name' : 'Grill Probe 1'
-	}
-
-	grill_probes['grill_probe2'] = {
-		'name' : 'Grill Probe 2'
-	}
-
-	grill_probes['grill_probe3'] = {
-		'name' : 'Avg Grill Probes'
-	}
-
-	return grill_probes
-
 def default_probe_map(probe_profiles):
 
 	probe_devices = []
@@ -621,9 +604,13 @@ def default_probe_map(probe_profiles):
 	probe_info.append(grill_probe)
 
 	for index in range(1,4):
+		name = f'Probe-{index}'
+		label = "".join([x for x in name if x.isalnum()])
+		#safe_label = "".join([x for x in name if x.isalnum()])
 		probe = {
 				'type' : 'Food',
-				'label' : f'Probe-{index}',
+				'label' : label,
+				'name' : name,
 				'profile' : probe_profiles['TWPS00'],
 				'device' : 'proto_adc',
 				'port' : f'ADC{index}',
@@ -1023,13 +1010,12 @@ def read_history(num_items=0, flushhistory=False):
 		for key, value in datastruct.items():
 			temp_dict[key].append(value)
 
-def write_history(in_data, maxsizelines=28800, tuning_mode=False, ext_data=False):
+def write_history(in_data, maxsizelines=28800, ext_data=False):
 	"""
 	Write History to Redis DB
 
 	:param in_data: History data to be written to the database 
 	:param maxsizelines: Maximum Line Size (Default 28800)
-	:param tuning_mode: True to populate tuning data otherwise False
 	:param ext_data: Extended data to be written to the databse 
 	"""
 	
@@ -1053,21 +1039,19 @@ def write_history(in_data, maxsizelines=28800, tuning_mode=False, ext_data=False
 	if cmdsts.llen('control:history') > maxsizelines:
 		cmdsts.lpop('control:history')
 
-	# Set current values in control:current
-	current = {}
-	current['P'] = in_data['probe_history']['primary']
-	current['F'] = in_data['probe_history']['food']
-	cmdsts.set('control:current', json.dumps(current))
 
-	# If in tuning mode, populate the Tr data in the database 
-	if tuning_mode:
-		cmdsts.set('control:tuning', json.dumps(in_data['probe_history']['tr']))
+def write_current(in_data):
+	"""
+	Write current and populate a dictionary of data
 
-'''
-def read_raw_history():
+	:param in_data: dictionary containing current temperatures
+	"""
 	global cmdsts
-	return cmdsts.lrange('control:history', 1, -1)
-'''
+
+	current = {}
+	current['P'] = in_data['primary']
+	current['F'] = in_data['food']
+	cmdsts.set('control:current', json.dumps(current))
 
 def read_current(zero_out=False):
 	"""
@@ -1077,22 +1061,37 @@ def read_current(zero_out=False):
 	:return: Current probe temps structure
 	"""
 	global cmdsts
-	
+
+	if zero_out:
+		''' Build Probe Structure '''
+		settings = read_settings()
+		current = {
+			'P' : {}, 
+			'F' : {}
+		}
+
+		for probe in settings['probe_settings']['probe_map']['probe_info']:
+			if probe['type'] == 'Primary':
+				current['P'][probe['label']] = 0
+			if probe['type'] == 'Food':
+				current['F'][probe['label']] = 0
+
+		cmdsts.set('control:current', json.dumps(current))
+
 	if not cmdsts.exists('control:current'):
 		current = {}
 	else:
 		current = json.loads(cmdsts.get('control:current'))
-
-	if zero_out:
-		if 'P' in current.keys():
-			for probe in current['P']: 
-				current['P'][probe] = 0
-		if 'F' in current.keys():
-			for probe in current['F']: 
-				current['F'][probe] = 0
-		cmdsts.set('control:current', json.dumps(current))
 	
 	return(current)
+
+def write_tr(tr_data):
+	"""
+	Write tr values to Redis DB
+
+	"""
+	global cmdsts
+	cmdsts.set('control:tuning', json.dumps(tr_data))
 
 def read_tr():
 	"""

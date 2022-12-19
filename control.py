@@ -435,9 +435,6 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	# Set time since toggle for hopper check
 	hopper_toggle_time = start_time
 
-	# Set time since last control check
-	control_check_time = start_time
-
 	# Set time since fan speed update
 	fan_update_time = start_time
 
@@ -450,6 +447,8 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	# ============ Main Work Cycle ============
 	while status == 'Active':
 		now = time.time()
+
+		control = read_control()
 
 		# Check if user changed settings and reload
 		if control['settings_update']:
@@ -464,11 +463,6 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			dist_device.update_distances(empty, full)
 			control['distance_update'] = False
 			write_control(control)
-
-		# Check for update in control status every 0.1 seconds
-		if (now - control_check_time) > 0.1:
-			control = read_control()
-			control_check_time = now
 
 		# Check if new mode has been requested
 		if control['updated']:
@@ -584,6 +578,11 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			in_data['ext_data']['CR'] = CycleRatio if 'CycleRatio' in locals() else 0
 			in_data['ext_data']['RCR'] = RawCycleRatio if 'RawCycleRatio' in locals() else 0
 			in_data['ext_data']['Aux'] = sensor_data['aux']
+
+		# Save current data to the database 
+		write_current(in_data['probe_history'])
+		if control['tuning_mode']:
+			write_tr(in_data['probe_history']['tr'])
 
 		# Check to see if there are any pending notifications (i.e. Timer / Temperature Settings)
 		control = check_notify(in_data, control, settings, pelletdb, grill_platform)
@@ -741,7 +740,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		if (now - temp_toggle_time) > 3:
 			temp_toggle_time = time.time()
 			ext_data = True if settings['globals']['ext_data'] else False  # If passing in extended data, set to True
-			write_history(in_data, tuning_mode=control['tuning_mode'], ext_data=ext_data)
+			write_history(in_data, ext_data=ext_data)
 
 		# Check if startup time has elapsed since startup/reignite mode started
 		if mode in ('Startup', 'Reignite'):

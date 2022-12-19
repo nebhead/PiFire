@@ -1,0 +1,112 @@
+{% macro render_container(settings, control) %} 
+<!-- Control Panel -->
+<div class="container" id="cp_container">
+	{% if settings['globals']['page_theme'] == 'dark' %}
+	<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #aaaaaa;">
+	{% else %}
+	<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #dddddd;">
+	{% endif %}
+    <span class="navbar-text">
+
+    <!-- Inactive Toolbar -->
+
+    <div class="btn-toolbar justify-content-center" role="toolbar" id="inactive_group"{% if control['mode'] not in ['Stop', 'Startup', 'Monitor', 'Error']%} style="display:none"{% endif %}>
+        <div id="prime_group" class="btn-group mr-2 dropup shadow" role="group" data-toggle="tooltip" data-placement="top" title="Prime the Firepot">
+            <button type="button" class="btn btn-outline-primary border border-secondary dropdown-toggle" id="prime_btn" data-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-angle-double-right"></i>
+            </button>
+            <div class="dropdown-menu">
+              <!-- Dropdown menu links -->
+              <button class="dropdown-item" type="button" onclick="setPrime(10, 'Stop')">Prime 10g</button>
+              <button class="dropdown-item" type="button" onclick="setPrime(25, 'Stop')">Prime 25g</button>
+              <button class="dropdown-item" type="button" onclick="setPrime(50, 'Stop')">Prime 50g</button>
+              <button class="dropdown-item" type="button" onclick="setPrime(10, 'Startup')">Prime 10g & Startup</button>
+              <button class="dropdown-item" type="button" onclick="setPrime(25, 'Startup')">Prime 25g & Startup</button>
+              <button class="dropdown-item" type="button" onclick="setPrime(50, 'Startup')">Prime 50g & Startup</button>
+            </div>
+        </div>
+        <div id="inactive_core_group" class="btn-group mr-2 shadow" role="group">
+            <button type="button" data-toggle="tooltip" title="Startup" class="btn btn-outline-success border border-secondary" id="startup_btn" name="setmodestartup" value="true"><i class="fas fa-play"></i></button>
+            <button type="button" data-toggle="tooltip" title="Monitor" class="btn btn-outline-secondary border border-secondary" id="monitor_btn" name="setmodemonitor" value="true"><i class="fas fa-glasses"></i></button>
+            <button type="button" data-toggle="tooltip" title="Smoke Mode" class="btn btn-outline-secondary border border-secondary" id="smoke_inactive_btn" name="setmodesmoke" value="true"{% if control['mode'] not in ['Startup', 'Reignite'] %} style="display:none"{% endif %}><i class="fas fa-cloud"></i></button>
+            <button type="button" data-toggle="modal" data-target="#setpointModal" class="btn btn-outline-secondary border border-secondary" id="hold_inactive_btn"{% if control['mode'] not in ['Startup', 'Reignite'] %} style="display:none"{% endif %}><i class="fas fa-crosshairs"></i></button>
+            <button type="button" data-toggle="tooltip" title="Stop" class="btn btn-outline-secondary border border-secondary" id="stop_inactive_btn" name="setmodestop" value="true" ><i class="fas fa-stop"></i></button>
+        </div>
+        <div id="error_group" class="btn-group" role="group" style="display:none">
+            <!-- ERROR Button Indicator -->
+            <button type="button" data-toggle="tooltip" title="Error!" class="btn btn-danger text-yellow" id="error_btn" name="error_btn" value="true"><i class="fas fa-exclamation-triangle"></i></button>
+        </div>
+    </div> <!-- End of Inactive Toolbar -->
+    
+    <!-- Active Toolbar -->
+
+    <div class="btn-toolbar justify-content-center" role="toolbar" id="active_group"{% if control['mode'] not in ['Smoke', 'Hold', 'Recipe'] %} style="display:none"{% endif %}>
+        <div id="active_core_group" class="btn-group mr-2 shadow" role="group">
+            <button type="button" data-toggle="tooltip" title="Smoke Mode" class="btn btn-outline-secondary border border-secondary" id="smoke_active_btn" name="setmodesmoke" value="true" ><i class="fas fa-cloud"></i></button>
+            <button type="button" class="btn btn-outline-secondary border border-secondary" id="hold_active_btn" data-toggle="modal" data-target="#setpointModal" ><i class="fas fa-crosshairs"></i></button>
+            <button type="button" data-toggle="tooltip" title="Stop" class="btn btn-outline-secondary border border-secondary" id="stop_active_btn" name="setmodestop" value="true"><i class="fas fa-stop" ></i></button>
+            <button type="button" data-toggle="tooltip" title="Shutdown" class="btn btn-outline-secondary border border-secondary" id="shutdown_active_btn" name="setmodeshutdown" value="true" ><i class="fas fa-flag-checkered"></i></button>
+        </div> <!-- End of Button Group -->
+        <div id="smoke_plus_group" class="btn-group mr-2 shadow" role="group">
+            <!-- Smoke Plus -->
+            <button type="button" data-toggle="tooltip" title="Smoke Plus" 
+            {% if control['s_plus'] %}
+            class="btn btn-success border border-secondary text-secondary"
+            {% else %}
+            class="btn btn-outline-primary border border-secondary text-secondary"
+            {% endif %}
+            id="splus_btn" name="setmodesmokeplus" value="true"><i class="fas fa-fan"></i></button>
+        </div>
+        <div id="dc_fan_group" class="btn-group mr-2 shadow" role="group"{% if not settings['globals']['dc_fan'] %} style="display:none"{% endif %}>
+            <!-- Temp Fan Control -->
+            <button type="button" data-toggle="tooltip" title="Temp Fan Control" class="btn btn-outline-primary border border-secondary text-secondary" id="pwm_control_btn" name="pwm_control" value="true"><i class="fas fa-tachometer-alt"></i></button>
+        </div>
+    </div> <!-- End of Active Toolbar -->
+
+    <!-- Recipe Toolbar -->
+    <!-- TBD -->
+    
+    </span>
+    </nav>
+
+    <!-- Hold Modal -->
+    <div class="modal" id="setpointModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title"><i class="fas fa-temperature-high"></i> Set Point Temperature</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <!-- Modal body -->
+                <div class="modal-body text-center">
+                    {% if settings['globals']['units'] == 'F' %}
+                        {% if control['primary_setpoint'] == 0 %}
+                        <h1><output name="tempOutput" id="tempOutputId">125</output>°{{ settings['globals']['units'] }}</h1>
+                        <input type="range" class="custom-range" min="125" max="600" step="5" value="125" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
+                        {% else %}
+                        <h1><output name="tempOutput" id="tempOutputId">{{ control['primary_setpoint'] }}</output>°{{ settings['globals']['units'] }}</h1>
+                        <input type="range" class="custom-range" min="125" max="600" step="5" value="{{ control['primary_setpoint'] }}" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
+                        {% endif %}
+                    {% else %}
+                        {% if control['primary_setpoint'] == 0 %}
+                        <h1><output name="tempOutput" id="tempOutputId">50</output>°{{ settings['globals']['units'] }}</h1>
+                        <input type="range" class="custom-range" min="50" max="260" value="50" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
+                        {% else %}
+                        <h1><output name="tempOutput" id="tempOutputId">{{ control['primary_setpoint'] }}</output>°{{ settings['globals']['units'] }}</h1>
+                        <input type="range" class="custom-range" min="50" max="260" value="{{ control['primary_setpoint'] }}" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
+                        {% endif %}
+                    {% endif %}
+                </div>
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="hold_modal_btn" data-dismiss="modal">Set</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div> <!-- End of Container --> 
+
+{% endmacro %}

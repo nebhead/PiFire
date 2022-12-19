@@ -1,0 +1,88 @@
+{% extends 'base.html' %} 
+
+{% from '_macro_dash_basic.html' import render_probe_card, render_hopper_card %}
+
+{% block cssextend %}
+{% endblock %} 
+
+{% block title %}Dashboard{% endblock %} 
+
+{% block content %}
+<br>
+<!-- Card Section -->
+<div class="row"> <!-- Probe Cards -->
+	{% for probe in settings['probe_settings']['probe_map']['probe_info'] %}
+		{% if probe['enabled'] %}
+		<div class="col-4">
+			<br>
+			<!-- Card for Probe Data -->
+			{{ render_probe_card(probe, settings, control) }}
+			<br>
+		</div>
+		{% endif %}
+	{% endfor %}
+</div> <!-- End of Row -->
+<div class="row"> <!-- Hopper Card -->
+	<div class="col-4">
+		<br>
+		{{ render_hopper_card() }}
+		<br>
+	</div>
+</div> <!-- End of Row -->
+<br>
+<br>
+
+<!-- Navigation Button Row -->
+<div class="row">
+	<div class="col">
+		<a href="/history" class="btn btn-outline-primary btn-block shadow" role="button"><i class="fas fa-chart-line"></i> Status & History Graphs</a>
+	</div> <!-- End of Column -->
+</div> <!-- End of Row -->
+<br>
+<br>
+<br>
+<br>
+
+<!-- Server Reload Modal -->
+<div class="modal" id="serverReloadModal">
+	<div class="modal-dialog">
+	  <div class="modal-content">
+  
+		<!-- Modal Header -->
+		<div class="modal-header">
+		  <h4 class="modal-title">Server Change Detected</h4>
+		  <button type="button" class="close" data-dismiss="modal">&times;</button>
+		</div>
+  
+		<!-- Modal body -->
+		<div class="modal-body">
+		  A server side change was detected (probably some probes got reconfigured) and needs to reload this page. <br>
+		  <br>
+		  Please click reload below to reload the page.
+		</div>
+  
+		<!-- Modal footer -->
+		<div class="modal-footer">
+		  <button type="button" class="btn btn-danger" id="reloadPage" data-dismiss="modal">Reload</button>
+		</div>
+  
+	  </div>
+	</div>
+</div> <!-- End Server Reload Modal -->
+
+
+{% endblock %}
+
+{% block postcontainer %}
+	<!-- Control Panel -->
+	{% from "_macro_control_panel.html" import render_container %}
+	{{ render_container(settings, control) }}
+{% endblock %}
+
+{% block scripts %}
+	<script> 
+	var units = "{{ settings['globals']['units'] }}";
+	</script>
+	<script src="{{ url_for('static', filename='js/dash_basic.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/control_panel.js') }}"></script>
+{% endblock %}

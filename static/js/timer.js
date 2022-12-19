@@ -1,5 +1,14 @@
 // Timer Bar JS
 // Puts timer status in the top-bar
+function timerToggle() {
+	if ($("#toggleTimer").html() == 'hidden') {
+		$("#timer_bar").slideDown();
+		$("#toggleTimer").html('unhidden');
+	} else {
+		$("#timer_bar").slideUp();
+		$("#toggleTimer").html('hidden');
+	};
+};
 
 function countdown(timerEnd, timerPaused) {
 	// Set the time we're counting down to
@@ -159,6 +168,7 @@ $(document).ready(function(){
 			}
 			// Show the Timer
 			$("#timer_bar").slideDown();
+			$("#toggleTimer").html('unhidden');
 			timerSetup();
 		}
 	});
