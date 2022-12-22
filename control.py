@@ -580,7 +580,9 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			in_data['ext_data']['Aux'] = sensor_data['aux']
 
 		# Save current data to the database 
-		write_current(in_data['probe_history'])
+		write_current(in_data)
+
+		# Write Tr data to the database if in tuning mode 
 		if control['tuning_mode']:
 			write_tr(in_data['probe_history']['tr'])
 

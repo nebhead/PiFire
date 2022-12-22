@@ -32,46 +32,46 @@
 <!-- Pagination -->
 <div class="btn-toolbar" role="toolbar" aria-label="Pagination">
     <div class="btn-group mr-2" role="group" aria-label="Previous Group">
-      <button type="button" class="btn btn-outline-primary" onclick="gotoPage(1, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})">First</button>
-      <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntdcf['prevpage'] }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})"><i class="fas fa-angle-left"></i></button>
+      <button type="button" class="btn btn-outline-primary" onclick="gotoCFPage(1, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})">First</button>
+      <button type="button" class="btn btn-outline-primary" onclick="gotoCFPage({{ pgntdcf['prevpage'] }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})"><i class="fas fa-angle-left"></i></button>
     </div>
     <div class="btn-group mr-2" role="group" aria-label="Page Group">
       {% if pgntdcf['curpage'] == 2 %}
-        <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntdcf['curpage'] - 1 }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})">
+        <button type="button" class="btn btn-outline-primary" onclick="gotoCFPage({{ pgntdcf['curpage'] - 1 }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})">
             {{ pgntdcf['curpage'] - 1}}
         </button>
       {% elif pgntdcf['curpage'] > 2 %}
-        <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntdcf['curpage'] - 2 }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})">
+        <button type="button" class="btn btn-outline-primary" onclick="gotoCFPage({{ pgntdcf['curpage'] - 2 }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})">
             {{ pgntdcf['curpage'] - 2}}
         </button>
-        <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntdcf['curpage'] - 1 }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})">
+        <button type="button" class="btn btn-outline-primary" onclick="gotoCFPage({{ pgntdcf['curpage'] - 1 }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})">
             {{ pgntdcf['curpage'] - 1}}
         </button>
       {% endif %}
         <button type="button" class="btn btn-primary"><strong>{{ pgntdcf['curpage'] }}</strong></button>
       {% if pgntdcf['curpage'] <= pgntdcf['lastpage'] - 2 %}
-        <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntdcf['curpage'] + 1 }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})">
+        <button type="button" class="btn btn-outline-primary" onclick="gotoCFPage({{ pgntdcf['curpage'] + 1 }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})">
             {{ pgntdcf['curpage'] + 1}}
         </button>
-        <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntdcf['curpage'] +2 }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})">
+        <button type="button" class="btn btn-outline-primary" onclick="gotoCFPage({{ pgntdcf['curpage'] +2 }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})">
             {{ pgntdcf['curpage'] + 2}}
         </button>
       {% elif pgntdcf['curpage'] == pgntdcf['lastpage'] - 1 %}
-        <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntdcf['curpage'] + 1 }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})">
+        <button type="button" class="btn btn-outline-primary" onclick="gotoCFPage({{ pgntdcf['curpage'] + 1 }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})">
             {{ pgntdcf['curpage'] + 1}}
         </button>
       {% endif %}
     </div>
     <div class="btn-group" role="group" aria-label="Next Group">
-      <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntdcf['nextpage'] }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})"><i class="fas fa-angle-right"></i></button>
-      <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntdcf['lastpage'] }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})">Last</button>
+      <button type="button" class="btn btn-outline-primary" onclick="gotoCFPage({{ pgntdcf['nextpage'] }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})"><i class="fas fa-angle-right"></i></button>
+      <button type="button" class="btn btn-outline-primary" onclick="gotoCFPage({{ pgntdcf['lastpage'] }}, {{ pgntdcf['reverse'] }}, {{ pgntdcf['itemspage'] }})">Last</button>
     </div>
     &nbsp;
     <div class="btn-group" role="group" aria-label="Sort Group">
         {% if pgntdcf['reverse'] == 'true' %}
-        <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntdcf['curpage'] }}, false, {{ pgntdcf['itemspage'] }})"><i class="fas fa-sort-numeric-up-alt"></i>&nbsp; Sort</button>
+        <button type="button" class="btn btn-outline-primary" onclick="gotoCFPage({{ pgntdcf['curpage'] }}, false, {{ pgntdcf['itemspage'] }})"><i class="fas fa-sort-numeric-up-alt"></i>&nbsp; Sort</button>
         {% else %} 
-        <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntdcf['curpage'] }}, true, {{ pgntdcf['itemspage'] }})"><i class="fas fa-sort-numeric-down"></i>&nbsp; Sort</button>
+        <button type="button" class="btn btn-outline-primary" onclick="gotoCFPage({{ pgntdcf['curpage'] }}, true, {{ pgntdcf['itemspage'] }})"><i class="fas fa-sort-numeric-down"></i>&nbsp; Sort</button>
         {% endif %}
     </div>
     &nbsp;
@@ -80,11 +80,11 @@
           {{ pgntdcf['itemspage'] }}
         </button>
         <div class="dropdown-menu">
-          <button class="dropdown-item{% if pgntdcf['itemspage'] == 5 %} active{% endif %}" type="button" onclick="gotoPage({{ pgntdcf['curpage'] }}, {{ pgntdcf['reverse'] }}, 5)">5</button>
-          <button class="dropdown-item{% if pgntdcf['itemspage'] == 10 %} active{% endif %}" type="button" onclick="gotoPage({{ pgntdcf['curpage'] }}, {{ pgntdcf['reverse'] }}, 10)">10</button>
-          <button class="dropdown-item{% if pgntdcf['itemspage'] == 25 %} active{% endif %}" type="button" onclick="gotoPage({{ pgntdcf['curpage'] }}, {{ pgntdcf['reverse'] }}, 25)">25</button>
-          <button class="dropdown-item{% if pgntdcf['itemspage'] == 50 %} active{% endif %}" type="button" onclick="gotoPage({{ pgntdcf['curpage'] }}, {{ pgntdcf['reverse'] }}, 50)">50</button>
-          <button class="dropdown-item{% if pgntdcf['itemspage'] == 100 %} active{% endif %}" type="button" onclick="gotoPage({{ pgntdcf['curpage'] }}, {{ pgntdcf['reverse'] }}, 100)">100</button>
+          <button class="dropdown-item{% if pgntdcf['itemspage'] == 5 %} active{% endif %}" type="button" onclick="gotoCFPage({{ pgntdcf['curpage'] }}, {{ pgntdcf['reverse'] }}, 5)">5</button>
+          <button class="dropdown-item{% if pgntdcf['itemspage'] == 10 %} active{% endif %}" type="button" onclick="gotoCFPage({{ pgntdcf['curpage'] }}, {{ pgntdcf['reverse'] }}, 10)">10</button>
+          <button class="dropdown-item{% if pgntdcf['itemspage'] == 25 %} active{% endif %}" type="button" onclick="gotoCFPage({{ pgntdcf['curpage'] }}, {{ pgntdcf['reverse'] }}, 25)">25</button>
+          <button class="dropdown-item{% if pgntdcf['itemspage'] == 50 %} active{% endif %}" type="button" onclick="gotoCFPage({{ pgntdcf['curpage'] }}, {{ pgntdcf['reverse'] }}, 50)">50</button>
+          <button class="dropdown-item{% if pgntdcf['itemspage'] == 100 %} active{% endif %}" type="button" onclick="gotoCFPage({{ pgntdcf['curpage'] }}, {{ pgntdcf['reverse'] }}, 100)">100</button>
         </div>
     </div>
 </div>

@@ -38,13 +38,6 @@ def default_settings():
 		'recipe' : "1.0.0"  # Current recipe file format version
 	}
 
-	settings['history_page'] = {
-		'minutes' : 15, 				# Sets default number of minutes to show in history
-		'clearhistoryonstart' : True, 	# Clear history when StartUp Mode selected
-		'autorefresh' : 'on', 			# Sets history graph to auto refresh ('live' graph)
-		'datapoints' : 60 				# Number of data points to show on the history chart
-	}
-
 	settings['probe_settings'] = {}
 	settings['probe_settings']['probe_profiles'] = _default_probe_profiles()
 	settings['probe_settings']['probe_map'] = default_probe_map(settings['probe_settings']['probe_profiles'])
@@ -175,7 +168,6 @@ def default_settings():
 
 	settings['modules'] = {
 		'grillplat' : 'prototype',
-		'adc' : 'prototype',
 		'display' : 'prototype',
 		'dist' : 'prototype'
 	}
@@ -232,7 +224,38 @@ def default_settings():
 
 	settings['notify_services'] = default_notify_services()
 
+	settings['history_page'] = {
+		'minutes' : 15, 				# Sets default number of minutes to show in history
+		'clearhistoryonstart' : True, 	# Clear history when StartUp Mode selected
+		'autorefresh' : 'on', 			# Sets history graph to auto refresh ('live' graph)
+		'datapoints' : 60, 				# Number of data points to show on the history chart
+		'probe_config' : default_probe_config(settings)
+	}
+
 	return settings
+
+def default_probe_config(settings):
+	''' Builds an configuration information for all probes to be used by the history graph '''
+	probe_config = {}
+	for probe in settings['probe_settings']['probe_map']['probe_info']:
+		if probe['type'] in ['Primary', 'Food']:
+			label = probe['label']
+			probe_config[label] = {
+				'name' : probe['name'],
+				'type' : probe['type'],
+				'enabled' : probe['enabled'],
+				'line_color' : 'rgba(0,0,127,0.4)',
+				'line_color_target' : 'rgba(0,0,127,0.4)',
+				'dash_setpoint' : True,
+				'bg_color' : 'rgba(0,0,127,0.4)', 
+				'bg_color_target' : 'rgba(0,0,127,0.4)', 
+				'fill' : False
+			}
+			if probe['type'] == 'Primary':
+				probe_config[label]['bg_color_setpoint'] = 'rgba(0,0,127,0.5)'
+				probe_config[label]['line_color_setpoint'] = 'rgba(0,0,127,1)'
+				
+	return probe_config
 
 def default_notify_services():
 	services = {}
@@ -595,6 +618,7 @@ def default_probe_map(probe_profiles):
 	grill_probe = {
 			'type' : 'Primary',
 			'label' : 'Grill',
+			'name' : 'Grill',
 			'profile' : probe_profiles['PT-1000-PiFire'],
 			'device' : 'proto_adc',
 			'port' : 'ADC0',
@@ -991,24 +1015,26 @@ def read_history(num_items=0, flushhistory=False):
 			
 	return(datalist)
 
-	# TODO: Move to App for Interpretation of the data into graphs
+def unpack_history(datalist):
 	temp_dict = {}  # Create temporary dictionary to store all of the history data lists
-	temp_struct = json.loads(data[0])  # Load the initial history data into a temporary dictionary  
+	temp_struct = datalist[0]  # Load the initial history data into a temporary dictionary  
 	for key in temp_struct.keys():  # Iterate each of the keys
-		if key == 'T':
-			temp_dict['T'] = []
-		elif key in ['P', 'F', 'PSP', 'NSP', 'EXD']:
+		if key in ['P', 'F', 'NT', 'EXD']:
 			temp_dict[key] = {}
 			for subkey in temp_struct[key]:
 				temp_dict[key][subkey] = []
-				subkey
 		else: 
-			temp_dict[key] = []  # Create an empty list for any other keys
+			temp_dict[key] = []  # Create an empty list for any other keys ('T', 'PSP')
 
-	for index in range(len(data)):
-		datastruct = json.loads(data[index])
-		for key, value in datastruct.items():
-			temp_dict[key].append(value)
+	for index in range(len(datalist)):
+		temp_struct = datalist[index]
+		for key, value in temp_struct.items():
+			if key in ['P', 'F', 'NT', 'EXD']:
+				for subkey, subvalue in temp_struct[key].items():
+					temp_dict[key][subkey].append(subvalue)
+			else: 
+				temp_dict[key].append(value)  # Append list for any other keys ('T', 'PSP')
+	return temp_dict
 
 def write_history(in_data, maxsizelines=28800, ext_data=False):
 	"""
@@ -1049,8 +1075,10 @@ def write_current(in_data):
 	global cmdsts
 
 	current = {}
-	current['P'] = in_data['primary']
-	current['F'] = in_data['food']
+	current['P'] = in_data['probe_history']['primary']
+	current['F'] = in_data['probe_history']['food']
+	current['PSP'] = in_data['primary_setpoint']
+	current['NT'] = in_data['notify_targets']
 	cmdsts.set('control:current', json.dumps(current))
 
 def read_current(zero_out=False):
@@ -1067,7 +1095,9 @@ def read_current(zero_out=False):
 		settings = read_settings()
 		current = {
 			'P' : {}, 
-			'F' : {}
+			'F' : {},
+			'PSP' : 0,
+			'NT' : {}
 		}
 
 		for probe in settings['probe_settings']['probe_map']['probe_info']:
@@ -1075,6 +1105,7 @@ def read_current(zero_out=False):
 				current['P'][probe['label']] = 0
 			if probe['type'] == 'Food':
 				current['F'][probe['label']] = 0
+			current['NT'][probe['label']] = 0
 
 		cmdsts.set('control:current', json.dumps(current))
 

@@ -197,41 +197,12 @@ def history_page(action=None):
 					settings['history_page']['minutes'] = int(response['minutes'])
 					write_settings(settings)
 
-		elif action == 'clear':
-			if 'clearhistory' in response:
-				if response['clearhistory'] == 'true':
-					write_log('Clearing History Log.')
-					read_history(0, flushhistory=True)
-
 	elif (request.method == 'GET') and (action == 'export'):
 		exportfilename = _prepare_graph_csv()
 		return send_file(exportfilename, as_attachment=True, max_age=0)
 
-	num_items = settings['history_page']['minutes'] * 20
-	probes_enabled = settings['probe_settings']['probes_enabled']
-
-	data_blob = _prepare_data(num_items, True, settings['history_page']['datapoints'])
-
-	auto_refresh = settings['history_page']['autorefresh']
-
-	# Calculate Displayed Start Time
-	displayed_starttime = time.time() - (settings['history_page']['minutes'] * 60)
-	annotations = _prepare_annotations(displayed_starttime)
-
 	return render_template('history.html',
-						   control=control,
-						   grill_temp_list=data_blob['grill_temp_list'],
-						   grill_settemp_list=data_blob['grill_settemp_list'],
-						   probe1_temp_list=data_blob['probe1_temp_list'],
-						   probe1_settemp_list=data_blob['probe1_settemp_list'],
-						   probe2_temp_list=data_blob['probe2_temp_list'],
-						   probe2_settemp_list=data_blob['probe2_settemp_list'],
-						   label_time_list=data_blob['label_time_list'],
-						   probes_enabled=probes_enabled,
-						   num_mins=settings['history_page']['minutes'],
-						   num_datapoints=settings['history_page']['datapoints'],
-						   autorefresh=auto_refresh,
-						   annotations=annotations,
+						   control=control, settings=settings,
 						   page_theme=settings['globals']['page_theme'],
 						   grill_name=settings['globals']['grill_name'])
 
@@ -243,31 +214,38 @@ def history_update(action=None):
 	if action == 'stream':
 		# GET - Read current temperatures and set points for history streaming 
 		control = read_control()
-		if control['mode'] == 'Stop':
-			set_temps = [0,0,0]
-			cur_probe_temps = [0,0,0]
+		json_response = {}
+		if control['mode'] in ['Stop', 'Error']:
+			json_response['current'] = read_current(zero_out=True) # Probe Temps Zero'd Out
 		else:
-			set_temps = control['setpoints']
-			set_temps[0] = control['setpoints']['grill']
-			set_temps[1] = control['setpoints']['probe1']
-			set_temps[2] = control['setpoints']['probe2']
-			cur_probe_temps = read_current()
+			json_response['current'] = read_current() # Probe Temps Zero'd Out
 
 		# Calculate Displayed Start Time
-		displayed_starttime = time.time() - (settings['history_page']['minutes'] * 60)
-		annotations = _prepare_annotations(displayed_starttime)
+		displayed_starttime = time.time() - (settings['history_page']['minutes'] * 20)
+		json_response['annotations'] = _prepare_annotations(displayed_starttime)
+		json_response['mode'] = control['mode']
+		json_response['ui_hash'] = create_ui_hash()
 
-		json_data = {
-			'probe0_temp' : int(float(cur_probe_temps[0])), 
-			'probe0_settemp' : set_temps[0], 
-			'probe1_temp' : int(float(cur_probe_temps[1])), 
-			'probe1_settemp' : set_temps[1], 
-			'probe2_temp' : int(float(cur_probe_temps[2])), 
-			'probe2_settemp' : set_temps[2],
-			'annotations' : annotations,
-			'mode' : control['mode']
+		'''
+		json_response = {
+			'current' : {
+				'P' : {
+					'probename' : temperature
+				}, 
+				'F' : {
+					'probename' : temperature
+				}, 
+				'PSP' : primary setpoint temperature, 
+				'NT' : {
+					'probename' : temperature
+				}
+			}, 
+			'annotations' : [], 
+			'mode' : string[mode]
 		}
-		return jsonify(json_data)
+		'''
+
+		return jsonify(json_response)
 
 	elif action == 'refresh':
 		# POST - Get number of minutes into the history to refresh the history chart
@@ -277,24 +255,24 @@ def history_update(action=None):
 			num_items = int(request_json['num_mins']) * 20  # Calculate number of items requested
 			settings['history_page']['minutes'] = int(request_json['num_mins'])
 			write_settings(settings)
-			data_blob = _prepare_data(num_items, True, settings['history_page']['datapoints'])
+		else: 
+			num_items = int(settings['history_page']['minutes'] * 20)
 
-			# Calculate Displayed Start Time
-			displayed_starttime = time.time() - (settings['history_page']['minutes'] * 60)
-			annotations = _prepare_annotations(displayed_starttime)
+		# Get Chart Data Structures
+		json_response = prepare_chartdata(settings['history_page']['probe_config'], num_items=num_items, reduce=True, data_points=settings['history_page']['datapoints'])
+		# Calculate Displayed Start Time
+		displayed_starttime = time.time() - (settings['history_page']['minutes'] * 60)
+		json_response['annotations'] = _prepare_annotations(displayed_starttime)
+		'''
+		json_response = {
+			'annotations' : [], 
+			'time_labels' : time_labels,
+			'probe_mapper' : probe_mapper, 
+			'chart_data' : chart_data
+		}		
+		'''
+		return jsonify(json_response)
 
-			json_data = {
-				'grill_temp_list' : data_blob['grill_temp_list'],
-				'grill_settemp_list' : data_blob['grill_settemp_list'],
-				'probe1_temp_list' : data_blob['probe1_temp_list'],
-				'probe1_settemp_list' : data_blob['probe1_settemp_list'],
-				'probe2_temp_list' : data_blob['probe2_temp_list'],
-				'probe2_settemp_list' : data_blob['probe2_settemp_list'],
-				'label_time_list' : data_blob['label_time_list'], 
-				'annotations' : annotations, 
-				'mode' : control['mode']
-			}
-			return jsonify(json_data)
 	return jsonify({'status' : 'ERROR'})
 
 @app.route('/cookfiledata', methods=['POST', 'GET'])
@@ -1150,58 +1128,18 @@ def settings_page(action=None):
 	if request.method == 'POST' and action == 'probes':
 		response = request.form
 
-		if 'grill1enable' in response:
-			if response['grill1enable'] == '0':
-				settings['probe_settings']['grill_probe_enabled'][0] = 0
-			else:
-				settings['probe_settings']['grill_probe_enabled'][0] = 1
-		if 'grill2enable' in response:
-			if response['grill2enable'] == '0':
-				settings['probe_settings']['grill_probe_enabled'][1] = 0
-			else:
-				settings['probe_settings']['grill_probe_enabled'][1] = 1
-		if 'probe1enable' in response:
-			if response['probe1enable'] == '0':
-				settings['probe_settings']['probes_enabled'][1] = 0
-			else:
-				settings['probe_settings']['probes_enabled'][1] = 1
-		if 'probe2enable' in response:
-			if response['probe2enable'] == '0':
-				settings['probe_settings']['probes_enabled'][2] = 0
-			else:
-				settings['probe_settings']['probes_enabled'][2] = 1
-		if 'grill_probes' in response:
-			if response['grill_probes'] == 'grill_probe1':
-				settings['grill_probe_settings']['grill_probe_enabled'][0] = 1
-				settings['grill_probe_settings']['grill_probe_enabled'][1] = 0
-				settings['grill_probe_settings']['grill_probe_enabled'][2] = 0
-				settings['grill_probe_settings']['grill_probe'] = response['grill_probes']
-			elif response['grill_probes'] == 'grill_probe2':
-				settings['grill_probe_settings']['grill_probe_enabled'][0] = 0
-				settings['grill_probe_settings']['grill_probe_enabled'][1] = 1
-				settings['grill_probe_settings']['grill_probe_enabled'][2] = 0
-				settings['grill_probe_settings']['grill_probe'] = response['grill_probes']
-			elif response['grill_probes'] == 'grill_probe3':
-				settings['grill_probe_settings']['grill_probe_enabled'][0] = 0
-				settings['grill_probe_settings']['grill_probe_enabled'][1] = 0
-				settings['grill_probe_settings']['grill_probe_enabled'][2] = 1
-				settings['grill_probe_settings']['grill_probe'] = response['grill_probes']
-		if 'grill_probe1_type' in response:
-			settings['probe_types']['grill1type'] = response['grill_probe1_type']
-		if 'grill_probe2_type' in response:
-			settings['probe_types']['grill2type'] = response['grill_probe2_type']
-		if 'probe1_type' in response:
-			settings['probe_types']['probe1type'] = response['probe1_type']
-		if 'probe2_type' in response:
-			settings['probe_types']['probe2type'] = response['probe2_type']
-		if 'adc_grill_probe_one' in response:
-			settings['probe_settings']['probe_sources'][0] = response['adc_grill_probe_one']
-		if 'adc_grill_probe_two' in response:
-			settings['probe_settings']['probe_sources'][3] = response['adc_grill_probe_two']
-		if 'adc_probe_one' in response:
-			settings['probe_settings']['probe_sources'][1] = response['adc_probe_one']
-		if 'adc_probe_two' in response:
-			settings['probe_settings']['probe_sources'][2] = response['adc_probe_two']
+		for item in response.items():
+			if 'profile_select_' in item[0]:
+				probe_label = item[0].replace('profile_select_', '')
+				for index, probe in enumerate(settings['probe_settings']['probe_map']['probe_info']):
+					if probe['label'] == probe_label:
+						settings['probe_settings']['probe_map']['probe_info'][index]['profile'] = settings['probe_settings']['probe_profiles'][item[1]]
+			if 'probe_name_' in item[0]:
+				probe_label = item[0].replace('probe_name_', '')
+				for index, probe in enumerate(settings['probe_settings']['probe_map']['probe_info']):
+					if probe['label'] == probe_label:
+						settings['probe_settings']['probe_map']['probe_info'][index]['name'] = item[1]
+						settings['history_page']['probe_config'][probe_label]['name'] = item[1]
 
 		event['type'] = 'updated'
 		event['text'] = 'Successfully updated probe settings.'
@@ -1903,8 +1841,9 @@ def api_page(action=None):
 			''' Create string of probes that can be hashed to ensure UI integrity '''
 			probe_string = ''
 			for group in current_temps:
-				for probe in current_temps[group]:
-					probe_string += probe
+				if group in ['P', 'F']:
+					for probe in current_temps[group]:
+						probe_string += probe
 			probe_string += settings['globals']['units']
 
 			primary_setpoint = control['primary_setpoint']
@@ -1917,7 +1856,7 @@ def api_page(action=None):
 			status['units'] = settings['globals']['units']
 			status['name'] = settings['globals']['grill_name']
 			status['primary_setpoint'] = control['primary_setpoint']
-			status['ui_hash'] = hash(probe_string)
+			status['ui_hash'] = create_ui_hash()
 			return jsonify({'current':current_temps, 'primary_setpoint':primary_setpoint, 'notify_data':notify_data, 'status':status}), 201
 		elif action == 'hopper':
 			pelletdb = read_pellet_db()
@@ -2168,6 +2107,146 @@ def _allowed_file(filename):
 def _check_cpu_temp():
 	temp = os.popen('vcgencmd measure_temp').readline()
 	return temp.replace("temp=","")
+
+def prepare_chartdata(probe_config, chart_info={}, num_items=10, reduce=True, data_points=60):
+	''' Build Probe Mapper and Chart Data Struct '''
+	chart_data = []
+
+	if chart_info == {}:
+		chart_info = {
+			'label' : '',
+			'fill': False,
+			'lineTension': 0.1,
+			'backgroundColor': '',
+			'borderColor': '',
+			'borderCapStyle': 'butt',
+			'borderDash': [],
+			'borderDashOffset': 0.0,
+			'borderJoinStyle': 'miter',
+			'pointBorderColor': '',
+			'pointBackgroundColor': '#fff',
+			'pointBorderWidth': 1,
+			'pointHoverRadius': 10,
+			'pointHoverBackgroundColor': '',
+			'pointHoverBorderColor': '',
+			'pointHoverBorderWidth': 2,
+			'pointRadius': 1,
+			'pointHitRadius': 10,
+			'pointStyle': 'line',
+			'data': [],
+			'spanGaps': False,
+			'hidden': False
+		}
+
+	index = 0
+	probe_mapper = { 'probes' : {}, 'targets' : {}, 'primarysp' : {} } 
+
+	for probe in probe_config:
+		''' First Object is Temperature Data for Probe '''
+		chart_obj = chart_info.copy()
+		chart_obj['label'] = probe_config[probe]['name']
+		chart_obj['backgroundColor'] = probe_config[probe]['bg_color']
+		chart_obj['borderColor'] = probe_config[probe]['line_color']
+		chart_obj['borderDash'] = []
+		chart_obj['pointBorderColor'] = probe_config[probe]['line_color']
+		chart_obj['pointHoverBackgroundColor'] = probe_config[probe]['bg_color']
+		chart_obj['pointHoverBorderColor'] = probe_config[probe]['line_color']
+		chart_obj['hidden'] = not probe_config[probe]['enabled']
+		chart_obj['data'] = []
+		chart_data.append(chart_obj)
+		probe_mapper['probes'][probe] = index 
+		''' Second Object is the Target Temperature Data for Probe '''
+		index += 1
+		chart_obj = chart_info.copy()
+		chart_obj['label'] = probe_config[probe]['name'] + ' Target'
+		chart_obj['backgroundColor'] = probe_config[probe]['bg_color_target']
+		chart_obj['borderColor'] = probe_config[probe]['line_color_target']
+		chart_obj['borderDash'] = [8, 4]
+		chart_obj['pointBorderColor'] = probe_config[probe]['line_color_target']
+		chart_obj['pointHoverBackgroundColor'] = probe_config[probe]['bg_color_target']
+		chart_obj['pointHoverBorderColor'] = probe_config[probe]['line_color_target']
+		chart_obj['hidden'] = not probe_config[probe]['enabled']
+		chart_obj['data'] = []
+		chart_data.append(chart_obj)
+		probe_mapper['targets'][probe] = index
+		''' Third Object is the Primary Setpoint Temperature Data for Probe (if it is primary) '''
+		if probe_config[probe]['type'] == 'Primary':
+			index += 1
+			chart_obj = chart_info.copy()
+			chart_obj['label'] = probe_config[probe]['name'] + ' Set Point'
+			chart_obj['backgroundColor'] = probe_config[probe]['bg_color_setpoint']
+			chart_obj['borderColor'] = probe_config[probe]['line_color_setpoint']
+			chart_obj['borderDash'] = [8, 4]
+			chart_obj['pointBorderColor'] = probe_config[probe]['line_color_setpoint']
+			chart_obj['pointHoverBackgroundColor'] = probe_config[probe]['bg_color_setpoint']
+			chart_obj['pointHoverBorderColor'] = probe_config[probe]['line_color_setpoint']
+			chart_obj['hidden'] = not probe_config[probe]['enabled']
+			chart_obj['data'] = []
+			chart_data.append(chart_obj)
+			probe_mapper['primarysp'][probe] = index
+		''' Increment Index '''
+		index += 1
+
+	''' Populate history data into chart data '''
+	history = read_history(num_items)
+
+	if history != []: 
+		history = unpack_history(history)
+		list_length = len(history['T']) # Length of list(s)
+
+		if (list_length < num_items) and (list_length > 0):
+			num_items = list_length
+
+		if reduce and (num_items > data_points):
+			step = int(num_items/data_points)
+		else:
+			step = 1
+	else:
+		list_length = 0
+
+	time_labels = []
+
+	if (list_length > 0):
+		# Build all lists from file data
+		for index in range(list_length - num_items, list_length, step):
+			for key, value in history['P'].items():
+				chart_data[probe_mapper['probes'][key]]['data'].append(history['P'][key][index])
+			for key, value in history['F'].items():
+				chart_data[probe_mapper['probes'][key]]['data'].append(history['F'][key][index])
+			for key, value in history['NT'].items():
+				chart_data[probe_mapper['targets'][key]]['data'].append(history['NT'][key][index])
+			for key in probe_mapper['primarysp']: 
+				chart_data[probe_mapper['primarysp'][key]]['data'].append(history['PSP'][index])
+				break 
+
+			time_labels.append(history['T'][index])
+	else:
+		now = datetime.datetime.now()
+		time_now = int(now.timestamp() * 1000)  # Use timestamp format * 1000 for JavaScript usages
+		time_labels.append(time_now)
+		for key in probe_mapper['probes'].keys():
+			chart_data[probe_mapper['probes'][key]]['data'].append(0)
+		for key in probe_mapper['targets'].keys():
+			chart_data[probe_mapper['targets'][key]]['data'].append(0)
+		for key in probe_mapper['primarysp'].keys(): 
+			chart_data[probe_mapper['primarysp'][key]]['data'].append(0)
+
+	''' Create Hash for UI Consistency '''
+	ui_hash = create_ui_hash()
+	
+	''' Create data structure to return '''
+	data_blob = {
+		'time_labels' : time_labels,
+		'probe_mapper' : probe_mapper, 
+		'chart_data' : chart_data,
+		'ui_hash' : ui_hash
+	}
+
+	return data_blob
+
+def create_ui_hash():
+	global settings 
+	return hash(json.dumps(settings['probe_settings']['probe_map']['probe_info']))
 
 def _prepare_data(num_items=10, reduce=True, data_points=60):
 	# num_items: Number of items to store in the data blob

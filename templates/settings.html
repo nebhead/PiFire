@@ -78,200 +78,53 @@
                             </div>
                             <div class="card-body">
                                 <!-- Probe Settings Form Start -->
-                                <form name="probe_input" id="probe_form" action="/settings/probes" method="POST">
-                                    <!-- Grill Probe Selection -->
-                                    {% if settings['globals']['four_probes'] %}
+                                <form name="probe_type_input" id="probe_form" action="/settings/probes" method="POST">
+                                    {% for probe in settings['probe_settings']['probe_map']['probe_info'] %}
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
-                                            <span class="input-group-text">Grill Probe Selection</span>
+                                            <span class="input-group-text">{{ probe['name'] }} Profile Selection</span>
                                         </div>
-                                        <select class="form-control" name="grill_probes" id="grill_probes" onchange="this.form.submit()">
-                                            {% for index, data in settings['grill_probe_settings']['grill_probes'].items()|sort %}
-                                            {% if index == settings['grill_probe_settings']['grill_probe'] %}
+                                        <select class="form-control" name="profile_select_{{ probe['label'] }}" id="profile_select_{{ probe['label'] }}" onchange="this.form.submit()">
+                                            {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %}
+                                            {% if data['id'] == probe['profile']['id'] %}
                                             <option value="{{ index }}" selected>{{ data['name'] }}</option>
                                             {% else %}
                                             <option value="{{ index }}">{{ data['name'] }}</option>
                                             {% endif %} {% endfor %}
                                         </select>
                                     </div>
-                                    <!-- Grill Probe 1 Settings -->
-                                    {% endif %}
-                                    <div class="input-group mb-3">
-                                        <div class="input-group-prepend">
-                                            {% if settings['globals']['four_probes'] %}
-                                            <span class="input-group-text">Grill Probe 1 Type</span>
-                                            {% else %}
-                                            <span class="input-group-text">Grill Probe Type</span>
-                                            {% endif %}
-                                        </div>
-                                        <select class="form-control" name="grill_probe1_type" id="grill_probe1_type" onchange="this.form.submit()">
-                                            {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %}
-                                            {% if index == settings['probe_types']['grill1type'] %}
-                                            <option value="{{ index }}" selected>{{ data['name'] }}</option>
-                                            {% else %}
-                                            <option value="{{ index }}">{{ data['name'] }}</option>
-                                            {% endif %}
-                                            {% endfor %}
-                                        </select>
-                                        <div class="input-group-append">
-                                            {% if settings['grill_probe_settings']['grill_probe_enabled'][0] == 1 or settings['grill_probe_settings']['grill_probe_enabled'][2] == 1 %}
-                                            <button type="submit" name="grill1enable" value="0" class="btn btn-success btn-sm float-right" disabled><i class="fas fa-eye"></i></button>
-                                            {% else %}
-                                            <button type="submit" name="grill1enable" value="1" class="btn btn-outline-secondary btn-sm float-right" disabled><i class="fas fa-eye-slash"></i></button>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <!-- Grill Probe 2 Settings -->
-                                    {% if settings['globals']['four_probes'] %}
-                                    <div class="input-group mb-3">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text">Grill Probe 2 Type</span>
-                                        </div>
-                                        <select class="form-control" name="grill_probe2_type" id="grill_probe2_type" onchange="this.form.submit()">
-                                            {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %}
-                                            {% if index == settings['probe_types']['grill2type'] %}
-                                            <option value="{{ index }}" selected>{{ data['name'] }}</option>
-                                            {% else %}
-                                            <option value="{{ index }}">{{ data['name'] }}</option>
-                                            {% endif %}
-                                            {% endfor %}
-                                        </select>
-                                        <div class="input-group-append">
-                                            {% if settings['grill_probe_settings']['grill_probe_enabled'][1] == 1 or settings['grill_probe_settings']['grill_probe_enabled'][2] == 1 %}
-                                            <button type="submit" name="grill2enable" value="0" class="btn btn-success btn-sm float-right" disabled><i class="fas fa-eye"></i></button>
-                                            {% else %}
-                                            <button type="submit" name="grill2enable" value="1" class="btn btn-outline-secondary btn-sm float-right" disabled><i class="fas fa-eye-slash"></i></button>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    {% endif %}
-                                    <!-- Probe 1 Settings -->
-                                    <div class="input-group mb-3">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text">Probe-1 Type</span>
-                                        </div>
-                                        <select class="form-control" name="probe1_type" id="probe1_type" onchange="this.form.submit()">
-                                            {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %}
-                                            {% if index == settings['probe_types']['probe1type'] %}
-                                            <option value="{{ index }}" selected>{{ data['name'] }}</option>
-                                            {% else %}
-                                            <option value="{{ index }}">{{ data['name'] }}</option>
-                                            {% endif %}
-                                            {% endfor %}
-                                        </select>
-                                        <div class="input-group-append">
-                                            {% if settings['probe_settings']['probes_enabled'][1] == 1  %}
-                                            <button type="submit" name="probe1enable" value="0" class="btn btn-success btn-sm float-right"><i class="fas fa-eye"></i></button>
-                                            {% else %}
-                                            <button type="submit" name="probe1enable" value="1" class="btn btn-outline-secondary btn-sm float-right"><i class="fas fa-eye-slash"></i></button>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <!-- Probe 2 Settings -->
-                                    <div class="input-group mb-3">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text">Probe-2 Type</span>
-                                        </div>
-                                        <select class="form-control" name="probe2_type" id="probe2_type" onchange="this.form.submit()">
-                                            {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %}
-                                            {% if index == settings['probe_types']['probe2type'] %}
-                                            <option value="{{ index }}" selected>{{ data['name'] }}</option>
-                                            {% else %}
-                                            <option value="{{ index }}">{{ data['name'] }}</option>
-                                            {% endif %}
-                                            {% endfor %}
-                                        </select>
-                                        <div class="input-group-append">
-                                            {% if settings['probe_settings']['probes_enabled'][2] == 1  %}
-                                            <button type="submit" name="probe2enable" value="0" class="btn btn-success btn-sm float-right"><i class="fas fa-eye"></i></button>
-                                            {% else %}
-                                            <button type="submit" name="probe2enable" value="1" class="btn btn-outline-secondary btn-sm float-right"><i class="fas fa-eye-slash"></i></button>
-                                            {% endif %}
-                                        </div>
-                                    </div>
+                                    {% endfor %}
                                 </form>
                             </div><!-- End of card body -->
-                        </div><!-- End of Card -->
+                        </div><!-- End of Probe Types Card -->
                         <br>
                         <div class="card shadow">
-                            <div class="card-header">
-                                <h5>
-                                    <i class="fa fa-tools"></i>&nbsp; ADC Probe Assignment
-                                </h5>
-                            </div>
-                            <div class="card-body">
-                                <form name="probes_adc" id="probes_adc_form" action="/settings/probes" method="POST">
-                                    <span class="badge badge-warning">NOTE:</span>
-                                    <i class="small"> Here you can map the ADC Inputs to the PiFire Probes. Most systems will use the default settings shown. If your probes are wired differently you can set the new values below. </i>
-                                    <br>
-                                    <br>
-                                    <div class="input-group mb-3">
-                                        <div class="input-group-prepend">
-                                            {% if settings['globals']['four_probes'] %}
-                                            <span class="input-group-text">Grill Probe One</span>
-                                            {% else %}
-                                            <span class="input-group-text">Grill Probe</span>
-                                            {% endif %}
+                            <form name="probe_name_input" id="probe_form" action="/settings/probes" method="POST">
+                                <div class="card-header">
+                                    <h5>
+                                        <i class="fa fa-tools"></i>&nbsp; Probe Display Names 
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Probe Settings Form Start -->
+
+                                        {% for probe in settings['probe_settings']['probe_map']['probe_info'] %}
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="Probe name displayed by PiFire on the Dashboard and Graphs">
+                                                {{ probe['name'] }} &nbsp;<i class="fas fa-arrow-right"></i></span>
+                                            </div>
+                                            <input id="probe_name_{{ probe['label'] }}" type="text" class="form-control" name="probe_name_{{ probe['label'] }}" value="{{ probe['name'] }}">
                                         </div>
-                                        <select class="form-control" name="adc_grill_probe_one" id="adc_grill_probe_one" onchange="this.form.submit()">
-                                            {% for option in settings['probe_settings']['probe_options'] %}
-                                            {% if option == settings['probe_settings']['probe_sources'][0] %}
-                                            <option value="{{ option }}" selected>{{ option }}</option>
-                                            {% else %}
-                                            <option value="{{ option }}">{{ option }}</option>
-                                            {% endif %}
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                    {% if settings['globals']['four_probes'] %}
-                                    <div class="input-group mb-3">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text">Grill Probe Two</span>
-                                        </div>
-                                        <select class="form-control" name="adc_grill_probe_two" id="grill_probe_two" onchange="this.form.submit()">
-                                            {% for option in settings['probe_settings']['probe_options'] %}
-                                            {% if option == settings['probe_settings']['probe_sources'][3] %}
-                                            <option value="{{ option }}" selected>{{ option }}</option>
-                                            {% else %}
-                                            <option value="{{ option }}">{{ option }}</option>
-                                            {% endif %}
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                    {% endif %}
-                                    <div class="input-group mb-3">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text">Probe One</span>
-                                        </div>
-                                        <select class="form-control" name="adc_probe_one" id="probe_one" onchange="this.form.submit()">
-                                            {% for option in settings['probe_settings']['probe_options'] %}
-                                            {% if option == settings['probe_settings']['probe_sources'][1] %}
-                                            <option value="{{ option }}" selected>{{ option }}</option>
-                                            {% else %}
-                                            <option value="{{ option }}">{{ option }}</option>
-                                            {% endif %}
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                    <div class="input-group mb-3">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text">Probe Two</span>
-                                        </div>
-                                        <select class="form-control" name="adc_probe_two" id="probe_two" onchange="this.form.submit()">
-                                            {% for option in settings['probe_settings']['probe_options'] %}
-                                            {% if option == settings['probe_settings']['probe_sources'][2] %}
-                                            <option value="{{ option }}" selected>{{ option }}</option>
-                                            {% else %}
-                                            <option value="{{ option }}">{{ option }}</option>
-                                            {% endif %}
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                </form>
-                            </div><!-- End of card body -->
-                        </div><!-- End of Card -->
+                                        {% endfor %}
+                                    
+                                </div> <!-- -->
+                                <div class="card-footer bg-light">
+                                    <button type="submit" class="btn btn-outline-primary">Save</button>
+                                </div>
+                            </form>
                     </div><!-- End of card body -->
-                </div><!-- End of Card -->
+                </div><!-- End of Probe Settings Card -->
             </div><!-- End of Tab -->
             <!-- ============================ Edit / Add / Delete Probe Profiles ========================== -->
             {% if request.MOBILE %}<br>{% endif %}
@@ -1436,12 +1289,12 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="custom-control custom-switch">
-                                        <input type="checkbox" class="custom-control-input" id="apprise_enabled" name="apprise_enabled" {% if settings['apprise']['enabled'] == True %}checked{% endif %}>
+                                        <input type="checkbox" class="custom-control-input" id="apprise_enabled" name="apprise_enabled" {% if settings['notify_services']['apprise']['enabled'] == True %}checked{% endif %}>
                                         <label class="custom-control-label" for="apprise_enabled">Apprise Enabled</label>
                                     </div>
                                     <br>
-                                    {% if settings['apprise']['locations']|length %}
-                                    {% for location in settings['apprise']['locations'] %}<div class="input-group mb-3 appriselocation">
+                                    {% if settings['notify_services']['apprise']['locations']|length %}
+                                    {% for location in settings['notify_services']['apprise']['locations'] %}<div class="input-group mb-3 appriselocation">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">
                                                 <i class="fas fa-link"></i>&nbsp; Location</span>
@@ -1476,7 +1329,7 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="custom-control custom-switch">
-                                        <input type="checkbox" class="custom-control-input" id="ifttt_enabled" name="ifttt_enabled" {% if settings['ifttt']['enabled'] %}checked{% endif %}>
+                                        <input type="checkbox" class="custom-control-input" id="ifttt_enabled" name="ifttt_enabled" {% if settings['notify_services']['ifttt']['enabled'] %}checked{% endif %}>
                                         <label class="custom-control-label" for="ifttt_enabled">IFTTT Enabled</label>
                                     </div>
                                     <br>
@@ -1485,7 +1338,7 @@
                                             <span class="input-group-text">
                                                 <i class="fas fa-key"></i>&nbsp; API Key</span>
                                         </div>
-                                        <input id="iftttapi" type="text" class="form-control" name="iftttapi" value="{{settings['ifttt']['APIKey']}}">
+                                        <input id="iftttapi" type="text" class="form-control" name="iftttapi" value="{{settings['notify_services']['ifttt']['APIKey']}}">
                                     </div>
                                 </div><!-- End of card body -->
                             </div><!-- End of Card -->
@@ -1497,7 +1350,7 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="custom-control custom-switch">
-                                        <input type="checkbox" class="custom-control-input" id="pushover_enabled" name="pushover_enabled" {% if settings['pushover']['enabled'] %}checked{% endif %}>
+                                        <input type="checkbox" class="custom-control-input" id="pushover_enabled" name="pushover_enabled" {% if settings['notify_services']['pushover']['enabled'] %}checked{% endif %}>
                                         <label class="custom-control-label" for="pushover_enabled">PushOver Enabled</label>
                                     </div>
                                     <br>
@@ -1506,14 +1359,14 @@
                                             <span class="input-group-text">
                                                 <i class="fas fa-key"></i>&nbsp; API Key</span>
                                         </div>
-                                        <input id="pushover_apikey" type="text" class="form-control" name="pushover_apikey" value="{{settings['pushover']['APIKey']}}">
+                                        <input id="pushover_apikey" type="text" class="form-control" name="pushover_apikey" value="{{settings['notify_services']['pushover']['APIKey']}}">
                                     </div>
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">
                                                 <i class="fas fa-key"></i>&nbsp; User Keys</span>
                                         </div>
-                                        <input id="pushover_userkeys" type="text" class="form-control" name="pushover_userkeys" value="{{settings['pushover']['UserKeys']}}">
+                                        <input id="pushover_userkeys" type="text" class="form-control" name="pushover_userkeys" value="{{settings['notify_services']['pushover']['UserKeys']}}">
                                     </div>
                                     <span class="badge badge-warning">NOTE:</span>
                                     <i class="small"> Add commas for multiple user keys. Leave blank to disable.</i>
@@ -1524,7 +1377,7 @@
                                             <span class="input-group-text">
                                                 <i class="fas fa-link"></i>&nbsp; Public URL </span>
                                         </div>
-                                        <input id="pushover_publicurl" type="text" class="form-control" name="pushover_publicurl" value="{{settings['pushover']['PublicURL']}}">
+                                        <input id="pushover_publicurl" type="text" class="form-control" name="pushover_publicurl" value="{{settings['notify_services']['pushover']['PublicURL']}}">
                                     </div>
                                     <span class="badge badge-warning">NOTE:</span>
                                     <i class="small"> URL to be added to Pushover notifications.</i>
@@ -1538,7 +1391,7 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="custom-control custom-switch">
-                                        <input type="checkbox" class="custom-control-input" id="pushbullet_enabled" name="pushbullet_enabled" {% if settings['pushbullet']['enabled'] %}checked{% endif %}>
+                                        <input type="checkbox" class="custom-control-input" id="pushbullet_enabled" name="pushbullet_enabled" {% if settings['notify_services']['pushbullet']['enabled'] %}checked{% endif %}>
                                         <label class="custom-control-label" for="pushbullet_enabled">Pushbullet Enabled</label>
                                     </div>
                                     <br>
@@ -1547,14 +1400,14 @@
                                             <span class="input-group-text">
                                                 <i class="fas fa-key"></i>&nbsp; API Key</span>
                                         </div>
-                                        <input id="pushbullet_apikey" type="text" class="form-control" name="pushbullet_apikey" value="{{settings['pushbullet']['APIKey']}}">
+                                        <input id="pushbullet_apikey" type="text" class="form-control" name="pushbullet_apikey" value="{{settings['notify_services']['pushbullet']['APIKey']}}">
                                     </div>
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">
                                                 <i class="fas fa-link"></i>&nbsp; Public URL</span>
                                         </div>
-                                        <input id="pushbullet_publicurl" type="text" class="form-control" name="pushbullet_publicurl" value="{{settings['pushbullet']['PublicURL']}}">
+                                        <input id="pushbullet_publicurl" type="text" class="form-control" name="pushbullet_publicurl" value="{{settings['notify_services']['pushbullet']['PublicURL']}}">
                                     </div>
                                     <span class="badge badge-warning">NOTE:</span>
                                     <i class="small"> URL to be added to Pushbullet notifications.</i>
@@ -1570,11 +1423,11 @@
                                     <div class="custom-control custom-switch">
                                         <input type="checkbox" class="custom-control-input"
                                                id="onesignal_enabled"
-                                               name="onesignal_enabled" {% if settings['onesignal']['enabled'] %}checked{% endif %}>
+                                               name="onesignal_enabled" {% if settings['notify_services']['onesignal']['enabled'] %}checked{% endif %}>
                                         <label class="custom-control-label" for="onesignal_enabled">OneSignal Enabled</label>
                                     </div>
                                     <br>
-                                    {% for index, data in settings['onesignal']['devices'].items()|sort %}
+                                    {% for index, data in settings['notify_services']['onesignal']['devices'].items()|sort %}
                                     <div class="card shadow">
                                         <div class="card-header bg-light text-white">
                                             <h5>
@@ -1668,7 +1521,7 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="custom-control custom-switch">
-                                        <input type="checkbox" class="custom-control-input" id="influxdb_enabled" name="influxdb_enabled" {% if settings['influxdb']['enabled'] %}checked{% endif %}>
+                                        <input type="checkbox" class="custom-control-input" id="influxdb_enabled" name="influxdb_enabled" {% if settings['notify_services']['influxdb']['enabled'] %}checked{% endif %}>
                                         <label class="custom-control-label" for="influxdb_enabled">InfluxDB Enabled</label>
                                     </div>
                                     <br>
@@ -1677,28 +1530,28 @@
                                     <span class="input-group-text">
                                         <i class="fas fa-key"></i>&nbsp; URL </span>
                                         </div>
-                                        <input id="influxdb_url" type="text" class="form-control" name="influxdb_url" value="{{settings['influxdb']['url']}}">
+                                        <input id="influxdb_url" type="text" class="form-control" name="influxdb_url" value="{{settings['notify_services']['influxdb']['url']}}">
                                     </div>
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
                                     <span class="input-group-text">
                                         <i class="fas fa-key"></i>&nbsp; token </span>
                                         </div>
-                                        <input id="influxdb_token" type="text" class="form-control" name="influxdb_token" value="{{settings['influxdb']['token']}}">
+                                        <input id="influxdb_token" type="text" class="form-control" name="influxdb_token" value="{{settings['notify_services']['influxdb']['token']}}">
                                     </div>
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
                                     <span class="input-group-text">
                                         <i class="fas fa-key"></i>&nbsp; org </span>
                                         </div>
-                                        <input id="influxdb_org" type="text" class="form-control" name="influxdb_org" value="{{settings['influxdb']['org']}}">
+                                        <input id="influxdb_org" type="text" class="form-control" name="influxdb_org" value="{{settings['notify_services']['influxdb']['org']}}">
                                     </div>
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
                                     <span class="input-group-text">
                                         <i class="fas fa-key"></i>&nbsp; bucket </span>
                                         </div>
-                                        <input id="influxdb_bucket" type="text" class="form-control" name="influxdb_bucket" value="{{settings['influxdb']['bucket']}}">
+                                        <input id="influxdb_bucket" type="text" class="form-control" name="influxdb_bucket" value="{{settings['notify_services']['influxdb']['bucket']}}">
                                     </div>
                                 </div><!-- End of card body -->
                             </div><!-- End of Card -->
