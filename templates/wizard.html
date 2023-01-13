@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% from '_macro_wizard_card.html' import render_wizard_card %}
+{% from '_macro_probes_config.html' import render_probe_devices, render_probe_ports %}
 
 {% block title %}Setup Wizard{% endblock %}
 
@@ -59,7 +61,13 @@
 						        </select>
 					        </div>
 					        <!-- Module Card -->
-					        <div id="grillplatformCard"></div>
+					        <div id="grillplatformCard">
+								{% for module in wizardData['modules']['grillplatform'] %}
+									{% if wizardData['modules']['grillplatform'][module]['default'] %}
+										{{ render_wizard_card(wizardData['modules']['grillplatform'][module], 'grillplatform') }}
+									{% endif %}
+								{% endfor %}
+							</div>
 					        <!-- End of Card -->
 					        <br>
 					        <br>Once finished, click next to continue on to the probe input selection.<br>
@@ -77,23 +85,48 @@
                 <div class="tab-pane fade" id="v-pills-probes" role="tabpanel" aria-labelledby="v-pills-probes-tab">
 			        <div class="card shadow">
 				        <div class="card-header bg-primary text-white">
-				        <strong>Probes Input Module</strong>
+				        <strong>Probes Input</strong>
 				        </div>
 				        <div class="card-body">
-					        <strong>Select a Probes Module for PiFire.</strong><br><br>
-					        By default, this project uses the ADS1115 ADC module for probe input.  The prototype module should only be selected for testing/debug purposes. <br><br>
-					        <!-- Select Drop Down -->
-					        <div class="form-group">
-						        <select class="form-control" id="probesSelect" name="probesSelect">
-							        {% for module in wizardData['modules']['probes'] %}
-								        <option value="{{ module }}"{% if wizardData['modules']['probes'][module]['default'] == True %} selected {% endif %}>{{ wizardData['modules']['probes'][module]['friendly_name'] }}</option>
-							        {% endfor %}
-						        </select>
-					        </div>
-					        <!-- Module Card -->
-					        <div id="probesCard"></div>
+					        <strong>Configure Probe Input for PiFire.</strong><br><br>
+					        Configure the probe devices and ports that will be used by PiFire.  The prototype module should only be selected for testing/debug purposes. <br><br>
+					        
+							<!-- Units Table -->
+							<div class="card">
+								<table class="table">
+									<thead class="thead-light">
+										<tr>
+										<th scope="col">Global Setting</th>
+										<th scope="col">Options</th>
+										<th scope="col">Description</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr>
+											<td>
+												Temp Units
+											</td>
+											<td>
+												<select class="form-control" id="probes_units" name="probes_units">
+													<option value="F" selected>Fahrenheit</option>
+													<option value="C">Celcius</option>
+												</select>
+											</td>
+											<td>
+												Select the temperature units to use for PiFire globally.  (This can be modified in settings later)
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+							<br>
+							<!-- Module Card -->
+								{{ render_probe_devices(wizardInstallInfo['probe_map'], wizardData['modules']['probes']) }}
+								<br><br>
+								{{ render_probe_ports(wizardInstallInfo['probe_map'], wizardData['modules']['probes']) }}
 					        <!-- End of Card -->
-					        <br>
+								<br>
+							
 					        <br>Once finished, click next to continue on to the display selection.<br>
 				        </div>
 				        <div class="card-footer">
@@ -125,7 +158,13 @@
 						        </select>
 					        </div>
 					        <!-- Module Card -->
-					        <div id="displayCard"></div>
+					        <div id="displayCard">
+								{% for module in wizardData['modules']['display'] %}
+									{% if wizardData['modules']['display'][module]['default'] %}
+										{{ render_wizard_card(wizardData['modules']['display'][module], 'display') }}
+									{% endif %}
+								{% endfor %}
+							</div>
 					        <!-- End of Card -->
 					        <br>
 					        <br>Once finished, click next to continue on to the hopper sensor selection.<br>
@@ -159,7 +198,13 @@
 						        </select>
 					        </div>
 					        <!-- Module Card -->
-					        <div id="distanceCard"></div>
+					        <div id="distanceCard">
+								{% for module in wizardData['modules']['distance'] %}
+									{% if wizardData['modules']['distance'][module]['default'] %}
+										{{ render_wizard_card(wizardData['modules']['distance'][module], 'distance') }}
+									{% endif %}
+								{% endfor %}
+							</div>
 					        <!-- End of Card -->
 					        <br>
 					        <br>Once finished, click next to continue to the next tab to confirm your settings.<br>
@@ -188,7 +233,7 @@
 						        <thead>
 						         <tr>
 							        <th scope="col">Module Type</th>
-							        <th scope="col">Selected Module</th>
+							        <th scope="col">Selected Modules</th>
 						        </tr>
 						        </thead>
 						        <tbody>
@@ -259,4 +304,5 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/wizard.js') }}"></script>
+<script src="{{ url_for('static', filename='js/probes_config.js') }}"></script>
 {% endblock %}

@@ -212,13 +212,9 @@ def default_settings():
 		'current' : 'Default', 
 		'dashboards' : [
 			{	'name' : 'Default',
-				'friendly_name' : 'Default/Classic Dashboard', 
-				'html_name' : 'dash_default.html'
-			},
-			{	'name' : 'Modern',
-				'friendly_name' : 'Modern Dashboard', 
-				'html_name' : 'dash_default.html'
-			},
+				'friendly_name' : 'Default/Basic Dashboard', 
+				'html_name' : 'dash_basic.html'
+			}
 		]
 	}
 
@@ -785,20 +781,17 @@ def write_metrics(metrics=default_metrics(), flush=False, new_metric=False):
 		cmdsts.rpop('metrics:general')
 		cmdsts.rpush('metrics:general', json.dumps(metrics))
 
-def read_settings(filename='settings.json'):
+def read_settings(filename='settings.json', init=False):
 	"""
 	Read Settings from file
 
 	:param filename: Filename to use (default settings.json)
 	"""
 
-	# Get latest settings format
-	settings = default_settings()
-
 	try:
 		json_data_file = os.fdopen(os.open(filename, os.O_RDONLY))
 		json_data_string = json_data_file.read()
-		settings_struct = json.loads(json_data_string)
+		settings = json.loads(json_data_string)
 		json_data_file.close()
 
 	except(IOError, OSError):
@@ -813,40 +806,51 @@ def read_settings(filename='settings.json'):
 		write_log(event)
 		json_data_file.close()
 		# Retry Reading Settings
-		settings_struct = read_settings(filename=filename)
+		settings = read_settings(filename=filename)
 
-	# Overlay the read values over the top of the default settings
-	#  This ensures that any NEW fields are captured.  
-	update_settings = False # set flag in case an update needs to be written back
+	if init:
+		# Get latest settings format
+		settings_default = default_settings()
 
-	# If default version is different from what is currently saved, update version in saved settings
-	if 'versions' not in settings_struct.keys():
-		settings_struct['versions'] = {
-			'server' : settings['versions']['server']
-		}
-		update_settings = True
-	elif settings_struct['versions']['server'] != settings['versions']['server']:
-		settings_struct['versions']['server'] = settings['versions']['server']
-		update_settings = True
+		# Overlay the read values over the top of the default settings
+		#  This ensures that any NEW fields are captured.  
+		update_settings = False # set flag in case an update needs to be written back
 
-	# Prevent the wizard from popping up on existing installations
-	if 'first_time_setup' not in settings_struct['globals'].keys():
-		settings_struct['globals']['first_time_setup'] = False
-		update_settings = True
-		print(' ===  DEBUG: Setting First Time Setup to False!! ')
-
-	for key in settings.keys():
-		if key in settings_struct.keys():
-			for subkey in settings[key].keys():
-				if subkey not in settings_struct[key].keys():
-					update_settings = True
-			settings[key].update(settings_struct.get(key, {}))
-		else:
+		# Prevent the wizard from popping up on existing installations
+		if 'first_time_setup' not in settings['globals'].keys():
+			settings['globals']['first_time_setup'] = False
 			update_settings = True
 
-	if update_settings or filename != 'settings.json': # If any of the keys were added, then write back the changes
-		write_settings(settings)
-	#print('key mismatch - update flag set')
+		# If default version is different from what is currently saved, update version in saved settings
+		if 'versions' not in settings.keys():
+			settings['versions'] = {
+				'server' : settings_default['versions']['server']
+			}
+			update_settings = True
+		elif settings_default['versions']['server'] != settings['versions']['server']:
+			prev_ver = semantic_ver_to_list(settings['versions']['server'])
+			''' Check if upgrading from v1.4.x or earlier, and require upgrades if so. '''
+			if prev_ver[0] <=1 and prev_ver[1] <= 4:
+				settings['globals']['first_time_setup'] = True
+				# TODO Other Settings Fixups May be necessary 
+			settings['versions']['server'] = settings_default['versions']['server']
+			update_settings = True
+
+		# Overalay the original settings ontop of the default settings
+		for key in settings_default.keys():
+			if key in settings.keys():
+				for subkey in settings_default[key].keys():
+					if subkey not in settings[key].keys():
+						update_settings = True
+				settings_default[key].update(settings.get(key, {}))
+			else:
+				update_settings = True
+
+		# Move all changes to the settings variable
+		settings = settings_default 
+
+		if update_settings or filename != 'settings.json': # If any of the keys were added, then write back the changes
+			write_settings(settings)
 
 	return(settings)
 

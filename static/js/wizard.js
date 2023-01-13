@@ -12,6 +12,7 @@ function scrollTop() {
 
 // On Document Ready
 $(document).ready(function() {
+	// === Setup Pill Navigation Buttons ===
 	$("#platformBtn").click(function() {
 		$("#v-pills-platform-tab").trigger('click');
 		scrollTop()
@@ -52,48 +53,44 @@ $(document).ready(function() {
 		$("#v-pills-distance-tab").trigger('click');
 		scrollTop()
 	});
+	// Wizard complete button will submit the form
 	$("#finishBtn").click(function() {
 		finished = true;
 		$('#wizardForm').submit();
 	});
 
-	// Function for Calling Card Info
+	// Set the confirmation value on the confirm/finish section
 	var selection = $('#grillplatformSelect').val();
-	$('#grillplatformCard').load("/wizard/modulecard", {"section" : "grillplatform", "module" : selection});
 	$('#grillplatformConfirm').html(selection);
 
-	var selection = $('#probesSelect').val();
-	$('#probesCard').load("/wizard/modulecard", {"section" : "probes", "module" : selection});
-	$('#probesConfirm').html(selection);
-
 	var selection = $('#displaySelect').val();
-	$('#displayCard').load("/wizard/modulecard", {"section" : "display", "module" : selection});
 	$('#displayConfirm').html(selection);
 
 	var selection = $('#distanceSelect').val();
-	$('#distanceCard').load("/wizard/modulecard", {"section" : "distance", "module" : selection});
 	$('#distanceConfirm').html(selection);
 
-	// Setup listeners for selection boxes
+	// Setup listeners for selection boxes in each section 
 	$('#grillplatformSelect').change(function () {
 		var selection = $('#grillplatformSelect').val();
 		$('#grillplatformCard').load("/wizard/modulecard", {"section" : "grillplatform", "module" : selection});
 		$('#grillplatformConfirm').html(selection);
 	});
-	$('#probesSelect').change(function () {
-		var selection = $('#probesSelect').val();
-		$('#probesCard').load("/wizard/modulecard", {"section" : "probes", "module" : selection});
-		$('#probesConfirm').html(selection);
-	});
+	
 	$('#displaySelect').change(function () {
 		var selection = $('#displaySelect').val();
 		$('#displayCard').load("/wizard/modulecard", {"section" : "display", "module" : selection});
 		$('#displayConfirm').html(selection);
 	});
+
 	$('#distanceSelect').change(function () {
 		var selection = $('#distanceSelect').val();
 		$('#distanceCard').load("/wizard/modulecard", {"section" : "distance", "module" : selection});
 		$('#distanceConfirm').html(selection);
 	});
+
+	setInterval(function () {
+		var selection = $('#probeModuleList').val();
+		$('#probesConfirm').html(selection);
+	}, 1000);
 
 });

@@ -15,8 +15,8 @@ Description:
 			'module' : 'virtual_average',	# Must be populated for this module to load properly
 			'ports' : ['VIRT0'], 			# A port must be defined, with the labels of the probes to average together in config data
 			'config' : {
-			  "avg_probes" : {
-              	"VIRT0" : ["Grill-1", "Grill-2"]	# Port and list of probe labels to average
+			  "probes_list" : {
+              	"VIRT0" : ["Grill1", "Grill2"]	# Port and list of probe labels to average
             }
 			} 
 		}
@@ -46,7 +46,7 @@ class ReadProbes(ProbeInterface):
 		for port in self.port_map:
 			count = 0
 			accumulator = 0
-			for probe in self.device_info['config']['avg_probes'][port]:
+			for probe in self.device_info['config']['probes_list'][port]:
 				if probe in output_data['primary']:
 					count += 1
 					accumulator += output_data['primary'][probe]

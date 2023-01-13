@@ -1406,7 +1406,7 @@ def settings_page(action=None):
 			settings['smartstart']['enabled'] = False
 
 		settings['start_to_mode']['after_startup_mode'] = response['after_startup_mode']
-		settings['start_to_mode']['grill1_setpoint'] = int(response['startup_mode_grill1_setpoint'])
+		settings['start_to_mode']['primary_setpoint'] = int(response['startup_mode_setpoint'])
 		
 		event['type'] = 'updated'
 		event['text'] = 'Successfully updated startup/shutdown settings.'
@@ -1730,7 +1730,6 @@ def admin_page(action=None):
 				if remote_file and _allowed_file(remote_file.filename):
 					filename = secure_filename(remote_file.filename)
 					remote_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-					#print(f'{filename} saved to {BACKUPPATH}')
 					notify = "success"
 					pelletdb = read_pellet_db(filename=BACKUP_PATH+filename)
 					write_pellet_db(pelletdb)
@@ -1905,10 +1904,7 @@ def wizard(action=None):
 	wizardData = read_wizard()
 
 	if request.method == 'GET':
-		if action=='welcome':
-			return render_template('wizard.html', settings=settings, page_theme=settings['globals']['page_theme'],
-								   grill_name=settings['globals']['grill_name'], wizardData=wizardData)
-		elif action=='installstatus':
+		if action=='installstatus':
 			percent, status, output = get_wizard_install_status()
 			return jsonify({'percent' : percent, 'status' : status, 'output' : output}) 
 	elif request.method == 'POST':
@@ -1927,39 +1923,56 @@ def wizard(action=None):
 		if action=='modulecard':
 			module = r['module']
 			section = r['section']
-			if section in ['grillplatform', 'probes', 'display', 'distance']:
+			if section in ['grillplatform', 'display', 'distance']:
 				moduleData = wizardData['modules'][section][module]
+				render_string = "{% from '_macro_wizard_card.html' import render_wizard_card %}{{ render_wizard_card(moduleData, moduleSection) }}"
+				return render_template_string(render_string, moduleData=moduleData, moduleSection=section)
 			else:
 				return '<strong color="red">No Data</strong>'
-			return render_template('wizard-card.html', moduleData=moduleData, moduleSection=section)	
+	
+	''' Create Temporary Probe Device/Port Structure for Setup '''
+	wizardInstallInfo = {
+		'modules' : {}, 
+		'probe_map' : settings['probe_settings']['probe_map']
+	} 
+	if settings['globals']['first_time_setup']: 
+		wizardInstallInfo['probe_map'] = wizardData['boards']['PiFirev2x']['probe_map']
+
+	store_wizard_install_info(wizardInstallInfo) 
 
 	return render_template('wizard.html', settings=settings, page_theme=settings['globals']['page_theme'],
-						   grill_name=settings['globals']['grill_name'], wizardData=wizardData)
+						   grill_name=settings['globals']['grill_name'], wizardData=wizardData, wizardInstallInfo=wizardInstallInfo)
 
 def prepare_wizard_data(form_data):
 	wizardData = read_wizard()
 	
-	wizardInstallInfo = {}
+	wizardInstallInfo = load_wizard_install_info()
+
 	wizardInstallInfo['modules'] = {
 		'grillplatform' : {
-			'module_selected' : form_data['grillplatformSelect'],
-			'settings' : {}
-		}, 
-		'probes' : {
-			'module_selected' : form_data['probesSelect'],
+			'module_selected' : [form_data['grillplatformSelect']],
 			'settings' : {}
 		}, 
 		'display' : {
-			'module_selected' : form_data['displaySelect'],
+			'module_selected' : [form_data['displaySelect']],
 			'settings' : {}
 		}, 
 		'distance' : {
-			'module_selected' : form_data['distanceSelect'],
+			'module_selected' : [form_data['distanceSelect']],
 			'settings' : {}
 		}, 
+		'probes' : {
+			'module_selected' : [],
+			'settings' : {
+				'units' : form_data['probes_units']
+			}
+		}
 	}
 
-	for module in ['grillplatform', 'probes', 'display', 'distance']:
+	for device in wizardInstallInfo['probe_map']['probe_devices']:
+		wizardInstallInfo['modules']['probes']['module_selected'].append(device['module'])
+
+	for module in ['grillplatform', 'display', 'distance']:
 		module_ = module + '_'
 		moduleSelect = module + 'Select'
 		selected = form_data[moduleSelect]
@@ -1969,6 +1982,329 @@ def prepare_wizard_data(form_data):
 				wizardInstallInfo['modules'][module]['settings'][setting] = form_data[settingName]
 
 	return(wizardInstallInfo)
+
+'''
+Probe Configuration Route
+'''
+@app.route('/probeconfig', methods=['GET', 'POST'])
+def probe_config():
+	global settings
+	wizardData = read_wizard()
+	wizardInstallInfo = load_wizard_install_info()
+	alerts = []
+	errors = 0
+
+	if request.method == 'GET':
+		render_string = "{% from '_macro_probes_config.html' import render_probe_devices, render_probe_ports %}{{ render_probe_devices(probe_map, modules, alerts) }}{{ render_probe_ports(probe_map, modules) }}"
+		return render_template_string(render_string, probe_map=wizardInstallInfo['probe_map'], modules=wizardData['modules']['probes'], alerts=alerts)
+	elif request.method == 'POST':
+		r = request.form
+		if r['section'] == 'devices':
+			if r['action'] == 'delete_device':
+				for index, device in enumerate(wizardInstallInfo['probe_map']['probe_devices']):
+					if device['device'] == r['name']:
+						# Remove the device from the device list
+						wizardInstallInfo['probe_map']['probe_devices'].pop(index)
+						# Remove probes associated with device from the probe list
+						probe_info = []
+						for index, probe in enumerate(wizardInstallInfo['probe_map']['probe_info']):
+							# to maintain consistency while iterating, create a new list of probes
+							if probe['device'] != r['name']:
+								probe_info.append(probe)
+						wizardInstallInfo['probe_map']['probe_info'] = probe_info
+						store_wizard_install_info(wizardInstallInfo)
+						break 
+			if r['action'] == 'add_config':
+				''' Populate Configuration Settings into Modal '''
+				moduleData = wizardData['modules']['probes'][r['module']]
+				friendlyName = wizardData['modules']['probes'][r['module']]['friendly_name']
+				deviceName = "".join([x for x in friendlyName if x.isalnum()])
+				available_probes = []
+				''' Get a list of port-labels that can be used by the virtual port '''
+				for index, probe in enumerate(wizardInstallInfo['probe_map']['probe_info']):
+					available_probes.append(probe['label'])
+				''' Set default configuration data '''
+				defaultConfig = {}
+				for config_setting in moduleData['device_specific']['config']:
+					if config_setting == 'probes_list':
+						defaultConfig[config_setting] = []
+					else:
+						defaultConfig[config_setting] = list(moduleData['device_specific']['config'][config_setting]['options'].keys())[0]
+				render_string = "{% from '_macro_probes_config.html' import render_probe_device_settings %}{{ render_probe_device_settings(moduleData, moduleSection, defaultName, defaultConfig, available_probes, mode) }}"
+				return render_template_string(render_string, moduleData=moduleData, moduleSection='probes', defaultName=deviceName, defaultConfig=defaultConfig, available_probes=available_probes, mode='Add')
+			if r['action'] == 'add_device':
+				''' Add device to the Wizard Install Info Probe Map Devices '''
+				device_name = "".join([x for x in r['name'] if x.isalnum()])
+				# Check if any other devices are using that name
+				for index, device in enumerate(wizardInstallInfo['probe_map']['probe_devices']):
+					if device['device'] == device_name: 
+						alert = {
+							'message' : 'Device name already exists.  Please select a unique device name.',
+							'type' : 'error'
+						}
+						alerts.append(alert)
+						errors += 1
+						break 
+				
+				if r['name'] == '': 
+					alert = {
+						'message' : 'Device name is blank.  Please select a unique device name.',
+						'type' : 'error'
+					}
+					alerts.append(alert)
+					errors += 1
+
+				if errors == 0:
+					# Configure new device entry
+					new_device = {
+						"config": {},
+						"device": device_name,
+						"module": r['module'],
+						"ports": wizardData['modules']['probes'][r['module']]['device_specific']['ports']
+					}
+					# If any device specific configuration settings, set them here
+					for key, config_value in r.items():
+						if 'probes_devspec_' in key:
+							if '[]' in key:
+								config_item = key.replace('probes_devspec_', '').replace('[]', '')
+								new_device['config'][config_item] = request.form.getlist(key)
+							else:
+								config_item = key.replace('probes_devspec_', '')
+								new_device['config'][config_item] = config_value 
+					
+					wizardInstallInfo['probe_map']['probe_devices'].append(new_device)
+					store_wizard_install_info(wizardInstallInfo)
+			if r['action'] == 'edit_config':
+				''' Populate Configuration Settings into Modal '''
+				device_name = r['name']
+				for index, device in enumerate(wizardInstallInfo['probe_map']['probe_devices']):
+					if device['device'] == device_name: 
+						#wizardInstallInfo['probe_map']['probe_devices'][index]
+						moduleData = wizardData['modules']['probes'][device['module']]
+						defaultConfig = device['config']
+						break 
+					
+				''' Get a list of port-labels that can be used by the virtual port '''
+				available_probes = []
+				for index, probe in enumerate(wizardInstallInfo['probe_map']['probe_info']):
+					available_probes.append(probe['label'])
+
+				render_string = "{% from '_macro_probes_config.html' import render_probe_device_settings %}{{ render_probe_device_settings(moduleData, moduleSection, defaultName, defaultConfig, available_probes, mode) }}"
+				return render_template_string(render_string, moduleData=moduleData, moduleSection='probes', defaultName=device_name, defaultConfig=defaultConfig, available_probes=available_probes, mode='Edit')
+			if r['action'] == 'edit_device':
+				''' Save changes from edited device to WizardInstallInfo structure '''
+				if r['newname'] == '': 
+					alert = {
+						'message' : 'Device name is blank.  Please select a unique device name.',
+						'type' : 'error'
+					}
+					alerts.append(alert)
+					errors += 1
+				
+				if not errors: 
+					# Configure new device entry
+					new_device = {
+						"config": {},
+						"device": r['newname'],
+						"module": "",
+						"ports": []
+					}
+					# If any device specific configuration settings, set them here
+					for key, config_value in r.items():
+						if 'probes_devspec_' in key:
+							if '[]' in key:
+								config_item = key.replace('probes_devspec_', '').replace('[]', '')
+								new_device['config'][config_item] = request.form.getlist(key)
+							else:
+								config_item = key.replace('probes_devspec_', '')
+								new_device['config'][config_item] = config_value 
+					for index, probe in enumerate(wizardInstallInfo['probe_map']['probe_devices']):
+						if probe['device'] == r['name']:
+							new_device['ports'] = probe['ports']
+							new_device['module'] = probe['module']
+							wizardInstallInfo['probe_map']['probe_devices'][index] = new_device
+							store_wizard_install_info(wizardInstallInfo)
+							break
+			render_string = "{% from '_macro_probes_config.html' import render_probe_devices, render_probe_ports %}{{ render_probe_devices(probe_map, modules, alerts) }}"
+			return render_template_string(render_string, probe_map=wizardInstallInfo['probe_map'], modules=wizardData['modules']['probes'], alerts=alerts)
+		elif r['section'] == 'ports':
+			if r['action'] == 'delete_probe':
+				for index, probe in enumerate(wizardInstallInfo['probe_map']['probe_info']):
+					if probe['label'] == r['label']:
+						# Check if probe is being used in a virtual device, and delete it from there. 
+						for index, device in enumerate(wizardInstallInfo['probe_map']['probe_devices']):
+							if 'virtual' in device['module']:
+								if probe['label'] in device['config']['probes_list']: 
+									wizardInstallInfo['probe_map']['probe_devices'][index]['config']['probes_list'].remove(probe['label'])
+						wizardInstallInfo['probe_map']['probe_info'].pop(index)
+						store_wizard_install_info(wizardInstallInfo)
+						break
+
+			if r['action'] == 'config':
+				defaultLabel = r['label']
+				defaultConfig = {
+					'name' : '', 
+					'device_port' : '',
+					'type' : '',
+					'profile_id' : '',
+					'enabled' : 'true'
+				}
+
+				if r['label'] != '':
+					for index, probe in enumerate(wizardInstallInfo['probe_map']['probe_info']):
+						if probe['label'] == r['label']:
+							defaultConfig['name'] = probe['name']
+							defaultConfig['device_port'] = f'{probe["device"]}:{probe["port"]}'
+							defaultConfig['type'] = probe['type']
+							defaultConfig['profile_id'] = probe['profile']['id']
+							defaultConfig['enabled'] = 'true' if probe['enabled'] else 'false'
+							break
+				
+				configOptions = wizardData['probe_config_options']
+
+				# Populate Device & Port Options
+				for index, device in enumerate(wizardInstallInfo['probe_map']['probe_devices']):
+					device_name = device['device']
+					for port in device['ports']:
+						option_id = f'{device_name}:{port}'
+						option_name = f'{device_name} -> {port}'
+						configOptions['device_port']['options'][option_id] = option_name 
+
+				# Populate Probe Profiles
+				for profile in settings['probe_settings']['probe_profiles']:
+					configOptions['profile_id']['options'][profile] = settings['probe_settings']['probe_profiles'][profile]['name']
+
+				render_string = "{% from '_macro_probes_config.html' import render_probe_port_settings %}{{ render_probe_port_settings(defaultLabel, defaultConfig, configOptions) }}"
+				return render_template_string(render_string, defaultLabel=defaultLabel, defaultConfig=defaultConfig, configOptions=configOptions)
+
+			if r['action'] == 'add_probe' or r['action'] == 'edit_probe':
+				new_probe = {} 
+				for key, config_value in r.items():
+					if 'probe_config_' in key:
+						config_item = key.replace('probe_config_', '')
+						new_probe[config_item] = config_value 
+
+				if new_probe['name'] == '':
+					errors += 1
+					# Error: Probe Name is empty. 
+					alert = {
+						'message' : 'Probe name is empty.  Please select a probe name.',
+						'type' : 'error'
+					}
+					alerts.append(alert)					
+
+				new_probe['enabled'] = True if new_probe['enabled'] == 'true' else False 
+				new_probe['label'] = "".join([x for x in new_probe['name'] if x.isalnum()])
+				new_probe['device'] = new_probe['device_port'].split(':')[0]
+				new_probe['port'] = new_probe['device_port'].split(':')[1]
+				new_probe.pop('device_port')
+
+				for profile in settings['probe_settings']['probe_profiles']:
+					if profile == new_probe['profile_id']:
+						new_probe['profile'] = settings['probe_settings']['probe_profiles'][profile].copy()
+						break 
+				new_probe.pop('profile_id') 
+
+				# Look for existing probe with the same name
+				found = None
+				for index, probe in enumerate(wizardInstallInfo['probe_map']['probe_info']):
+					if r['name'] != '' and probe['label'] == r['name']:
+						found = index
+						break 
+					elif probe['label'] == new_probe['label']:
+						found = index 
+						break 
+				
+				# Check for primary probe conflict
+				if new_probe['type'] == 'Primary': 
+					for index, probe in enumerate(wizardInstallInfo['probe_map']['probe_info']):
+						if probe['label'] == r['name']:
+							pass
+						elif probe['type'] == 'Primary':
+							# Found a conflict, report error  
+							errors += 1
+							# Error: Probe Name is empty. 
+							alert = {
+								'message' : f'There must only be one Primary probe defined. The probe named {probe["name"]} is already set to primary.  Delete or edit that probe to a different type, before setting a new primary probbe.',
+								'type' : 'error'
+							}
+							alerts.append(alert)
+							break
+
+				if errors: 
+					pass 
+				elif found is not None and r['name'] == '':
+					# Error Adding New Probe: There is already a probe with the same name
+					alert = {
+						'message' : 'Probe name is already used or is similar to another probe name.  Please select a different probe name.  Note: Special characters and spaces are removed when checking names.',
+						'type' : 'error'
+					}
+					alerts.append(alert)					
+				elif found is not None and r['name'] != '':
+					# Check virtual ports and fix up probe labels if they've changed 
+					in_virtual_device = []
+					for index, device in enumerate(wizardInstallInfo['probe_map']['probe_devices']):
+						if 'virtual' in device['module']: 
+							if r['name'] in device['config']['probes_list']:
+								for item, value in enumerate(wizardInstallInfo['probe_map']['probe_devices'][index]['config']['probes_list']):
+									if value == r['name']: 
+										wizardInstallInfo['probe_map']['probe_devices'][index]['config']['probes_list'][item] = new_probe['label']
+										in_virtual_device.append(device['device']) # 
+										break 
+					
+					# If this is a virtual port, check to make sure this config entry comes after the probe input config entries for this port
+					if 'VIRT' in new_probe['port']:
+						for index, device in enumerate(wizardInstallInfo['probe_map']['probe_devices']):
+							if 'virtual' in device['module'] and new_probe['device'] == device['device']:
+								input_probes = device['config']['probes_list']
+								for probe in range(len(wizardInstallInfo['probe_map']['probe_info']), 0, -1):
+									if wizardInstallInfo['probe_map']['probe_info'][probe]['label'] == new_probe['label']:
+										# Found the virtual probe first, current location is OK
+										wizardInstallInfo['probe_map']['probe_info'][found] = new_probe
+										break 
+									elif wizardInstallInfo['probe_map']['probe_info'][probe]['label'] in input_probes:
+										# Found one of the input probes first, fix by inserting edited probe config here
+										wizardInstallInfo['probe_map']['probe_info'].insert(probe, new_probe)
+										# Remove the previous config from the list
+										wizardInstallInfo['probe_map']['probe_info'].pop(found)
+										break 
+								break 
+
+					elif in_virtual_device != []:
+						# If this probe is used by a virtual device, make sure its config entry comes before the config entry for the virtual port 
+						for index, probe in enumerate(wizardInstallInfo['probe_map']['probe_info']):
+							if wizardInstallInfo['probe_map']['probe_info'][index]['label'] == r['name']:
+								# Found the probe config for the virtual device, current location is OK 
+								wizardInstallInfo['probe_map']['probe_info'][index] = new_probe
+								break
+							elif wizardInstallInfo['probe_map']['probe_info'][index]['device'] in in_virtual_device:
+								# Found this input probes first, fix by inserting edited probe config here
+								wizardInstallInfo['probe_map']['probe_info'].insert(index, new_probe)
+								# Remove the previous config from the list
+								wizardInstallInfo['probe_map']['probe_info'].pop(found+1)
+								break 
+					else: 
+						# Editing probe with new data
+						wizardInstallInfo['probe_map']['probe_info'][found] = new_probe
+					store_wizard_install_info(wizardInstallInfo)
+				elif not found and r['name'] == '':
+					# Adding new probe
+					wizardInstallInfo['probe_map']['probe_info'].append(new_probe)
+					store_wizard_install_info(wizardInstallInfo)
+				else:
+					# Other Error
+					alert = {
+						'message' : 'Error Adding/Editing Probe.  Please try again.',
+						'type' : 'error'
+					}
+					alerts.append(alert)	
+					
+			render_string = "{% from '_macro_probes_config.html' import render_probe_devices, render_probe_ports %}{{ render_probe_ports(probe_map, modules, alerts) }}"
+			return render_template_string(render_string, probe_map=wizardInstallInfo['probe_map'], modules=wizardData['modules']['probes'], alerts=alerts)
+	else:
+		render_string = "Error!"
+		return render_template_string(render_string)
+
 
 '''
 Manifest Route for Web Application Integration
@@ -2602,7 +2938,6 @@ def _calc_shh_coefficients(t1, t2, t3, r1, r2, r3):
 		# Step 6: A = Y1 - (B + L1^2*C) * L1
 		a = y1 - ((b + (math.pow(l1, 2) * c)) * l1)
 	except:
-		#print('An error occurred when calculating coefficients.')
 		a = 0
 		b = 0
 		c = 0
@@ -3239,7 +3574,7 @@ def post_restore_data(type='none', filename='none', json_data=None):
 '''
 Main Program Start
 '''
-settings = read_settings()
+settings = read_settings(init=True)
 
 if __name__ == '__main__':
 	if is_raspberry_pi():

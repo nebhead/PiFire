@@ -31,7 +31,7 @@ from os.path import exists
 Read and initialize Settings, Control, History, Metrics, and Error Data
 '''
 # Read Settings & Wizard Manifest to Get Modules Configuration 
-settings = read_settings()
+settings = read_settings(init=True)
 wizard_data = read_wizard()
 
 # Flush Redis DB and create JSON structure

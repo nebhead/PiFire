@@ -21,12 +21,6 @@
 						"description" : "Select the trigger level for the relays on the platform.  ",
 						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
 						"settings" : ["globals", "triggerlevel"]
-					},
-					"four_probes" : {
-						"friendly_name" : "Probes",
-						"description" : "Select if your PCB supports 3 or 4 probe inputs ",
-						"options" : { "False" : "Three Probes", "True" : "Four Probes" },
-						"settings" : ["globals", "four_probes"]
 					}
 				}
 			},
@@ -58,12 +52,6 @@
 						"options" : { "True" : "PWM DC Fan" },
 						"settings" : ["globals", "dc_fan"],
 						"hidden" : true
-					},
-					"four_probes" : {
-						"friendly_name" : "Probes",
-						"description" : "Select if your PCB supports 3 or 4 probe inputs ",
-						"options" : { "True" : "Four Probes", "False" : "Three Probes" },
-						"settings" : ["globals", "four_probes"]
 					}
 				}
 			},
@@ -93,12 +81,6 @@
 						"description" : "Select if your platform supports a DC PWM fan or uses a regular AC Fan. ",
 						"options" : { "False" : "Standard AC Fan", "True" : "PWM DC Fan" },
 						"settings" : ["globals", "dc_fan"]
-					},
-					"four_probes" : {
-						"friendly_name" : "Probes",
-						"description" : "Select if your PCB supports 3 or 4 probe inputs ",
-						"options" : { "False" : "Three Probes", "True" : "Four Probes" },
-						"settings" : ["globals", "four_probes"]
 					}
 				}
 			} 
@@ -119,6 +101,10 @@
 						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
 						"settings" : ["globals", "units"]
 					}
+				},
+				"device_specific" : {
+					"ports" : ["ADC0", "ADC1", "ADC2", "ADC3"],
+					"config" : {}
 				}
 			},
 			"ads1015_adafruit" : {
@@ -136,6 +122,10 @@
 						"options" : {"F" : "Farenheit", "C": "Celsius"},
 						"settings" : ["globals", "units"]
 					}
+				},
+				"device_specific" : {
+					"ports" : ["ADC0", "ADC1", "ADC2", "ADC3"],
+					"config" : {}
 				}
 			},
 			"ads1115_adafruit" : {
@@ -153,6 +143,52 @@
 						"options" : {"F" : "Farenheit", "C": "Celsius"},
 						"settings" : ["globals", "units"]
 					}
+				},
+				"device_specific" : {
+					"ports" : ["ADC0", "ADC1", "ADC2", "ADC3"],
+					"config" : {}
+				}
+			},
+			"max31865" : {
+				"friendly_name" : "MAX31865 RTD",
+				"filename" : "max31865",
+				"description" : "This SPI device reads RTD style probes, such as the Traeger PT100(PT1000) RTD probe.  Note that special care may need to be taken if this is used with another SPI device (i.e. SPI Display) on the system.",
+				"default" : false,
+				"image" : "max31865.png",
+				"py_dependencies" : [], 
+				"apt_dependencies" : [],
+				"settings_dependencies" : {
+					"units" : {
+						"friendly_name" : "Temp Units",
+						"description" : "Select the temperature units to use for PiFire globally.  (this can be modified in settings later)",
+						"options" : {"F" : "Farenheit", "C": "Celsius"},
+						"settings" : ["globals", "units"]
+					}
+				},
+				"device_specific" : {
+					"ports" : ["RTD0"],
+					"config" : {
+						"cs" : {
+							"friendly_name" : "SPI Chip Select (CS)",
+							"description" : "SPI Chip Select (CS/CEx) pin used for this device.",
+							"options" : {"1" : "CS1", "0": "CS0"}
+						},
+						"rtd_nominal" : {
+							"friendly_name" : "RTD Nominal",
+							"description" : "RTD Nominal Resistance Value in Ohms. Default 100 Ohms.",
+							"options" : {"100" : "100 Ohms"}
+						},
+						"ref_resistor" : {
+							"friendly_name" : "Reference Resistor",
+							"description" : "Reference Resistor Value in Ohms. Default 430 Ohms.",
+							"options" : {"430" : "430 Ohms"}
+						},
+						"wires" : {
+							"friendly_name" : "RTD Wires",
+							"description" : "Number of RTD wires used for input.  Default 2",
+							"options" : {"2" : "2 Wires", "3" : "3 Wires", "4" : "4 Wires"}
+						}
+					} 
 				}
 			},
 			"prototype" : {
@@ -169,6 +205,37 @@
 						"description" : "Select the temperature units to use for PiFire globally.  (This can be modified in settings later)",
 						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
 						"settings" : ["globals", "units"]
+					}
+				},
+				"device_specific" : {
+					"ports" : ["ADC0", "ADC1", "ADC2", "ADC3"],
+					"config" : {}
+				}			
+			},
+			"virtual_average" : {
+				"friendly_name" : "Virtual Probes - Average",
+				"filename" : "virtual_average",
+				"description" : "This is a virtual probe module that will average specific ports on real devices.",
+				"default" : false,
+				"image" : "virtual_probe.png",
+				"py_dependencies" : [], 
+				"apt_dependencies" : [],
+				"settings_dependencies" : {
+					"units" : {
+						"friendly_name" : "Temp Units",
+						"description" : "Select the temperature units to use for PiFire globally.  (This can be modified in settings later)",
+						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
+						"settings" : ["globals", "units"]
+					}
+				},
+				"device_specific" : {
+					"ports" : ["VIRT0"],
+					"config" : {
+						"probes_list" : {
+							"friendly_name" : "Average Probes",
+							"description" : "A list of probes from other devices, to average. Select which probes should be averaged together with ctrl+click.",
+							"options" : {"list" : "List of probes to average."}
+						}
 					}
 				}			
 			}
@@ -452,6 +519,110 @@
 				"py_dependencies" : [], 
 				"apt_dependencies" : [],
 				"settings_dependencies" : {}			
+			}
+		}
+	}, 
+	"probe_config_options" : {
+		"name" : {
+			"display_name" : "Probe Name",
+			"options" : {},
+			"description" : "This name will be displayed throughout the PiFire UI for this probe.  It should be unique to this probe and not match other probe names."
+		}, 
+		"device_port" : {
+			"display_name" : "Device & Port",
+			"options" : {},
+			"description" : "The device name and port where the temperature readings will be read from."
+		}, 
+		"type" : {
+			"display_name" : "Probe Type",
+			"options" : {"Food": "Food Probe", "Primary": "Primary Probe", "Aux": "Auxillary Probe"},
+			"description" : "Probe types are as follows: <i><br><strong>Food</strong> - Used as a food probe to track the temperature of food items.  This probe will be displayed in the UI and tracked in history. <br><strong>Primary</strong> - Used as the primary probe to control the grill/smoker in hold mode, etc.  There must be one Primary probe, and only one.  This probe is displayed in the UI and tracked in the history.  <br><strong>Aux</strong> - Auxillary temperature input, not displayed in the UI, but tracked in the history.</i>"
+		}, 
+		"profile_id" : {
+			"display_name" : "Probe Profile",
+			"options" : {},
+			"description" : "The probe profile that will be applied to this probe."
+		}, 
+		"enabled" : {
+			"display_name" : "Enabled",
+			"options" : {"true": "Yes", "false": "No"},
+			"description" : "Probe is enabled and visible in the UI."
+		}
+	},
+	"boards" : {
+		"PiFirev2x" : {
+			"name" : "PiFire v2.x",  
+			"id" : "PiFirev2x",
+			"description" : "Description of the board here.  Future expansion of PiFire wizard/configuration.",
+			"probe_map": {
+				"probe_devices": [
+				  {
+					"config": {
+			
+					},
+					"device": "ADS1115",
+					"module": "ads1115_adafruit",
+					"ports": [
+					  "ADC0",
+					  "ADC1",
+					  "ADC2",
+					  "ADC3"
+					]
+				  }
+				],
+				"probe_info": [
+				  {
+					"name": "Grill",
+					"type": "Primary",
+					"enabled": true,
+					"label": "Grill",
+					"device": "ADS1115",
+					"port": "ADC0",
+					"profile": {
+					  "A": 0.04136906456,
+					  "B": -0.00677987613,
+					  "C": 2.760294589e-05,
+					  "Rd": 10000,
+					  "Vs": 3.28,
+					  "id": "PT-1000-OEM",
+					  "name": "PT-1000-Grill-Probe-OEM"
+					}
+				  },
+				  {
+					"name": "Probe-1",
+					"type": "Food",
+					"enabled": true,
+					"label": "Probe1",
+					"device": "ADS1115",
+					"port": "ADC1",
+					"profile": {
+					  "A": 0.00073431401,
+					  "B": 0.0002157437,
+					  "C": 9.515686e-08,
+					  "Rd": 10000,
+					  "Vs": 3.28,
+					  "id": "TWPS00",
+					  "name": "Thermoworks-Pro-Series-HeaterMeter"
+					}
+				  },
+				  {
+					"name": "Probe-2",
+					"type": "Food",
+					"enabled": true,
+					"label": "Probe2",
+					"device": "ADS1115",
+					"port": "ADC2",
+					"profile": {
+					  "A": 0.00073431401,
+					  "B": 0.0002157437,
+					  "C": 9.515686e-08,
+					  "Rd": 10000,
+					  "Vs": 3.28,
+					  "id": "TWPS00",
+					  "name": "Thermoworks-Pro-Series-HeaterMeter"
+					}
+				  }
+				]
 			}
 		}
 	}

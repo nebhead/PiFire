@@ -39,10 +39,13 @@ output = ' - Adding selected modules to the settings.json file. '
 set_wizard_install_status(percent, status, output)
 time.sleep(2)
 
-settings['modules']['grillplat'] = WizardInstallInfo['modules']['grillplatform']['module_selected']		
-settings['modules']['adc'] = WizardInstallInfo['modules']['probes']['module_selected']		
-settings['modules']['display'] = WizardInstallInfo['modules']['display']['module_selected']		
-settings['modules']['dist'] = WizardInstallInfo['modules']['distance']['module_selected']		
+settings['modules']['grillplat'] = WizardInstallInfo['modules']['grillplatform']['module_selected'][0]
+#settings['modules']['adc'] = WizardInstallInfo['modules']['probes']['module_selected']		
+settings['modules']['display'] = WizardInstallInfo['modules']['display']['module_selected'][0]
+settings['modules']['dist'] = WizardInstallInfo['modules']['distance']['module_selected'][0]		
+
+''' Configuring Probes Data '''
+settings['probe_settings']['probe_map'] = WizardInstallInfo['probe_map']
 
 percent = 10
 status = 'Updating Settings...'
@@ -52,7 +55,7 @@ time.sleep(2)
 
 for module in WizardInstallInfo['modules']:
 	for setting in WizardInstallInfo['modules'][module]['settings']:
-		selected = WizardInstallInfo['modules'][module]['module_selected']
+		selected = WizardInstallInfo['modules'][module]['module_selected'][0]
 		settingsLocation = WizardData['modules'][module][selected]['settings_dependencies'][setting]['settings']
 		selected_setting = WizardInstallInfo['modules'][module]['settings'][setting]
 
@@ -95,11 +98,11 @@ time.sleep(2)
 py_dependencies = []
 apt_dependencies = []
 for module in WizardInstallInfo['modules']:
-	selected = WizardInstallInfo['modules'][module]['module_selected']
-	for py_dependency in WizardData['modules'][module][selected]['py_dependencies']:
-		py_dependencies.append(py_dependency)
-	for apt_dependency in WizardData['modules'][module][selected]['apt_dependencies']:
-		apt_dependencies.append(apt_dependency)
+	for selected in WizardInstallInfo['modules'][module]['module_selected']:
+		for py_dependency in WizardData['modules'][module][selected]['py_dependencies']:
+			py_dependencies.append(py_dependency)
+		for apt_dependency in WizardData['modules'][module][selected]['apt_dependencies']:
+			apt_dependencies.append(apt_dependency)
 
 # Calculate the percent done from remaining items to install 
 items_remaining = len(py_dependencies) + len(apt_dependencies)

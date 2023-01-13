@@ -123,7 +123,8 @@
                                     <button type="submit" class="btn btn-outline-primary">Save</button>
                                 </div>
                             </form>
-                    </div><!-- End of card body -->
+                        </div> <!-- End of card for Probe Display Names -->
+                    </div><!-- End of Probe Settings Card body -->
                 </div><!-- End of Probe Settings Card -->
             </div><!-- End of Tab -->
             <!-- ============================ Edit / Add / Delete Probe Profiles ========================== -->
@@ -833,7 +834,7 @@
 											<span class="input-group-text" data-toggle="tooltip" title="Setpoint Temperature for Hold Mode">
                                                 <i class="fas fa-temperature-low"></i>&nbsp; Hold Temp</span>
 										</div>
-										<input id="startup_timer" type="number" min="{{ settings['safety']['maxstartuptemp'] }}" max="{{ settings['safety']['maxtemp'] }}" class="form-control" value="{{ settings['start_to_mode']['grill1_setpoint'] }}" name="startup_mode_grill1_setpoint">
+										<input id="startup_timer" type="number" min="{{ settings['safety']['maxstartuptemp'] }}" max="{{ settings['safety']['maxtemp'] }}" class="form-control" value="{{ settings['start_to_mode']['primary_setpoint'] }}" name="startup_mode_setpoint">
                                     </div>
 
                                 </div>
