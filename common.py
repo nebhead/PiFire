@@ -168,8 +168,8 @@ def default_settings():
 
 	settings['modules'] = {
 		'grillplat' : 'prototype',
-		'display' : 'prototype',
-		'dist' : 'prototype'
+		'display' : 'none',
+		'dist' : 'none'
 	}
 
 	settings['lastupdated'] = {
@@ -829,10 +829,7 @@ def read_settings(filename='settings.json', init=False):
 			update_settings = True
 		elif settings_default['versions']['server'] != settings['versions']['server']:
 			prev_ver = semantic_ver_to_list(settings['versions']['server'])
-			''' Check if upgrading from v1.4.x or earlier, and require upgrades if so. '''
-			if prev_ver[0] <=1 and prev_ver[1] <= 4:
-				settings['globals']['first_time_setup'] = True
-				# TODO Other Settings Fixups May be necessary 
+			settings, settings_default = upgrade_settings(prev_ver, settings, settings_default)
 			settings['versions']['server'] = settings_default['versions']['server']
 			update_settings = True
 
@@ -866,6 +863,24 @@ def write_settings(settings):
 	json_data_string = json.dumps(settings, indent=2, sort_keys=True)
 	with open("settings.json", 'w') as settings_file:
 		settings_file.write(json_data_string)
+
+def upgrade_settings(prev_ver, settings, settings_default):
+	''' Check if upgrading from v1.4.x or earlier '''
+	if prev_ver[0] <=1 and prev_ver[1] <= 4:
+		settings['globals']['first_time_setup'] = True  # Force configuration for probes
+		settings['start_to_mode']['primary_setpoint'] = settings['start_to_mode']['grill1_setpoint']
+		settings['start_to_mode'].pop('grill1_setpoint')
+		settings['dashboard'] = settings_default['dashboard']
+		# Move Notification Settings
+		settings['notify_services'] = {}
+		for key in settings_default['notify_services'].keys():
+			settings['notify_services'][key] = settings[key]
+		settings['probe_settings'].pop('probe_options')
+		settings['probe_settings'].pop('probe_sources')
+		settings['probe_settings'].pop('probes_enabled')
+		settings['modules'].pop('adc')
+
+	return(settings)
 
 def read_pellet_db(filename='pelletdb.json'):
 	"""

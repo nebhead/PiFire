@@ -384,7 +384,7 @@
 				"filename" : "none",
 				"description" : "This is for systems without a display.  This module should be selected if no display is present.",
 				"default" : false,
-				"image" : "prototype.png",
+				"image" : "none.png",
 				"py_dependencies" : [], 
 				"apt_dependencies" : [],
 				"settings_dependencies" : {}			
@@ -511,11 +511,21 @@
 				"settings_dependencies" : {}
 			},
 			"prototype" : {
-				"friendly_name" : "Prototype / None",
+				"friendly_name" : "Prototype / Test",
 				"filename" : "prototype",
-				"description" : "This module should be chosen if there is no distance sensor hardware installed, or for testing & debug.",
-				"default" : true,
+				"description" : "This module should be chosen for testing & debug.",
+				"default" : false,
 				"image" : "prototype.png",
+				"py_dependencies" : [], 
+				"apt_dependencies" : [],
+				"settings_dependencies" : {}			
+			},
+			"none" : {
+				"friendly_name" : "None",
+				"filename" : "prototype",
+				"description" : "This module should be chosen if there is no distance sensor hardware installed.",
+				"default" : true,
+				"image" : "none.png",
 				"py_dependencies" : [], 
 				"apt_dependencies" : [],
 				"settings_dependencies" : {}			
