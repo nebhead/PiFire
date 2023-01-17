@@ -47,6 +47,9 @@ settings['modules']['dist'] = WizardInstallInfo['modules']['distance']['module_s
 ''' Configuring Probes Data '''
 settings['probe_settings']['probe_map'] = WizardInstallInfo['probe_map']
 
+''' Update History Page Config with Latest Probe Config '''
+settings['history_page']['probe_config'] = default_probe_config(settings)
+
 percent = 10
 status = 'Updating Settings...'
 output = ' - Adding selected settings to the settings.json file.'

@@ -29,12 +29,22 @@ import random
 # Setup Command / Status database connection
 cmdsts = redis.StrictRedis('localhost', 6379, charset="utf-8", decode_responses=True)
 
+# Set of default colors for charts.  Contains list of tuples (primary color, secondary color). 
+COLOR_LIST = [
+	('rgb(0, 64, 255, 1)', 'rgb(0, 128, 255, 1)'),  # Blue
+	('rgb(0, 200, 64, 1)', 'rgb(0, 232, 126, 1)'),  # Green
+	('rgb(132, 0, 0, 1)', 'rgb(200, 0, 0, 1)'),  # Red 
+	('rgb(126, 0, 126, 1)', 'rgb(126, 64, 125, 1)'),  # Purple
+	('rgb(255, 210, 0, 1)', 'rgb(255, 255, 0, 1)'),  # Yellow
+	('rgb(255, 126, 0, 1)', 'rgb(255, 126, 64, 1)')	# Orange
+]
+
 def default_settings():
 	settings = {}
 
 	settings['versions'] = {
 		'server' : "1.5.0",
-		'cookfile' : "1.0.1",  # Current cookfile format version
+		'cookfile' : "1.5.0",  # Current cookfile format version
 		'recipe' : "1.0.0"  # Current recipe file format version
 	}
 
@@ -233,6 +243,7 @@ def default_settings():
 def default_probe_config(settings):
 	''' Builds an configuration information for all probes to be used by the history graph '''
 	probe_config = {}
+	color_index = 0
 	for probe in settings['probe_settings']['probe_map']['probe_info']:
 		if probe['type'] in ['Primary', 'Food']:
 			label = probe['label']
@@ -240,17 +251,17 @@ def default_probe_config(settings):
 				'name' : probe['name'],
 				'type' : probe['type'],
 				'enabled' : probe['enabled'],
-				'line_color' : 'rgba(0,0,127,0.4)',
-				'line_color_target' : 'rgba(0,0,127,0.4)',
+				'line_color' : COLOR_LIST[color_index][0],
+				'line_color_target' : COLOR_LIST[color_index][1],
 				'dash_setpoint' : True,
-				'bg_color' : 'rgba(0,0,127,0.4)', 
-				'bg_color_target' : 'rgba(0,0,127,0.4)', 
+				'bg_color' : COLOR_LIST[color_index][0], 
+				'bg_color_target' : COLOR_LIST[color_index][1], 
 				'fill' : False
 			}
 			if probe['type'] == 'Primary':
-				probe_config[label]['bg_color_setpoint'] = 'rgba(0,0,127,0.5)'
-				probe_config[label]['line_color_setpoint'] = 'rgba(0,0,127,1)'
-				
+				probe_config[label]['bg_color_setpoint'] = COLOR_LIST[color_index][0]
+				probe_config[label]['line_color_setpoint'] = COLOR_LIST[color_index][1]
+			color_index += 1		
 	return probe_config
 
 def default_notify_services():
@@ -867,6 +878,7 @@ def write_settings(settings):
 def upgrade_settings(prev_ver, settings, settings_default):
 	''' Check if upgrading from v1.4.x or earlier '''
 	if prev_ver[0] <=1 and prev_ver[1] <= 4:
+		settings['versions'] = settings_default['versions']
 		settings['globals']['first_time_setup'] = True  # Force configuration for probes
 		settings['start_to_mode']['primary_setpoint'] = settings['start_to_mode']['grill1_setpoint']
 		settings['start_to_mode'].pop('grill1_setpoint')

@@ -154,44 +154,24 @@
 							<table class="table">
 								<thead>
 								  <tr>
-									<th scope="col">Probe</th>
-									<th scope="col">Label</th>
+									<th scope="col">Current Label Name</th>
+									<th scope="col">New Label Name</th>
 								  </tr>
 								</thead>
 								<tbody>
+									{% for label, name in labels['probes'].items() %}
 									<tr>
-										<td>Grill Temp</td>
+										<td id="{{ label }}_name">{{ name }}</td>
 										<td>
 											<div class="input-group mb-3">
-												<input type="text" class="form-control" id="grill1_label" value="{{ labels['grill1_label'] }}" aria-label="Grill1Label" aria-describedby="button-addon">
+												<input type="text" class="form-control" id="{{ label }}_label" value="{{ name }}" aria-describedby="button-addon">
 												<div class="input-group-append">
-												  <button class="btn btn-success" type="button" id="grill1_saveLabel"><i class="fas fa-save"></i></button>
+												  <button class="btn btn-success" type="button" id="{{ label }}_saveLabel" onClick="editLabel('{{ label }}')"><i class="fas fa-save"></i></button>
 												</div>
 											</div>
 										</td>
 									</tr>
-									<tr>
-										<td>Probe 1 Temp</td>
-										<td>
-											<div class="input-group mb-3">
-												<input type="text" class="form-control" id="probe1_label" value="{{ labels['probe1_label'] }}" aria-label="Probe1Label" aria-describedby="button-addon">
-												<div class="input-group-append">
-												  <button class="btn btn-success" type="button" id="probe1_saveLabel"><i class="fas fa-save"></i></button>
-												</div>
-											</div>
-										</td>
-									</tr>
-									<tr>
-										<td>Probe 2 Temp</td>
-										<td>
-											<div class="input-group mb-3">
-												<input type="text" class="form-control" id="probe2_label" value="{{ labels['probe2_label'] }}" aria-label="Probe2Label" aria-describedby="button-addon">
-												<div class="input-group-append">
-												  <button class="btn btn-success" type="button" id="probe2_saveLabel"><i class="fas fa-save"></i></button>
-												</div>
-											</div>
-										</td>
-									</tr>
+									{% endfor %}
 								</tbody>
 							</table>
 						</div>

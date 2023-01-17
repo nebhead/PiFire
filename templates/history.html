@@ -38,9 +38,9 @@
 						<input type="range" class="custom-range" min="1" max="480" step="1" value="{{ settings['history_page']['minutes'] }}" id="durationWindowInput" oninput="minutes.value = durationWindowInput.value;">
 					</div>
 					{% if settings['history_page']['autorefresh'] == "off" %}
-					<button class="btn btn-secondary text-light" type="button" id="autorefresh" name="autorefresh" value="on"><i class="fas fa-sync-alt"></i>&nbsp; Stream OFF</button>
+					<button class="btn btn-secondary text-white" type="button" id="autorefresh" name="autorefresh" value="on"><i class="fas fa-sync-alt"></i>&nbsp; Stream OFF</button>
 					{% else %}
-					<button class="btn btn-outline-primary border-white text-white" type="button" id="autorefresh" name="autorefresh" value="off"><i class="fas fa-sync-alt"></i>&nbsp; Stream ON</button>
+					<button class="btn btn-outline-primary" type="button" id="autorefresh" name="autorefresh" value="off"><i class="fas fa-sync-alt"></i>&nbsp; Stream ON</button>
 					{% endif %}
 					<a href="/history/export" class="btn btn-primary" role="button"><i class="fas fa-file-download"></i>&nbsp; Export CSV</a>
 					<a href="/metrics" class="btn btn-primary" role="button"><i class="fas fa-chart-line"></i>&nbsp; Metrics</a>

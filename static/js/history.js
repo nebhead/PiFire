@@ -166,12 +166,12 @@ function refreshChartData() {
 function checkAutorefresh() {
 	if ($("#autorefresh").val() == 'on') {
 		temperatureCharts.options.scales.x.realtime.pause = true;
-		document.getElementById("autorefresh").className = "btn btn-secondary text-light";
+		document.getElementById("autorefresh").className = "btn btn-secondary text-white";
 		document.getElementById("autorefresh").innerHTML = "<i class=\"fas fa-sync-alt\"></i>&nbsp;Stream OFF";
 		paused = true;
 	} else {
 		temperatureCharts.options.scales.x.realtime.pause = false;
-		document.getElementById("autorefresh").className = "btn btn-outline-primary border-white text-white";
+		document.getElementById("autorefresh").className = "btn btn-outline-primary";
 		document.getElementById("autorefresh").innerHTML = "<i class=\"fas fa-sync-alt\"></i>&nbsp;Stream ON";
 		paused = false;
 	};

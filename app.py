@@ -27,7 +27,7 @@ from datetime import datetime
 from common import generate_uuid, _epoch_to_time
 from updater import *  # Library for doing project updates from GitHub
 from file_common import fixup_assets, read_json_file_data, update_json_file_data, remove_assets
-from file_cookfile import read_cookfile, upgrade_cookfile
+from file_cookfile import read_cookfile, upgrade_cookfile, prepare_chartdata
 from file_media import add_asset, set_thumbnail, unpack_thumb
 
 BACKUP_PATH = './backups/'  # Path to backups of settings.json, pelletdb.json
@@ -176,7 +176,10 @@ def history_page(action=None):
 					labels = cookfilestruct['graph_labels']
 					assets = cookfilestruct['assets']
 					filenameonly = response['opencookfile']
-					return render_template('cookfile.html', settings=settings, cookfilename=cookfilename, filenameonly=filenameonly, events=events, event_totals=event_totals, comments=comments, metadata=metadata, labels=labels, assets=assets, errors=errors, page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
+					return render_template('cookfile.html', settings=settings, cookfilename=cookfilename, 
+						filenameonly=filenameonly, events=events, event_totals=event_totals, comments=comments, 
+						metadata=metadata, labels=labels, assets=assets, errors=errors, 
+						page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
 				else:
 					errors.append(status)
 					if 'version' in status:
@@ -260,6 +263,7 @@ def history_update(action=None):
 
 		# Get Chart Data Structures
 		json_response = prepare_chartdata(settings['history_page']['probe_config'], num_items=num_items, reduce=True, data_points=settings['history_page']['datapoints'])
+		json_response['ui_hash'] = create_ui_hash()
 		# Calculate Displayed Start Time
 		displayed_starttime = time.time() - (settings['history_page']['minutes'] * 60)
 		json_response['annotations'] = _prepare_annotations(displayed_starttime)
@@ -290,20 +294,10 @@ def cookfiledata(action=None):
 			if(status == 'OK'):
 				annotations = _prepare_annotations(0, cookfiledata['events'])
 
-				json_data = { 
-					'GT1_label' : cookfiledata['graph_labels']['grill1_label'],
-					'GSP1_label' : cookfiledata['graph_labels']['grill1_label'] + " SetPoint",
-					'PT1_label' : cookfiledata['graph_labels']['probe1_label'],
-					'PSP1_label' : cookfiledata['graph_labels']['probe1_label'] + " SetPoint",
-					'PT2_label' : cookfiledata['graph_labels']['probe2_label'],
-					'PSP2_label' : cookfiledata['graph_labels']['probe2_label'] + " SetPoint",
-					'GT1_data' : cookfiledata['graph_data']['grill1_temp'], 
-					'GSP1_data' : cookfiledata['graph_data']['grill1_setpoint'], 
-					'PT1_data' : cookfiledata['graph_data']['probe1_temp'], 
-					'PT2_data' : cookfiledata['graph_data']['probe2_temp'], 
-					'PSP1_data' : cookfiledata['graph_data']['probe1_setpoint'],
-					'PSP2_data' : cookfiledata['graph_data']['probe2_setpoint'],
+				json_data = {
+					'chart_data' : cookfiledata['graph_data']['chart_data'],
 					'time_labels' : cookfiledata['graph_data']['time_labels'],
+					'probe_mapper' : cookfiledata['graph_data']['probe_mapper'],
 					'annotations' : annotations
 				}
 				return jsonify(json_data)
@@ -538,7 +532,7 @@ def cookfiledata(action=None):
 		if('repairCF' in requestform):
 			cookfilename = requestform['repairCF']
 			filenameonly = requestform['repairCF'].replace(HISTORY_FOLDER, '')
-			cookfilestruct, status = upgrade_cookfile(cookfilename)
+			cookfilestruct, status = upgrade_cookfile(cookfilename, repair=True)
 			if status != 'OK':
 				errors.append(status)
 				if 'version' in status:
@@ -723,25 +717,61 @@ def updatecookdata(action=None):
 		
 		if('graph_labels' in requestjson):
 			filename = requestjson['filename']
-			cookfiledata, status = read_json_file_data(filename, 'graph_labels')
-			if(status == 'OK'):
-				if('grill1_label' in requestjson):
-					cookfiledata['grill1_label'] = requestjson['grill1_label']
-					result = update_json_file_data(cookfiledata, filename, 'graph_labels')
-					if(result == 'OK'):
-						return jsonify({'result' : 'OK'})
-				if('probe1_label' in requestjson):
-					cookfiledata['probe1_label'] = requestjson['probe1_label']
-					result = update_json_file_data(cookfiledata, filename, 'graph_labels')
-					if(result == 'OK'):
-						return jsonify({'result' : 'OK'})
-				if('probe2_label' in requestjson):
-					cookfiledata['probe2_label'] = requestjson['probe2_label']
-					result = update_json_file_data(cookfiledata, filename, 'graph_labels')
-					if(result == 'OK'):
-						return jsonify({'result' : 'OK'})
-			else:
-				print(f'ERROR: {status}')
+			
+			''' Update graph_labels.json '''
+			cookfiledata, result = read_json_file_data(filename, 'graph_labels')
+			if(result != 'OK'):
+				print(f'ERROR: {result}')
+				return jsonify({'result' : 'ERROR'})
+
+			old_label = requestjson['old_label']
+			new_label = requestjson['new_label']
+			new_label_safe = _create_safe_name(new_label)
+
+			for category in cookfiledata:
+				if new_label_safe in cookfiledata[category].keys():
+					result = 'Label already exists!'
+					break
+				if old_label in cookfiledata[category].keys():
+					cookfiledata[category].pop(old_label)
+					cookfiledata[category][new_label_safe] = new_label 
+			
+			if(result != 'OK'):
+				print(f'ERROR: {result}')	
+				return jsonify({'result' : 'ERROR'})
+
+			result = update_json_file_data(cookfiledata, filename, 'graph_labels')
+			if(result != 'OK'):
+				print(f'ERROR: {result}')	
+				return jsonify({'result' : 'ERROR'})
+
+			''' Update graph_data.json '''
+			cookfiledata, result = read_json_file_data(filename, 'graph_data')
+			if(result != 'OK'):
+				print(f'ERROR: {result}')	
+				return jsonify({'result' : 'ERROR'})
+
+			for category in cookfiledata['probe_mapper']:
+				if old_label in cookfiledata['probe_mapper'][category].keys():
+					cookfiledata['probe_mapper'][category][new_label_safe] = cookfiledata['probe_mapper'][category][old_label]
+					cookfiledata['probe_mapper'][category].pop(old_label)
+					list_position = cookfiledata['probe_mapper'][category][new_label_safe]
+					if category == 'targets': 
+						addendum = ' Target'
+					elif category == 'primarysp':
+						addendum = ' Set Point'
+					else:
+						addendum = ''
+					cookfiledata['chart_data'][list_position]['label'] = new_label + addendum 
+
+			result = update_json_file_data(cookfiledata, filename, 'graph_data')
+			if(result != 'OK'):
+				print(f'ERROR: {result}')	
+				return jsonify({'result' : 'ERROR'})
+
+			return jsonify({'result' : 'OK', 'new_label_safe' : new_label_safe})
+
+
 
 		if('media' in requestjson):
 			filename = requestjson['filename']
@@ -2430,6 +2460,9 @@ def metrics_page(action=None):
 Supporting Functions
 '''
 
+def _create_safe_name(name): 
+	return("".join([x for x in name if x.isalnum()]))
+
 def _is_not_blank(response, setting):
 	return setting in response and setting != ''
 
@@ -2443,142 +2476,6 @@ def _allowed_file(filename):
 def _check_cpu_temp():
 	temp = os.popen('vcgencmd measure_temp').readline()
 	return temp.replace("temp=","")
-
-def prepare_chartdata(probe_config, chart_info={}, num_items=10, reduce=True, data_points=60):
-	''' Build Probe Mapper and Chart Data Struct '''
-	chart_data = []
-
-	if chart_info == {}:
-		chart_info = {
-			'label' : '',
-			'fill': False,
-			'lineTension': 0.1,
-			'backgroundColor': '',
-			'borderColor': '',
-			'borderCapStyle': 'butt',
-			'borderDash': [],
-			'borderDashOffset': 0.0,
-			'borderJoinStyle': 'miter',
-			'pointBorderColor': '',
-			'pointBackgroundColor': '#fff',
-			'pointBorderWidth': 1,
-			'pointHoverRadius': 10,
-			'pointHoverBackgroundColor': '',
-			'pointHoverBorderColor': '',
-			'pointHoverBorderWidth': 2,
-			'pointRadius': 1,
-			'pointHitRadius': 10,
-			'pointStyle': 'line',
-			'data': [],
-			'spanGaps': False,
-			'hidden': False
-		}
-
-	index = 0
-	probe_mapper = { 'probes' : {}, 'targets' : {}, 'primarysp' : {} } 
-
-	for probe in probe_config:
-		''' First Object is Temperature Data for Probe '''
-		chart_obj = chart_info.copy()
-		chart_obj['label'] = probe_config[probe]['name']
-		chart_obj['backgroundColor'] = probe_config[probe]['bg_color']
-		chart_obj['borderColor'] = probe_config[probe]['line_color']
-		chart_obj['borderDash'] = []
-		chart_obj['pointBorderColor'] = probe_config[probe]['line_color']
-		chart_obj['pointHoverBackgroundColor'] = probe_config[probe]['bg_color']
-		chart_obj['pointHoverBorderColor'] = probe_config[probe]['line_color']
-		chart_obj['hidden'] = not probe_config[probe]['enabled']
-		chart_obj['data'] = []
-		chart_data.append(chart_obj)
-		probe_mapper['probes'][probe] = index 
-		''' Second Object is the Target Temperature Data for Probe '''
-		index += 1
-		chart_obj = chart_info.copy()
-		chart_obj['label'] = probe_config[probe]['name'] + ' Target'
-		chart_obj['backgroundColor'] = probe_config[probe]['bg_color_target']
-		chart_obj['borderColor'] = probe_config[probe]['line_color_target']
-		chart_obj['borderDash'] = [8, 4]
-		chart_obj['pointBorderColor'] = probe_config[probe]['line_color_target']
-		chart_obj['pointHoverBackgroundColor'] = probe_config[probe]['bg_color_target']
-		chart_obj['pointHoverBorderColor'] = probe_config[probe]['line_color_target']
-		chart_obj['hidden'] = not probe_config[probe]['enabled']
-		chart_obj['data'] = []
-		chart_data.append(chart_obj)
-		probe_mapper['targets'][probe] = index
-		''' Third Object is the Primary Setpoint Temperature Data for Probe (if it is primary) '''
-		if probe_config[probe]['type'] == 'Primary':
-			index += 1
-			chart_obj = chart_info.copy()
-			chart_obj['label'] = probe_config[probe]['name'] + ' Set Point'
-			chart_obj['backgroundColor'] = probe_config[probe]['bg_color_setpoint']
-			chart_obj['borderColor'] = probe_config[probe]['line_color_setpoint']
-			chart_obj['borderDash'] = [8, 4]
-			chart_obj['pointBorderColor'] = probe_config[probe]['line_color_setpoint']
-			chart_obj['pointHoverBackgroundColor'] = probe_config[probe]['bg_color_setpoint']
-			chart_obj['pointHoverBorderColor'] = probe_config[probe]['line_color_setpoint']
-			chart_obj['hidden'] = not probe_config[probe]['enabled']
-			chart_obj['data'] = []
-			chart_data.append(chart_obj)
-			probe_mapper['primarysp'][probe] = index
-		''' Increment Index '''
-		index += 1
-
-	''' Populate history data into chart data '''
-	history = read_history(num_items)
-
-	if history != []: 
-		history = unpack_history(history)
-		list_length = len(history['T']) # Length of list(s)
-
-		if (list_length < num_items) and (list_length > 0):
-			num_items = list_length
-
-		if reduce and (num_items > data_points):
-			step = int(num_items/data_points)
-		else:
-			step = 1
-	else:
-		list_length = 0
-
-	time_labels = []
-
-	if (list_length > 0):
-		# Build all lists from file data
-		for index in range(list_length - num_items, list_length, step):
-			for key, value in history['P'].items():
-				chart_data[probe_mapper['probes'][key]]['data'].append(history['P'][key][index])
-			for key, value in history['F'].items():
-				chart_data[probe_mapper['probes'][key]]['data'].append(history['F'][key][index])
-			for key, value in history['NT'].items():
-				chart_data[probe_mapper['targets'][key]]['data'].append(history['NT'][key][index])
-			for key in probe_mapper['primarysp']: 
-				chart_data[probe_mapper['primarysp'][key]]['data'].append(history['PSP'][index])
-				break 
-
-			time_labels.append(history['T'][index])
-	else:
-		now = datetime.datetime.now()
-		time_now = int(now.timestamp() * 1000)  # Use timestamp format * 1000 for JavaScript usages
-		time_labels.append(time_now)
-		for key in probe_mapper['probes'].keys():
-			chart_data[probe_mapper['probes'][key]]['data'].append(0)
-		for key in probe_mapper['targets'].keys():
-			chart_data[probe_mapper['targets'][key]]['data'].append(0)
-		for key in probe_mapper['primarysp'].keys(): 
-			chart_data[probe_mapper['primarysp'][key]]['data'].append(0)
-
-	''' Create Hash for UI Consistency '''
-	ui_hash = create_ui_hash()
-	
-	''' Create data structure to return '''
-	data_blob = {
-		'time_labels' : time_labels,
-		'probe_mapper' : probe_mapper, 
-		'chart_data' : chart_data,
-		'ui_hash' : ui_hash
-	}
-
-	return data_blob
 
 def create_ui_hash():
 	global settings 

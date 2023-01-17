@@ -575,9 +575,11 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 
 		# If Extended Data Mode is Enabled, Populate Extra Data Here
 		if settings['globals']['ext_data']:
+			in_data['ext_data'] = {}
 			in_data['ext_data']['CR'] = CycleRatio if 'CycleRatio' in locals() else 0
 			in_data['ext_data']['RCR'] = RawCycleRatio if 'RawCycleRatio' in locals() else 0
-			in_data['ext_data']['Aux'] = sensor_data['aux']
+			for sensor in sensor_data['aux']:
+				in_data['ext_data']['AUX_'+sensor] = sensor_data['aux'][sensor]
 
 		# Save current data to the database 
 		write_current(in_data)
@@ -1003,8 +1005,8 @@ while True:
 				metrics = read_metrics()
 				metrics['mode'] = 'Stop'
 				write_metrics(metrics)
-				all_history = read_history(num_items=0)
-				#TODO create_cookfile(all_history)
+				if metrics_list[-1]['mode'] != 'Prime':
+					create_cookfile()
 
 			if control['status'] == 'monitor' and control['mode'] == 'Error':
 				grill_platform.power_on()
