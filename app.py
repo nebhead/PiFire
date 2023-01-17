@@ -24,7 +24,7 @@ import zipfile
 import pathlib
 from threading import Thread
 from datetime import datetime
-from common import generate_uuid, _epoch_to_time
+from common import generate_uuid, _epoch_to_time, prepare_csv
 from updater import *  # Library for doing project updates from GitHub
 from file_common import fixup_assets, read_json_file_data, update_json_file_data, remove_assets
 from file_cookfile import read_cookfile, upgrade_cookfile, prepare_chartdata
@@ -201,7 +201,7 @@ def history_page(action=None):
 					write_settings(settings)
 
 	elif (request.method == 'GET') and (action == 'export'):
-		exportfilename = _prepare_graph_csv()
+		exportfilename = prepare_csv()
 		return send_file(exportfilename, as_attachment=True, max_age=0)
 
 	return render_template('history.html',
@@ -411,12 +411,11 @@ def cookfiledata(action=None):
 				return send_file(csvfilename, as_attachment=True, max_age=0)
 
 		if('dl_graphfile' in requestform):
-			# Download CSV of the Graph Data Only
+			# Download CSV of the raw temperature data (and extended data)
 			filename = requestform['dl_graphfile']
 			cookfiledata, status = read_cookfile(filename)
 			if(status == 'OK'):
-				cookfiledata['graph_data'] = _convert_labels(cookfiledata['graph_data'])
-				csvfilename = _prepare_graph_csv(cookfiledata['graph_data'], cookfiledata['graph_labels'], filename)
+				csvfilename = prepare_csv(cookfiledata['raw_data'], filename)
 				return send_file(csvfilename, as_attachment=True, max_age=0)
 
 		if('ulcookfilereq' in requestform):
@@ -430,7 +429,6 @@ def cookfiledata(action=None):
 					filename = secure_filename(remotefile.filename)
 					remotefile.save(os.path.join(app.config['HISTORY_FOLDER'], filename))
 				else:
-					print('Disallowed File Upload.')
 					errors.append('Disallowed File Upload.')
 				return redirect('/history')
 
@@ -713,7 +711,7 @@ def updatecookdata(action=None):
 					if(result == 'OK'):
 						return jsonify({'result' : 'OK'})
 					else: 
-						print(f'Result: {result}')
+						return jsonify({'result' : 'ERROR'})
 		
 		if('graph_labels' in requestjson):
 			filename = requestjson['filename']
@@ -721,7 +719,6 @@ def updatecookdata(action=None):
 			''' Update graph_labels.json '''
 			cookfiledata, result = read_json_file_data(filename, 'graph_labels')
 			if(result != 'OK'):
-				print(f'ERROR: {result}')
 				return jsonify({'result' : 'ERROR'})
 
 			old_label = requestjson['old_label']
@@ -737,18 +734,15 @@ def updatecookdata(action=None):
 					cookfiledata[category][new_label_safe] = new_label 
 			
 			if(result != 'OK'):
-				print(f'ERROR: {result}')	
 				return jsonify({'result' : 'ERROR'})
 
 			result = update_json_file_data(cookfiledata, filename, 'graph_labels')
 			if(result != 'OK'):
-				print(f'ERROR: {result}')	
 				return jsonify({'result' : 'ERROR'})
 
 			''' Update graph_data.json '''
 			cookfiledata, result = read_json_file_data(filename, 'graph_data')
 			if(result != 'OK'):
-				print(f'ERROR: {result}')	
 				return jsonify({'result' : 'ERROR'})
 
 			for category in cookfiledata['probe_mapper']:
@@ -766,7 +760,6 @@ def updatecookdata(action=None):
 
 			result = update_json_file_data(cookfiledata, filename, 'graph_data')
 			if(result != 'OK'):
-				print(f'ERROR: {result}')	
 				return jsonify({'result' : 'ERROR'})
 
 			return jsonify({'result' : 'OK', 'new_label_safe' : new_label_safe})
@@ -2591,97 +2584,6 @@ def _prepare_annotations(displayed_starttime, metrics_data=[]):
 
 	return(annotation_json)
 
-def _prepare_graph_csv(graph_data=[], graph_labels=[], filename=''):
-		standard_data_keys = ['T', 'GT1', 'GSP1', 'PT1', 'PSP1', 'PT2', 'PSP2']  # Standard Labels / Data To Export
-		
-		# Create filename if no name specified
-		if(filename == ''):
-			now = datetime.datetime.now()
-			filename = now.strftime('%Y%m%d-%H%M') + '-PiFire-Export'
-		else:
-			filename = filename.replace('.json', '')
-			filename = filename.replace('./history/', '')
-			filename += '-Pifire-Export'
-		
-		exportfilename = '/tmp/' + filename + ".csv"
-		
-		# Open CSV File for editing
-		csvfile = open(exportfilename, "w")
-
-		# Get / Set Standard Labels 
-		if(graph_labels == []):
-			labels = 'Time,Grill Temp,Grill SetTemp,Probe 1 Temp,Probe 1 SetTemp,Probe 2 Temp, Probe 2 SetTemp'
-		else:
-			labels = 'Time,' 
-			labels += graph_labels['grill1_label'] + ' Temp,'
-			labels += graph_labels['grill1_label'] + ' Setpoint,'
-			labels += graph_labels['probe1_label'] + ' Temp,'
-			labels += graph_labels['probe1_label'] + ' Setpoint,'
-			labels += graph_labels['probe2_label'] + ' Temp,'
-			labels += graph_labels['probe2_label'] + ' Setpoint'
-
-		if(graph_data == []):
-			graph_data = read_history()
-		
-		# Get the length of the data (number of captured events)
-		list_length = len(graph_data['T'])
-
-		# Add any additional label data if it exists
-		ext_keys = []
-		for key in graph_data.keys():
-			if key not in standard_data_keys:
-				labels += f', {key}'
-				ext_keys.append(key)
-
-		# End the labels line
-		labels += '\n'
-
-		if(list_length > 0):
-			writeline = labels
-			csvfile.write(writeline)
-			last = -1
-			for index in range(0, list_length):
-				if (int((index/list_length)*100) > last):
-					last = int((index/list_length)*100)
-				converted_dt = datetime.datetime.fromtimestamp(int(graph_data['T'][index]) / 1000)
-				timestr = converted_dt.strftime('%Y-%m-%d %H:%M:%S')
-				writeline = f"{timestr}, {graph_data['GT1'][index]}, {graph_data['GSP1'][index]}, {graph_data['PT1'][index]}, {graph_data['PSP1'][index]}, {graph_data['PT2'][index]}, {graph_data['PSP2'][index]}"
-				# Add any additional data if keys exist
-				if ext_keys != []:
-					for key in ext_keys:
-						writeline += f', {graph_data[key][index]}'
-				csvfile.write(writeline + '\n')
-		else:
-			writeline = 'No Data\n'
-			csvfile.write(writeline)
-
-		csvfile.close()
-
-		return(exportfilename)
-
-def _convert_labels(indata):
-	'''
-	Temporary function to convert Grill Data Labels to Legacy Format
-	'''
-	outdata = {}
-	outdata['T'] = indata.pop('time_labels')
-	outdata['GT1'] = indata.pop('grill1_temp')
-	outdata['GSP1'] = indata.pop('grill1_setpoint')
-	outdata['PT1'] = indata.pop('probe1_temp')
-	outdata['PSP1'] = indata.pop('probe1_setpoint')
-	outdata['PT2'] = indata.pop('probe2_temp')
-	outdata['PSP2'] = indata.pop('probe2_setpoint')
-
-	# For any additional keys (extended data)
-	ext_keys = []
-	for key in indata.keys():
-		ext_keys.append(key)
-	
-	for key in ext_keys: 
-		outdata[key] = indata.pop(key)
-
-	return(outdata)
-
 def _prepare_metrics_csv(metrics_data, filename):
 	filename = filename.replace('.json', '')
 	filename = filename.replace('./history/', '')
@@ -2872,7 +2774,6 @@ def _tr_to_temp(tr, a, b, c):
 		temp_c = temp_k - 273.15 # Kelvin to Celsius
 		temp_c = temp_c * (9 / 5) + 32 # Celsius to Fahrenheit
 	except:
-		#print('Error occurred while calculating temperature.')
 		temp_c = 0.0
 	return int(temp_c) # Return Calculated Temperature and Thermistor Value in Ohms
 

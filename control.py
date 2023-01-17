@@ -578,8 +578,6 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			in_data['ext_data'] = {}
 			in_data['ext_data']['CR'] = CycleRatio if 'CycleRatio' in locals() else 0
 			in_data['ext_data']['RCR'] = RawCycleRatio if 'RawCycleRatio' in locals() else 0
-			for sensor in sensor_data['aux']:
-				in_data['ext_data']['AUX_'+sensor] = sensor_data['aux'][sensor]
 
 		# Save current data to the database 
 		write_current(in_data)

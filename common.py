@@ -1085,6 +1085,7 @@ def write_history(in_data, maxsizelines=28800, ext_data=False):
 	datastruct['F'] = in_data['probe_history']['food']  # Contains food probe temperature(s) [key:value pairs]
 	datastruct['PSP'] = in_data['primary_setpoint']  # Setpoint for the primary probe (non-notify setpoint) [value]
 	datastruct['NT'] = in_data['notify_targets']  # Notification Target Temps for all probes
+	datastruct['AUX'] = in_data['probe_history']['aux']  # Contains auxilliary probe temperature history [key:value]
 
 	if ext_data:
 		datastruct['EXD'] = in_data['ext_data']
@@ -1169,6 +1170,70 @@ def read_tr():
 		tr_data = json.loads(cmdsts.get('control:tuning'))
 
 	return(tr_data)
+
+def prepare_csv(data=[], filename=''):
+	# Create filename if no name specified
+	if(filename == ''):
+		now = datetime.datetime.now()
+		filename = now.strftime('%Y%m%d-%H%M') + '-PiFire-Export'
+	else:
+		filename = filename.replace('.json', '')
+		filename = filename.replace('./history/', '')
+		filename += '-Pifire-Export'
+	
+	exportfilename = '/tmp/' + filename + ".csv"
+	
+	# Open CSV File for editing
+	csvfile = open(exportfilename, "w")
+
+	if(data == []):
+		data = read_history()
+
+	exd_data = True if 'EXD' in data[0].keys() else False 
+
+	# Set Standard Labels 
+	labels = 'Time, '
+	primary_key = list(data[0]['P'].keys())[0]
+	labels += f'{primary_key} Temp, {primary_key} Set Point, {primary_key} Notify Target' 
+	for key in data[0]['F']:
+		labels += f', {key} Temp, {key} Notify Target'
+	for key in data[0]['AUX']:
+		labels += f', {key} Temp'
+	if exd_data: 
+		for key in data[0]['EXD']:
+			labels += f', {key}'
+
+	# End the labels line
+	labels += '\n'
+
+	# Get the length of the data (number of captured events)
+	list_length = len(data)
+
+	if(list_length > 0):
+		writeline = labels
+		csvfile.write(writeline)
+
+		for index in range(0, list_length):
+			converted_dt = datetime.datetime.fromtimestamp(int(data[index]['T']) / 1000)
+			timestr = converted_dt.strftime('%Y-%m-%d %H:%M:%S')
+			writeline = f"{timestr}, {data[index]['P'][primary_key]}, {data[index]['PSP']}, {data[index]['NT'][primary_key]}"
+			for key in data[index]['F']:
+				writeline += f", {data[index]['F'][key]}, {data[index]['NT'][key]}"
+			for key in data[index]['AUX']:
+				writeline += f", {data[index]['AUX'][key]}"
+			# Add any additional data if keys exist
+			if exd_data: 
+				for key in data[index]['EXD']:
+					writeline += f", {data[index]['EXD'][key]}"
+			# Write line to file
+			csvfile.write(writeline + '\n')
+	else:
+		writeline = 'No Data\n'
+		csvfile.write(writeline)
+
+	csvfile.close()
+
+	return(exportfilename)
 
 def convert_temp(units, temp):
 	"""

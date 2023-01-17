@@ -43,6 +43,8 @@ def _default_cookfilestruct():
 	
 	cookfilestruct['graph_data'] = {}
 
+	cookfilestruct['raw_data'] = []
+
 	cookfilestruct['graph_labels'] = {}
 	
 	cookfilestruct['events'] = []
@@ -73,6 +75,7 @@ def create_cookfile():
 	title = nowstring + '-CookFile'
 
 	chart_data = prepare_chartdata(settings['history_page']['probe_config'], num_items=0, reduce=False, data_points=0)
+	raw_data = read_history()
 
 	if len(chart_data['time_labels']):
 		starttime = chart_data['time_labels'][0]
@@ -93,10 +96,12 @@ def create_cookfile():
 
 		cook_file_struct['graph_labels'] = chart_data['graph_labels']
 
+		cook_file_struct['raw_data'] = raw_data 
+
 		cook_file_struct['events'] = process_metrics(read_metrics(all=True), augerrate=settings['globals']['augerrate'])
 
 		# 1. Create all JSON data files
-		files_list = ['metadata', 'graph_data', 'graph_labels', 'events', 'comments', 'assets']
+		files_list = ['metadata', 'graph_data', 'raw_data', 'graph_labels', 'events', 'comments', 'assets']
 		if not os.path.exists(HISTORY_FOLDER):
 			os.mkdir(HISTORY_FOLDER)
 		os.mkdir(f'{HISTORY_FOLDER}{title}')  # Make temporary folder for all files
@@ -137,7 +142,7 @@ def read_cookfile(filename):
 
 	cook_file_struct = {}
 	status = 'OK'
-	json_types = ['metadata', 'graph_data', 'graph_labels', 'events', 'comments', 'assets']
+	json_types = ['metadata', 'graph_data', 'raw_data', 'graph_labels', 'events', 'comments', 'assets']
 	for jsonfile in json_types:
 		cook_file_struct[jsonfile], status = read_json_file_data(filename, jsonfile)
 		if jsonfile == 'metadata':
@@ -157,10 +162,36 @@ def upgrade_cookfile(cookfilename, repair=False):
 	cookfilestruct = _default_cookfilestruct()
 	current_version = [0, 0, 0]
 
-	json_types = ['metadata', 'graph_data', 'graph_labels', 'events', 'comments', 'assets']
+	json_types = ['metadata', 'raw_data', 'graph_data', 'graph_labels', 'events', 'comments', 'assets']
 	for jsonfile in json_types:
 		jsondata, status = read_json_file_data(cookfilename, jsonfile, unpackassets=False)
-		if status != 'OK':
+		if status != 'OK' and jsonfile == 'raw_data':
+			cookfilestruct['raw_data'] = []
+			graph_data, status = read_json_file_data(cookfilename, 'graph_data', unpackassets=False)
+			list_length = len(graph_data['time_labels'])
+			jsondata = [] 
+			# Build out Raw Data Set
+			for index in range(0, list_length):
+				list_item = {
+					'T' : graph_data['time_labels'][index], 
+					'P' : {
+						'grill1' : graph_data['grill1_temp'][index]
+					},
+					'PSP' : graph_data['grill1_setpoint'][index],
+					'F' : {
+						'probe1' : graph_data['probe1_temp'][index],
+						'probe2' : graph_data['probe2_temp'][index],
+					}, 
+					'NT' : {
+						'grill1' : graph_data['grill1_setpoint'][index],
+						'probe1' : graph_data['probe1_setpoint'][index],
+						'probe2' : graph_data['probe2_setpoint'][index]
+					},
+					'AUX' : {}
+				}
+				jsondata.append(list_item)
+			cookfilestruct[jsonfile] = jsondata
+		elif status != 'OK':
 			break  # Exit loop and function, error string in status
 		elif jsonfile == 'metadata':
 			# Update to the latest cookfile version
