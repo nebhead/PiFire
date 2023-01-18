@@ -602,7 +602,12 @@ class DisplayBase:
 		draw.ellipse(fill_coords, fill=fill_color)
 
 		# Gauge Label
-		font_point_size = round((size[1] * 0.75) / 4) + 1 # Convert size to height of circle * font point ratio / 8
+		if len(label) <= 5:
+			font_point_size = round((size[1] * 0.75) / 4) + 1 # Convert size to height of circle * font point ratio / 8
+		elif len(label) <= 6: 
+			font_point_size = round((size[1] * 0.60) / 4) + 1 # Convert size to height of circle * font point ratio / 8
+		else:
+			font_point_size = round((size[1] * 0.40) / 4) + 1 # Convert size to height of circle * font point ratio / 8
 		font = ImageFont.truetype("trebuc.ttf", font_point_size)
 		(font_width, font_height) = font.getsize(label)  # Grab the width of the text
 		label_x = position[0] + (size[0] // 2) - (font_width // 2)
@@ -698,41 +703,41 @@ class DisplayBase:
 		# Create drawing object
 		draw = ImageDraw.Draw(img)
 
-		# ======== Grill Temp Circle Gauge ========
+		# ======== Primary Temp Circle Gauge ========
 		position = (self.WIDTH // 2 - 80, self.HEIGHT // 2 - 110)
 		size = (160, 160)
 		bg_color = (50, 50, 50)  # Grey
 		fg_color = (200, 0, 0)  # Red
 
-		label = 'Grill'
+		label = list(in_data['probe_history']['primary'].keys())[0]
 		
 		# percents = [temperature, setpoint1, setpoint2]
 		temps = [0,0,0]
 		percents = [0,0,0]
 
-		temps[0] = in_data['GrillTemp']
-		if in_data['GrillTemp'] <= 0:
+		temps[0] = in_data['probe_history']['primary'][label]
+		if temps[0] <= 0:
 			percents[0] = 0
 		elif self.units == 'F':
-			percents[0] = round((in_data['GrillTemp'] / 600) * 100)  # F Temp Range [0 - 600F] for Grill
+			percents[0] = round((temps[0] / 600) * 100)  # F Temp Range [0 - 600F] for Grill
 		else:
-			percents[0] = round((in_data['GrillTemp'] / 300) * 100)  # C Temp Range [0 - 300C] for Grill 
+			percents[0] = round((temps[0] / 300) * 100)  # C Temp Range [0 - 300C] for Grill 
 
-		temps[1] = in_data['GrillSetPoint']
-		if in_data['GrillSetPoint'] <= 0:
+		temps[1] = in_data['primary_setpoint']
+		if temps[1] <= 0:
 			percents[1] = 0
 		elif self.units == 'F' and status_data['mode'] == 'Hold':
-			percents[1] = round((in_data['GrillSetPoint'] / 600) * 100)  # F Temp Range [0 - 600F] for Grill
+			percents[1] = round((temps[1] / 600) * 100)  # F Temp Range [0 - 600F] for Grill
 		elif self.units == 'C' and status_data['mode'] == 'Hold':
-			percents[1] = round((in_data['GrillSetPoint'] / 300) * 100)  # C Temp Range [0 - 300C] for Grill 
+			percents[1] = round((temps[1] / 300) * 100)  # C Temp Range [0 - 300C] for Grill 
 
-		temps[2] = in_data['GrillNotifyPoint']
-		if in_data['GrillNotifyPoint'] <= 0:
+		temps[2] = in_data['notify_targets'][label]
+		if temps[2] <= 0:
 			percents[2] = 0
 		elif self.units == 'F':
-			percents[2] = round((in_data['GrillNotifyPoint'] / 600) * 100)  # F Temp Range [0 - 600F] for Grill
+			percents[2] = round((temps[2] / 600) * 100)  # F Temp Range [0 - 600F] for Grill
 		else:
-			percents[2] = round((in_data['GrillNotifyPoint'] / 300) * 100)  # C Temp Range [0 - 300C] for Grill 
+			percents[2] = round((temps[2] / 300) * 100)  # C Temp Range [0 - 300C] for Grill 
 
 		# Draw the Grill Gauge w/Labels
 		img = self._draw_gauge(img, position, size, fg_color, bg_color, 
@@ -744,27 +749,27 @@ class DisplayBase:
 		bg_color = (50, 50, 50)  # Grey
 		fg_color = (3, 161, 252)  # Blue
 
-		label = 'P1'
+		label = list(in_data['probe_history']['food'].keys())[0]
 		
 		# temp, percents = [current temperature, setpoint1, setpoint2]
 		temps = [0,0,0]
 		percents = [0,0,0]
 
-		temps[0] = in_data['Probe1Temp']
-		if in_data['Probe1Temp'] <= 0:
+		temps[0] = in_data['probe_history']['food'][label]
+		if temps[0] <= 0:
 			percents[0] = 0
 		elif self.units == 'F':
-			percents[0] = round((in_data['Probe1Temp'] / 300) * 100)  # F Temp Range [0 - 300F] for probe
+			percents[0] = round((temps[0] / 300) * 100)  # F Temp Range [0 - 300F] for probe
 		else:
-			percents[0] = round((in_data['Probe1Temp'] / 150) * 100)  # C Temp Range [0 - 150C] for probe
+			percents[0] = round((temps[0] / 150) * 100)  # C Temp Range [0 - 150C] for probe
 
-		temps[1] = in_data['Probe1SetPoint']
-		if in_data['Probe1SetPoint'] <= 0:
+		temps[1] = in_data['notify_targets'][label]
+		if temps[1] <= 0:
 			percents[1] = 0
 		elif self.units == 'F':
-			percents[1] = round((in_data['Probe1SetPoint'] / 300) * 100)  # F Temp Range [0 - 300F] for probe
+			percents[1] = round((temps[1] / 300) * 100)  # F Temp Range [0 - 300F] for probe
 		elif self.units == 'C':
-			percents[1] = round((in_data['Probe1SetPoint'] / 150) * 100)  # C Temp Range [0 - 150C] for probe 
+			percents[1] = round((temps[1] / 150) * 100)  # C Temp Range [0 - 150C] for probe 
 
 		# No SetPoint2 on Probes
 		temps[2] = 0
@@ -780,27 +785,27 @@ class DisplayBase:
 		bg_color = (50, 50, 50)  # Grey
 		fg_color = (3, 161, 252)  # Blue
 
-		label = 'P2'
+		label = list(in_data['probe_history']['food'].keys())[1]
 		
 		# temp, percents = [current temperature, setpoint1, setpoint2]
 		temps = [0,0,0]
 		percents = [0,0,0]
 
-		temps[0] = in_data['Probe2Temp']
-		if in_data['Probe2Temp'] <= 0:
+		temps[0] = in_data['probe_history']['food'][label]
+		if temps[0] <= 0:
 			percents[0] = 0
 		elif self.units == 'F':
-			percents[0] = round((in_data['Probe2Temp'] / 300) * 100)  # F Temp Range [0 - 300F] for probe
+			percents[0] = round((temps[0] / 300) * 100)  # F Temp Range [0 - 300F] for probe
 		else:
-			percents[0] = round((in_data['Probe2Temp'] / 150) * 100)  # C Temp Range [0 - 150C] for probe
+			percents[0] = round((temps[0] / 150) * 100)  # C Temp Range [0 - 150C] for probe
 
-		temps[1] = in_data['Probe2SetPoint']
-		if in_data['Probe2SetPoint'] <= 0:
+		temps[1] = in_data['notify_targets'][label]
+		if temps[1] <= 0:
 			percents[1] = 0
 		elif self.units == 'F':
-			percents[1] = round((in_data['Probe2SetPoint'] / 300) * 100)  # F Temp Range [0 - 300F] for probe
+			percents[1] = round((temps[1] / 300) * 100)  # F Temp Range [0 - 300F] for probe
 		elif self.units == 'C':
-			percents[1] = round((in_data['Probe2SetPoint'] / 150) * 100)  # C Temp Range [0 - 150C] for probe 
+			percents[1] = round((temps[1] / 150) * 100)  # C Temp Range [0 - 150C] for probe 
 
 		# No SetPoint2 on Probes
 		temps[2] = 0
@@ -850,8 +855,8 @@ class DisplayBase:
 		# Notification Indicator (Right)
 		show_notify_indicator = False
 		notify_count = 0
-		for item in status_data['notify_req']:
-			if status_data['notify_req'][item]:
+		for index, item in enumerate(status_data['notify_data']):
+			if item['req'] and item['type'] != 'hopper':
 				show_notify_indicator = True
 				notify_count += 1
 
@@ -988,7 +993,7 @@ class DisplayBase:
 					self.menu['current']['option'] = minTemp  # Roll over to minTemp if you go greater than 500.
 			elif action == 'ENTER':
 				control = read_control()
-				control['setpoints']['grill'] = self.menu['current']['option']
+				control['primary_setpoint'] = self.menu['current']['option']
 				control['updated'] = True
 				control['mode'] = 'Hold'
 				write_control(control)
@@ -1078,13 +1083,13 @@ class DisplayBase:
 				elif selected == 'Hold':
 					self.display_active = True
 					self.menu['current']['mode'] = 'grill_hold_value'
-					if self.in_data['GrillSetPoint'] == 0:
+					if self.in_data['primary_setpoint'] == 0:
 						if self.units == 'F':
 							self.menu['current']['option'] = 200  # start at 200 for F
 						else:
 							self.menu['current']['option'] = 100  # start at 100 for C
 					else:
-						self.menu['current']['option'] = self.in_data['GrillSetPoint']
+						self.menu['current']['option'] = self.in_data['primary_setpoint']
 				elif selected == 'Smoke':
 					self.display_active = True
 					self.menu['current']['mode'] = 'none'

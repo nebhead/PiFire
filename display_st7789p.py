@@ -168,7 +168,8 @@ class Display:
 			font = ImageFont.truetype("trebuc.ttf", 128)
 		else:
 			font = ImageFont.truetype("trebuc.ttf", 80)
-		text = str(in_data['GrillTemp'])[:5]
+		label = list(in_data['probe_history']['primary'].keys())[0]
+		text = str(in_data['probe_history']['primary'][label])[:5]
 		(font_width, font_height) = font.getsize(text)
 		draw.text((self.WIDTH//2 - font_width//2,0), text, font=font, fill=(255,255,255))
 		
@@ -190,8 +191,8 @@ class Display:
 		# Notification Indicator (Right)
 		font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 48)
 		text = ' '
-		for item in status_data['notify_req']:
-			if status_data['notify_req'][item]:
+		for index, item in enumerate(status_data['notify_data']):
+			if item['req'] and item['type'] != 'hopper':
 				text = '\uf0f3'
 		(font_width, font_height) = font.getsize(text)
 		draw.text(( ((self.WIDTH//8)*7) - font_width//2, self.HEIGHT - 96), text, font=font, fill=(255,255,0))

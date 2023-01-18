@@ -143,7 +143,8 @@ class Display:
 				font = ImageFont.truetype("impact.ttf", 42)
 			else:
 				font = ImageFont.truetype("impact.ttf", 38)
-			text = str(in_data['GrillTemp'])[:5]
+			label = list(in_data['probe_history']['primary'].keys())[0]
+			text = str(in_data['probe_history']['primary'][label])[:5]
 			(font_width, font_height) = font.getsize(text)
 			draw.text((128//2 - font_width//2,0), text, font=font, fill=255)
 			# Active Outputs F = Fan, I = Igniter, A = Auger (Upper Left)
@@ -167,8 +168,8 @@ class Display:
 			# Notification Indicator (Upper Right)
 			font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 24)
 			text = ' '
-			for item in status_data['notify_req']:
-				if status_data['notify_req'][item]:
+			for index, item in enumerate(status_data['notify_data']):
+				if item['req'] and item['type'] != 'hopper':
 					text = '\uf0f3'
 			(font_width, font_height) = font.getsize(text)
 			draw.text((128 - font_width, 0), text, font=font, fill=255)
