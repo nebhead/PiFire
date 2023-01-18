@@ -32,11 +32,9 @@
 						<form name="probe_select" id="probe_select" action="/tuning/select" method="POST">
 							<select class="form-control" name="probe_select" id="probe_select" onchange="this.form.submit()">
 								<option value="none"{% if pagectrl['selected'] == 'none' %} selected{% endif %}>Select an Input to Tune</option>
-								{% if settings['grill_probe_settings']['grill_probe_enabled'][2] != 1 %}
-								<option value="grill_input"{% if pagectrl['selected'] == 'grill_input' %} selected{% endif %}>Grill Ambient Thermistor Input</option>
-								{% endif %}
-								<option value="probe1_input"{% if pagectrl['selected'] == 'probe1_input' %} selected{% endif %}>Probe 1 Thermistor Input</option>
-								<option value="probe2_input"{% if pagectrl['selected'] == 'probe2_input' %} selected{% endif %}>Probe 2 Thermistor Input</option>
+								{% for probe in settings['probe_settings']['probe_map']['probe_info'] %}
+								<option value="{{ probe['label'] }}"{% if pagectrl['selected'] == probe['label'] %} selected{% endif %}>{{ probe['name'] }} Input</option>
+								{% endfor %}
 							</select>
 
 							<br>
@@ -279,7 +277,7 @@
 	{% endblock %}
 	
 	{% block scripts %}
-	<script src="{{ url_for('static', filename='js/Chart.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/chart.min.js') }}"></script>
 
 
 	{% if pagectrl['refresh'] == 'on' %}
@@ -287,21 +285,24 @@
 	<script>
 		var IntervalID = setInterval(update_tr,1000);
 
-			function update_tr() {
-				{% if pagectrl['selected'] == 'grill_input' %}
-				$.getJSON('/_grilltr', 
-				{% elif pagectrl['selected'] == 'probe1_input' %}
-				$.getJSON('/_probe1tr',
-				{% else %}
-				$.getJSON('/_probe2tr',
-				{% endif %}
+		function update_tr() {
+			var postdata = {
+				probe_selected : "{{ pagectrl['selected']}}"
+			};
 
-				function(data) { 
+			$.ajax({
+				url : '/_gettr',
+				type : 'POST',
+				data : JSON.stringify(postdata),
+				contentType: "application/json; charset=utf-8",
+				traditional: true,
+				success: function (data) {
 					{% if pagectrl['low_tempvalue'] == '' %}$('#low_trvalue').val(data.trohms){% endif %}
 					{% if pagectrl['med_tempvalue'] == '' %}$('#med_trvalue').val(data.trohms){% endif %}
 					{% if pagectrl['high_tempvalue'] == '' %}$('#high_trvalue').val(data.trohms){% endif %}
-				});
-			};
+				}
+			});
+		};
 	</script>
 
 	{% endif %}
@@ -340,20 +341,18 @@
 		data: data,
 		options: {
 			scales: {
-				xAxes: [{
-					display: true,
-					scaleLabel: {
+				x: {
+					title: {
 						display: true,
-						labelString: 'Thermistor (Ohms)'
+						text: 'Thermistor (Ohms)'
 					},
-				}],
-				yAxes: [{
-					display: true,	
-					scaleLabel: {
+				},
+				y: {
+					title: {
 						display: true,
-						labelString: 'Temperature ({{ settings['globals']['units'] }})'
+						text: 'Temperature ({{ settings["globals"]["units"] }})'
 					},
-				}]
+				}
 			},
 			responsive: true,
 			maintainAspectRatio: false,

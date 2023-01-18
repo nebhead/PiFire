@@ -915,32 +915,14 @@ def tuning_page(action=None):
 						   grill_name=settings['globals']['grill_name'],
 						   alert=alert)
 
-@app.route('/_grilltr', methods=['GET'])
-def grill_tr():
-
+@app.route('/_gettr', methods=['GET', 'POST'])
+def get_tr():
+	requestjson = request.json 
 	cur_probe_tr = read_tr()
-	tr = {}
-	tr['trohms'] = cur_probe_tr[0]
-
-	return json.dumps(tr)
-
-@app.route('/_probe1tr', methods=['GET'])
-def probe1_tr():
-
-	cur_probe_tr = read_tr()
-	tr = {}
-	tr['trohms'] = cur_probe_tr[1]
-
-	return json.dumps(tr)
-
-@app.route('/_probe2tr', methods=['GET'])
-def probe2_tr():
-
-	cur_probe_tr = read_tr()
-	tr = {}
-	tr['trohms'] = cur_probe_tr[2]
-
-	return json.dumps(tr)
+	if requestjson['probe_selected'] in cur_probe_tr.keys():
+		return jsonify({ 'trohms' : cur_probe_tr[requestjson['probe_selected']]})
+	else:
+		return jsonify({ 'trohms' : 0 })
 
 
 @app.route('/events/<action>', methods=['POST','GET'])
