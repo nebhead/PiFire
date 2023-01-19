@@ -1,0 +1,117 @@
+{% macro render_probe_card(probe_data, settings, control) %}
+
+<!-- Probe Card -->
+<div class="card shadow"> 
+	<div class="card-header bg-primary text-white text-center">
+		<strong>
+			{% if probe_data['type'] == 'Primary' %}
+			<i class="fas fa-tachometer-alt"></i>&nbsp;
+			{% else %}
+			<i class="fas fa-thermometer"></i>&nbsp;
+			{% endif %} 
+			{{ probe_data['name'] }}
+		</strong>
+	</div>
+	<div class="card-body text-center justify-content-center">
+		<div class="row">
+			<div class="col">
+				<div id="{{ probe_data['label'] }}_gauge" class="gauge-container">
+					<span class="value-text">&deg;{% if settings['globals']['units'] == 'F' %}F{% else %}C{% endif %}</span>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="card-footer justify-content-center">
+		<div class="btn-toolbar justify-content-center" role="toolbar">
+			<div class="btn-group mr-2 shadow" role="group">
+				<a href="/settings" class="btn btn-sm btn-outline-primary" role="button" data-toggle="tooltip" title="Settings for this probe."><i class="fas fa-cog"></i></a>
+				{% if probe_data['type'] == 'Primary' %}
+					<button type="button" class="btn btn-sm btn-outline-primary" id="{{ probe_data['label'] }}_primary_setpoint_btn" 
+					  onclick="launchSetpointModal()">
+						<i class="fas fa-crosshairs"></i>
+					</button>
+				{% endif %}
+				{% for notify_info in control['notify_data'] %}
+					{% if notify_info['label'] == probe_data['label'] %} 
+						{% if notify_info['req'] %}
+							<button type="button" class="btn btn-sm btn-primary" id="{{ probe_data['label'] }}_notify_btn" 
+							  data-toggle="modal" data-target="#{{ probe_data['label'] }}_notifyModal">
+							  	<i class="far fa-bell"></i>&nbsp;
+								{{ notify_info['target'] }}&deg;
+								{% if settings['globals']['units'] == 'F' %}F{% else %}C{% endif %}
+							</button>
+						{% else %}
+							<button type="button" class="btn btn-sm btn-outline-primary" id="{{ probe_data['label'] }}_notify_btn" data-toggle="modal" data-target="#{{ probe_data['label'] }}_notifyModal"><i class="far fa-bell-slash"></i></button>
+						{% endif %}
+					{% endif %}
+				{% endfor %}
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Modal for setting notifications -->
+<div class="modal" id="{{ probe_data['label'] }}_notifyModal">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<!-- Modal Header -->
+			<div class="modal-header">
+				<h4 class="modal-title"><i class="fas fa-temperature-high"></i>&nbsp; {{ probe_data['name'] }} Notification Target</h4>
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+			</div>
+			<!-- Modal body -->
+			<div class="modal-body text-center">
+				Send a notification when this probe achieves the target temperature:
+				<h1><output name="{{ probe_data['label'] }}_tempOutput" id="{{ probe_data['label'] }}_tempOutputId">0</output>&deg;{% if settings['globals']['units'] == 'F' %}F{% else %}C{% endif %}</h1>
+				{% if probe_data['type'] == 'Primary' %}
+					{% if settings['globals']['units'] == 'F' %}
+					<input type="range" class="custom-range" min="0" max="600" value="0" id="{{ probe_data['label'] }}_tempInputId" name="{{ probe_data['label'] }}_tempInputRange" oninput="{{ probe_data['label'] }}_tempOutputId.value = {{ probe_data['label'] }}_tempInputId.value">
+					{% else %}
+					<input type="range" class="custom-range" min="0" max="300" value="0" id="{{ probe_data['label'] }}_tempInputId" name="{{ probe_data['label'] }}_tempInputRange" oninput="{{ probe_data['label'] }}_tempOutputId.value = {{ probe_data['label'] }}_tempInputId.value">
+					{% endif %}
+				{% else %}
+					{% if settings['globals']['units'] == 'F' %}
+					<input type="range" class="custom-range" min="0" max="300" value="0" id="{{ probe_data['label'] }}_tempInputId" name="{{ probe_data['label'] }}_tempInputRange" oninput="{{ probe_data['label'] }}_tempOutputId.value = {{ probe_data['label'] }}_tempInputId.value">
+					{% else %}
+					<input type="range" class="custom-range" min="0" max="150" value="0" id="{{ probe_data['label'] }}_tempInputId" name="{{ probe_data['label'] }}_tempInputRange" oninput="{{ probe_data['label'] }}_tempOutputId.value = {{ probe_data['label'] }}_tempInputId.value">
+					{% endif %}
+				{% endif %}
+				<br><br>
+				<p>When {{ probe_data['name'] }} Achieves Set Point:</p>
+				<div class="custom-control custom-checkbox mb-3">
+					<input type="checkbox" class="custom-control-input" id="{{ probe_data['label'] }}_shutdown" name="{{ probe_data['label'] }}_shutdown">
+					<label class="custom-control-label" for="{{ probe_data['label'] }}_shutdown">Shutdown PiFire</label>
+				</div>
+				<div class="custom-control custom-checkbox mb-3">
+					<input type="checkbox" class="custom-control-input" id="{{ probe_data['label'] }}_keepWarm" name="{{ probe_data['label'] }}_keepWarm">
+					<label class="custom-control-label" for="{{ probe_data['label'] }}_keepWarm">Start Keep Warm</label>
+				</div>
+			</div>
+			<!-- Modal footer -->
+			<div class="modal-footer">
+				<button type="button" class="btn btn-warning" id="{{ probe_data['label'] }}_notify_disable" data-dismiss="modal" onclick="cancelNotify('{{ probe_data['label'] }}')">Cancel</button>
+				<button type="button" class="btn btn-danger" id="{{ probe_data['label'] }}_notify_enable" data-dismiss="modal" onclick="setNotify('{{ probe_data['label'] }}', {{ probe_data['label'] }}_tempInputId.value)">Set</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+{% endmacro %}
+
+{% macro render_hopper_card() %}
+<div class="card shadow">
+	<div class="card-header bg-primary text-white text-center">
+		<i class="fas fa-poll-h"></i>&nbsp; Current Pellet Level
+	</div>
+	<div class="card-body text-center">
+		<h5>Current: <span id="hopperPellets"></span></h5>
+		<!-- Hopper Level Indicator-->
+		<div class="progress shadow" style="height:30px">
+			<div id="hopperLevel" class="progress-bar progress-bar-striped bg-success" style="width:100%;height:30px">100%</div>
+		</div>
+	</div>
+	<div class="card-footer text-center">
+		<button type="button" class="btn btn-outline-primary" onclick="refreshHopperStatus()">Refresh Status</button>
+	</div>
+</div>
+{% endmacro %}

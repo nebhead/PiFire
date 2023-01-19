@@ -1,0 +1,32 @@
+.gauge-container {
+    width: 250px;
+    height: 250px;
+    display: inline-block;
+    padding: 10px;
+  }
+  .gauge-container > .gauge .dial {
+    stroke: #eee;
+    stroke-width: 10;
+    fill: rgba(0,0,0,0);
+  }
+  .gauge-container > .gauge .value {
+    stroke: #3498db;
+    stroke-width: 12;
+    fill: rgba(0,0,0,0);
+  }
+  .gauge-container > .gauge .value-text {
+    fill: #3498db;
+    font-family: "Lato", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-weight: bold;
+    font-size: 2em;
+  }
+
+  .gauge-container > .value-text {
+    color: #3498db;
+    font-weight: 100;
+    position: absolute;
+    bottom: 10%;
+    right: 48%;
+    display: inline-block;
+    font-size: 1.4em;
+  } 

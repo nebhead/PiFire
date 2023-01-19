@@ -222,7 +222,11 @@ def default_settings():
 		'current' : 'Default', 
 		'dashboards' : [
 			{	'name' : 'Default',
-				'friendly_name' : 'Default/Basic Dashboard', 
+				'friendly_name' : 'Default Dashboard', 
+				'html_name' : 'dash_default.html'
+			}, 
+			{	'name' : 'Basic',
+				'friendly_name' : 'Basic Dashboard', 
 				'html_name' : 'dash_basic.html'
 			}
 		]

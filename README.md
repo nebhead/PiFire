@@ -29,16 +29,17 @@ Just as with the PiSmoker project, I had a few goals in mind.  I also wanted to 
 	* ILI9341 TFT Display (now with more rotation options)
 * Physical Button Input / Control (depending on the display, three button inputs)
 * Encoder support for, so you can control your grill with a spinny knob.
-* One (1) Grill Probe and Two (2) Food Probes
+* One (1) Grill Probe and Many Food Probes
 	* Tunable probe inputs to allow for many different probe manufacturers
 	* Probe tuning tool to help develop probe profiles
-	* NEW - Up to two (2) grill probes if using the correct PCB design.
+	* NEW - Any number of probe inputs, limited only by the number of devices that the Raspberry Pi can support
+	* Virtual Probes to allow you to do things like averaging probes, finding highest and lowest values of certain probes, etc.  
 * Cook Timer
 * Notifications (Grill / Food Probes / Timer)
 	* Supports Apprise, IFTTT, Pushover, and Pushbullet Notification Services
 * Smoke Plus Feature to deliver more smoke during Smoke / Hold modes
 * Safety settings to prevent over-temp, startup failure, or firepot flameout (and overload)
-* __NEW__ Save temperature history for all probes / set points to a cook file that can be updated with images, notes, and even downloaded to your devices.
+* Save temperature history for all probes / set points to a cook file that can be updated with images, notes, and even downloaded to your devices.
 * Wood Pellet Tracking Manager - Now includes estimates of pellet usage.
 * Pellet Level Sensor Support
 	* VL53L0X Time of Flight Sensor
@@ -102,6 +103,7 @@ I've added a discord server [here](https://discord.gg/F9mbCrbrZS) which can be a
 * 6/2022 - Release v1.3.3 - Lot's of changes for this latest stable release for June 2022. It's been a busy couple of months and we've had a few bug fixes pulled into this latest version, including an installer bug. The display modules have been completely overhauled in this latest release to improve responsiveness and capabilities. We've added a module for the ILI1394 with rotary encoder support, which is a nice option for those who like to use a dial with push button to interface the menu system. When doing the update, consider doing a full reboot (instead of just restarting the server) to ensure connected display devices are fully reset.
 * 7/2022 - Release v1.3.4 - Another monthly release with some bug fixes and some new features. The biggest new feature of this month was the addition of Annotations in the history graph. This gives you helpful tags on the graph (see below) with indicators of the mode changes. Of course you can turn this off in the history page if you don't like it.
 * **10/2022** - Release v1.3.5 - Bug fixes, feature refinements and brand new features galore in this latest release.  Added a new ADS1115 module (using Adafruits Circuit Python), due to some reports of issues with the existing ADS1115 module. These can be optionally selected in the configuration wizard.  PWM Fan Support and a boatload of code cleanup was introduced, thanks to contributor @weberbox.  Support for saving cook files was introduced in this version, so that you can go back to older cooks, edit some of the information and add images and comments.  Added a Prime Mode to allow you to prime the fire pot with pellets prior to a cook, and even prime & startup.  Added estimated pellet usage to the pellet manager, which will attempt to track just how many pellets you have used since your last load of pellets.  Added Apprise notification capability thanks to contributor @calonmerc.  320x200 displays have been update and added timers to specific modes. And even more!  
+* **xx/2023** - Release v1.5.0 - Perhaps this should be v2.0 with all of the changes!
 
 ### Credits
 
@@ -112,6 +114,8 @@ Of course, none of this project would be available without the wonderful and ama
 * **PiSmoker** - The project that served as the inspiration for this project and where the PID controller is wholesale borrowed from.  Special mention to Dan for providing encouraging feedback from day one of this project.  Many thanks!  Copyright Dan Borello. [engineeredmusings.com](http://engineeredmusings.com/pismoker/) [github](https://github.com/DBorello/PiSmoker)
 
 * **Circliful** - Beautiful Circle Gauges on the dashboard. Extra special mention for Patric for providing great support to me via GitHub.  Copyright Patric Gutersohn & other contributors. [gutersohn.com](http://gutersohn.com/) [github](https://github.com/pguso/js-plugin-circliful)
+
+* **SVG Gauge** - Credits to Aniket Naik for the excellent SVG-Gauge. Released under the MIT License Copyright (c) 2016 [(github profile)](https://github.com/naikus) [github.com](https://github.com/naikus/svg-gauge)
 
 * **Bootstrap** - WebUI Based on Bootstrap 4.  Bootstrap is released under the MIT license and is copyright 2018 Twitter. [getbootstrap.com](http://getbootstrap.com)
 
