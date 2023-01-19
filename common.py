@@ -1051,7 +1051,7 @@ def unpack_history(datalist):
 	temp_dict = {}  # Create temporary dictionary to store all of the history data lists
 	temp_struct = datalist[0]  # Load the initial history data into a temporary dictionary  
 	for key in temp_struct.keys():  # Iterate each of the keys
-		if key in ['P', 'F', 'NT', 'EXD']:
+		if key in ['P', 'F', 'NT', 'EXD', 'AUX']:
 			temp_dict[key] = {}
 			for subkey in temp_struct[key]:
 				temp_dict[key][subkey] = []
@@ -1061,7 +1061,7 @@ def unpack_history(datalist):
 	for index in range(len(datalist)):
 		temp_struct = datalist[index]
 		for key, value in temp_struct.items():
-			if key in ['P', 'F', 'NT', 'EXD']:
+			if key in ['P', 'F', 'NT', 'EXD', 'AUX']:
 				for subkey, subvalue in temp_struct[key].items():
 					temp_dict[key][subkey].append(subvalue)
 			else: 
