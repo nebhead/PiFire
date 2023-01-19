@@ -700,51 +700,53 @@ $(document).ready(function() {
 		}
 	});
 
-	// Get PWM Duty Cycle Data
-	$.ajax({
-		url: '/settings/pwm_duty_cycle',
-		type: 'GET',
-		contentType: "application/json; charset=utf-8",
-		traditional: true,
-		success: function(data) {
-			dc_temps_list = data.dc_temps_list;
-			dc_profiles = data.dc_profiles;
-			// Populate table with initial data
- 			var profile = {};
-			for (let index = 0; index < dc_profiles.length; index++) {
-				profile.rowSelected = index;
-				profile.numRows = dc_profiles.length;
-				// Determine list position
-				if (index == 0) {
-					profile.position = 'first';
-				} else if (index == dc_profiles.length - 1) {
-					profile.position = 'last';
-				} else {
-					profile.position = 'inner';
+	if(dc_fan_enabled == 'True') {
+		// Get PWM Duty Cycle Data
+		$.ajax({
+			url: '/settings/pwm_duty_cycle',
+			type: 'GET',
+			contentType: "application/json; charset=utf-8",
+			traditional: true,
+			success: function(data) {
+				dc_temps_list = data.dc_temps_list;
+				dc_profiles = data.dc_profiles;
+				// Populate table with initial data
+				var profile = {};
+				for (let index = 0; index < dc_profiles.length; index++) {
+					profile.rowSelected = index;
+					profile.numRows = dc_profiles.length;
+					// Determine list position
+					if (index == 0) {
+						profile.position = 'first';
+					} else if (index == dc_profiles.length - 1) {
+						profile.position = 'last';
+					} else {
+						profile.position = 'inner';
+					}
+					// Set previous temperature minimum value, for ranges
+					if (index > 0) {
+						profile.tempMinPrevious = dc_temps_list[index - 1];
+					} else {
+						profile.tempMinPrevious = dc_temps_list[index];
+					}
+					// If last profile and the list is greater than 1 profile long
+					if ((index == dc_profiles.length - 1) && (dc_profiles.length > 1)) {
+						profile.tempMin = dc_temps_list[index - 1];
+						profile.tempMinPrevious = dc_temps_list[index - 2];
+						// Set minimum value for next range to be the minimum of last range plus 1
+						var newMinTemp = dc_temps_list[index - 1] + 1;
+						$('#dc_temp').val(newMinTemp);
+						document.getElementById("dc_temp").min = newMinTemp;
+						$('#dc_add_temp').html(newMinTemp - 1);
+					} else {
+						profile.tempMin = dc_temps_list[index];
+					};
+					profile.duty_cycle = dc_profiles[index].duty_cycle;
+					addPWMProfile(profile);
 				}
-				// Set previous temperature minimum value, for ranges
-				if (index > 0) {
-					profile.tempMinPrevious = dc_temps_list[index - 1];
-				} else {
-					profile.tempMinPrevious = dc_temps_list[index];
-				}
-				// If last profile and the list is greater than 1 profile long
-				if ((index == dc_profiles.length - 1) && (dc_profiles.length > 1)) {
-					profile.tempMin = dc_temps_list[index - 1];
-					profile.tempMinPrevious = dc_temps_list[index - 2];
-					// Set minimum value for next range to be the minimum of last range plus 1
-					var newMinTemp = dc_temps_list[index - 1] + 1;
-					$('#dc_temp').val(newMinTemp);
-					document.getElementById("dc_temp").min = newMinTemp;
-					$('#dc_add_temp').html(newMinTemp - 1);
-				} else {
-					profile.tempMin = dc_temps_list[index];
-				};
-				profile.duty_cycle = dc_profiles[index].duty_cycle;
-				addPWMProfile(profile);
 			}
-		}
-	});
+		});
+	};
 
     $('button[name=addAppriseLocation]').click(function(e) {
         e.preventDefault();

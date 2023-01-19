@@ -229,25 +229,6 @@ def history_update(action=None):
 		json_response['mode'] = control['mode']
 		json_response['ui_hash'] = create_ui_hash()
 
-		'''
-		json_response = {
-			'current' : {
-				'P' : {
-					'probename' : temperature
-				}, 
-				'F' : {
-					'probename' : temperature
-				}, 
-				'PSP' : primary setpoint temperature, 
-				'NT' : {
-					'probename' : temperature
-				}
-			}, 
-			'annotations' : [], 
-			'mode' : string[mode]
-		}
-		'''
-
 		return jsonify(json_response)
 
 	elif action == 'refresh':
@@ -2134,14 +2115,14 @@ def probe_config():
 			return render_template_string(render_string, probe_map=wizardInstallInfo['probe_map'], modules=wizardData['modules']['probes'], alerts=alerts)
 		elif r['section'] == 'ports':
 			if r['action'] == 'delete_probe':
-				for index, probe in enumerate(wizardInstallInfo['probe_map']['probe_info']):
+				for probe_index, probe in enumerate(wizardInstallInfo['probe_map']['probe_info']):
 					if probe['label'] == r['label']:
 						# Check if probe is being used in a virtual device, and delete it from there. 
 						for index, device in enumerate(wizardInstallInfo['probe_map']['probe_devices']):
 							if 'virtual' in device['module']:
 								if probe['label'] in device['config']['probes_list']: 
 									wizardInstallInfo['probe_map']['probe_devices'][index]['config']['probes_list'].remove(probe['label'])
-						wizardInstallInfo['probe_map']['probe_info'].pop(index)
+						wizardInstallInfo['probe_map']['probe_info'].pop(probe_index)
 						store_wizard_install_info(wizardInstallInfo)
 						break
 

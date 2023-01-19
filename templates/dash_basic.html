@@ -12,7 +12,7 @@
 <!-- Card Section -->
 <div class="row"> <!-- Probe Cards -->
 	{% for probe in settings['probe_settings']['probe_map']['probe_info'] %}
-		{% if probe['enabled'] %}
+		{% if probe['enabled'] and probe['type'] != 'Aux' %}
 		<div class="col-4">
 			<br>
 			<!-- Card for Probe Data -->

@@ -371,10 +371,9 @@ def prepare_chartdata(probe_config, chart_info={}, num_items=10, reduce=True, da
 		history = read_history(num_items)
 		if history !=[]: 
 			history = unpack_history(history)
+			list_length = len(history['T']) # Length of list(s)
 		else: 
 			list_length = 0
-
-	list_length = len(history['T']) # Length of list(s)
 
 	if (list_length < num_items) and (list_length > 0):
 		num_items = list_length

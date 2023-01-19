@@ -570,7 +570,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 
 		in_data = {}
 		in_data['probe_history'] = sensor_data 
-		in_data['primary_setpoint'] = control['primary_setpoint']
+		in_data['primary_setpoint'] = control['primary_setpoint'] if mode == 'Hold' else 0
 		in_data['notify_targets'] = get_notify_targets(control['notify_data'])
 
 		# If Extended Data Mode is Enabled, Populate Extra Data Here
@@ -828,7 +828,7 @@ def _next_mode(next_mode, setpoint=0):
 	# If no other request, then transition to next mode, otherwise exit
 	if not control['updated']:
 		control['mode'] = next_mode
-		control['primary_setpoint'] = setpoint  # If next mode is 'Hold'
+		control['primary_setpoint'] = setpoint if next_mode == 'Hold' else 0 # If next mode is 'Hold'
 		control['updated'] = True 
 		write_control(control)
 	return control 

@@ -429,7 +429,8 @@ def default_notify(settings):
 def get_probe_list(settings):
 	probe_list = [] 
 	for probe in settings['probe_settings']['probe_map']['probe_info']:
-		probe_list.append((probe['label'] , probe['name']))
+		if probe['type'] != 'Aux':
+			probe_list.append((probe['label'] , probe['name']))
 
 	return probe_list
 
@@ -840,7 +841,7 @@ def read_settings(filename='settings.json', init=False):
 			update_settings = True
 		elif settings_default['versions']['server'] != settings['versions']['server']:
 			prev_ver = semantic_ver_to_list(settings['versions']['server'])
-			settings, settings_default = upgrade_settings(prev_ver, settings, settings_default)
+			settings = upgrade_settings(prev_ver, settings, settings_default)
 			settings['versions']['server'] = settings_default['versions']['server']
 			update_settings = True
 

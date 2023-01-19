@@ -97,7 +97,7 @@ function gotoCFPage(pagenum, sortorder, itemsperpage) {
 };
 
 function checkModeChange(mode) {
-	if ((mode == 'Stop') && (mode != lastCookMode)) {
+	if (((mode == 'Stop') || (mode == 'Error')) && (mode != lastCookMode)) {
 		$('#graphcardbody').hide();
 		$('#graphcardfooter').hide();
 		$('#stopcardbody').show();
@@ -111,13 +111,14 @@ function checkModeChange(mode) {
 		lastCookMode = mode;
 		temperatureCharts.options.scales.x.realtime.pause = true;
 		paused = true;
+		chartReady = false;
 	} else if (mode != lastCookMode) {
 		$('#stopcardbody').hide();
 		$('#graphcardbody').show();
 		$('#graphcardfooter').show();
 		if ((['PageLoad', 'Error'].includes(lastCookMode)) || (chartReady == false)) {
 			refreshChartData();
-		};
+		}; 
 		lastCookMode = mode;
 		checkAutorefresh();
 	};
