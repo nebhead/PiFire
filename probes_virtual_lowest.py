@@ -2,18 +2,18 @@
 
 '''
 *****************************************
-PiFire Probes Virtual Probe Averaging Module 
+PiFire Probes Virtual Probe Lowest Module 
 *****************************************
 
 Description: 
-  This module is a virtual probe device that will average any number of other probe inputs.  Probe labels must be defined in config data.
+  This module is a virtual probe device that will take the lowest of any number of other probe inputs.  Probe labels must be defined in config data.
 	
 	Ex Device Definition: 
 	
 	device = {
 			'device' : 'your_device_name',	# Unique name for the device
-			'module' : 'virtual_average',	# Must be populated for this module to load properly
-			'ports' : ['VIRT0'], 			# A port must be defined, with the labels of the probes to utilize in config data
+			'module' : 'virtual_lowest',	# Must be populated for this module to load properly
+			'ports' : ['VIRT0'], 			# A single port must be defined, with the labels of the probes to utilize in config data
 			'config' : {
 			  "probes_list" : ["Grill1", "Grill2"]	# List of probe labels to utilize
 			} 
@@ -27,7 +27,6 @@ Description:
 '''
 
 from probes_base import ProbeInterface
-from statistics import mean
 
 '''
 *****************************************
@@ -41,7 +40,7 @@ class ReadProbes(ProbeInterface):
 		super().__init__(probe_info, device_info, units)
 	
 	def read_all_ports(self, output_data):
-		''' Find the probes to average '''
+		''' Find the lowest probe value '''
 		for port in self.port_map:
 			temp_list = []
 			for probe in self.device_info['config']['probes_list']:
@@ -52,13 +51,13 @@ class ReadProbes(ProbeInterface):
 				elif probe in output_data['aux']:
 					temp_list.append(output_data['aux'][probe])			
 			
-			''' Get average temperature and store it in the output data structure'''
+			''' Get lowest value and store it in the output data structure'''
 			if port == self.primary_port:
-				self.output_data['primary'][self.port_map[port]] = mean(temp_list)
+				self.output_data['primary'][self.port_map[port]] = min(temp_list)
 			elif port in self.food_ports:
-				self.output_data['food'][self.port_map[port]] = mean(temp_list)
+				self.output_data['food'][self.port_map[port]] = min(temp_list)
 			elif port in self.aux_ports:
-				self.output_data['aux'][self.port_map[port]] = mean(temp_list)
+				self.output_data['aux'][self.port_map[port]] = min(temp_list)
 			
 			''' Set Tr value to 0 since we are averaging temperature outputs '''
 			self.output_data['tr'][self.port_map[port]] = 0

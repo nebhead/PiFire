@@ -238,6 +238,87 @@
 						}
 					}
 				}			
+			},
+			"virtual_highest" : {
+				"friendly_name" : "Virtual Probes - Highest",
+				"filename" : "virtual_highest",
+				"description" : "This is a virtual probe module that will return the highest value from specific ports on real devices.",
+				"default" : false,
+				"image" : "virtual_probe.png",
+				"py_dependencies" : [], 
+				"apt_dependencies" : [],
+				"settings_dependencies" : {
+					"units" : {
+						"friendly_name" : "Temp Units",
+						"description" : "Select the temperature units to use for PiFire globally.  (This can be modified in settings later)",
+						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
+						"settings" : ["globals", "units"]
+					}
+				},
+				"device_specific" : {
+					"ports" : ["VIRT0"],
+					"config" : {
+						"probes_list" : {
+							"friendly_name" : "Use Probes",
+							"description" : "A list of probes from other devices, to determine the highest value. Select which probes should used with ctrl+click.",
+							"options" : {"list" : "List of probes to utilize."}
+						}
+					}
+				}			
+			},
+			"virtual_lowest" : {
+				"friendly_name" : "Virtual Probes - Lowest",
+				"filename" : "virtual_lowest",
+				"description" : "This is a virtual probe module that will return the lowest value from specific ports on real devices.",
+				"default" : false,
+				"image" : "virtual_probe.png",
+				"py_dependencies" : [], 
+				"apt_dependencies" : [],
+				"settings_dependencies" : {
+					"units" : {
+						"friendly_name" : "Temp Units",
+						"description" : "Select the temperature units to use for PiFire globally.  (This can be modified in settings later)",
+						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
+						"settings" : ["globals", "units"]
+					}
+				},
+				"device_specific" : {
+					"ports" : ["VIRT0"],
+					"config" : {
+						"probes_list" : {
+							"friendly_name" : "Use Probes",
+							"description" : "A list of probes from other devices, to determine the lowest value. Select which probes should used with ctrl+click.",
+							"options" : {"list" : "List of probes to utilize."}
+						}
+					}
+				}			
+			},
+			"virtual_median" : {
+				"friendly_name" : "Virtual Probes - Median",
+				"filename" : "virtual_median",
+				"description" : "This is a virtual probe module that will return the median value from specific ports on real devices.",
+				"default" : false,
+				"image" : "virtual_probe.png",
+				"py_dependencies" : [], 
+				"apt_dependencies" : [],
+				"settings_dependencies" : {
+					"units" : {
+						"friendly_name" : "Temp Units",
+						"description" : "Select the temperature units to use for PiFire globally.  (This can be modified in settings later)",
+						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
+						"settings" : ["globals", "units"]
+					}
+				},
+				"device_specific" : {
+					"ports" : ["VIRT0"],
+					"config" : {
+						"probes_list" : {
+							"friendly_name" : "Use Probes",
+							"description" : "A list of probes from other devices, to determine the median value. Select which probes should used with ctrl+click.",
+							"options" : {"list" : "List of probes to utilize."}
+						}
+					}
+				}			
 			}
 		},
 		"display" : {

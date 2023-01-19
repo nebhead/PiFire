@@ -2,17 +2,17 @@
 
 '''
 *****************************************
-PiFire Probes Virtual Probe Averaging Module 
+PiFire Probes Virtual Probe Median Module 
 *****************************************
 
 Description: 
-  This module is a virtual probe device that will average any number of other probe inputs.  Probe labels must be defined in config data.
+  This module is a virtual probe device that will find the median any number of other probe inputs.  Probe labels must be defined in config data.
 	
 	Ex Device Definition: 
 	
 	device = {
 			'device' : 'your_device_name',	# Unique name for the device
-			'module' : 'virtual_average',	# Must be populated for this module to load properly
+			'module' : 'virtual_median',	# Must be populated for this module to load properly
 			'ports' : ['VIRT0'], 			# A port must be defined, with the labels of the probes to utilize in config data
 			'config' : {
 			  "probes_list" : ["Grill1", "Grill2"]	# List of probe labels to utilize
@@ -27,7 +27,7 @@ Description:
 '''
 
 from probes_base import ProbeInterface
-from statistics import mean
+from statistics import median
 
 '''
 *****************************************
@@ -54,11 +54,11 @@ class ReadProbes(ProbeInterface):
 			
 			''' Get average temperature and store it in the output data structure'''
 			if port == self.primary_port:
-				self.output_data['primary'][self.port_map[port]] = mean(temp_list)
+				self.output_data['primary'][self.port_map[port]] = median(temp_list)
 			elif port in self.food_ports:
-				self.output_data['food'][self.port_map[port]] = mean(temp_list)
+				self.output_data['food'][self.port_map[port]] = median(temp_list)
 			elif port in self.aux_ports:
-				self.output_data['aux'][self.port_map[port]] = mean(temp_list)
+				self.output_data['aux'][self.port_map[port]] = median(temp_list)
 			
 			''' Set Tr value to 0 since we are averaging temperature outputs '''
 			self.output_data['tr'][self.port_map[port]] = 0
