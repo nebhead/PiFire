@@ -64,14 +64,26 @@ class InfluxNotificationHandler:
 				return data[k]
 			return default
 
-		# TODO: Fixup these outputs
+		PrimaryKey = list(in_data['probe_history']['primary'].keys())[0]
+		Probe1Key = list(in_data['probe_history']['food'].keys())[0]
+		Probe2Key = list(in_data['probe_history']['food'].keys())[1]
+		
+		PrimaryTemp = in_data['probe_history']['primary'][PrimaryKey]
+		PrimarySetpoint = in_data['primary_setpoint']
+		PrimaryNotify = in_data['notify_targets'][PrimaryKey]
+		Probe1Temp = in_data['probe_history']['food'][Probe1Key]
+		Probe1Notify = in_data['notify_targets'][Probe1Key]
+		Probe2Temp = in_data['probe_history']['food'][Probe2Key]
+		Probe2Notify = in_data['notify_targets'][Probe2Key]
+
 		p = Point(name).time(time=datetime.utcnow()) \
-			.field("GrillTemp", float(get_or_default(in_data, 'GrillTemp', 0.0))) \
-			.field('GrillSetPoint', float(get_or_default(in_data, 'GrillSetPoint', 0.0))) \
-			.field('Probe1Temp', float(get_or_default(in_data, 'Probe1Temp', 0.0))) \
-			.field('Probe1SetPoint', float(get_or_default(in_data, 'Probe1SetPoint', 0.0))) \
-			.field('Probe2Temp', float(get_or_default(in_data, 'Probe2Temp', 0))) \
-			.field('Probe2SetPoint', float(get_or_default(in_data, 'Probe2SetPoint', 0.0))) \
+			.field("GrillTemp", float(PrimaryTemp)) \
+			.field('GrillSetPoint', float(PrimarySetpoint)) \
+			.field('GrillNotifyPoint', float(PrimaryNotify)) \
+			.field('Probe1Temp', float(Probe1Temp)) \
+			.field('Probe1SetPoint', float(Probe1Notify)) \
+			.field('Probe2Temp', float(Probe2Temp)) \
+			.field('Probe2SetPoint', float(Probe2Notify)) \
 			.field("Mode", str(get_or_default(control, "mode", 'unknown'))) \
 			.field('PelletLevel', int(get_or_default(get_or_default(pelletdb, 'current', {}), 'hopper_level', 100)))
 		if grill_platform is not None:
