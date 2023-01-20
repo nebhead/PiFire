@@ -450,6 +450,10 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 
 		control = read_control()
 
+		# Check if new mode has been requested
+		if control['updated']:
+			break
+
 		# Check if user changed settings and reload
 		if control['settings_update']:
 			control['settings_update'] = False
@@ -461,12 +465,9 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			empty = settings['pelletlevel']['empty']
 			full = settings['pelletlevel']['full']
 			dist_device.update_distances(empty, full)
+			control = read_control()
 			control['distance_update'] = False
 			write_control(control)
-
-		# Check if new mode has been requested
-		if control['updated']:
-			break
 
 		# Check hopper level when requested or every 300 seconds
 		if control['hopper_check'] or (now - hopper_toggle_time) > 300:
@@ -477,6 +478,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			hopper_toggle_time = now
 			write_event(settings, "* Hopper Level Checked @ " + str(pelletdb['current']['hopper_level']) + "%")
 			if control['hopper_check']:
+				control = read_control()
 				control['hopper_check'] = False
 				write_control(control)
 
@@ -524,7 +526,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 					speed = control['manual']['pwm']
 					write_event(settings, '* PWM Speed: ' + str(speed) + '%')
 					grill_platform.set_duty_cycle(speed)
-
+				control = read_control()
 				control['manual']['change'] = False
 				write_control(control)
 
@@ -559,6 +561,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		# Grab current probe profiles if they have changed since the last loop.
 		if control['probe_profile_update']:
 			settings = read_settings()
+			control = read_control()
 			control['probe_profile_update'] = False
 			write_control(control)
 			# Add new probe profiles to probe complex object
@@ -667,6 +670,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 					(now - fan_update_time) > settings['pwm']['update_time']):
 				fan_update_time = now
 				if ptemp > control['primary_setpoint']:
+					control = read_control()
 					control['duty_cycle'] = settings['pwm']['min_duty_cycle']
 					write_control(control)
 				else:
@@ -677,10 +681,12 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 							duty_cycle = settings['pwm']['profiles'][temp_profile]['duty_cycle']
 							duty_cycle = max(duty_cycle, settings['pwm']['min_duty_cycle'])
 							duty_cycle = min(duty_cycle, settings['pwm']['max_duty_cycle'])
+							control = read_control()
 							control['duty_cycle'] = duty_cycle
 							write_control(control)
 							break # Break out of the loop
 						if temp_profile == len(settings['pwm']['temp_range_list']) - 1:
+							control = read_control()
 							control['duty_cycle'] = settings['pwm']['max_duty_cycle']
 							write_control(control)
 
@@ -733,6 +739,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			# If PWM Fan Control is turned off check current Duty Cycle and set back to max_duty_cycle if required
 			elif (dc_fan and not control['pwm_control'] and current_output_status['pwm'] !=
 				  	settings['pwm']['max_duty_cycle']):
+				control = read_control()
 				control['duty_cycle'] = settings['pwm']['max_duty_cycle']
 				write_control(control)
 				grill_platform.set_duty_cycle(control['duty_cycle'])
@@ -806,6 +813,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		write_event(settings, '* Fan OFF, Power OFF')
 	
 	if mode in ('Startup', 'Reignite'):
+		control = read_control()
 		control['safety']['afterstarttemp'] = ptemp
 		write_control(control)
 
@@ -981,7 +989,7 @@ while True:
 		if control['units_change']:
 			write_event(settings, '* Changing Base Units.')
 			settings = read_settings()
-			# Update ADC object and set profiles
+			# Update ADC objects and set profiles
 			probe_complex.update_units(settings['globals']['units'])
 			control['mode'] = 'Stop'  # Stop any activity
 			control['units_change'] = False
