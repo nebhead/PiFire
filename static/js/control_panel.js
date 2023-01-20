@@ -1,11 +1,13 @@
+// Control Panel/Tool Bar JS
+
 // Setup Global Variables 
-var mode = "Init";
+var cpMode = "Init";
 var last_mode = "Init";
 var splus_state = true;
 var last_splus_state = false; 
 var pwm_control = false;
 var last_pwm_control = false;
-var primary_setpoint = 0;
+var cp_primary_setpoint = 0;
 var last_primary_setpoint = -1;
 
 // API Calls
@@ -38,7 +40,7 @@ function update_mode() {
     console.log('Detected MODE change.')
 
     // Hide / Unhide relevant toolbar group
-    if ((mode == 'Startup') || (mode == 'Reignite')) {
+    if ((cpMode == 'Startup') || (cpMode == 'Reignite')) {
         // Select Inactive Group w/o Prime & Monitor Buttons
         $("#active_group").hide();
         $("#prime_group").hide();
@@ -46,11 +48,11 @@ function update_mode() {
         $("#smoke_inactive_btn").show();
         $("#hold_inactive_btn").show();
         $("#inactive_group").show();
-    } else if (mode == 'Monitor') {
+    } else if (cpMode == 'Monitor') {
         $("#prime_group").hide();
         $("#active_group").hide();
         $("#inactive_group").show();
-    } else if ((mode == 'Smoke') || (mode == 'Hold') || (mode == 'Shutdown')) {
+    } else if ((cpMode == 'Smoke') || (cpMode == 'Hold') || (cpMode == 'Shutdown')) {
         // Select Active Group
         $("#inactive_group").hide(); 
         $("#active_group").show();
@@ -65,22 +67,22 @@ function update_mode() {
     };
 
     // Highlight Active Mode Button 
-    if((mode == 'Startup') || (mode == 'Reignite')) {
+    if((cpMode == 'Startup') || (cpMode == 'Reignite')) {
         document.getElementById("startup_btn").className = "btn btn-success border border-secondary";
-    } else if (mode == 'Monitor') {
+    } else if (cpMode == 'Monitor') {
         document.getElementById("monitor_btn").className = "btn btn-secondary border border-secondary";
-    } else if (mode == 'Smoke') {
+    } else if (cpMode == 'Smoke') {
         document.getElementById("smoke_active_btn").className = "btn btn-warning border border-secondary";
-    } else if (mode == 'Hold') {
+    } else if (cpMode == 'Hold') {
         document.getElementById("hold_active_btn").className = "btn btn-primary border border-secondary text-white";
-        $("#hold_active_btn").html(primary_setpoint + "°" + units);
-    } else if (mode == 'Shutdown') {
+        $("#hold_active_btn").html(cp_primary_setpoint + "°" + units);
+    } else if (cpMode == 'Shutdown') {
         document.getElementById("shutdown_active_btn").className = "btn btn-danger border border-secondary";
-    } else if (mode == 'Stop') {
+    } else if (cpMode == 'Stop') {
         document.getElementById("stop_inactive_btn").className = "btn btn-danger border border-secondary";
-    } else if (mode == 'Prime') {
+    } else if (cpMode == 'Prime') {
         document.getElementById("prime_btn").className = "btn btn-primary border border-secondary dropdown-toggle text-white";
-    } else if (mode == 'Error') {
+    } else if (cpMode == 'Error') {
         $("#error_group").show();
     };
 
@@ -105,14 +107,14 @@ function update_mode() {
     };
 
     // Reset last_mode to current_mode
-    last_mode = mode;
+    last_mode = cpMode;
 };
 
 function update_splus() {
     // Update splus buttons if splus_state changed
     console.log('Detected SPLUS change.')
 
-    if ((mode == 'Smoke') || (mode == 'Hold')) {
+    if ((cpMode == 'Smoke') || (cpMode == 'Hold')) {
         console.log('** Updating SPLUS. **')
         if (splus_state == true) {
             $("#splus_btn").show();
@@ -130,20 +132,20 @@ function update_setpoint() {
     // Update Primary Setpoint if it has changed
     console.log('Detected Primary SETPOINT change.')
 
-    if (mode == 'Hold') {
-        $("#hold_active_btn").html(primary_setpoint + "°" + units);
+    if (cpMode == 'Hold') {
+        $("#hold_active_btn").html(cp_primary_setpoint + "°" + units);
     } else {
         $("#hold_active_btn").html("<i class=\"fas fa-crosshairs\"></i>");
     };
 
-    last_primary_setpoint = primary_setpoint;
+    last_primary_setpoint = cp_primary_setpoint;
 };
 
 function update_pwm() {
     // Update PWM button if pwm_control changed
     console.log('Detected PWM change.')
 
-    if (mode == 'Hold') {
+    if (cpMode == 'Hold') {
         if (pwm_control == true) {
             $("#pwm_control_btn").show();
             document.getElementById("pwm_control_btn").className = "btn btn-success border border-secondary";
@@ -169,12 +171,12 @@ function check_state() {
             //  data.pwm_control
             //  data.primary_setpoint
             
-            mode = control.control.mode;
+            cpMode = control.control.mode;
             splus_state = control.control.s_plus;
             pwm_control = control.control.pwm_control;
-            primary_setpoint = control.control.primary_setpoint;
+            cp_primary_setpoint = control.control.primary_setpoint;
 
-            if(mode != last_mode) {
+            if(cpMode != last_mode) {
                 update_mode();
             };
             if(splus_state != last_splus_state) {
@@ -183,7 +185,7 @@ function check_state() {
             if(pwm_control != last_pwm_control) {
                 update_pwm();
             };
-            if(primary_setpoint != last_primary_setpoint) {
+            if(cp_primary_setpoint != last_primary_setpoint) {
                 update_setpoint();
             };
         }
