@@ -359,7 +359,7 @@ class Display:
 				control['primary_setpoint'] = self.menu['current']['option']
 				control['updated'] = True
 				control['mode'] = 'Hold'
-				write_control(control)
+				write_control(control, origin='display')
 				self.menu['current']['mode'] = 'none'
 				self.menu['current']['option'] = 0
 				self.menu_active = False
@@ -411,7 +411,7 @@ class Display:
 					control = read_control()
 					control['updated'] = True
 					control['mode'] = 'Startup'
-					write_control(control)
+					write_control(control, origin='display')
 				elif selected == 'Monitor':
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
@@ -420,7 +420,7 @@ class Display:
 					control = read_control()
 					control['updated'] = True
 					control['mode'] = 'Monitor'
-					write_control(control)
+					write_control(control, origin='display')
 				elif selected == 'Stop':
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
@@ -430,7 +430,7 @@ class Display:
 					control = read_control()
 					control['updated'] = True
 					control['mode'] = 'Stop'
-					write_control(control)
+					write_control(control, origin='display')
 				# Active Mode
 				elif selected == 'Shutdown':
 					self.menu['current']['mode'] = 'none'
@@ -441,7 +441,7 @@ class Display:
 					control = read_control()
 					control['updated'] = True
 					control['mode'] = 'Shutdown'
-					write_control(control)
+					write_control(control, origin='display')
 				elif selected == 'Hold':
 					self.menu['current']['mode'] = 'grill_hold_value'
 					if self.units == 'F':
@@ -457,7 +457,7 @@ class Display:
 					control = read_control()
 					control['updated'] = True
 					control['mode'] = 'Smoke'
-					write_control(control)
+					write_control(control, origin='display')
 				elif selected == 'SmokePlus':
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
@@ -469,7 +469,7 @@ class Display:
 						control['s_plus'] = False
 					else:
 						control['s_plus'] = True
-					write_control(control)
+					write_control(control, origin='display')
 				elif selected == 'Network':
 					self.display_network()
 

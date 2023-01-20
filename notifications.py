@@ -83,7 +83,7 @@ def check_notify(in_data, control, settings, pelletdb, grill_platform):
 				control['updated'] = True
 				control['notify_data'][index]['keep_warm'] = False 
 
-			write_control(control)
+			write_control(control, direct_write=True, origin='notifications')
 
 	return control
 

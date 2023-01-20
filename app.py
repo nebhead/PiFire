@@ -114,20 +114,20 @@ def timer():
 						else:
 							control['notify_data'][index]['keep_warm'] = False
 					write_log('Timer started.  Ends at: ' + _epoch_to_time(control['timer']['end']))
-					write_control(control)
+					write_control(control, origin='app')
 				else:	# If Timer was paused, restart with new end time.
 					now = time.time()
 					control['timer']['end'] = (control['timer']['end'] - control['timer']['paused']) + now
 					control['timer']['paused'] = 0
 					write_log('Timer unpaused.  Ends at: ' + _epoch_to_time(control['timer']['end']))
-					write_control(control)
+					write_control(control, origin='app')
 			elif 'timer_pause' == request.form['input']:
 				if control['timer']['start'] != 0:
 					control['notify_data'][index]['req'] = False
 					now = time.time()
 					control['timer']['paused'] = now
 					write_log('Timer paused.')
-					write_control(control)
+					write_control(control, origin='app')
 				else:
 					control['notify_data'][index]['req'] = False
 					control['timer']['start'] = 0
@@ -136,7 +136,7 @@ def timer():
 					control['notify_data'][index]['shutdown'] = False
 					control['notify_data'][index]['keep_warm'] = False
 					write_log('Timer cleared.')
-					write_control(control)
+					write_control(control, origin='app')
 			elif 'timer_stop' == request.form['input']:
 				control['notify_data'][index]['req'] = False
 				control['timer']['start'] = 0
@@ -144,7 +144,7 @@ def timer():
 				control['notify_data'][index]['shutdown'] = False
 				control['notify_data'][index]['keep_warm'] = False
 				write_log('Timer stopped.')
-				write_control(control)
+				write_control(control, origin='app')
 		return jsonify({'result':'success'})
 
 @app.route('/history/<action>', methods=['POST','GET'])
@@ -800,7 +800,7 @@ def tuning_page(action=None):
 			pagectrl['selected'] = response['probe_select']
 			pagectrl['refresh'] = 'on'
 			control['tuning_mode'] = True  # Enable tuning mode
-			write_control(control)
+			write_control(control, origin='app')
 
 			if'pause' in response:
 				if response['low_trvalue'] != '':
@@ -819,7 +819,7 @@ def tuning_page(action=None):
 
 				pagectrl['refresh'] = 'off'	
 				control['tuning_mode'] = False  # Disable tuning mode while paused
-				write_control(control)
+				write_control(control, origin='app')
 
 			elif 'save' in response:
 				if response['low_trvalue'] != '':
@@ -840,7 +840,7 @@ def tuning_page(action=None):
 						pagectrl['high_tempvalue'] != ''):
 					pagectrl['refresh'] = 'off'
 					control['tuning_mode'] = False  # Disable tuning mode when complete
-					write_control(control)
+					write_control(control, origin='app')
 					pagectrl['showcalc'] = 'true'
 					a, b, c = _calc_shh_coefficients(int(pagectrl['low_tempvalue']), int(pagectrl['med_tempvalue']),
 													int(pagectrl['high_tempvalue']), int(pagectrl['low_trvalue']),
@@ -886,7 +886,7 @@ def tuning_page(action=None):
 				else:
 					pagectrl['refresh'] = 'on'
 					control['tuning_mode'] = True  # Enable tuning mode
-					write_control(control)
+					write_control(control, origin='app')
 	
 	return render_template('tuning.html',
 						   control=control,
@@ -947,7 +947,7 @@ def pellets_page(action=None):
 				pelletdb['current']['est_usage'] = 0
 				control = read_control()
 				control['hopper_check'] = True
-				write_control(control)
+				write_control(control, origin='app')
 				now = str(datetime.datetime.now())
 				now = now[0:19] # Truncate the microseconds
 				pelletdb['current']['date_loaded'] = now 
@@ -956,9 +956,9 @@ def pellets_page(action=None):
 				event['type'] = 'updated'
 				event['text'] = 'Successfully loaded profile and logged.'
 	elif request.method == 'GET' and action == 'hopperlevel':
-		control = read_control()
+		control = {}
 		control['hopper_check'] = True
-		write_control(control)
+		write_control(control, origin='app')
 	elif request.method == 'POST' and action == 'editbrands':
 		response = request.form
 		if 'delBrand' in response:
@@ -1022,9 +1022,9 @@ def pellets_page(action=None):
 
 			if response['addprofile'] == 'add_load':
 				pelletdb['current']['pelletid'] = profile_id
-				control = read_control()
+				control = {}
 				control['hopper_check'] = True
-				write_control(control)
+				write_control(control, origin='app')
 				now = str(datetime.datetime.now())
 				now = now[0:19] # Truncate the microseconds
 				pelletdb['current']['date_loaded'] = now
@@ -1134,7 +1134,7 @@ def settings_page(action=None):
 
 		# Take all settings and write them
 		write_settings(settings)
-		write_control(control)
+		write_control(control, origin='app')
 
 	if request.method == 'POST' and action == 'notify':
 		response = request.form
@@ -1213,7 +1213,7 @@ def settings_page(action=None):
 
 		# Take all settings and write them
 		write_settings(settings)
-		write_control(control)
+		write_control(control, origin='app')
 
 	if request.method == 'POST' and action == 'editprofile':
 		response = request.form
@@ -1349,7 +1349,7 @@ def settings_page(action=None):
 		control['settings_update'] = True
 
 		write_settings(settings)
-		write_control(control)
+		write_control(control, origin='app')
 
 	if request.method == 'POST' and action == 'pwm':
 		response = request.form
@@ -1373,7 +1373,7 @@ def settings_page(action=None):
 		control['settings_update'] = True
 
 		write_settings(settings)
-		write_control(control)
+		write_control(control, origin='app')
 
 	if request.method == 'POST' and action == 'timers':
 		response = request.form
@@ -1400,7 +1400,7 @@ def settings_page(action=None):
 		control['settings_update'] = True
 
 		write_settings(settings)
-		write_control(control)
+		write_control(control, origin='app')
 
 	if request.method == 'POST' and action == 'dashboard':
 		response = request.form
@@ -1507,7 +1507,7 @@ def settings_page(action=None):
 		control['settings_update'] = True
 
 		write_settings(settings)
-		write_control(control)
+		write_control(control, origin='app')
 
 	if request.method == 'POST' and action == 'units':
 		response = request.form
@@ -1518,19 +1518,19 @@ def settings_page(action=None):
 				write_settings(settings)
 				event['type'] = 'updated'
 				event['text'] = 'Successfully updated units to Celsius.'
-				control = read_control()
+				control = {}
 				control['updated'] = True
 				control['units_change'] = True
-				write_control(control)
+				write_control(control, origin='app')
 			elif response['units'] == 'F' and settings['globals']['units'] == 'C':
 				settings = convert_settings_units('F', settings)
 				write_settings(settings)
 				event['type'] = 'updated'
 				event['text'] = 'Successfully updated units to Fahrenheit.'
-				control = read_control()
+				control = {}
 				control['updated'] = True
 				control['units_change'] = True
-				write_control(control)
+				write_control(control, origin='app')
 	'''
 	Smart Start Settings
 	'''
@@ -1618,11 +1618,11 @@ def admin_page(action=None):
 				write_log('Debug Mode Disabled.')
 				settings['globals']['debug_mode'] = False
 				write_settings(settings)
-				write_control(control)
+				write_control(control, origin='app')
 			else:
 				settings['globals']['debug_mode'] = True
 				write_settings(settings)
-				write_control(control)
+				write_control(control, origin='app')
 				write_log('Debug Mode Enabled.')
 
 		if 'clearhistory' in response:
@@ -1656,7 +1656,7 @@ def admin_page(action=None):
 				settings = default_settings()
 				control = default_control()
 				write_settings(settings)
-				write_control(control)
+				write_control(control, origin='app')
 				server_status = 'restarting'
 				restart_scripts()
 				return render_template('shutdown.html', action='restart', page_theme=settings['globals']['page_theme'],
@@ -1796,7 +1796,7 @@ def manual_page(action=None):
 			control['manual']['change'] = True
 			control['manual']['pwm'] = speed
 
-		write_control(control)
+		write_control(control, origin='app')
 
 		time.sleep(1)
 		control = read_control()
@@ -1865,14 +1865,10 @@ def api_page(action=None):
 				write_settings(settings)
 				return jsonify({'settings':'success'}), 201
 			elif(action == 'control'):
-				control = read_control()
-				for key in control.keys():
-					if key in request_json.keys():
-						if key in ['safety', 'timer', 'manual']:
-							control[key].update(request_json.get(key, {}))
-						else:
-							control[key] = request_json[key]
-				write_control(control)
+				'''
+					Updating of control input data is now done in common.py > execute_commands() 
+				'''
+				write_control(request.json, origin='app')
 				return jsonify({'control':'success'}), 201
 			else:
 				return jsonify({'Error':'Received POST request no valid action.'}), 404
@@ -3012,7 +3008,7 @@ def post_app_data(action=None, type=None, json_data=None):
 			for key in request.keys():
 				if key in control.keys():
 					control = _deep_dict_update(control, request)
-					write_control(control)
+					write_control(control, origin='app')
 					return {'response': {'result':'success'}}
 				else:
 					return {'response': {'result':'error', 'message':'Error: Key not found in control'}}
@@ -3045,7 +3041,7 @@ def post_app_data(action=None, type=None, json_data=None):
 			settings = default_settings()
 			control = default_control()
 			write_settings(settings)
-			write_control(control)
+			write_control(control, origin='app')
 			write_log('Resetting Settings, Control, History to factory defaults.')
 			return {'response': {'result':'success'}}
 		elif type == 'reboot':
@@ -3070,7 +3066,7 @@ def post_app_data(action=None, type=None, json_data=None):
 			control = read_control()
 			control['updated'] = True
 			control['units_change'] = True
-			write_control(control)
+			write_control(control, origin='app')
 			write_log("Changed units to Fahrenheit")
 			return {'response': {'result':'success'}}
 		elif type == 'c_units' and settings['globals']['units'] == 'F':
@@ -3079,7 +3075,7 @@ def post_app_data(action=None, type=None, json_data=None):
 			control = read_control()
 			control['updated'] = True
 			control['units_change'] = True
-			write_control(control)
+			write_control(control, origin='app')
 			write_log("Changed units to Celsius")
 			return {'response': {'result':'success'}}
 		else:
@@ -3110,7 +3106,7 @@ def post_app_data(action=None, type=None, json_data=None):
 				pelletdb['log'][now] = request['pellets_action']['profile']
 				control = read_control()
 				control['hopper_check'] = True
-				write_control(control)
+				write_control(control, origin='app')
 				write_pellet_db(pelletdb)
 				return {'response': {'result':'success'}}
 			else:
@@ -3118,7 +3114,7 @@ def post_app_data(action=None, type=None, json_data=None):
 		elif type == 'hopper_check':
 			control = read_control()
 			control['hopper_check'] = True
-			write_control(control)
+			write_control(control, origin='app')
 			return {'response': {'result':'success'}}
 		elif type == 'edit_brands':
 			if 'delete_brand' in request['pellets_action']:
@@ -3162,7 +3158,7 @@ def post_app_data(action=None, type=None, json_data=None):
 				pelletdb['current']['pelletid'] = profile_id
 				control = read_control()
 				control['hopper_check'] = True
-				write_control(control)
+				write_control(control, origin='app')
 				now = str(datetime.datetime.now())
 				now = now[0:19]
 				pelletdb['current']['date_loaded'] = now
@@ -3224,7 +3220,7 @@ def post_app_data(action=None, type=None, json_data=None):
 					control['notify_data']['timer_shutdown'] = request['timer_action']['timer_shutdown']
 					control['notify_data']['timer_keep_warm'] = request['timer_action']['timer_keep_warm']
 					write_log('Timer started.  Ends at: ' + _epoch_to_time(control['timer']['end']))
-					write_control(control)
+					write_control(control, origin='app')
 					return {'response': {'result':'success'}}
 				else:
 					return {'response': {'result':'error', 'message':'Error: Start time not specified'}}
@@ -3233,14 +3229,14 @@ def post_app_data(action=None, type=None, json_data=None):
 				control['timer']['end'] = (control['timer']['end'] - control['timer']['paused']) + now
 				control['timer']['paused'] = 0
 				write_log('Timer unpaused.  Ends at: ' + _epoch_to_time(control['timer']['end']))
-				write_control(control)
+				write_control(control, origin='app')
 				return {'response': {'result':'success'}}
 		elif type == 'pause_timer':
 			control['notify_req']['timer'] = False
 			now = time.time()
 			control['timer']['paused'] = now
 			write_log('Timer paused.')
-			write_control(control)
+			write_control(control, origin='app')
 			return {'response': {'result':'success'}}
 		elif type == 'stop_timer':
 			control['notify_req']['timer'] = False
@@ -3250,7 +3246,7 @@ def post_app_data(action=None, type=None, json_data=None):
 			control['notify_data']['timer_shutdown'] = False
 			control['notify_data']['timer_keep_warm'] = False
 			write_log('Timer stopped.')
-			write_control(control)
+			write_control(control, origin='app')
 			return {'response': {'result':'success'}}
 		else:
 			return {'response': {'result':'error', 'message':'Error: Received request without valid type'}}

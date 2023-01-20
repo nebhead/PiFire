@@ -686,13 +686,13 @@ def read_control(flush=False):
 		if flush:
 			# Remove all control structures in Redis DB (not history or current)
 			cmdsts.delete('control:general')
-
+			cmdsts.delete('control:command')
 			# The following set's no persistence so that we don't get writes to the disk / SDCard 
 			cmdsts.config_set('appendonly', 'no')
 			cmdsts.config_set('save', '')
 
 			control = default_control()
-			write_control(control)
+			write_control(control, direct_write=True, origin='common')
 		else: 
 			control = json.loads(cmdsts.get('control:general'))
 	except:
@@ -700,15 +700,45 @@ def read_control(flush=False):
 
 	return(control)
 
-def write_control(control):
+def write_control(control, direct_write=False, origin='unknown'):
 	"""
 	Read Control from Redis DB
 
-	:param control: Control
+	:param control: Control Dictionary
+	:param direct_write:  If set to true, write directly to the control data.  Else, write the control data to a command queue.  Defaults to false.  
 	"""
 	global cmdsts
 
-	cmdsts.set('control:general', json.dumps(control))
+	if direct_write: 
+		cmdsts.set('control:general', json.dumps(control))
+	else: 
+		control['origin'] = origin 
+		cmdsts.rpush('control:command', json.dumps(control))
+		#print(f' -> Command Pushed to Queue by {origin}')
+
+def execute_commands():
+	"""
+	Execute Control Commands in Queue from Redis DB
+
+	:param None
+
+	:return status : 'OK', 'ERROR' 
+	"""
+	global cmdsts 
+
+	status = 'OK'
+	while cmdsts.llen('control:command') > 0:
+		control = read_control()
+		command = json.loads(cmdsts.lpop('control:command'))
+		command.pop('origin')
+		for key in control.keys():
+			if key in command.keys():
+				if key in ['safety', 'recipe', 'timer', 'manual', 'smart_start']:
+					control[key].update(command.get(key, {}))
+				else:
+					control[key] = command[key]
+		write_control(control, direct_write=True, origin='executor')
+	return status
 
 def read_errors(flush=False):
 	"""

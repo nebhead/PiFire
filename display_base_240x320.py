@@ -996,7 +996,7 @@ class DisplayBase:
 				control['primary_setpoint'] = self.menu['current']['option']
 				control['updated'] = True
 				control['mode'] = 'Hold'
-				write_control(control)
+				write_control(control, origin='display')
 				self.menu['current']['mode'] = 'none'
 				self.menu['current']['option'] = 0
 				self.menu_active = False
@@ -1048,7 +1048,7 @@ class DisplayBase:
 					control = read_control()
 					control['updated'] = True
 					control['mode'] = 'Startup'
-					write_control(control)
+					write_control(control, origin='display')
 				elif selected == 'Monitor':
 					self.display_active = True
 					self.menu['current']['mode'] = 'none'
@@ -1058,7 +1058,7 @@ class DisplayBase:
 					control = read_control()
 					control['updated'] = True
 					control['mode'] = 'Monitor'
-					write_control(control)
+					write_control(control, origin='display')
 				elif selected == 'Stop':
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
@@ -1068,7 +1068,7 @@ class DisplayBase:
 					control = read_control()
 					control['updated'] = True
 					control['mode'] = 'Stop'
-					write_control(control)
+					write_control(control, origin='display')
 				# Active Mode
 				elif selected == 'Shutdown':
 					self.display_active = True
@@ -1079,7 +1079,7 @@ class DisplayBase:
 					control = read_control()
 					control['updated'] = True
 					control['mode'] = 'Shutdown'
-					write_control(control)
+					write_control(control, origin='display')
 				elif selected == 'Hold':
 					self.display_active = True
 					self.menu['current']['mode'] = 'grill_hold_value'
@@ -1099,7 +1099,7 @@ class DisplayBase:
 					control = read_control()
 					control['updated'] = True
 					control['mode'] = 'Smoke'
-					write_control(control)
+					write_control(control, origin='display')
 				elif selected == 'SmokePlus':
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
@@ -1110,7 +1110,7 @@ class DisplayBase:
 						control['s_plus'] = False
 					else:
 						control['s_plus'] = True
-					write_control(control)
+					write_control(control, origin='display')
 				elif selected == 'Network':
 					self.display_network()
 				elif selected == 'Prime':
@@ -1136,7 +1136,7 @@ class DisplayBase:
 					self.menu_time = 0
 					control['updated'] = True
 					control['mode'] = 'Prime'
-					write_control(control)
+					write_control(control, origin='display')
 				elif 'NextStep' in selected:
 					self.display_active = True
 					self.menu['current']['mode'] = 'none'
@@ -1149,15 +1149,15 @@ class DisplayBase:
 						if control['recipe']['step_data']['triggered'] and control['recipe']['step_data']['pause']:
 							# 'Unpause' Recipe 
 							control['recipe']['step_data']['pause'] = False
-							write_control(control)
+							write_control(control, origin='display')
 						else:
 							# User is forcing next step
 							control['updated'] = True
-							write_control(control)
+							write_control(control, origin='display')
 					else:
 						# User is forcing next step
 						control['updated'] = True
-						write_control(control)
+						write_control(control, origin='display')
 
 		# Create canvas
 		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
