@@ -54,6 +54,8 @@ function countdown(timerEnd, timerPaused) {
 };
 
 function timerSetup() {
+	// Turn Timer Button in Navbar Yellow 
+	document.getElementById("timerButton").className = "btn btn-outline-warning border-secondary";
 	// Setup Button Listeners
 	$("#timer_start").click(function(){
 		req = $.ajax({
@@ -88,6 +90,7 @@ function timerSetup() {
 		req.done(function(data) { 
 			clearInterval(timerInterval);
 			$("#timer_btn_grp").html("<button type=\"button\" class=\"btn btn-warning\"><i class=\"fas fa-stopwatch\"></i>&nbsp; <i>Stopped</i></button>");
+			document.getElementById("timerButton").className = "btn btn-outline-secondary border-secondary";
 		});
 	});
 
@@ -111,6 +114,7 @@ function timerSetup() {
 			if (distance < 0) {
 				clearInterval(timerInterval);
 				$("#timer_btn_grp").html("<button type=\"button\" class=\"btn btn-warning\"><i class=\"fas fa-stopwatch\"></i>&nbsp; <i>Finished</i></button>");
+				document.getElementById("timerButton").className = "btn btn-outline-secondary border-secondary";
 			}
 		}
 		// Get Current Timer Data
@@ -211,6 +215,7 @@ $("#timer_launch").click(function(){
 		$("#timer_pause").hide();
 		$("#timer_start").hide();
 		$("#timer_bar").slideDown();
+		$("#timerButton")
 		timerSetup();
 	});
 });
