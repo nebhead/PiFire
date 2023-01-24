@@ -6,8 +6,13 @@ PiFire Probes MAX31865 Module
 *****************************************
 
 Description: 
-  This module utilizes the MAX31865 hardware and returns temperature data.
-	Depends on: pip3 install adafruit-circuitpython-max31865 
+  This module utilizes the MAX31865 hardware and returns temperature data.  
+  Credit to Adafruit (https://github.com/adafruit/Adafruit_CircuitPython_MAX31865) for much of this code.
+  While the code here was contributed by another user, it does appear that much of it was borrowed originally
+  from the Adafruit module.  The only difference, it appears, is that this module uses spidev instead of 
+  the circuitpython modules. 
+
+	Depends on: spidev
 
 	Ex Device Definition: 
 	
@@ -17,8 +22,8 @@ Description:
 			'ports' : ['RTD0'],    			# This is defined in the module, so this does not need to be defined.
 			'config' : {
 				'cs' : 1, 					# SPI Chip Select (Defaults to 1)
-				'rtd_nominal' : 100, 		# RTD Nominal (Defaults to 100)
-				'ref_resistor' : 430, 		# Reference Resistor (Defaults to 430)
+				'rtd_nominal' : 1000, 		# RTD Nominal (Defaults to 1000)
+				'ref_resistor' : 4300, 		# Reference Resistor (Defaults to 4300)
 				'wires' : 2					# Number of RTD Probe Wires (Defaults to 2)
 			} 
 		}
@@ -46,21 +51,19 @@ _RTD_A = 3.9083e-3
 _RTD_B = -5.775e-7
 
 class RTDDevice():
-	''' MAX31865 Device Based on the Adafruit Module '''
-	def __init__(self, cs, rtd_nominal=100, ref_resistor=430.0, wires=2):
+	''' MAX31865 Device Init '''
+	def __init__(self, cs, rtd_nominal=1000, ref_resistor=4300, wires=2):
 		self.cs = cs
 		self.wires = wires
 
 		# RTD Constants
 		self.rtd_nominal = rtd_nominal
 		self.ref_resistor = ref_resistor
-		self.A = 3.90830e-3
-		self.B = -5.775e-7
 
 		# Setup SPI
 		self.spi = spidev.SpiDev()
-		self.spi.open(0, 1)
-		self.spi.max_speed_hz = 7629
+		self.spi.open(0, self.cs)
+		self.spi.max_speed_hz = 5000
 		self.spi.mode = 0b01
 
 		self.config()
@@ -185,10 +188,10 @@ class ReadProbes(ProbeInterface):
 	def _init_device(self):
 		self.time_delay = 0
 		self.device_info['ports'] = ['RTD0']
-		cs = self.device_info['config'].get('cs', default=1)
-		rtd_nominal = self.device_info['config'].get('rtd_nominal', default=100)
-		ref_resistor = self.device_info['config'].get('ref_resistor', default=430)
-		wires = self.device_info['config'].get('wires', default=2)
+		cs = int(self.device_info['config'].get('cs', 1))
+		rtd_nominal = int(self.device_info['config'].get('rtd_nominal', 1000))
+		ref_resistor = int(self.device_info['config'].get('ref_resistor', 4300))
+		wires = int(self.device_info['config'].get('wires', 2))
 		self.device = RTDDevice(cs, rtd_nominal, ref_resistor, wires)
 
 	def read_all_ports(self, output_data):

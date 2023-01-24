@@ -119,7 +119,7 @@
 					"units" : {
 						"friendly_name" : "Temp Units",
 						"description" : "Select the temperature units to use for PiFire globally.  (this can be modified in settings later)",
-						"options" : {"F" : "Farenheit", "C": "Celsius"},
+						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
 						"settings" : ["globals", "units"]
 					}
 				},
@@ -140,7 +140,7 @@
 					"units" : {
 						"friendly_name" : "Temp Units",
 						"description" : "Select the temperature units to use for PiFire globally.  (this can be modified in settings later)",
-						"options" : {"F" : "Farenheit", "C": "Celsius"},
+						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
 						"settings" : ["globals", "units"]
 					}
 				},
@@ -161,7 +161,7 @@
 					"units" : {
 						"friendly_name" : "Temp Units",
 						"description" : "Select the temperature units to use for PiFire globally.  (this can be modified in settings later)",
-						"options" : {"F" : "Farenheit", "C": "Celsius"},
+						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
 						"settings" : ["globals", "units"]
 					}
 				},
@@ -175,13 +175,55 @@
 						},
 						"rtd_nominal" : {
 							"friendly_name" : "RTD Nominal",
-							"description" : "RTD Nominal Resistance Value in Ohms. Default 100 Ohms.",
-							"options" : {"100" : "100 Ohms"}
+							"description" : "RTD Nominal Resistance Value in Ohms. Default 1000 Ohms.",
+							"options" : {"1000" : "1000 Ohms", "100" : "100 Ohms"}
 						},
 						"ref_resistor" : {
 							"friendly_name" : "Reference Resistor",
-							"description" : "Reference Resistor Value in Ohms. Default 430 Ohms.",
-							"options" : {"430" : "430 Ohms"}
+							"description" : "Reference Resistor Value in Ohms. Default 4300 Ohms.",
+							"options" : {"4300" : "4300 Ohms", "430" : "430 Ohms"}
+						},
+						"wires" : {
+							"friendly_name" : "RTD Wires",
+							"description" : "Number of RTD wires used for input.  Default 2",
+							"options" : {"2" : "2 Wires", "3" : "3 Wires", "4" : "4 Wires"}
+						}
+					} 
+				}
+			},
+			"max31865_adafruit" : {
+				"friendly_name" : "Adafruit MAX31865 RTD",
+				"filename" : "max31865_adafruit",
+				"description" : "This SPI device reads RTD style probes, such as the Traeger PT100(PT1000) RTD probe.  This version uses the Adafruit CircuitPython modules.  It should be noted that this module does not allow the use of CE0 or CE1, thus another GPIO should be used for the CS pin. Note that special care may need to be taken if this is used with another SPI device (i.e. SPI Display) on the system.",
+				"default" : false,
+				"image" : "max31865.png",
+				"py_dependencies" : ["adafruit-circuitpython-max31865"], 
+				"apt_dependencies" : [],
+				"settings_dependencies" : {
+					"units" : {
+						"friendly_name" : "Temp Units",
+						"description" : "Select the temperature units to use for PiFire globally.  (this can be modified in settings later)",
+						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
+						"settings" : ["globals", "units"]
+					}
+				},
+				"device_specific" : {
+					"ports" : ["RTD0"],
+					"config" : {
+						"cs" : {
+							"friendly_name" : "SPI Chip Select (CS)",
+							"description" : "SPI Chip Select (CS/CEx) pin used for this device.",
+							"options" : {"D2" : "GPIO2", "D3": "GPIO3", "D4": "GPIO4", "D5": "GPIO5", "D6": "GPIO6", "D12": "GPI12", "D13": "GPIO13", "D14": "GPIO14", "D15": "GPIO15", "D16": "GPIO16", "D17": "GPIO17", "D18": "GPIO18", "D19": "GPIO19", "D20": "GPIO20", "D21": "GPIO21", "D22": "GPIO22", "D23": "GPIO23", "D24": "GPIO24", "D25": "GPIO25", "D26": "GPIO26", "D27": "GPIO27"}
+						},
+						"rtd_nominal" : {
+							"friendly_name" : "RTD Nominal",
+							"description" : "RTD Nominal Resistance Value in Ohms. Default 1000 Ohms.",
+							"options" : {"1000" : "1000 Ohms", "100" : "100 Ohms"}
+						},
+						"ref_resistor" : {
+							"friendly_name" : "Reference Resistor",
+							"description" : "Reference Resistor Value in Ohms. Default 4300 Ohms.",
+							"options" : {"4300" : "4300 Ohms", "430" : "430 Ohms"}
 						},
 						"wires" : {
 							"friendly_name" : "RTD Wires",
