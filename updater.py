@@ -121,20 +121,23 @@ def do_update():
 	branch, error_msg1 = get_branch()
 	remote, error_msg2 = get_remote_url()
 	if error_msg1 == '' and error_msg2 == '':
-		command = ['git', 'fetch']
+		command = ['git', 'fetch', '--all']
 		fetch = subprocess.run(command, capture_output=True, text=True)
+		command = ['git', 'reset', '--hard', f'origin/{branch}']
+		reset = subprocess.run(command, capture_output=True, text=True)
+
+		'''
 		command = ['git', 'reset', '--hard', 'HEAD']
 		reset = subprocess.run(command, capture_output=True, text=True)
 		command = ['git', 'merge', f'origin/{branch}']
 		merge = subprocess.run(command, capture_output=True, text=True)
+		'''
 		error_msg = ''
 		if fetch.returncode == 0 and reset.returncode == 0 and merge.returncode == 0:
-			result = fetch.stdout.replace('\n', '<br>') + '<br>' + reset.stdout.replace('\n', '<br>') + '<br>' + \
-					 merge.stdout.replace('\n', '<br>')
+			result = fetch.stdout.replace('\n', '<br>') + '<br>' + reset.stdout.replace('\n', '<br>') # + '<br>' + merge.stdout.replace('\n', '<br>')
 		else: 
 			result = 'ERROR Performing Update.'
-			error_msg = fetch.stderr.replace('\n', '<br>') + '<br>' + reset.stderr.replace('\n', '<br>') + '<br>' + \
-						merge.stderr.replace('\n', '<br>')
+			error_msg = fetch.stderr.replace('\n', '<br>') + '<br>' + reset.stderr.replace('\n', '<br>') # + '<br>' + merge.stderr.replace('\n', '<br>')
 	else: 
 		result = 'ERROR Getting Remote URL.'
 	return(result, error_msg)
