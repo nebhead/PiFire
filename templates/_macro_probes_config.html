@@ -359,7 +359,7 @@
         <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-            <h5 class="modal-title" id="addProbeDevicePortLabel">Add Probe Device</h5>
+            <h5 class="modal-title" id="addProbeDevicePortLabel">Add Probe</h5>
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
             </button>
@@ -382,8 +382,6 @@
 {% endmacro %}
 
 {% macro render_probe_port_settings(defaultLabel, defaultConfig, configOptions) %} 
-
-{% if defaultLabel == '' %} Adding! {% else %} Editing {{ defaultLabel }} {% endif %}
 
 <table class="table">
     <thead class="thead-light">
