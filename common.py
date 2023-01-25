@@ -940,6 +940,10 @@ def upgrade_settings(prev_ver, settings, settings_default):
 		settings['probe_settings'].pop('probe_sources')
 		settings['probe_settings'].pop('probes_enabled')
 		settings['modules'].pop('adc')
+		# Add ID to probe_profiles
+		for profile in settings['probe_settings']['probe_profiles']:
+			if 'id' not in settings['probe_settings']['probe_profiles'][profile].keys():
+				settings['probe_settings']['probe_profiles'][profile]['id'] = profile
 
 	return(settings)
 
