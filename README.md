@@ -34,7 +34,7 @@ Just as with the PiSmoker project, I had a few goals in mind.  I also wanted to 
 	* Supports the ADS1115 ADC, ADS1015 ADC, and MAX31865 RTD devices for measuring probes
 	* Probe tuning tool to help develop probe profiles
 	* NEW - Any number of probe inputs, limited only by the number of devices that the Raspberry Pi can support
-	* Virtual Probes to allow you to do things like averaging probes, finding highest and lowest values of certain probes, etc.  
+	* NEW - Virtual Probes to allow you to do things like averaging probes, finding highest and lowest values of certain probes, etc.
 * Cook Timer - Moved to the Top Bar for Easy Access
 * Notifications (Grill / Food Probes / Timer)
 	* Supports Apprise, IFTTT, Pushover, and Pushbullet Notification Services
@@ -117,6 +117,8 @@ Of course, none of this project would be available without the wonderful and ama
 * **Circliful** - Beautiful Circle Gauges on the dashboard. Extra special mention for Patric for providing great support to me via GitHub.  Copyright Patric Gutersohn & other contributors. [gutersohn.com](http://gutersohn.com/) [github](https://github.com/pguso/js-plugin-circliful)
 
 * **SVG Gauge** - Credits to Aniket Naik for the excellent SVG-Gauge. Released under the MIT License Copyright (c) 2016 [(github profile)](https://github.com/naikus) [github.com](https://github.com/naikus/svg-gauge)
+
+* **Bootstrap Color Picker** - Color picker for configuring the chart line colors. Copyright (c) 2017 Javi Aguilar. Released under MIT license. [github](https://github.com/itsjavi/bootstrap-colorpicker)
 
 * **Bootstrap** - WebUI Based on Bootstrap 4.  Bootstrap is released under the MIT license and is copyright 2018 Twitter. [getbootstrap.com](http://getbootstrap.com)
 

@@ -635,6 +635,10 @@ function onAddPWM() {
 
 // On page load...
 $(document).ready(function() {
+	// Setup Color Picker for all elements whose id starts with 'clrpck_'
+	$(function () {
+		$('[id^="clrpck_"]').colorpicker();
+	});
 	// Select last nav pill
 	$('a[data-toggle="pill"]').on('show.bs.tab', function(e) {
 		sessionStorage.setItem('activeTab', $(e.target).attr('href'));

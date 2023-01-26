@@ -1439,6 +1439,27 @@ def settings_page(action=None):
 			event['type'] = 'updated'
 			event['text'] = 'Successfully updated history settings.'
 
+		# Edit Graph Color Config
+		for item in response:
+			if 'clr_temp_' in item: 
+				probe_label = item.replace('clr_temp_', '')
+				settings['history_page']['probe_config'][probe_label]['line_color'] = response[item]
+			if 'clrbg_temp_' in item: 
+				probe_label = item.replace('clrbg_temp_', '')
+				settings['history_page']['probe_config'][probe_label]['bg_color'] = response[item]
+			if 'clr_setpoint_' in item: 
+				probe_label = item.replace('clr_setpoint_', '')
+				settings['history_page']['probe_config'][probe_label]['line_color_setpoint'] = response[item]
+			if 'clrbg_setpoint_' in item: 
+				probe_label = item.replace('clrbg_setpoint_', '')
+				settings['history_page']['probe_config'][probe_label]['bg_color_setpoint'] = response[item]
+			if 'clr_target_' in item: 
+				probe_label = item.replace('clr_target_', '')
+				settings['history_page']['probe_config'][probe_label]['line_color_target'] = response[item]
+			if 'clrbg_target_' in item: 
+				probe_label = item.replace('clrbg_target_', '')
+				settings['history_page']['probe_config'][probe_label]['bg_color_target'] = response[item]
+
 		write_settings(settings)
 
 	if request.method == 'POST' and action == 'pagesettings':

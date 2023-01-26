@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 
-{% block cssextend %}{% endblock %}
+{% block cssextend %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-colorpicker.min.css') }}" type="text/css" />
+{% endblock %}
 
 {% block title %}Settings{% endblock %}
 
@@ -1066,11 +1068,7 @@
                                 </div>
                                 <input id="datapoints" type="number" min="10" class="form-control" placeholder="{{ settings['history_page']['datapoints'] }}" value="{{ settings['history_page']['datapoints'] }}" name="datapoints">
                             </div>
-                            <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="clearhistorystartup" name="clearhistorystartup" {% if settings['history_page']['clearhistoryonstart'] %}checked{% endif %}>
-                                <label class="custom-control-label" for="clearhistorystartup">Clear History on Startup</label>
-                            </div>
-                            <br>
+
                             <div class="custom-control custom-switch">
                                 <input type="checkbox" class="custom-control-input" id="historyautorefresh" name="historyautorefresh" {% if settings['history_page']['autorefresh'] == 'on' %}checked{% endif %}>
                                 <label class="custom-control-label" for="historyautorefresh">History Auto-Refresh</label>
@@ -1084,6 +1082,83 @@
                                 </label>
                             </div>
                             <br>
+
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <span class="align-middle">
+                                        <button type="button" class="btn btn-outline-primary" data-toggle="collapse" data-target="#collapseColors" aria-expanded="false" aria-controls="collapseColors">
+                                            <i class="fas fa-palette"></i>&nbsp; Expand Color Config
+                                        </button>
+                                    </span>
+                                </div>
+                                <div class="collapse" id="collapseColors">
+                                <div class="card-body">
+                                    <span class="badge badge-primary">Note</span> 
+                                    <i>Click on the color swatch on the right of each line item to use the integrated color picker.  
+                                        Configure the line color and background color for each Probe, Probe Notification Target, and for Primary Probes, the Setpoint.</i>
+                                    <br><br>
+                                    {% for probe in settings['history_page']['probe_config'] %}
+                                    <div id="clrpck_temp_{{ probe }}" class="input-group" data-color="{{ settings['history_page']['probe_config'][probe]['line_color'] }}">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">{{ settings['history_page']['probe_config'][probe]['name'] }} Temperature Color</span>
+                                        </div>
+                                        <input type="text" class="form-control input-lg" id="clr_temp_{{ probe }}" name="clr_temp_{{ probe }}"/>
+                                        <span class="input-group-append">
+                                            <span class="input-group-text colorpicker-input-addon"><i></i></span>
+                                        </span>
+                                    </div>
+                                    <div id="clrpck_bgtemp_{{ probe }}" class="input-group" data-color="{{ settings['history_page']['probe_config'][probe]['bg_color'] }}">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">{{ settings['history_page']['probe_config'][probe]['name'] }} Background Temperature Color</span>
+                                        </div>
+                                        <input type="text" class="form-control input-lg" id="clrbg_temp_{{ probe }}" name="clrbg_temp_{{ probe }}"/>
+                                        <span class="input-group-append">
+                                            <span class="input-group-text colorpicker-input-addon"><i></i></span>
+                                        </span>
+                                    </div>
+                                    {% if 'line_color_setpoint' in settings['history_page']['probe_config'][probe].keys() %} 
+                                    <div id="clrpck_setpoint_{{ probe }}" class="input-group" data-color="{{ settings['history_page']['probe_config'][probe]['line_color_setpoint'] }}">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">{{ settings['history_page']['probe_config'][probe]['name'] }} Setpoint Color</span>
+                                        </div>
+                                        <input type="text" class="form-control input-lg" id="clr_setpoint_{{ probe }}" name="clr_setpoint_{{ probe }}"/>
+                                        <span class="input-group-append">
+                                            <span class="input-group-text colorpicker-input-addon"><i></i></span>
+                                        </span>
+                                    </div>
+                                    <div id="clrpck_bgsetpoint_{{ probe }}" class="input-group" data-color="{{ settings['history_page']['probe_config'][probe]['bg_color_setpoint'] }}">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">{{ settings['history_page']['probe_config'][probe]['name'] }} Background Setpoint Color</span>
+                                        </div>
+                                        <input type="text" class="form-control input-lg" id="clrbg_setpoint_{{ probe }}" name="clrbg_setpoint_{{ probe }}"/>
+                                        <span class="input-group-append">
+                                            <span class="input-group-text colorpicker-input-addon"><i></i></span>
+                                        </span>
+                                    </div>
+                                    {% endif %}
+                                    <div id="clrpck_target_{{ probe }}" class="input-group" data-color="{{ settings['history_page']['probe_config'][probe]['line_color_target'] }}">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">{{ settings['history_page']['probe_config'][probe]['name'] }} Notify Target Color</span>
+                                        </div>
+                                        <input type="text" class="form-control input-lg" id="clr_target_{{ probe }}" name="clr_target_{{ probe }}"/>
+                                        <span class="input-group-append">
+                                            <span class="input-group-text colorpicker-input-addon"><i></i></span>
+                                        </span>
+                                    </div>
+                                    <div id="clrpck_bgtarget_{{ probe }}" class="input-group" data-color="{{ settings['history_page']['probe_config'][probe]['bg_color_target'] }}">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">{{ settings['history_page']['probe_config'][probe]['name'] }} Background Notify Target Color</span>
+                                        </div>
+                                        <input type="text" class="form-control input-lg" id="clrbg_target_{{ probe }}" name="clrbg_target_{{ probe }}"/>
+                                        <span class="input-group-append">
+                                            <span class="input-group-text colorpicker-input-addon"><i></i></span>
+                                        </span>
+                                    </div>
+                                    <br>
+                                    {% endfor %}
+                                </div> <!-- End of card body -->
+                            </div> <!-- End of collapse -->
+                        </div> <!-- End of Color Picker Card -->
                         </div><!-- End of card body -->
                         <div class="card-footer bg-light">
                             <button type="submit" class="btn btn-outline-primary">Save</button>
@@ -1573,6 +1648,7 @@
 <script>
     var dc_fan_enabled = "{{ settings['globals']['dc_fan'] }}";
 </script>
- 
+<script src="{{ url_for('static', filename='js/bootstrap-colorpicker.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/settings.js') }}"></script>
+
 {% endblock %}
