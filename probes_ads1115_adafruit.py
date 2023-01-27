@@ -62,6 +62,6 @@ class ReadProbes(ProbeInterface):
 		super().__init__(probe_info, device_info, units)
 
 	def _init_device(self):
-		self.time_delay = 0
+		self.time_delay = 0.008
 		self.device_info['ports'] = ['ADC0', 'ADC1', 'ADC2', 'ADC3']
 		self.device = ADSDevice()

@@ -176,7 +176,7 @@ class ProbeInterface:
 
 		for port in self.port_map:
 			''' Read Ports from Device '''
-			port_values[port] = self.device.read_voltage(port)  # Simulated read from a device
+			port_values[port] = self.device.read_voltage(port)
 
 			''' Convert Voltage to Temperature and Tr '''
 			port_values[port], self.output_data['tr'][self.port_map[port]] = self._voltage_to_temp(port_values[port], self.probe_profiles[port])
