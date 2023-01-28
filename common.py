@@ -271,7 +271,7 @@ def default_probe_config(settings):
 			}
 			if probe['type'] == 'Primary':
 				probe_config[label]['bg_color_setpoint'] = COLOR_LIST[color_index][0]
-				probe_config[label]['line_color_setpoint'] = COLOR_LIST[color_index][1]
+				probe_config[label]['line_color_setpoint'] = COLOR_LIST[color_index][0]
 			color_index += 1		
 	return probe_config
 
