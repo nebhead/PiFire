@@ -104,7 +104,13 @@
 				},
 				"device_specific" : {
 					"ports" : ["ADC0", "ADC1", "ADC2", "ADC3"],
-					"config" : {}
+					"config" : {
+						"i2c_bus_addr" : {
+							"friendly_name" : "I2C Bus Address",
+							"description" : "Select the I2C bus address to use for this device.  Default is 0x48.  If you have more than one ADS1115, you can assign unique device bus address for up to four devices.",
+							"options" : {"0x48" : "0x48", "0x49": "0x49", "0x4A": "0x4A", "0x4B": "0x4B"}
+						}
+					}
 				}
 			},
 			"ads1015_adafruit" : {
@@ -125,7 +131,13 @@
 				},
 				"device_specific" : {
 					"ports" : ["ADC0", "ADC1", "ADC2", "ADC3"],
-					"config" : {}
+					"config" : {
+						"i2c_bus_addr" : {
+							"friendly_name" : "I2C Bus Address",
+							"description" : "Select the I2C bus address to use for this device.  Default is 0x48.  If you have more than one ADS1115, you can assign unique device bus address for up to four devices.",
+							"options" : {"0x48" : "0x48", "0x49": "0x49", "0x4A": "0x4A", "0x4B": "0x4B"}
+						}
+					}
 				}
 			},
 			"ads1115_adafruit" : {
@@ -146,7 +158,13 @@
 				},
 				"device_specific" : {
 					"ports" : ["ADC0", "ADC1", "ADC2", "ADC3"],
-					"config" : {}
+					"config" : {
+						"i2c_bus_addr" : {
+							"friendly_name" : "I2C Bus Address",
+							"description" : "Select the I2C bus address to use for this device.  Default is 0x48.  If you have more than one ADS1115, you can assign unique device bus address for up to four devices.",
+							"options" : {"0x48" : "0x48", "0x49": "0x49", "0x4A": "0x4A", "0x4B": "0x4B"}
+						}
+					}
 				}
 			},
 			"max31865" : {
@@ -691,7 +709,7 @@
 				"probe_devices": [
 				  {
 					"config": {
-			
+						"i2c_bus_addr" : "0x48"
 					},
 					"device": "ADS1115",
 					"module": "ads1115_adafruit",

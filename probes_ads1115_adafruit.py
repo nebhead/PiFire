@@ -14,7 +14,9 @@ Description:
 			'device' : 'your_device_name',	# Unique name for the device
 			'module' : 'ads1115_adafruit',	# Must be populated for this module to load properly
 			'ports' : ['ADC0', 'ADC1', 'ADC2', 'ADC3'], # This is defined in the module, so this does not need to be defined.
-			'config' : {} 
+			'config' : {
+				'i2c_bus_addr' : '0x48'
+			} 
 		}
 
 '''
@@ -37,13 +39,20 @@ from probes_base import ProbeInterface
 *****************************************
 '''
 
+BUSMAP = {
+	'0x48' : 0x48,  # Address Pin GND
+	'0x49' : 0x49,  # Address Pin VIN 
+	'0x4A' : 0x4A,	# Address Pin SDA
+	'0x4B' : 0x4B	# Address Pin SCL
+}
+
 class ADSDevice():
 	''' ADS1115 Device Based on the Adafruit Module '''
-	def __init__(self):
+	def __init__(self, i2c_bus_addr=0x48):
 		# Create the I2C bus
 		self.i2c = busio.I2C(board.SCL, board.SDA)
 		# Create the ADC object using the I2C bus
-		self.ads = ADS.ADS1115(self.i2c)
+		self.ads = ADS.ADS1115(self.i2c, address=i2c_bus_addr)
 
 	def read_voltage(self, port):
 		adc_ports = {
@@ -64,4 +73,5 @@ class ReadProbes(ProbeInterface):
 	def _init_device(self):
 		self.time_delay = 0.008
 		self.device_info['ports'] = ['ADC0', 'ADC1', 'ADC2', 'ADC3']
-		self.device = ADSDevice()
+		i2c_bus_addr = BUSMAP[self.device_info['config'].get('i2c_bus_addr', '0x48')]
+		self.device = ADSDevice(i2c_bus_addr=i2c_bus_addr)
