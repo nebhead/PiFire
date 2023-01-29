@@ -101,7 +101,16 @@
 		</div>
 		{% block postcontainer %}{% endblock %}
 
-        <!-- JavaScript -->
+		{% block controlpanel %}
+			{% if settings['globals']['global_control_panel'] %}
+				<!-- Control Panel -->
+				{% from "_macro_control_panel.html" import render_container %}
+				{{ render_container(settings, control) }}
+				<!-- End Control Panel -->
+			{% endif %}
+		{% endblock %}
+
+        <!-- Standard JavaScript -->
         <!-- jQuery --> 
         <script src="{{ url_for('static', filename='js/jquery-3.4.1.js') }}"></script>
         <!-- Bootstrap -->
@@ -112,6 +121,13 @@
 		{% block timer_scripts %}
 		<!-- Timer JS -->
 		<script src="{{ url_for('static', filename='js/timer.js') }}"></script>
+		{% endblock %}
+
+		{% block controlpanel_scripts %}
+			{% if settings['globals']['global_control_panel'] %}
+				<!-- Control Panel JS -->
+				<script src="{{ url_for('static', filename='js/control_panel.js') }}"></script>
+			{% endif %}
 		{% endblock %}
 
 		{% block scripts %} {% endblock %}

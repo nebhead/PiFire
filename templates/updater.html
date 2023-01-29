@@ -186,6 +186,9 @@
 </div> <!-- End of Container -->
 {% endblock %}
 
+{% block controlpanel %}{% endblock %}
+{% block controlpanel_scripts %}{% endblock %}
+
 {% block scripts %}
 	<!-- Updater Script -->
 	<script src="{{ url_for('static', filename='js/updater.js') }}"></script>

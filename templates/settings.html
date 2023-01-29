@@ -128,6 +128,7 @@
                         </div> <!-- End of card for Probe Display Names -->
                     </div><!-- End of Probe Settings Card body -->
                 </div><!-- End of Probe Settings Card -->
+                {% if not request.MOBILE %}<br><br><br>{% endif %}
             </div><!-- End of Tab -->
             <!-- ============================ Edit / Add / Delete Probe Profiles ========================== -->
             {% if request.MOBILE %}<br>{% endif %}
@@ -297,6 +298,7 @@
                         </div>
                     </div><!-- End of card body -->
                 </div><!-- End of Card -->
+                {% if not request.MOBILE %}<br><br><br>{% endif %}
             </div><!-- End of Tab -->
             <!-- ============================ Select Temp Units ========================== -->
             {% if request.MOBILE %}<br>{% endif %}
@@ -325,6 +327,7 @@
                         </div>
                     </form>
                 </div><!-- End of Card -->
+                {% if not request.MOBILE %}<br><br><br>{% endif %}
             </div><!-- End of Tab -->
             <!-- ============================ Grill Name ========================== -->
             {% if request.MOBILE %}<br>{% endif %}
@@ -350,6 +353,7 @@
                         </div>
                     </form>
                 </div><!-- End of Card -->
+                {% if not request.MOBILE %}<br><br><br>{% endif %}
             </div><!-- End of Tab -->
             <!-- ============================ Work Mode Settings ========================== -->
             {% if request.MOBILE %}<br>{% endif %}
@@ -612,6 +616,7 @@
                         </div>
                     </form>
                 </div><!-- End of Card -->
+                {% if not request.MOBILE %}<br><br><br>{% endif %}
             </div><!-- End of Tab -->
             <!-- ============================ PWM Settings ========================== -->
             {% if settings['globals']['dc_fan'] %}
@@ -787,6 +792,7 @@
                         </div>
                     </form>
                 </div><!-- End of Card -->
+                {% if not request.MOBILE %}<br><br><br>{% endif %}
             </div>
             {% endif %}
             <!-- End of Tab -->
@@ -1013,6 +1019,7 @@
                         </div>
                     </form>
                 </div><!-- End of Card -->
+                {% if not request.MOBILE %}<br><br><br>{% endif %}
             </div><!-- End of Tab -->
             
             <!-- ============================ Dashboard Settings ========================== -->
@@ -1040,6 +1047,7 @@
                         </div>
                     </form>
                 </div><!-- End of Card -->
+                {% if not request.MOBILE %}<br><br><br>{% endif %}
             </div><!-- End of Tab -->
 
 
@@ -1165,6 +1173,7 @@
                         </div>
                     </form>
                 </div><!-- End of Card -->
+                {% if not request.MOBILE %}<br><br><br>{% endif %}
             </div><!-- End of Tab -->
             <!-- ============================ Safety Settings ========================== -->
             {% if request.MOBILE %}<br>{% endif %}
@@ -1218,6 +1227,7 @@
                         </div>
                     </form>
                 </div><!-- End of Card -->
+                {% if not request.MOBILE %}<br><br><br>{% endif %}
             </div><!-- End of Tab -->
             <!-- ============================ Pellet Settings ========================== -->
             {% if request.MOBILE %}<br>{% endif %}
@@ -1323,6 +1333,7 @@
                         </div>
                     </form>
                 </div><!-- End of Card -->
+                {% if not request.MOBILE %}<br><br><br>{% endif %}
             </div><!-- End of Tab -->
             <!-- ============================ Page Settings ========================== -->
             {% if request.MOBILE %}<br>{% endif %}
@@ -1340,12 +1351,18 @@
                                 <label class="custom-control-label" for="darkmode">Enable Dark Mode</label>
                             </div>
                             <br>
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="global_control_panel" name="global_control_panel" {% if settings['globals']['global_control_panel'] %}checked{% endif %}>
+                                <label class="custom-control-label" for="global_control_panel">Show Control Panel on Most Pages</label>
+                            </div>
+                            <br>
                         </div><!-- End of card body -->
                         <div class="card-footer bg-light">
                             <button type="submit" class="btn btn-outline-primary">Save</button>
                         </div>
                     </form>
                 </div><!-- End of Card -->
+                {% if not request.MOBILE %}<br><br><br>{% endif %}
             </div><!-- End of Tab -->
             <!-- ========================== Notification Settings ========================== -->
             {% if request.MOBILE %}<br>{% endif %}
@@ -1637,6 +1654,7 @@
                         </div>
                     </form>
                 </div><!-- End of Card -->
+                {% if not request.MOBILE %}<br><br><br>{% endif %}
             </div><!-- End of Tab -->
         </div>
     </div>

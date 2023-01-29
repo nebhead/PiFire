@@ -910,6 +910,7 @@ def get_tr():
 @app.route('/events', methods=['POST','GET'])
 def events_page(action=None):
 	global settings
+	control = read_control()
 
 	if(request.method == 'POST') and ('form' in request.content_type):
 		requestform = request.form 
@@ -924,8 +925,10 @@ def events_page(action=None):
 			return ('Error')
 
 	return render_template('events.html',
-						   page_theme=settings['globals']['page_theme'],
-						   grill_name=settings['globals']['grill_name'])
+							settings=settings,
+						   	control=control,
+						   	page_theme=settings['globals']['page_theme'],
+						   	grill_name=settings['globals']['grill_name'])
 
 @app.route('/pellets/<action>', methods=['POST','GET'])
 @app.route('/pellets', methods=['POST','GET'])
@@ -933,6 +936,7 @@ def pellets_page(action=None):
 	# Pellet Management page
 	global settings
 	pelletdb = read_pellet_db()
+	control = read_control()
 
 	event = {
 		'type' : 'none',
@@ -1086,6 +1090,8 @@ def pellets_page(action=None):
 						   pelletdb=pelletdb,
 						   est_usage_imperial=est_usage_imperial,
 						   est_usage_metric=est_usage_metric,
+						   settings=settings,
+						   control=control,
 						   units=settings['globals']['units'],
 						   page_theme=settings['globals']['page_theme'],
 						   grill_name=settings['globals']['grill_name'])
@@ -1094,10 +1100,13 @@ def pellets_page(action=None):
 @app.route('/recipes', methods=['POST','GET'])
 def recipes_page(action=None):
 	global settings
+	control = read_control()
 	# Placholder for Recipe UI
 	return render_template('recipes.html',
-						   page_theme=settings['globals']['page_theme'],
-						   grill_name=settings['globals']['grill_name'])
+							settings=settings,
+						   	control=control,
+						   	page_theme=settings['globals']['page_theme'],
+						   	grill_name=settings['globals']['grill_name'])
 
 @app.route('/settings/<action>', methods=['POST','GET'])
 @app.route('/settings', methods=['POST','GET'])
@@ -1470,6 +1479,11 @@ def settings_page(action=None):
 		else:
 			settings['globals']['page_theme'] = 'light'
 
+		if _is_checked(response, 'global_control_panel'):
+			settings['globals']['global_control_panel'] = True
+		else:
+			settings['globals']['global_control_panel'] = False
+
 		event['type'] = 'updated'
 		event['text'] = 'Successfully updated page settings.'
 
@@ -1585,6 +1599,7 @@ def settings_page(action=None):
 	return render_template('settings.html',
 						   settings=settings,
 						   alert=event,
+						   control=control,
 						   page_theme=settings['globals']['page_theme'],
 						   grill_name=settings['globals']['grill_name'])
 
@@ -1762,6 +1777,7 @@ def admin_page(action=None):
 
 	return render_template('admin.html', settings=settings, notify=notify, uptime=uptime, cpuinfo=cpu_info, temp=temp,
 						   ifconfig=ifconfig, debug_mode=debug_mode, qr_content=url,
+						   control=control,
 						   page_theme=settings['globals']['page_theme'],
 						   grill_name=settings['globals']['grill_name'], files=files)
 
@@ -1823,8 +1839,8 @@ def manual_page(action=None):
 		control = read_control()
 
 	return render_template('manual.html', settings=settings, control=control,
-						   page_theme=settings['globals']['page_theme'],
-						   grill_name=settings['globals']['grill_name'])
+						   	page_theme=settings['globals']['page_theme'],
+						   	grill_name=settings['globals']['grill_name'])
 
 @app.route('/api/<action>', methods=['POST','GET'])
 @app.route('/api', methods=['POST','GET'])
@@ -2418,6 +2434,7 @@ Metrics Routes
 @app.route('/metrics', methods=['POST','GET'])
 def metrics_page(action=None):
 	global settings
+	control = read_control()
 
 	metrics_data = process_metrics(read_metrics(all=True))
 
@@ -2426,7 +2443,7 @@ def metrics_page(action=None):
 		csvfilename = _prepare_metrics_csv(metrics_data, filename)
 		return send_file(csvfilename, as_attachment=True, max_age=0)
 
-	return render_template('metrics.html', settings=settings, page_theme=settings['globals']['page_theme'], 
+	return render_template('metrics.html', settings=settings, control=control, page_theme=settings['globals']['page_theme'], 
 							grill_name=settings['globals']['grill_name'], metrics_data=metrics_data)
 
 '''

@@ -1,7 +1,7 @@
 {% macro render_container(settings, control) %} 
 <!-- Control Panel -->
 <div class="container" id="cp_container">
-	{% if settings['globals']['page_theme'] == 'dark' %}
+	{% if page_theme == 'dark' %}
 	<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #aaaaaa;">
 	{% else %}
 	<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #dddddd;">

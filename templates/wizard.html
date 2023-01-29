@@ -302,6 +302,9 @@
 
 {% endblock %}
 
+{% block controlpanel %}{% endblock %}
+{% block controlpanel_scripts %}{% endblock %}
+
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/wizard.js') }}"></script>
 <script src="{{ url_for('static', filename='js/probes_config.js') }}"></script>

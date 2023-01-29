@@ -82,7 +82,9 @@
 						</div>
 					</div>
 				</div>
+				{% if not request.MOBILE %}<br><br><br>{% endif %}
 			</div><!-- End of Tab -->
+			
 			<!-- ============================ Debug and Manual Options ========================== -->
 			{% if request.MOBILE %}<br>{% endif %}
 			<div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-debug" role="tabpanel" aria-labelledby="v-pills-debug-tab">
@@ -110,6 +112,7 @@
 						<br>
 					</div>
 				</div>
+				{% if not request.MOBILE %}<br><br><br>{% endif %}
 			</div><!-- End of Tab -->
 			<!-- ============================ Data Management ========================== -->
 			{% if request.MOBILE %}<br>{% endif %}
@@ -285,6 +288,7 @@
 						</form>
 					</div>
 				</div>
+				{% if not request.MOBILE %}<br><br><br>{% endif %}
 			</div><!-- End of Tab -->
 			<!-- Restore Settings Modal -->
 			<form method="POST" action="/admin/setting" enctype="multipart/form-data">
@@ -437,6 +441,7 @@
 						<a href="/wizard" class="btn btn-outline-primary btn-block shadow">Launch PiFire Configuration Wizard</a>
 					</div>
 				</div>
+				{% if not request.MOBILE %}<br><br><br>{% endif %}
 			</div><!-- End of Tab -->
 			<!-- ============================ System Power ========================== -->
 			{% if request.MOBILE %}<br>{% endif %}
@@ -536,6 +541,7 @@
 						</form>
 					</div>
 				</div>
+				{% if not request.MOBILE %}<br><br><br>{% endif %}
 			</div><!-- End of Tab -->
 			<!-- ============================ System Info ========================== -->
 			{% if request.MOBILE %}<br>{% endif %}
@@ -573,6 +579,7 @@
 						{% endfor %}
 					</div>
 				</div>
+				{% if not request.MOBILE %}<br><br><br>{% endif %}
 			</div><!-- End of Tab -->
 			<!-- ============================ GPIO Info ========================== -->
 			{% if request.MOBILE %}<br>{% endif %}
@@ -654,6 +661,7 @@
 						</table>
 					</div>
 				</div>
+				{% if not request.MOBILE %}<br><br><br>{% endif %}
 			</div><!-- End of Tab -->
 			<!-- ============================ Modules Info ========================== -->
 			{% if request.MOBILE %}<br>{% endif %}
@@ -678,10 +686,6 @@
 								<td>{{ settings['modules']['grillplat'] }}</td>
 							</tr>
 							<tr>
-								<td>ADC</td>
-								<td>{{ settings['modules']['adc'] }}</td>
-							</tr>
-							<tr>
 								<td>Display</td>
 								<td>{{ settings['modules']['display'] }}</td>
 							</tr>
@@ -693,6 +697,7 @@
 						</table>
 					</div>
 				</div>
+				{% if not request.MOBILE %}<br><br><br>{% endif %}
 			</div><!-- End of Tab -->
 			<!-- ============================ PiFire Info ========================== -->
 			{% if request.MOBILE %}<br>{% endif %}
@@ -705,13 +710,13 @@
 					</div>
 					<div class="card-body">
 						<b>PiFire Version:</b> {{ settings['versions']['server'] }}<br>
-						<br><a href="https://nebhead.github.io/PiFire" target="_blank" class="btn btn-outline-secondary btn-block shadow" role="button">Read the Latest Documentation &nbsp;<i class="fas fa-external-link-alt"></i></a>
-						<br><a href="https://github.com/nebhead/PiFire" target="_blank" class="btn btn-outline-secondary btn-block shadow" role="button">Goto the GitHub Repo &nbsp;<i class="fas fa-external-link-alt"></i></i></a>
-						<br><a href="https://github.com/nebhead/PiFire/issues" target="_blank" class="btn btn-outline-secondary btn-block shadow" role="button">Submit an Issue &nbsp;<i class="fas fa-external-link-alt"></i></i></a>
-						<br><a href="https://github.com/weberbox/PiFire-Android" target="_blank" class="btn btn-outline-secondary btn-block shadow" role="button">Get the Native Android App &nbsp;<i class="fas fa-external-link-alt"></i></i></a>
+						<br><a href="https://nebhead.github.io/PiFire" target="_blank" class="btn btn-outline-primary btn-block shadow" role="button">Read the Latest Documentation &nbsp;<i class="fas fa-external-link-alt"></i></a>
+						<br><a href="https://github.com/nebhead/PiFire" target="_blank" class="btn btn-outline-primary btn-block shadow" role="button">Goto the GitHub Repo &nbsp;<i class="fas fa-external-link-alt"></i></i></a>
+						<br><a href="https://github.com/nebhead/PiFire/issues" target="_blank" class="btn btn-outline-primary btn-block shadow" role="button">Submit an Issue &nbsp;<i class="fas fa-external-link-alt"></i></i></a>
+						<br><a href="https://github.com/weberbox/PiFire-Android" target="_blank" class="btn btn-outline-primary btn-block shadow" role="button">Get the Native Android App &nbsp;<i class="fas fa-external-link-alt"></i></i></a>
 						<br>
 						<!-- QR Code -->
-						<button type="button" class="btn btn-outline-secondary btn-block shadow" data-toggle="modal" data-target="#qrModal">
+						<button type="button" class="btn btn-outline-primary btn-block shadow" data-toggle="modal" data-target="#qrModal">
 							PiFire Address QR Code
 						</button>
 						<!-- QR Modal -->
@@ -742,6 +747,7 @@
 						</div>
 					</div>
 				</div>
+				{% if not request.MOBILE %}<br><br><br>{% endif %}
 			</div><!-- End of Tab -->
 			<!-- ============================ Credits and Licenses ========================== -->
 			{% if request.MOBILE %}<br>{% endif %}
@@ -768,6 +774,7 @@
             			</ul>
         			</div>
 				</div>
+				{% if not request.MOBILE %}<br><br><br>{% endif %}
 			</div><!-- End of Tab -->
 		</div><!-- End of Tab Content -->
 	</div><!-- End of Col -->

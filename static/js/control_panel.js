@@ -9,6 +9,7 @@ var pwm_control = false;
 var last_pwm_control = false;
 var cp_primary_setpoint = 0;
 var last_primary_setpoint = -1;
+var cp_units = 'F';
 
 // API Calls
 function api_post(postdata) {
@@ -75,7 +76,7 @@ function update_mode() {
         document.getElementById("smoke_active_btn").className = "btn btn-warning border border-secondary";
     } else if (cpMode == 'Hold') {
         document.getElementById("hold_active_btn").className = "btn btn-primary border border-secondary text-white";
-        $("#hold_active_btn").html(cp_primary_setpoint + "°" + units);
+        $("#hold_active_btn").html(cp_primary_setpoint + "°" + cp_units);
     } else if (cpMode == 'Shutdown') {
         document.getElementById("shutdown_active_btn").className = "btn btn-danger border border-secondary";
     } else if (cpMode == 'Stop') {
@@ -133,7 +134,7 @@ function update_setpoint() {
     console.log('Detected Primary SETPOINT change.')
 
     if (cpMode == 'Hold') {
-        $("#hold_active_btn").html(cp_primary_setpoint + "°" + units);
+        $("#hold_active_btn").html(cp_primary_setpoint + "°" + cp_units);
     } else {
         $("#hold_active_btn").html("<i class=\"fas fa-crosshairs\"></i>");
     };
@@ -192,9 +193,24 @@ function check_state() {
     });
 };
 
+function check_current() {
+    // Get control data and update control panel if needed
+    $.ajax({
+        url : '/api/current',
+        type : 'GET',
+        success : function (current) {
+            // Relevant data returned from call:
+            //  data.status.units
+            cp_units = current.status.units;
+        }
+    });
+};
+
 // Main Loop
 
 $(document).ready(function(){
+    check_current();
+    
     // Setup Button Listeners
     $("#startup_btn").click(function(){
         var postdata = { 
