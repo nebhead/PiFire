@@ -1,0 +1,57 @@
+{% from '_macro_recipes.html' import render_recipe_step_startup, render_recipe_step_active, render_recipe_step_generic %}
+
+<!-- Show Recipe Card -->
+<div class="col-md-12">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h3><strong><i class="fas fa-file-alt"></i>&nbsp; {{ recipe_data['metadata']['title'] }}</strong></h3>
+        </div> <!-- End of card header -->
+        <div class="card-body">
+            <div class="row"> <!-- Start of Steps -->
+                <div class="col-md-12">
+                    {% if control['mode'] != 'Recipe' %}
+                        {% set active_step = -1 %}
+                    {% else %}  
+                        {% set active_step = control['recipe']['step'] %}
+                    {% endif %} 
+                    <div class="card shadow">
+                        <div class="card-header">
+                            <i class="fas fa-list-ol"></i>&nbsp; Program Steps
+                        </div>
+                        <div class="card-body">
+                            {% for step in recipe_data['recipe']['steps'] %}
+                                {% if loop.index0 == active_step %}
+                                    {% set active = True %}
+                                {% else %} 
+                                    {% set active = False %}
+                                {% endif %}
+
+                                {% if step['mode'] == 'Startup' %}
+                                    {{ render_recipe_step_startup(step, loop.index0, active) }}
+                                {% elif step['mode'] in ['Hold', 'Smoke']%}
+                                    {{ render_recipe_step_active(step, loop.index0, recipe_data, active) }}
+                                {% else %}
+                                    {{ render_recipe_step_generic(step, loop.index0, active) }}
+                                {% endif %}
+
+                                {% if active %}
+                                <!-- move page focus to current step -->
+                                <script>
+                                    recipeScrollToStep('{{ loop.index0 }}');
+                                </script>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                </div>
+            </div> <!-- End of Steps Row -->
+        </div> <!-- End of Card Body-->
+    </div> <!-- End of Recipe Card -->
+</div> <!-- End of MAIN Column-->
+
+{% if control['mode'] != 'Recipe' %}
+<script>
+    recipeCheckStateStop();
+</script>
+{% endif %}

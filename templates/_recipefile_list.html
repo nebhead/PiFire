@@ -1,0 +1,132 @@
+<table class="table table-hover">
+    <thead class="thead-light">
+        <tr>
+        <th scope="col">Actions</th>
+        <th scope="col"></th>
+        <th scope="col">Recipe Name</th>
+        <th scope="col">Filename</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in pgntdrf['displaydata'] %}
+        <tr>
+            <td style="width: 30%" class="align-middle">
+              <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+                <div class="btn-group mr-2" role="group" aria-label="View/Edit Group">
+                  <button class="btn btn-outline-success btn-sm" type="button" onclick="recipeRunFile('{{ item['filename'] }}')" data-toggle="tooltip" title="Run Recipe Program"><i class="fas fa-play"></i></button>
+                  <button class="btn btn-outline-success btn-sm" type="button" onclick="recipeOpenFile('{{ item['filename'] }}')" data-toggle="tooltip" title="View Recipe"><i class="fas fa-eye"></i></button>
+                  <button class="btn btn-outline-success btn-sm" type="button" onclick="recipeEditFile('{{ item['filename'] }}')" data-toggle="tooltip" title="Edit Recipe"><i class="fas fa-edit"></i></button>
+                </div>
+                <div class="btn-group mr-2" role="group" aria-label="Upload/Download Group">
+                  <button class="btn btn-outline-primary btn-sm" type="button" onclick="recipeDownloadFile('{{ item['filename'] }}')" data-toggle="tooltip" title="Download File"><i class="fas fa-file-download"></i></button>
+                  <button class="btn btn-outline-secondary btn-sm" type="button" id="ulrecipefile" name="ulrecipefile" value="{{ item['filename'] }}" data-toggle="tooltip" title="Send to Cloud" disabled><i class="fas fa-cloud-upload-alt"></i></button>
+                </div>
+                <div class="btn-group mr-2" role="group" aria-label="Delete Group">
+                  <button class="btn btn-danger btn-sm text-white" type="button" data-val="{{ item['filename'] }}" data-toggle="modal" data-target="#delrecipefilemodal"><i class="far fa-trash-alt"></i></button>
+                </div>
+              </div>
+            </td>
+            <td class="align-middle" onclick="recipeOpenFile('{{ item['filename'] }}')">
+                {% if item['thumbnail'] == '' %}
+                <img src="{{ url_for('static', filename='img/pifire-cf-thumb.png') }}" class="rounded" alt="thumbnail" width="48" height="48"> 
+                {% else %}
+                <img src="{{ url_for('static', filename='img/tmp/' + item['thumbnail']) }}" class="rounded" alt="thumbnail" width="48" height="48"> 
+                {% endif %}
+            </td>
+            <td class="align-middle" onclick="recipeOpenFile('{{ item['filename'] }}')">{{ item['title'] }}</td>
+            <td class="align-middle" onclick="recipeOpenFile('{{ item['filename'] }}')">{{ item['filename'] }}</td>
+          </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<!-- Pagination -->
+<div class="btn-toolbar" role="toolbar" aria-label="Pagination">
+    <div class="btn-group mr-2" role="group" aria-label="Previous Group">
+      <button type="button" class="btn btn-outline-primary" onclick="gotoRFPage(1, {{ pgntdrf['reverse'] }}, {{ pgntdrf['itemspage'] }})">First</button>
+      <button type="button" class="btn btn-outline-primary" onclick="gotoRFPage({{ pgntdrf['prevpage'] }}, {{ pgntdrf['reverse'] }}, {{ pgntdrf['itemspage'] }})"><i class="fas fa-angle-left"></i></button>
+    </div>
+    <div class="btn-group mr-2" role="group" aria-label="Page Group">
+      {% if pgntdrf['curpage'] == 2 %}
+        <button type="button" class="btn btn-outline-primary" onclick="gotoRFPage({{ pgntdrf['curpage'] - 1 }}, {{ pgntdrf['reverse'] }}, {{ pgntdrf['itemspage'] }})">
+            {{ pgntdrf['curpage'] - 1}}
+        </button>
+      {% elif pgntdrf['curpage'] > 2 %}
+        <button type="button" class="btn btn-outline-primary" onclick="gotoRFPage({{ pgntdrf['curpage'] - 2 }}, {{ pgntdrf['reverse'] }}, {{ pgntdrf['itemspage'] }})">
+            {{ pgntdrf['curpage'] - 2}}
+        </button>
+        <button type="button" class="btn btn-outline-primary" onclick="gotoRFPage({{ pgntdrf['curpage'] - 1 }}, {{ pgntdrf['reverse'] }}, {{ pgntdrf['itemspage'] }})">
+            {{ pgntdrf['curpage'] - 1}}
+        </button>
+      {% endif %}
+        <button type="button" class="btn btn-primary"><strong>{{ pgntdrf['curpage'] }}</strong></button>
+      {% if pgntdrf['curpage'] <= pgntdrf['lastpage'] - 2 %}
+        <button type="button" class="btn btn-outline-primary" onclick="gotoRFPage({{ pgntdrf['curpage'] + 1 }}, {{ pgntdrf['reverse'] }}, {{ pgntdrf['itemspage'] }})">
+            {{ pgntdrf['curpage'] + 1}}
+        </button>
+        <button type="button" class="btn btn-outline-primary" onclick="gotoRFPage({{ pgntdrf['curpage'] +2 }}, {{ pgntdrf['reverse'] }}, {{ pgntdrf['itemspage'] }})">
+            {{ pgntdrf['curpage'] + 2}}
+        </button>
+      {% elif pgntdrf['curpage'] == pgntdrf['lastpage'] - 1 %}
+        <button type="button" class="btn btn-outline-primary" onclick="gotoRFPage({{ pgntdrf['curpage'] + 1 }}, {{ pgntdrf['reverse'] }}, {{ pgntdrf['itemspage'] }})">
+            {{ pgntdrf['curpage'] + 1}}
+        </button>
+      {% endif %}
+    </div>
+    <div class="btn-group" role="group" aria-label="Next Group">
+      <button type="button" class="btn btn-outline-primary" onclick="gotoRFPage({{ pgntdrf['nextpage'] }}, {{ pgntdrf['reverse'] }}, {{ pgntdrf['itemspage'] }})"><i class="fas fa-angle-right"></i></button>
+      <button type="button" class="btn btn-outline-primary" onclick="gotoRFPage({{ pgntdrf['lastpage'] }}, {{ pgntdrf['reverse'] }}, {{ pgntdrf['itemspage'] }})">Last</button>
+    </div>
+    &nbsp;
+    <div class="btn-group" role="group" aria-label="Sort Group">
+        {% if pgntdrf['reverse'] == 'true' %}
+        <button type="button" class="btn btn-outline-primary" onclick="gotoRFPage({{ pgntdrf['curpage'] }}, false, {{ pgntdrf['itemspage'] }})"><i class="fas fa-sort-numeric-up-alt"></i>&nbsp; Sort</button>
+        {% else %} 
+        <button type="button" class="btn btn-outline-primary" onclick="gotoRFPage({{ pgntdrf['curpage'] }}, true, {{ pgntdrf['itemspage'] }})"><i class="fas fa-sort-numeric-down"></i>&nbsp; Sort</button>
+        {% endif %}
+    </div>
+    &nbsp;
+    <div class="dropdown">
+        <button class="btn btn-outline-primary dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">
+          {{ pgntdrf['itemspage'] }}
+        </button>
+        <div class="dropdown-menu">
+          <button class="dropdown-item{% if pgntdrf['itemspage'] == 5 %} active{% endif %}" type="button" onclick="gotoRFPage({{ pgntdrf['curpage'] }}, {{ pgntdrf['reverse'] }}, 5)">5</button>
+          <button class="dropdown-item{% if pgntdrf['itemspage'] == 10 %} active{% endif %}" type="button" onclick="gotoRFPage({{ pgntdrf['curpage'] }}, {{ pgntdrf['reverse'] }}, 10)">10</button>
+          <button class="dropdown-item{% if pgntdrf['itemspage'] == 25 %} active{% endif %}" type="button" onclick="gotoRFPage({{ pgntdrf['curpage'] }}, {{ pgntdrf['reverse'] }}, 25)">25</button>
+          <button class="dropdown-item{% if pgntdrf['itemspage'] == 50 %} active{% endif %}" type="button" onclick="gotoRFPage({{ pgntdrf['curpage'] }}, {{ pgntdrf['reverse'] }}, 50)">50</button>
+          <button class="dropdown-item{% if pgntdrf['itemspage'] == 100 %} active{% endif %}" type="button" onclick="gotoRFPage({{ pgntdrf['curpage'] }}, {{ pgntdrf['reverse'] }}, 100)">100</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Recipe File Modal -->
+<div class="modal" id="delrecipefilemodal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h4 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Delete Recipe?</h4>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <!-- Modal body -->
+      <div class="modal-body text-center">
+        Are you sure that you want to permanently delete <i id="recipefileselected"></i> file?  This operation cannot be undone.
+      </div>
+      <!-- Modal footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" data-dismiss="modal" id="delrecipefilename" value="" onclick="recipeDeleteFile(this.value)">I'm Sure.</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Delete Cook File Modal Data Transfer
+$('#delrecipefilemodal').on('show.bs.modal', function (event) {
+	var recipefileselected = $(event.relatedTarget).data('val');
+	console.log('File Selected: ' + recipefileselected);
+	$('#recipefileselected').html(recipefileselected);
+  $('#delrecipefilename').val(recipefileselected);
+});
+</script>

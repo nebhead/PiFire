@@ -41,15 +41,33 @@ def _default_recipe_metadata():
     metadata['cook_time'] = 0
     metadata['rating'] = 5 
     metadata['difficulty'] = 'Easy'
-    metadata['version'] = '1.0.0'
+    metadata['version'] = '1.1.0'
+    metadata['food_probes'] = 2
     return(metadata)
 
 def _default_recipe_ingredients():
     ingredients = []
+    '''
+    ingredient = {
+        "name" : "",
+        "quantity" : "",
+        "assets" : []
+    }
+    ingredients.append(ingredient)
+    '''
     return(ingredients)
 
 def _default_recipe_instructions():
     instructions = []
+    '''
+    instruction = {
+      "text" : "",
+      "ingredients" : [],
+      "assets" : [],
+      "step" : 0
+    }
+    instructions.append(instruction)
+    '''
     return(instructions)
 
 def _default_recipe_comments():
@@ -67,9 +85,8 @@ def _default_recipe_steps():
     step = {
         'mode' : 'Startup', 
         'trigger_temps' : {
-            'grill' : 0, 
-            'probe1' : 0, 
-            'probe2' : 0, 
+            'primary' : 0, 
+            'food' : [0, 0] 
         }, 
         'hold_temp' : 0, 
         'timer' : 0, 
@@ -83,9 +100,8 @@ def _default_recipe_steps():
     step = {
         'mode' : 'Hold', 
         'trigger_temps' : {
-            'grill' : 0, 
-            'probe1' : 160, 
-            'probe2' : 0, 
+            'primary' : 0, 
+            'food' : [420, 0] 
         }, 
         'hold_temp' : 420, 
         'timer' : 0, 
@@ -99,9 +115,8 @@ def _default_recipe_steps():
     step = {
         'mode' : 'Shutdown', 
         'trigger_temps' : {
-            'grill' : 0, 
-            'probe1' : 0, 
-            'probe2' : 0, 
+            'primary' : 0, 
+            'food' : [0, 0] 
         }, 
         'hold_temp' : 0, 
         'timer' : 0, 
@@ -165,7 +180,7 @@ def create_recipefile():
     # 4. Cleanup temporary files
     command = f'rm -rf {RECIPE_FOLDER}{title}'
     os.system(command)
-
+    return filename 
 
 def read_recipefile(filename):
 	'''
@@ -187,4 +202,3 @@ def convert_recipe_units(recipe, units):
             recipe['steps'][index]['settemps'][probe] = 0 if settemp == 0 else convert_temp(units, settemp)
         recipe['steps'][index]['hold_temp'] = 0 if step['hold_temp'] == 0 else convert_temp(units, step['hold_temp'])
     return(recipe)
-

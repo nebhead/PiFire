@@ -1,0 +1,699 @@
+{% macro render_recipe_step_startup(step_data, step_number, active) %}
+
+<div class="card shadow" id="recipe_steps_step_card_{{ step_number }}">
+    <div class="row no-gutters">
+        <div class="col-md-3 {% if active %}bg-primary{% else %}bg-secondary{% endif %} text-white text-center">
+            <div class="card-body align-middle">
+                <H3><strong>Step {{ step_number }}</strong></H3>
+            </div>
+        </div>
+        <div class="col-md-9">
+          <div class="card-body align-middle">
+            <strong>Mode: </strong><span class="text-success">{{ step_data['mode'] }}</span><br><br>
+            <strong>Transition to the next step after: </strong><br>
+            <ul>
+                <li>
+                    Startup completes successfully. 
+                </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+</div>
+
+{% endmacro %}
+
+{% macro render_recipe_step_active(step_data, step_number, recipe_data, active) %}
+
+<div class="card shadow" id="recipe_steps_step_card_{{ step_number }}">
+    <div class="row no-gutters">
+        <div class="col-md-3 {% if active %}bg-primary{% else %}bg-secondary{% endif %} text-white text-center">
+            <div class="card-body align-middle">
+                <H3><strong>Step {{ step_number }}</strong></H3>
+            </div>
+        </div>
+        <div class="col-md-9">
+          <div class="card-body align-middle">
+            <strong>Mode: </strong>{{ step_data['mode'] }}
+            {% if step_data['mode'] == 'Hold' %} @{{ step_data['hold_temp'] }}&deg;{{ recipe_data['metadata']['units'] }}{% endif %}<br><br>
+            <strong>Transition to the next step after one of the following trigger(s):</strong><br>
+            <ul>
+                {% if step_data['trigger_temps']['primary'] > 0 %}
+                <li>Primary reaches {{ step_data['trigger_temps']['primary'] }}&deg;{{ recipe_data['metadata']['units'] }}</li>
+                {% endif %}
+
+                {% for trigger in step_data['trigger_temps']['food'] %} 
+                    {% if trigger > 0 %}
+                    <li>Food Probe {{ loop.index }} reaches {{ trigger }}&deg;{{ recipe_data['metadata']['units'] }}</li>
+                    {% endif %}
+                {% endfor %}
+                {% if step_data['timer'] > 0 %} 
+                <li>{{ step_data['timer'] }} minutes elapses</li>
+                {% endif %}
+                {% if step_data['pause'] %} 
+                <li>The user presses continue on the display or in the WebUI</li>
+                {% endif %}
+            </ul>
+            {% if step_data['notify'] %}
+            <div class="card">
+                <div class="card-body">
+                    <i class="fas fa-bell text-warning"></i>&nbsp; A notification will be sent when the first trigger is tripped with the message: <br>
+                    <br>
+                    <center><i>"{{ step_data['message'] }}"</i></center><br>
+                </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+</div>
+
+{% endmacro %}
+
+{% macro render_recipe_step_generic(step_data, step_number, active) %}
+
+<div class="card shadow" id="recipe_steps_step_card_{{ step_number }}">
+    <div class="row no-gutters">
+        <div class="col-md-3 {% if active %}bg-primary{% else %}bg-secondary{% endif %} text-white text-center">
+            <div class="card-body align-middle">
+                <H3><strong>Step {{ step_number }}</strong></H3>
+            </div>
+        </div>
+        <div class="col-md-9">
+          <div class="card-body align-middle">
+            <strong>Mode: </strong>{{ step_data['mode'] }}<br><br>
+          </div>
+        </div>
+      </div>
+</div>
+
+{% endmacro %}
+
+{% macro render_recipe_edit_title(recipe_data, recipe_filename) %} 
+<div class="col-md-12">
+  <div class="input-group mb-3">
+      <div class="input-group-prepend">
+          <button class="btn btn-primary" type="button"><i class="fas fa-file-alt"></i>&nbsp; Filename</button>
+      </div>
+      <input type="text" class="form-control" value="{{ recipe_filename }}" id="recipe_filename" readonly>
+      <div class="input-group-append">
+        <button class="btn btn-success" type="button" id="recipe_title_btn" data-toggle="tooltip" data-placement="top" title="Save" disabled>
+          <i class="fas fa-save"></i>
+      </button>
+      </div>
+  </div>
+  <div class="input-group mb-3" id="recipe_metadata_title_card">
+      <div class="input-group-prepend">
+          <button class="btn btn-primary" type="button"><i class="fas fa-file-alt"></i>&nbsp; Recipe Title</button>
+      </div>
+      <input type="text" class="form-control" value="{{ recipe_data['metadata']['title'] }}" id="recipe_metadata_title">
+      <div class="input-group-append">
+        <button class="btn btn-success" type="button" id="recipe_title_btn" data-toggle="tooltip" data-placement="top" title="Save"  onclick="metadataUpdate('title', $('#recipe_metadata_title').val());">
+          <i class="fas fa-save"></i>
+      </button>
+      </div>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro render_recipe_edit_metadata(recipe_data) %}
+
+<div class="col-md-4">
+  <div class="card shadow text-center">
+      <div class="card-body"> 
+          <br>
+          <div>
+          {% if recipe_data['metadata']['image'] != '' %}
+          <img src="{{ url_for('static', filename='img/tmp/'+recipe_data['metadata']['id']+'/'+recipe_data['metadata']['image']) }}" alt="Recipe Image" width="200"> 
+          {% else %}
+          <img src="{{ url_for('static', filename='img/pifire-cf-thumb.png') }}" alt="Recipe Image" width="200"> 
+          {% endif %}
+          </div>
+          <br>
+      </div>
+      <div class="card-footer">
+          <button class="btn btn-outline-primary" type="button" id="recipe_metadata_image_assets_btn" onclick="recipeManageAssets('', 'splash', 0)">
+            <i class="far fa-images"></i>
+          </button>
+      </div>
+  </div>
+</div>
+
+<div class="col-md-8">
+  <div class="card shadow" id="recipe_metadata_card">
+      <div class="card-header">
+          <i class="fas fa-info-circle"></i>&nbsp; About This Recipe
+      </div>
+      <table class="table">
+          <tbody>
+              <tr>
+                  <th scope="row">Author</th>
+                  <td>
+                      <div class="input-group mb-3">
+                          <input type="text" class="form-control" value="{{ recipe_data['metadata']['author'] }}" id="recipe_metadata_author">
+                          <div class="input-group-append">
+                            <button class="btn btn-success" type="button" id="recipe_metadata_author_btn" data-toggle="tooltip" data-placement="top" title="Save" onclick="metadataUpdate('author', $('#recipe_metadata_author').val());">
+                              <i class="fas fa-save"></i>
+                          </button>
+                          </div>
+                      </div>
+                  </td>
+              </tr>
+              <tr>
+                  <th scope="row">Rating</th>
+                  <td>
+                      <select class="custom-select" id="recipe_metadata_rating_select" onchange="metadataUpdate('rating', this.value);">
+                          <option value="5"{% if recipe_data['metadata']['rating'] == 5 %} selected{% endif %}>
+                              &starf;&starf;&starf;&starf;&starf; (5)
+                          </option>
+                          <option value="4"{% if recipe_data['metadata']['rating'] == 4 %} selected{% endif %}>
+                              &starf;&starf;&starf;&starf; (4)
+                          </option>
+                          <option value="3"{% if recipe_data['metadata']['rating'] == 3 %} selected{% endif %}>
+                              &starf;&starf;&starf; (3)
+                          </option>
+                          <option value="2"{% if recipe_data['metadata']['rating'] == 2 %} selected{% endif %}>
+                              &starf;&starf; (2)
+                          </option>
+                          <option value="1"{% if recipe_data['metadata']['rating'] == 1 %} selected{% endif %}>
+                              &starf; (1)
+                          </option>
+                      </select>
+                  </td>
+              </tr>
+              <tr>
+                  <th scope="row">Prep Time (mins)</th>
+                  <td>
+                      <div class="input-group mb-3">
+                          <input type="text" class="form-control" value="{{ recipe_data['metadata']['prep_time'] }}" id="recipe_metadata_preptime">
+                          <div class="input-group-append">
+                            <button class="btn btn-success" type="button" id="recipe_metadata_preptime_btn" data-toggle="tooltip" data-placement="top" title="Save" onclick="metadataUpdate('prep_time', $('#recipe_metadata_preptime').val());">
+                              <i class="fas fa-save"></i>
+                          </button>
+                          </div>
+                      </div>
+                  </td>
+              </tr>
+              <tr>
+                  <th scope="row">Cook Time (mins)</th>
+                  <td>
+                      <div class="input-group mb-3">
+                          <input type="text" class="form-control" value="{{ recipe_data['metadata']['cook_time'] }}" id="recipe_metadata_cooktime">
+                          <div class="input-group-append">
+                            <button class="btn btn-success" type="button" id="recipe_metadata_cooktime_btn" data-toggle="tooltip" data-placement="top" title="Save" onclick="metadataUpdate('cook_time', $('#recipe_metadata_cooktime').val());">
+                              <i class="fas fa-save"></i>
+                          </button>
+                          </div>
+                      </div>
+                  </td>
+              </tr>
+              <tr>
+                  <th scope="row">Difficulty</th>
+                  <td>
+                      <select class="custom-select" id="recipe_metadata_difficulty_select" onchange="metadataUpdate('difficulty', this.value);">
+                          <option value="Easy"{% if recipe_data['metadata']['difficulty'] == 'Easy' %} selected{% endif %}>
+                              Easy
+                          </option>
+                          <option value="Intermediate"{% if recipe_data['metadata']['difficulty'] == 'Intermediate' %} selected{% endif %}>
+                              Intermediate
+                          </option>
+                          <option value="Hard"{% if recipe_data['metadata']['difficulty'] == 'Hard' %} selected{% endif %}>
+                              Hard
+                          </option>
+                          <option value="Advanced"{% if recipe_data['metadata']['difficulty'] == 'Advanced' %} selected{% endif %}>
+                              Advanced
+                          </option>
+                      </select>
+                  </td>
+              </tr>
+              <tr>
+                <th scope="row">Food Probes</th>
+                <td>
+                  <div class="input-group mb-3">
+                    <input type="number" class="form-control" value="{{ recipe_data['metadata']['food_probes'] }}" id="recipe_metadata_foodprobes" min="0">
+                    <div class="input-group-append">
+                      <button class="btn btn-success" type="button" id="recipe_metadata_foodprobes_btn" data-toggle="tooltip" data-placement="top" title="Save" onclick="metadataUpdate('food_probes', $('#recipe_metadata_foodprobes').val());">
+                        <i class="fas fa-save"></i>
+                    </button>
+                    </div>
+                  </div>
+                  
+                </td>
+              </tr>
+          </tbody>
+      </table>
+  </div> <!-- End of Meta Items Card -->
+</div> <!-- End of Col -->
+
+{% endmacro %}
+
+
+{% macro render_recipe_edit_description(recipe_data) %}
+<div class="col-md-12">
+  <div class="card shadow" id="recipe_metadata_description_card">
+      <div class="card-header">
+          <i class="fas fa-info-circle"></i>&nbsp; Description
+      </div>
+      <div class="card-body">
+          <textarea class="form-control" id="recipe_metadata_description_textarea" rows="5">{{ recipe_data['metadata']['description'] }}</textarea>
+      </div>
+      <div class="card-footer">
+          <button class="btn btn-success" type="button" id="recipe_metadata_description_btn" onclick="metadataUpdate('description', $('#recipe_metadata_description_textarea').val());">
+              <i class="fas fa-save"></i>
+              &nbsp; Save
+          </button>
+      </div>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro render_recipe_edit_ingredients(recipe_data) %} 
+<div class="col-md-12">
+  <div class="card shadow">
+      <div class="card-header">
+          <i class="fas fa-shopping-cart"></i>&nbsp; Ingredients
+      </div>
+      <div class="card-body">
+          <table class="table table-hover">
+              <thead>
+              <tr>
+                  <th scope="col"></th>
+                  <th scope="col">Quantity</th>
+                  <th scope="col">Ingredient</th>
+                  <th scope="col">Action</th>
+              </tr>
+              </thead>
+              <tbody>
+              {% for ingredient in recipe_data['recipe']['ingredients'] %}
+              <tr>
+                  <th scope="row" class="align-middle">
+                      <i class="far fa-circle"></i>
+                  </th>
+                  <td>
+                      <input type="text" class="form-control" value="{{ ingredient['quantity'] }}" id="recipe_ingredient_quantity_{{ loop.index0 }}">
+                  </td>
+                  <td>
+                      <input type="text" class="form-control" value="{{ ingredient['name'] }}" id="recipe_ingredient_name_{{ loop.index0 }}">
+                  </td>
+                  <td>
+                      <button class="btn btn-primary" type="button" 
+                        id="recipe_ingredient_assets_btn_{{ loop.index0 }}" 
+                        data-toggle="tooltip" data-placement="top" title="Manage Images"
+                        onclick="recipeManageAssets('', 'ingredients', {{ loop.index0 }})">
+                          <i class="far fa-images"></i>
+                      </button>
+                      <button class="btn btn-success" type="button" 
+                        id="recipe_ingredient_save_btn_{{ loop.index0 }}" 
+                        data-toggle="tooltip" data-placement="top" title="Save Item"
+                        onclick="ingredientSave({{ loop.index0 }}, $('#recipe_ingredient_name_{{ loop.index0 }}').val(), $('#recipe_ingredient_quantity_{{ loop.index0 }}').val())">
+                          <i class="fas fa-save"></i>
+                      </button>
+                      <button class="btn btn-danger" type="button" 
+                        id="recipe_ingredient_del_btn_{{ loop.index0 }}" 
+                        data-toggle="tooltip" data-placement="top" title="Delete Item"
+                        onclick="ingredientDelete({{ loop.index0 }})">
+                          <i class="far fa-trash-alt"></i>
+                      </button>
+                  </td>
+              </tr>
+              {% endfor %}
+              <tr>
+                  <th class="align-middle"></th>
+                  <td></td>
+                  <td></td>
+                  <td>
+                      <button class="btn btn-success" type="button" 
+                        id="recipe_ingredient_add_btn" 
+                        data-toggle="tooltip" data-placement="top" title="Add Item"
+                        onclick="ingredientAdd()">
+                          <i class="fas fa-plus"></i>
+                      </button>
+                  </td>
+              </tr>
+
+              </tbody>
+          </table>
+      </div>
+  </div>
+</div>
+{% endmacro %} 
+
+{% macro render_recipe_edit_instructions(recipe_data) %} 
+<div class="col-md-12">
+  <div class="card shadow">
+      <div class="card-header">
+          <i class="fas fa-list-ul"></i>&nbsp; Instructions
+      </div>
+      <div class="card-body">
+          <table class="table table-hover">
+              <thead>
+              <tr>
+                  <th scope="col"></th>
+                  <th scope="col">Direction</th>
+                  <th scope="col">Ingredients Used</th>
+                  <th scope="col">Program Step</th>
+                  <th scope="col">Actions</th>
+              </tr>
+              </thead>
+              <tbody>
+                  {% for item in recipe_data['recipe']['instructions'] %}
+                  <tr>
+                      <th scope="row" class="align-middle"><i class="far fa-circle"></i></th>
+                      <td class="align-middle">
+                          <textarea class="form-control" id="recipe_instructions_text_{{ loop.index0 }}" rows="3">{{ item['text'] }}</textarea>
+                      </td>
+                      <td class="align-middle">
+                          <select multiple class="form-control" id="recipe_instructions_ingredients_{{ loop.index0 }}">
+                              {% for ingredient in recipe_data['recipe']['ingredients'] %}
+                              <option value="{{ ingredient['name'] }}"{% if ingredient['name'] in item['ingredients'] %} selected{% endif %}>
+                                  {{ ingredient['name'] }}
+                              </option>
+                              {% endfor %}
+                          </select>
+                      </td>
+                      <td class="align-middle">
+                          <select class="custom-select" id="recipe_instructions_step_select_{{ loop.index0 }}">
+                              {% for step in recipe_data['recipe']['steps'] %}
+                              <option value="{{ loop.index0 }}"{% if item['step'] == loop.index0 %} selected{% endif %}>
+                                  {% if loop.index0 == 0 %}
+                                  Prep
+                                  {% else %}
+                                  Step {{ loop.index0 }}
+                                  {% endif %}
+                              </option>
+                              {% endfor %}
+                          </select>
+                      </td>
+                      <td class="align-middle">
+                          <button class="btn btn-primary" type="button" id="recipe_instructions_assets_btn_{{ loop.index0 }}" 
+                            data-toggle="tooltip" data-placement="top" title="Manage Images"
+                            onclick="recipeManageAssets('', 'instructions', {{ loop.index0 }})">
+                              <i class="far fa-images"></i>
+                          </button>
+                          <button class="btn btn-success" type="button" id="recipe_instructions_save_btn_{{ loop.index0 }}" 
+                            data-toggle="tooltip" data-placement="top" title="Save Item"
+                            onclick="instructionSave({{ loop.index0 }})">
+                              <i class="fas fa-save"></i>
+                          </button>
+                          <button class="btn btn-danger" type="button" id="recipe_instructions_del_btn_{{ loop.index0 }}" 
+                            data-toggle="tooltip" data-placement="top" title="Delete Item"
+                            onclick="instructionDelete({{ loop.index0 }});">
+                              <i class="far fa-trash-alt"></i>
+                          </button>
+                      </td>
+                  </tr>
+                  {% endfor %}
+                  <tr>
+                      <th class="align-middle"></th>
+                      <td></td>
+                      <td></td>
+                      <td></td>
+                      <td>
+                          <button class="btn btn-success" type="button" id="recipe_instructions_add_btn" 
+                            data-toggle="tooltip" data-placement="top" title="Add Item"
+                            onclick="instructionAdd();">
+                              <i class="fas fa-plus"></i>
+                          </button>
+                      </td>
+                  </tr>
+              </tbody>
+          </table>
+      </div>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro render_recipe_edit_steps(recipe_data) %} 
+<div class="col-md-12">
+  <div class="card shadow">
+      <div class="card-header">
+        <i class="fas fa-list-ol"></i>&nbsp; Program Steps
+      </div>
+      <div class="card-body">
+          {% for step in recipe_data['recipe']['steps'] %}
+            {% if step['mode'] == 'Startup' %}
+                {{ render_recipe_step_startup(step, loop.index0) }}
+            {% elif step['mode'] in ['Hold', 'Smoke']%}
+                {{ render_recipe_edit_step_active(step, loop.index0, recipe_data) }}
+            {% elif step['mode'] in ['Shutdown'] %}
+                <br>
+                <center>
+                    <button type="button" class="btn btn-outline-primary btn-lg" id="recipe_step_add_btn_{{ loop.index0 }}" 
+                      data-toggle="tooltip" data-placement="top" title="Insert New Step"
+                      onclick="stepAdd({{ loop.index0 }})">
+                      <i class="fas fa-plus-circle"></i>
+                    </button>
+                </center>
+                <br>
+                {{ render_recipe_step_generic(step, loop.index0) }}
+            {% endif %}
+          {% endfor %}
+      </div>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro render_recipe_edit_step_active(step_data, step_number, recipe_data) %}
+<br>
+<center>
+    <button type="button" class="btn btn-outline-primary btn-lg" id="recipe_step_add_btn_{{ step_number }}" 
+      data-toggle="tooltip" data-placement="top" title="Insert New Step"
+      onclick="stepAdd({{ step_number }})">
+      <i class="fas fa-plus-circle"></i>
+    </button>
+</center>
+<br>
+<div class="card shadow" id="recipe_edit_step_card_{{ step_number }}">
+  <div class="row no-gutters">
+      <div class="col-md-3 bg-primary text-white text-center align-middle">
+          <div class="card-body align-middle">
+              <H3><strong>Step {{ step_number }}</strong></H3>
+          </div>
+      </div>
+      <div class="col-md-9">
+        <div class="card-body align-middle">
+
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <label class="input-group-text" for="recipe_step_mode_select_{{ step_number }}">Mode</label>
+            </div>
+            <select class="custom-select" id="recipe_step_mode_select_{{ step_number }}">
+              <option value="Smoke"{% if step_data['mode'] == 'Smoke' %} selected{% endif %}>
+                Smoke
+              </option>
+              <option value="Hold"{% if step_data['mode'] == 'Hold' %} selected{% endif %}>
+                Hold
+              </option>
+            </select>
+          </div>
+
+          {% if recipe_data['metadata']['units'] == 'F' %} 
+            {% set max_temp = 600 %}
+          {% else %} 
+            {% set max_temp = 300 %}
+          {% endif %} 
+
+          <div class="input-group mb-3" id="recipe_step_hold_group_{{ step_number }}"{% if step_data['mode'] != 'Hold' %} style="display:none" {% endif %}>
+            <div class="input-group-prepend">
+              <span class="input-group-text">Hold Temp (&deg;{{ recipe_data['metadata']['units'] }})</span>
+            </div>
+            <input type="number" id="recipe_step_hold_{{ step_number }}" class="form-control" value="{{ step_data['hold_temp'] }}" min="0" max="{{ max_temp }}">
+          </div>
+
+          <script>
+            $("#recipe_step_mode_select_{{ step_number }}").change(function(){
+              var recipe_step_mode = $("#recipe_step_mode_select_{{ step_number }}").find(":selected").val();
+              if( recipe_step_mode == 'Hold') {
+                $("#recipe_step_hold_group_{{ step_number }}").slideDown();
+              } else {
+                $("#recipe_step_hold_group_{{ step_number }}").slideUp();
+              };
+            });
+          </script>
+
+          <strong>Transition to the next step after Trigger (select at least one):</strong><br>
+          <table class="table table-hover">
+            <thead>
+            <tr>
+                <th scope="col" class="text-center">Enable</th>
+                <th scope="col">Trigger</th>
+                <th scope="col">Value</th>
+            </tr>
+            </thead>
+            <tbody>
+              <!-- Temperature Triggers -->
+              <!-- Primary -->
+              <tr>
+                <td class="align-middle text-center">
+                  <!-- Enable Switch -->
+                  <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="recipe_step_trigger_switch_primary_{{ step_number }}"{% if step_data['trigger_temps']['primary'] > 0 %} checked{% endif %}>
+                    <label class="custom-control-label" for="recipe_step_trigger_switch_primary_{{ step_number }}"></label>
+                  </div>
+                </td>
+                <td class="align-middle">
+                  Primary Temp(&deg;{{ recipe_data['metadata']['units'] }})
+                </td>
+                <td class="align-middle">
+                  <input type="number" id="recipe_step_trigger_temp_primary_{{ step_number }}" class="form-control" value="{{ step_data['trigger_temps']['primary'] }}" min="0" max="{{ max_temp }}">
+                </td>
+                <script>
+                  $('#recipe_step_trigger_switch_primary_{{ step_number }}').change(function(){
+                      if($('#recipe_step_trigger_switch_primary_{{ step_number }}:checked').length){
+                        $('#recipe_step_trigger_temp_primary_{{ step_number }}').val(100); //Set value to 100  
+                        $('#recipe_step_trigger_temp_primary_{{ step_number }}').attr('readonly',false); //If checked - Normal
+                      }else{
+                        $('#recipe_step_trigger_temp_primary_{{ step_number }}').val(0); //Set value to 0
+                        $('#recipe_step_trigger_temp_primary_{{ step_number }}').attr('readonly',true);//Not Checked - Ready Only
+                      }
+                  });
+                </script>
+              </tr>
+              {% for trigger in step_data['trigger_temps']['food'] %}
+              <tr>
+                <td class="align-middle text-center">
+                  <!-- Enable Switch -->
+                  <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="recipe_step_trigger_switch_food_{{ loop.index0 }}_{{ step_number }}"{% if trigger > 0 %} checked{% endif %}>
+                    <label class="custom-control-label" for="recipe_step_trigger_switch_food_{{ loop.index0 }}_{{ step_number }}"></label>
+                  </div>
+                </td>
+                <td class="align-middle">
+                  Food Probe {{ loop.index }} Temp(&deg;{{ recipe_data['metadata']['units'] }})
+                </td>
+                <td class="align-middle">
+                  <input type="number" id="recipe_step_trigger_temp_food_{{ loop.index0 }}_{{ step_number }}" class="form-control recipeEditFoodTrigger_{{ step_number }}" value="{{ trigger }}" min="0" max="{{ max_temp }}">
+                </td>
+              </tr>
+              <script>
+                $('#recipe_step_trigger_switch_food_{{ loop.index0 }}_{{ step_number }}').change(function(){
+                    if($('#recipe_step_trigger_switch_food_{{ loop.index0 }}_{{ step_number }}:checked').length){
+                      $('#recipe_step_trigger_temp_food_{{ loop.index0 }}_{{ step_number }}').val(100); //Set value to 100  
+                      $('#recipe_step_trigger_temp_food_{{ loop.index0 }}_{{ step_number }}').attr('readonly',false); //If checked - Normal
+                    }else{
+                      $('#recipe_step_trigger_temp_food_{{ loop.index0 }}_{{ step_number }}').val(0); //Set value to 0
+                      $('#recipe_step_trigger_temp_food_{{ loop.index0 }}_{{ step_number }}').attr('readonly',true);//Not Checked - Ready Only
+                    }
+                });
+              </script>
+              {% endfor %}
+
+              <!-- Timer Trigger step_data['timer'] -->
+              <tr>
+                <td class="align-middle text-center">
+                  <!-- Enable Switch -->
+                  <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="recipe_step_trigger_switch_timer_{{ step_number }}"{% if step_data['timer'] > 0 %} checked{% endif %}>
+                    <label class="custom-control-label" for="recipe_step_trigger_switch_timer_{{ step_number }}"></label>
+                  </div>
+                </td>
+                <td class="align-middle">
+                  Timer(mins)
+                </td>
+                <td class="align-middle">
+                  <input type="number" id="recipe_step_trigger_timer_{{ step_number }}" class="form-control" value="{{ step_data['timer'] }}" min="0">
+                </td>
+              </tr>
+              <script>
+                $('#recipe_step_trigger_switch_timer_{{ step_number }}').change(function(){
+                    if($('#recipe_step_trigger_switch_timer_{{ step_number }}:checked').length){
+                      $('#recipe_step_trigger_timer_{{ step_number }}').val(1); //Set value to 100  
+                      $('#recipe_step_trigger_timer_{{ step_number }}').attr('readonly',false); //If checked - Normal
+                    }else{
+                      $('#recipe_step_trigger_timer_{{ step_number }}').val(0); //Set value to 0
+                      $('#recipe_step_trigger_timer_{{ step_number }}').attr('readonly',true);//Not Checked - Ready Only
+                    }
+                });
+              </script>
+            </tbody>
+          </table>
+
+          <!-- Pause and wait for input step_data['pause'] -->
+          <table class="table table-bordered">
+            <tbody>
+              <tr class="align-middle">
+                <td class="align-middle text-center table-secondary text-secondary">
+                  <H3><i class="fas fa-pause"></i></H3>
+                </td>
+                <td class="align-middle">
+                  <!-- Pause Enable Switch -->
+                  <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="recipe_step_switch_pause_{{ step_number }}"{% if step_data['pause'] %} checked{% endif %}>
+                    <label class="custom-control-label" for="recipe_step_switch_pause_{{ step_number }}"> Pause here and wait for user input to continue to next step.</label>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <br>
+    
+          <!-- Notification -->
+          <table class="table table-bordered">
+            <tbody>
+              <tr class="align-middle">
+                <td class="align-middle text-center table-secondary text-secondary">
+                  <H3><i class="fas fa-bell"></i></H3>
+                </td>
+                <td class="align-middle">
+                  <!-- Notification Enable Switch -->
+                  <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="recipe_step_switch_notify_{{ step_number }}"{% if step_data['notify'] %} checked{% endif %}>
+                    <label class="custom-control-label" for="recipe_step_switch_notify_{{ step_number }}"> Send a notification message when first trigger has fired.</label>
+                  </div>
+                  <br>
+                  <strong>Message:</strong>
+                  <textarea class="form-control" id="recipe_step_notify_textarea_{{ step_number }}" rows="2">{{ step_data['message'] }}</textarea>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <br>
+        </div>
+
+        <div class="card-footer text-right">
+          <button class="btn btn-danger" type="button" id="recipe_step_del_btn_{{ step_number }}" 
+            data-toggle="tooltip" data-placement="top" title="Delete Step"
+            onclick="stepDelete({{ step_number }})">
+            <i class="far fa-trash-alt"></i>
+          </button>
+          <button class="btn btn-success" type="button" id="recipe_step_save_btn_{{ step_number }}" 
+            data-toggle="tooltip" data-placement="top" title="Save Changes for this Step"
+            onclick="stepUpdate({{ step_number }})">
+            <i class="fas fa-save"></i>&nbsp; Save
+          </button>
+        </div>
+
+      </div>
+    </div>
+</div>
+
+{% endmacro %}
+
+{% macro render_recipe_asset_viewer(assets, recipe_id, selected_asset) %} 
+
+<div id="assetIndicators" class="carousel slide" data-ride="carousel">
+  <ol class="carousel-indicators">
+    {% for asset in assets %}
+    <li data-target="#assetIndicators" data-slide-to="{{ loop.index0 }}"
+      {% if asset == selected_asset %} class="active"{% endif %}></li>
+    {% endfor %}
+  </ol>
+  <div class="carousel-inner">
+    {% for asset in assets %}
+    <div class="carousel-item{% if asset == selected_asset %} active{% endif %}">
+      <img src="{{ url_for('static', filename='img/tmp/'+recipe_id+'/'+asset) }}" alt="Recipe Image"> 
+    </div>
+    {% endfor %}
+  </div>
+  <button class="carousel-control-prev" type="button" data-target="#assetIndicators" data-slide="prev">
+    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+    <span class="sr-only">Previous</span>
+  </button>
+  <button class="carousel-control-next" type="button" data-target="#assetIndicators" data-slide="next">
+    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+    <span class="sr-only">Next</span>
+  </button>
+</div>
+
+{% endmacro %}

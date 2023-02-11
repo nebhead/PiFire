@@ -1,0 +1,212 @@
+{% from '_macro_recipes.html' import render_recipe_step_startup, render_recipe_step_active, render_recipe_step_generic %}
+
+<!-- Show Recipe Card -->
+<div class="col-md-12">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h3><strong><i class="fas fa-file-alt"></i>&nbsp; {{ recipe_data['metadata']['title'] }}</strong></h3>
+        </div> <!-- End of card header -->
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card shadow text-center">
+                        <div class="card-body"> 
+                            <br>
+                            <div>
+                            {% if recipe_data['metadata']['image'] != '' %}
+                            <img src="{{ url_for('static', filename='img/tmp/'+recipe_data['metadata']['id']+'/'+recipe_data['metadata']['image']) }}" alt="Recipe Image" width="256" height="256"> 
+                            {% else %}
+                            <img src="{{ url_for('static', filename='img/pifire-cf-thumb.png') }}" alt="Recipe Image" width="200"> 
+                            {% endif %}
+                            </div>
+                            <br>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="card shadow">
+                        <div class="card-header">
+                            <i class="fas fa-info-circle"></i>&nbsp; About This Recipe
+                        </div>
+                        <table class="table">
+                            <tbody>
+                                <tr>
+                                    <th scope="row">Author</th>
+                                    <td>{{ recipe_data['metadata']['author'] }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Rating</th>
+                                    <td>
+                                        {% for star in range(0, recipe_data['metadata']['rating']) %}
+                                        <i class="fas fa-star text-warning"></i>
+                                        {% endfor %}
+                                        &nbsp; ({{ recipe_data['metadata']['rating'] }})
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Prep Time</th>
+                                    <td>{{ recipe_data['metadata']['prep_time'] }}m</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Cook Time</th>
+                                    <td>{{ recipe_data['metadata']['cook_time'] }}m</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Difficulty</th>
+                                    <td>
+                                        {% if recipe_data['metadata']['difficulty'] == 'Easy' %} 
+                                        <h5><span class="badge badge-success">Easy</span></h5>
+                                        {% elif recipe_data['metadata']['difficulty'] == 'Intermediate' %} 
+                                        <h5><span class="badge badge-primary">Intermediate</span></h5>
+                                        {% elif recipe_data['metadata']['difficulty'] == 'Hard' %} 
+                                        <h5><span class="badge badge-warning">Hard</span></h5>
+                                        {% elif recipe_data['metadata']['difficulty'] == 'Advanced' %} 
+                                        <h5><span class="badge badge-danger">Advanced</span></h5>
+                                        {% else %}
+                                        <h5><span class="badge badge-secondary">{{ recipe_data['metadata']['difficulty'] }}</span></h5>
+                                        {% endif %}
+                                        
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Food Probes</th>
+                                    <td>{{ recipe_data['metadata']['food_probes'] }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div> <!-- End of Meta Items Card -->
+            </div> <!-- End of Col -->
+        </div> <!-- End of Metadata Row -->
+        <br>
+        <div class="row"> <!-- Start of Description Row -->
+            <div class="col-md-12">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <i class="fas fa-info-circle"></i>&nbsp; Description
+                    </div>
+                    <div class="card-body">
+                        {{ recipe_data['metadata']['description'] }}
+                    </div>
+                </div>
+            </div>
+        </div> <!-- End of Description Row -->
+        <br>
+        <div class="row"> <!-- Start of Ingredients Row-->
+            <div class="col-md-12">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <i class="fas fa-shopping-cart"></i>&nbsp; Ingredients
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Quantity</th>
+                                <th scope="col">Ingredient</th>
+                                <th scope="col"></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                                {% for ingredient in recipe_data['recipe']['ingredients'] %}
+                            <tr>
+                                <th scope="row"> {{ loop.index0 }}</th>
+                                <td>{{ ingredient['quantity'] }}</td>
+                                <td>{{ ingredient['name'] }}</td>
+                                <td>
+                                    {% set outerindex = loop.index0 %}
+                                    {% for asset in ingredient['assets'] %}
+                                    <button class="btn" type="button" data-assetfilename="{{ asset }}" data-recipefilename="{{ recipe_filename }}" data-section="ingredients" data-sectionindex="{{ outerindex }}" data-toggle="modal" data-target="#display_asset_modal">
+                                        <img src="{{ url_for('static', filename='img/tmp/'+recipe_data['metadata']['id']+'/'+asset) }}" class="rounded image-thumbnail" alt="thumbnail" width="64" height="64">
+                                    </button>
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- End of Ingredients Row -->
+        <br>
+        <div class="row"> <!-- Start of Instructions -->
+            <div class="col-md-12">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <i class="fas fa-list-ul"></i>&nbsp; Instructions
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th scope="col"></th>
+                                <th scope="col">Direction</th>
+                                <th scope="col">Ingredients Used</th>
+                                <th scope="col">Program Step</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in recipe_data['recipe']['instructions'] %}
+                                <tr>
+                                    <th scope="row" class="align-middle"><i class="far fa-circle"></i></th>
+                                    <td class="align-middle">
+                                        {{ item['text'] }}<br>
+                                        {% set outerindex = loop.index0 %}
+                                        {% for asset in item['assets'] %}
+                                        <button class="btn" type="button" data-assetfilename="{{ asset }}" data-recipefilename="{{ recipe_filename }}" data-section="instructions" data-sectionindex="{{ outerindex }}" data-toggle="modal" data-target="#display_asset_modal">
+                                            <img src="{{ url_for('static', filename='img/tmp/'+recipe_data['metadata']['id']+'/'+asset) }}" class="rounded image-thumbnail" alt="thumbnail" width="128" height="128">
+                                        </button>
+                                        {% endfor %}
+                                    </td>
+                                    <td class="align-middle">
+                                        <ul>
+                                        {% for ingredient in item['ingredients'] %}
+                                            <li>
+                                                {{ ingredient }}
+                                            </li>
+                                        {% endfor %}
+                                        </ul>
+                                    </td>
+                                    <td class="align-middle">
+                                        {% if item['step'] == 0 %}
+                                        Prep
+                                        {% else %}
+                                        Step {{ item['step'] }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- End of Instructions Row -->
+        <br>
+        <div class="row"> <!-- Start of Steps -->
+            <div class="col-md-12">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <i class="fas fa-list-ol"></i>&nbsp; Program Steps
+                    </div>
+                    <div class="card-body">
+                        {% for step in recipe_data['recipe']['steps'] %}
+                            {% if step['mode'] == 'Startup' %}
+                                {{ render_recipe_step_startup(step, loop.index0, True) }}
+                            {% elif step['mode'] in ['Hold', 'Smoke']%}
+                                {{ render_recipe_step_active(step, loop.index0, recipe_data, True) }}
+                            {% else %}
+                                {{ render_recipe_step_generic(step, loop.index0, True) }}
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div> <!-- End of Steps Row -->
+    </div> <!-- End of Card Body-->
+    </div> <!-- End of Recipe Card -->
+
+</div> <!-- End of MAIN Column-->
+

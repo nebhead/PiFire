@@ -179,8 +179,12 @@ def fixup_assets(filename, jsondata):
 	status = 'OK'
 	return(jsondata, status)
 
-def remove_assets(filename, assetlist):
+def remove_assets(filename, assetlist, filetype='cookfile'):
 	status = 'OK'
+
+	if filetype == 'recipefile':
+		recipe, status = read_json_file_data(filename, 'recipe')
+
 	metadata, status = read_json_file_data(filename, 'metadata')
 	comments, status = read_json_file_data(filename, 'comments')
 	assets, status = read_json_file_data(filename, 'assets', unpackassets=False)
@@ -188,9 +192,11 @@ def remove_assets(filename, assetlist):
 	# Check Thumbnail against assetlist
 	if metadata['thumbnail'] in assetlist:
 		metadata['thumbnail'] = ''
+		if filetype == 'recipefile':
+			metadata['image'] = ''
 		update_json_file_data(metadata, filename, 'metadata')
 
-	# Check Comment Assets against assetlist
+	# Check comment.json assets against assetlist
 	modified = False
 	for index, comment in enumerate(comments):
 		for asset in comment['assets']:
@@ -200,7 +206,23 @@ def remove_assets(filename, assetlist):
 	if modified:
 		update_json_file_data(comments, filename, 'comments')
 
-	# Check Asset.json against assetlist 
+	# Check recipe.json assets against assetlist
+	if filetype == 'recipefile':
+		modified = False
+		for index, ingredient in enumerate(recipe['ingredients']):
+			for asset in ingredient['assets']:
+				if asset in assetlist:
+					recipe['ingredients'][index]['assets'].remove(asset)
+					modified = True 
+		for index, instruction in enumerate(recipe['instructions']):
+			for asset in instruction['assets']:
+				if asset in assetlist:
+					recipe['instructions'][index]['assets'].remove(asset)
+					modified = True 
+		if modified:
+			update_json_file_data(recipe, filename, 'recipe')
+
+	# Check asset.json against assetlist 
 	modified = False 
 	tempassets = assets.copy()
 	for asset in tempassets:

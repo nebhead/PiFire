@@ -879,6 +879,12 @@ def _recipe_mode(grill_platform, probe_complex, display_device, dist_device, sta
 		# 4a. Setup all step data and write to control
 		control['recipe']['step'] = step_num 
 		control['recipe']['step_data'] = recipe['steps'][step_num]
+		''' Setup trigger_temps structure that the work_cycle expects, mapping to real probes '''
+		trigger_temps = {}
+		trigger_temps[settings['recipe']['probe_map']['primary']] = recipe['steps'][step_num]['trigger_temps']['primary']
+		for index, value in enumerate(recipe['steps'][step_num]['trigger_temps']['food']):
+			trigger_temps[settings['recipe']['probe_map']['food'][index]] = value 
+		control['recipe']['step_data']['trigger_temps'] = trigger_temps
 		control['recipe']['step_data']['triggered'] = False
 		control['primary_setpoint'] = recipe['steps'][step_num]['hold_temp']  # Set Hold Temp if applicable.  
 		control['updated'] = False  # Clear Updated Flag if Set

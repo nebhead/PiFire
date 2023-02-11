@@ -1,0 +1,136 @@
+<!-- Image Select CSS -->
+<style>
+.img-container{
+  position:relative;
+  display:inline-block;
+}
+.img-container .overlay{
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  opacity:0.75;
+  transition:opacity 500ms ease-in-out;
+}
+.img-container:hover .overlay{
+  opacity:1;
+}
+.overlay span{
+  position:absolute;
+  top:20%;
+  left:15%;
+  transform:translate(-50%,-50%);
+  color:#eeff00;
+}
+</style>
+
+<!-- Asset Manager Card -->
+<div class="col-md-12">
+    <button type="button" class="btn btn-sm btn-outline-primary" id="recipe_asset_back" onclick="recipeEditFile('{{ recipe_filename }}')">
+        <i class="fas fa-arrow-circle-left"></i>&nbsp; Back
+    </button>
+    <br><br>
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <i class="far fa-images"></i>&nbsp; Manage Images
+        </div> <!-- End of card header -->
+        <div class="card-body">
+            <div class="row">
+                <div class="col">
+                    <div class="card border-info shadow">
+                        <div class="card-body">
+                            <i class="far fa-check-circle"></i>&nbsp; 
+                            {% if section == 'splash' %}
+                                Select Image for the Recipe Splash Image.
+                            {% elif section == 'ingredients' %}
+                                Select Image(s) for the {{ recipe_data['recipe']['ingredients'][section_index]['name'] }} ingredient.
+                            {% elif section == 'instructions' %} 
+                                Select Image(s) for item {{ section_index }} in instructions.
+                            {% elif section == 'delete' %} 
+                                Select Image(s) to delete from "{{ recipe_data['metadata']['title'] }}" ({{ recipe_filename }}). <br><br>
+                                <div class="alert alert-danger" role="alert">
+                                   <strong><i class="fas fa-exclamation-triangle"></i>&nbsp; Images will be immediately removed when selected.</strong>  
+                                </div>
+                            {% else %} 
+                                Select Image(s). 
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <br>
+            <div class="row text-center">
+                {% for asset in recipe_data['assets'] %}
+                <div class="col-md-3">
+                    <div class="img-container" 
+                      onclick="recipeImageSelectToggle('{{ recipe_filename }}', '{{ section }}', {{ section_index }}, '{{ asset['filename'] }}', '{{ asset['id']}}')">
+                        <img src="{{ url_for('static', filename='img/tmp/'+recipe_data['metadata']['id']+'/'+asset['filename']) }}" 
+                        class="img-thumbnail" alt="Recipe Image" width="256" height="256"> 
+                        <div class="overlay">
+                            {% if asset['filename'] in selected %}
+                                {% set highlight = 'true' %} 
+                            {% else %} 
+                                {% set highlight = 'false' %}
+                            {% endif %}
+                            <input type="hidden" id="asset_highlight_{{ asset['id'] }}" value="{{ highlight }}">
+                            <span id="asset_select_{{ asset['id'] }}" data-highlight="{{ highlight }}">
+                                {% if highlight == 'true' %}
+                                <h3><i class="fas fa-check-circle"></i></h3>
+                                {% else %}
+                                <h3><i class="far fa-circle"></i></h3>
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div> <!-- End of Card Body-->
+        {% if section != 'delete' %}
+        <div class="card-footer">
+
+            <!-- Done Button -->
+            <button type="button" class="btn btn-outline-success" id="recipe_asset_back" onclick="recipeEditFile('{{ recipe_filename }}')">
+                <i class="far fa-check-circle"></i>&nbsp; Done
+            </button>
+            <!-- Upload Button -->
+            <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#uploadAssetModal">
+                <i class="fas fa-upload"></i>&nbsp; Add More Images to Recipe File
+            </button>
+					
+            <!-- Modal - Select Upload File -->
+            <div class="modal fade" id="uploadAssetModal" tabindex="-1" aria-labelledby="ulAssetModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                    <h5 class="modal-title" id="ulAssetModalLabel">Upload Images</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="remotefile">Select File(s):</label>
+                            <input type="file" class="form-control-file" id="upload_recipe_assets" name="upload_recipe_assets" accept="image/*" multiple>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="recipe_assets_upload_btn" data-dismiss="modal"
+                      onclick="recipeUploadAssets('{{ recipe_filename}}', '{{ section }}', '{{ section_index }}');">
+                        Upload Image
+                    </button>
+                    </div>
+                </div>
+                </div>
+            </div> <!-- End of Modal -->
+
+            <!-- Delete Button -->
+            <button type="button" class="btn btn-outline-danger" onclick="recipeManageAssets('{{ recipe_filename }}', 'delete', 0)">
+                <i class="fas fa-trash-alt"></i>&nbsp; Remove Images from Recipe File
+            </button>
+        </div>
+        {% endif %}
+    </div> <!-- End of Recipe Card -->
+</div> <!-- End of MAIN Column-->

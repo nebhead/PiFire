@@ -1,0 +1,56 @@
+{% from '_macro_recipes.html' import render_recipe_step_startup, render_recipe_step_active, 
+    render_recipe_step_generic, render_recipe_edit_title, 
+    render_recipe_edit_metadata, render_recipe_edit_description, 
+    render_recipe_edit_ingredients, render_recipe_edit_instructions, 
+    render_recipe_edit_steps %}
+
+<!-- Show Recipe Card -->
+<div class="col-md-12">
+    <div class="card shadow">
+        <div class="card-header">
+            <div class="row" id="recipe_edit_title_row">
+                {{ render_recipe_edit_title(recipe_data, recipe_filename) }}
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row" id="recipe_edit_metadata_row"> <!-- Start of Metadata Row -->
+                {{ render_recipe_edit_metadata(recipe_data) }}
+            </div> <!-- End of Metadata Row -->
+            <br>
+            <div class="row" id="recipe_edit_description_row"> <!-- Start of Description Row -->
+                {{ render_recipe_edit_description(recipe_data) }}
+            </div> <!-- End of Description Row -->
+            <br>
+            <div class="row" id="recipe_edit_ingredients_row"> <!-- Start of Ingredients Row-->
+                {{ render_recipe_edit_ingredients(recipe_data) }}
+            </div> <!-- End of Ingredients Row -->
+            <br>
+            <div class="row" id="recipe_edit_instructions_row"> <!-- Start of Instructions -->
+                {{ render_recipe_edit_instructions(recipe_data) }}
+            </div> <!-- End of Instructions Row -->
+            <br>
+            <div class="row" id="recipe_edit_steps_row"> <!-- Start of Steps -->
+                {{ render_recipe_edit_steps(recipe_data) }}
+            </div> <!-- End of Steps Row -->
+        </div> <!-- End of Card Body-->
+    </div> <!-- End of Recipe Card -->
+
+</div> <!-- End of MAIN Column-->
+
+<!-- Data Update Success Toast -->
+<div class="position-fixed bottom-0 right-0 p-3" style="z-index: 5; right: 0; bottom: 0;">
+    <div id="successToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true" data-delay="4000">
+      <div class="toast-header">
+        <img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" class="rounded mr-2" alt="Bloop">
+        <strong class="mr-auto">Updating</strong>
+        <small>Now</small>
+        <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="toast-body" id="successToastMsg">
+        Item changed successfully.
+      </div>
+    </div>
+</div> <!-- End of Toast -->
+  

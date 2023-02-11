@@ -1,4 +1,25 @@
 {% macro render_container(settings, control) %} 
+<!-- Glowing Effect -->
+<style>
+    @keyframes glowing {
+      0% {
+        background-color: #17a2b8;
+        box-shadow: 0 0 5px #17a2b8;
+      }
+      50% {
+        background-color: #49e7ff;
+        box-shadow: 0 0 20px #49e7ff;
+      }
+      100% {
+        background-color: #17a2b8;
+        box-shadow: 0 0 5px #17a2b8;
+      }
+    }
+    .glowbutton {
+      animation: glowing 1000ms infinite;
+    }
+</style>
+
 <!-- Control Panel -->
 <div class="container" id="cp_container">
 	{% if page_theme == 'dark' %}
@@ -11,6 +32,7 @@
     <!-- Inactive Toolbar -->
 
     <div class="btn-toolbar justify-content-center" role="toolbar" id="inactive_group"{% if control['mode'] not in ['Stop', 'Startup', 'Monitor', 'Error']%} style="display:none"{% endif %}>
+        <!-- Prime Group -->
         <div id="prime_group" class="btn-group mr-2 dropup shadow" role="group" data-toggle="tooltip" data-placement="top" title="Prime the Firepot">
             <button type="button" class="btn btn-outline-primary border border-secondary dropdown-toggle" id="prime_btn" data-toggle="dropdown" aria-expanded="false">
                 <i class="fas fa-angle-double-right"></i>
@@ -40,7 +62,7 @@
     
     <!-- Active Toolbar -->
 
-    <div class="btn-toolbar justify-content-center" role="toolbar" id="active_group"{% if control['mode'] not in ['Smoke', 'Hold', 'Recipe'] %} style="display:none"{% endif %}>
+    <div class="btn-toolbar justify-content-center" role="toolbar" id="active_group"{% if control['mode'] not in ['Smoke', 'Hold'] %} style="display:none"{% endif %}>
         <div id="active_core_group" class="btn-group mr-2 shadow" role="group">
             <button type="button" data-toggle="tooltip" title="Smoke Mode" class="btn btn-outline-secondary border border-secondary" id="smoke_active_btn" name="setmodesmoke" value="true" ><i class="fas fa-cloud"></i></button>
             <button type="button" class="btn btn-outline-secondary border border-secondary" id="hold_active_btn" data-toggle="modal" data-target="#setpointModal" ><i class="fas fa-crosshairs"></i></button>
@@ -62,10 +84,21 @@
             <button type="button" data-toggle="tooltip" title="Temp Fan Control" class="btn btn-outline-primary border border-secondary text-secondary" id="pwm_control_btn" name="pwm_control" value="true"><i class="fas fa-tachometer-alt"></i></button>
         </div>
     </div> <!-- End of Active Toolbar -->
-
+   
     <!-- Recipe Toolbar -->
-    <!-- TBD -->
-    
+    <div class="btn-toolbar justify-content-center" role="toolbar" id="recipe_group"{% if control['mode'] != 'Recipe'  %} style="display:none"{% endif %}>
+        <!-- Recipe Group -->
+        <div id="cp_recipe_group" class="btn-group mr-2 dropup shadow" role="group" data-toggle="tooltip" data-placement="top" title="Goto Recipe">     
+            <button type="button" data-toggle="tooltip" title="Recipe Active" class="btn btn-info text-white" id="cp_recipe_indicator_btn">
+                <i class="fas fa-clipboard-list"></i>
+            </button>
+            <a href="/recipes" role="button" data-toggle="tooltip" title="Recipe Step" class="btn btn-outline-info outline-secondary text-secondary" id="cp_recipe_step_btn">
+                Step X
+            </a>
+            <button type="button" data-toggle="tooltip" title="Mode" class="btn btn-info text-white" id="cp_recipe_mode_btn"><i class="fas fa-cloud" ></i></button>
+            <button type="button" data-toggle="tooltip" title="Shutdown" class="btn btn-outline-info outline-secondary text-secondary" id="cp_recipe_shutdown_btn"><i class="fas fa-flag-checkered"></i></button>
+        </div>
+    </div>
     </span>
     </nav>
 

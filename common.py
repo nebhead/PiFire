@@ -250,7 +250,23 @@ def default_settings():
 		'probe_config' : default_probe_config(settings)
 	}
 
+	settings['recipe'] = {}
+	settings['recipe']['probe_map'] = _default_recipe_probe_map(settings)
+
 	return settings
+
+def _default_recipe_probe_map(settings):
+	recipe_probe_map = {
+		'primary' : '',
+		'food' : []
+	}
+	for probe in settings['probe_settings']['probe_map']['probe_info']:
+		if probe['type'] == 'Primary':
+			recipe_probe_map['primary'] = probe['label']
+		elif probe['type'] == 'Food':
+			recipe_probe_map['food'].append(probe['label'])
+	
+	return recipe_probe_map 
 
 def default_probe_config(settings):
 	''' Builds an configuration information for all probes to be used by the history graph '''
@@ -741,8 +757,15 @@ def execute_commands():
 		command.pop('origin')
 		for key in control.keys():
 			if key in command.keys():
-				if key in ['safety', 'recipe', 'timer', 'manual', 'smart_start']:
+				if key in ['safety', 'timer', 'manual', 'smart_start']:
 					control[key].update(command.get(key, {}))
+				elif key in ['recipe']:
+					for subkey in control[key].keys():
+						if subkey in command[key].keys():
+							if subkey in ['step_data']:
+								control[key][subkey].update(command[key].get(subkey, {}))
+							else:
+								control[key][subkey] = command[key][subkey]
 				else:
 					control[key] = command[key]
 		write_control(control, direct_write=True, origin='executor')
