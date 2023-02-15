@@ -1,4 +1,4 @@
-{% macro render_wizard_card(moduleData, moduleSection) %} 
+{% macro render_wizard_card(moduleData, moduleSection, moduleSettings) %} 
 <!-- Form for Selected Module -->
 <div class="card">
 	<div class="media">
@@ -33,7 +33,7 @@
 				<td>
 					<select class="form-control" id="{{ moduleSection }}_{{ setting }}" name="{{ moduleSection }}_{{ setting }}">
 					{% for option in moduleData['settings_dependencies'][setting]['options'] %}
-						<option value="{{ option }}">{{ moduleData['settings_dependencies'][setting]['options'][option] }}</option>
+						<option value="{{ option }}"{% if moduleSettings[setting] == option %} selected{% endif %}>{{ moduleData['settings_dependencies'][setting]['options'][option] }}</option>
 					{% endfor %}
 					</select>
 				</td>

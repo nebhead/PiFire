@@ -2286,18 +2286,97 @@ def wizard(action=None):
 			else:
 				return '<strong color="red">No Data</strong>'
 	
-	''' Create Temporary Probe Device/Port Structure for Setup '''
-	wizardInstallInfo = {
-		'modules' : {}, 
-		'probe_map' : settings['probe_settings']['probe_map']
-	} 
+	''' Create Temporary Probe Device/Port Structure for Setup, Use Existing unless First Time Setup '''
 	if settings['globals']['first_time_setup']: 
-		wizardInstallInfo['probe_map'] = wizardData['boards']['PiFirev2x']['probe_map']
+		wizardInstallInfo = wizardInstallInfoDefaults(wizardData)
+	else:
+		wizardInstallInfo = wizardInstallInfoExisting(wizardData, settings)
 
 	store_wizard_install_info(wizardInstallInfo) 
 
 	return render_template('wizard.html', settings=settings, page_theme=settings['globals']['page_theme'],
 						   grill_name=settings['globals']['grill_name'], wizardData=wizardData, wizardInstallInfo=wizardInstallInfo)
+
+def wizardInstallInfoDefaults(wizardData):
+	
+	wizardInstallInfo = {
+		'modules' : {
+			'grillplatform' : {
+				'module_selected' : [],
+				'settings' : {}
+			}, 
+			'display' : {
+				'module_selected' : [],
+				'settings' : {}
+			}, 
+			'distance' : {
+				'module_selected' : [],
+				'settings' : {}
+			}, 
+			'probes' : {
+				'module_selected' : [],
+				'settings' : {
+					'units' : 'F'
+				}
+			}
+		},
+		'probe_map' : wizardData['boards']['PiFirev2x']['probe_map']
+	}
+	''' Populate Modules Info with Defaults from Wizard Data including Settings '''
+	for component in ['grillplatform', 'display', 'distance']:
+		for module in wizardData['modules'][component]:
+			if wizardData['modules'][component][module]['default']:
+				''' Populate Module Filename'''
+				wizardInstallInfo['modules'][component]['module_selected'].append(wizardData['modules'][component][module]['filename'])
+				for setting in wizardData['modules'][component][module]['settings_dependencies']: 
+					''' Populate all settings with default value '''
+					wizardInstallInfo['modules'][component]['settings'][setting] = list(wizardData['modules'][component][module]['settings_dependencies'][setting]['options'].keys())[0]
+
+	''' Populate Probes Module List with all configured probe devices '''
+	for device in wizardInstallInfo['probe_map']['probe_devices']:
+		wizardInstallInfo['modules']['probes']['module_selected'].append(device['module'])
+
+	return wizardInstallInfo
+
+def wizardInstallInfoExisting(wizardData, settings):
+	wizardInstallInfo = {
+		'modules' : {
+			'grillplatform' : {
+				'module_selected' : [settings['modules']['grillplat']],
+				'settings' : {}
+			}, 
+			'display' : {
+				'module_selected' : [settings['modules']['display']],
+				'settings' : {}
+			}, 
+			'distance' : {
+				'module_selected' : [settings['modules']['dist']],
+				'settings' : {}
+			}, 
+			'probes' : {
+				'module_selected' : [],
+				'settings' : {
+					'units' : settings['globals']['units']
+				}
+			}
+		}, 
+		'probe_map' : settings['probe_settings']['probe_map']
+	} 
+	''' Populate Probes Module List with all configured probe devices '''
+	for device in wizardInstallInfo['probe_map']['probe_devices']:
+		wizardInstallInfo['modules']['probes']['module_selected'].append(device['module'])
+	
+	''' Populate Modules Info with current Settings '''
+	for module in ['grillplatform', 'display', 'distance']:
+		selected = wizardInstallInfo['modules'][module]['module_selected'][0]
+		for setting in wizardData['modules'][module][selected]['settings_dependencies']:
+			settingsLocation = wizardData['modules'][module][selected]['settings_dependencies'][setting]['settings']
+			settingsValue = settings.copy() 
+			for index in range(0, len(settingsLocation)):
+				settingsValue = settingsValue[settingsLocation[index]]
+			wizardInstallInfo['modules'][module]['settings'][setting] = str(settingsValue)
+
+	return wizardInstallInfo
 
 def prepare_wizard_data(form_data):
 	wizardData = read_wizard()

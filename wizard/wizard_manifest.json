@@ -663,7 +663,7 @@
 			},
 			"none" : {
 				"friendly_name" : "None",
-				"filename" : "prototype",
+				"filename" : "none",
 				"description" : "This module should be chosen if there is no distance sensor hardware installed.",
 				"default" : true,
 				"image" : "none.png",

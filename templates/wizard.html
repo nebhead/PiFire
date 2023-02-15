@@ -56,15 +56,15 @@
 					        <div class="form-group">
 						        <select class="form-control" id="grillplatformSelect" name="grillplatformSelect">
 							        {% for module in wizardData['modules']['grillplatform'] %}
-								        <option value="{{ module }}"{% if wizardData['modules']['grillplatform'][module]['default'] == True %} selected {% endif %}>{{ wizardData['modules']['grillplatform'][module]['friendly_name'] }}</option>
+								        <option value="{{ module }}"{% if wizardInstallInfo['modules']['grillplatform']['module_selected'][0] == module %} selected {% endif %}>{{ wizardData['modules']['grillplatform'][module]['friendly_name'] }}</option>
 							        {% endfor %}
 						        </select>
 					        </div>
 					        <!-- Module Card -->
 					        <div id="grillplatformCard">
 								{% for module in wizardData['modules']['grillplatform'] %}
-									{% if wizardData['modules']['grillplatform'][module]['default'] %}
-										{{ render_wizard_card(wizardData['modules']['grillplatform'][module], 'grillplatform') }}
+									{% if wizardInstallInfo['modules']['grillplatform']['module_selected'][0] == module %}
+										{{ render_wizard_card(wizardData['modules']['grillplatform'][module], 'grillplatform', wizardInstallInfo['modules']['grillplatform']['settings']) }}
 									{% endif %}
 								{% endfor %}
 							</div>
@@ -151,7 +151,7 @@
 					        <div class="form-group">
 						        <select class="form-control" id="displaySelect" name="displaySelect">
 							        {% for module in wizardData['modules']['display'] %}
-                                    <option value="{{ module }}"{% if wizardData['modules']['display'][module]['default'] == True %} selected {% endif %}>
+                                    <option value="{{ module }}"{% if wizardInstallInfo['modules']['display']['module_selected'][0] == module %} selected {% endif %}>
                                     {{ wizardData['modules']['display'][module]['friendly_name'] }}
                                     </option>
 							        {% endfor %}
@@ -160,8 +160,8 @@
 					        <!-- Module Card -->
 					        <div id="displayCard">
 								{% for module in wizardData['modules']['display'] %}
-									{% if wizardData['modules']['display'][module]['default'] %}
-										{{ render_wizard_card(wizardData['modules']['display'][module], 'display') }}
+									{% if wizardInstallInfo['modules']['display']['module_selected'][0] == module %}
+										{{ render_wizard_card(wizardData['modules']['display'][module], 'display',  wizardInstallInfo['modules']['display']['settings']) }}
 									{% endif %}
 								{% endfor %}
 							</div>
@@ -191,7 +191,7 @@
 					        <div class="form-group">
 						        <select class="form-control" id="distanceSelect" name="distanceSelect">
 							        {% for module in wizardData['modules']['distance'] %}
-								        <option value="{{ module }}"{% if wizardData['modules']['distance'][module]['default'] == True %} selected {% endif %}>
+								        <option value="{{ module }}"{% if wizardInstallInfo['modules']['distance']['module_selected'][0] == module %} selected {% endif %}>
 									        {{ wizardData['modules']['distance'][module]['friendly_name'] }}
 								        </option>
 							        {% endfor %}
@@ -200,8 +200,8 @@
 					        <!-- Module Card -->
 					        <div id="distanceCard">
 								{% for module in wizardData['modules']['distance'] %}
-									{% if wizardData['modules']['distance'][module]['default'] %}
-										{{ render_wizard_card(wizardData['modules']['distance'][module], 'distance') }}
+									{% if wizardInstallInfo['modules']['distance']['module_selected'][0] == module %}
+										{{ render_wizard_card(wizardData['modules']['distance'][module], 'distance',  wizardInstallInfo['modules']['distance']['settings']) }}
 									{% endif %}
 								{% endfor %}
 							</div>
