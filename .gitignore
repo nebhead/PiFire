@@ -43,3 +43,5 @@ history/
 static/img/tmp/
 
 recipes/recipe/
+
+*.log

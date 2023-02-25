@@ -25,6 +25,7 @@ Description:
  Imported Libraries
 *****************************************
 '''
+import logging
 import math
 import ADS1115
 from probes_base import ProbeInterface
@@ -45,6 +46,7 @@ BUSMAP = {
 class ADSDevice():
 	''' ADS1115 Device Based on the ADS1115 Python Module '''
 	def __init__(self, i2c_bus_addr=0x48):
+		self.logger = logging.getLogger("control")
 		self.ads = ADS1115.ADS1115(address=i2c_bus_addr)
 
 	def read_voltage(self, port):
@@ -54,7 +56,11 @@ class ADSDevice():
 			'ADC2' : 2, 
 			'ADC3' : 3
 		}
-		voltage = self.ads.readADCSingleEnded(adc_ports[port])
+		try:
+			voltage = self.ads.readADCSingleEnded(adc_ports[port])
+		except: 
+			self.logger.exception(f'Exception occurred while reading probe port {port}.  Trace dump: ')
+			voltage = 0
 		return voltage
 
 class ReadProbes(ProbeInterface):

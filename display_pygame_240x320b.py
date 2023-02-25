@@ -17,6 +17,7 @@ PiFire Display Interface Library
 '''
  Imported Libraries
 '''
+import logging
 import time
 import threading
 import socket
@@ -30,6 +31,7 @@ class Display(DisplayBase):
 
 	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F'):
 		super().__init__(dev_pins, buttonslevel, rotation, units)
+		self.eventLogger = logging.getLogger('events')
 
 	def _init_display_device(self):
 		# Setup & Start Display Loop Thread 
@@ -121,7 +123,7 @@ class Display(DisplayBase):
 	============== Graphics / Display / Draw Methods ============= 
 	'''
 	def _display_clear(self):
-		print(f'[{time.time()}]  Screen Cleared.')
+		self.eventLogger.info('Screen Cleared.')
 		self.display_surface.fill((0,0,0))
 		pygame.display.update() 
 

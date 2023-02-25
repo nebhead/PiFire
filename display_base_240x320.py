@@ -19,6 +19,7 @@ PiFire Display Interface Library
 import time
 import socket
 import qrcode
+import logging
 from PIL import Image, ImageDraw, ImageFont
 from common import read_control, write_control
 
@@ -40,7 +41,8 @@ class DisplayBase:
 		self.display_command = 'splash'
 		self.input_counter = 0
 		self.input_enabled = False
-
+		# Attempt to set the log level of PIL so that it does not pollute the logs
+		logging.getLogger('PIL').setLevel(logging.CRITICAL + 1)
 		# Init Display Device, Input Device, Assets
 		self._init_globals()
 		self._init_assets() 

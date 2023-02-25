@@ -21,6 +21,7 @@ import math
 import redis
 import uuid
 import random
+import logging
 
 # *****************************************
 # Constants and Globals 
@@ -45,6 +46,17 @@ COLOR_LIST = [
 	('rgb(255, 210, 0, 1)', 'rgb(255, 255, 0, 1)'),  # Yellow
 	('rgb(255, 126, 0, 1)', 'rgb(255, 126, 64, 1)')	# Orange
 ]
+
+def create_logger(name, filename='./logs/pifire.log', messageformat='%(asctime)s | %(levelname)s | %(message)s', level=logging.INFO):
+	"""Setup a custom logger"""
+	formatter = logging.Formatter(fmt=messageformat, datefmt='%Y-%m-%d %H:%M:%S')
+	# datefmt='%Y-%m-%d %H:%M:%S'
+	handler = logging.FileHandler(filename)        
+	handler.setFormatter(formatter)
+	logger = logging.getLogger(name)
+	logger.setLevel(level)
+	logger.addHandler(handler)
+	return logger
 
 def default_settings():
 	settings = {}

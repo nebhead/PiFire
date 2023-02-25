@@ -35,7 +35,7 @@ Description:
  Imported Libraries
 *****************************************
 '''
-
+import logging
 import spidev
 import time
 import math
@@ -53,6 +53,7 @@ _RTD_B = -5.775e-7
 class RTDDevice():
 	''' MAX31865 Device Init '''
 	def __init__(self, cs, rtd_nominal=1000, ref_resistor=4300, wires=2):
+		self.logger = logging.getLogger("control")
 		self.cs = cs
 		self.wires = wires
 
@@ -101,9 +102,13 @@ class RTDDevice():
 	@property
 	def resistance(self):
 		"""Read the resistance of the RTD and return its value in Ohms."""
-		resistance = self.read_rtd()
-		resistance /= 32768
-		resistance *= self.ref_resistor
+		try:
+			resistance = self.read_rtd()
+			resistance /= 32768
+			resistance *= self.ref_resistor
+		except: 
+			self.logger.exception(f'Exception occurred while reading probe port {self.device_info["ports"][0]}.  Trace dump: ')
+			resistance = 0
 		return resistance
 
 	@property
@@ -162,20 +167,19 @@ class RTDDevice():
 
 	def get_fault(self):
 		fault = self.spi.xfer2([0x07, 0x00])[1]
-		''' Removed logging temporarily until testing 
+
 		if fault & 0b10000000:
-			logger.debug('Fault SPI %i: RTD High Threshold', self.cs)
+			self.logger.debug('Fault SPI %i: RTD High Threshold', self.cs)
 		if fault & 0b01000000:
-			logger.debug('Fault SPI %i: RTD Low Threshold', self.cs)
+			self.logger.debug('Fault SPI %i: RTD Low Threshold', self.cs)
 		if fault & 0b00100000:
-			logger.debug('Fault SPI %i: REFIN- > 0.85 x V_BIAS', self.cs)
+			self.logger.debug('Fault SPI %i: REFIN- > 0.85 x V_BIAS', self.cs)
 		if fault & 0b0001000:
-			logger.debug('Fault SPI %i: REFIN- < 0.85 x V_BIAS (FORCE- Open)', self.cs)
+			self.logger.debug('Fault SPI %i: REFIN- < 0.85 x V_BIAS (FORCE- Open)', self.cs)
 		if fault & 0b00001000:
-			logger.debug('Fault SPI %i: RTDIN- < 0.85 x V_BIAS (FORCE- Open)', self.cs)
+			self.logger.debug('Fault SPI %i: RTDIN- < 0.85 x V_BIAS (FORCE- Open)', self.cs)
 		if fault & 0b00000100:
-			logger.debug('Fault SPI %i: Overvoltage/undervoltage fault', self.cs)
-		'''
+			self.logger.debug('Fault SPI %i: Overvoltage/undervoltage fault', self.cs)
 
 	def close(self):
 		self.spi.close()

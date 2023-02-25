@@ -25,6 +25,7 @@ Description:
  Imported Libraries
 *****************************************
 '''
+import logging
 import math
 import board
 import busio
@@ -48,6 +49,7 @@ BUSMAP = {
 class ADSDevice():
 	''' ADS1015 Device Based on the Adafruit Module '''
 	def __init__(self, i2c_bus_addr=0x48):
+		self.logger = logging.getLogger("control")
 		# Create the I2C bus
 		self.i2c = busio.I2C(board.SCL, board.SDA)
 		# Create the ADC object using the I2C bus
@@ -60,8 +62,12 @@ class ADSDevice():
 			'ADC2' : ADS.P2, 
 			'ADC3' : ADS.P3
 		}
-		read_data = AnalogIn(self.ads, adc_ports[port])
-		voltage = math.floor(read_data.voltage * 1000)
+		try:
+			read_data = AnalogIn(self.ads, adc_ports[port])
+			voltage = math.floor(read_data.voltage * 1000)
+		except:
+			self.logger.exception(f'Exception occurred while reading probe port {port}.  Trace dump: ')
+			voltage = 0
 		return voltage
 
 class ReadProbes(ProbeInterface):

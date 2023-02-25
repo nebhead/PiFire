@@ -17,7 +17,7 @@ Description:
 '''
 
 import math
-import time 
+import time
 from temp_queue import TempQueue
 
 '''

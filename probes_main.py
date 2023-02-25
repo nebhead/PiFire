@@ -17,14 +17,16 @@ Description:
 *****************************************
 '''
 import importlib
+import logging
 
 class ProbesMain:
 
 	def __init__(self, probe_map, units):
+		self.logger = logging.getLogger("control")
 		self.units = units 
 		self.probe_devices = probe_map['probe_devices']
 		self.probe_info = probe_map['probe_info']
-		error = self._setup_probe_devices(self.probe_devices)
+		self._setup_probe_devices(self.probe_devices)
 	
 	def _setup_probe_devices(self, probe_devices):
 		error_event = None
@@ -39,6 +41,7 @@ class ProbesMain:
 					f'prototype module has been loaded instead.  This sometimes means that the hardware is not connected ' \
 					f'properly, or the module is not configured.  Please run the configuration wizard again from the admin ' \
 					f'panel to fix this issue.'
+				self.logger.exception(error_event)
 				break 
 			
 			'''
