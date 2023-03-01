@@ -49,13 +49,14 @@ COLOR_LIST = [
 
 def create_logger(name, filename='./logs/pifire.log', messageformat='%(asctime)s | %(levelname)s | %(message)s', level=logging.INFO):
 	"""Setup a custom logger"""
-	formatter = logging.Formatter(fmt=messageformat, datefmt='%Y-%m-%d %H:%M:%S')
-	# datefmt='%Y-%m-%d %H:%M:%S'
-	handler = logging.FileHandler(filename)        
-	handler.setFormatter(formatter)
 	logger = logging.getLogger(name)
 	logger.setLevel(level)
-	logger.addHandler(handler)
+	if not logger.hasHandlers():
+		formatter = logging.Formatter(fmt=messageformat, datefmt='%Y-%m-%d %H:%M:%S')
+		# datefmt='%Y-%m-%d %H:%M:%S'
+		handler = logging.FileHandler(filename)        
+		handler.setFormatter(formatter)
+		logger.addHandler(handler)
 	return logger
 
 def default_settings():

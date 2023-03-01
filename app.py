@@ -1486,67 +1486,67 @@ def settings_page(action=None):
 		response = request.form
 
 		if _is_checked(response, 'apprise_enabled'):
-			settings['apprise']['enabled'] = True
+			settings['notify_services']['apprise']['enabled'] = True
 		else:
-			settings['apprise']['enabled'] = False
+			settings['notify_services']['apprise']['enabled'] = False
 		if 'appriselocations' in response:
 			locations = []
 			for location in response.getlist('appriselocations'):
 				if(len(location)):
 					locations.append(location)
-			settings['apprise']['locations'] = locations
+			settings['notify_services']['apprise']['locations'] = locations
 		else:
-			settings['apprise']['locations'] = []
+			settings['notify_services']['apprise']['locations'] = []
 		if _is_checked(response, 'ifttt_enabled'):
-			settings['ifttt']['enabled'] = True
+			settings['notify_services']['ifttt']['enabled'] = True
 		else:
-			settings['ifttt']['enabled'] = False
+			settings['notify_services']['ifttt']['enabled'] = False
 		if 'iftttapi' in response:
-			settings['ifttt']['APIKey'] = response['iftttapi']
+			settings['notify_services']['ifttt']['APIKey'] = response['iftttapi']
 		if _is_checked(response, 'pushbullet_enabled'):
-			settings['pushbullet']['enabled'] = True
+			settings['notify_services']['pushbullet']['enabled'] = True
 		else:
-			settings['pushbullet']['enabled'] = False
+			settings['notify_services']['pushbullet']['enabled'] = False
 		if 'pushbullet_apikey' in response:
-			settings['pushbullet']['APIKey'] = response['pushbullet_apikey']
+			settings['notify_services']['pushbullet']['APIKey'] = response['pushbullet_apikey']
 		if 'pushbullet_publicurl' in response:
-			settings['pushbullet']['PublicURL'] = response['pushbullet_publicurl']
+			settings['notify_services']['pushbullet']['PublicURL'] = response['pushbullet_publicurl']
 		if _is_checked(response, 'pushover_enabled'):
-			settings['pushover']['enabled'] = True
+			settings['notify_services']['pushover']['enabled'] = True
 		else:
-			settings['pushover']['enabled'] = False
+			settings['notify_services']['pushover']['enabled'] = False
 		if 'pushover_apikey' in response:
-			settings['pushover']['APIKey'] = response['pushover_apikey']
+			settings['notify_services']['pushover']['APIKey'] = response['pushover_apikey']
 		if 'pushover_userkeys' in response:
-			settings['pushover']['UserKeys'] = response['pushover_userkeys']
+			settings['notify_services']['pushover']['UserKeys'] = response['pushover_userkeys']
 		if 'pushover_publicurl' in response:
-			settings['pushover']['PublicURL'] = response['pushover_publicurl']
+			settings['notify_services']['pushover']['PublicURL'] = response['pushover_publicurl']
 		if _is_checked(response, 'onesignal_enabled'):
-			settings['onesignal']['enabled'] = True
+			settings['notify_services']['onesignal']['enabled'] = True
 		else:
-			settings['onesignal']['enabled'] = False
+			settings['notify_services']['onesignal']['enabled'] = False
 
 		if _is_checked(response, 'influxdb_enabled'):
-			settings['influxdb']['enabled'] = True
+			settings['notify_services']['influxdb']['enabled'] = True
 		else:
-			settings['influxdb']['enabled'] = False
+			settings['notify_services']['influxdb']['enabled'] = False
 		if 'influxdb_url' in response:
-			settings['influxdb']['url'] = response['influxdb_url']
+			settings['notify_services']['influxdb']['url'] = response['influxdb_url']
 		if 'influxdb_token' in response:
-			settings['influxdb']['token'] = response['influxdb_token']
+			settings['notify_services']['influxdb']['token'] = response['influxdb_token']
 		if 'influxdb_org' in response:
-			settings['influxdb']['org'] = response['influxdb_org']
+			settings['notify_services']['influxdb']['org'] = response['influxdb_org']
 		if 'influxdb_bucket' in response:
-			settings['influxdb']['bucket'] = response['influxdb_bucket']
+			settings['notify_services']['influxdb']['bucket'] = response['influxdb_bucket']
 
 		if 'delete_device' in response:
 			DeviceID = response['delete_device']
-			settings['onesignal']['devices'].pop(DeviceID)
+			settings['notify_services']['onesignal']['devices'].pop(DeviceID)
 
 		if 'edit_device' in response:
 			if response['edit_device'] != '':
 				DeviceID = response['edit_device']
-				settings['onesignal']['devices'][DeviceID] = {
+				settings['notify_services']['onesignal']['devices'][DeviceID] = {
 					'friendly_name' : response['FriendlyName_' + DeviceID],
 					'device_name' : response['DeviceName_' + DeviceID],
 					'app_version' : response['AppVersion_' + DeviceID]

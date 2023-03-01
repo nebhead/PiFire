@@ -796,7 +796,8 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 				# If notification / message was requested, notify and clear notification 
 				if control['recipe']['step_data']['notify']:
 					send_notifications('Recipe_Step_Message', control, settings, pelletdb)
-					control['recipe']['step_data']['notify'] = False 
+					control['recipe']['step_data']['notify'] = False
+					write_control(control, direct_write=True, origin='control')
 				# Continue until 'pause' variable is cleared 
 
 		time.sleep(0.05)

@@ -17,7 +17,8 @@ import time
 import requests
 import json
 import apprise
-from common import write_event, write_settings, write_control
+import logging
+from common import write_settings, write_control, create_logger
 
 # *****************************************
 # Functions
@@ -96,6 +97,8 @@ def send_notifications(notify_event, control, settings, pelletdb, label='Probe',
 	:param settings: Settings
 	:param pelletdb: Pellet DB
 	"""
+	log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
+	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 	date = datetime.datetime.now()
 	now = date.strftime('%m-%d %H:%M')
 	time = date.strftime('%H:%M')
@@ -108,64 +111,64 @@ def send_notifications(notify_event, control, settings, pelletdb, label='Probe',
 		body_message = f"{label} target of {target} {unit} achieved at {time} on {day}"
 		channel = 'pifire_temp_alerts'
 		query_args = {"value1": True}
-		write_event(settings, body_message)
+		eventLogger.info(body_message)
 	elif "Timer_Expired" in notify_event:
 		title_message = "Timer Complete"
 		body_message = "Your timer has expired, time to check your cook!"
 		channel = 'pifire_timer_alerts'
 		query_args = {"value1": 'Your timer has expired.'}
-		write_event(settings, body_message)
+		eventLogger.info(body_message)
 	elif "Pellet_Level_Low" in notify_event:
 		title_message = "Low Pellet Level"
 		body_message = f"Your pellet level is currently at {pelletdb['current']['hopper_level']}%"
 		channel = 'pifire_pellet_alerts'
 		query_args = {"value1": body_message}
-		write_event(settings, body_message)
+		eventLogger.info(body_message)
 	elif "Grill_Error_00" in notify_event:
 		title_message = "Grill Error!"
 		body_message = "Your grill has experienced an error and will shutdown now. " + str(now)
 		channel = 'pifire_error_alerts'
 		query_args = {"value1": 'Your grill has experienced an error and will shutdown now. '}
-		write_event(settings, body_message)
+		eventLogger.info(body_message)
 	elif "Grill_Error_01" in notify_event:
 		title_message = "Grill Error!"
 		body_message = "Grill exceded maximum temperature limit of " + str(
 			settings['safety']['maxtemp']) + unit + "! Shutting down. " + str(now)
 		channel = 'pifire_error_alerts'
 		query_args = {"value1": str(settings['safety']['maxtemp'])}
-		write_event(settings, body_message)
+		eventLogger.info(body_message)
 	elif "Grill_Error_02" in notify_event:
 		title_message = "Grill Error!"
 		body_message = "Grill temperature dropped below minimum startup temperature of " + str(
 			control['safety']['startuptemp']) + unit + "! Shutting down to prevent firepot overload. " + str(now)
 		channel = 'pifire_error_alerts'
 		query_args = {"value1": str(control['safety']['startuptemp'])}
-		write_event(settings, body_message)
+		eventLogger.info(body_message)
 	elif "Grill_Error_03" in notify_event:
 		title_message = "Grill Error!"
 		body_message = "Grill temperature dropped below minimum startup temperature of " + str(
 			control['safety']['startuptemp']) + unit + "! Starting a re-ignite attempt, per user settings."
 		channel = 'pifire_error_alerts'
 		query_args = {"value1": str(control['safety']['startuptemp'])}
-		write_event(settings, body_message)
+		eventLogger.info(body_message)
 	elif "Grill_Warning" in notify_event:
 		title_message = "Grill Warning!"
 		body_message = "Your grill has experienced a warning condition. Please check the logs. " + str(now)
 		channel = 'pifire_error_alerts'
 		query_args = {"value1": 'General Warning.'}
-		write_event(settings, body_message)
+		eventLogger.info(body_message)
 	elif "Recipe_Step_Message" in notify_event:
 		title_message = "Recipe Message"
 		body_message = control['recipe']['step_data']['message'] + str(now)
 		channel = 'pifire_recipe_message'
 		query_args = {"value1": control['recipe']['step_data']['message']}
-		write_event(settings, body_message)
+		eventLogger.info(body_message)
 	else:
 		title_message = "PiFire: Unknown Notification issue"
 		body_message = "Whoops! PiFire had the following unhandled notify event: " + notify_event + " at " + str(now)
 		channel = 'default'
 		query_args = {"value1": 'Unknown Notification issue'}
-		write_event(settings, body_message)
+		eventLogger.error(body_message)
 
 	if settings['notify_services']['apprise']['locations'] != '' and settings['notify_services']['apprise']['enabled']:
 		_send_apprise_notifications(settings, title_message, body_message)
@@ -188,9 +191,10 @@ def _send_apprise_notifications(settings, title_message, body_message):
 	:param title_message: Message Title
 	:param body_message: Message Body
 	"""
-
+	log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
+	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 	if(len(settings['notify_services']['apprise']['locations'])):
-		write_event(settings, "Sending Apprise Notifications: " + ", ".join(settings['notify_services']['apprise']['locations']))
+		eventLogger.info("Sending Apprise Notifications: " + ", ".join(settings['notify_services']['apprise']['locations']))
 		appriseHandler = apprise.Apprise()
 
 		for location in settings['notify_services']['apprise']['locations']:
@@ -201,7 +205,7 @@ def _send_apprise_notifications(settings, title_message, body_message):
 			body=body_message,
 		)
 	else:
-		write_event(settings, "No Apprise Locations Configured")
+		eventLogger.warning("No Apprise Locations Configured")
 
 def _send_pushover_notification(settings, title_message, body_message):
 	"""
@@ -211,6 +215,8 @@ def _send_pushover_notification(settings, title_message, body_message):
 	:param title_message: Message Title
 	:param body_message: Message Body
 	"""
+	log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
+	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 	url = 'https://api.pushover.net/1/messages.json'
 	for user in settings['notify_services']['pushover']['UserKeys'].split(','):
 		try:
@@ -223,14 +229,14 @@ def _send_pushover_notification(settings, title_message, body_message):
 			})
 
 			if not response.status_code == 200:
-				write_event(settings, "Pushover Notification Failed: " + title_message)
+				eventLogger.warning("Pushover Notification Failed: " + title_message)
 
-			write_event(settings, "* Pushover Response: " + response.text)
+			eventLogger.debug("Pushover Response: " + response.text)
 
 		except Exception as e:
-			write_event(settings, "WARNING: Pushover Notification to %s failed: %s" % (user, e))
+			eventLogger.warning("Pushover Notification to %s failed: %s" % (user, e))
 		except:
-			write_event(settings, "WARNING: Pushover Notification to %s failed for unknown reason." % (user))
+			eventLogger.warning("Pushover Notification to %s failed for unknown reason." % (user))
 
 
 def _send_pushbullet_notification(settings, title_message, body_message):
@@ -242,6 +248,8 @@ def _send_pushbullet_notification(settings, title_message, body_message):
 	:param body_message: Message Body
 	:return:
 	"""
+	log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
+	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 	api_key = settings['notify_services']['pushbullet']['APIKey']
 	pushbullet_link = settings['notify_services']['pushbullet']['PublicURL']
 	url = "https://api.pushbullet.com/v2/pushes"
@@ -253,14 +261,14 @@ def _send_pushbullet_notification(settings, title_message, body_message):
 		response = requests.post(url, headers=headers, data=json.dumps(payload))
 
 		if not response.status_code == 200:
-			write_event(settings, "PushBullet Notification Failed: " + title_message)
+			eventLogger.warning("PushBullet Notification Failed: " + title_message)
 
-		write_event(settings, "* PushBullet Response: " + response.text)
+		eventLogger.debug("PushBullet Response: " + response.text)
 
 	except Exception as e:
-		write_event(settings, "WARNING: PushBullet Notification failed: %s" % (e))
+		eventLogger.warning("PushBullet Notification failed: %s" % (e))
 	except:
-		write_event(settings, "WARNING: PushBullet Notification failed for unknown reason.")
+		eventLogger.warning("PushBullet Notification failed for unknown reason.")
 
 
 def _send_onesignal_notification(settings, title_message, body_message, channel):
@@ -272,6 +280,8 @@ def _send_onesignal_notification(settings, title_message, body_message, channel)
 	:param body_message: Message Body
 	:param channel: Android Notifications Channel
 	"""
+	log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
+	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 	app_id = settings['notify_services']['onesignal']['app_id']
 	devices = settings['notify_services']['onesignal']['devices']
 	url = "https://onesignal.com/api/v1/notifications"
@@ -294,26 +304,26 @@ def _send_onesignal_notification(settings, title_message, body_message, channel)
 			response = requests.post(url, headers=headers, data=json.dumps(payload))
 
 			if not response.status_code == 200:
-				write_event(settings, "OneSignal Notification Failed: " + title_message)
+				eventLogger.warning("OneSignal Notification Failed: " + title_message)
 
-			write_event(settings, "* OneSignal Response: " + response.text)
+			eventLogger.debug("OneSignal Response: " + response.text)
 
 			json_response = response.json()
 			if 'errors' in json_response:
 				if 'invalid_player_ids' in json_response['errors']:
 					for device in json_response['errors']['invalid_player_ids']:
 						if device in settings['onesignal']['devices']:
-							write_event(settings, "OneSignal: " + settings['onesignal']['devices'][device]
+							eventLogger.info("OneSignal: " + settings['onesignal']['devices'][device]
 							['device_name'] + " has an invalid id and has been removed")
 							settings['onesignal']['devices'].pop(device)
 							write_settings(settings)
 
 		except Exception as e:
-			write_event(settings, "WARNING: OneSignal Notification failed: %s" % (e))
+			eventLogger.warning("OneSignal Notification failed: %s" % (e))
 		except:
-			write_event(settings, "WARNING: OneSignal Notification failed for unknown reason.")
+			eventLogger.warning("OneSignal Notification failed for unknown reason.")
 	else:
-		write_event(settings, "OneSignal Notification Failed No Devices Registered")
+		eventLogger.warning("OneSignal Notification Failed No Devices Registered")
 
 
 def _send_ifttt_notification(settings, notify_event, query_args):
@@ -324,15 +334,16 @@ def _send_ifttt_notification(settings, notify_event, query_args):
 	:param notify_event: String Event
 	:param query_args: Query Args
 	"""
-
+	log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
+	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 	key = settings['notify_services']['ifttt']['APIKey']
 	url = 'https://maker.ifttt.com/trigger/' + notify_event + '/with/key/' + key
 
 	try:
 		r = requests.post(url, data=query_args)
-		write_event(settings, "IFTTT Notification Success: " + r.text)
+		eventLogger.info("IFTTT Notification Success: " + r.text)
 	except:
-		write_event(settings, "IFTTT Notification Failed: " + url)
+		eventLogger.warning("IFTTT Notification Failed: " + url)
 
 
 influx_handler = None
