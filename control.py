@@ -1,35 +1,38 @@
 #!/usr/bin/env python3
 
-# *****************************************
-# PiFire Main Control Program
-# *****************************************
-#
-# Description: This script will start at boot, initialize the relays and
-#  wait for further commands from the web user interface.
-#
-# This script runs as a separate process from the Flask / Gunicorn
-# implementation which handles the web interface.
-#
-# *****************************************
+'''
+==============================================================================
+ PiFire Main Control Process 
+==============================================================================
 
-# Prototype Mode is now selected through the setup wizard or by running 'bash modules.sh' from the command prompt
+Description: This script will start at boot, initialize the relays and
+  wait for further commands from the web user interface.
 
-# *****************************************
-# Base Imported Libraries
-# *****************************************
-import logging
-import importlib
-import pid  # Library for calculating PID setpoints
-from common import *  # Common Library for WebUI and Control Program
-from probes_main import ProbesMain  # Probe device libary: loads probe devices and maps them to ports
-from notifications import *
-from file_recipes import convert_recipe_units
-from file_cookfile import create_cookfile
-from file_common import read_json_file_data
-from os.path import exists
+ This script runs as a separate process from the Flask / Gunicorn
+ implementation which handles the web interface.
+
+==============================================================================
+'''
 
 '''
-Read and initialize Settings, Control, History, Metrics, and Error Data
+==============================================================================
+ Imported Modules
+==============================================================================
+'''
+import logging
+import importlib
+from common import *  # Common Module for WebUI and Control Program
+from notify.notifications import *
+from file_mgmt.recipes import convert_recipe_units
+from file_mgmt.cookfile import create_cookfile
+from file_mgmt.common import read_json_file_data
+from os.path import exists
+
+
+'''
+==============================================================================
+ Read and initialize Settings, Control, History, Metrics, and Error Data
+==============================================================================
 '''
 # Read Settings & Wizard Manifest to Get Modules Configuration 
 settings = read_settings(init=True)
@@ -58,12 +61,11 @@ Set up GrillPlatform Module
 '''
 try: 
 	grill_platform = settings['modules']['grillplat']
-	filename = 'grillplat_' + wizard_data['modules']['grillplatform'][grill_platform]['filename']
-	GrillPlatModule = importlib.import_module(filename)
+	GrillPlatModule = importlib.import_module(f'grillplat.{grill_platform}')
 
 except:
 	controlLogger.exception(f'Error occurred loading grillplatform module ({filename}). Trace dump: ')
-	GrillPlatModule = importlib.import_module('grillplat_prototype')
+	GrillPlatModule = importlib.import_module('grillplat.prototype')
 	error_event = f'An error occurred loading the [{settings["modules"]["grillplat"]}] platform module.  The ' \
 		f'prototype module has been loaded instead.  This sometimes means that the hardware is not connected ' \
 		f'properly, or the module is not configured.  Please run the configuration wizard again from the admin ' \
@@ -92,7 +94,7 @@ try:
 		grill_platform = GrillPlatModule.GrillPlatform(out_pins, in_pins, trigger_level)
 except:
 	controlLogger.exception(f'Error occurred configuring grillplatform module ({filename}). Trace dump: ')
-	from grillplat_prototype import GrillPlatform  # Simulated Library for controlling the grill platform
+	from grillplat.prototype import GrillPlatform  # Simulated Library for controlling the grill platform
 	grill_platform = GrillPlatform(out_pins, in_pins, trigger_level)
 	error_event = f'An error occurred configuring the [{settings["modules"]["grillplat"]}] platform object.  The ' \
 		f'prototype module has been loaded instead.  This sometimes means that the hardware is not ' \
@@ -108,12 +110,12 @@ except:
 Set up Probes Input Module
 '''
 try: 
+	from probes.main import ProbesMain  # Probe device libary: loads probe devices and maps them to ports
 	probe_complex = ProbesMain(settings["probe_settings"]["probe_map"], settings['globals']['units'])
 
 except:
 	controlLogger.exception(f'Error occurred loading probes modules. Trace dump: ')
 	settings['probe_settings']['probe_map'] = default_probe_map(settings["probe_settings"]['probe_profiles'])
-	#write_settings(settings)
 	probe_complex = ProbesMain(settings["probe_settings"]["probe_map"], settings['globals']['units'])
 	error_event = f'An error occurred loading the probes module(s).  The prototype ' \
 		f'module has been loaded instead.  This sometimes means that the hardware is not connected ' \
@@ -130,11 +132,10 @@ Set up Display Module
 '''
 try: 
 	display_name = settings['modules']['display']
-	filename = 'display_' + wizard_data['modules']['display'][display_name]['filename']
-	DisplayModule = importlib.import_module(filename)
+	DisplayModule = importlib.import_module(f'display.{display_name}')
 
 except:
-	controlLogger.exception(f'Error occurred loading the display module ({filename}). Trace dump: ')
+	controlLogger.exception(f'Error occurred loading the display module ({display_name}). Trace dump: ')
 	DisplayModule = importlib.import_module('display_none')
 	error_event = f'An error occurred loading the [{settings["modules"]["display"]}] display module.  The ' \
 		f'"display_none" module has been loaded instead.  This sometimes means that the hardware is ' \
@@ -151,7 +152,7 @@ try:
 										   rotation=disp_rotation, units=units)
 except:
 	controlLogger.exception(f'Error occurred configuring the display module ({filename}). Trace dump: ')
-	from display_none import Display  # Simulated Library for controlling the grill platform
+	from display.none import Display  # Simulated Library for controlling the grill platform
 	display_device = Display(dev_pins=dev_pins, buttonslevel=buttons_level, rotation=disp_rotation, units=units)
 	error_event = f'An error occurred configuring the [{settings["modules"]["display"]}] display object.  The ' \
 		f'"display_none" module has been loaded instead.  This sometimes means that the hardware is ' \
@@ -168,13 +169,12 @@ Set up Distance (Hopper Level) Module
 '''
 try: 
 	dist_name = settings['modules']['dist']
-	filename = 'distance_' + wizard_data['modules']['distance'][dist_name]['filename']
-	DistanceModule = importlib.import_module(filename)
+	DistanceModule = importlib.import_module(f'distance.{dist_name}')
 
 except:
-	controlLogger.exception(f'Error occurred loading the distance module ({filename}). Trace dump: ')
-	DistanceModule = importlib.import_module('distance_prototype')
-	error_event = f'An error occurred loading the [{settings["modules"]["dist"]}] distance module.  The prototype ' \
+	controlLogger.exception(f'Error occurred loading the distance module ({dist_name}). Trace dump: ')
+	DistanceModule = importlib.import_module('distance.none')
+	error_event = f'An error occurred loading the [{settings["modules"]["dist"]}] distance module.  The none ' \
 		f'module has been loaded instead.  This sometimes means that the hardware is not connected ' \
 		f'properly, or the module is not configured.  Please run the configuration wizard again from the ' \
 		f'admin panel to fix this issue.'
@@ -193,13 +193,13 @@ try:
 			dev_pins=dev_pins, empty=settings['pelletlevel']['empty'], full=settings['pelletlevel']['full'],
 			debug=settings['globals']['debug_mode'])
 except:
-	controlLogger.exception(f'Error occurred configuring the distance module ({filename}). Trace dump: ')
-	from distance_prototype import HopperLevel  # Simulated Library for controlling the grill platform
+	controlLogger.exception(f'Error occurred configuring the distance module ({dist_name}). Trace dump: ')
+	from distance.none import HopperLevel  # Simulated Library for controlling the grill platform
 	dist_device = HopperLevel(
 		dev_pins=dev_pins, empty=settings['pelletlevel']['empty'], full=settings['pelletlevel']['full'],
 		debug=settings['globals']['debug_mode'])
 	error_event = f'An error occurred configuring the [{settings["modules"]["dist"]}] distance object.  The ' \
-		f'prototype module has been loaded instead.  This sometimes means that the hardware is not ' \
+		f'none module has been loaded instead.  This sometimes means that the hardware is not ' \
 		f'connected properly, or the module is not configured.  Please run the configuration wizard again ' \
 		f'from the admin panel to fix this issue.'
 	errors.append(error_event)
@@ -245,6 +245,8 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	:param display_device: Display Device
 	:param dist_device: Distance Device
 	"""
+	# Precondition for entering into main control loop 
+	status = 'Active'
 
 	# Setup Cycle Parameters
 	settings = read_settings()
@@ -351,9 +353,17 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		CycleRatio = RawCycleRatio = settings['cycle_data']['u_min']  # Ratio of OnTime to CycleTime
 		LidOpenDetect = False
 		LidOpenEventExpires = 0
-		PIDControl = pid.PID(settings['cycle_data']['PB'], settings['cycle_data']['Ti'], settings['cycle_data']['Td'],
-							 settings['cycle_data']['center'])
-		PIDControl.set_target(control['primary_setpoint'])  # Initialize with setpoint for grill
+		'''
+			Load Controller Module (i.e. PID)
+		'''
+		try: 
+			controller_type = settings['controller']['selected']
+			controller_module = importlib.import_module(f'controller.{controller_type}')
+		except:
+			controlLogger.exception(f'Error occurred loading controller module({controller_type}). Trace dump: ')
+			status = 'Inactive'
+		controllerCore = controller_module.Controller(settings['controller']['config'])
+		controllerCore.set_target(control['primary_setpoint'])  # Initialize with setpoint for grill
 		eventLogger.debug('On Time = ' + str(OnTime) + ', OffTime = ' + str(OffTime) + ', CycleTime = ' + str(
 			CycleTime) + ', CycleRatio = ' + str(CycleRatio))
 
@@ -369,8 +379,6 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	# Get initial probe sensor data, temperatures 
 	sensor_data = probe_complex.read_probes()
 	ptemp = list(sensor_data['primary'].values())[0]  # Primary Temperature or the Pit Temperature
-
-	status = 'Active'
 
 	# Safety Controls
 	if mode in ('Startup', 'Reignite'):
@@ -548,7 +556,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 				eventLogger.debug('Cycle Event: Auger On')
 				# Reset Cycle Time for HOLD Mode
 				if mode == 'Hold':
-					CycleRatio = RawCycleRatio = settings['cycle_data']['u_min'] if LidOpenDetect else PIDControl.update(ptemp)
+					CycleRatio = RawCycleRatio = settings['cycle_data']['u_min'] if LidOpenDetect else controllerCore.update(ptemp)
 					CycleRatio = max(CycleRatio, settings['cycle_data']['u_min'])
 					CycleRatio = min(CycleRatio, settings['cycle_data']['u_max'])
 					OnTime = settings['cycle_data']['HoldCycleTime'] * CycleRatio

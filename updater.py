@@ -1,13 +1,31 @@
 #!/usr/bin/env python3
 
-"""
-Update support functions to utilize Git/GitHub for live system updates
-"""
+'''
+==============================================================================
+ PiFire Updater 
+==============================================================================
+
+ Description: Update support functions to utilize Git/GitHub for live system updates
+
+==============================================================================
+'''
+
+'''
+==============================================================================
+ Imported Modules
+==============================================================================
+'''
 
 from common import *
 import pkg_resources
 import subprocess
 import argparse
+
+'''
+==============================================================================
+ Supporting Functions
+==============================================================================
+'''
 
 def get_available_branches():
 	command = ['git', 'branch', '-a']

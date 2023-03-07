@@ -1,0 +1,44 @@
+{
+    "metadata" : {
+        "pid" : {
+            "friendly_name" : "PID Standard",
+            "module_name" : "pid",
+            "image" : "",
+            "description" : "The standard PID controller for PiFire, used by default. This software was originally developed by GitHub user DBorello as part of his excellent PiSmoker project: https://github.com/DBorello/PiSmoker.  Slightly modified by @weberbox and adapted for PiFire. ",
+            "config" : [
+                {
+                    "option_name" : "PB",
+                    "option_friendly_name" : "PB", 
+                    "option_description" : "Proportional Band(PB): This is the temperature band centered around the set point, that the controller is active.  If the error is greater than PB/2, the command is 0.  If the error is less than PB/2, the command is 1.0",
+                    "option_type" : "float",
+                    "option_default" : 60.0, 
+                    "option_selection" : {}
+                },
+                {
+                    "option_name" : "Td",
+                    "option_friendly_name" : "Td", 
+                    "option_description" : "Derivative Time (Td): Time (in seconds) to predict the future value.",
+                    "option_type" : "float",
+                    "option_default" : 45.0, 
+                    "option_selection" : {}
+                },
+                {
+                    "option_name" : "Ti",
+                    "option_friendly_name" : "Ti", 
+                    "option_description" : "Integral Time (Ti): Time (in seconds) to eliminate the integral error.",
+                    "option_type" : "float",
+                    "option_default" : 180.0, 
+                    "option_selection" : {}
+                },
+                {
+                    "option_name" : "center",
+                    "option_friendly_name" : "Center Ratio", 
+                    "option_description" : "Center of Cycle Ratio.",
+                    "option_type" : "float",
+                    "option_default" : 0.5, 
+                    "option_selection" : {}
+                }
+            ]
+        }
+    }
+}

@@ -1,16 +1,24 @@
 #!/usr/bin/env python3
 
-# *****************************************
-# PiFire Web UI (Flask App)
-# *****************************************
-#
-# Description: This script will start at boot, and start up the web user
-#  interface.
-#
-# This script runs as a separate process from the control program
-# implementation which handles interfacing and running I2C devices & GPIOs.
-#
-# *****************************************
+'''
+==============================================================================
+ PiFire Web UI (Flask App) Process
+==============================================================================
+
+Description: This script will start at boot, and start up the web user
+  interface.
+ 
+   This script runs as a separate process from the control program
+  implementation which handles interfacing and running I2C devices & GPIOs.
+
+==============================================================================
+'''
+
+'''
+==============================================================================
+ Imported Modules
+==============================================================================
+'''
 
 from flask import Flask, request, abort, render_template, make_response, send_file, jsonify, redirect, render_template_string
 from flask_mobility import Mobility
@@ -24,12 +32,18 @@ import zipfile
 import pathlib
 from threading import Thread
 from datetime import datetime
-from common import generate_uuid, _epoch_to_time, prepare_csv
+from common import generate_uuid, epoch_to_time, prepare_csv
 from updater import *  # Library for doing project updates from GitHub
-from file_common import fixup_assets, read_json_file_data, update_json_file_data, remove_assets
-from file_cookfile import read_cookfile, upgrade_cookfile, prepare_chartdata
-from file_media import add_asset, set_thumbnail, unpack_thumb
-from file_recipes import read_recipefile, create_recipefile
+from file_mgmt.common import fixup_assets, read_json_file_data, update_json_file_data, remove_assets
+from file_mgmt.cookfile import read_cookfile, upgrade_cookfile, prepare_chartdata
+from file_mgmt.media import add_asset, set_thumbnail, unpack_thumb
+from file_mgmt.recipes import read_recipefile, create_recipefile
+
+'''
+==============================================================================
+ Constants & Globals 
+==============================================================================
+'''
 
 BACKUP_PATH = './backups/'  # Path to backups of settings.json, pelletdb.json
 UPLOAD_FOLDER = BACKUP_PATH  # Point uploads to the backup path
@@ -46,6 +60,11 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['HISTORY_FOLDER'] = HISTORY_FOLDER
 app.config['RECIPE_FOLDER'] = RECIPE_FOLDER
 
+'''
+==============================================================================
+ App Routes
+==============================================================================
+'''
 @app.route('/')
 def index():
 	global settings
@@ -116,13 +135,13 @@ def timer():
 							control['notify_data'][index]['keep_warm'] = True
 						else:
 							control['notify_data'][index]['keep_warm'] = False
-					write_log('Timer started.  Ends at: ' + _epoch_to_time(control['timer']['end']))
+					write_log('Timer started.  Ends at: ' + epoch_to_time(control['timer']['end']))
 					write_control(control, origin='app')
 				else:	# If Timer was paused, restart with new end time.
 					now = time.time()
 					control['timer']['end'] = (control['timer']['end'] - control['timer']['paused']) + now
 					control['timer']['paused'] = 0
-					write_log('Timer unpaused.  Ends at: ' + _epoch_to_time(control['timer']['end']))
+					write_log('Timer unpaused.  Ends at: ' + epoch_to_time(control['timer']['end']))
 					write_control(control, origin='app')
 			elif 'timer_pause' == request.form['input']:
 				if control['timer']['start'] != 0:
@@ -174,8 +193,8 @@ def history_page(action=None):
 					for comment in comments:
 						comment['text'] = comment['text'].replace('\n', '<br>')
 					metadata = cookfilestruct['metadata']
-					metadata['starttime'] = _epoch_to_time(metadata['starttime'] / 1000)
-					metadata['endtime'] = _epoch_to_time(metadata['endtime'] / 1000)
+					metadata['starttime'] = epoch_to_time(metadata['starttime'] / 1000)
+					metadata['endtime'] = epoch_to_time(metadata['endtime'] / 1000)
 					labels = cookfilestruct['graph_labels']
 					assets = cookfilestruct['assets']
 					filenameonly = response['opencookfile']
@@ -431,8 +450,8 @@ def cookfiledata(action=None):
 				for comment in comments:
 					comment['text'] = comment['text'].replace('\n', '<br>')
 				metadata = cookfilestruct['metadata']
-				metadata['starttime'] = _epoch_to_time(metadata['starttime'] / 1000)
-				metadata['endtime'] = _epoch_to_time(metadata['endtime'] / 1000)
+				metadata['starttime'] = epoch_to_time(metadata['starttime'] / 1000)
+				metadata['endtime'] = epoch_to_time(metadata['endtime'] / 1000)
 				labels = cookfilestruct['graph_labels']
 				assets = cookfilestruct['assets']
 				
@@ -486,8 +505,8 @@ def cookfiledata(action=None):
 				for comment in comments:
 					comment['text'] = comment['text'].replace('\n', '<br>')
 				metadata = cookfilestruct['metadata']
-				metadata['starttime'] = _epoch_to_time(metadata['starttime'] / 1000)
-				metadata['endtime'] = _epoch_to_time(metadata['endtime'] / 1000)
+				metadata['starttime'] = epoch_to_time(metadata['starttime'] / 1000)
+				metadata['endtime'] = epoch_to_time(metadata['endtime'] / 1000)
 				labels = cookfilestruct['graph_labels']
 				assets = cookfilestruct['assets']
 
@@ -551,8 +570,8 @@ def cookfiledata(action=None):
 				for comment in comments:
 					comment['text'] = comment['text'].replace('\n', '<br>')
 				metadata = cookfilestruct['metadata']
-				metadata['starttime'] = _epoch_to_time(metadata['starttime'] / 1000)
-				metadata['endtime'] = _epoch_to_time(metadata['endtime'] / 1000)
+				metadata['starttime'] = epoch_to_time(metadata['starttime'] / 1000)
+				metadata['endtime'] = epoch_to_time(metadata['endtime'] / 1000)
 				labels = cookfilestruct['graph_labels']
 				assets = cookfilestruct['assets']
 
@@ -587,8 +606,8 @@ def cookfiledata(action=None):
 				for comment in comments:
 					comment['text'] = comment['text'].replace('\n', '<br>')
 				metadata = cookfilestruct['metadata']
-				metadata['starttime'] = _epoch_to_time(metadata['starttime'] / 1000)
-				metadata['endtime'] = _epoch_to_time(metadata['endtime'] / 1000)
+				metadata['starttime'] = epoch_to_time(metadata['starttime'] / 1000)
+				metadata['endtime'] = epoch_to_time(metadata['endtime'] / 1000)
 				labels = cookfilestruct['graph_labels']
 				assets = cookfilestruct['assets']
 
@@ -625,8 +644,8 @@ def cookfiledata(action=None):
 				for comment in comments:
 					comment['text'] = comment['text'].replace('\n', '<br>')
 				metadata = cookfilestruct['metadata']
-				metadata['starttime'] = _epoch_to_time(metadata['starttime'] / 1000)
-				metadata['endtime'] = _epoch_to_time(metadata['endtime'] / 1000)
+				metadata['starttime'] = epoch_to_time(metadata['starttime'] / 1000)
+				metadata['endtime'] = epoch_to_time(metadata['endtime'] / 1000)
 				labels = cookfilestruct['graph_labels']
 				assets = cookfilestruct['assets']
 
@@ -2863,7 +2882,9 @@ def metrics_page(action=None):
 							grill_name=settings['globals']['grill_name'], metrics_data=metrics_data)
 
 '''
-Supporting Functions
+==============================================================================
+ Supporting Functions
+==============================================================================
 '''
 
 def _create_safe_name(name): 
@@ -2957,7 +2978,7 @@ def _prepare_annotations(displayed_starttime, metrics_data=[]):
 		# Check if metric falls in the displayed time window
 		if metrics_data[index]['starttime'] > displayed_starttime:
 			# Convert Start Time
-			# starttime = _epoch_to_time(metrics_data[index]['starttime']/1000)
+			# starttime = epoch_to_time(metrics_data[index]['starttime']/1000)
 			mode = metrics_data[index]['mode']
 			color = 'blue'
 			if mode == 'Startup':
@@ -3249,7 +3270,9 @@ def _deep_dict_update(orig_dict, new_dict):
 	return orig_dict
 
 '''
-Socket IO for Android Functionality
+==============================================================================
+ SocketIO Section
+==============================================================================
 '''
 thread = Thread()
 thread_lock = threading.Lock()
@@ -3696,7 +3719,7 @@ def post_app_data(action=None, type=None, json_data=None):
 					control['timer']['end'] = now + seconds
 					control['notify_data']['timer_shutdown'] = request['timer_action']['timer_shutdown']
 					control['notify_data']['timer_keep_warm'] = request['timer_action']['timer_keep_warm']
-					write_log('Timer started.  Ends at: ' + _epoch_to_time(control['timer']['end']))
+					write_log('Timer started.  Ends at: ' + epoch_to_time(control['timer']['end']))
 					write_control(control, origin='app')
 					return {'response': {'result':'success'}}
 				else:
@@ -3705,7 +3728,7 @@ def post_app_data(action=None, type=None, json_data=None):
 				now = time.time()
 				control['timer']['end'] = (control['timer']['end'] - control['timer']['paused']) + now
 				control['timer']['paused'] = 0
-				write_log('Timer unpaused.  Ends at: ' + _epoch_to_time(control['timer']['end']))
+				write_log('Timer unpaused.  Ends at: ' + epoch_to_time(control['timer']['end']))
 				write_control(control, origin='app')
 				return {'response': {'result':'success'}}
 		elif type == 'pause_timer':
@@ -3806,7 +3829,9 @@ def post_restore_data(type='none', filename='none', json_data=None):
 		return {'response': {'result':'error', 'message':'Error: Received request without valid type'}}
 
 '''
-Main Program Start
+==============================================================================
+ Main Program Start
+==============================================================================
 '''
 settings = read_settings(init=True)
 
