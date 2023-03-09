@@ -1605,7 +1605,8 @@ def settings_page(action=None):
 						'A' : float(response['A_' + UniqueID]),
 						'B' : float(response['B_' + UniqueID]),
 						'C' : float(response['C_' + UniqueID]),
-						'name' : response['Name_' + UniqueID]
+						'name' : response['Name_' + UniqueID], 
+						'id' : UniqueID
 					}
 
 					if response['UniqueID_' + UniqueID] != UniqueID:
@@ -1632,13 +1633,15 @@ def settings_page(action=None):
 				response['Rd'] != '' and response['A'] != '' and response['B'] != '' and response['C'] != ''):
 			# Try to convert input values
 			try:
+				UniqueID = response['UniqueID']
 				settings['probe_settings']['probe_profiles'][response['UniqueID']] = {
 					'Vs' : float(response['Vs']),
 					'Rd' : int(response['Rd']),
 					'A' : float(response['A']),
 					'B' : float(response['B']),
 					'C' : float(response['C']),
-					'name' : response['Name']
+					'name' : response['Name'], 
+					'id' : UniqueID
 				}
 				event['type'] = 'updated'
 				event['text'] = 'Successfully added ' + response['Name'] + ' profile.'
