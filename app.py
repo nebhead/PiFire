@@ -2224,7 +2224,6 @@ def api_page(action=None):
 						probe_string += probe
 			probe_string += settings['globals']['units']
 
-			primary_setpoint = control['primary_setpoint']
 			notify_data = control['notify_data']
 
 			status = {}
@@ -2233,9 +2232,8 @@ def api_page(action=None):
 			status['s_plus'] = control['s_plus']
 			status['units'] = settings['globals']['units']
 			status['name'] = settings['globals']['grill_name']
-			status['primary_setpoint'] = control['primary_setpoint']
 			status['ui_hash'] = create_ui_hash()
-			return jsonify({'current':current_temps, 'primary_setpoint':primary_setpoint, 'notify_data':notify_data, 'status':status}), 201
+			return jsonify({'current':current_temps, 'notify_data':notify_data, 'status':status}), 201
 		elif action == 'hopper':
 			pelletdb = read_pellet_db()
 			pelletlevel = pelletdb['current']['hopper_level']

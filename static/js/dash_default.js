@@ -128,8 +128,8 @@ function updateProbeCards() {
 				// Check for mode change
 				if (mode != current.status.mode) {
 					if (current.status.mode == 'Hold') {
-						setPrimarySetpointBtn(primary, current.status.primary_setpoint);
-						primary_setpoint = current.status.primary_setpoint;
+						setPrimarySetpointBtn(primary, current.current.PSP);
+						primary_setpoint = current.current.PSP;
 					} else {
 						clearPrimarySetpointBtn(primary);
 					};
@@ -137,9 +137,9 @@ function updateProbeCards() {
 				};
 
 				// Check for a primary_setpoint change
-				if ((primary_setpoint != current.status.primary_setpoint) && (current.status.mode == 'Hold')) {
-					setPrimarySetpointBtn(primary, current.status.primary_setpoint);
-					primary_setpoint = current.status.primary_setpoint;
+				if ((primary_setpoint != current.current.PSP) && (current.status.mode == 'Hold')) {
+					setPrimarySetpointBtn(primary, current.current.PSP);
+					primary_setpoint = current.current.PSP;
 				};					
 			};
 		}
