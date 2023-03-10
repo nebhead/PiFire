@@ -2278,6 +2278,7 @@ def wizard(action=None):
 	global settings
 
 	wizardData = read_wizard()
+	errors = []
 
 	if request.method == 'GET':
 		if action=='installstatus':
@@ -2290,12 +2291,17 @@ def wizard(action=None):
 			write_settings(settings)
 			return redirect('/')
 		if action=='finish':
-			wizardInstallInfo = prepare_wizard_data(r)
-			store_wizard_install_info(wizardInstallInfo)
-			set_wizard_install_status(0, 'Starting Install...', '')
-			os.system('python3 wizard.py &')	# Kickoff Installation
-			return render_template('wizard-finish.html', page_theme=settings['globals']['page_theme'],
-								   grill_name=settings['globals']['grill_name'], wizardData=wizardData)
+			control = read_control()
+			if control['mode'] == 'Stop':
+				wizardInstallInfo = prepare_wizard_data(r)
+				store_wizard_install_info(wizardInstallInfo)
+				set_wizard_install_status(0, 'Starting Install...', '')
+				os.system('python3 wizard.py &')	# Kickoff Installation
+				return render_template('wizard-finish.html', page_theme=settings['globals']['page_theme'],
+									grill_name=settings['globals']['grill_name'], wizardData=wizardData)
+			else:
+				errors.append('PiFire configuration wizard cannot be run while the system is active.  Please stop the current cook before continuing.')
+
 		if action=='modulecard':
 			module = r['module']
 			section = r['section']
@@ -2315,7 +2321,7 @@ def wizard(action=None):
 	store_wizard_install_info(wizardInstallInfo) 
 
 	return render_template('wizard.html', settings=settings, page_theme=settings['globals']['page_theme'],
-						   grill_name=settings['globals']['grill_name'], wizardData=wizardData, wizardInstallInfo=wizardInstallInfo)
+						   grill_name=settings['globals']['grill_name'], wizardData=wizardData, wizardInstallInfo=wizardInstallInfo, errors=errors)
 
 def wizardInstallInfoDefaults(wizardData):
 	
@@ -2838,10 +2844,23 @@ def update_page(action=None):
 									   grill_name=settings['globals']['grill_name'])
 
 		if 'do_update' in r:
-			set_updater_install_status(0, 'Starting Update...', '')
-			os.system('python3 %s %s %s &' % ('updater.py', '-u', update_data['branch_target']))  # Kickoff Update
-			return render_template('updater-status.html', page_theme=settings['globals']['page_theme'],
-								   grill_name=settings['globals']['grill_name'])
+			control = read_control()
+			if control['mode'] == 'Stop':
+				set_updater_install_status(0, 'Starting Update...', '')
+				os.system('python3 %s %s %s &' % ('updater.py', '-u', update_data['branch_target']))  # Kickoff Update
+				return render_template('updater-status.html', page_theme=settings['globals']['page_theme'],
+									grill_name=settings['globals']['grill_name'])
+			else:
+				alert = {
+					'type' : 'error',
+					'text' : f'PiFire System Update cannot be completed when the system is active.  Please shutdown/stop your smoker before retrying.'
+				}
+				update_data = get_update_data(settings)
+				return render_template('updater.html', alert=alert, settings=settings,
+									page_theme=settings['globals']['page_theme'],
+									grill_name=settings['globals']['grill_name'],
+									update_data=update_data)
+
 
 		if 'show_log' in r:
 			if r['show_log'].isnumeric():
