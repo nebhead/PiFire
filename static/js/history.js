@@ -25,6 +25,9 @@ var temperatureCharts = new Chart(document.getElementById('HistoryChart'), {
 			}, 
 			annotation: {
 				annotations: {}
+			},
+			streaming: {
+				frameRate: 5   // chart is drawn 5 times every second
 			}
 		},
 		scales: {
