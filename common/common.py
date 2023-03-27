@@ -1596,4 +1596,8 @@ def seconds_to_string(seconds):
 	else: 
 		time_string = f'{s}s'
 
-	return time_string 
+	return time_string
+
+def read_generic_json(filename):
+	f = open(filename)
+	return json.load(f)

@@ -1,0 +1,49 @@
+{% macro render_controller_config(selected, metadata, settings) %}
+
+<div class="card shadow">
+    <div class="card-body">
+        {{ metadata[selected]['description'] }}
+        <br><br>
+        {% if metadata[selected]['config'] != [] %}
+        <table class="table">
+            <thead class="thead-light">
+                <tr>
+                <th scope="col">Option</th>
+                <th scope="col">Setting</th>
+                <th scope="col">Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for option in metadata[selected]['config'] %}
+                <tr {% if option['hidden'] %} hidden {% endif %}>
+                    <td>{{ option['option_friendly_name'] }}</td>
+                    <td>
+                        {% if option['option_type'] == 'float' %}
+                            {% if selected == settings['selected'] %}
+                                {{ render_input_float(option['option_friendly_name'], option['option_name'], settings['config'][option['option_name']], option['option_min'], option['option_max'], option['option_step']) }} 
+                            {% else %}
+                                {{ render_input_float(option['option_friendly_name'], option['option_name'], option['option_default'], option['option_min'], option['option_max'], option['option_step']) }} 
+                            {% endif %}
+                        {% else %}
+                          Placeholder for {{ option['option_type'] }} 
+                        {% endif %}
+                    </td>
+                    <td>{{ option['option_description'] }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <i><strong>Note:</strong> No configuration options are exposed for this controller.</i>
+        {% endif %}
+    </div>
+</div>
+
+{% endmacro %}
+
+
+{% macro render_input_float(label, name, value, min, max, step) %}
+<input type="number" class="form-control" value="{{ value }}" aria-label="{{ label }}" 
+    aria-describedby="{{name}}_addon" name="controller_config_{{ name }}" min="{{ min }}" 
+    max="{{ max }}" step="{{ step }}"/>
+{% endmacro %}  

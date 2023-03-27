@@ -21,9 +21,10 @@ Class Definition
 '''
 
 class ControllerBase:
-	def __init__(self, config):
+	def __init__(self, config, units, cycle_data):
 		self.config = config
-		self.set_target(0.0)
+		self.units = units
+		self.cycle_data = cycle_data 
 
 	def update(self, current):
 		'''

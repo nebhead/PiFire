@@ -8,37 +8,61 @@
             "config" : [
                 {
                     "option_name" : "PB",
-                    "option_friendly_name" : "PB", 
-                    "option_description" : "Proportional Band(PB): This is the temperature band centered around the set point, that the controller is active.  If the error is greater than PB/2, the command is 0.  If the error is less than PB/2, the command is 1.0",
+                    "option_friendly_name" : "Proportional Band(PB)", 
+                    "option_description" : "This is the temperature band centered around the set point, that the controller is active.  If the error is greater than PB/2, the command is 0.  If the error is less than PB/2, the command is 1.0",
                     "option_type" : "float",
-                    "option_default" : 60.0, 
-                    "option_selection" : {}
+                    "option_default" : 60.0,
+                    "option_min" : null,
+                    "option_max" : null, 
+                    "option_step" : 0.1,
+                    "option_selection" : {},
+                    "hidden" : false
                 },
                 {
                     "option_name" : "Td",
-                    "option_friendly_name" : "Td", 
-                    "option_description" : "Derivative Time (Td): Time (in seconds) to predict the future value.",
+                    "option_friendly_name" : "Derivative Time (Td)", 
+                    "option_description" : "Time (in seconds) to predict the future value.",
                     "option_type" : "float",
-                    "option_default" : 45.0, 
-                    "option_selection" : {}
+                    "option_default" : 45.0,
+                    "option_min" : null,
+                    "option_max" : null,
+                    "option_step" : 0.1,  
+                    "option_selection" : {},
+                    "hidden" : false
                 },
                 {
                     "option_name" : "Ti",
-                    "option_friendly_name" : "Ti", 
-                    "option_description" : "Integral Time (Ti): Time (in seconds) to eliminate the integral error.",
+                    "option_friendly_name" : "Integral Time (Ti)", 
+                    "option_description" : "Time (in seconds) to eliminate the integral error.",
                     "option_type" : "float",
-                    "option_default" : 180.0, 
-                    "option_selection" : {}
+                    "option_default" : 180.0,
+                    "option_min" : null,
+                    "option_max" : null, 
+                    "option_step" : 0.1,
+                    "option_selection" : {},
+                    "hidden" : false
                 },
                 {
                     "option_name" : "center",
                     "option_friendly_name" : "Center Ratio", 
-                    "option_description" : "Center of Cycle Ratio.",
+                    "option_description" : "Center of Cycle Ratio, which is specific to the way this PID will behave.",
                     "option_type" : "float",
-                    "option_default" : 0.5, 
-                    "option_selection" : {}
+                    "option_default" : 0.5,
+                    "option_min" : null,
+                    "option_max" : null, 
+                    "option_step" : 0.01, 
+                    "option_selection" : {},
+                    "hidden" : false
                 }
             ]
+        },
+        "fuzzy" : {
+            "friendly_name" : "Fuzzy Logic Controller",
+            "module_name" : "fuzzy",
+            "image" : "",
+            "description" : "This is an attempt at designing a fuzzy logic controller for set temperature control.  It is currently using Scikit Fuzzy's Python Module to implement a relatively straightforward fuzzy logic controller.  This controller should be considered pre-Alpha and extremely experimental.  This module will store the fuzzy logic controller in an object, which is saved/pickled in the controller directory, named 'fuzzy.pickle'.  If any changes are made to the default fuzzy logic controller settings, then this pickle file should be deleted so that a new object can be created with new settings.  Note that it may take a very long time for the object to be generated on the Raspberry Pi due to the limited performance capabilities of that processor.",
+            "config" : []
         }
+
     }
 }
