@@ -3,8 +3,19 @@
         "pid" : {
             "friendly_name" : "PID Standard",
             "module_name" : "pid",
-            "image" : "",
-            "description" : "The standard PID controller for PiFire, used by default. This software was originally developed by GitHub user DBorello as part of his excellent PiSmoker project: https://github.com/DBorello/PiSmoker.  Slightly modified by @weberbox and adapted for PiFire. ",
+            "image" : "pid.png",
+            "description" : "The standard PID controller for PiFire, used by default. This software was originally developed by GitHub user DBorello as part of his excellent PiSmoker project.  Slightly modified by @weberbox and adapted for PiFire. ",
+            "author" : "Dan Borello",
+            "link" : "https://github.com/DBorello/PiSmoker", 
+            "contributors" : ["Ben Parmeter", "James Weber"],
+            "attributions" : [],
+            "recommendations" : {
+                "cycle" : { 
+                    "cycle_time" : 25,
+                    "cycle_ratio_min" : 0.1,
+                    "cycle_ratio_max" : 0.9
+                }   
+            },
             "config" : [
                 {
                     "option_name" : "PB",
@@ -15,7 +26,6 @@
                     "option_min" : null,
                     "option_max" : null, 
                     "option_step" : 0.1,
-                    "option_selection" : {},
                     "hidden" : false
                 },
                 {
@@ -27,7 +37,6 @@
                     "option_min" : null,
                     "option_max" : null,
                     "option_step" : 0.1,  
-                    "option_selection" : {},
                     "hidden" : false
                 },
                 {
@@ -39,7 +48,6 @@
                     "option_min" : null,
                     "option_max" : null, 
                     "option_step" : 0.1,
-                    "option_selection" : {},
                     "hidden" : false
                 },
                 {
@@ -51,7 +59,6 @@
                     "option_min" : null,
                     "option_max" : null, 
                     "option_step" : 0.01, 
-                    "option_selection" : {},
                     "hidden" : false
                 }
             ]
@@ -59,10 +66,20 @@
         "fuzzy" : {
             "friendly_name" : "Fuzzy Logic Controller",
             "module_name" : "fuzzy",
-            "image" : "",
+            "image" : "fuzzy.png",
             "description" : "This is an attempt at designing a fuzzy logic controller for set temperature control.  It is currently using Scikit Fuzzy's Python Module to implement a relatively straightforward fuzzy logic controller.  This controller should be considered pre-Alpha and extremely experimental.  This module will store the fuzzy logic controller in an object, which is saved/pickled in the controller directory, named 'fuzzy.pickle'.  If any changes are made to the default fuzzy logic controller settings, then this pickle file should be deleted so that a new object can be created with new settings.  Note that it may take a very long time for the object to be generated on the Raspberry Pi due to the limited performance capabilities of that processor.",
+            "author" : "Ben Parmeter",
+            "link" : "https://nebhead.github.io/PiFire", 
+            "contributors" : [],
+            "attributions" : ["Sci-Kit Fuzzy"],
+            "recommendations" : {
+                "cycle" : { 
+                    "cycle_time" : 25,
+                    "cycle_ratio_min" : 0.1,
+                    "cycle_ratio_max" : 1.0
+                }   
+            },
             "config" : []
         }
-
     }
 }

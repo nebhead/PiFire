@@ -1659,8 +1659,12 @@ def settings_page(action=None):
 
 	if request.method == 'POST' and action == 'controller_card':
 		response = request.form
-		render_string = "{% from '_macro_settings.html' import render_controller_config %}{{ render_controller_config(selected, metadata, settings) }}"
-		return render_template_string(render_string, selected=response['selected'], metadata=controller['metadata'], settings=settings['controller'])
+		render_string = "{% from '_macro_settings.html' import render_controller_config %}{{ render_controller_config(selected, metadata, settings, cycle_data) }}"
+		return render_template_string(render_string, 
+				selected=response['selected'], 
+				metadata=controller['metadata'], 
+				settings=settings['controller'],
+				cycle_data=settings['cycle_data'])
 
 	if request.method == 'POST' and action == 'cycle':
 		response = request.form
@@ -1714,7 +1718,7 @@ def settings_page(action=None):
 			# Select Controller Type
 			selected = response['selectController']
 			settings['controller']['selected'] = selected
-			settings['controller']['config'] = {}
+			settings['controller']['config'][selected] = {}
 			# Save Controller Configuration 
 			for item, value in response.items(): 
 				if item.startswith('controller_config_'):
@@ -1722,13 +1726,15 @@ def settings_page(action=None):
 					for option in controller['metadata'][selected]['config']:
 						if option_name == option['option_name']: 
 							if option['option_type'] == 'float':
-								settings['controller']['config'][option_name] = float(value) 
+								settings['controller']['config'][selected][option_name] = float(value) 
 							elif option['option_type'] == 'int':
-								settings['controller']['config'][option_name] = int(value)
-							elif option['option_type'] == 'boolean':
-								settings['controller']['config'][option_name] = bool(value)
+								settings['controller']['config'][selected][option_name] = int(value)
+							elif option['option_type'] == 'bool':
+								settings['controller']['config'][selected][option_name] = True if value == 'true' else False 
+							elif option['option_type'] == 'numlist':
+								settings['controller']['config'][selected][option_name] = float(value)
 							else: 
-								settings['controller']['config'][option_name] = value
+								settings['controller']['config'][selected][option_name] = value
  
 		event['type'] = 'updated'
 		event['text'] = 'Successfully updated cycle settings.'
