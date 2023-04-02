@@ -25,7 +25,7 @@
 '''
 Imported Libraries
 '''
-#import time
+import time
 from controller.base import ControllerBase
 import numpy as np
 import skfuzzy as fuzz
@@ -56,17 +56,36 @@ class Controller(ControllerBase):
         except: 
             self.controlLogger.exception('An exception occurred when attempting to open the fuzzy.pickle file.')
         self.set_target(0.0)
+        self.last_temp = -99
+        self.last_time = time.time()
+        self.cycle_time = cycle_data['HoldCycleTime']
 
     def update(self, current):
         if self.units == 'C':
             current = int(current * (9/5) + 32) # Celsius to Fahrenheit
 
+        now = time.time()
+
+        cycle_time = now - self.last_time
+
+        self.last_time = now 
+
+        if self.last_temp == -99:
+            self.last_temp == current
+            cycle_time = self.cycle_time
+
         # Pass inputs to the ControlSystem using Antecedent labels with Pythonic API
         self.fuzzy_controller.input['delta'] = self.set_point - current  # Delta = Set Point - Current Temperature
-        self.fuzzy_controller.input['current'] = current  # Current temperature 
+        self.fuzzy_controller.input['current'] = current  # Current temperature
+        self.fuzzy_controller.input['rate_of_change'] = (current - self.last_temp) / cycle_time  # Rate of Change
 
         # Crunch the numbers
         self.fuzzy_controller.compute()
+
+        # Set last temp to current temp 
+        self.last_temp = current 
+
+        # Return the Cycle Ratio Computed 
         return self.fuzzy_controller.output["cycleratio"]
 
     def set_target(self, set_point):
