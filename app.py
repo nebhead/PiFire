@@ -33,6 +33,7 @@ import pathlib
 from threading import Thread
 from datetime import datetime
 from common import generate_uuid, epoch_to_time, prepare_csv
+from common.hacks import hack_read_control, hack_write_control, hack_read_settings, hack_write_settings, hack_prepare_data, hack_read_current
 from updater import *  # Library for doing project updates from GitHub
 from file_mgmt.common import fixup_assets, read_json_file_data, update_json_file_data, remove_assets
 from file_mgmt.cookfile import read_cookfile, upgrade_cookfile, prepare_chartdata
@@ -2954,67 +2955,6 @@ def create_ui_hash():
 	global settings 
 	return hash(json.dumps(settings['probe_settings']['probe_map']['probe_info']))
 
-def _prepare_data(num_items=10, reduce=True, data_points=60):
-	# num_items: Number of items to store in the data blob
-	global settings
-	units = settings['globals']['units']
-
-	data_struct = read_history(num_items)
-
-	data_blob = {}
-
-	data_blob['label_time_list'] = []
-	data_blob['grill_temp_list'] = []
-	data_blob['grill_settemp_list'] = []
-	data_blob['probe1_temp_list'] = []
-	data_blob['probe1_settemp_list'] = []
-	data_blob['probe2_temp_list'] = []
-	data_blob['probe2_settemp_list'] = []
-	
-	list_length = len(data_struct['T']) # Length of list(s)
-
-	if (list_length < num_items) and (list_length > 0):
-		num_items = list_length
-
-	if reduce and (num_items > data_points):
-		step = int(num_items/data_points)
-	else:
-		step = 1
-
-	if (list_length > 0):
-		# Build all lists from file data
-		for index in range(list_length - num_items, list_length, step):
-			if(units == 'F'):
-				data_blob['label_time_list'].append(int(data_struct['T'][index]))  # Timestamp format is int, so convert from str
-				data_blob['grill_temp_list'].append(int(data_struct['GT1'][index]))
-				data_blob['grill_settemp_list'].append(int(data_struct['GSP1'][index]))
-				data_blob['probe1_temp_list'].append(int(data_struct['PT1'][index]))
-				data_blob['probe1_settemp_list'].append(int(data_struct['PSP1'][index]))
-				data_blob['probe2_temp_list'].append(int(data_struct['PT2'][index]))
-				data_blob['probe2_settemp_list'].append(int(data_struct['PSP2'][index]))
-			else: 
-				data_blob['label_time_list'].append(int(data_struct['T'][index]))  # Timestamp format is int, so convert from str
-				data_blob['grill_temp_list'].append(float(data_struct['GT1'][index]))
-				data_blob['grill_settemp_list'].append(float(data_struct['GSP1'][index]))
-				data_blob['probe1_temp_list'].append(float(data_struct['PT1'][index]))
-				data_blob['probe1_settemp_list'].append(float(data_struct['PSP1'][index]))
-				data_blob['probe2_temp_list'].append(float(data_struct['PT2'][index]))
-				data_blob['probe2_settemp_list'].append(float(data_struct['PSP2'][index]))
-	else:
-		now = datetime.datetime.now()
-		#time_now = now.strftime('%H:%M:%S')
-		time_now = int(now.timestamp() * 1000)  # Use timestamp format (int) instead of H:M:S format in string
-		for index in range(num_items):
-			data_blob['label_time_list'].append(time_now)
-			data_blob['grill_temp_list'].append(0)
-			data_blob['grill_settemp_list'].append(0)
-			data_blob['probe1_temp_list'].append(0)
-			data_blob['probe1_settemp_list'].append(0)
-			data_blob['probe2_temp_list'].append(0)
-			data_blob['probe2_settemp_list'].append(0)
-
-	return(data_blob)
-
 def _prepare_annotations(displayed_starttime, metrics_data=[]):
 	if(metrics_data == []):
 		metrics_data = read_metrics(all=True)
@@ -3351,12 +3291,12 @@ def emit_dash_data():
 	previous_data = ''
 
 	while (clients > 0):
-		global settings
-		control = read_control()
+		settings = hack_read_settings()
+		control = hack_read_control()
 		pelletdb = read_pellet_db()
 
 		probes_enabled = settings['probe_settings']['probes_enabled']
-		cur_probe_temps = read_current()
+		cur_probe_temps = hack_read_current()
 
 		current_temps = {
 			'grill_temp' : cur_probe_temps[0],
@@ -3415,7 +3355,7 @@ def emit_dash_data():
 
 @socketio.on('get_app_data')
 def get_app_data(action=None, type=None):
-	global settings
+	settings = hack_read_settings()
 
 	if action == 'settings_data':
 		return settings
@@ -3429,10 +3369,10 @@ def get_app_data(action=None, type=None):
 		for x in range(min(num_events, 60)):
 			events_trim.append(event_list[x])
 		return { 'events_list' : events_trim }
-
+	
 	elif action == 'history_data':
 		num_items = settings['history_page']['minutes'] * 20
-		data_blob = _prepare_data(num_items, True, settings['history_page']['datapoints'])
+		data_blob = hack_prepare_data(num_items, True, settings['history_page']['datapoints'])
 		# Converting time format from 'time from epoch' to H:M:S
 		# @weberbox:  Trying to keep the legacy format for the time labels so that I don't break the Android app
 		for index in range(0, len(data_blob['label_time_list'])): 
@@ -3459,7 +3399,7 @@ def get_app_data(action=None, type=None):
 			'server_version' : settings['versions']['server'] }
 
 	elif action == 'manual_data':
-		control = read_control()
+		control = hack_read_control()
 		return {
 			'manual' : control['manual'],
 			'mode' : control['mode'] }
@@ -3533,7 +3473,7 @@ def get_app_data(action=None, type=None):
 
 @socketio.on('post_app_data')
 def post_app_data(action=None, type=None, json_data=None):
-	global settings
+	settings = hack_read_settings()
 
 	if json_data is not None:
 		request = json.loads(json_data)
@@ -3545,16 +3485,16 @@ def post_app_data(action=None, type=None, json_data=None):
 			for key in request.keys():
 				if key in settings.keys():
 					settings = _deep_dict_update(settings, request)
-					write_settings(settings)
+					hack_write_settings(settings)
 					return {'response': {'result':'success'}}
 				else:
 					return {'response': {'result':'error', 'message':'Error: Key not found in settings'}}
 		elif type == 'control':
-			control = read_control()
+			control = hack_read_control()
 			for key in request.keys():
 				if key in control.keys():
 					control = _deep_dict_update(control, request)
-					write_control(control, origin='app')
+					hack_write_control(control, origin='app-socketio')
 					return {'response': {'result':'success'}}
 				else:
 					return {'response': {'result':'error', 'message':'Error: Key not found in control'}}
@@ -3587,7 +3527,7 @@ def post_app_data(action=None, type=None, json_data=None):
 			settings = default_settings()
 			control = default_control()
 			write_settings(settings)
-			write_control(control, origin='app')
+			write_control(control, origin='app-socketio')
 			write_log('Resetting Settings, Control, History to factory defaults.')
 			return {'response': {'result':'success'}}
 		elif type == 'reboot':
@@ -3608,20 +3548,20 @@ def post_app_data(action=None, type=None, json_data=None):
 	elif action == 'units_action':
 		if type == 'f_units' and settings['globals']['units'] == 'C':
 			settings = convert_settings_units('F', settings)
-			write_settings(settings)
-			control = read_control()
+			hack_write_settings(settings)
+			control = hack_read_control()
 			control['updated'] = True
 			control['units_change'] = True
-			write_control(control, origin='app')
+			hack_write_control(control, origin='app-socketio')
 			write_log("Changed units to Fahrenheit")
 			return {'response': {'result':'success'}}
 		elif type == 'c_units' and settings['globals']['units'] == 'F':
 			settings = convert_settings_units('C', settings)
-			write_settings(settings)
-			control = read_control()
+			hack_write_settings(settings)
+			control = hack_read_control()
 			control['updated'] = True
 			control['units_change'] = True
-			write_control(control, origin='app')
+			hack_write_control(control, origin='app-socketio')
 			write_log("Changed units to Celsius")
 			return {'response': {'result':'success'}}
 		else:
@@ -3633,7 +3573,7 @@ def post_app_data(action=None, type=None, json_data=None):
 				device = request['onesignal_device']['onesignal_player_id']
 				if device in settings['onesignal']['devices']:
 					settings['onesignal']['devices'].pop(device)
-				write_settings(settings)
+				hack_write_settings(settings)
 				return {'response': {'result':'success'}}
 			else:
 				return {'response': {'result':'error', 'message':'Error: Device not specified'}}
@@ -3650,17 +3590,17 @@ def post_app_data(action=None, type=None, json_data=None):
 				pelletdb['current']['date_loaded'] = now
 				pelletdb['current']['est_usage'] = 0
 				pelletdb['log'][now] = request['pellets_action']['profile']
-				control = read_control()
+				control = hack_read_control()
 				control['hopper_check'] = True
-				write_control(control, origin='app')
+				hack_write_control(control, origin='app-socketio')
 				write_pellet_db(pelletdb)
 				return {'response': {'result':'success'}}
 			else:
 				return {'response': {'result':'error', 'message':'Error: Profile not included in request'}}
 		elif type == 'hopper_check':
-			control = read_control()
+			control = hack_read_control()
 			control['hopper_check'] = True
-			write_control(control, origin='app')
+			hack_write_control(control, origin='app-socketio')
 			return {'response': {'result':'success'}}
 		elif type == 'edit_brands':
 			if 'delete_brand' in request['pellets_action']:
@@ -3702,9 +3642,9 @@ def post_app_data(action=None, type=None, json_data=None):
 				'comments' : request['pellets_action']['comments'] }
 			if request['pellets_action']['add_and_load']:
 				pelletdb['current']['pelletid'] = profile_id
-				control = read_control()
+				control = hack_read_control()
 				control['hopper_check'] = True
-				write_control(control, origin='app')
+				hack_write_control(control, origin='app-socketio')
 				now = str(datetime.datetime.now())
 				now = now[0:19]
 				pelletdb['current']['date_loaded'] = now
@@ -3753,7 +3693,7 @@ def post_app_data(action=None, type=None, json_data=None):
 			return {'response': {'result':'error', 'message':'Error: Received request without valid type'}}
 
 	elif action == 'timer_action':
-		control = read_control()
+		control = hack_read_control()
 		if type == 'start_timer':
 			control['notify_req']['timer'] = True
 			if control['timer']['paused'] == 0:
@@ -3766,7 +3706,7 @@ def post_app_data(action=None, type=None, json_data=None):
 					control['notify_data']['timer_shutdown'] = request['timer_action']['timer_shutdown']
 					control['notify_data']['timer_keep_warm'] = request['timer_action']['timer_keep_warm']
 					write_log('Timer started.  Ends at: ' + epoch_to_time(control['timer']['end']))
-					write_control(control, origin='app')
+					hack_write_control(control, origin='app-socketio')
 					return {'response': {'result':'success'}}
 				else:
 					return {'response': {'result':'error', 'message':'Error: Start time not specified'}}
@@ -3775,14 +3715,14 @@ def post_app_data(action=None, type=None, json_data=None):
 				control['timer']['end'] = (control['timer']['end'] - control['timer']['paused']) + now
 				control['timer']['paused'] = 0
 				write_log('Timer unpaused.  Ends at: ' + epoch_to_time(control['timer']['end']))
-				write_control(control, origin='app')
+				hack_write_control(control, origin='app-socketio')
 				return {'response': {'result':'success'}}
 		elif type == 'pause_timer':
 			control['notify_req']['timer'] = False
 			now = time.time()
 			control['timer']['paused'] = now
 			write_log('Timer paused.')
-			write_control(control, origin='app')
+			hack_write_control(control, origin='app-socketio')
 			return {'response': {'result':'success'}}
 		elif type == 'stop_timer':
 			control['notify_req']['timer'] = False
@@ -3792,7 +3732,7 @@ def post_app_data(action=None, type=None, json_data=None):
 			control['notify_data']['timer_shutdown'] = False
 			control['notify_data']['timer_keep_warm'] = False
 			write_log('Timer stopped.')
-			write_control(control, origin='app')
+			hack_write_control(control, origin='app-socketio')
 			return {'response': {'result':'success'}}
 		else:
 			return {'response': {'result':'error', 'message':'Error: Received request without valid type'}}
