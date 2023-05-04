@@ -5,6 +5,20 @@ This utility will overwrite the ml_model.joblib file, with a new version.
 
 Ideally this should be run on a sufficiently powered PC, so that the ml object
 can simply be called by the Raspberry Pi when running.  
+
+This utility takes in the ml_dataset.csv file in the following format: 
+
+    current,setpoint,rate_change,cycle_ratio
+    105,165,1,1
+    139,165,1.61904761904762,0.224308435494124
+    169,165,1.42857142857143,0.05
+    181,165,0.571428571428571,0.05
+    185,165,0.19047619047619,0.213058885676354
+    ... 
+
+This data should be scrubbed to remove startup, smoke or shutdown cycles.  
+It should also ideally be scrubbed of duplicate data points.  
+Rate of change is: current - last / cycle time 
 '''
 
 import pandas as pd 

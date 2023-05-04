@@ -33,10 +33,10 @@ class Controller(ControllerBase):
 	def __init__(self, config, units, cycle_data):
 		super().__init__(config, units, cycle_data)
 		try:
-			self.model = joblib.load('ml_model.joblib')
+			self.model = load('./controller/ml_model.joblib')
 		except: 
 			''' Error loading model '''
-			pass 
+			raise
 		self.set_target(0.0)
 		self.last_temp = -99
 		self.last_time = time.time()
@@ -60,7 +60,7 @@ class Controller(ControllerBase):
 
 		cycle_ratio = self.model.predict([[current, self.set_point, rate_of_change]])
 
-		return cycle_ratio
+		return cycle_ratio[0]
 
 	def set_target(self, set_point):
 		self.set_point = set_point
