@@ -13,7 +13,8 @@
     "control": {
       "py_dependencies": [
         "apprise",
-        "scikit-fuzzy"
+        "scikit-fuzzy",
+        "scikit-learn"
       ],
       "apt_dependencies": [
         "libatlas-base-dev"

@@ -128,13 +128,6 @@ def default_settings():
 		},
 	}
 
-	# PID controller based on proportional band in standard PID form
-	# https://en.wikipedia.org/wiki/PID_controller#Ideal_versus_standard_PID_form
-	# u = Kp (e(t)+ 1/Ti INT + Td de/dt)
-	# PB = Proportional Band
-	# Ti = Goal of eliminating in Ti seconds
-	# Td = Predicts error value at Td in seconds
-
 	settings['cycle_data'] = {
 		'HoldCycleTime' : 20,
 		'SmokeCycleTime' : 15,
