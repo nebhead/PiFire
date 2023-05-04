@@ -73,6 +73,7 @@ echo "**                                                                     **"
 echo "*************************************************************************"
 $SUDO apt install python3-dev python3-pip python3-pil libfreetype6-dev libjpeg-dev build-essential libopenjp2-7 libtiff5 nginx git gunicorn3 supervisor ttf-mscorefonts-installer redis-server -y
 $SUDO apt install python3-rpi.gpio -y
+$SUDO apt install -y python3-scipy
 $SUDO pip3 install flask
 $SUDO pip3 install flask-mobility
 $SUDO pip3 install flask-qrcode
@@ -83,6 +84,8 @@ $SUDO pip3 install redis
 $SUDO pip3 install uuid
 $SUDO pip3 install influxdb-client[ciso]
 $SUDO pip3 install apprise
+$SUDO pip3 install scikit-fuzzy
+$SUDO apt install libatlas-base-dev -y
 
 # Setup config.txt to enable busses 
 clear

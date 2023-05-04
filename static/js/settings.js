@@ -633,6 +633,11 @@ function onAddPWM() {
 	};
 };
 
+// Function to change the controller card selected 
+$('#selectController').on('change', function() {
+	$('#controller_config').load("/settings/controller_card", {"selected" : this.value});
+});
+
 // On page load...
 $(document).ready(function() {
 	// Setup Color Picker for all elements whose id starts with 'clrpck_'

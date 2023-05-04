@@ -18,6 +18,14 @@
   PB = Proportional Band
   Ti = Goal of eliminating in Ti seconds
   Td = Predicts error value at Td in seconds
+  
+  Configuration Defaults: 
+  "config": {
+      "PB": 60.0,
+      "Td": 45.0,
+      "Ti": 180.0,
+      "center": 0.5
+   }
 
 *****************************************
 '''
@@ -32,8 +40,8 @@ from controller.base import ControllerBase
 Class Definition
 '''
 class Controller(ControllerBase):
-	def __init__(self, config):
-		super().__init__(config)
+	def __init__(self, config, units, cycle_data):
+		super().__init__(config, units, cycle_data)
 
 		self._calculate_gains(config['PB'], config['Ti'], config['Td'])
 

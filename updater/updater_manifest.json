@@ -6,13 +6,18 @@
         "flask_socketio",
         "flask_qrcode"
       ],
-      "apt_dependencies": []
+      "apt_dependencies": [
+        "python3-scipy"
+      ]
     },
     "control": {
       "py_dependencies": [
-        "apprise"
+        "apprise",
+        "scikit-fuzzy"
       ],
-      "apt_dependencies": []
+      "apt_dependencies": [
+        "libatlas-base-dev"
+      ]
     }
   }
 }

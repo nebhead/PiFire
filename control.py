@@ -362,8 +362,8 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		except:
 			controlLogger.exception(f'Error occurred loading controller module({controller_type}). Trace dump: ')
 			status = 'Inactive'
-		controllerCore = controller_module.Controller(settings['controller']['config'])
-		controllerCore.set_target(control['primary_setpoint'])  # Initialize with setpoint for grill
+		controllerCore = controller_module.Controller(settings['controller']['config'][controller_type], settings['globals']['units'], settings['cycle_data'])
+		controllerCore.set_target(control['primary_setpoint'])  # Initialize with Set Point for grill
 		eventLogger.debug('On Time = ' + str(OnTime) + ', OffTime = ' + str(OffTime) + ', CycleTime = ' + str(
 			CycleTime) + ', CycleRatio = ' + str(CycleRatio))
 

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from '_macro_settings.html' import render_controller_config %}
 
 {% block cssextend %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-colorpicker.min.css') }}" type="text/css" />
@@ -492,72 +493,35 @@
                             <div class="card shadow">
                                 <div class="card-header">
                                     <h5>
-                                        <i class="fas fa-tools"></i>&nbsp; PID Settings (HOLD Mode)
+                                        <i class="fas fa-microchip"></i>&nbsp; Controller Configuration (HOLD Mode)
                                     </h5>
                                 </div>
                                 <div class="card-body">
-                                    <div class="input-group mb-3">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text" data-toggle="tooltip" title="Cycle Time for PID Controller (seconds)[Default=20]">
-                                                <i class="far fa-clock"></i>&nbsp; Cycle Time
-                                            </span>
-                                        </div>
-                                        <input id="holdcycletime" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['HoldCycleTime'] }}" value="{{ settings['cycle_data']['HoldCycleTime'] }}" name="holdcycletime">
+                                    <div class="form-group">
+                                        <label for="selectController"><i>Selected Controller Type:</i></label>
+                                        <select class="form-control" id="selectController" name="selectController">
+                                            {% for controller in controller_metadata %}
+                                                <option value="{{ controller }}" {% if settings['controller']['selected'] == controller %}selected{% endif %}>{{ controller_metadata[controller]['friendly_name'] }}</option>
+                                            {% endfor %}    
+                                        </select>
                                     </div>
-                                    <div class="input-group mb-3">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text" data-toggle="tooltip" title="Proportional Band - This is the temperature band centered around the set point, that the controller is active.  If the error is greater than PB/2, the command is 0.  If the error is less than PB/2, the command is 1.0 [Default=60.0]">
-                                                <i class="fas fa-wave-square"></i>&nbsp; Proportional Band (PB)
-                                            </span>
-                                        </div>
-                                        <input id="propband" type="number" min="1" step="0.1" class="form-control" placeholder="{{ settings['cycle_data']['PB'] }}" value="{{ settings['cycle_data']['PB'] }}" name="propband">
+                                    <div id="controller_config">
+                                        {{ render_controller_config(settings['controller']['selected'], controller_metadata, settings['controller'], settings['cycle_data']) }}
                                     </div>
-                                    <div class="input-group mb-3">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text" data-toggle="tooltip" title="Integral Time - Time (in seconds) to eliminate the integral error. [Default=180.0]">
-                                                <i class="far fa-clock"></i>&nbsp; Integral Time (Ti)
-                                            </span>
-                                        </div>
-                                        <input id="integraltime" type="number" min="1" step="0.1" class="form-control" placeholder="{{ settings['cycle_data']['Ti'] }}" value="{{ settings['cycle_data']['Ti'] }}" name="integraltime">
-                                    </div>
-                                    <div class="input-group mb-3">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text" data-toggle="tooltip" title="Derivative Time - Time (in seconds) to predict the future value. [Default=45.0]">
-                                                <i class="far fa-clock"></i>&nbsp; Derivative Time (Td)
-                                            </span>
-                                        </div>
-                                        <input id="derivtime" type="number" min="1" step="0.1" class="form-control" placeholder="{{ settings['cycle_data']['Td'] }}" value="{{ settings['cycle_data']['Td'] }}" name="derivtime">
-                                    </div>
-                                    <div class="input-group mb-3">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text" data-toggle="tooltip" title="Min Cycle Ratio [Default=0.15]">
-                                                <i class="far fa-clock"></i>&nbsp; Min Cycle Ratio
-                                            </span>
-                                        </div>
-                                        <input id="u_min" type="number" min="0.05" step="0.01" class="form-control" placeholder="{{ settings['cycle_data']['u_min'] }}" value="{{ settings['cycle_data']['u_min'] }}" name="u_min">
-                                    </div>
-                                    <div class="input-group mb-3">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text" data-toggle="tooltip" title="Max Cycle Ratio [Default=1.0]">
-                                                <i class="far fa-clock"></i>&nbsp; Max Cycle Ratio
-                                            </span>
-                                        </div>
-                                        <input id="u_max" type="number" min="0.1" step="0.01" class="form-control" placeholder="{{ settings['cycle_data']['u_max'] }}" value="{{ settings['cycle_data']['u_max'] }}" name="u_max">
-                                    </div>
-                                    <div class="input-group mb-3">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text" data-toggle="tooltip" title="Center Ratio [Default=0.5]">
-                                                <i class="far fa-clock"></i>&nbsp; Center Ratio
-                                            </span>
-                                        </div>
-                                        <input id="center" type="number" min="0.1" step="0.01" class="form-control" placeholder="{{ settings['cycle_data']['center'] }}" value="{{ settings['cycle_data']['center'] }}" name="center">
-                                    </div>
-                                    <span class="badge badge-warning">NOTE:</span>
-                                    <i class="small"> PID Settings will take effect on next Hold cycle that is started, if a cycle is currently running it would need to be restarted. More information on the PID control settings can be found <a href="http://engineeredmusings.com/pismoker/" target="blank">here.</a></i>
-                                    <br><br>
-                                    <!-- LID OPEN EVENT DETECT SETTINGS -->
-                                    <span class="badge badge-primary">Lid Open Detection</span><br>
-                                    <i class="small">If enabled, the system will attempt to determine if the lid was opened and temporarily suspend the PID.  If the temperature drops below the threshold (percentage of the hold temperature), a lid open event is triggered.  Once lid open is detected, it will pause the PID for the specified amount of seconds.</i>
+                                </div><!-- End of card body -->
+                            </div><!-- End of Card -->
+                            <br>
+
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h5>
+                                        <i class="fas fa-door-open"></i>&nbsp; Lid Open Detection Settings (HOLD Mode)
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    If enabled, the system will attempt to determine if the lid was opened and temporarily suspend the controller.  
+                                    If the temperature drops below the threshold (percentage of the hold temperature), a lid open event is triggered.  
+                                    Once lid open is detected, it will pause the controller calculations for the specified amount of seconds. <br>
                                     <div class="custom-control custom-switch">
                                         <input type="checkbox" class="custom-control-input" id="lid_open_detect_enable" name="lid_open_detect_enable" {% if settings['cycle_data']['LidOpenDetectEnabled'] %}checked{% endif %}>
                                         <label class="custom-control-label" for="lid_open_detect_enable">Auto Lid Open Detection</label>
@@ -574,7 +538,7 @@
 
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
-                                            <span class="input-group-text" data-toggle="tooltip" title="Time in seconds to pause the PID when lid open detected.">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Time in seconds to pause the controller when lid open detected.">
                                                 <i class="fas fa-clock"></i>&nbsp; Lid Open Pause Time (s)
                                             </span>
                                         </div>
@@ -587,7 +551,7 @@
                             <div class="card shadow">
                                 <div class="card-header">
                                     <h5>
-                                        <i class="fas fa-tools"></i>&nbsp; Keep Warm Settings
+                                        <i class="fas fa-tachometer-alt"></i>&nbsp; Keep Warm Settings
                                     </h5>
                                 </div>
                                 <div class="card-body">

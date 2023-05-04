@@ -136,15 +136,11 @@ def default_settings():
 	# Td = Predicts error value at Td in seconds
 
 	settings['cycle_data'] = {
-		'PB' : 60.0,
-		'Ti' : 180.0,
-		'Td' : 45.0,
 		'HoldCycleTime' : 20,
 		'SmokeCycleTime' : 15,
 		'PMode' : 2,  			# http://tipsforbbq.com/Definition/Traeger-P-Setting
 		'u_min' : 0.15,
 		'u_max' : 1.0,
-		'center' : 0.5, 
 		'LidOpenDetectEnabled' : False,  #  Enable Lid Open Detection
 		'LidOpenThreshold' : 15,	 #  Percentage drop in temperature from the hold temp, to trigger lid open event
 		'LidOpenPauseTime' : 60  #  Number of seconds to pause when a lid open event is detected 
@@ -152,13 +148,9 @@ def default_settings():
 
 	settings['controller'] = {
 		'selected' : 'pid',
-		'config' : {
-			'PB' : 60.0,
-			'Ti' : 180.0,
-			'Td' : 45.0,
-			'center' : 0.5
-		}
 	}
+
+	settings['controller']['config'] = _default_controller_config()
 
 	settings['keep_warm'] = {
 		'temp' : 165,
@@ -286,6 +278,16 @@ def default_settings():
 	settings['recipe']['probe_map'] = _default_recipe_probe_map(settings)
 
 	return settings
+
+def _default_controller_config():
+	controller_metadata = read_generic_json('./controller/controllers.json')
+	config = {}
+	for controller in controller_metadata['metadata']:
+		config[controller] = {}
+		for option in controller_metadata['metadata'][controller]['config']:
+			config[controller][option['option_name']] = option['option_default']
+
+	return config
 
 def _default_recipe_probe_map(settings):
 	recipe_probe_map = {
@@ -1596,4 +1598,8 @@ def seconds_to_string(seconds):
 	else: 
 		time_string = f'{s}s'
 
-	return time_string 
+	return time_string
+
+def read_generic_json(filename):
+	f = open(filename)
+	return json.load(f)

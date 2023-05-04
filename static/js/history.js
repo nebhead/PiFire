@@ -202,6 +202,29 @@ $('#reloadPage').click(function() {
 	location.reload(); 
 });
 
+
+$("#annotation_enabled").change(function() {
+		
+	if(document.getElementById('annotation_enabled').checked) {
+		annotation_enabled = true;
+	} else {
+		annotation_enabled = false;
+	};
+
+	// If streaming is paused, update chart manually
+	if(paused == true) {
+		if (annotation_enabled == true) {
+			$.get("/historyupdate/stream", function(data) {
+				temperatureCharts.options.plugins.annotation.annotations = data.annotations;
+			});
+		} else {
+			temperatureCharts.options.plugins.annotation.annotations = {};
+		};			
+		// Update Chart
+		temperatureCharts.update();
+	};
+});
+
 $(document).ready(function(){
 	// Load the paginated cookfile list
 	gotoCFPage(1, true, 10);
