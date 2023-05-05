@@ -77,6 +77,7 @@
 					{% endif %}
 				{% endif %}
 				<br><br>
+				{% if probe_data['type'] != 'Primary' %}
 				<p>When {{ probe_data['name'] }} Achieves Set Point:</p>
 				<div class="custom-control custom-checkbox mb-3">
 					<input type="checkbox" class="custom-control-input" id="{{ probe_data['label'] }}_shutdown" name="{{ probe_data['label'] }}_shutdown">
@@ -86,6 +87,7 @@
 					<input type="checkbox" class="custom-control-input" id="{{ probe_data['label'] }}_keepWarm" name="{{ probe_data['label'] }}_keepWarm">
 					<label class="custom-control-label" for="{{ probe_data['label'] }}_keepWarm">Start Keep Warm</label>
 				</div>
+				{% endif %}
 			</div>
 			<!-- Modal footer -->
 			<div class="modal-footer">
@@ -95,6 +97,24 @@
 		</div>
 	</div>
 </div>
+
+{% if probe_data['type'] != 'Primary' %}
+<script>
+	document.getElementById("{{ probe_data['label'] }}_shutdown").addEventListener("click",  
+		function(){
+			if($(this).is(':checked')){
+				document.getElementById("{{ probe_data['label'] }}_keepWarm").checked = false;
+			}
+		});
+
+	document.getElementById("{{ probe_data['label'] }}_keepWarm").addEventListener("click",  
+	function(){
+		if($(this).is(':checked')){
+			document.getElementById("{{ probe_data['label'] }}_shutdown").checked = false;
+		}
+	});
+</script>
+{% endif %}
 
 {% endmacro %}
 

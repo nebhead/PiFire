@@ -172,6 +172,9 @@ function cancelNotify(probe_label) {
 	for (item in updated_notify_data) {
 		if (updated_notify_data[item].label == probe_label) {
 			updated_notify_data[item].req = false;  // Set request to false
+			updated_notify_data[item].shutdown = false;  // Set shutdown to false
+			updated_notify_data[item].keep_warm = false;  // Set keep_warm to false
+			updated_notify_data[item].target = 0;  // Set target to 0
 		};
 	};
 

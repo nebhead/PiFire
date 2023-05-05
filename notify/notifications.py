@@ -59,7 +59,8 @@ def check_notify(in_data, control, settings, pelletdb, grill_platform):
 					if control['mode'] == 'Recipe':
 						if control['recipe']['step_data']['trigger_temps'][item['label']] > 0:
 							control['recipe']['step_data']['triggered'] = True
-					control['notify_data'][index]['req'] = False 
+					control['notify_data'][index]['req'] = False
+					control['notify_data'][index]['target'] = 0 
 
 			elif item['type'] == 'timer':
 				if time.time() >= control['timer']['end']:
