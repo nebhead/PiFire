@@ -187,6 +187,13 @@ def hack_write_control(control_in, direct_write=False, origin='unknown'):
 	control.pop('notify_req')  # Not used in updated control
 	control.pop('probe_titles')  # Not used in updated control 
 
+	# If you are changing the set point temperature while in Hold Mode, then you may need a direct write
+	if (control_cur['mode'] == 'Hold') and (control_cur['primary_setpoint'] != control_in['setpoints']['grill']):
+		direct_write=True
+	# If you are changing from any mode to hold mode, then you may need a direct write 
+	if (control_cur['mode'] != 'Hold') and (control['mode'] == 'Hold'):
+		direct_write=True
+
 	control['primary_setpoint'] = control_in['setpoints']['grill']
 
 	grill1_key = list(current['P'].keys())[0]
@@ -220,7 +227,7 @@ def hack_write_control(control_in, direct_write=False, origin='unknown'):
 		if item['label'] == 'Hopper':
 			control['notify_data'][index]['req'] = control_in['notify_data']['hopper_low']
 	# Direct Write is required due to timing issues - however this may lead to some commands being missed during active modes.  
-	write_control(control, direct_write=True, origin=origin)
+	write_control(control, direct_write=direct_write, origin=origin)
 
 def hack_prepare_data(num_items=10, reduce=True, data_points=60):
 	# num_items: Number of items to store in the data blob
