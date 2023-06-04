@@ -1589,10 +1589,17 @@ def settings_page(action=None):
 		if 'delete' in response:
 			UniqueID = response['delete'] # Get the string of the UniqueID
 			try:
-				settings['probe_settings']['probe_profiles'].pop(UniqueID)
-				write_settings(settings)
-				event['type'] = 'updated'
-				event['text'] = 'Successfully removed ' + response['Name_' + UniqueID] + ' profile.'
+				# Check if this profile is in use
+				for item in settings['probe_settings']['probe_map']['probe_info']:
+					if item['profile']['id'] == UniqueID:
+						event['type'] = 'error'
+						event['text'] = f'Error: Cannot delete this profile, as it is selected for a probe.  Go to the probe settings tab and select a different profile for {item["name"]}.  Then try to delete this profile again.'
+				if event['type'] != 'error':
+					# Attempt to remove the profile 
+					settings['probe_settings']['probe_profiles'].pop(UniqueID)
+					write_settings(settings)
+					event['type'] = 'updated'
+					event['text'] = 'Successfully removed ' + response['Name_' + UniqueID] + ' profile.'
 			except:
 				event['type'] = 'error'
 				event['text'] = 'Error: Failed to remove ' + response['Name_' + UniqueID] + ' profile.'
@@ -1612,14 +1619,8 @@ def settings_page(action=None):
 						'id' : UniqueID
 					}
 
-					if response['UniqueID_' + UniqueID] != UniqueID:
-						# Copy Old Profile to New Profile
-						settings['probe_settings']['probe_profiles'][response['UniqueID_' + UniqueID]] = settings[
-							'probe_settings']['probe_profiles'][UniqueID]
-						# Remove the Old Profile
-						settings['probe_settings']['probe_profiles'].pop(UniqueID)
 					event['type'] = 'updated'
-					event['text'] = 'Successfully added ' + response['Name_' + UniqueID] + ' profile.'
+					event['text'] = 'Successfully edited ' + response['Name_' + UniqueID] + ' profile.'
 					# Write the new probe profile to disk
 					write_settings(settings)
 				except:
@@ -1632,12 +1633,12 @@ def settings_page(action=None):
 	if request.method == 'POST' and action == 'addprofile':
 		response = request.form
 
-		if (response['UniqueID'] != '' and response['Name'] != '' and response['Vs'] != '' and
+		if (response['Name'] != '' and response['Vs'] != '' and
 				response['Rd'] != '' and response['A'] != '' and response['B'] != '' and response['C'] != ''):
 			# Try to convert input values
 			try:
-				UniqueID = response['UniqueID']
-				settings['probe_settings']['probe_profiles'][response['UniqueID']] = {
+				UniqueID = generate_uuid()
+				settings['probe_settings']['probe_profiles'][UniqueID] = {
 					'Vs' : float(response['Vs']),
 					'Rd' : int(response['Rd']),
 					'A' : float(response['A']),

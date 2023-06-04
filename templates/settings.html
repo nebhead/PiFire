@@ -154,13 +154,6 @@
                                     <div class="card-body">
                                         <div class="input-group mb-3">
                                             <div class="input-group-prepend">
-                                                <span class="input-group-text" data-toggle="tooltip" title="Short Unique ID to select a profile.  Should not use spaces.">
-                                                    <i class="fas fa-fingerprint"></i>&nbsp; UniqueID </span>
-                                            </div>
-                                            <input id="UniqueID_{{ index }}" type="text" class="form-control" name="UniqueID_{{ index }}" value="{{ index }}">
-                                        </div>
-                                        <div class="input-group mb-3">
-                                            <div class="input-group-prepend">
                                                 <span class="input-group-text" data-toggle="tooltip" title="Human readable name for profile. Used to display above.">
                                                     <i class="fas fa-user-circle"></i>&nbsp; Name </span>
                                             </div>
@@ -212,7 +205,7 @@
                                                 <div class="modal-content">
                                                     <!-- Modal Header -->
                                                     <div class="modal-header">
-                                                        <h4 class="modal-title">Delete Profile {{ index }}</h4>
+                                                        <h4 class="modal-title">Delete Profile {{ data['name'] }}</h4>
                                                         <button type="button" class="close" data-dismiss="modal">&times;</button>
                                                     </div>
                                                     <!-- Modal body -->
@@ -243,12 +236,6 @@
                                 </div>
                                 <div id="addprofile" class="collapse">
                                     <div class="card-body">
-                                        <div class="input-group mb-3">
-                                            <div class="input-group-prepend"><span class="input-group-text" data-toggle="tooltip" title="Short Unique ID to select a profile.  Should not use spaces.">
-                                                <i class="fas fa-fingerprint"></i>&nbsp; UniqueID </span>
-                                            </div>
-                                            <input id="UniqueID" type="text" class="form-control" placeholder="UniqueID" name="UniqueID">
-                                        </div>
                                         <div class="input-group mb-3">
                                             <div class="input-group-prepend">
                                                 <span class="input-group-text" data-toggle="tooltip" title="Human readable name for profile. Used to display above.">
