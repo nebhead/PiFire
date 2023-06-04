@@ -3344,11 +3344,13 @@ def emit_dash_data():
 		}
 
 		if force_refresh:
-			socketio.emit('grill_control_data', current_data, broadcast=True)
+			socketio.emit('grill_control_data', current_data)
+			#socketio.emit('grill_control_data', current_data, broadcast=True)
 			force_refresh = False
 			socketio.sleep(2)
 		elif previous_data != current_data:
-			socketio.emit('grill_control_data', current_data, broadcast=True)
+			socketio.emit('grill_control_data', current_data)
+			#socketio.emit('grill_control_data', current_data, broadcast=True)
 			previous_data = current_data
 			socketio.sleep(2)
 		else:
