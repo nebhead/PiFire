@@ -140,6 +140,8 @@ function update_recipe_mode() {
     } else if(cpMode == 'Shutdown') {
         $("#cp_recipe_mode_btn").hide();
         document.getElementById("cp_recipe_shutdown_btn").className = "btn btn-info text-white";
+        // Change the next step button to a 'stop' icon
+        $("#cp_recipe_next_step_btn").html('<i class="fas fa-stop"></i>');
     };
     $("#cp_recipe_mode_btn").html(cpRecipeModeIcon);
     cpRecipeLastStep = cpRecipeStep;
@@ -148,10 +150,10 @@ function update_recipe_mode() {
 
 function update_recipe_pause() {
     if (cpRecipePause && cpRecipeTriggered) {
-        $("#cp_recipe_next_step_btn").html('<i class="fas fa-step-forward"></i>');
+        //$("#cp_recipe_next_step_btn").html('<i class="fas fa-step-forward"></i>');
         document.getElementById("cp_recipe_next_step_btn").className = "btn btn-info text-white glowbutton";
     } else {
-        $("#cp_recipe_next_step_btn").html('<i class="fas fa-step-forward"></i>');
+        //$("#cp_recipe_next_step_btn").html('<i class="fas fa-step-forward"></i>');
         document.getElementById("cp_recipe_next_step_btn").className = "btn btn-info text-white";
     };
     cpLastRecipePause = cpRecipePause;
