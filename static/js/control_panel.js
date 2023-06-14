@@ -372,7 +372,7 @@ $(document).ready(function(){
 
     $("#cp_recipe_next_step_btn").click(function(){
         //console.log('You clicked the button!');
-        if(cpRecipePause) {
+        if(cpRecipePause && cpRecipeTriggered) {
             // If the recipe was paused, then follow the unpause path
             console.log('Unpausing to Next Step.');
             cpRecipeUnpause();
