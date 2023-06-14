@@ -45,3 +45,5 @@ static/img/tmp/
 recipes/recipe/
 
 *.log
+
+backups/PiFire_06-14-23_100519.json

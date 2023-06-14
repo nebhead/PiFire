@@ -4,6 +4,7 @@ const RECIPE_FOLDER = './recipes/';
 var recipeRunStatusInterval;
 var recipeMode = 'PageLoad';
 var recipeAssetsList = [];
+var recipeScrollStep = '-1';
 // === Listeners ===
 
 // Load Recipe Book Menu
@@ -550,16 +551,21 @@ function recipeCheckState() {
 
 function recipeCheckStateStop() {
 	clearInterval(recipeRunStatusInterval);
+	recipeScrollStep = '-1';
 };
 
 function recipeScrollToStep(step_num) {
-	//$("#recipe_steps_step_card_{{ loop.index0 }}").get(0).scrollIntoView({behavior: 'smooth'});
-	var id = 'recipe_steps_step_card_' + step_num;
-	const yOffset = -50; 
-	var element = document.getElementById(id);
-	var y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+	// Only scroll to the step if the step has changed, so that it's not constantly scrolling
+	if (step_num != recipeScrollStep) {
+		//$("#recipe_steps_step_card_{{ loop.index0 }}").get(0).scrollIntoView({behavior: 'smooth'});
+		var id = 'recipe_steps_step_card_' + step_num;
+		const yOffset = -50; 
+		var element = document.getElementById(id);
+		var y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
 
-	window.scrollTo({top: y, behavior: 'smooth'});
+		window.scrollTo({top: y, behavior: 'smooth'});
+		recipeScrollStep = step_num;
+	};
 };
 
 function recipeDownloadFile(filename) {

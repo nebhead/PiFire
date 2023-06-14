@@ -148,11 +148,11 @@ function update_recipe_mode() {
 
 function update_recipe_pause() {
     if (cpRecipePause && cpRecipeTriggered) {
-        $("#cp_recipe_indicator_btn").html('<i class="fas fa-step-forward"></i>');
-        document.getElementById("cp_recipe_indicator_btn").className = "btn btn-info text-white glowbutton";
+        $("#cp_recipe_next_step_btn").html('<i class="fas fa-step-forward"></i>');
+        document.getElementById("cp_recipe_next_step_btn").className = "btn btn-info text-white glowbutton";
     } else {
-        $("#cp_recipe_indicator_btn").html('<i class="fas fa-clipboard-list"></i>');
-        document.getElementById("cp_recipe_indicator_btn").className = "btn btn-info text-white";
+        $("#cp_recipe_next_step_btn").html('<i class="fas fa-step-forward"></i>');
+        document.getElementById("cp_recipe_next_step_btn").className = "btn btn-info text-white";
     };
     cpLastRecipePause = cpRecipePause;
     cpLastRecipeTriggered = cpRecipeTriggered;
@@ -370,12 +370,19 @@ $(document).ready(function(){
         api_post(postdata);
     });
 
-    $("#cp_recipe_indicator_btn").click(function(){
-        console.log('You clicked the button!');
+    $("#cp_recipe_next_step_btn").click(function(){
+        //console.log('You clicked the button!');
         if(cpRecipePause) {
+            // If the recipe was paused, then follow the unpause path
+            console.log('Unpausing to Next Step.');
             cpRecipeUnpause();
         } else {
-            window.location.href = '/recipes';
+            // If the user is requesting next step, force next step
+            console.log('Requesting Next Step.');
+            var postdata = { 
+                'updated' : true
+            };
+            api_post(postdata);
         };
     });
 
