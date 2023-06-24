@@ -1618,11 +1618,21 @@ def settings_page(action=None):
 						'name' : response['Name_' + UniqueID], 
 						'id' : UniqueID
 					}
+					# Update profile info in probe map 
+					profile_in_use = False 
+					for index, probe in enumerate(settings['probe_settings']['probe_map']['probe_info']):
+						if probe['profile']['id'] == UniqueID:
+							settings['probe_settings']['probe_map']['probe_info'][index]['profile'] = settings['probe_settings']['probe_profiles'][UniqueID]
+							profile_in_use = True
 
 					event['type'] = 'updated'
 					event['text'] = 'Successfully edited ' + response['Name_' + UniqueID] + ' profile.'
 					# Write the new probe profile to disk
 					write_settings(settings)
+					# If this profile is currently in use, update the profile in the control script as well 
+					if profile_in_use:					
+						control['probe_profile_update'] = True
+						write_control(control, origin='app')
 				except:
 					event['type'] = 'error'
 					event['text'] = 'Something bad happened when trying to format your inputs.  Try again.'

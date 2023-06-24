@@ -1003,6 +1003,15 @@ while True:
 		control['hopper_check'] = False
 		write_control(control, direct_write=True, origin='control')
 
+	# Grab current probe profiles if they have changed since the last loop.
+	if control['probe_profile_update']:
+		settings = read_settings()
+		control['probe_profile_update'] = False
+		write_control(control, direct_write=True, origin='control')
+		# Add new probe profiles to probe complex object
+		probe_complex.update_probe_profiles(settings['probe_settings']['probe_map']['probe_info'])
+		eventLogger.info('Active probe profiles updated in control script.')
+
 	if control['updated']:
 		eventLogger.debug(f'Control Settings Updated.  Mode: {control["mode"]}, Units Change: {control["units_change"]} ')
 		# Clear control flag
