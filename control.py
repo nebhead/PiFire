@@ -22,6 +22,7 @@ Description: This script will start at boot, initialize the relays and
 import logging
 import importlib
 from common import *  # Common Module for WebUI and Control Program
+from common.process_mon import Process_Monitor
 from notify.notifications import *
 from file_mgmt.recipes import convert_recipe_units
 from file_mgmt.cookfile import create_cookfile
@@ -245,6 +246,11 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	:param display_device: Display Device
 	:param dist_device: Distance Device
 	"""
+
+	# Setup Process Monitor and Start 
+	monitor = Process_Monitor('control', ['service', 'supervisor', 'restart'], timeout=30)
+	monitor.start_monitor()
+
 	# Precondition for entering into main control loop 
 	status = 'Active'
 
@@ -757,11 +763,12 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 				grill_platform.set_duty_cycle(control['duty_cycle'])
 				eventLogger.debug('Temp Fan Control: Set to OFF, Fan Returned to Max Duty Cycle')
 
-		# Write History after 3 seconds has passed
+		# Write History & Issue Heartbeat after 3 seconds has passed
 		if (now - temp_toggle_time) > 3:
 			temp_toggle_time = time.time()
 			ext_data = True if settings['globals']['ext_data'] else False  # If passing in extended data, set to True
 			write_history(in_data, ext_data=ext_data)
+			monitor.heartbeat()  # Issue a heartbeat for the process monitor
 
 		# Check if startup time has elapsed since startup/reignite mode started
 		if mode in ('Startup', 'Reignite'):
@@ -841,6 +848,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	metrics['pellet_level_end'] = pelletdb['current']['hopper_level']
 	write_metrics(metrics)
 
+	monitor.stop_monitor()
 	return ()
 
 def _next_mode(next_mode, setpoint=0):			
