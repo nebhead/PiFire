@@ -248,7 +248,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	"""
 
 	# Setup Process Monitor and Start 
-	monitor = Process_Monitor('control', ['service', 'supervisor', 'restart'], timeout=30)
+	monitor = Process_Monitor('control', ['supervisorctl', 'restart', 'control'], timeout=30)
 	monitor.start_monitor()
 
 	# Precondition for entering into main control loop 
