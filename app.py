@@ -2345,8 +2345,9 @@ def wizard(action=None):
 			section = r['section']
 			if section in ['grillplatform', 'display', 'distance']:
 				moduleData = wizardData['modules'][section][module]
-				render_string = "{% from '_macro_wizard_card.html' import render_wizard_card %}{{ render_wizard_card(moduleData, moduleSection) }}"
-				return render_template_string(render_string, moduleData=moduleData, moduleSection=section)
+				moduleSettings = get_settings_dependencies_values(settings, moduleData)
+				render_string = "{% from '_macro_wizard_card.html' import render_wizard_card %}{{ render_wizard_card(moduleData, moduleSection, moduleSettings) }}"
+				return render_template_string(render_string, moduleData=moduleData, moduleSection=section, moduleSettings=moduleSettings)
 			else:
 				return '<strong color="red">No Data</strong>'
 	
@@ -2360,6 +2361,17 @@ def wizard(action=None):
 
 	return render_template('wizard.html', settings=settings, page_theme=settings['globals']['page_theme'],
 						   grill_name=settings['globals']['grill_name'], wizardData=wizardData, wizardInstallInfo=wizardInstallInfo, errors=errors)
+
+def get_settings_dependencies_values(settings, moduleData):
+	moduleSettings = {}
+	for setting, data in moduleData['settings_dependencies'].items():
+		setting_location = data['settings']
+		setting_value = settings
+		for setting_name in setting_location:
+			setting_value = setting_value[setting_name]
+		moduleSettings[setting] = setting_value 
+	print(moduleSettings)
+	return moduleSettings 
 
 def wizardInstallInfoDefaults(wizardData):
 	
