@@ -259,9 +259,11 @@ def history_update(action=None):
 		control = read_control()
 		request_json = request.json
 		if 'num_mins' in request_json:
-			num_items = int(request_json['num_mins']) * 20  # Calculate number of items requested
-			settings['history_page']['minutes'] = int(request_json['num_mins'])
+			num_items = int(request_json['num_mins']) * 20 if int(request_json['num_mins']) > 0 else 20 # Calculate number of items requested
+			settings['history_page']['minutes'] = int(request_json['num_mins']) if int(request_json['num_mins']) > 0 else 1
 			write_settings(settings)
+		elif 'zoom' in request_json:
+			num_items = int(request_json['zoom']) * 20
 		else: 
 			num_items = int(settings['history_page']['minutes'] * 20)
 
@@ -269,7 +271,7 @@ def history_update(action=None):
 		json_response = prepare_chartdata(settings['history_page']['probe_config'], num_items=num_items, reduce=True, data_points=settings['history_page']['datapoints'])
 		json_response['ui_hash'] = create_ui_hash()
 		# Calculate Displayed Start Time
-		displayed_starttime = time.time() - (settings['history_page']['minutes'] * 60)
+		displayed_starttime = time.time() - (int(num_items / 20) * 60)
 		json_response['annotations'] = _prepare_annotations(displayed_starttime)
 		'''
 		json_response = {

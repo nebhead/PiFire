@@ -44,6 +44,7 @@
 					{% endif %}
 					<a href="/history/export" class="btn btn-primary" role="button"><i class="fas fa-file-download"></i>&nbsp; Export CSV</a>
 					<a href="/metrics" class="btn btn-primary" role="button"><i class="fas fa-chart-line"></i>&nbsp; Metrics</a>
+					<button class="btn btn-primary" id="resetzoom"><i class="fas fa-search"></i>&nbsp; Reset Zoom</button>
 				</div> <!-- End of card footer-->
 			</div> <!-- End of Card -->
 		</div> <!-- End of Column -->
@@ -164,6 +165,8 @@
 	<script src="{{ url_for('static', filename='js/chartjs-adapter-luxon.js') }}"></script>
 	<script src="{{ url_for('static', filename='js/chartjs-plugin-streaming.js') }}"></script>
 	<script src="{{ url_for('static', filename='js/chartjs-plugin-annotation.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/hammerjs-2.0.8.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/chartjs-plugin-zoom.min.js') }}"></script>
 	<script src="{{ url_for('static', filename='js/history.js') }}"></script>
 
 {% endblock %}
