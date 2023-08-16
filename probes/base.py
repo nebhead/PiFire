@@ -18,6 +18,7 @@ Description:
 
 import math
 import time
+import logging
 from probes.temp_queue import TempQueue
 
 '''
@@ -40,6 +41,7 @@ class ProbeInterface:
 		self.aux_ports = []
 		self._discover_port_types(probe_info)
 		self._init_device()
+		self.logger = logging.getLogger("control")
 
 	def _init_device(self):
 		self.time_delay = 0
@@ -121,7 +123,7 @@ class ProbeInterface:
 		return Tr 
 
 	def _voltage_to_temp(self, voltage, probe_profile):
-		if(voltage > 0) and (voltage < (probe_profile['Vs'] * 1000) * 0.99):
+		if(voltage > 0) and (voltage < (probe_profile['Vs'] * 1000)):
 			'''
 				Voltage at the divider (i.e. input to the ADC)
 			'''
@@ -165,6 +167,9 @@ class ProbeInterface:
 			tempF = 0.0
 			tempC = 0.0
 			Tr = 0
+			error_event = f'An error occurred reading the voltage from one of the ports. The voltage read ({voltage}mV) ' \
+				f'was outside the expected range of 0mV to {probe_profile["Vs"] * 1000}mV'	
+			self.logger.error(error_event)
 
 		if self.units == 'F':
 			return tempF, round(Tr)  # Return Calculated Temperature and Thermistor Value in Ohms
@@ -208,6 +213,8 @@ class ProbeInterface:
 			for probe in probe_info:
 				if probe['device'] == self.device_info['device'] and probe['port'] == port:
 					self.probe_profiles[port] = probe['profile']
+					self.probe_profiles[port]['Rd'] = int(self.device_info['config'].get(port + '_rd', 10000))
+					self.probe_profiles[port]['Vs'] = float(self.device_info['config'].get('voltage_ref', 3.28))
 
 	def get_port_map(self):
 		return self.port_map

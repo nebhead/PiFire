@@ -14,7 +14,14 @@ Description:
 			'device' : 'your_device_name',	# Unique name for the device
 			'module' : 'prototype',  			# Must be populated for this module to load properly
 			'ports' : ['ADC0', 'ADC1', 'ADC2', 'ADC3'], # This should be defined by the user with the number of ports desired
-			'config' : {} 
+			'config' : {
+				'ADC0_rd': '10000',
+            	'ADC1_rd': '10000',
+            	'ADC2_rd': '10000',
+            	'ADC3_rd': '10000',
+            	'i2c_bus_addr': '0x48',
+            	'voltage_ref': '3.28'
+			} 
 		}
 
 	Note: This prototype module will calculate temperature based on the probe profiles, just like for the ADS1115 probes.  

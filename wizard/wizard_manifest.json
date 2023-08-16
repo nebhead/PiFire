@@ -109,6 +109,31 @@
 							"friendly_name" : "I2C Bus Address",
 							"description" : "Select the I2C bus address to use for this device.  Default is 0x48.  If you have more than one ADS1115, you can assign unique device bus address for up to four devices.",
 							"options" : {"0x48" : "0x48", "0x49": "0x49", "0x4A": "0x4A", "0x4B": "0x4B"}
+						}, 
+						"ADC0_rd" : {
+							"friendly_name" : "ADC0 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
+							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+						},
+						"ADC1_rd" : {
+							"friendly_name" : "ADC1 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
+							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+						},
+						"ADC2_rd" : {
+							"friendly_name" : "ADC2 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
+							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+						},
+						"ADC3_rd" : {
+							"friendly_name" : "ADC3 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
+							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+						},
+						"voltage_ref" : {
+							"friendly_name" : "Voltage Source Reference",
+							"description" : "Select the voltage reference measured at the top of the resistor dividers (from the power supply source).  Default is 3.28V",
+							"options" : {"3.30" : "3.30V", "3.28": "3.28V", "3.24": "3.24V", "3.22": "3.22V", "3.20": "3.20V", "3.18": "3.18V", "3.16": "3.16V", "3.14": "3.14V", "3.12": "3.12V", "3.10": "3.10V", "3.08": "3.08V", "3.06": "3.06V", "3.04": "3.04V", "3.02": "3.02V", "3.00": "3.00V"}
 						}
 					}
 				}
@@ -136,6 +161,31 @@
 							"friendly_name" : "I2C Bus Address",
 							"description" : "Select the I2C bus address to use for this device.  Default is 0x48.  If you have more than one ADS1115, you can assign unique device bus address for up to four devices.",
 							"options" : {"0x48" : "0x48", "0x49": "0x49", "0x4A": "0x4A", "0x4B": "0x4B"}
+						}, 
+						"ADC0_rd" : {
+							"friendly_name" : "ADC0 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
+							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+						},
+						"ADC1_rd" : {
+							"friendly_name" : "ADC1 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
+							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+						},
+						"ADC2_rd" : {
+							"friendly_name" : "ADC2 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
+							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+						},
+						"ADC3_rd" : {
+							"friendly_name" : "ADC3 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
+							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+						},
+						"voltage_ref" : {
+							"friendly_name" : "Voltage Source Reference",
+							"description" : "Select the voltage reference measured at the top of the resistor dividers (from the power supply source).  Default is 3.28V",
+							"options" : {"3.30" : "3.30V", "3.28": "3.28V", "3.24": "3.24V", "3.22": "3.22V", "3.20": "3.20V", "3.18": "3.18V", "3.16": "3.16V", "3.14": "3.14V", "3.12": "3.12V", "3.10": "3.10V", "3.08": "3.08V", "3.06": "3.06V", "3.04": "3.04V", "3.02": "3.02V", "3.00": "3.00V"}
 						}
 					}
 				}
@@ -163,6 +213,31 @@
 							"friendly_name" : "I2C Bus Address",
 							"description" : "Select the I2C bus address to use for this device.  Default is 0x48.  If you have more than one ADS1115, you can assign unique device bus address for up to four devices.",
 							"options" : {"0x48" : "0x48", "0x49": "0x49", "0x4A": "0x4A", "0x4B": "0x4B"}
+						}, 
+						"ADC0_rd" : {
+							"friendly_name" : "ADC0 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
+							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+						},
+						"ADC1_rd" : {
+							"friendly_name" : "ADC1 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
+							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+						},
+						"ADC2_rd" : {
+							"friendly_name" : "ADC2 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
+							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+						},
+						"ADC3_rd" : {
+							"friendly_name" : "ADC3 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
+							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+						},
+						"voltage_ref" : {
+							"friendly_name" : "Voltage Source Reference",
+							"description" : "Select the voltage reference measured at the top of the resistor dividers (from the power supply source).  Default is 3.28V",
+							"options" : {"3.30" : "3.30V", "3.28": "3.28V", "3.24": "3.24V", "3.22": "3.22V", "3.20": "3.20V", "3.18": "3.18V", "3.16": "3.16V", "3.14": "3.14V", "3.12": "3.12V", "3.10": "3.10V", "3.08": "3.08V", "3.06": "3.06V", "3.04": "3.04V", "3.02": "3.02V", "3.00": "3.00V"}
 						}
 					}
 				}
@@ -269,7 +344,38 @@
 				},
 				"device_specific" : {
 					"ports" : ["ADC0", "ADC1", "ADC2", "ADC3"],
-					"config" : {}
+					"config" : {
+						"i2c_bus_addr" : {
+							"friendly_name" : "I2C Bus Address",
+							"description" : "Select the I2C bus address to use for this device.  Default is 0x48.  If you have more than one ADS1115, you can assign unique device bus address for up to four devices.",
+							"options" : {"0x48" : "0x48", "0x49": "0x49", "0x4A": "0x4A", "0x4B": "0x4B"}
+						}, 
+						"ADC0_rd" : {
+							"friendly_name" : "ADC0 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
+							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+						},
+						"ADC1_rd" : {
+							"friendly_name" : "ADC1 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
+							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+						},
+						"ADC2_rd" : {
+							"friendly_name" : "ADC2 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
+							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+						},
+						"ADC3_rd" : {
+							"friendly_name" : "ADC3 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
+							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+						},
+						"voltage_ref" : {
+							"friendly_name" : "Voltage Source Reference",
+							"description" : "Select the voltage reference measured at the top of the resistor dividers (from the power supply source).  Default is 3.28V",
+							"options" : {"3.30" : "3.30V", "3.28": "3.28V", "3.24": "3.24V", "3.22": "3.22V", "3.20": "3.20V", "3.18": "3.18V", "3.16": "3.16V", "3.14": "3.14V", "3.12": "3.12V", "3.10": "3.10V", "3.08": "3.08V", "3.06": "3.06V", "3.04": "3.04V", "3.02": "3.02V", "3.00": "3.00V"}
+						}
+					}
 				}			
 			},
 			"virtual_average" : {
@@ -709,7 +815,12 @@
 				"probe_devices": [
 				  {
 					"config": {
-						"i2c_bus_addr" : "0x48"
+						"ADC0_rd": "10000",
+						"ADC1_rd": "10000",
+						"ADC2_rd": "10000",
+						"ADC3_rd": "10000",
+						"i2c_bus_addr": "0x48",
+						"voltage_ref": "3.28"
 					},
 					"device": "ADS1115",
 					"module": "ads1115_adafruit",
@@ -733,10 +844,8 @@
 					  "A": 0.04136906456,
 					  "B": -0.00677987613,
 					  "C": 2.760294589e-05,
-					  "Rd": 10000,
-					  "Vs": 3.28,
-					  "id": "PT-1000-OEM",
-					  "name": "PT-1000-Grill-Probe-OEM"
+					  "id": "99b8f02d-233d-11ee-a7a2-e5396c02c5fd",
+					  "name": "PT-1000-Ideal"
 					}
 				  },
 				  {
@@ -750,8 +859,6 @@
 					  "A": 0.00073431401,
 					  "B": 0.0002157437,
 					  "C": 9.515686e-08,
-					  "Rd": 10000,
-					  "Vs": 3.28,
 					  "id": "TWPS00",
 					  "name": "Thermoworks-Pro-Series-HeaterMeter"
 					}
@@ -767,8 +874,6 @@
 					  "A": 0.00073431401,
 					  "B": 0.0002157437,
 					  "C": 9.515686e-08,
-					  "Rd": 10000,
-					  "Vs": 3.28,
 					  "id": "TWPS00",
 					  "name": "Thermoworks-Pro-Series-HeaterMeter"
 					}

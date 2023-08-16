@@ -1612,8 +1612,6 @@ def settings_page(action=None):
 				try:
 					UniqueID = response['editprofile'] # Get the string of the UniqueID
 					settings['probe_settings']['probe_profiles'][UniqueID] = {
-						'Vs' : float(response['Vs_' + UniqueID]),
-						'Rd' : int(response['Rd_' + UniqueID]),
 						'A' : float(response['A_' + UniqueID]),
 						'B' : float(response['B_' + UniqueID]),
 						'C' : float(response['C_' + UniqueID]),
@@ -1645,14 +1643,11 @@ def settings_page(action=None):
 	if request.method == 'POST' and action == 'addprofile':
 		response = request.form
 
-		if (response['Name'] != '' and response['Vs'] != '' and
-				response['Rd'] != '' and response['A'] != '' and response['B'] != '' and response['C'] != ''):
+		if (response['Name'] != '' and response['A'] != '' and response['B'] != '' and response['C'] != ''):
 			# Try to convert input values
 			try:
 				UniqueID = generate_uuid()
 				settings['probe_settings']['probe_profiles'][UniqueID] = {
-					'Vs' : float(response['Vs']),
-					'Rd' : int(response['Rd']),
 					'A' : float(response['A']),
 					'B' : float(response['B']),
 					'C' : float(response['C']),

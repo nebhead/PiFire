@@ -15,7 +15,12 @@ Description:
 			'module' : 'ads1015_adafruit',	# Must be populated for this module to load properly
 			'ports' : ['ADC0', 'ADC1', 'ADC2', 'ADC3'], # This is defined in the module, so this does not need to be defined.
 			'config' : {
-				'i2c_bus_addr' : '0x48'
+				'ADC0_rd': '10000',
+            	'ADC1_rd': '10000',
+            	'ADC2_rd': '10000',
+            	'ADC3_rd': '10000',
+            	'i2c_bus_addr': '0x48',
+            	'voltage_ref': '3.28'
 			}
 		} 
 '''

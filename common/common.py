@@ -598,88 +598,8 @@ def default_pellets():
 
 def _default_probe_profiles():
 
-	probe_profiles = {}
-
-	probe_profiles['TWPS00'] = {
-		'Vs' : 3.28,		# Vs = Voltage Source input to resistor divider
-		'Rd' : 10000,		# Divider Resistance Ohms (Default 10k Ohm)
-		'A' : 7.3431401e-4,	# Coefficient A for SHH # from HeaterMeter?
-		'B' : 2.1574370e-4,	# Coefficient B for SHH
-		'C' : 9.5156860e-8,	# Coefficient C for SHH
-		'name' : 'Thermoworks-Pro-Series-HeaterMeter', 
-		'id' : 'TWPS00'
-	}
-
-	probe_profiles['ET73-HM'] = {
-		'Vs' : 3.28,			# Vs = Voltage Source input to resistor divider
-		'Rd' : 10000,			# Divider Resistance Ohms (Default 10k Ohm)
-		'A' : 2.4723753e-04,	# Coefficient A for SHH # from HeaterMeter?
-		'B' : 2.3402251e-04,	# Coefficient B for SHH
-		'C' : 1.3879768e-07,	# Coefficient C for SHH
-		'name' : 'ET-73-Heatermeter', 
-		'id' : 'ET73-HM'
-	}
-
-	probe_profiles['iGrill-HM'] = {
-		'Vs' : 3.28,			# Vs = Voltage Source input to resistor divider
-		'Rd' : 10000,			# Divider Resistance Ohms (Default 10k Ohm)
-		'A' : 0.7739251279e-3,	# Coefficient A for SHH # from HeaterMeter?
-		'B' : 2.088025997e-4,	# Coefficient B for SHH
-		'C' : 1.154400438e-7,	# Coefficient C for SHH
-		'name' : 'iGrill-Heatermeter', 
-		'id' : 'iGrill-HM'
-	}
-
-	probe_profiles['PT-1000-OEM'] = {
-		'Vs': 3.28,
-		'Rd': 10000,
-		'A': 0.04136906456,
-		'B': -0.00677987613,
-		'C': 2.760294589e-05,
-		'name': 'PT-1000-Grill-Probe-OEM', # This profile was for the original probe on my Traeger
-		'id' : 'PT-1000-OEM'
-	}
-
-	probe_profiles['PT-1000-PiFire'] = {
-		'Vs': 3.28,
-		'Rd': 10000,
-		'A': 0.05469905897345206,
-		'B': -0.009473055040089443,
-		'C': 4.3768560703857386e-5,
-		'name': "PT-1000-Grill-Probe-PiFire", # This profile is for a replacement PT-1000 grill probe
-		'id' : 'PT-1000-PiFire'
-	}
-
-	probe_profiles['ET73-SP'] = {
-		'Vs' : 3.28,  # Vs = Voltage Source input to resistor divider
-		'Rd' : 10000,  # Divider Resistance Ohms (Default 10k Ohm)
-		# from: https://github.com/skyeperry1/Maverick-ET-73-Meat-Probe-Arduino-Library/blob/master/ET73.h
-		'A' : 2.3067434E-4,
-		'B' : 2.3696596E-4,
-		'C' : 1.2636414E-7,
-		'name' : 'ET-73-skyeperry1',
-		'id' : 'ET73-SP'
-	}
-	
-	probe_profiles['04204563-2335-11ee-9a44-e5396c02c605'] = {
-        "A": 0.08349559509913372,
-        "B": -0.015417214989461945,
-        "C": 8.10020549005308e-05,
-        "Rd": 10000,
-        "Vs": 3.28,
-        "id": "04204563-2335-11ee-9a44-e5396c02c605",
-        "name": "PT-1000-OEM-2023"
-      }
-	
-	probe_profiles['99b8f02d-233d-11ee-a7a2-e5396c02c5fd'] = {
-        "A": 0.05966017913127897,
-        "B": -0.01048654943772497,
-        "C": 4.987389532180097e-05,
-        "Rd": 10000,
-        "Vs": 3.28,
-        "id": "99b8f02d-233d-11ee-a7a2-e5396c02c5fd",
-        "name": "PT-1000-Ideal"
-    },
+	probes_json = read_generic_json('./probes/probes.json')
+	probe_profiles = probes_json['profiles']
 
 	return probe_profiles
 
@@ -691,7 +611,14 @@ def default_probe_map(probe_profiles):
 			'device' : 'proto_adc',   # Unique name for the device
 			'module' : 'prototype',  # Module to support the hardware device
 			'ports' : ['ADC0', 'ADC1', 'ADC2', 'ADC3'],    # Optionally define ports, otherwise, leave this up to the module to define
-			'config' : {}  # Optional configuration data to pass to the module
+			'config' : {
+				'ADC0_rd': '10000',
+            	'ADC1_rd': '10000',
+            	'ADC2_rd': '10000',
+            	'ADC3_rd': '10000',
+            	'i2c_bus_addr': '0x48',
+            	'voltage_ref': '3.28'
+			}  # Configuration data to pass to the module
 		}
 	
 	probe_devices.append(device)
@@ -702,7 +629,7 @@ def default_probe_map(probe_profiles):
 			'type' : 'Primary',
 			'label' : 'Grill',
 			'name' : 'Grill',
-			'profile' : probe_profiles['PT-1000-PiFire'],
+			'profile' : probe_profiles['99b8f02d-233d-11ee-a7a2-e5396c02c5fd'],
 			'device' : 'proto_adc',
 			'port' : 'ADC0',
 			'enabled' : True
@@ -958,7 +885,7 @@ def read_settings(filename='settings.json', init=False):
 			settings['versions']['server'] = settings_default['versions']['server']
 			update_settings = True
 
-		# Overalay the original settings ontop of the default settings
+		# Overlay the original settings on top of the default settings
 		for key in settings_default.keys():
 			if key in settings.keys():
 				for subkey in settings_default[key].keys():
@@ -1015,7 +942,9 @@ def upgrade_settings(prev_ver, settings, settings_default):
 		for profile in settings['probe_settings']['probe_profiles']:
 			if 'id' not in settings['probe_settings']['probe_profiles'][profile].keys():
 				settings['probe_settings']['probe_profiles'][profile]['id'] = profile
-
+	if prev_ver[0] <=1 and prev_ver[1] <= 5:
+		# if moving from v1.5 to v1.6, force a first-time setup to drive changes to the probe device setup
+		settings['globals']['first_time_setup'] = True
 	return(settings)
 
 def read_pellet_db(filename='pelletdb.json'):
@@ -1614,5 +1543,13 @@ def seconds_to_string(seconds):
 	return time_string
 
 def read_generic_json(filename):
-	f = open(filename)
-	return json.load(f)
+	try:
+		json_file = os.fdopen(os.open(filename, os.O_RDONLY))
+		json_data = json_file.read()
+		dictionary = json.loads(json_data)
+		json_file.close()
+	except: 
+		print(f'An error occurred loading {filename}')
+		raise
+
+	return dictionary
