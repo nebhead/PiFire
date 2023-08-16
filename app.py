@@ -1682,8 +1682,10 @@ def settings_page(action=None):
 			settings['cycle_data']['PMode'] = int(response['pmode'])
 		if _is_not_blank(response, 'holdcycletime'):
 			settings['cycle_data']['HoldCycleTime'] = int(response['holdcycletime'])
-		if _is_not_blank(response, 'smokecycletime'):
-			settings['cycle_data']['SmokeCycleTime'] = int(response['smokecycletime'])
+		if _is_not_blank(response, 'SmokeOnCycleTime'):
+			settings['cycle_data']['SmokeOnCycleTime'] = int(response['SmokeOnCycleTime'])
+		if _is_not_blank(response, 'SmokeOffCycleTime'):
+			settings['cycle_data']['SmokeOffCycleTime'] = int(response['SmokeOffCycleTime'])
 
 		if _is_not_blank(response, 'u_min'):
 			settings['cycle_data']['u_min'] = float(response['u_min'])

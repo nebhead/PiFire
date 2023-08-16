@@ -130,7 +130,8 @@ def default_settings():
 
 	settings['cycle_data'] = {
 		'HoldCycleTime' : 20,
-		'SmokeCycleTime' : 15,
+		'SmokeOnCycleTime' : 15,  # Smoke/Startup Auger On Time.
+		'SmokeOffCycleTime' : 45,  # Smoke/Startup Auger Off Time.  Starting value for PMode (10s is added for each PMode setting)
 		'PMode' : 2,  			# http://tipsforbbq.com/Definition/Traeger-P-Setting
 		'u_min' : 0.15,
 		'u_max' : 1.0,
@@ -945,6 +946,9 @@ def upgrade_settings(prev_ver, settings, settings_default):
 	if prev_ver[0] <=1 and prev_ver[1] <= 5:
 		# if moving from v1.5 to v1.6, force a first-time setup to drive changes to the probe device setup
 		settings['globals']['first_time_setup'] = True
+		settings['cycle_data'].pop('SmokeCycleTime') # Remove old SmokeCycleTime
+		settings['cycle_data']['SmokeOnCycleTime'] = 15  # Name change for SmokeCycleTime variable 
+		settings['cycle_data']['SmokeOffCycleTime'] = 45  # Added SmokeOffCycleTime variable 
 	return(settings)
 
 def read_pellet_db(filename='pelletdb.json'):

@@ -343,13 +343,13 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		eventLogger.debug('Auger ON')
 
 	if mode in ('Startup', 'Reignite', 'Smoke'):
-		OnTime = settings['cycle_data']['SmokeCycleTime']  # Auger On Time (Default 15s)
-		OffTime = 45 + (settings['cycle_data']['PMode'] * 10)  # Auger Off Time
+		OnTime = settings['cycle_data']['SmokeOnCycleTime']  # Auger On Time (Default 15s) 
+		OffTime = settings['cycle_data']['SmokeOffCycleTime'] + (settings['cycle_data']['PMode'] * 10)  # Auger Off Time
 		CycleTime = OnTime + OffTime  # Total Cycle Time
 		CycleRatio = RawCycleRatio = OnTime / CycleTime  # Ratio of OnTime to CycleTime
 		# Write Metrics (note these will be overwritten if smart start is enabled)
 		metrics['p_mode'] = settings['cycle_data']['PMode']
-		metrics['auger_cycle_time'] = settings['cycle_data']['SmokeCycleTime']
+		metrics['auger_cycle_time'] = settings['cycle_data']['SmokeOnCycleTime']
 		write_metrics(metrics)
 
 	if mode == 'Hold':
@@ -431,7 +431,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		# Apply the profile 
 		profile_selected = control['smartstart']['profile_selected']
 		OnTime = settings['smartstart']['profiles'][profile_selected]['augerontime']  # Auger On Time (Default 15s)
-		OffTime = 45 + (settings['smartstart']['profiles'][profile_selected]['p_mode'] * 10)  # Auger Off Time
+		OffTime = settings['cycle_data']['SmokeOffCycleTime'] + (settings['smartstart']['profiles'][profile_selected]['p_mode'] * 10)  # Auger Off Time
 		CycleTime = OnTime + OffTime  # Total Cycle Time
 		CycleRatio = RawCycleRatio = OnTime / CycleTime  # Ratio of OnTime to CycleTime
 		startup_timer = settings['smartstart']['profiles'][profile_selected]['startuptime']
