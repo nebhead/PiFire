@@ -485,6 +485,15 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			control['settings_update'] = False
 			write_control(control, direct_write=True, origin='control')
 			settings = read_settings()
+			if mode in ('Startup', 'Reignite', 'Smoke'):
+				OnTime = settings['cycle_data']['SmokeOnCycleTime']  # Auger On Time (Default 15s) 
+				OffTime = settings['cycle_data']['SmokeOffCycleTime'] + (settings['cycle_data']['PMode'] * 10)  # Auger Off Time
+				CycleTime = OnTime + OffTime  # Total Cycle Time
+				CycleRatio = RawCycleRatio = OnTime / CycleTime  # Ratio of OnTime to CycleTime
+				# Write Metrics (note these will overwrite the previous value)
+				metrics['p_mode'] = settings['cycle_data']['PMode']
+				metrics['auger_cycle_time'] = settings['cycle_data']['SmokeOnCycleTime']
+				write_metrics(metrics)
 
 		# Check if user changed hopper levels and update if required
 		if control['distance_update']:
