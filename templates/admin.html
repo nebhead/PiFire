@@ -31,6 +31,7 @@
 			<a class="nav-link" id="v-pills-data-tab" data-toggle="pill" href="#v-pills-data" role="tab" aria-controls="v-pills-data" aria-selected="false">Data Management</a>
 			<a class="nav-link" id="v-pills-wizard-tab" data-toggle="pill" href="#v-pills-wizard" role="tab" aria-controls="v-pills-wizard" aria-selected="false">Config Wizard</a>
 			<a class="nav-link" id="v-pills-power-tab" data-toggle="pill" href="#v-pills-power" role="tab" aria-controls="v-pills-power" aria-selected="false">System Power</a>
+			<a class="nav-link" id="v-pills-boot-tab" data-toggle="pill" href="#v-pills-boot" role="tab" aria-controls="v-pills-boot" aria-selected="false">Boot Settings</a>
 			<a class="nav-link" id="v-pills-system-tab" data-toggle="pill" href="#v-pills-system" role="tab" aria-controls="v-pills-system" aria-selected="false">System Info</a>
 			<a class="nav-link" id="v-pills-gpio-tab" data-toggle="pill" href="#v-pills-gpio" role="tab" aria-controls="v-pills-gpio" aria-selected="false">GPIO Info</a>
 			<a class="nav-link" id="v-pills-modules-tab" data-toggle="pill" href="#v-pills-modules" role="tab" aria-controls="v-pills-modules" aria-selected="false">Module Info</a>
@@ -110,6 +111,8 @@
 						<a href="/manual" class="btn btn-outline-warning btn-block shadow" role="button"><i class="fas fa-sliders-h"></i> Manual Controls</a><br>
 						<span class="badge badge-warning">NOTE:</span><i class="small"> This mode cancels current mode and will allow you to control the Auger, Fan, Igniter and Power outputs from the relay.</i>
 						<br>
+						<br>
+
 					</div>
 				</div>
 				{% if not request.MOBILE %}<br><br><br>{% endif %}
@@ -543,6 +546,31 @@
 				</div>
 				{% if not request.MOBILE %}<br><br><br>{% endif %}
 			</div><!-- End of Tab -->
+			<!-- ============================ Boot Settings ========================== -->
+			{% if request.MOBILE %}<br>{% endif %}
+
+			<div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-boot" role="tabpanel" aria-labelledby="v-pills-boot-tab">
+				<form name="input" action="/admin/boot" method="POST">
+				<div class="card shadow">
+					<div class="card-header bg-primary text-white">
+						<h5>
+							<i class="fas fa-power-off"></i>&nbsp; Boot Configuration
+						</h5>
+					</div>
+					<div class="card-body">
+						<div class="custom-control custom-switch">
+							<input type="checkbox" class="custom-control-input" id="boot_to_monitor" name="boot_to_monitor" {% if settings['globals']['boot_to_monitor'] %}checked{% endif %}>
+							<label class="custom-control-label" for="boot_to_monitor">Enable boot into monitor mode.</label>
+  					    </div>
+					</div>
+					<div class="card-footer">
+						<button type="submit" class="btn btn-primary">Save Boot Settings</button>
+					</div>
+				</div>
+				{% if not request.MOBILE %}<br><br><br>{% endif %}
+				</form>
+			</div><!-- End of Tab -->
+
 			<!-- ============================ System Info ========================== -->
 			{% if request.MOBILE %}<br>{% endif %}
 			<div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-system" role="tabpanel" aria-labelledby="v-pills-system-tab">

@@ -2155,6 +2155,16 @@ def admin_page(action=None):
 					notify = "error"
 			else:
 				notify = "error"
+	
+	if request.method == 'POST' and action == 'boot':
+		response = request.form
+
+		if 'boot_to_monitor' in response:
+			settings['globals']['boot_to_monitor'] = True 
+		else:
+			settings['globals']['boot_to_monitor'] = False 
+		
+		write_settings(settings)
 
 	uptime = os.popen('uptime').readline()
 

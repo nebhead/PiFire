@@ -97,7 +97,8 @@ def default_settings():
 		'augerrate' : 0.3,  		# (grams per second) default auger load rate is 10 grams / 30 seconds
 		'first_time_setup' : True,  # Set to True on first setup, to run wizard on load 
 		'ext_data' : False,  # Set to True to allow tracking of extended data.  More data will be stored in the history database and can be reviewed in the CSV.
-		'global_control_panel' : False  # Set to True to display control panel on most pages (except Updater, Wizard, Cookfile and some other pages)
+		'global_control_panel' : False,  # Set to True to display control panel on most pages (except Updater, Wizard, Cookfile and some other pages)
+		'boot_to_monitor' : False  # Set to True to boot directly into monitor mode
 	}
 
 	settings['outpins'] = {

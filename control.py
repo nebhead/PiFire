@@ -974,6 +974,13 @@ controlLogger.info(f'Control Script Starting Up.')
 
 last = grill_platform.get_input_status()
 
+''' If the user has selected boot-to-monitor mode, then issue the command prior to the main loop '''
+if settings['globals']['boot_to_monitor']:
+	control = read_control()
+	control['mode'] = 'Monitor'
+	control['updated'] = True
+	write_control(control, direct_write=True, origin='control')
+
 while True:
 
 	# Check the On/Off switch for changes
