@@ -214,7 +214,7 @@ def default_settings():
 	}
 
 	settings['smartstart'] = {
-		'enabled' : True, 
+		'enabled' : False,   # Disable Smart Start by default on new installations
 		'temp_range_list' : [60, 80, 90],  # Min Temps for Each Profile
 		'profiles' : [
 			{
