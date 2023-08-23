@@ -2546,10 +2546,10 @@ def probe_config():
 				''' Set default configuration data '''
 				defaultConfig = {}
 				for config_setting in moduleData['device_specific']['config']:
-					if config_setting == 'probes_list':
-						defaultConfig[config_setting] = []
+					if config_setting['label'] == 'probes_list':
+						defaultConfig[config_setting['label']] = []
 					else:
-						defaultConfig[config_setting] = list(moduleData['device_specific']['config'][config_setting]['options'].keys())[0]
+						defaultConfig[config_setting['label']] = config_setting['default']
 				render_string = "{% from '_macro_probes_config.html' import render_probe_device_settings %}{{ render_probe_device_settings(moduleData, moduleSection, defaultName, defaultConfig, available_probes, mode) }}"
 				return render_template_string(render_string, moduleData=moduleData, moduleSection='probes', defaultName=deviceName, defaultConfig=defaultConfig, available_probes=available_probes, mode='Add')
 			if r['action'] == 'add_device':

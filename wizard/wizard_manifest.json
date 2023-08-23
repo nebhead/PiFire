@@ -104,38 +104,73 @@
 				},
 				"device_specific" : {
 					"ports" : ["ADC0", "ADC1", "ADC2", "ADC3"],
-					"config" : {
-						"i2c_bus_addr" : {
+					"config" : [
+						{
+							"label" : "i2c_bus_addr", 
 							"friendly_name" : "I2C Bus Address",
 							"description" : "Select the I2C bus address to use for this device.  Default is 0x48.  If you have more than one ADS1115, you can assign unique device bus address for up to four devices.",
-							"options" : {"0x48" : "0x48", "0x49": "0x49", "0x4A": "0x4A", "0x4B": "0x4B"}
+							"type" : "list", 
+							"list_values" : ["0x48", "0x49", "0x4A", "0x4B"],
+							"list_labels" : ["0x48", "0x49", "0x4A", "0x4B"],							
+							"default" : "0x48",
+							"hidden" : false
 						}, 
-						"ADC0_rd" : {
+						{
+							"label" : "ADC0_rd", 
 							"friendly_name" : "ADC0 Resistor Divider Value",
-							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
-							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
-						},
-						"ADC1_rd" : {
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
+						}, 
+						{
+							"label" : "ADC1_rd", 
 							"friendly_name" : "ADC1 Resistor Divider Value",
-							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
-							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
 						},
-						"ADC2_rd" : {
+						{
+							"label" : "ADC2_rd", 
 							"friendly_name" : "ADC2 Resistor Divider Value",
-							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
-							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
 						},
-						"ADC3_rd" : {
+						{
+							"label" : "ADC3_rd", 
 							"friendly_name" : "ADC3 Resistor Divider Value",
-							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
-							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
 						},
-						"voltage_ref" : {
+						{
+							"label" : "voltage_ref", 
 							"friendly_name" : "Voltage Source Reference",
 							"description" : "Select the voltage reference measured at the top of the resistor dividers (from the power supply source).  Default is 3.28V",
-							"options" : {"3.30" : "3.30V", "3.28": "3.28V", "3.24": "3.24V", "3.22": "3.22V", "3.20": "3.20V", "3.18": "3.18V", "3.16": "3.16V", "3.14": "3.14V", "3.12": "3.12V", "3.10": "3.10V", "3.08": "3.08V", "3.06": "3.06V", "3.04": "3.04V", "3.02": "3.02V", "3.00": "3.00V"}
+							"type" : "float", 
+							"default" : 3.2,
+							"min" : 1,
+							"max" : 10,
+							"step" : 0.001,
+							"hidden" : false
 						}
-					}
+					]
 				}
 			},
 			"ads1015_adafruit" : {
@@ -156,38 +191,73 @@
 				},
 				"device_specific" : {
 					"ports" : ["ADC0", "ADC1", "ADC2", "ADC3"],
-					"config" : {
-						"i2c_bus_addr" : {
+					"config" : [
+						{
+							"label" : "i2c_bus_addr", 
 							"friendly_name" : "I2C Bus Address",
 							"description" : "Select the I2C bus address to use for this device.  Default is 0x48.  If you have more than one ADS1115, you can assign unique device bus address for up to four devices.",
-							"options" : {"0x48" : "0x48", "0x49": "0x49", "0x4A": "0x4A", "0x4B": "0x4B"}
+							"type" : "list", 
+							"list_values" : ["0x48", "0x49", "0x4A", "0x4B"],
+							"list_labels" : ["0x48", "0x49", "0x4A", "0x4B"],						
+							"default" : "0x48",
+							"hidden" : false
 						}, 
-						"ADC0_rd" : {
+						{
+							"label" : "ADC0_rd", 
 							"friendly_name" : "ADC0 Resistor Divider Value",
-							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
-							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
-						},
-						"ADC1_rd" : {
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
+						}, 
+						{
+							"label" : "ADC1_rd", 
 							"friendly_name" : "ADC1 Resistor Divider Value",
-							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
-							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
 						},
-						"ADC2_rd" : {
+						{
+							"label" : "ADC2_rd", 
 							"friendly_name" : "ADC2 Resistor Divider Value",
-							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
-							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
 						},
-						"ADC3_rd" : {
+						{
+							"label" : "ADC3_rd", 
 							"friendly_name" : "ADC3 Resistor Divider Value",
-							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
-							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
 						},
-						"voltage_ref" : {
+						{
+							"label" : "voltage_ref", 
 							"friendly_name" : "Voltage Source Reference",
 							"description" : "Select the voltage reference measured at the top of the resistor dividers (from the power supply source).  Default is 3.28V",
-							"options" : {"3.30" : "3.30V", "3.28": "3.28V", "3.24": "3.24V", "3.22": "3.22V", "3.20": "3.20V", "3.18": "3.18V", "3.16": "3.16V", "3.14": "3.14V", "3.12": "3.12V", "3.10": "3.10V", "3.08": "3.08V", "3.06": "3.06V", "3.04": "3.04V", "3.02": "3.02V", "3.00": "3.00V"}
+							"type" : "float", 
+							"default" : 3.2,
+							"min" : 1,
+							"max" : 10,
+							"step" : 0.001,
+							"hidden" : false
 						}
-					}
+					]
 				}
 			},
 			"ads1115_adafruit" : {
@@ -208,38 +278,73 @@
 				},
 				"device_specific" : {
 					"ports" : ["ADC0", "ADC1", "ADC2", "ADC3"],
-					"config" : {
-						"i2c_bus_addr" : {
+					"config" : [
+						{
+							"label" : "i2c_bus_addr", 
 							"friendly_name" : "I2C Bus Address",
 							"description" : "Select the I2C bus address to use for this device.  Default is 0x48.  If you have more than one ADS1115, you can assign unique device bus address for up to four devices.",
-							"options" : {"0x48" : "0x48", "0x49": "0x49", "0x4A": "0x4A", "0x4B": "0x4B"}
+							"type" : "list", 
+							"list_values" : ["0x48", "0x49", "0x4A", "0x4B"],
+							"list_labels" : ["0x48", "0x49", "0x4A", "0x4B"],
+							"default" : "0x48",
+							"hidden" : false
 						}, 
-						"ADC0_rd" : {
+						{
+							"label" : "ADC0_rd", 
 							"friendly_name" : "ADC0 Resistor Divider Value",
-							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
-							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
-						},
-						"ADC1_rd" : {
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "", 
+							"step" : 1,
+							"hidden" : false
+						}, 
+						{
+							"label" : "ADC1_rd", 
 							"friendly_name" : "ADC1 Resistor Divider Value",
-							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
-							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
 						},
-						"ADC2_rd" : {
+						{
+							"label" : "ADC2_rd", 
 							"friendly_name" : "ADC2 Resistor Divider Value",
-							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
-							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
 						},
-						"ADC3_rd" : {
+						{
+							"label" : "ADC3_rd", 
 							"friendly_name" : "ADC3 Resistor Divider Value",
-							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
-							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
 						},
-						"voltage_ref" : {
+						{
+							"label" : "voltage_ref", 
 							"friendly_name" : "Voltage Source Reference",
 							"description" : "Select the voltage reference measured at the top of the resistor dividers (from the power supply source).  Default is 3.28V",
-							"options" : {"3.30" : "3.30V", "3.28": "3.28V", "3.24": "3.24V", "3.22": "3.22V", "3.20": "3.20V", "3.18": "3.18V", "3.16": "3.16V", "3.14": "3.14V", "3.12": "3.12V", "3.10": "3.10V", "3.08": "3.08V", "3.06": "3.06V", "3.04": "3.04V", "3.02": "3.02V", "3.00": "3.00V"}
+							"type" : "float", 
+							"default" : 3.2,
+							"min" : 1,
+							"max" : 10,
+							"step" : 0.001,
+							"hidden" : false
 						}
-					}
+					]
 				}
 			},
 			"max31865" : {
@@ -260,28 +365,50 @@
 				},
 				"device_specific" : {
 					"ports" : ["RTD0"],
-					"config" : {
-						"cs" : {
+					"config" : [
+						{
+							"label" : "cs", 
 							"friendly_name" : "SPI Chip Select (CS)",
 							"description" : "SPI Chip Select (CS/CEx) pin used for this device.",
-							"options" : {"1" : "CS1", "0": "CS0"}
-						},
-						"rtd_nominal" : {
+							"type" : "list",
+							"list_values" : ["GPIO2", "GPIO3", "GPIO4", "GPIO5", "GPIO6", "GPIO12", "GPIO13", "GPIO14", "GPIO15", "GPIO16", "GPIO17", "GPIO18", "GPIO19", "GPIO20", "GPIO21", "GPIO22", "GPIO23", "GPIO24", "GPIO25", "GPIO26", "GPIO27"],
+							"list_labels" : ["D2", "D3", "D4", "D5", "D6", "D12", "D13", "D14", "D15", "D16", "D17", "D18", "D19", "D20", "D21", "D22", "D23", "D24", "D25", "D26", "D27"],
+							"default" : "D2",
+							"hidden" : false
+						}, 
+						{
+							"label" : "rtd_nominal", 
 							"friendly_name" : "RTD Nominal",
 							"description" : "RTD Nominal Resistance Value in Ohms. Default 1000 Ohms.",
-							"options" : {"1000" : "1000 Ohms", "100" : "100 Ohms"}
-						},
-						"ref_resistor" : {
+							"type" : "int",
+							"default" : 1000,
+							"min": 1, 
+							"max": 10000,
+							"step" : 1,
+							"hidden" : false
+						}, 
+						{
+							"label" : "ref_resistor", 
 							"friendly_name" : "Reference Resistor",
-							"description" : "Reference Resistor Value in Ohms. Default 4300 Ohms.",
-							"options" : {"4300" : "4300 Ohms", "430" : "430 Ohms"}
+							"description" : "Reference Resistor Value in Ohms. Default 4300 Ohms. (Typical options: 4300, 430)",
+							"type" : "int",
+							"default" : 4300,
+							"min": 1, 
+							"max": 10000,
+							"step" : 1,
+							"hidden" : false
 						},
-						"wires" : {
+						{
+							"label" : "wires", 
 							"friendly_name" : "RTD Wires",
 							"description" : "Number of RTD wires used for input.  Default 2",
-							"options" : {"2" : "2 Wires", "3" : "3 Wires", "4" : "4 Wires"}
+							"type" : "list",
+							"list_values" : ["2", "3", "4"],
+							"list_labels" : ["2 Wires", "3 Wires", "4 Wires"],
+							"default" : "2",
+							"hidden" : false
 						}
-					} 
+					]
 				}
 			},
 			"max31865_adafruit" : {
@@ -302,28 +429,50 @@
 				},
 				"device_specific" : {
 					"ports" : ["RTD0"],
-					"config" : {
-						"cs" : {
+					"config" : [
+						{
+							"label" : "cs", 
 							"friendly_name" : "SPI Chip Select (CS)",
 							"description" : "SPI Chip Select (CS/CEx) pin used for this device.",
-							"options" : {"D2" : "GPIO2", "D3": "GPIO3", "D4": "GPIO4", "D5": "GPIO5", "D6": "GPIO6", "D12": "GPI12", "D13": "GPIO13", "D14": "GPIO14", "D15": "GPIO15", "D16": "GPIO16", "D17": "GPIO17", "D18": "GPIO18", "D19": "GPIO19", "D20": "GPIO20", "D21": "GPIO21", "D22": "GPIO22", "D23": "GPIO23", "D24": "GPIO24", "D25": "GPIO25", "D26": "GPIO26", "D27": "GPIO27"}
-						},
-						"rtd_nominal" : {
+							"type" : "list",
+							"list_values" : ["GPIO2", "GPIO3", "GPIO4", "GPIO5", "GPIO6", "GPIO12", "GPIO13", "GPIO14", "GPIO15", "GPIO16", "GPIO17", "GPIO18", "GPIO19", "GPIO20", "GPIO21", "GPIO22", "GPIO23", "GPIO24", "GPIO25", "GPIO26", "GPIO27"],
+							"list_labels" : ["D2", "D3", "D4", "D5", "D6", "D12", "D13", "D14", "D15", "D16", "D17", "D18", "D19", "D20", "D21", "D22", "D23", "D24", "D25", "D26", "D27"],
+							"default" : "D2",
+							"hidden" : false
+						}, 
+						{
+							"label" : "rtd_nominal", 
 							"friendly_name" : "RTD Nominal",
 							"description" : "RTD Nominal Resistance Value in Ohms. Default 1000 Ohms.",
-							"options" : {"1000" : "1000 Ohms", "100" : "100 Ohms"}
-						},
-						"ref_resistor" : {
+							"type" : "int",
+							"default" : 1000,
+							"min": 1, 
+							"max": 10000,
+							"step" : 1,
+							"hidden" : false
+						}, 
+						{
+							"label" : "ref_resistor", 
 							"friendly_name" : "Reference Resistor",
-							"description" : "Reference Resistor Value in Ohms. Default 4300 Ohms.",
-							"options" : {"4300" : "4300 Ohms", "430" : "430 Ohms"}
+							"description" : "Reference Resistor Value in Ohms. Default 4300 Ohms. (Typical options: 4300, 430)",
+							"type" : "int",
+							"default" : 4300,
+							"min": 1, 
+							"max": 10000,
+							"step" : 1,
+							"hidden" : false
 						},
-						"wires" : {
+						{
+							"label" : "wires", 
 							"friendly_name" : "RTD Wires",
 							"description" : "Number of RTD wires used for input.  Default 2",
-							"options" : {"2" : "2 Wires", "3" : "3 Wires", "4" : "4 Wires"}
+							"type" : "list",
+							"list_values" : ["2", "3", "4"],
+							"list_labels" : ["2 Wires", "3 Wires", "4 Wires"],
+							"default" : "2",
+							"hidden" : false
 						}
-					} 
+					]
 				}
 			},
 			"prototype" : {
@@ -344,38 +493,73 @@
 				},
 				"device_specific" : {
 					"ports" : ["ADC0", "ADC1", "ADC2", "ADC3"],
-					"config" : {
-						"i2c_bus_addr" : {
+					"config" : [
+						{
+							"label" : "i2c_bus_addr", 
 							"friendly_name" : "I2C Bus Address",
 							"description" : "Select the I2C bus address to use for this device.  Default is 0x48.  If you have more than one ADS1115, you can assign unique device bus address for up to four devices.",
-							"options" : {"0x48" : "0x48", "0x49": "0x49", "0x4A": "0x4A", "0x4B": "0x4B"}
+							"type" : "list", 
+							"list_values" : ["0x48", "0x49", "0x4A", "0x4B"],
+							"list_labels" : ["0x48", "0x49", "0x4A", "0x4B"],
+							"default" : "0x48",
+							"hidden" : false
 						}, 
-						"ADC0_rd" : {
+						{
+							"label" : "ADC0_rd", 
 							"friendly_name" : "ADC0 Resistor Divider Value",
-							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
-							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
-						},
-						"ADC1_rd" : {
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
+						}, 
+						{
+							"label" : "ADC1_rd", 
 							"friendly_name" : "ADC1 Resistor Divider Value",
-							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
-							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
 						},
-						"ADC2_rd" : {
+						{
+							"label" : "ADC2_rd", 
 							"friendly_name" : "ADC2 Resistor Divider Value",
-							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
-							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
 						},
-						"ADC3_rd" : {
+						{
+							"label" : "ADC3_rd", 
 							"friendly_name" : "ADC3 Resistor Divider Value",
-							"description" : "Select the resistor divider value for this probe port.  Default is 10k Ohm for temperature probes.",
-							"options" : {"10000" : "10k Ohm", "1000": "1k Ohm"}
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
 						},
-						"voltage_ref" : {
+						{
+							"label" : "voltage_ref", 
 							"friendly_name" : "Voltage Source Reference",
 							"description" : "Select the voltage reference measured at the top of the resistor dividers (from the power supply source).  Default is 3.28V",
-							"options" : {"3.30" : "3.30V", "3.28": "3.28V", "3.24": "3.24V", "3.22": "3.22V", "3.20": "3.20V", "3.18": "3.18V", "3.16": "3.16V", "3.14": "3.14V", "3.12": "3.12V", "3.10": "3.10V", "3.08": "3.08V", "3.06": "3.06V", "3.04": "3.04V", "3.02": "3.02V", "3.00": "3.00V"}
+							"type" : "float", 
+							"default" : 3.2,
+							"min" : 1,
+							"max" : 10,
+							"step" : 0.001,
+							"hidden" : false
 						}
-					}
+					]
 				}			
 			},
 			"virtual_average" : {
@@ -396,13 +580,15 @@
 				},
 				"device_specific" : {
 					"ports" : ["VIRT0"],
-					"config" : {
-						"probes_list" : {
+					"config" : [
+						{
+							"label" : "probes_list", 
 							"friendly_name" : "Average Probes",
 							"description" : "A list of probes from other devices, to average. Select which probes should be averaged together with ctrl+click.",
-							"options" : {"list" : "List of probes to average."}
+							"type" : "probes_list", 
+							"hidden" : false
 						}
-					}
+					]
 				}			
 			},
 			"virtual_highest" : {
@@ -423,13 +609,15 @@
 				},
 				"device_specific" : {
 					"ports" : ["VIRT0"],
-					"config" : {
-						"probes_list" : {
+					"config" : [
+						{
+							"label" : "probes_list", 
 							"friendly_name" : "Use Probes",
 							"description" : "A list of probes from other devices, to determine the highest value. Select which probes should used with ctrl+click.",
-							"options" : {"list" : "List of probes to utilize."}
+							"type" : "probes_list", 
+							"hidden" : false
 						}
-					}
+					]
 				}			
 			},
 			"virtual_lowest" : {
@@ -450,13 +638,15 @@
 				},
 				"device_specific" : {
 					"ports" : ["VIRT0"],
-					"config" : {
-						"probes_list" : {
+					"config" : [
+						{
+							"label" : "probes_list", 
 							"friendly_name" : "Use Probes",
 							"description" : "A list of probes from other devices, to determine the lowest value. Select which probes should used with ctrl+click.",
-							"options" : {"list" : "List of probes to utilize."}
+							"type" : "probes_list", 
+							"hidden" : false
 						}
-					}
+					]
 				}			
 			},
 			"virtual_median" : {
@@ -477,13 +667,15 @@
 				},
 				"device_specific" : {
 					"ports" : ["VIRT0"],
-					"config" : {
-						"probes_list" : {
+					"config" : [
+						{
+							"label" : "probes_list", 
 							"friendly_name" : "Use Probes",
 							"description" : "A list of probes from other devices, to determine the median value. Select which probes should used with ctrl+click.",
-							"options" : {"list" : "List of probes to utilize."}
+							"type" : "probes_list", 
+							"hidden" : false
 						}
-					}
+					]
 				}			
 			}
 		},
