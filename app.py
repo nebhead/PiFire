@@ -2266,6 +2266,8 @@ def api_page(action=None):
 			''' Only fetch data from RedisDB or locally available, to improve performance '''
 			current_temps = read_current()
 			control = read_control()
+			display = read_status()  # Get status of display items
+
 			''' Create string of probes that can be hashed to ensure UI integrity '''
 			probe_string = ''
 			for group in current_temps:
@@ -2278,10 +2280,20 @@ def api_page(action=None):
 
 			status = {}
 			status['mode'] = control['mode']
+			status['display_mode'] = display['mode']
 			status['status'] = control['status']
 			status['s_plus'] = control['s_plus']
 			status['units'] = settings['globals']['units']
 			status['name'] = settings['globals']['grill_name']
+			status['start_time'] = display['start_time']
+			status['start_duration'] = display['start_duration']
+			status['shutdown_duration'] = display['shutdown_duration']
+			status['prime_duration'] = display['prime_duration']
+			status['prime_amount'] = display['prime_amount']
+			status['lid_open_detected'] = display['lid_open_detected']
+			status['lid_open_endtime'] = display['lid_open_endtime']
+			status['p_mode'] = display['p_mode']
+			status['outpins'] = display['outpins']
 			status['ui_hash'] = create_ui_hash()
 			return jsonify({'current':current_temps, 'notify_data':notify_data, 'status':status}), 201
 		elif action == 'hopper':

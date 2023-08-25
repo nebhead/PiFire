@@ -1558,3 +1558,48 @@ def read_generic_json(filename):
 		raise
 
 	return dictionary
+
+def write_status(status):
+	"""
+	Write Status to Redis DB
+
+	:param status: Status Dictionary
+	"""
+	global cmdsts
+
+	cmdsts.set('control:status', json.dumps(status))
+
+def read_status(init=False):
+	"""
+	Read Status dictionary from Redis DB
+	"""
+	global cmdsts
+
+	if init:
+		status = {
+		  	"s_plus": False,
+  			"hopper_level": 100,
+			"units": "F",
+			"mode": "Stop",
+			"recipe": False,
+			"start_time": 0,
+			"start_duration": 0,
+			"shutdown_duration": 0,
+			"prime_duration": 0,
+			"prime_amount": 0,
+			"lid_open_detected": False,
+			"lid_open_endtime": 0,
+			"p_mode": 0,
+			"recipe_paused": False,
+			"outpins": {
+				"auger": False,
+				"fan": False,
+				"igniter": False,
+				"power": False
+			}
+		}
+		write_status(status)
+	else:
+		status = json.loads(cmdsts.get('control:status'))
+
+	return status 

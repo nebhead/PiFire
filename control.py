@@ -640,6 +640,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			status_data['prime_amount'] = prime_amount if mode == 'Prime' else 0  # Enable Display of Prime Amount
 			status_data['lid_open_detected'] = LidOpenDetect if mode == 'Hold' else False
 			status_data['lid_open_endtime'] = LidOpenEventExpires if mode == 'Hold' else 0
+			status_data['p_mode'] = metrics.get('p_mode', None)
 			if control['mode'] == 'Recipe':
 				status_data['recipe_paused'] = True if control['recipe']['step_data']['triggered'] and control['recipe']['step_data']['pause'] else False
 			else: 
@@ -651,7 +652,10 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 					status_data['outpins'][item] = current[item]
 				except KeyError:
 					continue
+			# Send Data to Display
 			display_device.display_status(in_data, status_data)
+			# Save Status Data to Redis 
+			write_status(status_data)
 			display_toggle_time = time.time()  # Reset the display_toggle_time to current time
 
 		# Safety Controls
@@ -981,6 +985,9 @@ if settings['globals']['boot_to_monitor']:
 	control['updated'] = True
 	write_control(control, direct_write=True, origin='control')
 
+''' Initialize the status data on first run. '''
+status = read_status(init=True)
+
 while True:
 
 	# Check the On/Off switch for changes
@@ -992,6 +999,15 @@ while True:
 			control['updated'] = True  # Change mode
 			control['mode'] = 'Stop'
 			write_control(control, direct_write=True, origin='control')
+
+	status = read_status()
+	current = grill_platform.get_output_status()  # Get current pin settings
+	for item in settings['outpins']:
+		try:
+			status['outpins'][item] = current[item]
+		except KeyError:
+			continue
+	write_status(status)
 
 	# 1. Check control for commands
 	execute_commands()
@@ -1069,6 +1085,15 @@ while True:
 				write_metrics(metrics)
 				if metrics_list[-1]['mode'] != 'Prime':
 					create_cookfile()
+
+			status['p_mode'] = 0  
+			status['mode'] = "Stop"
+			status['recipe'] = False
+			status['recipe_paused'] = False
+			status['start_time'] = 0
+			status['lid_open_detected'] = False 
+			status['lid_open_endtime'] = 0 
+			write_status(status)
 
 			if control['status'] == 'monitor' and control['mode'] == 'Error':
 				grill_platform.power_on()
