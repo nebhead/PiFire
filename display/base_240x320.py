@@ -41,6 +41,8 @@ class DisplayBase:
 		self.display_command = 'splash'
 		self.input_counter = 0
 		self.input_enabled = False
+		self.primary_font = 'trebuc.ttf'
+		#self.primary_font = 'DejaVuSans.ttf'  # May need to switch to a default font in Raspberry Pi OS Lite due to MSTCorefonts Package Deprecation 
 		# Attempt to set the log level of PIL so that it does not pollute the logs
 		logging.getLogger('PIL').setLevel(logging.CRITICAL + 1)
 		# Init Display Device, Input Device, Assets
@@ -306,6 +308,24 @@ class DisplayBase:
 		draw.pieslice([(x0, y1 - rad * 2), (x0 + rad * 2, y1)], 90, 180, fill=fill)
 		draw.pieslice([(x1 - rad * 2, y0), (x1, y0 + rad * 2)], 270, 360, fill=fill)
 
+	def _draw_text(self, text, font_name, font_point_size, text_color, rect=False, fill_color=None, outline_color=None):
+		font = ImageFont.truetype(font_name, font_point_size)
+		font_bbox = font.getbbox(str(text))  # Grab the width of the text
+		font_canvas_size = (font_bbox[2], font_bbox[3])
+		font_canvas = Image.new('RGBA', font_canvas_size)
+		font_draw = ImageDraw.Draw(font_canvas)
+		font_draw.text((0,0), str(text), font=font, fill=text_color)
+		if rect:
+			font_canvas = font_canvas.crop(font_canvas.getbbox())
+			font_canvas_size = font_canvas.size 
+			rect_canvas_size = (font_canvas_size[0] + 16, font_canvas_size[1] + 16)
+			rect_canvas = Image.new('RGBA', rect_canvas_size)
+			rect_draw = ImageDraw.Draw(rect_canvas)
+			rect_draw.rounded_rectangle((0, 0, rect_canvas_size[0], rect_canvas_size[1]), radius=8, fill=fill_color, outline=outline_color, width=3)
+			rect_canvas.paste(font_canvas, (8,8), font_canvas) 
+			return rect_canvas 
+		return font_canvas.crop(font_canvas.getbbox())
+
 	def _text_circle(self, draw, position, size, text, fg_color=(255,255,255), bg_color=(0,0,0)):
 		# Draw outline with fg_color
 		coords = (position[0], position[1], position[0] + size[0], position[1] + size[1])
@@ -315,41 +335,16 @@ class DisplayBase:
 		draw.ellipse(fill_coords, fill=bg_color)
 		# Place Text
 		font_point_size = round(size[1] * 0.6)  # Convert size to height of circle * font point ratio 0.6
-		font = ImageFont.truetype("trebuc.ttf", font_point_size)
-		(font_width, font_height) = font.getsize(text)  # Grab the width of the text
+		font = ImageFont.truetype(self.primary_font, font_point_size)
+		font_bbox = font.getbbox(str(text))  # Grab the bounding box of the text
+		font_width = font_bbox[2]
 		label_x = position[0] + (size[0] // 2) - (font_width // 2)
 		label_y = position[1] + round((size[1] // 2) - (font_point_size // 2))  
 		label_origin = (label_x, label_y)
 		draw.text(label_origin, text, font=font, fill=fg_color)
 
-	def _text_rectangle(self, draw, center_point, text, font_point_size, text_color, fill_color, outline_color):
-		# Create drawing object
-		vertical_margin = 5
-		horizontal_margin = 10
-		border = 2
-		rad = 5
-
-		font = ImageFont.truetype("trebuc.ttf", font_point_size)
-		(font_width, font_height) = font.getsize(text)  # Grab the width of the text
-
-		size = (font_width + horizontal_margin + border, font_height + vertical_margin + border)
-		outside_coords = (center_point[0] - (size[0] // 2), center_point[1] - (size[1] // 2), center_point[0] + (size[0] // 2), center_point[1] + (size[1] // 2))
-		inside_coords = (outside_coords[0] + border, outside_coords[1] + border, outside_coords[2] - border, outside_coords[3] - border)
-		self._rounded_rectangle(draw, outside_coords, rad, outline_color)
-		self._rounded_rectangle(draw, inside_coords, rad, fill_color)
-		draw.text((center_point[0] - (font_width // 2), center_point[1] - (font_height // 1.75)), text, font=font, fill=text_color)
-
-		#return draw
-
 	def _create_icon(self, charid, size, color):
-		# Get font and character size 
-		font = ImageFont.truetype("static/font/FA-Free-Solid.otf", size)
-		# Create canvas
-		icon_canvas = Image.new('RGBa', font.getsize(charid))
-		# Create drawing object
-		draw = ImageDraw.Draw(icon_canvas)
-		draw.text((0, 0), charid, font=font, fill=color)
-		icon_canvas = icon_canvas.crop(icon_canvas.getbbox())
+		icon_canvas = self._draw_text(charid, 'static/font/FA-Free-Solid.otf', size, color)
 		return(icon_canvas)
 
 	def _paste_icon(self, icon, canvas, position, rotation):
@@ -610,36 +605,33 @@ class DisplayBase:
 			font_point_size = round((size[1] * 0.60) / 4) + 1 # Convert size to height of circle * font point ratio / 8
 		else:
 			font_point_size = round((size[1] * 0.40) / 4) + 1 # Convert size to height of circle * font point ratio / 8
-		font = ImageFont.truetype("trebuc.ttf", font_point_size)
-		(font_width, font_height) = font.getsize(label)  # Grab the width of the text
-		label_x = position[0] + (size[0] // 2) - (font_width // 2)
-		label_y = position[1] + (round(((size[1] * 0.75) / 8) * 6.6))
+		label_canvas = self._draw_text(label, self.primary_font, font_point_size, (255,255,255))
+		label_x = int(position[0] + (size[0] // 2) - (label_canvas.width // 2))
+		label_y = int(position[1] + (round(((size[1] * 0.75) / 8) * 6.6)))
 		label_origin = (label_x, label_y)
-		draw.text(label_origin, label, font=font, fill=(255, 255, 255))
+		canvas.paste(label_canvas, label_origin, label_canvas)
 
 		# SetPoint1 Label 
 		if percents[1] > 0:
 			sp1_label = f'>{temps[1]}<'
-			font_point_size = round((size[1] * 0.75) / 4) - 1  # Convert size to height of circle * font point ratio
-			font = ImageFont.truetype("trebuc.ttf", font_point_size)
-			(font_width, font_height) = font.getsize(sp1_label)  # Grab the width of the text
-			label_x = position[0] + (size[0] // 2) - (font_width // 2)
-			label_y = position[1] + round((size[1] * 0.75) / 8)  
+			font_point_size = round((size[1] * 0.6) / 4) # Convert size to height of circle * font point ratio
+			label_canvas = self._draw_text(sp1_label, self.primary_font, font_point_size, sp1_color)
+			label_x = int(position[0] + (size[0] // 2) - (label_canvas.width // 2))
+			label_y = int(position[1] + round(size[1] / 8))
 			label_origin = (label_x, label_y)
-			draw.text(label_origin, sp1_label, font=font, fill=sp1_color)
+			canvas.paste(label_canvas, label_origin, label_canvas)
 
 		# Current Temperature (Large Centered)
 		cur_temp = str(temps[0])[:5]
 		if self.units == 'F':
-			font_point_size = round(size[1] * 0.45)  # Convert size to height of circle * font point ratio / 8
+			font_point_size = round(size[1] * 0.4)  # Convert size to height of circle * font point ratio / 8
 		else:
 			font_point_size = round(size[1] * 0.3)  # Convert size to height of circle * font point ratio / 8
-		font = ImageFont.truetype("trebuc.ttf", font_point_size)
-		(font_width, font_height) = font.getsize(cur_temp)  # Grab the width of the text
-		label_x = position[0] + (size[0] // 2) - (font_width // 2)
-		label_y = position[1] + ((size[1] // 2) - (font_point_size // 1.5))  
+		label_canvas = self._draw_text(cur_temp, self.primary_font, font_point_size, (255,255,255))
+		label_x = int(position[0] + (size[0] // 2) - (label_canvas.width // 2))
+		label_y = int(position[1] + ((size[1] // 1.8) - (font_point_size // 1.5)))
 		label_origin = (label_x, label_y)
-		draw.text(label_origin, cur_temp, font=font, fill=(255,255,255))
+		canvas.paste(label_canvas, label_origin, label_canvas)
 
 		return(canvas)
 
@@ -658,31 +650,29 @@ class DisplayBase:
 
 	def _display_splash(self):
 		# Create canvas
-		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
+		img = Image.new('RGBA', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
 
 		# Set the position & paste the splash image onto the canvas
 		position = ((self.WIDTH - self.splash_width) // 2, (self.HEIGHT - self.splash_height) // 2)
-		img.paste(self.splash, position)
+		img.paste(self.splash, position, self.splash)
 
 		self._display_canvas(img)
 
 	def _display_text(self):
 		# Create canvas
-		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
+		img = Image.new('RGBA', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
 
-		# Create drawing object
-		draw = ImageDraw.Draw(img)
-
-		font = ImageFont.truetype("impact.ttf", 42)
-		(font_width, font_height) = font.getsize(self.display_data)
-		draw.text((self.WIDTH // 2 - font_width // 2, self.HEIGHT // 2 - font_height // 2), self.display_data,
-				  font=font, fill=255)
+		label_canvas = self._draw_text(self.display_data, self.primary_font, 42, (255,255,0))
+		label_x = (self.WIDTH // 2 - label_canvas.width // 2)
+		label_y = self.HEIGHT // 2 - label_canvas.height // 2
+		label_origin = (label_x, label_y)
+		img.paste(label_canvas, label_origin, label_canvas)
 
 		self._display_canvas(img)
 
 	def _display_network(self, network_ip):
 		# Create canvas
-		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(255, 255, 255))
+		img = Image.new('RGBA', (self.WIDTH, self.HEIGHT), color=(255, 255, 255))
 		img_qr = qrcode.make('http://' + network_ip)
 		img_qr_width, img_qr_height = img_qr.size
 		img_qr_width *= 2
@@ -696,7 +686,7 @@ class DisplayBase:
 
 	def _display_current(self, in_data, status_data):
 		# Create canvas
-		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
+		img = Image.new('RGBA', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
 
 		# Set the position and paste the background image onto the canvas
 		position = (0, 0)
@@ -898,25 +888,48 @@ class DisplayBase:
 			hopper_color = (255, 150, 0)
 		else:
 			hopper_color = (255, 0, 0)
+
+		label_canvas = self._draw_text(text, self.primary_font, 15, hopper_color, rect=True, outline_color=hopper_color, fill_color=(0,0,0))
 		if self.WIDTH == 240:
-			center_point = self.WIDTH // 2, self.HEIGHT - 14
+			coords = self.WIDTH // 2 - (label_canvas.width // 2), self.HEIGHT - 28
 		else:
-			center_point = self.WIDTH // 2, (self.HEIGHT // 2) + 64
-		self._text_rectangle(draw, center_point, text, 16, hopper_color, (0,0,0), hopper_color)
+			coords = self.WIDTH // 2 - (label_canvas.width // 2), (self.HEIGHT // 2) + 50
+
+		img.paste(label_canvas, coords, label_canvas)
 
 		# Current Mode (Bottom Center)
 		text = status_data['mode']  # + ' Mode'
+		label_canvas = self._draw_text(text, self.primary_font, 32, (0,0,0), rect=True, outline_color=(3, 161, 252), fill_color=(255,255,255))
 		if self.WIDTH == 240:
-			center_point = (self.WIDTH // 2, 22)
+			coords = (self.WIDTH // 2 - (label_canvas.width // 2), 0)
 		else:
-			center_point = (self.WIDTH // 2, self.HEIGHT - 22)
-		self._text_rectangle(draw, center_point, text, 32, text_color=(0,0,0), fill_color=(255,255,255), outline_color=(3, 161, 252))
+			coords = (self.WIDTH // 2 - (label_canvas.width // 2), self.HEIGHT - 44)
+		img.paste(label_canvas, coords, label_canvas)
 
 		# Draw Units Circle
 		text = f'°{self.units}'
 		position = ((self.WIDTH // 2) - 13, (self.HEIGHT // 2) + 24)
 		size = (26, 26)
 		self._text_circle(draw, position, size, text)
+
+		# Smoke / Startup / Reignite P-Mode (Upper Center)
+		if status_data['mode'] in ['Startup', 'Reignite', 'Smoke']:
+			text = f"PMode: {status_data['p_mode']}"
+			text_color = (0, 250, 0)
+
+			label_canvas = self._draw_text(text, self.primary_font, 15, text_color, rect=True, outline_color=text_color, fill_color=(0,0,0))
+			if self.WIDTH == 240:
+				if status_data['mode'] == 'Smoke':
+					coords = self.WIDTH // 2 - (label_canvas.width // 2), 60
+				else: 
+					coords = self.WIDTH // 2 - (label_canvas.width // 2), 210
+			else:
+				if status_data['mode'] == 'Smoke':
+					coords = self.WIDTH // 2 - (label_canvas.width // 2), 26
+				else: 
+					coords = self.WIDTH - label_canvas.width - 10, 10
+
+			img.paste(label_canvas, coords, label_canvas)
 
 		# Display Countdown for Startup / Reignite / Shutdown / Prime
 		if status_data['mode'] in ['Startup', 'Reignite', 'Shutdown', 'Prime']:
@@ -929,16 +942,18 @@ class DisplayBase:
 			
 			countdown = int(duration - (time.time() - status_data['start_time'])) if int(duration - (time.time() - status_data['start_time'])) > 0 else 0
 			text = f'{countdown}s'
-			center_point = (self.WIDTH // 2, self.HEIGHT // 2 - 100)
-			self._text_rectangle(draw, center_point, text, 26, text_color=(0,200,0), fill_color=(0,0,0), outline_color=(0, 200, 0))
+			label_canvas = self._draw_text(text, self.primary_font, 26, (0,200,0), rect=True, outline_color=(0, 200, 0), fill_color=(0,0,0))
+			coords = (int((self.WIDTH // 2 )- (label_canvas.width // 2)), int((self.HEIGHT // 2) - 120))
+			img.paste(label_canvas, coords, label_canvas)
 
 		# Lid open detection timer display
 		if status_data['mode'] in ['Hold']:
 			if status_data['lid_open_detected']:
 				duration = int(status_data['lid_open_endtime'] - time.time()) if int(status_data['lid_open_endtime'] - time.time()) > 0 else 0
 				text = f'Lid Pause {duration}s'
-				center_point = (self.WIDTH // 2, self.HEIGHT // 2 - 100)
-				self._text_rectangle(draw, center_point, text, 18, text_color=(0,200,0), fill_color=(0,0,0), outline_color=(0, 200, 0))
+				label_canvas = self._draw_text(text, self.primary_font, 18, (0,200,0), rect=True, outline_color=(0, 200, 0), fill_color=(0,0,0))
+				coords = (int((self.WIDTH // 2 )- (label_canvas.width // 2)), int((self.HEIGHT // 2) - 120))
+				img.paste(label_canvas, coords, label_canvas)
 
 		# Display Final Screen
 		self._display_canvas(img)
@@ -1162,7 +1177,7 @@ class DisplayBase:
 						write_control(control, origin='display')
 
 		# Create canvas
-		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
+		img = Image.new('RGBA', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
 		# Set the position & paste background image onto canvas 
 		position = (0, 0)
 		img.paste(self.background, position)
@@ -1172,28 +1187,23 @@ class DisplayBase:
 		if self.menu['current']['mode'] == 'grill_hold_value':
 			# Grill Temperature (Large Centered)
 			font_point_size = 80 if self.WIDTH == 240 else 120 
-			font = ImageFont.truetype("trebuc.ttf", font_point_size)
-			text = str(self.menu['current']['option'])
-			(font_width, font_height) = font.getsize(text)
-			if self.WIDTH == 240:
-				draw.text((self.WIDTH // 2 - font_width // 2 - 20, self.HEIGHT // 2.5 - font_height // 2), text, font=font,
-					  fill=(255, 255, 255))
-			else:
-				draw.text((self.WIDTH // 2 - font_width // 2, self.HEIGHT // 3 - font_height // 2), text, font=font,
-					  fill=(255, 255, 255))
+			label_canvas = self._draw_text(str(self.menu['current']['option']), self.primary_font, font_point_size, (255,255,255))
+			label_origin = (int(self.WIDTH // 2 - label_canvas.width // 2), int(self.HEIGHT // 3 - label_canvas.height // 2)) if self.WIDTH == 240 else (int(self.WIDTH // 2 - label_canvas.width // 2 - 20), int(self.HEIGHT // 2.5 - label_canvas.height // 2))
+			img.paste(label_canvas, label_origin, label_canvas)
 
 			# Current Mode (Bottom Center)
-			font = ImageFont.truetype("trebuc.ttf", 36)
+			font_point_size = 36
 			text = "Grill Set Point"
-			(font_width, font_height) = font.getsize(text)
+			label_canvas = self._draw_text(text, self.primary_font, font_point_size, (255,255,255))
+
 			# Draw Black Rectangle
 			draw.rectangle([(0, (self.HEIGHT // 8) * 6), (self.WIDTH, self.HEIGHT)], fill=(0, 0, 0))
 			# Draw White Line/Rectangle
 			draw.rectangle([(0, (self.HEIGHT // 8) * 6), (self.WIDTH, ((self.HEIGHT // 8) * 6) + 2)],
 						   fill=(255, 255, 255))
 			# Draw Text
-			draw.text((self.WIDTH // 2 - font_width // 2, (self.HEIGHT // 8) * 6.25), text, font=font,
-					  fill=(255, 255, 255))
+			label_origin = (int(self.WIDTH // 2 - label_canvas.width // 2), int((self.HEIGHT // 8) * 6.25))
+			img.paste(label_canvas, label_origin, label_canvas)
 
 		elif self.menu['current']['mode'] != 'none':
 			# Menu Option (Large Top Center)
@@ -1205,32 +1215,31 @@ class DisplayBase:
 					break
 				index += 1
 			font_point_size = 80 if self.WIDTH == 240 else 120 
-			font = ImageFont.truetype("static/font/FA-Free-Solid.otf", font_point_size)
 			text = self.menu[self.menu['current']['mode']][selected]['icon']
-			(font_width, font_height) = font.getsize(text)
-			draw.text((self.WIDTH // 2 - font_width // 2, self.HEIGHT // 2.5 - font_height // 2), text, font=font,
-					  fill=(255, 255, 255))
+			label_canvas = self._draw_text(text, 'static/font/FA-Free-Solid.otf', font_point_size, (255,255,255))
+			label_origin = (int(self.WIDTH // 2 - label_canvas.width // 2), int(self.HEIGHT // 2.5 - label_canvas.height // 2))
+			img.paste(label_canvas, label_origin, label_canvas)
+
 			# Draw a Plus Icon over the top of the Smoke Icon
 			if selected == 'SmokePlus':
 				font_point_size = 60 if self.WIDTH == 240 else 80
-				font = ImageFont.truetype("static/font/FA-Free-Solid.otf", font_point_size)
-				text = '\uf067'  # FontAwesome Icon for PLUS
-				(font_width, font_height) = font.getsize(text)
-				draw.text((self.WIDTH // 2 - font_width // 2, self.HEIGHT // 2.5 - font_height // 2), text, font=font,
-						  fill=(0, 0, 0))
+				text = '\uf067'
+				label_canvas = self._draw_text(text, 'static/font/FA-Free-Solid.otf', font_point_size, (0,0,0))
+				label_origin = (int(self.WIDTH // 2 - label_canvas.width // 2), int(self.HEIGHT // 2.5 - label_canvas.height // 2))
+				img.paste(label_canvas, label_origin, label_canvas)
 
 			# Current Mode (Bottom Center)
-			font = ImageFont.truetype("trebuc.ttf", 36)
-			text = self.menu[self.menu['current']['mode']][selected]['displaytext']
-			(font_width, font_height) = font.getsize(text)
 			# Draw Black Rectangle
 			draw.rectangle([(0, (self.HEIGHT // 8) * 6), (self.WIDTH, self.HEIGHT)], fill=(0, 0, 0))
 			# Draw White Line/Rectangle
 			draw.rectangle([(0, (self.HEIGHT // 8) * 6), (self.WIDTH, ((self.HEIGHT // 8) * 6) + 2)],
 						   fill=(255, 255, 255))
 			# Draw Text
-			draw.text((self.WIDTH // 2 - font_width // 2, (self.HEIGHT // 8) * 6.25), text, font=font,
-					  fill=(255, 255, 255))
+			font_point_size = 36
+			text = self.menu[self.menu['current']['mode']][selected]['displaytext']
+			label_canvas = self._draw_text(text, self.primary_font, font_point_size, (255,255,255))
+			label_origin = (int(self.WIDTH // 2 - label_canvas.width // 2), int((self.HEIGHT // 8) * 6.25))
+			img.paste(label_canvas, label_origin, label_canvas)
 
 		# Change color of Arrow for Up / Down when adjusting temperature
 		up_color = (255, 255, 255)
@@ -1243,32 +1252,30 @@ class DisplayBase:
 
 		# Up / Down Arrows (Middle Right)
 		font_point_size = 80 if self.WIDTH == 240 else 60 
-		font = ImageFont.truetype("static/font/FA-Free-Solid.otf", font_point_size)
 		text = '\uf0de'  # FontAwesome Icon Sort (Up Arrow)
-		(font_width, font_height) = font.getsize(text)
-		draw.text(((self.WIDTH - (font_width // 2) ** 1.3), (self.HEIGHT // 2.5 - font_height // 2)), text,
-					font=font, fill=up_color)
+		label_canvas = self._draw_text(text, 'static/font/FA-Free-Solid.otf', font_point_size, up_color)
+		label_origin = ((self.WIDTH - int((label_canvas.width // 2) ** 1.3)), int((self.HEIGHT // 2.5) - (label_canvas.height // 2) - 5))
+		img.paste(label_canvas, label_origin, label_canvas)
 
 		text = '\uf0dd'  # FontAwesome Icon Sort (Down Arrow)
-		(font_width, font_height) = font.getsize(text)
-		draw.text(((self.WIDTH - (font_width // 2) ** 1.3), (self.HEIGHT // 2.4 - font_height // 2)), text,
-					font=font, fill=down_color)
+		label_canvas = self._draw_text(text, 'static/font/FA-Free-Solid.otf', font_point_size, down_color)
+		label_origin = ((self.WIDTH - int((label_canvas.width // 2) ** 1.3)), int((self.HEIGHT // 2.5) + (label_canvas.height // 2) + 5))
+		img.paste(label_canvas, label_origin, label_canvas)
 		
 		self._display_canvas(img)
 		time.sleep(0.05)
 
-		# Up / Down Arrows (Middle Right)
-		font_point_size = 80 if self.WIDTH == 240 else 60 
-		font = ImageFont.truetype("static/font/FA-Free-Solid.otf", font_point_size)
+		# Up / Down Arrows (Middle Right) back to white
 		text = '\uf0de'  # FontAwesome Icon Sort (Up Arrow)
-		(font_width, font_height) = font.getsize(text)
-		draw.text(((self.WIDTH - (font_width // 2) ** 1.3), (self.HEIGHT // 2.5 - font_height // 2)), text,
-					font=font, fill=(255, 255, 255))
+		label_canvas = self._draw_text(text, 'static/font/FA-Free-Solid.otf', font_point_size, (255,255,255))
+		label_origin = ((self.WIDTH - int((label_canvas.width // 2) ** 1.3)), int((self.HEIGHT // 2.5) - (label_canvas.height // 2) - 5))
+		img.paste(label_canvas, label_origin, label_canvas)
 
 		text = '\uf0dd'  # FontAwesome Icon Sort (Down Arrow)
-		(font_width, font_height) = font.getsize(text)
-		draw.text(((self.WIDTH - (font_width // 2) ** 1.3), (self.HEIGHT // 2.4 - font_height // 2)), text,
-		font=font, fill=(255, 255, 255))
+		label_canvas = self._draw_text(text, 'static/font/FA-Free-Solid.otf', font_point_size, (255,255,255))
+		label_origin = ((self.WIDTH - int((label_canvas.width // 2) ** 1.3)), int((self.HEIGHT // 2.5) + (label_canvas.height // 2) + 5))
+		img.paste(label_canvas, label_origin, label_canvas)
+
 
 		self._display_canvas(img)
 
