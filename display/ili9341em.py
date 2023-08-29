@@ -95,7 +95,7 @@ class Display(DisplayBase):
 		# Display Image
 		self.device.backlight(True)
 		self.device.show()
-		self.device.display(canvas)
+		self.device.display(canvas.convert(mode="RGB"))
 
 	'''
 	 ====================== Input & Menu Code ========================
