@@ -24,12 +24,32 @@
 	<div class="card-footer justify-content-center">
 		<div class="btn-toolbar justify-content-center" role="toolbar">
 			<div class="btn-group mr-2 shadow" role="group">
-				<a href="/settings" class="btn btn-sm btn-outline-primary" role="button" data-toggle="tooltip" title="Settings for this probe."><i class="fas fa-cog"></i></a>
+				<button class="btn btn-sm btn-outline-primary" role="button" data-toggle="tooltip" title="Settings for this probe." onclick="window.location.href = '/settings';">
+					<i class="fas fa-cog"></i>
+				</button>
 				{% if probe_data['type'] == 'Primary' %}
 					<button type="button" class="btn btn-sm btn-outline-primary" id="{{ probe_data['label'] }}_primary_setpoint_btn" 
-					  onclick="launchSetpointModal()">
+					  onclick="launchSetpointModal()" style="display:none">
 						<i class="fas fa-crosshairs"></i>
 					</button>
+					<div id="pmode_group" class="btn-group dropup" role="group" data-toggle="tooltip" data-placement="top" title="Adjust the PMode" style="display:none">
+						<button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" id="pmode_btn" data-toggle="dropdown" aria-expanded="false">
+							<i class="fa-solid fa-p"></i>
+						</button>
+						<div class="dropdown-menu">
+						  <!-- Dropdown menu links -->
+						  <button class="dropdown-item" type="button" onclick="setPmode(0)">0 - Off</button>
+						  <button class="dropdown-item" type="button" onclick="setPmode(1)">1</button>
+						  <button class="dropdown-item" type="button" onclick="setPmode(2)">2</button>
+						  <button class="dropdown-item" type="button" onclick="setPmode(3)">3</button>
+						  <button class="dropdown-item" type="button" onclick="setPmode(4)">4</button>
+						  <button class="dropdown-item" type="button" onclick="setPmode(5)">5</button>
+						  <button class="dropdown-item" type="button" onclick="setPmode(6)">6</button>
+						  <button class="dropdown-item" type="button" onclick="setPmode(7)">7</button>
+						  <button class="dropdown-item" type="button" onclick="setPmode(8)">8</button>
+						  <button class="dropdown-item" type="button" onclick="setPmode(9)">9</button>
+						</div>
+					</div>
 				{% endif %}
 				{% for notify_info in control['notify_data'] %}
 					{% if notify_info['label'] == probe_data['label'] %} 

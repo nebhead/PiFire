@@ -80,18 +80,31 @@ function updateProbeCards() {
 					clearPrimarySetpointBtn(primary);
 				};
 				mode = current.status.mode;
-				if (['Prime', 'Startup', 'Reignite', 'Shutdown'].includes(mode)) {
+				if (['Prime', 'Shutdown'].includes(mode)) {
 					$('#status_footer').slideDown();
 					$('#mode_timer_label').show();
 					$('#lid_open_label').hide();
+					$('#pmode_group').hide();
+				} else if (['Startup', 'Reignite'].includes(mode)) {
+					$('#status_footer').slideDown();
+					$('#mode_timer_label').show();
+					$('#lid_open_label').hide();
+					$('#pmode_group').show();
 				} else if (mode == 'Hold') {
 					$('#status_footer').slideUp();
 					$('#mode_timer_label').hide();
 					$('#lid_open_label').show();
+					$('#pmode_group').hide();
+				} else if (mode == 'Smoke') {
+					$('#status_footer').slideUp();
+					$('#mode_timer_label').hide();
+					$('#lid_open_label').hide();
+					$('#pmode_group').show();
 				} else {
 					$('#status_footer').slideUp();
 					$('#mode_timer_label').hide();
 					$('#lid_open_label').hide();
+					$('#pmode_group').hide();
 				};
 				$('#mode_status').html('<b>' + mode +'</b>');
 			};
@@ -139,8 +152,10 @@ function updateProbeCards() {
 				last_pmode_status = current.status.p_mode;
 				if (last_pmode_status == 0) {
 					document.getElementById('pmode_status').innerHTML = '<i class="far fa-square fa-stack-2x" style="color:rgb(150, 150, 150)" data-toggle="tooltip" data-placement="top" title="P-Mode"></i><i class="fas fa-minus fa-stack-1x" style="color:rgb(150, 150, 150)"></i>';
+					document.getElementById('pmode_btn').innerHTML = '<i class="fa-solid fa-p"></i>-<i class="fas fa-' + last_pmode_status + '"></i>';
 				} else if (last_pmode_status < 10) {
 					document.getElementById('pmode_status').innerHTML = '<i class="far fa-square fa-stack-2x" style="color:rgb(100, 0, 100)" data-toggle="tooltip" data-placement="top" title="P-Mode"></i><i class="fas fa-' + last_pmode_status + ' fa-stack-1x" style="color:rgb(100, 0, 100)"></i>';
+					document.getElementById('pmode_btn').innerHTML = '<i class="fa-solid fa-p"></i>-<i class="fas fa-' + last_pmode_status + '"></i>';
 				};
 			};
 
@@ -384,6 +399,37 @@ function refreshHopperStatus() {
 // Launch the setpointModal from the notification toolbar
 function launchSetpointModal() {
 	$("#setpointModal").modal('show');
+};
+
+function setPmode(pmode) {
+    var postdata = { 
+        'cycle_data' : {
+			'PMode' : pmode
+		}
+    };
+
+	$.ajax({
+        url : '/api/settings',
+        type : 'POST',
+        data : JSON.stringify(postdata),
+        contentType: "application/json; charset=utf-8",
+        traditional: true,
+        success: function (data) {
+			var postdata = { 
+				'settings_update' : true
+			};
+
+			$.ajax({
+				url : '/api/control',
+				type : 'POST',
+				data : JSON.stringify(postdata),
+				contentType: "application/json; charset=utf-8",
+				traditional: true,
+				success: function (data) {
+				}
+			});
+        }
+    });
 };
 
 // Main
