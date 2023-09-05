@@ -414,7 +414,10 @@
                                 </div>
                                 <div class="card-body">
                                     <span class="badge badge-warning">NOTE:</span>
-                                    <i class="small">Smoke Plus Mode can be toggled on/off by tapping the fan icon button on the dashboard. The icon will be highlighted blue indicating that smoke plus is enabled. Smoke Plus will cycle the fan on and off during smoke and hold mode to promote additional smoke generation. Fan cycling will only occur between the below min/max temperatures.</i>
+                                    <i class="small">Smoke Plus Mode can be toggled on/off by tapping the fan icon button on the dashboard. 
+                                        The icon will be highlighted blue indicating that smoke plus is enabled. Smoke Plus will cycle the fan on and off 
+                                        during smoke and hold mode to promote additional smoke generation. Fan cycling will only occur between the below 
+                                        min/max temperatures.</i>
                                     <br>
                                     <br>
                                     <div class="custom-control custom-switch">
@@ -541,15 +544,13 @@
                                     </h5>
                                 </div>
                                 <div class="card-body">
-                                    <span class="badge badge-warning">NOTE:</span>
-                                    <i class="small">The Keep Warm function will be activated when option is selected and a probe set point has been achieved or the set timer has expired. The Grill will exit the currently running mode and switch to Hold Mode then attempt to maintain the temperature set below. You can also enable or disable the Smoke Plus feature during Keep Warm.</i>
-                                    <br>
-                                    <br>
-                                    <div class="custom-control custom-switch">
-                                        <input type="checkbox" class="custom-control-input" id="keep_warm_s_plus" name="keep_warm_s_plus" {% if settings['keep_warm']['s_plus'] %}checked{% endif %}>
-                                        <label class="custom-control-label" for="keep_warm_s_plus">Smoke Plus Enabled</label>
-                                    </div>
-                                    <br>
+                                    The Keep Warm mode is a specified Hold temperature, that you can define, <u>that can be activated by a timer or 
+                                    notification targets.</u>  When the grill is active, you can click on the timer dialog and check the Keep Warm 
+                                    box.  Or you can click on the Notification Targets for any of the probes and select the Keep Warm box. 
+                                    The Keep Warm function will be activated when a probe notify target has been achieved 
+                                    or the timer has expired. The Grill will exit the currently running mode and switch to Hold Mode then 
+                                    attempt to maintain the temperature set below. 
+                                    <br><br>
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text" data-toggle="tooltip" title="Keep Warm Temperature ({{settings['globals']['units']}}) [Default: 165F/74C]">
@@ -558,6 +559,15 @@
                                         </div>
                                         <input id="keep_warm_temp" type="number" min="1" class="form-control" placeholder="{{ settings['keep_warm']['temp'] }}" value="{{ settings['keep_warm']['temp'] }}" name="keep_warm_temp">
                                     </div>
+                                    <br>
+                                    You can also enable or disable the Smoke Plus feature during Keep Warm.
+                                    <br>
+                                    <br>
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="keep_warm_s_plus" name="keep_warm_s_plus" {% if settings['keep_warm']['s_plus'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="keep_warm_s_plus">Smoke Plus Enabled During 'Keep Warm'</label>
+                                    </div>
+                                    <br>
                                 </div><!-- End of card body -->
                             </div><!-- End of Card -->
                         </div><!-- End of card body -->
