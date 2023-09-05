@@ -30,7 +30,7 @@
 				"description" : "This is the PWM PiFire module supporting the Raspberry Pi Zero W (1/2).  Choose this module if PiFire is running on a Raspberry Pi and your PCB supports a 12v DC PWM Fan.",
 				"default" : false,
 				"image" : "raspizerow.png",
-				"py_dependencies" : [],
+				"py_dependencies" : ["rpi-hardware-pwm"],
 				"apt_dependencies" : [],
 				"settings_dependencies" : {
 					"standalone" : {
