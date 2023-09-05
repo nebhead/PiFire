@@ -136,7 +136,11 @@ class ProbeInterface:
 			 Tr = ((probe_profile['Vs'] * probe_profile['Rd']) - (Vo * probe_profile['Rd'])) / Vo
 			 R2 = ( Vout * R1 ) / ( Vin - Vout )
 			'''
-			Tr = ( Vo * probe_profile['Rd']) / ( probe_profile['Vs'] - Vo )
+			
+			if Vo < probe_profile['Vs']:
+				Tr = ( Vo * probe_profile['Rd']) / ( probe_profile['Vs'] - Vo )
+			else:
+				Tr = ( Vo * probe_profile['Rd']) / ( 0.001 )
 
 			''' Coefficient a, b, & c values '''
 			a = probe_profile['A']
