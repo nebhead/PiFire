@@ -123,7 +123,8 @@ class ProbeInterface:
 		return Tr 
 
 	def _voltage_to_temp(self, voltage, probe_profile):
-		if(voltage > 0) and (voltage < (probe_profile['Vs'] * 1000)):
+		''' Check to make sure voltage is between 0V and Vs defined in profile, plus some guard band '''
+		if(voltage > 0) and (voltage <= ((probe_profile['Vs'] * 1000) * 1.01)):
 			'''
 				Voltage at the divider (i.e. input to the ADC)
 			'''
