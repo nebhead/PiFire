@@ -14,7 +14,8 @@
       "py_dependencies": [
         "apprise",
         "scikit-fuzzy",
-        "scikit-learn"
+        "scikit-learn",
+        "ratelimitingfilter"
       ],
       "apt_dependencies": [
         "libatlas-base-dev"

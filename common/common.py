@@ -26,6 +26,7 @@ import redis
 import uuid
 import random
 import logging
+from ratelimitingfilter import RateLimitingFilter
 
 # *****************************************
 # Constants and Globals 
@@ -63,8 +64,12 @@ def create_logger(name, filename='./logs/pifire.log', messageformat='%(asctime)s
 	if not logger.hasHandlers():
 		formatter = logging.Formatter(fmt=messageformat, datefmt='%Y-%m-%d %H:%M:%S')
 		# datefmt='%Y-%m-%d %H:%M:%S'
+		# Add a rate limit filter for the voltage error logging 
+		config = {'match': ['An error occurred reading the voltage from one of the ports.']}
+		ratelimit = RateLimitingFilter(rate=1, per=60, burst=5, **config)  # Allow 1 per 60s (with periodic burst of 5)
 		handler = logging.FileHandler(filename)        
 		handler.setFormatter(formatter)
+		handler.addFilter(ratelimit)  # Add the rate limit filter
 		logger.addHandler(handler)
 	return logger
 
