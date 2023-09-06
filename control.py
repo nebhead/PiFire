@@ -381,6 +381,10 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		OffTime = 1  # Auger Off Time
 		CycleTime = OnTime + OffTime  # Total Cycle Time
 		CycleRatio = RawCycleRatio = OnTime / CycleTime  # Ratio of OnTime to CycleTime
+		''' Allow for the igniter to be turned on during prime mode - user selected '''
+		if settings['globals']['prime_ignition'] and control['next_mode'] == 'Startup':
+			grill_platform.igniter_on()
+			eventLogger.debug('Igniter ON')
 
 	# Get initial probe sensor data, temperatures 
 	sensor_data = probe_complex.read_probes()

@@ -1287,6 +1287,28 @@
                                     <br>
                                 </div>
                             </div>
+                            <br>
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h5>
+                                        <i class="fas fa-angle-double-right"></i>&nbsp; Prime Settings
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="prime_ignition" name="prime_ignition" {% if settings['globals']['prime_ignition'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="prime_ignition">Start Igniter During Prime + Startup</label>
+                                    </div>
+                                    <span class="badge badge-danger">DANGER:</span>
+                                    <i class="small"> 
+                                        Only enable the igniter during Priming, if you are absolutely sure that you need to do this.  
+                                        Enabling the igniter will ignite pellets and start the firepot, even without the fan enabled. 
+                                        This feature will only turn on the igniter if Prime & Startup is selected.  Otherwise, priming 
+                                        without startup will not utilize the igniter.  
+                                    </i>
+                                    <br>
+                                </div>
+                            </div>
                         </div><!-- End of card body -->
                         <div class="card-footer bg-light">
                             <button type="submit" class="btn btn-outline-primary">Save</button>

@@ -1931,6 +1931,11 @@ def settings_page(action=None):
 		if _is_not_blank(response, 'auger_rate'):
 			settings['globals']['augerrate'] = float(response['auger_rate'])
 
+		if _is_checked(response, 'prime_ignition'):
+			settings['globals']['prime_ignition'] = True
+		else:
+			settings['globals']['prime_ignition'] = False
+
 		event['type'] = 'updated'
 		event['text'] = 'Successfully updated pellet settings.'
 
