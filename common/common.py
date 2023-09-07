@@ -58,10 +58,15 @@ cmdsts = redis.StrictRedis('localhost', 6379, charset="utf-8", decode_responses=
 ==============================================================================
 '''
 def create_logger(name, filename='./logs/pifire.log', messageformat='%(asctime)s | %(levelname)s | %(message)s', level=logging.INFO):
-	"""Setup a custom logger"""
+	'''Create or Get Existing Logger'''
 	logger = logging.getLogger(name)
-	logger.setLevel(level)
+	''' 
+		If the logger does not exist, create one. Else return the logger. 
+		Note: If the a log-level change is needed, the developer should directly set the log level on the logger, instead of using 
+		this function.  
+	'''
 	if not logger.hasHandlers():
+		logger.setLevel(level)
 		formatter = logging.Formatter(fmt=messageformat, datefmt='%Y-%m-%d %H:%M:%S')
 		# datefmt='%Y-%m-%d %H:%M:%S'
 		# Add a rate limit filter for the voltage error logging 
