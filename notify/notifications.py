@@ -22,7 +22,7 @@ import requests
 import json
 import apprise
 import logging
-from common import write_settings, write_control, create_logger
+from common import write_settings, write_control
 
 '''
 ==============================================================================
@@ -104,8 +104,7 @@ def send_notifications(notify_event, control, settings, pelletdb, label='Probe',
 	:param settings: Settings
 	:param pelletdb: Pellet DB
 	"""
-	log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
-	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
+	eventLogger = logging.getLogger("events") # Use events logger defined during initialization of main control loop
 	date = datetime.datetime.now()
 	now = date.strftime('%m-%d %H:%M')
 	time = date.strftime('%H:%M')
@@ -198,8 +197,7 @@ def _send_apprise_notifications(settings, title_message, body_message):
 	:param title_message: Message Title
 	:param body_message: Message Body
 	"""
-	log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
-	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
+	eventLogger = logging.getLogger("events") # Use events logger defined during initialization of main control loop
 	if(len(settings['notify_services']['apprise']['locations'])):
 		eventLogger.info("Sending Apprise Notifications: " + ", ".join(settings['notify_services']['apprise']['locations']))
 		appriseHandler = apprise.Apprise()
@@ -222,8 +220,7 @@ def _send_pushover_notification(settings, title_message, body_message):
 	:param title_message: Message Title
 	:param body_message: Message Body
 	"""
-	log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
-	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
+	eventLogger = logging.getLogger("events") # Use events logger defined during initialization of main control loop
 	url = 'https://api.pushover.net/1/messages.json'
 	for user in settings['notify_services']['pushover']['UserKeys'].split(','):
 		try:
@@ -255,8 +252,7 @@ def _send_pushbullet_notification(settings, title_message, body_message):
 	:param body_message: Message Body
 	:return:
 	"""
-	log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
-	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
+	eventLogger = logging.getLogger("events") # Use events logger defined during initialization of main control loop
 	api_key = settings['notify_services']['pushbullet']['APIKey']
 	pushbullet_link = settings['notify_services']['pushbullet']['PublicURL']
 	url = "https://api.pushbullet.com/v2/pushes"
@@ -287,8 +283,7 @@ def _send_onesignal_notification(settings, title_message, body_message, channel)
 	:param body_message: Message Body
 	:param channel: Android Notifications Channel
 	"""
-	log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
-	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
+	eventLogger = logging.getLogger("events") # Use events logger defined during initialization of main control loop
 	app_id = settings['notify_services']['onesignal']['app_id']
 	devices = settings['notify_services']['onesignal']['devices']
 	url = "https://onesignal.com/api/v1/notifications"
@@ -341,8 +336,7 @@ def _send_ifttt_notification(settings, notify_event, query_args):
 	:param notify_event: String Event
 	:param query_args: Query Args
 	"""
-	log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
-	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
+	eventLogger = logging.getLogger("events") # Use events logger defined during initialization of main control loop
 	key = settings['notify_services']['ifttt']['APIKey']
 	url = 'https://maker.ifttt.com/trigger/' + notify_event + '/with/key/' + key
 
