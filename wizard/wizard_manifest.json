@@ -475,6 +475,38 @@
 					]
 				}
 			},
+			"mcp9600_adafruit" : {
+				"friendly_name" : "Adafruit MCP9600 Thermocouple Amplifier",
+				"filename" : "mcp9600_adafruit",
+				"description" : "This I2C device reads K-Type thermocouples / probes. Moreover the MCP9600 can interface with just about any thermocouple type: K, J, T, N, S, E, B and R type are all supported.  This version uses the Adafruit CircuitPython modules.",
+				"default" : false,
+				"image" : "mcp9600.png",
+				"py_dependencies" : ["adafruit-circuitpython-mcp9600"], 
+				"apt_dependencies" : [],
+				"settings_dependencies" : {
+					"units" : {
+						"friendly_name" : "Temp Units",
+						"description" : "Select the temperature units to use for PiFire globally.  (this can be modified in settings later)",
+						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
+						"settings" : ["globals", "units"]
+					}
+				},
+				"device_specific" : {
+					"ports" : ["KTT0"],
+					"config" : [
+						{
+							"label" : "i2c_bus_addr", 
+							"friendly_name" : "I2C Bus Address",
+							"description" : "Select the I2C bus address to use for this device.  Default is 0x67.  If you have more than one MCP9600, you can assign unique device bus address for up to five devices.",
+							"type" : "list", 
+							"list_values" : ["0x67", "0x66", "0x65", "0x64", "0x60"],
+							"list_labels" : ["0x67", "0x66", "0x65", "0x64", "0x60"],
+							"default" : "0x67",
+							"hidden" : false
+						}
+					]
+				}
+			},
 			"prototype" : {
 				"friendly_name" : "Prototype",
 				"filename" : "prototype",
