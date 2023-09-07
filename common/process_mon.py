@@ -49,8 +49,7 @@ class Process_Monitor:
         # Setup logging
         log_level = logging.ERROR
         self.process_logger = create_logger(self.process, filename=f'./logs/{self.process}.log', level=log_level)
-        self.logger = logging.getLogger("events") # Use events logger defined during initialization of main control loop
-
+        self.event_logger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 
         # Setup process monitoring thread 
         self.process_thread = threading.Thread(target=self._heartbeat_check)

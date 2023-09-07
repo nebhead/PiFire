@@ -33,6 +33,7 @@ from skfuzzy import control as ctrl
 import pickle
 import pathlib 
 import logging
+from common.common import create_logger
 
 '''
 Class Definition
@@ -40,7 +41,8 @@ Class Definition
 class Controller(ControllerBase):
     def __init__(self, config, units, cycle_data):
         super().__init__(config, units, cycle_data)
-        self.logger = logging.getLogger("control") # Use control logger defined during initialization of main control loop
+        self.controlLogger = create_logger('control', filename='./logs/control.log', level=logging.ERROR)
+
         pickle_path = pathlib.Path('./controller/fuzzy.pickle')
         if not pathlib.Path.exists(pickle_path):
             import subprocess
