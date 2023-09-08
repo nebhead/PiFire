@@ -176,7 +176,7 @@ def default_settings():
 	settings['pwm'] = {
 		'pwm_control': False,
 		'update_time' : 10,
-		'frequency' : 30, 		# PWM Fan Frequency. This may vary with different fans
+		'frequency' : 25000, 	# PWM Fan Frequency. Intel standard for 4-pin PWM PC fans specifies 25 kHz
 		'min_duty_cycle' : 20, 	# This is the minimum duty cycle that can be set. Some fans stall below a certain speed
 		'max_duty_cycle' : 100, # This is the maximum duty cycle that can be set. Can limit fans that are overpowered
 		'temp_range_list' : [3, 7, 10, 15],  # Temp Bands for Each Profile
