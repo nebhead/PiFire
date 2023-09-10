@@ -735,77 +735,79 @@ class DisplayBase:
 		img = self._draw_gauge(img, position, size, fg_color, bg_color, 
 			percents, temps, label)
 
-		# ======== Probe1 Temp Circle Gauge ========
-		position = (10, self.HEIGHT - 110)
-		size = (100, 100)
-		bg_color = (50, 50, 50)  # Grey
-		fg_color = (3, 161, 252)  # Blue
+		if len(list(in_data['probe_history']['food'].keys())) > 0:
+			# ======== Probe1 Temp Circle Gauge ========
+			position = (10, self.HEIGHT - 110)
+			size = (100, 100)
+			bg_color = (50, 50, 50)  # Grey
+			fg_color = (3, 161, 252)  # Blue
 
-		label = list(in_data['probe_history']['food'].keys())[0]
-		
-		# temp, percents = [current temperature, setpoint1, setpoint2]
-		temps = [0,0,0]
-		percents = [0,0,0]
+			label = list(in_data['probe_history']['food'].keys())[0]
+			
+			# temp, percents = [current temperature, setpoint1, setpoint2]
+			temps = [0,0,0]
+			percents = [0,0,0]
 
-		temps[0] = in_data['probe_history']['food'][label]
-		if temps[0] <= 0:
-			percents[0] = 0
-		elif self.units == 'F':
-			percents[0] = round((temps[0] / 300) * 100)  # F Temp Range [0 - 300F] for probe
-		else:
-			percents[0] = round((temps[0] / 150) * 100)  # C Temp Range [0 - 150C] for probe
+			temps[0] = in_data['probe_history']['food'][label]
+			if temps[0] <= 0:
+				percents[0] = 0
+			elif self.units == 'F':
+				percents[0] = round((temps[0] / 300) * 100)  # F Temp Range [0 - 300F] for probe
+			else:
+				percents[0] = round((temps[0] / 150) * 100)  # C Temp Range [0 - 150C] for probe
 
-		temps[1] = in_data['notify_targets'][label]
-		if temps[1] <= 0:
-			percents[1] = 0
-		elif self.units == 'F':
-			percents[1] = round((temps[1] / 300) * 100)  # F Temp Range [0 - 300F] for probe
-		elif self.units == 'C':
-			percents[1] = round((temps[1] / 150) * 100)  # C Temp Range [0 - 150C] for probe 
+			temps[1] = in_data['notify_targets'][label]
+			if temps[1] <= 0:
+				percents[1] = 0
+			elif self.units == 'F':
+				percents[1] = round((temps[1] / 300) * 100)  # F Temp Range [0 - 300F] for probe
+			elif self.units == 'C':
+				percents[1] = round((temps[1] / 150) * 100)  # C Temp Range [0 - 150C] for probe 
 
-		# No SetPoint2 on Probes
-		temps[2] = 0
-		percents[2] = 0
+			# No SetPoint2 on Probes
+			temps[2] = 0
+			percents[2] = 0
 
-		# Draw the Probe1 Gauge w/Labels - Use Yellow as the SetPoint Color
-		img = self._draw_gauge(img, position, size, fg_color, bg_color, 
-			percents, temps, label, sp1_color=(255, 255, 0))
+			# Draw the Probe1 Gauge w/Labels - Use Yellow as the SetPoint Color
+			img = self._draw_gauge(img, position, size, fg_color, bg_color, 
+				percents, temps, label, sp1_color=(255, 255, 0))
 
-		# ======== Probe2 Temp Circle Gauge ========
-		position = (self.WIDTH - 110, self.HEIGHT - 110)
-		size = (100, 100)
-		bg_color = (50, 50, 50)  # Grey
-		fg_color = (3, 161, 252)  # Blue
+		if len(list(in_data['probe_history']['food'].keys())) > 1:
+			# ======== Probe2 Temp Circle Gauge ========
+			position = (self.WIDTH - 110, self.HEIGHT - 110)
+			size = (100, 100)
+			bg_color = (50, 50, 50)  # Grey
+			fg_color = (3, 161, 252)  # Blue
 
-		label = list(in_data['probe_history']['food'].keys())[1]
-		
-		# temp, percents = [current temperature, setpoint1, setpoint2]
-		temps = [0,0,0]
-		percents = [0,0,0]
+			label = list(in_data['probe_history']['food'].keys())[1]
+			
+			# temp, percents = [current temperature, setpoint1, setpoint2]
+			temps = [0,0,0]
+			percents = [0,0,0]
 
-		temps[0] = in_data['probe_history']['food'][label]
-		if temps[0] <= 0:
-			percents[0] = 0
-		elif self.units == 'F':
-			percents[0] = round((temps[0] / 300) * 100)  # F Temp Range [0 - 300F] for probe
-		else:
-			percents[0] = round((temps[0] / 150) * 100)  # C Temp Range [0 - 150C] for probe
+			temps[0] = in_data['probe_history']['food'][label]
+			if temps[0] <= 0:
+				percents[0] = 0
+			elif self.units == 'F':
+				percents[0] = round((temps[0] / 300) * 100)  # F Temp Range [0 - 300F] for probe
+			else:
+				percents[0] = round((temps[0] / 150) * 100)  # C Temp Range [0 - 150C] for probe
 
-		temps[1] = in_data['notify_targets'][label]
-		if temps[1] <= 0:
-			percents[1] = 0
-		elif self.units == 'F':
-			percents[1] = round((temps[1] / 300) * 100)  # F Temp Range [0 - 300F] for probe
-		elif self.units == 'C':
-			percents[1] = round((temps[1] / 150) * 100)  # C Temp Range [0 - 150C] for probe 
+			temps[1] = in_data['notify_targets'][label]
+			if temps[1] <= 0:
+				percents[1] = 0
+			elif self.units == 'F':
+				percents[1] = round((temps[1] / 300) * 100)  # F Temp Range [0 - 300F] for probe
+			elif self.units == 'C':
+				percents[1] = round((temps[1] / 150) * 100)  # C Temp Range [0 - 150C] for probe 
 
-		# No SetPoint2 on Probes
-		temps[2] = 0
-		percents[2] = 0
+			# No SetPoint2 on Probes
+			temps[2] = 0
+			percents[2] = 0
 
-		# Draw the Probe1 Gauge w/Labels - Use Yellow as the SetPoint Color
-		img = self._draw_gauge(img, position, size, fg_color, bg_color, 
-			percents, temps, label, sp1_color=(255, 255, 0))
+			# Draw the Probe1 Gauge w/Labels - Use Yellow as the SetPoint Color
+			img = self._draw_gauge(img, position, size, fg_color, bg_color, 
+				percents, temps, label, sp1_color=(255, 255, 0))
 
 		# Display Icons for Active Outputs
 
