@@ -2116,8 +2116,12 @@ def admin_page(action=None):
 			local_file = request.form['localfile']
 			
 			if local_file != 'none':
-				settings = read_settings(filename=BACKUP_PATH+local_file)
-				notify = "success"
+				new_settings = read_settings(filename=BACKUP_PATH+local_file)
+				write_settings(new_settings)
+				server_status = 'restarting'
+				restart_scripts()
+				return render_template('shutdown.html', action='restart', page_theme=settings['globals']['page_theme'],
+									   grill_name=settings['globals']['grill_name'])
 			elif remote_file.filename != '':
 				# If the user does not select a file, the browser submits an
 				# empty file without a filename.
@@ -2125,7 +2129,12 @@ def admin_page(action=None):
 					filename = secure_filename(remote_file.filename)
 					remote_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 					notify = "success"
-					settings = read_settings(filename=BACKUP_PATH+filename)
+					new_settings = read_settings(filename=BACKUP_PATH+filename)
+					write_settings(new_settings)
+					server_status = 'restarting'
+					restart_scripts()
+					return render_template('shutdown.html', action='restart', page_theme=settings['globals']['page_theme'],
+									   		grill_name=settings['globals']['grill_name'])
 				else:
 					notify = "error"
 			else:
