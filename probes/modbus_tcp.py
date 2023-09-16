@@ -42,7 +42,7 @@ class ReadProbes(ProbeInterface):
 
 	def __init__(self, probe_info, device_info, units):
 		super().__init__(probe_info, device_info, units)
-		self.client = ModbusTcpClient('192.168.1.252')
+		self.client = ModbusTcpClient('10.10.10.50')
 		
 		
 
