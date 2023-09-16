@@ -22,5 +22,5 @@ Depends: nginx,
         ttf-mscorefonts-installer,
         redis-server
 Replaces: pifire (<= 1.0-1)
-Homepage: https://github.com/nebhead/PiFire
+Homepage: https://github.com/duganj/PiFire
 Description: This project is a WiFi enabled controller for your pellet smoker / grill. This example uses a Raspberry Pi Zero W with Flask WebUI. Based off of PiSmoker by DBorello

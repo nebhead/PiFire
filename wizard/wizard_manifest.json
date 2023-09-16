@@ -507,6 +507,27 @@
 					]
 				}
 			},
+			"modbus_tcp" : {
+				"friendly_name" : "Modbus TCP",
+				"filename" : "modbus_tcp",
+				"description" : "Experimental probe in development.  Polls a Modbus TCP device register to pull temperature data.  Development performed with a Watlow 96 Series PID Controller, Model 96A0-CFAU-00RG.",
+				"default" : false,
+				"image" : "watlow96.png",
+				"py_dependencies" : ["pymodbus"], 
+				"apt_dependencies" : [],
+				"settings_dependencies" : {
+					"units" : {
+						"friendly_name" : "Temp Units",
+						"description" : "Select the temperature units to use for PiFire globally.  (This can be modified in settings later)",
+						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
+						"settings" : ["globals", "units"]
+					}
+				},
+				"device_specific" : {
+					"ports" : ["register1"],
+					"config" : {}
+				}
+			},
 			"prototype" : {
 				"friendly_name" : "Prototype",
 				"filename" : "prototype",

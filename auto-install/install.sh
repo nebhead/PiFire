@@ -113,9 +113,9 @@ echo "**                                                                     **"
 echo "*************************************************************************"
 cd /usr/local/bin
 # Use a shallow clone to reduce download size
-$SUDO git clone --depth 1 https://github.com/nebhead/pifire
+$SUDO git clone --depth 1 https://github.com/duganj/pifire
 # Replace the below command to fetch development branch
-#git clone --depth 1 --branch development https://github.com/nebhead/pifire
+#git clone --depth 1 --branch development https://github.com/duganj/pifire
 
 # After doing a shallow clone, to be able to checkout other branches from remote,
 # git remote set-branches origin '*'
