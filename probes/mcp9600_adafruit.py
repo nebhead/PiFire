@@ -9,6 +9,11 @@ Description:
   This module utilizes the MCP9600 hardware and returns temperature data.
 	Depends on: pip3 install adafruit-circuitpython-mcp9600 
 
+	Note: Still experimental.  Requires a slower i2c clock speed. 
+	  This may cause issues with other i2c device performance.   
+	  Edit /boot/config.txt to add: 
+	  'dtparam=i2c_arm_baudrate=10000'
+	  
 	Ex Device Definition: 
 	
 	device = {
@@ -58,7 +63,7 @@ class KTTDevice():
 		# Create the I2C bus
 		self.i2c = busio.I2C(board.SCL, board.SDA)
 
-		self.sensor = MCP9600(self.i2c)
+		self.sensor = MCP9600(self.i2c, address=i2c_bus_addr)
 
 	@property
 	def temperature(self):
@@ -72,8 +77,12 @@ class ReadProbes(ProbeInterface):
 	def _init_device(self):
 		self.time_delay = 0
 		self.device_info['ports'] = ['KTT0']
-		i2c_bus_addr = BUSMAP[self.device_info['config'].get('i2c_bus_addr', '0x48')]
-		self.device = KTTDevice(i2c_bus_addr=i2c_bus_addr)
+		i2c_bus_addr = BUSMAP[self.device_info['config'].get('i2c_bus_addr', '0x67')]
+		try:
+			self.device = KTTDevice(i2c_bus_addr=i2c_bus_addr)
+		except:
+			self.logger.error('Something went wrong when trying to initialize the MCP9600 device.')
+			raise
 
 	def read_all_ports(self, output_data):
 		''' Read temperature from device '''
