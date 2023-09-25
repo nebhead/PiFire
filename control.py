@@ -510,14 +510,16 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		# Check hopper level when requested or every 300 seconds
 		if control['hopper_check'] or (now - hopper_toggle_time) > 300:
 			pelletdb = read_pellet_db()
-			# Get current hopper level and save it to the current pellet information
-			pelletdb['current']['hopper_level'] = dist_device.get_level()			
-			write_pellet_db(pelletdb)
-			hopper_toggle_time = now
-			eventLogger.info("Hopper Level Checked @ " + str(pelletdb['current']['hopper_level']) + "%")
+			override = False 
 			if control['hopper_check']:
 				control['hopper_check'] = False
 				write_control(control, direct_write=True, origin='control')
+				override = True
+			# Get current hopper level and save it to the current pellet information
+			pelletdb['current']['hopper_level'] = dist_device.get_level(override=override)			
+			write_pellet_db(pelletdb)
+			hopper_toggle_time = now
+			eventLogger.info("Hopper Level Checked @ " + str(pelletdb['current']['hopper_level']) + "%")
 
 		# Check for update in ON/OFF Switch
 		if not standalone and last != grill_platform.get_input_status():
@@ -1041,7 +1043,7 @@ while True:
 	if control['hopper_check']:
 		pelletdb = read_pellet_db()
 		# Get current hopper level and save it to the current pellet information
-		pelletdb['current']['hopper_level'] = dist_device.get_level()
+		pelletdb['current']['hopper_level'] = dist_device.get_level(override=True)
 		write_pellet_db(pelletdb)
 		eventLogger.info("Hopper Level Checked @ " + str(pelletdb['current']['hopper_level']) + "%")
 		control['hopper_check'] = False
