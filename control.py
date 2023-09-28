@@ -134,6 +134,8 @@ Set up Display Module
 try: 
 	display_name = settings['modules']['display']
 	DisplayModule = importlib.import_module(f'display.{display_name}')
+	display_config = settings['display']['config'][display_name]
+	display_config['probe_info'] = get_probe_info(settings['probe_settings']['probe_map']['probe_info'])
 
 except:
 	controlLogger.exception(f'Error occurred loading the display module ({display_name}). Trace dump: ')
@@ -150,11 +152,11 @@ except:
 
 try:
 	display_device = DisplayModule.Display(dev_pins=dev_pins, buttonslevel=buttons_level,
-										   rotation=disp_rotation, units=units)
+										   rotation=disp_rotation, units=units, config=display_config)
 except:
 	controlLogger.exception(f'Error occurred configuring the display module ({filename}). Trace dump: ')
 	from display.none import Display  # Simulated Library for controlling the grill platform
-	display_device = Display(dev_pins=dev_pins, buttonslevel=buttons_level, rotation=disp_rotation, units=units)
+	display_device = Display(dev_pins=dev_pins, buttonslevel=buttons_level, rotation=disp_rotation, units=units, config={})
 	error_event = f'An error occurred configuring the [{settings["modules"]["display"]}] display object.  The ' \
 		f'"display_none" module has been loaded instead.  This sometimes means that the hardware is ' \
 		f'not connected properly, or the module is not configured.  Please run the configuration wizard ' \

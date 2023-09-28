@@ -28,7 +28,7 @@ Display base class definition
 '''
 class DisplayBase:
 
-	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F'):
+	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F', config={}):
 		# Init Global Variables and Constants
 		self.dev_pins = dev_pins
 		self.buttonslevel = buttonslevel
