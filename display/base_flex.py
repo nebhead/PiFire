@@ -996,6 +996,18 @@ class DisplayBase:
         raw_str = self.splash.tobytes("raw", strFormat)
         self.splash = pygame.image.fromstring(raw_str, size, strFormat)
     
+    def _wake_display(self):
+        '''
+        Inheriting classes will override this function to wake the display device.
+        '''
+        pass
+    
+    def _sleep_display(self):
+        '''
+        Inheriting classes will override this function to sleep the display device.
+        '''
+        pass
+    
     def _display_clear(self):
         '''
         Inheriting classes will override this function to clear the display device.
@@ -1183,7 +1195,8 @@ class DisplayBase:
         ''' Wake the display to the dash if it's currently off '''
         if self.display_active == None:
             self.display_active = 'dash'
-            self.display_init = True 
+            self.display_init = True
+            self._wake_display()
         
         self.display_timeout = None
         
