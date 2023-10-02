@@ -54,9 +54,8 @@ class Display(DisplayBase):
 		else: 
 			# Else use a fake module class for backlight
 			self.backlight = DummyBacklight()
-		self.backlight.power = True 
-		self.backlight.brightness = 100 
-		self.backlight.fade_duration = 1
+
+		self._wake_display()
 
 		# Setup & Start Display Loop Thread 
 		display_thread = threading.Thread(target=self._display_loop)
@@ -203,12 +202,21 @@ class Display(DisplayBase):
 	'''
 	============== Graphics / Display / Draw Methods ============= 
 	'''
+	def _wake_display(self):
+		self.backlight.power = True 
+		self.backlight.brightness = 100 
+		self.backlight.fade_duration = 1
+	
+	def _sleep_display(self):
+		self.backlight.fade_duration = 1
+		self.backlight.brightness = 0
+		pygame.time.delay(1000)  # give time for the screen to fade
+		self.backlight.power = False
+
 	def _display_clear(self):
 		self.eventLogger.info('Screen Cleared.')
-		self.backlight.brightness = 0
-		pygame.time.delay(1000)
+		self._sleep_display()
 		self.display_surface.fill((0,0,0,255))
-		self.backlight.power = False
 		pygame.display.update() 
 
 	def _display_canvas(self):
@@ -437,6 +445,7 @@ class Display(DisplayBase):
 			'''
 			Wake the display & go to home/dash
 			'''					
+			self._wake_display()
 			self.display_active = 'home' if self.HOME_ENABLED else 'dash'
 			self.display_init = True
 			self.display_timeout = time.time() + self.TIMEOUT
