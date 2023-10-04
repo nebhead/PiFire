@@ -23,6 +23,7 @@
             "label" : "Primary", 
             "units" : "F", 
             "max_temp" : 600,
+            "data" : {},
             "button_list" : ["Primary Gauge"],
             "touch_areas" : []
         },
@@ -34,6 +35,7 @@
             "glow" : true,
             "size" : [400, 100], 
             "label" : "control_panel", 
+            "data" : {},
             "button_list" : ["menu_prime", "menu_startup", "cmd_monitor", "cmd_stop"],
             "button_type" : ["Prime", "Startup", "Monitor", "Stop"],
             "button_active" : "Stop",
@@ -53,6 +55,7 @@
             "label" : "Food Probe", 
             "units" : "F", 
             "max_temp" : 300,
+            "data" : {},
             "button_list" : ["Food Probe Gauge 0"],
             "touch_areas" : []
         },
@@ -70,6 +73,7 @@
             "label" : "Food Probe", 
             "units" : "F", 
             "max_temp" : 300,
+            "data" : {},
             "button_list" : ["Food Probe Gauge 1"],
             "touch_areas" : []
         },
@@ -87,6 +91,7 @@
             "label" : "Food Probe", 
             "units" : "F", 
             "max_temp" : 300,
+            "data" : {},
             "button_list" : ["Food Probe Gauge 2"],
             "touch_areas" : []
         },
@@ -104,6 +109,7 @@
             "label" : "Food Probe", 
             "units" : "F", 
             "max_temp" : 300,
+            "data" : {},
             "button_list" : ["Food Probe Gauge 3"],
             "touch_areas" : []
         },
@@ -121,6 +127,7 @@
             "label" : "Food Probe", 
             "units" : "F", 
             "max_temp" : 300,
+            "data" : {},
             "button_list" : ["Food Probe Gauge 4"],
             "touch_areas" : []
         },
@@ -138,6 +145,7 @@
             "label" : "Food Probe", 
             "units" : "F", 
             "max_temp" : 300,
+            "data" : {},
             "button_list" : ["Food Probe Gauge 5"],
             "touch_areas" : []
         },
@@ -151,6 +159,7 @@
             "font" : "trebuc.ttf",
             "label" : "mode_bar", 
             "text" : "Stop",
+            "data" : {},
             "touch_areas" : []
         },
         {
@@ -166,12 +175,13 @@
             "inactive_color" : [128,128,128,128],
             "active_color" : [255,255,255,255],
             "rotation" : 0,
+            "data" : {},
             "touch_areas" : []
         },
         {
             "name" : "auger_status",
             "type" : "status_icon",
-            "position" : [60, 5],
+            "position" : [85, 5],
             "animation_enabled" : false, 
             "size" : [50, 50],
             "glow" : true,
@@ -181,12 +191,13 @@
             "inactive_color" : [128,128,128,128],
             "active_color" : [255,255,255,255],
             "rotation" : 0,
+            "data" : {},
             "touch_areas" : []
         },
         {
             "name" : "igniter_status",
             "type" : "status_icon",
-            "position" : [110, 5],
+            "position" : [150, 5],
             "animation_enabled" : false, 
             "size" : [50, 50],
             "glow" : true,
@@ -196,6 +207,7 @@
             "inactive_color" : [128,128,128,128],
             "active_color" : [255,255,255,255],
             "rotation" : 0,
+            "data" : {},
             "touch_areas" : []
         },
         {
@@ -209,6 +221,7 @@
             "label" : "menu_icon", 
             "color" : [255,255,255,255],
             "button_list" : ["menu_main"],
+            "data" : {},
             "touch_areas" : []
         }
     ],
@@ -223,6 +236,7 @@
             "label" : "main_menu",
             "title_text" : "Main Menu", 
             "color" : [255,255,255,255],
+            "data" : {},
             "button_list" : ["menu_close", "menu_qrcode", "menu_main_reboot", "menu_main_power_off"],
             "button_text" : ["Close Menu", "Show QR Code", "Reboot System", "Power Off System"], 
             "touch_areas" : []
@@ -237,6 +251,7 @@
             "label" : "qr_code",
             "ip_address" : "0.0.0.0", 
             "color" : [255,255,255,255],
+            "data" : {},
             "button_list" : ["menu_close"],
             "touch_areas" : []
         },
@@ -250,6 +265,7 @@
             "label" : "main_menu_reboot",
             "title_text" : "Reboot the System?", 
             "color" : [255,255,255,255],
+            "data" : {},
             "button_list" : ["menu_close", "cmd_reboot", "menu_close"],
             "button_text" : ["Close Menu", "Yes", "No"], 
             "touch_areas" : []
@@ -264,6 +280,7 @@
             "label" : "main_menu_power_off",
             "title_text" : "Power Off the System?", 
             "color" : [255,255,255,255],
+            "data" : {},
             "button_list" : ["menu_close", "cmd_poweroff", "menu_close"],
             "button_text" : ["Close Menu", "Yes", "No"], 
             "touch_areas" : []
@@ -275,26 +292,44 @@
             "size" : [600, 400],
             "glow" : true,
             "font" : "trebuc.ttf",
-            "label" : "menu_prime",
-            "title_text" : "Select Amount to Prime:", 
+            "label" : "menu_prime_start",
+            "title_text" : "Startup after priming?", 
             "color" : [255,255,255,255],
-            "button_list" : ["menu_close", "menu_prime_start", "menu_prime_start", "menu_prime_start"],
-            "button_text" : ["Close Menu", "10 grams", "25 grams", "50 grams"],
-            "button_values" : [0, 10, 25, 50], 
+            "data" : {},
+            "button_list" : ["menu_close", "menu_prime_startup", "menu_prime_only"],
+            "button_text" : ["Close Menu", "Yes", "No"],
             "touch_areas" : []
         },
-        "prime_start" : {
+        "prime_startup" : {
             "type" : "menu",
             "position" : [100, 40],
             "animation_enabled" : false, 
             "size" : [600, 400],
             "glow" : true,
             "font" : "trebuc.ttf",
-            "label" : "menu_prime_start",
-            "title_text" : "Startup after priming?", 
+            "label" : "menu_prime",
+            "title_text" : "Select Amount to Prime:", 
             "color" : [255,255,255,255],
-            "button_list" : ["menu_close", "cmd_prime_startup", "cmd_prime"],
-            "button_text" : ["Close Menu", "Yes", "No"],
+            "data" : {},
+            "button_list" : ["menu_close", "cmd_primestartup", "cmd_primestartup", "cmd_primestartup"],
+            "button_text" : ["Close Menu", "10 grams", "25 grams", "50 grams"],
+            "button_value" : [0, 10, 25, 50],
+            "touch_areas" : []
+        },
+        "prime_only" : {
+            "type" : "menu",
+            "position" : [100, 40],
+            "animation_enabled" : false, 
+            "size" : [600, 400],
+            "glow" : true,
+            "font" : "trebuc.ttf",
+            "label" : "menu_prime",
+            "title_text" : "Select Amount to Prime:", 
+            "color" : [255,255,255,255],
+            "data" : {},
+            "button_list" : ["menu_close", "cmd_primeonly", "cmd_primeonly", "cmd_primeonly"],
+            "button_text" : ["Close Menu", "10 grams", "25 grams", "50 grams"],
+            "button_value" : [0, 10, 25, 50],
             "touch_areas" : []
         },
         "startup" : {
@@ -307,10 +342,50 @@
             "label" : "menu_startup",
             "title_text" : "Do you want to start up?", 
             "color" : [255,255,255,255],
+            "data" : {},
             "button_list" : ["menu_close", "cmd_startup", "menu_close"],
             "button_text" : ["Close Menu", "Yes", "No"],
             "touch_areas" : []
         }
+    },
+    "input" : {
+        "hold" : {
+            "type" : "input_number",
+            "position" : [100, 40],
+            "animation_enabled" : true, 
+            "size" : [600, 400],
+            "glow" : true,
+            "font" : "trebuc.ttf",
+            "label" : "input_hold",
+            "title_text" : "Enter Hold Temperature:",
+            "color" : [255,255,255,255],
+            "command" : "cmd_hold",
+            "data" : {
+                "input": "",
+                "value" : 200
+            },
+            "step" : 5,
+            "button_list" : [],
+            "touch_areas" : []
+        },
+        "notify" : {
+            "type" : "input_number",
+            "position" : [100, 40],
+            "animation_enabled" : true, 
+            "size" : [600, 400],
+            "glow" : true,
+            "font" : "trebuc.ttf",
+            "label" : "input_notify",
+            "title_text" : "Enter Notify Temperature:",
+            "color" : [255,255,255,255],
+            "command" : "cmd_notify",
+            "data" : {
+                "input": "",
+                "value" : 165
+            },
+            "step" : 5,
+            "button_list" : [],
+            "touch_areas" : []
+        }
     }
-
 }

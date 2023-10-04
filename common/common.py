@@ -982,7 +982,7 @@ def upgrade_settings(prev_ver, settings, settings_default):
 		settings['display']['selected'] = settings['modules']['display']  # Selected Display Device
 		for display in settings['display']['config']:
 			if display == settings['modules']['display']:
-				settings['display']['config'][display]['rotation'] = settings['globals']['rotation']  # Preserve current display settings in the configuration
+				settings['display']['config'][display]['rotation'] = settings['globals']['disp_rotation']  # Preserve current display settings in the configuration
 				settings['display']['config'][display]['buttonslevel'] = settings['globals']['buttonslevel']  # Preserve current display settings in the configuration
 				break
 

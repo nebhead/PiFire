@@ -18,7 +18,8 @@
         "ratelimitingfilter"
       ],
       "apt_dependencies": [
-        "libatlas-base-dev"
+        "libatlas-base-dev",
+        "pillow>=10.0.0"
       ]
     }
   }

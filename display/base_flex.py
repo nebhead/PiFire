@@ -79,11 +79,7 @@ class DisplayObjects:
                     self.objectState['animation_lastData'][key] = value
             for key, value in updated_objectData.items():
                 self.objectData[key] = value
-            '''
-            if len(self.objectData['label']) > 5: 
-                self.objectState['animation_active'] = True 
-                self.objectState['animation_label_position'] = 0
-            '''
+
         if self.objectType == 'gauge':
             if self.objectState['animation_active']:
                 self.objectCanvas = self._animate_gauge()
@@ -121,6 +117,15 @@ class DisplayObjects:
             self.objectCanvas = self._draw_qrcode()
             self._define_generic_touch_area()
 
+        if self.objectType == 'input_number':
+            self._process_number_input()
+
+            if self.objectState['animation_active']:
+                self.objectCanvas = self._animate_input_number()
+            else:
+                self.objectCanvas = self._draw_input_number()
+        
+        ''' Convert the PIL Canvas to Pygame Surface '''
         self._canvas_to_surface()
 
         return self.objectSurface 
@@ -424,23 +429,31 @@ class DisplayObjects:
 
         return canvas 
 
-    def _draw_text(self, text, font_name, font_point_size, color, rect=False):
+    def _draw_text(self, text, font_name, font_point_size, color, rect=False, bg_fill=None):
         font = ImageFont.truetype(font_name, font_point_size)
         font_bbox = font.getbbox(str(text))  # Grab the width of the text
         font_canvas_size = (font_bbox[2], font_bbox[3])
         font_canvas = Image.new('RGBA', font_canvas_size)
         font_draw = ImageDraw.Draw(font_canvas)
         font_draw.text((0,0), str(text), font=font, fill=color)
+        font_canvas = font_canvas.crop(font_canvas.getbbox())
         if rect:
-            font_canvas = font_canvas.crop(font_canvas.getbbox())
             font_canvas_size = font_canvas.size 
             rect_canvas_size = (font_canvas_size[0] + 16, font_canvas_size[1] + 16)
             rect_canvas = Image.new('RGBA', rect_canvas_size)
+            if bg_fill is not None:
+                rect_canvas.paste(bg_fill, (0,0) + rect_canvas.size)
             rect_draw = ImageDraw.Draw(rect_canvas)
             rect_draw.rounded_rectangle((0, 0, rect_canvas_size[0], rect_canvas_size[1]), radius=8, outline=color, width=3)
-            rect_canvas.paste(font_canvas, (8,8)) 
+            rect_canvas.paste(font_canvas, (8,8), font_canvas) 
             return rect_canvas 
-        return font_canvas.crop(font_canvas.getbbox())
+        elif bg_fill is not None:
+            output_canvas = Image.new('RGBA', font_canvas.size)
+            output_canvas.paste(bg_fill, (0,0) + font_canvas.size)
+            output_canvas.paste(font_canvas, (0,0), font_canvas)
+            return output_canvas
+        else:
+            return font_canvas
 
     def _draw_mode_bar(self, size, text):
         output_size = size 
@@ -477,7 +490,7 @@ class DisplayObjects:
 
         return canvas 
 
-    def _create_icon(self, charid, font_size, color):
+    def _create_icon(self, charid, font_size, color, bg_fill=None):
         # Get font and character size 
         font = ImageFont.truetype("./static/font/FA-Free-Solid.otf", font_size)
         # Create canvas
@@ -486,6 +499,8 @@ class DisplayObjects:
         font_height = font_bbox[3]
 
         icon_canvas = Image.new('RGBA', (font_width, font_height))
+        if bg_fill is not None:
+            icon_canvas.paste(bg_fill, (0,0) + icon_canvas.size)
 
         # Create drawing object
         draw = ImageDraw.Draw(icon_canvas)
@@ -698,6 +713,10 @@ class DisplayObjects:
         xlated_y = int(y * (screen_size_new[1] / screen_size_old[1]))
         return (xlated_x, xlated_y, scaled_width, scaled_height)
 
+    def _transform_touch_area(self, touch_area, origin):
+        """ Transforms the touch area to the correct place on the screen. """
+        return (touch_area[0] + origin[0], touch_area[1] + origin[1], touch_area[2], touch_area[3])
+    
     def _draw_menu(self):
         size = (600, 400)  # Define working size
         canvas = Image.new("RGBA", size)  # Create canvas output object
@@ -804,9 +823,207 @@ class DisplayObjects:
 
         return canvas 
 
+    def _draw_input_number(self):
+        size = (600, 400)  # Define working size
+        canvas = Image.new("RGBA", size)  # Create canvas output object
+        draw = ImageDraw.Draw(canvas)  # Create drawing object 
+        button_pushed = self.objectState.get('animation_input', '')
+        self.objectData['touch_areas'] = []
+        self.objectData['button_list'] = []
+        
+        # Rounded rectangle that fills the canvas size
+        menu_padding = 10  # Define padding around outside of the menu rectangle 
+        draw.rounded_rectangle((menu_padding, menu_padding, size[0]-menu_padding, size[1]-menu_padding), radius=8, outline=(0,0,0,225), fill=(0, 0, 0, 250))
+
+        # Close Icon Upper Right
+        close_icon = self._create_icon('\uf00d', 34, (255,255,255))
+        close_position = (size[0] - (menu_padding * 4), (menu_padding * 2))
+        canvas.paste(close_icon, close_position, close_icon)
+        close_touch_area = (close_position[0]+self.objectData['position'][0], close_position[1]+self.objectData['position'][1], close_icon.width, close_icon.height)
+        close_touch_area = self._scale_touch_area(close_touch_area, size, self.objectData['size'])
+        scaled_touch_area = self._scale_touch_area(close_touch_area, size, self.objectData['size'])
+        self.objectData['touch_areas'].append(pygame.Rect(scaled_touch_area))
+        self.objectData['button_list'].append('menu_close')
+
+        # Menu Title
+        title = self._draw_text(self.objectData['title_text'], self.objectData['font'], 35, self.objectData['color'], rect=False, bg_fill=(0,0,0,250))
+        title_x = (size[0] // 2) - (title.width // 2)
+        title_y = 15
+        canvas.paste(title, (title_x, title_y))
+
+        # Number Display 
+        number_entry_position = (60, 75)
+        number_entry_size = (240, 100)
+        number_entry_coords = number_entry_position + (number_entry_position[0] + number_entry_size[0], number_entry_position[1] + number_entry_size[1])
+        number_entry_bg_color = (50,50,50)
+        draw.rounded_rectangle(number_entry_coords, radius=8, fill=number_entry_bg_color)
+        number_digits = self._draw_text(self.objectData['data']['value'], self.objectData['font'], 80, self.objectData['color'], bg_fill=number_entry_bg_color)
+        number_digits_position = (number_entry_position[0] + ((number_entry_size[0] // 2) - (number_digits.width // 2)), number_entry_position[1] + (number_entry_size[1] // 2) - (number_digits.height // 2)) 
+        canvas.paste(number_digits, number_digits_position)
+
+        # Up Arrow
+        if button_pushed == 'up':
+            bg_fill = (255,255,255,255)
+            fg_fill = (0,0,0,255)
+        else:
+            bg_fill = (0,0,0,255)
+            fg_fill = self.objectData['color']
+        button_position = (60, 195)
+        button_size = (110, 70)
+        button_coords = button_position + (button_position[0] + button_size[0], button_position[1] + button_size[1])
+        draw.rounded_rectangle(button_coords, radius=8, outline=fg_fill, fill=bg_fill, width=3)
+        button_icon = self._create_icon('\uf077', 35, fg_fill, bg_fill=bg_fill)
+        button_icon_position = (button_position[0] + ((button_size[0] // 2) - (button_icon.width // 2)), button_position[1] + (button_size[1] // 2) - (button_icon.height // 2))
+        canvas.paste(button_icon, button_icon_position)
+        # Scale and Store Touch Area
+        button_touch_area = button_position + button_size
+        scaled_touch_area = self._scale_touch_area(button_touch_area, size, self.objectData['size'])
+        transform_touch_area = self._transform_touch_area(scaled_touch_area, self.objectData['position'])
+        self.objectData['touch_areas'].append(pygame.Rect(transform_touch_area))
+        self.objectData['button_list'].append('button_up')
+
+        # Down Arrow
+        if button_pushed == 'down':
+            bg_fill = (255,255,255,255)
+            fg_fill = (0,0,0,255)
+        else:
+            bg_fill = (0,0,0,255)
+            fg_fill = self.objectData['color']
+        button_position = (190, 195)
+        button_size = (110, 70)
+        button_coords = button_position + (button_position[0] + button_size[0], button_position[1] + button_size[1])
+        draw.rounded_rectangle(button_coords, radius=8, outline=fg_fill, fill=bg_fill, width=3)
+        button_icon = self._create_icon('\uf078', 35, fg_fill, bg_fill=bg_fill)
+        button_icon_position = (button_position[0] + ((button_size[0] // 2) - (button_icon.width // 2)), button_position[1] + (button_size[1] // 2) - (button_icon.height // 2))
+        canvas.paste(button_icon, button_icon_position)
+        # Scale and Store Touch Area
+        button_touch_area = button_position + button_size
+        scaled_touch_area = self._scale_touch_area(button_touch_area, size, self.objectData['size'])
+        transform_touch_area = self._transform_touch_area(scaled_touch_area, self.objectData['position'])
+        self.objectData['touch_areas'].append(pygame.Rect(transform_touch_area))
+        self.objectData['button_list'].append('button_down')
+
+        # Enter Button
+        button_position = (60, 290)
+        button_size = (240, 80)
+        button_coords = button_position + (button_position[0] + button_size[0], button_position[1] + button_size[1])
+        draw.rounded_rectangle(button_coords, radius=8, outline=self.objectData['color'], width=3)
+        button_text = self._draw_text('ENTER', self.objectData['font'], 60, self.objectData['color'], bg_fill=(0,0,0))
+        button_text_position = (button_position[0] + ((button_size[0] // 2) - (button_text.width // 2)), button_position[1] + (button_size[1] // 2) - (button_text.height // 2))
+        canvas.paste(button_text, button_text_position)
+        # Scale and Store Touch Area
+        button_touch_area = button_position + button_size
+        scaled_touch_area = self._scale_touch_area(button_touch_area, size, self.objectData['size'])
+        transform_touch_area = self._transform_touch_area(scaled_touch_area, self.objectData['position'])
+        self.objectData['touch_areas'].append(pygame.Rect(transform_touch_area))
+        self.objectData['button_list'].append(self.objectData['command'])
+
+        # Draw Number Pad
+        pad_position = (250, 75)
+        button_size = (70,70)
+        button_padding = 5
+        button_position = [pad_position[0] - button_size[0] - button_padding, pad_position[1] - button_size[0] - button_padding]
+
+        pad_button_list = [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9'], ['DEL', '0', '.']]
+        for row in pad_button_list:
+            button_position[1] += button_size[1] + button_padding
+            button_position[0] = pad_position[0]
+            for col in row:
+                if button_pushed == col:
+                    bg_fill = (255,255,255,255)
+                    fg_fill = (0,0,0,255)
+                else:
+                    bg_fill = (0,0,0,255)
+                    fg_fill = self.objectData['color']
+                button_position[0] += button_size[0] + button_padding
+                if col == 'DEL':
+                    button_text = self._create_icon('\uf55a', 35, fg_fill, bg_fill=bg_fill)
+                else:
+                    button_text = self._draw_text(col, self.objectData['font'], 35, fg_fill, rect=False, bg_fill=bg_fill)
+                # Draw Rectangle
+                button_coords = tuple(button_position) + (button_position[0] + button_size[0], button_position[1] + button_size[1])
+                draw.rounded_rectangle(button_coords, radius=8, outline=fg_fill, fill=bg_fill, width=3)
+                text_position = (button_position[0] + (button_size[0] // 2) - (button_text.width // 2), button_position[1] + (button_size[1] // 2) - (button_text.height // 2))
+                canvas.paste(button_text, text_position)
+                button_touch_area = (button_position[0]+self.objectData['position'][0], button_position[1]+self.objectData['position'][1]) + button_size
+                scaled_touch_area = self._scale_touch_area(button_touch_area, size, self.objectData['size'])
+                self.objectData['touch_areas'].append(pygame.Rect(scaled_touch_area))
+                self.objectData['button_list'].append(f'button_{col}')
+        
+        return canvas 
+
+    def _animate_input_number(self):
+        if self.objectState['animation_start']:
+            self.objectState['animation_start'] = False  # Run animation start only once
+            self.objectState['animation_counter'] = 0  # Setup a counter for number of frames to produce
+            self.objectState['animation_input'] = self.objectData['data']['input']  # Save input from user
+            self.objectData['data']['input'] = ''  # Clear user input
+
+        if self.objectState['animation_counter'] > 3:
+            self.objectState['animation_active'] = False  # Disable animation after one frame
+            self.objectState['animation_input'] = ''
+
+        canvas = self._draw_input_number()
+
+        self.objectState['animation_counter'] += 1  # Increment the frame counter 
+
+        return canvas 
+
+    def _process_number_input(self):
+        
+        if self.objectData['data']['input'] != '':
+            ''' Check first for up / down input '''
+            if self.objectData['data']['input'] == 'up':
+                self.objectData['data']['value'] += self.objectData['step']
+
+            if self.objectData['data']['input'] == 'down':
+                self.objectData['data']['value'] -= self.objectData['step']
+                if self.objectData['data']['value'] < 0:
+                    self.objectData['data']['value'] = 0
+
+            ''' Convert value to list of characters '''
+            temp_string = str(self.objectData['data']['value'])
+            self.objectState['value'] = [char for char in temp_string]
+
+            if self.objectData['data']['input'] == 'DEL':
+
+                if len(self.objectState['value']) > 1:
+                    ''' If a float, delete back to the decimal value '''
+                    if '.' in self.objectState['value'] and self.objectState['value'][-2] == '.':
+                        self.objectState['value'].pop()
+                        self.objectState['value'].pop()
+                    else:
+                        self.objectState['value'].pop()
+                else:
+                    self.objectState['value'] = ['0']
+            
+            if '.' in self.objectState['value'] and self.objectData['data']['input'] == '.':
+                pass
+            elif self.objectData['data']['input'] in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.']:
+
+                if len(self.objectState['value']) > 5:
+                    pass 
+                if '.' in self.objectState['value']:
+                    self.objectState['value'].pop()
+                    self.objectState['value'].append(self.objectData['data']['input'])
+                elif len(self.objectState['value']) == 3 and self.objectData['data']['input'] == '.':
+                    self.objectState['value'].append(self.objectData['data']['input'])
+                elif len(self.objectState['value']) < 3:
+                    self.objectState['value'].append(self.objectData['data']['input'])
+
+            ''' Combine list of characters back to string and then back to a float or int '''    
+            temp_string = "".join([str(i) for i in self.objectState['value']])
+
+            if '.' in temp_string:
+                self.objectData['data']['value'] = float(temp_string)
+            else:
+                self.objectData['data']['value'] = int(temp_string)
+
 
 '''
+==================================================================================
 Display base class definition
+==================================================================================
 '''
 class DisplayBase:
 
@@ -827,6 +1044,7 @@ class DisplayBase:
         self.display_timeout = None
         self.TIMEOUT = 10
         self.command = 'splash'
+        self.command_data = None
 
         self.raspberry_pi = True if is_raspberry_pi() else False
         # Attempt to set the log level of PIL so that it does not pollute the logs
@@ -850,13 +1068,19 @@ class DisplayBase:
         '''
         self.rotation = self.config.get('rotation', 0)
         self.buttonslevel = self.config.get('buttonslevel', 'HIGH')
+        
+        ''' Get Local IP Address '''
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.settimeout(0)
         try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect(("8.8.8.8", 80))
+            # doesn't even have to be reachable
+            s.connect(('10.254.254.254', 1))
             self.ip_address = s.getsockname()[0]
-        except:
-            self.ip_address = '0.0.0.0'
+        except Exception:
+            self.ip_address = '127.0.0.1'
             self.eventLogger.error('Unable to get IP address of the system.')
+        finally:
+            s.close()
 
     def _init_framework(self):
         '''
@@ -892,6 +1116,10 @@ class DisplayBase:
             for key in list(object.keys()):
                 if key in ['position', 'size', 'fg_color', 'bg_color', 'color', 'active_color', 'inactive_color']:
                     self.display_data['menus'][menu][key] = tuple(object[key])
+        for input, object in self.display_data['input'].items():
+            for key in list(object.keys()):
+                if key in ['position', 'size', 'fg_color', 'bg_color', 'color', 'active_color', 'inactive_color']:
+                    self.display_data['input'][input][key] = tuple(object[key])
         #print(f'Fixed Up: \n{self.display_data["menus"]}')
 
 
@@ -1073,14 +1301,22 @@ class DisplayBase:
             write_control(data, origin='display')
         
         if 'hold' in self.command:
-            data = {
-                'updated' : True,
-                'mode' : 'Hold',
-                'primary_setpoint' : self.command_data['primary_setpoint']    
-            }
-            write_control(data, origin='display')
-            self.display_active = 'dash'
-            self.display_init = True
+            primary_setpoint = 0
+            for pointer, object in enumerate(self.display_object_list):
+                objectData = object.get_object_data()
+                if objectData['data'].get('value', False):
+                    primary_setpoint = objectData['data'].get('value', False)
+                    break
+
+            if primary_setpoint:
+                data = {
+                    'updated' : True,
+                    'mode' : 'Hold',
+                    'primary_setpoint' : primary_setpoint    
+                }
+                write_control(data, origin='display')
+                self.display_active = 'dash'
+                self.display_init = True
         
         if 'shutdown' in self.command:
             data = {
@@ -1108,12 +1344,23 @@ class DisplayBase:
             }
             write_control(data, origin='display')
 
-        if 'prime' in self.command:
+        if 'primestartup' in self.command:
             data = {
                 'updated' : True,
                 'mode' : 'Prime', 
-                'prime_amount' : self.command_data['prime_amount'],
-                'next_mode' : self.command_data['next_mode']
+                'prime_amount' : self.command_data,
+                'next_mode' : 'Startup'
+            }
+            write_control(data, origin='display')
+            self.display_active = 'dash'
+            self.display_init = True
+
+        if 'primeonly' in self.command:
+            data = {
+                'updated' : True,
+                'mode' : 'Prime', 
+                'prime_amount' : self.command_data,
+                'next_mode' : 'Stop'
             }
             write_control(data, origin='display')
             self.display_active = 'dash'

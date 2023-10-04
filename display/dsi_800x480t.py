@@ -175,13 +175,13 @@ class Display(DisplayBase):
 						self._update_dash_objects()
 
 				elif self.display_active is not None:
-					if 'menu_' in self.display_active and self.display_init:
-						''' Initialize Menu / Dialog '''
+					if (('menu_' in self.display_active) or ('input_' in self.display_active)) and self.display_init:
+						''' Initialize Menu / Input Dialog '''
 						self._display_menu_background()
 						self._build_objects(self.menu_background)
 						self.display_init = False
 						self.display_updated = True
-				
+					
 				''' Perform any animations that need to be displayed. '''
 				self._animate_objects()
 
@@ -250,6 +250,8 @@ class Display(DisplayBase):
 			section_data = self.display_data[self.display_active] 
 		elif 'menu_' in self.display_active:
 			section_data = [self.display_data['menus'][self.display_active.replace('menu_', '')]]
+		elif 'input_' in self.display_active:
+			section_data = [self.display_data['input'][self.display_active.replace('input_', '')]]
 		else:
 			return 
 			
@@ -303,13 +305,13 @@ class Display(DisplayBase):
 				''' TODO: Update Control Panel '''
 				object_data = self.display_object_list[self.dash_map['control_panel']].get_object_data()
 				object_data['button_active'] = self.status_data['mode']
-				if self.status_data['mode'] in ['Startup']:
+				if self.status_data['mode'] in ['Startup', 'Reignite']:
 					''' Startup Mode '''
-					object_data['button_list'] = ['cmd_startup', 'cmd_smoke', 'menu_hold', 'cmd_stop']
+					object_data['button_list'] = ['cmd_startup', 'cmd_smoke', 'input_hold', 'cmd_stop']
 					object_data['button_type'] = ['Startup', 'Smoke', 'Hold', 'Stop']
 				elif self.status_data['mode'] in ['Smoke', 'Hold', 'Shutdown']:
 					''' Smoke, Hold or Shutdown Modes '''
-					object_data['button_list'] = ['cmd_smoke', 'menu_hold', 'cmd_stop', 'cmd_shutdown']
+					object_data['button_list'] = ['cmd_smoke', 'input_hold', 'cmd_stop', 'cmd_shutdown']
 					object_data['button_type'] = ['Smoke', 'Hold', 'Stop', 'Shutdown']
 				else:
 					''' Stopped, Prime, Monitor Modes '''
@@ -380,6 +382,15 @@ class Display(DisplayBase):
 			self.last_in_data = self.in_data.copy() 
 			self.last_status_data = self.status_data.copy()
 
+	def _update_input_objects(self):
+		'''
+		for index, object in enumerate(self.display_object_list):
+			objectData = object.get_object_data()
+			if objectData['data']['input'] != '':
+				self.display_object_list[index].update_object_data(objectData)
+		'''
+		pass 
+	
 	def _animate_objects(self):
 		for object in self.display_object_list: 
 			objectData = object.get_object_data()
@@ -424,22 +435,29 @@ class Display(DisplayBase):
 			'''
 			Loop through current displayed objects and check for touch collisions
 			'''
-			for object in self.display_object_list:
+			for pointer, object in enumerate(self.display_object_list):
 				objectData = object.get_object_data()
 				for index, touch_area in enumerate(objectData['touch_areas']):
 					if touch_area.collidepoint(self.touch_pos):
 						print(f'You touched {objectData["button_list"][index]}.')
 						if 'cmd_' in objectData['button_list'][index]:
 							self.command = objectData['button_list'][index]
+							if objectData.get('button_value', False):
+								self.command_data = objectData['button_value'][index]
+							else:
+								self.command_data = None 
 							self._command_handler()
 						elif objectData['button_list'][index] == 'menu_close':
 							self.display_active = 'dash'
 							self.display_init = True
-						elif 'menu_' in objectData['button_list'][index]:
+						elif ('menu_' in objectData['button_list'][index]) or ('input_' in objectData['button_list'][index]):
 							if self.display_active == 'dash':
 								self._capture_background()
 							self.display_active = objectData['button_list'][index]
 							self.display_init = True
+						elif 'button_' in objectData['button_list'][index]:
+							objectData['data']['input'] = objectData['button_list'][index].replace('button_', '')
+							self.display_object_list[pointer].update_object_data(updated_objectData=objectData)
 
 		else:
 			'''
@@ -449,7 +467,4 @@ class Display(DisplayBase):
 			self.display_active = 'home' if self.HOME_ENABLED else 'dash'
 			self.display_init = True
 			self.display_timeout = time.time() + self.TIMEOUT
-
-
-
 	
