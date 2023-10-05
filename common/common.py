@@ -72,7 +72,7 @@ def default_settings():
 	settings = {}
 
 	settings['versions'] = {
-		'server' : "1.5.3",
+		'server' : "1.5.4",
 		'cookfile' : "1.5.0",  # Current cookfile format version
 		'recipe' : "1.0.0"  # Current recipe file format version
 	}
