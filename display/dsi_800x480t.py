@@ -163,12 +163,9 @@ class Display(DisplayBase):
 				elif self.display_active == 'dash':
 					if self.display_init:
 						''' Initialize Dash Screen '''
-						print('Initializing Dash')
 						self._display_background()
-						self._configure_dash()
-						self._build_objects(self.background)
-						self._build_dash_map()
-
+						self._restore_dash_objects()
+						self._update_dash_objects()
 						self.display_init = False
 						self.display_updated = True
 					else:
@@ -192,8 +189,15 @@ class Display(DisplayBase):
 			else:
 				if self.display_init:
 					self._display_clear()
-					self.display_init = False 
-
+					self.display_init = False
+					if not self.HOME_ENABLED:
+						self.display_active = 'dash'
+						self._init_framework()
+						self._configure_dash()
+						self._build_objects(self.background)
+						self._build_dash_map()
+						self._store_dash_objects()
+						self.display_active = None
 
 			self.clock.tick(self.FRAMERATE)
 
@@ -295,7 +299,7 @@ class Display(DisplayBase):
 			#print(f' - Index: {index}, Maps to: {objectData["name"]}')
 
 	def _update_dash_objects(self):
-		
+				
 		if self.in_data is not None and self.status_data is not None:
 			''' Update Mode Bar '''
 			if self.status_data['mode'] != self.last_status_data.get('mode', 'None'):
@@ -453,6 +457,7 @@ class Display(DisplayBase):
 						elif ('menu_' in objectData['button_list'][index]) or ('input_' in objectData['button_list'][index]):
 							if self.display_active == 'dash':
 								self._capture_background()
+								self._store_dash_objects()
 							self.display_active = objectData['button_list'][index]
 							self.display_init = True
 						elif 'button_' in objectData['button_list'][index]:

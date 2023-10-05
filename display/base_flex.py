@@ -959,7 +959,7 @@ class DisplayObjects:
             self.objectState['animation_input'] = self.objectData['data']['input']  # Save input from user
             self.objectData['data']['input'] = ''  # Clear user input
 
-        if self.objectState['animation_counter'] > 3:
+        if self.objectState['animation_counter'] > 1:
             self.objectState['animation_active'] = False  # Disable animation after one frame
             self.objectState['animation_input'] = ''
 
@@ -1154,25 +1154,34 @@ class DisplayBase:
             time.sleep(0.1)
 
     def _zero_dash_data(self):
-        self.last_in_data = {}
-        self.last_status_data = {}
-        self.status_data['mode'] = 'Stop'
-        for outpin in self.status_data['outpins']:
-            if outpin != 'pwm':
-                self.status_data['outpins'][outpin] = False  
-        for probe in self.in_data['probe_history']['primary']:
-            self.in_data['probe_history']['primary'][probe] = 0
-        for probe in self.in_data['probe_history']['food']:
-            self.in_data['probe_history']['food'][probe] = 0
-        for probe in self.in_data['probe_history']['aux']:
-            self.in_data['probe_history']['aux'][probe] = 0
-        for probe in self.in_data['probe_history']['tr']:
-            self.in_data['probe_history']['tr'][probe] = 0
+        #self.last_in_data = {}
+        #self.last_status_data = {}
+        if self.status_data is not None or self.in_data is not None:
+            self.status_data['mode'] = 'Stop'
+            for outpin in self.status_data['outpins']:
+                if outpin != 'pwm':
+                    self.status_data['outpins'][outpin] = False  
+            for probe in self.in_data['probe_history']['primary']:
+                self.in_data['probe_history']['primary'][probe] = 0
+            for probe in self.in_data['probe_history']['food']:
+                self.in_data['probe_history']['food'][probe] = 0
+            for probe in self.in_data['probe_history']['aux']:
+                self.in_data['probe_history']['aux'][probe] = 0
+            for probe in self.in_data['probe_history']['tr']:
+                self.in_data['probe_history']['tr'][probe] = 0
 
-        self.in_data['primary_setpoint'] = 0
+            self.in_data['primary_setpoint'] = 0
 
-        for probe in self.in_data['notify_targets']:
-            self.in_data['notify_targets'][probe] = 0
+            for probe in self.in_data['notify_targets']:
+                self.in_data['notify_targets'][probe] = 0
+
+    def _store_dash_objects(self):
+        ''' Store the dash object list so that it does not need to be rebuilt '''
+        self.dash_object_list = self.display_object_list.copy()
+
+    def _restore_dash_objects(self):
+        ''' Restore the dash object list to the main working display_object_list '''
+        self.display_object_list = self.dash_object_list.copy()
 
     '''
     ============== Input Callbacks ============= 
@@ -1399,6 +1408,7 @@ class DisplayBase:
                 pass
             self.display_active = 'dash'
             self.display_init = True
+            self.display_loop_active = False 
 
         if 'poweroff' in self.command:
             data = {
@@ -1412,6 +1422,7 @@ class DisplayBase:
                 pass
             self.display_active = 'dash'
             self.display_init = True
+            self.display_loop_active = False 
 
         if 'restart' in self.command:
             data = {
@@ -1425,6 +1436,7 @@ class DisplayBase:
                 pass 
             self.display_active = 'dash'
             self.display_init = True
+            self.display_loop_active = False 
 
         self.command = None 
 
@@ -1467,7 +1479,8 @@ class DisplayBase:
         """
         - Clear display and turn off backlight
         """
-        self.display_command = 'clear'
+        self.display_active = None
+        self.display_init = True
 
     def display_text(self, text):
         """

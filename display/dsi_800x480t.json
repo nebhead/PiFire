@@ -44,7 +44,7 @@
         {
             "name" : "food_probe_gauge_0", 
             "type" : "gauge_compact",
-            "position" : [5, 55],
+            "position" : [0, 55],
             "animation_enabled" : false, 
             "size" : [220, 110], 
             "fg_color" : [255, 255, 255, 255], 
@@ -80,7 +80,7 @@
         {
             "name" : "food_probe_gauge_2", 
             "type" : "gauge_compact",
-            "position" : [5, 160],
+            "position" : [0, 160],
             "animation_enabled" : false, 
             "size" : [220, 110], 
             "fg_color" : [255, 255, 255, 255], 
@@ -116,7 +116,7 @@
         {
             "name" : "food_probe_gauge_4", 
             "type" : "gauge_compact",
-            "position" : [5, 275],
+            "position" : [0, 275],
             "animation_enabled" : false, 
             "size" : [220, 110], 
             "fg_color" : [255, 255, 255, 255], 
