@@ -306,7 +306,7 @@ class Display(DisplayBase):
 				object_data = self.display_object_list[self.dash_map['mode_bar']].get_object_data()
 				object_data['text'] = self.status_data['mode']
 				self.display_object_list[self.dash_map['mode_bar']].update_object_data(object_data)
-				''' TODO: Update Control Panel '''
+
 				object_data = self.display_object_list[self.dash_map['control_panel']].get_object_data()
 				object_data['button_active'] = self.status_data['mode']
 				if self.status_data['mode'] in ['Startup', 'Reignite']:
@@ -381,6 +381,72 @@ class Display(DisplayBase):
 						object_data['animation_enabled'] = True if self.status_data['outpins'][output] else False
 						object_data['active'] = True if self.status_data['outpins'][output] else False
 						self.display_object_list[self.dash_map['igniter_status']].update_object_data(object_data)
+
+			''' Update Timer Output '''
+			if self.status_data['mode'] in ['Prime', 'Startup', 'Reignite', 'Shutdown']:
+				if self.status_data['mode'] in ['Startup', 'Reignite']: 
+					duration = self.status_data['start_duration']
+				elif self.status_data['mode'] in ['Prime']: 
+					duration = self.status_data['prime_duration']
+				else: 
+					duration = self.status_data['shutdown_duration']
+			
+				countdown = int(duration - (time.time() - self.status_data['start_time'])) if int(duration - (time.time() - self.status_data['start_time'])) > 0 else 0
+				object_data = self.display_object_list[self.dash_map['timer']].get_object_data()
+
+				if countdown != object_data['data']['seconds']:
+					object_data['data']['seconds'] = countdown
+					object_data['label'] = 'Timer'
+					self.display_object_list[self.dash_map['timer']].update_object_data(object_data)
+			
+			elif self.status_data['mode'] in ['Hold'] and self.status_data['lid_open_detected']:
+				''' In Hold Mode, use timer for lid open detection '''
+				countdown = int(self.status_data['lid_open_endtime'] - time.time()) if int(self.status_data['lid_open_endtime'] - time.time()) > 0 else 0
+				object_data = self.display_object_list[self.dash_map['timer']].get_object_data()
+				if countdown != object_data['data']['seconds']:
+					object_data['data']['seconds'] = countdown
+					object_data['label'] = 'Lid Pause'
+					self.display_object_list[self.dash_map['timer']].update_object_data(object_data)
+
+			else:
+				''' Clear the timer in other modes. '''
+				object_data = self.display_object_list[self.dash_map['timer']].get_object_data()
+				if object_data['data']['seconds'] != 0:
+					object_data['data']['seconds'] = 0
+					self.display_object_list[self.dash_map['timer']].update_object_data(object_data)
+
+			''' In Hold Mode, Check Lid Indicator '''
+			if self.status_data['mode'] in ['Hold'] and self.last_status_data['lid_open_detected'] != self.status_data['lid_open_detected']:
+				object_data = self.display_object_list[self.dash_map['lid_indicator']].get_object_data()
+				if self.status_data['lid_open_detected']:
+					object_data['active'] = True 
+				else:
+					object_data['active'] = False
+				self.display_object_list[self.dash_map['lid_indicator']].update_object_data(object_data)
+
+			''' Update PMode '''
+			if self.status_data['mode'] in ['Startup', 'Reignite', 'Smoke'] and	\
+				((self.status_data['mode'] != self.last_status_data.get('mode', 'None')) or \
+	  			(self.status_data['p_mode'] != self.last_status_data.get('p_mode', 'None'))):
+				
+				object_data = self.display_object_list[self.dash_map['p_mode']].get_object_data()
+				object_data['active'] = True
+				object_data['data']['pmode'] = self.status_data['p_mode']
+				self.display_object_list[self.dash_map['p_mode']].update_object_data(object_data)
+			
+			elif self.status_data['mode'] != self.last_status_data.get('mode', 'None'): 
+				object_data = self.display_object_list[self.dash_map['p_mode']].get_object_data()
+				object_data['active'] = False 
+				self.display_object_list[self.dash_map['p_mode']].update_object_data(object_data)
+
+			''' Update Smoke Plus '''
+			if self.status_data['s_plus'] != self.last_status_data.get('s_plus', None):
+				object_data = self.display_object_list[self.dash_map['smoke_plus']].get_object_data()
+
+				object_data['active'] = self.status_data['s_plus'] 
+				object_data['button_value'][0] = "off" if self.status_data['s_plus'] else "on" 
+				
+				self.display_object_list[self.dash_map['smoke_plus']].update_object_data(object_data)
 
 			''' After all the updates, update the last states/data '''
 			self.last_in_data = self.in_data.copy() 

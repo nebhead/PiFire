@@ -1122,8 +1122,8 @@
 				"notes" : "",
 				"default" : false,
 				"image" : "ili9341.png",
-				"py_dependencies" : ["rpi-backlight", "pillow>=10.0.0"], 
-				"apt_dependencies" : ["lightdm", "libsdl2-2.0-0", "python3-pygame"],
+				"py_dependencies" : ["rpi-backlight", "pillow>=10.0.0", "pygame>=2.5.0"], 
+				"apt_dependencies" : ["lightdm", "libsdl2-2.0-0"],
 				"settings_dependencies" : {
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",

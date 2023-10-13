@@ -24,7 +24,7 @@ import io
 import os
 import pygame
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
-from common import read_control, write_control, is_raspberry_pi, read_generic_json
+from common import read_control, write_control, is_raspberry_pi, read_generic_json, read_settings, write_settings
 
 '''
 Display object class definition 
@@ -125,6 +125,20 @@ class DisplayObjects:
             else:
                 self.objectCanvas = self._draw_input_number()
         
+        if self.objectType == 'timer':
+            self.objectCanvas = self._draw_timer()
+
+        if self.objectType == 'alert':
+            self.objectCanvas = self._draw_alert()
+
+        if self.objectType == 'p_mode_control':
+            self.objectCanvas = self._draw_pmode_status()
+            self._define_generic_touch_area()
+        
+        if self.objectType == 'splus_control':
+            self.objectCanvas = self._draw_splus_status()
+            self._define_generic_touch_area()
+    
         ''' Convert the PIL Canvas to Pygame Surface '''
         self._canvas_to_surface()
 
@@ -721,6 +735,7 @@ class DisplayObjects:
         size = (600, 400)  # Define working size
         canvas = Image.new("RGBA", size)  # Create canvas output object
         draw = ImageDraw.Draw(canvas)  # Create drawing object 
+        fg_color = self.objectData['color']
 
         # Clear any touch areas that might have been defined before 
         self.objectData['touch_areas'] = []  
@@ -730,22 +745,34 @@ class DisplayObjects:
         draw.rounded_rectangle((menu_padding, menu_padding, size[0]-menu_padding, size[1]-menu_padding), radius=8, outline=(0,0,0,225), fill=(0, 0, 0, 250))
 
         # Menu Title
-        title_text = self.objectData['title_text']
-        font_point_size = 35
-        font = ImageFont.truetype(self.objectData['font'], font_point_size)
-        font_bbox = font.getbbox(title_text)  # Grab the width of the text
-        font_width = font_bbox[2]
-        font_height = font_bbox[3]
-        title_x = (size[0] // 2) - (font_width // 2)
-        title_y = 15
-        title_origin = (title_x, title_y)
-        draw.text(title_origin, title_text, font=font, fill=(255, 255, 255))
-
+        title = self._draw_text(self.objectData['title_text'], 'trebuc.ttf', 35, fg_color)
+        title_position = ((size[0] // 2) - (title.width // 2), 20)
+        canvas.paste(title, title_position, title)
+       
         # Index through button_list to create menu items
-        #button_height = (size[1] - (padding * 2)) // len(self.objectData['button_list'])
-        button_height = 50
-        button_padding = 10
-        button_offset = 80  # Crude offset for the button spacing 
+
+        number_of_buttons = len(self.objectData['button_list'])
+
+        two_column_mode = True if number_of_buttons > 5 else False 
+
+        if two_column_mode:
+            button_height = 50
+            button_padding = 10
+            button_width = size[0] // 2 - (menu_padding * 2) - (button_padding * 2)
+            column = 0
+            button_area_position = (menu_padding + button_padding, 60)
+            button_area_size = (size[0] - (menu_padding * 2) - (button_padding * 2), size[1] - button_area_position[1] - menu_padding - button_padding)
+            row_height = 60
+        else: 
+            button_height = 50
+            button_padding = 10
+            button_width = size[0] - (menu_padding * 2) - (button_padding * 2)
+            button_area_position = (menu_padding + button_padding, 60)
+            button_area_size = (size[0] - (menu_padding * 2) - (button_padding * 2), size[1] - button_area_position[1] - menu_padding - button_padding)
+            row_height = button_area_size[1] // number_of_buttons
+
+        button_count = 0
+        row = 0
 
         for index, button in enumerate(self.objectData['button_list']):
             if '_close' in button and self.objectData['button_text'][index] == 'Close Menu':
@@ -758,11 +785,21 @@ class DisplayObjects:
                 scaled_touch_area = self._scale_touch_area(close_touch_area, size, self.objectData['size'])
                 self.objectData['touch_areas'].append(pygame.Rect(scaled_touch_area))
             else:
-                # Rounded rectangle for each button / menu item
-                rect_position = (button_padding + menu_padding, button_offset + ((button_height + button_padding) * index))
-                #print(rect_position)
-                rect_size = (size[0] - ((menu_padding * 2) + (button_padding * 2)), button_height)
+                if button_count > 10:
+                    break   # Stop if at 11 items
+
+                if two_column_mode:
+                    if button_count in [0, 2, 4, 6, 8, 10]:
+                        rect_position = (button_area_position[0], button_area_position[1] + (row * row_height))
+                    else:
+                        rect_position = (button_area_position[0] + button_width + button_padding, button_area_position[1] + (row * row_height))
+                        row += 1
+                else:
+                    rect_position = (button_area_position[0], button_area_position[1] + (button_count * row_height))
+
+                rect_size = (button_width, button_height)
                 rect_coords = (rect_position[0], rect_position[1], rect_position[0] + rect_size[0], rect_position[1] + rect_size[1])
+
                 draw.rounded_rectangle(rect_coords, radius=8, outline=(255,255,255,255), fill=(0, 0, 0, 250))
 
                 # Put button text inside rectangle  
@@ -770,24 +807,28 @@ class DisplayObjects:
                     label_displayed = self.objectData['button_text'][index][0:25]
                 else:
                     label_displayed = self.objectData['button_text'][index]
-                font_point_size = 35
-                font = ImageFont.truetype(self.objectData['font'], font_point_size)
-                font_bbox = font.getbbox(label_displayed)  # Grab the width of the text
-                font_width = font_bbox[2]
-                font_height = font_bbox[3]
 
-                label_x = rect_position[0] + (rect_size[0] // 2) - (font_width // 2)
-                label_y = rect_position[1] + (rect_size[1] // 2) - (font_height // 2)
-                label_origin = (label_x, label_y)
-                draw.text(label_origin, label_displayed, font=font, fill=(255, 255, 255))
+                label = self._draw_text(label_displayed, self.objectData['font'], 35, fg_color)
+                label_x = rect_position[0] + (rect_size[0] // 2) - (label.width // 2)
+                label_y = rect_position[1] + (rect_size[1] // 2) - (label.height // 2)
+                label_position = (label_x, label_y)
+                canvas.paste(label, label_position, label)
 
                 # Define touch area for button
+                '''
                 original_touch_area = (rect_position[0] + self.objectData['position'][0], rect_position[1] + self.objectData['position'][1], rect_size[0], rect_size[1])
                 scaled_touch_area = self._scale_touch_area(original_touch_area, size, self.objectData['size'])
                 touch_area = pygame.Rect(scaled_touch_area)
+                '''
+                button_touch_area = rect_position + rect_size
+                scaled_touch_area = self._scale_touch_area(button_touch_area, size, self.objectData['size'])
+                transformed_touch_area = self._transform_touch_area(scaled_touch_area, self.objectData['position'])
+                touch_area = pygame.Rect(transformed_touch_area)
 
                 # Create button rectangle / touch area and append to list
                 self.objectData['touch_areas'].append(touch_area) 
+
+                button_count += 1 
 
         # Resize for output
         canvas = canvas.resize(self.objectData['size'])
@@ -797,28 +838,27 @@ class DisplayObjects:
     def _draw_qrcode(self):
         size = (600, 400)  # Define working size
         canvas = Image.new("RGBA", size)  # Create canvas output object
-        draw = ImageDraw.Draw(canvas)  # Create drawing object 
+        draw = ImageDraw.Draw(canvas)  # Create drawing object
+        fg_color = self.objectData['color']
 
         # Rounded rectangle that fills the canvas size
         menu_padding = 10  # Define padding around outside of the menu rectangle 
         draw.rounded_rectangle((menu_padding, menu_padding, size[0]-menu_padding, size[1]-menu_padding), radius=8, outline=(0,0,0,225), fill=(0, 0, 0, 250))
 
+        # Draw Close Icon in upper right 
+        close_icon = self._create_icon('\uf00d', 34, (255,255,255))
+        close_position = (size[0] - (menu_padding * 4), (menu_padding * 2))
+        canvas.paste(close_icon, close_position, close_icon)
+
         # Menu Title
-        title_text = self.objectData['ip_address']
-        font_point_size = 35
-        font = ImageFont.truetype(self.objectData['font'], font_point_size)
-        font_bbox = font.getbbox(title_text)  # Grab the width of the text
-        font_width = font_bbox[2]
-        font_height = font_bbox[3]
-        title_x = (size[0] // 2) - (font_width // 2)
-        title_y = 15
-        title_origin = (title_x, title_y)
-        draw.text(title_origin, title_text, font=font, fill=(255, 255, 255))
+        title = self._draw_text(self.objectData['ip_address'], 'trebuc.ttf', 35, fg_color)
+        title_position = ((size[0] // 2) - (title.width // 2), 20)
+        canvas.paste(title, title_position, title)
 
         # Draw QR Code 
         img_qr = qrcode.make(f'http://{self.objectData["ip_address"]}')
         img_qr = img_qr.resize((300,300))
-        position = (150, 80)
+        position = (150, 60)
         canvas.paste(img_qr, position)
 
         return canvas 
@@ -1019,6 +1059,169 @@ class DisplayObjects:
             else:
                 self.objectData['data']['value'] = int(temp_string)
 
+    def _draw_timer(self):
+        output_size = self.objectData['size']
+        size = (400,200)  # Working Canvas Size 
+        fg_color = self.objectData['color']
+
+        # Create drawing object
+        canvas = Image.new("RGBA", size)
+        draw = ImageDraw.Draw(canvas)
+
+        # If not in use, display empty box
+        if self.objectData['data']['seconds'] > 0:
+            # Timer Background 
+            draw.rounded_rectangle((15, 15, size[0]-15, size[1]-15), radius=20, fill=(255,255,255,100))
+
+            # Draw Stopwatch Icon 
+            timer_icon = self._create_icon('\uf2f2', 35, fg_color)
+            canvas.paste(timer_icon, (40,30), timer_icon)
+
+            # Draw Timer Label on Top Portion of Box 
+            if len(self.objectData['label']) > 11:
+                label_displayed = self.objectData['label'][0:11]
+            else:
+                label_displayed = self.objectData['label']
+
+            timer_label = self._draw_text(label_displayed, 'trebuc.ttf', 50, fg_color)
+            canvas.paste(timer_label, (80,30), timer_label)
+
+            # Draw Seconds Remaining
+            seconds_remaining = f'{self.objectData["data"]["seconds"]}s'
+            timer_text = self._draw_text(seconds_remaining, 'trebuc.ttf', 100, fg_color)
+            timer_text_position = ((size[0] // 2) - (timer_text.width // 2), 90)
+            canvas.paste(timer_text, timer_text_position, timer_text)
+
+        # Resize and Prepare Output 
+        resized = canvas.resize(output_size)
+        canvas = Image.new("RGBA", (output_size[0], output_size[1]))
+
+        canvas.paste(resized, (0, 0), resized)
+
+        return canvas 
+
+    def _draw_alert(self):
+        output_size = self.objectData['size']
+        size = (400,200)  # Working Canvas Size 
+        fg_color = self.objectData['color']
+
+        # Create canvas & drawing object
+        canvas = Image.new("RGBA", size)
+        draw = ImageDraw.Draw(canvas)
+
+        if self.objectData['active']:
+            # Draw Rectangle
+            draw.rounded_rectangle((15, 15, size[0]-15, size[1]-15), radius=20, outline=fg_color, width=6)
+            
+            # Draw Alert Icon
+            fg_color_alpha = list(fg_color)
+            fg_color_alpha[3] = 125
+            fg_color_alpha = tuple(fg_color_alpha)
+
+            alert_icon = self._create_icon('\uf071', 100, fg_color_alpha)
+            alert_icon_pos = ((size[0] // 2) - (alert_icon.width // 2), (size[1] // 2) - (alert_icon.height // 2))
+            canvas.paste(alert_icon, alert_icon_pos)
+
+            text_lines = self.objectData['data']['text']
+            num_lines = len(text_lines)
+            padding = 50
+            line_height = (size[1] - padding) // num_lines
+            font_size = int(line_height * 0.8)
+            for index, text in enumerate(text_lines):
+                if len(text) > 11:
+                    text_displayed = text[0:11]
+                else:
+                    text_displayed = text
+
+                text_line = self._draw_text(text_displayed, 'trebuc.ttf', font_size, fg_color)
+                text_pos = ((size[0] // 2) - (text_line.width // 2), (padding // 2) + (line_height * index) + (line_height // 2) - (text_line.height // 2))
+                print(f'Index={index} text_pos={text_pos} text_height={text_line.height}')
+                canvas.paste(text_line, text_pos, text_line)
+
+        # Resize and Prepare Output 
+        resized = canvas.resize(output_size)
+        canvas = Image.new("RGBA", (output_size[0], output_size[1]))
+        canvas.paste(resized, (0, 0), resized)
+
+        return canvas 
+
+    def _draw_pmode_status(self):
+        output_size = self.objectData['size']
+        size = (400,200)  # Working Canvas Size 
+        fg_color = self.objectData['color']
+
+        # Create canvas & drawing object
+        canvas = Image.new("RGBA", size)
+
+        if self.objectData['active']:
+            draw = ImageDraw.Draw(canvas)
+            # Draw Rectangle
+            draw.rounded_rectangle((15, 15, size[0]-15, size[1]-15), radius=20, outline=fg_color, width=6)
+            
+            # Draw PMode Icon
+            fg_color_alpha = list(fg_color)
+            fg_color_alpha[3] = 125
+            fg_color_alpha = tuple(fg_color_alpha)
+
+            pmode_icon = self._create_icon('\uf83e', 100, fg_color_alpha)
+            pmode_icon_pos = ((size[0] // 2) - (pmode_icon.width // 2), (size[1] // 2) - 25)
+            canvas.paste(pmode_icon, pmode_icon_pos)
+
+            # Draw Title
+            text_displayed = self.objectData['label']
+            font_size = 40
+            text_line = self._draw_text(text_displayed, 'trebuc.ttf', font_size, fg_color)
+            text_pos = ((size[0] // 2) - (text_line.width // 2), 25)
+            canvas.paste(text_line, text_pos, text_line)
+
+            # Draw PMode Number 
+            text_displayed = self.objectData['data']['pmode']
+            font_size = 100
+            text_line = self._draw_text(text_displayed, 'trebuc.ttf', font_size, fg_color)
+            text_pos = ((size[0] // 2) - (text_line.width // 2), (size[1] // 2) - 25)
+            canvas.paste(text_line, text_pos, text_line)
+
+        # Resize and Prepare Output 
+        resized = canvas.resize(output_size)
+        canvas = Image.new("RGBA", (output_size[0], output_size[1]))
+        canvas.paste(resized, (0, 0), resized)
+
+        return canvas 
+
+    def _draw_splus_status(self):
+        output_size = self.objectData['size']
+        size = (200,200)  # Working Canvas Size 
+        
+
+        # Create canvas & drawing object
+        canvas = Image.new("RGBA", size)
+        draw = ImageDraw.Draw(canvas)
+        
+        fg_color = self.objectData['color']
+
+        if not self.objectData['active']:
+            fg_color = (255,255,255,125)
+        
+        # Draw Rectangle
+        padding = 25
+        draw.rounded_rectangle((padding, padding, size[0]-padding, size[1]-padding), radius=20, outline=fg_color, width=6)
+        
+        # Draw Smoke Plus Icon(s)
+        cloud_icon = self._create_icon('\uf0c2', 85, fg_color)
+        cloud_icon_pos = ((size[0] // 2) - (cloud_icon.width // 2) - 8, (size[1] // 2) - (cloud_icon.height // 2))
+        canvas.paste(cloud_icon, cloud_icon_pos, cloud_icon)
+
+        plus_icon = self._create_icon('\uf067', 50, fg_color)
+        plus_icon_pos = (120, 50)
+        #plus_icon_pos = ((size[0] // 2) - (plus_icon.width // 2), (size[1] // 2) - (plus_icon.height // 2))
+        canvas.paste(plus_icon, plus_icon_pos, plus_icon)
+
+        # Resize and Prepare Output 
+        resized = canvas.resize(output_size)
+        canvas = Image.new("RGBA", (output_size[0], output_size[1]))
+        canvas.paste(resized, (0, 0), resized)
+
+        return canvas 
 
 '''
 ==================================================================================
@@ -1038,6 +1241,7 @@ class DisplayBase:
         self.last_in_data = {}
         self.status_data = None
         self.last_status_data = {}
+
         self.input_enabled = False
 
         self.display_active = None 
@@ -1347,10 +1551,12 @@ class DisplayBase:
             self.display_init = True
             self.display_timeout = time.time() + self.TIMEOUT
 
-        if 'smoke_plus' in self.command:
+        if 'splus' in self.command:
+            enable = True if self.command_data == "on" else False 
             data = {
-                's_plus' : self.command_data['smoke_plus'],
+                's_plus' : enable,
             }
+            print(f'command_data = {enable}')
             write_control(data, origin='display')
 
         if 'primestartup' in self.command:
@@ -1372,6 +1578,19 @@ class DisplayBase:
                 'next_mode' : 'Stop'
             }
             write_control(data, origin='display')
+            self.display_active = 'dash'
+            self.display_init = True
+
+        if 'pmode' in self.command:
+            # TODO : Change to API Call
+            settings = read_settings()
+            settings['cycle_data']['PMode'] = self.command_data 
+            write_settings(settings)
+            data = {
+                'settings_update' : True,
+            }
+            write_control(data, origin='display')
+
             self.display_active = 'dash'
             self.display_init = True
 
