@@ -758,9 +758,9 @@ class DisplayObjects:
         if two_column_mode:
             button_height = 50
             button_padding = 10
-            button_width = size[0] // 2 - (menu_padding * 2) - (button_padding * 2)
+            button_width = size[0] // 2 - menu_padding - (button_padding * 2)
             column = 0
-            button_area_position = (menu_padding + button_padding, 60)
+            button_area_position = (menu_padding + button_padding, 80)
             button_area_size = (size[0] - (menu_padding * 2) - (button_padding * 2), size[1] - button_area_position[1] - menu_padding - button_padding)
             row_height = 60
         else: 
@@ -769,7 +769,7 @@ class DisplayObjects:
             button_width = size[0] - (menu_padding * 2) - (button_padding * 2)
             button_area_position = (menu_padding + button_padding, 60)
             button_area_size = (size[0] - (menu_padding * 2) - (button_padding * 2), size[1] - button_area_position[1] - menu_padding - button_padding)
-            row_height = button_area_size[1] // number_of_buttons
+            row_height = button_area_size[1] // (number_of_buttons - 1)
 
         button_count = 0
         row = 0
@@ -792,10 +792,10 @@ class DisplayObjects:
                     if button_count in [0, 2, 4, 6, 8, 10]:
                         rect_position = (button_area_position[0], button_area_position[1] + (row * row_height))
                     else:
-                        rect_position = (button_area_position[0] + button_width + button_padding, button_area_position[1] + (row * row_height))
+                        rect_position = (button_area_position[0] + button_width + (button_padding * 2), button_area_position[1] + (row * row_height))
                         row += 1
                 else:
-                    rect_position = (button_area_position[0], button_area_position[1] + (button_count * row_height))
+                    rect_position = (button_area_position[0], button_area_position[1] + (button_count * row_height) + ((row_height // 2) - (button_height // 2)))
 
                 rect_size = (button_width, button_height)
                 rect_coords = (rect_position[0], rect_position[1], rect_position[0] + rect_size[0], rect_position[1] + rect_size[1])
