@@ -256,6 +256,7 @@ class Display(DisplayBase):
 			section_data = [self.display_data['menus'][self.display_active.replace('menu_', '')]]
 		elif 'input_' in self.display_active:
 			section_data = [self.display_data['input'][self.display_active.replace('input_', '')]]
+			section_data[0]['data']['origin'] = self.input_origin
 		else:
 			return 
 			
@@ -281,8 +282,10 @@ class Display(DisplayBase):
 					''' Rename Displayed Food Probes '''
 					object['label'] = self.food_probe_name_map[object['name']]
 					object['units'] = self.units
+					object['button_value'] = [object['label']]
 				elif object['name'] == 'primary_gauge':
 					object['label'] = self.config['probe_info']['primary']['name']
+					object['button_value'] = [object['label']]
 				
 				display_data_dash_list.append(object)
 
@@ -337,8 +340,7 @@ class Display(DisplayBase):
 					object_data['temps'][1] = self.in_data['notify_targets'][primary_key]
 					object_data['temps'][2] = self.in_data['primary_setpoint']
 					object_data['units'] = self.units 
-					object_data['label'] = primary_key 
-
+					#object_data['label'] = primary_key
 					self.display_object_list[self.dash_map['primary_gauge']].update_object_data(object_data)
 			
 			''' Update Food Probe Gauges and Values '''
@@ -524,6 +526,8 @@ class Display(DisplayBase):
 							if self.display_active == 'dash':
 								self._capture_background()
 								self._store_dash_objects()
+							if ('input_' in objectData['button_list'][index]) and ('button_value' in list(objectData.keys())):
+								self.input_origin = objectData['button_value'][index]
 							self.display_active = objectData['button_list'][index]
 							self.display_init = True
 						elif 'button_' in objectData['button_list'][index]:

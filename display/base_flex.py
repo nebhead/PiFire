@@ -1135,7 +1135,6 @@ class DisplayObjects:
 
                 text_line = self._draw_text(text_displayed, 'trebuc.ttf', font_size, fg_color)
                 text_pos = ((size[0] // 2) - (text_line.width // 2), (padding // 2) + (line_height * index) + (line_height // 2) - (text_line.height // 2))
-                print(f'Index={index} text_pos={text_pos} text_height={text_line.height}')
                 canvas.paste(text_line, text_pos, text_line)
 
         # Resize and Prepare Output 
@@ -1249,6 +1248,7 @@ class DisplayBase:
         self.TIMEOUT = 10
         self.command = 'splash'
         self.command_data = None
+        self.input_origin = None
 
         self.raspberry_pi = True if is_raspberry_pi() else False
         # Attempt to set the log level of PIL so that it does not pollute the logs
@@ -1514,6 +1514,7 @@ class DisplayBase:
             write_control(data, origin='display')
         
         if 'hold' in self.command:
+            ''' Set hold target for primary probe '''
             primary_setpoint = 0
             for pointer, object in enumerate(self.display_object_list):
                 objectData = object.get_object_data()
@@ -1530,7 +1531,32 @@ class DisplayBase:
                 write_control(data, origin='display')
                 self.display_active = 'dash'
                 self.display_init = True
-        
+
+        if 'notify' in self.command:
+            ''' Set notification targets for probes/grill '''
+            notify_target = 0
+            for pointer, object in enumerate(self.display_object_list):
+                objectData = object.get_object_data()
+                if objectData['data'].get('value', False):
+                    notify_target = objectData['data'].get('value', False)
+                    break
+
+            control = read_control()
+            for index, notify_source in enumerate(control['notify_data']):
+                if notify_source['name'] == self.input_origin:
+                    control['notify_data'][index]['target'] = notify_target
+                    control['notify_data'][index]['req'] = True if notify_target else False
+                    break
+
+            data = {
+                'notify_data' : control['notify_data'],
+            }
+            write_control(data, origin='display')
+
+            self.input_origin = None
+            self.display_active = 'dash'
+            self.display_init = True
+
         if 'shutdown' in self.command:
             data = {
                 'updated' : True,
@@ -1556,7 +1582,6 @@ class DisplayBase:
             data = {
                 's_plus' : enable,
             }
-            print(f'command_data = {enable}')
             write_control(data, origin='display')
 
         if 'primestartup' in self.command:
@@ -1610,10 +1635,6 @@ class DisplayBase:
                 # User is forcing next step
                 data['updated'] = True
                 write_control(data, origin='display')
-
-        if 'notify' in self.command:
-            ''' Set notification targets for probes/grill '''
-            pass
 
         if 'reboot' in self.command:
             data = {

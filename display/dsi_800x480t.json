@@ -24,7 +24,8 @@
             "units" : "F", 
             "max_temp" : 600,
             "data" : {},
-            "button_list" : ["Primary Gauge"],
+            "button_list" : ["input_notify"],
+            "button_value" : [],
             "touch_areas" : []
         },
         {
@@ -56,7 +57,8 @@
             "units" : "F", 
             "max_temp" : 300,
             "data" : {},
-            "button_list" : ["Food Probe Gauge 0"],
+            "button_list" : ["input_notify"],
+            "button_value" : [],
             "touch_areas" : []
         },
         {
@@ -74,7 +76,8 @@
             "units" : "F", 
             "max_temp" : 300,
             "data" : {},
-            "button_list" : ["Food Probe Gauge 1"],
+            "button_list" : ["input_notify"],
+            "button_value" : [],
             "touch_areas" : []
         },
         {
@@ -92,7 +95,8 @@
             "units" : "F", 
             "max_temp" : 300,
             "data" : {},
-            "button_list" : ["Food Probe Gauge 2"],
+            "button_list" : ["input_notify"],
+            "button_value" : [],
             "touch_areas" : []
         },
         {
@@ -110,7 +114,8 @@
             "units" : "F", 
             "max_temp" : 300,
             "data" : {},
-            "button_list" : ["Food Probe Gauge 3"],
+            "button_list" : ["input_notify"],
+            "button_value" : [],
             "touch_areas" : []
         },
         {
@@ -128,7 +133,8 @@
             "units" : "F", 
             "max_temp" : 300,
             "data" : {},
-            "button_list" : ["Food Probe Gauge 4"],
+            "button_list" : ["input_notify"],
+            "button_value" : [],
             "touch_areas" : []
         },
         {
@@ -146,7 +152,8 @@
             "units" : "F", 
             "max_temp" : 300,
             "data" : {},
-            "button_list" : ["Food Probe Gauge 5"],
+            "button_list" : ["input_notify"],
+            "button_value" : [],
             "touch_areas" : []
         },
         {
@@ -221,6 +228,7 @@
             "label" : "menu_icon", 
             "color" : [255,255,255,255],
             "button_list" : ["menu_main"],
+            "button_value" : [],
             "data" : {},
             "touch_areas" : []
         },
@@ -234,6 +242,7 @@
             "label" : "Timer", 
             "color" : [255,255,255,255],
             "button_list" : [],
+            "button_value" : [],
             "data" : {
                 "seconds" : 0
             },
@@ -256,6 +265,7 @@
                 ]
             },
             "button_list" : [],
+            "button_value" : [],
             "touch_areas" : []
         },
         {
@@ -272,6 +282,7 @@
                 "pmode" : 0
             },
             "button_list" : ["menu_pmode"],
+            "button_value" : [],
             "touch_areas" : []
         },
         {
@@ -304,6 +315,7 @@
             "data" : {},
             "button_list" : ["menu_close", "menu_qrcode", "menu_main_reboot", "menu_main_power_off"],
             "button_text" : ["Close Menu", "Show QR Code", "Reboot System", "Power Off System"], 
+            "button_value" : [],
             "touch_areas" : []
         },
         "qrcode" : {
@@ -318,6 +330,7 @@
             "color" : [255,255,255,255],
             "data" : {},
             "button_list" : ["menu_close"],
+            "button_value" : [],
             "touch_areas" : []
         },
         "main_reboot" : {
@@ -333,6 +346,7 @@
             "data" : {},
             "button_list" : ["menu_close", "cmd_reboot", "menu_close"],
             "button_text" : ["Close Menu", "Yes", "No"], 
+            "button_value" : [],
             "touch_areas" : []
         },
         "main_power_off" : {
@@ -348,6 +362,7 @@
             "data" : {},
             "button_list" : ["menu_close", "cmd_poweroff", "menu_close"],
             "button_text" : ["Close Menu", "Yes", "No"], 
+            "button_value" : [],
             "touch_areas" : []
         },
         "prime" : {
@@ -363,6 +378,7 @@
             "data" : {},
             "button_list" : ["menu_close", "menu_prime_startup", "menu_prime_only"],
             "button_text" : ["Close Menu", "Yes", "No"],
+            "button_value" : [],
             "touch_areas" : []
         },
         "prime_startup" : {
@@ -410,6 +426,7 @@
             "data" : {},
             "button_list" : ["menu_close", "cmd_startup", "menu_close"],
             "button_text" : ["Close Menu", "Yes", "No"],
+            "button_value" : [],
             "touch_areas" : []
         },
         "pmode" : {
@@ -443,10 +460,12 @@
             "command" : "cmd_hold",
             "data" : {
                 "input": "",
-                "value" : 200
+                "value" : 200,
+                "origin" : ""
             },
             "step" : 5,
             "button_list" : [],
+            "button_value" : [],
             "touch_areas" : []
         },
         "notify" : {
@@ -462,10 +481,12 @@
             "command" : "cmd_notify",
             "data" : {
                 "input": "",
-                "value" : 165
+                "value" : 165,
+                "origin" : ""
             },
             "step" : 5,
             "button_list" : [],
+            "button_value" : [],
             "touch_areas" : []
         }
     }
