@@ -1010,7 +1010,7 @@ def write_pellet_db(pelletdb):
 	with open("pelletdb.json", 'w') as json_file:
 		json_file.write(json_data_string)
 
-def read_log(legacy=True):
+def read_events(legacy=True):
 	"""
 	Read event.log and populate an array of events.
 
@@ -1053,18 +1053,35 @@ def read_log(legacy=True):
 
 	return(event_list, num_events)
 
+def read_log_file(filepath):
+	# Read all lines of events.log into a list(array)
+	try:
+		with open(filepath) as log_file:
+			log_file_lines = log_file.readlines()
+			log_file.close()
+	# If file not found error, then create events.log file
+	except(IOError, OSError):
+		event = f'Unable to open log file: {filepath}'
+		write_log(event)
+		return []
+
+	return log_file_lines 
+
+def add_line_numbers(event_list):
+	event_lines = []
+	for index, line in enumerate(event_list):
+		event_lines.append([index, line])
+	return event_lines 
+
 def write_log(event):
 	"""
 	Write event to event.log
 
 	:param event: String event
 	"""
-	now = str(datetime.datetime.now())
-	now = now[0:19] # Truncate the microseconds
-
-	logfile = open("/tmp/events.log", "a")
-	logfile.write(now + ' ' + event + '\n')
-	logfile.close()
+	log_level = logging.INFO
+	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
+	eventLogger.info(event)
 
 def write_event(settings, event):
 	"""

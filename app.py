@@ -50,7 +50,8 @@ BACKUP_PATH = './backups/'  # Path to backups of settings.json, pelletdb.json
 UPLOAD_FOLDER = BACKUP_PATH  # Point uploads to the backup path
 HISTORY_FOLDER = './history/'  # Path to historical cook files
 RECIPE_FOLDER = './recipes/'  # Path to recipe files 
-ALLOWED_EXTENSIONS = {'json', 'pifire', 'pfrecipe', 'jpg', 'jpeg', 'png', 'gif', 'bmp'}
+LOGS_FOLDER = './logs/'  # Path to log files 
+ALLOWED_EXTENSIONS = {'json', 'pifire', 'pfrecipe', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'log'}
 server_status = 'available'
 
 app = Flask(__name__)
@@ -940,7 +941,7 @@ def events_page(action=None):
 	if(request.method == 'POST') and ('form' in request.content_type):
 		requestform = request.form 
 		if 'eventslist' in requestform:
-			event_list = read_log(legacy=False)
+			event_list = read_events(legacy=False)
 			page = int(requestform['page'])
 			reverse = True if requestform['reverse'] == 'true' else False
 			itemsperpage = int(requestform['itemsperpage'])
@@ -952,6 +953,43 @@ def events_page(action=None):
 	return render_template('events.html',
 							settings=settings,
 						   	control=control,
+						   	page_theme=settings['globals']['page_theme'],
+						   	grill_name=settings['globals']['grill_name'])
+
+@app.route('/logs/<action>', methods=['POST','GET'])
+@app.route('/logs', methods=['POST','GET'])
+def logs_page(action=None):
+	global settings
+
+	# Get list of log files 
+	if not os.path.exists(LOGS_FOLDER):
+		os.mkdir(LOGS_FOLDER)
+	log_file_list = os.listdir(LOGS_FOLDER)
+	for file in log_file_list:
+		if not _allowed_file(file):
+			log_file_list.remove(file)
+
+	if(request.method == 'POST') and ('form' in request.content_type):
+		requestform = request.form 
+
+		if 'download' in requestform:
+			log_file_name = LOGS_FOLDER + requestform['selectLog']
+			return send_file(log_file_name, as_attachment=True, max_age=0)
+		elif 'eventslist' in requestform:
+			log_file_name = requestform['logfile']
+			event_list = read_log_file(LOGS_FOLDER + log_file_name)
+			event_list = add_line_numbers(event_list)
+			page = int(requestform['page'])
+			reverse = True if requestform['reverse'] == 'true' else False
+			itemsperpage = int(requestform['itemsperpage'])
+			pgntd_data = _paginate_list(event_list, reversesortorder=reverse, itemsperpage=itemsperpage, page=page)
+			return render_template('_log_list.html', pgntd_data = pgntd_data, log_file_name=log_file_name)
+		else:
+			return ('Error')
+
+	return render_template('logs.html',
+							settings=settings,
+							log_file_list=log_file_list,
 						   	page_theme=settings['globals']['page_theme'],
 						   	grill_name=settings['globals']['grill_name'])
 
@@ -3424,7 +3462,7 @@ def get_app_data(action=None, type=None):
 		return read_pellet_db()
 
 	elif action == 'events_data':
-		event_list, num_events = read_log()
+		event_list, num_events = read_events()
 		events_trim = []
 		for x in range(min(num_events, 60)):
 			events_trim.append(event_list[x])
