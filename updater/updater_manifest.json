@@ -1,4 +1,14 @@
 {
+  "metadata" : {
+    "versions" : {
+      "server" : "1.6.0",
+      "cookfile" : "1.5.0",
+      "recipe" : "1.0.0",
+      "build" : 30
+    },
+    "update_notes" : "",
+    "update_warnings" : ""
+  },
   "dependencies": {
     "app": {
       "py_dependencies": [
@@ -21,5 +31,55 @@
         "libatlas-base-dev"
       ]
     }
-  }
+  },
+  "versions" : [
+    {
+      "version" : "1.5.4",
+      "build" : 0,
+      "reboot_required" : false,
+      "dependencies" : {
+        "app": {
+          "py_dependencies": [
+            "flask_mobility",
+            "flask_socketio",
+            "flask_qrcode"
+          ],
+          "apt_dependencies": [
+            "python3-scipy"
+          ],
+          "command_list" : []
+        },
+        "control": {
+          "py_dependencies": [
+            "apprise",
+            "scikit-fuzzy",
+            "scikit-learn"
+          ],
+          "apt_dependencies": [
+            "libatlas-base-dev"
+          ],
+          "command_list" : []
+        }
+      }
+    },
+    {
+      "version" : "1.6.0",
+      "build" : 30,
+      "reboot_required" : false,
+      "dependencies" : {
+        "app": {
+          "py_dependencies": [],
+          "apt_dependencies": [],
+          "command_list" : []
+        },
+        "control": {
+          "py_dependencies": [
+            "ratelimitingfilter"
+          ],
+          "apt_dependencies": [],
+          "command_list" : []
+        }
+      }
+    }
+  ]
 }

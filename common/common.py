@@ -81,11 +81,8 @@ def create_logger(name, filename='./logs/pifire.log', messageformat='%(asctime)s
 def default_settings():
 	settings = {}
 
-	settings['versions'] = {
-		'server' : "1.6.0",
-		'cookfile' : "1.5.0",  # Current cookfile format version
-		'recipe' : "1.0.0"  # Current recipe file format version
-	}
+	updater_info = read_updater_manifest()
+	settings['versions'] = updater_info['metadata']['versions']
 
 	settings['probe_settings'] = {}
 	settings['probe_settings']['probe_profiles'] = _default_probe_profiles()
@@ -1455,7 +1452,7 @@ def set_wizard_install_status(percent, status, output):
 	cmdsts.set('wizard:status', status)
 	cmdsts.set('wizard:output', output)
 
-def read_dependencies(filename='updater/updater_manifest.json'):
+def read_updater_manifest(filename='updater/updater_manifest.json'):
 	"""
 	Read Updater Manifest Data from file
 
@@ -1480,7 +1477,7 @@ def read_dependencies(filename='updater/updater_manifest.json'):
 		write_log(event)
 		json_data_file.close()
 		# Retry Reading Settings
-		dependencies = read_dependencies(filename=filename)
+		dependencies = read_updater_manifest(filename=filename)
 
 	return(dependencies)
 
@@ -1561,6 +1558,26 @@ def semantic_ver_to_list(version_string):
 	ver_list = list(map(int, ver_list))
 
 	return(ver_list)
+
+def semantic_ver_is_lower(version_A, version_B):
+	version_A = semantic_ver_to_list(version_A)
+	version_B = semantic_ver_to_list(version_B)
+	
+	if version_A [0] < version_B[0]:
+		return True
+	elif version_A [0] > version_B[0]:
+		return False
+	else:
+		if version_A [1] < version_B[1]:
+			return True
+		elif version_A [1] > version_B[1]:
+			return False
+		else:
+			if version_A [2] < version_B[2]:
+				return True
+			elif version_A [2] > version_B[2]:
+				return False
+	return False
 
 def seconds_to_string(seconds):
 	m, s = divmod(seconds, 60)
