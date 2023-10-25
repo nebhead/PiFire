@@ -106,7 +106,8 @@ def default_settings():
 		'ext_data' : False,  # Set to True to allow tracking of extended data.  More data will be stored in the history database and can be reviewed in the CSV.
 		'global_control_panel' : False,  # Set to True to display control panel on most pages (except Updater, Wizard, Cookfile and some other pages)
 		'boot_to_monitor' : False,  # Set to True to boot directly into monitor mode
-		'prime_ignition' : False  # Set to True to enable the igniter in prime & startup mode
+		'prime_ignition' : False,  # Set to True to enable the igniter in prime & startup mode
+		'updated_message' : False  # Set to True to display a pop-up message after the system has been updated 
 	}
 
 	settings['outpins'] = {
@@ -958,6 +959,8 @@ def upgrade_settings(prev_ver, settings, settings_default):
 		settings['cycle_data'].pop('SmokeCycleTime') # Remove old SmokeCycleTime
 		settings['cycle_data']['SmokeOnCycleTime'] = 15  # Name change for SmokeCycleTime variable 
 		settings['cycle_data']['SmokeOffCycleTime'] = 45  # Added SmokeOffCycleTime variable 
+	
+	settings['globals']['updated_message'] = True  # Display updated message after reset/reboot
 	return(settings)
 
 def read_pellet_db(filename='pelletdb.json'):

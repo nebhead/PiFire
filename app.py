@@ -960,7 +960,7 @@ def events_page(action=None):
 @app.route('/logs', methods=['POST','GET'])
 def logs_page(action=None):
 	global settings
-
+	control = read_control()
 	# Get list of log files 
 	if not os.path.exists(LOGS_FOLDER):
 		os.mkdir(LOGS_FOLDER)
@@ -989,6 +989,7 @@ def logs_page(action=None):
 
 	return render_template('logs.html',
 							settings=settings,
+							control=control,
 							log_file_list=log_file_list,
 						   	page_theme=settings['globals']['page_theme'],
 						   	grill_name=settings['globals']['grill_name'])
@@ -2940,6 +2941,14 @@ def update_page(action=None):
 		elif action=='updatestatus':
 			percent, status, output = get_updater_install_status()
 			return jsonify({'percent' : percent, 'status' : status, 'output' : output})
+		
+		elif action=='post-message':
+			try:
+				with open('./updater/post-update-message.html','r') as file:
+					post_update_message_html = " ".join(line.rstrip() for line in file)
+			except:
+				post_update_message_html = 'An error has occurred fetching the post-update message.' 
+			return render_template_string(post_update_message_html)
 
 	if request.method == 'POST':
 		r = request.form
