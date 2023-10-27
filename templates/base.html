@@ -111,29 +111,31 @@
 		{% endblock %}
 
 		{% block updater_message %}
-			{% if settings['globals']['updated_message'] %}
-			<!-- Updater Message Modal -->
-			<div class="modal fade" id="updater_message_modal" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="udpate_message_title" aria-hidden="true">
-				<div class="modal-dialog modal-dialog-scrollable modal-xl">
-				<div class="modal-content">
-					<div class="modal-header">
-					<h5 class="modal-title" id="update_message_title"><i class="fa-solid fa-gift"></i>&nbsp; Update Message</h5>
-					<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="clearMessage();">
-						<span aria-hidden="true">&times;</span>
-					</button>
-					</div>
-					<div class="modal-body">
-						<div id="update_message_html">
-						Loading...
+			{% if settings is defined %}
+				{% if settings['globals']['updated_message'] %}
+				<!-- Updater Message Modal -->
+				<div class="modal fade" id="updater_message_modal" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="udpate_message_title" aria-hidden="true">
+					<div class="modal-dialog modal-dialog-scrollable modal-xl">
+					<div class="modal-content">
+						<div class="modal-header">
+						<h5 class="modal-title" id="update_message_title"><i class="fa-solid fa-gift"></i>&nbsp; Update Message</h5>
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="clearMessage();">
+							<span aria-hidden="true">&times;</span>
+						</button>
+						</div>
+						<div class="modal-body">
+							<div id="update_message_html">
+							Loading...
+							</div>
+						</div>
+						<div class="modal-footer">
+						<button type="button" class="btn btn-primary" data-dismiss="modal" onclick="clearMessage();">Close</button>
 						</div>
 					</div>
-					<div class="modal-footer">
-					<button type="button" class="btn btn-primary" data-dismiss="modal" onclick="clearMessage();">Close</button>
 					</div>
 				</div>
-				</div>
-			</div>
-  			{% endif %}
+				{% endif %}
+			{% endif %}
 		{% endblock %}
 
         <!-- Standard JavaScript -->
@@ -156,10 +158,12 @@
 			{% endif %}
 		{% endblock %}
 
-		{% block updater_message_scripts %} 
-			{% if settings['globals']['updated_message'] %}
-			<!-- Updater Message Scripts -->
-			<script src="{{ url_for('static', filename='js/updater_message.js') }}"></script>
+		{% block updater_message_scripts %}
+			{% if settings is defined %}
+				{% if settings['globals']['updated_message'] %}
+				<!-- Updater Message Scripts -->
+				<script src="{{ url_for('static', filename='js/updater_message.js') }}"></script>
+				{% endif %}
 			{% endif %}
 		{% endblock %}
 

@@ -86,7 +86,8 @@ $SUDO pip3 install influxdb-client[ciso]
 $SUDO pip3 install apprise
 $SUDO pip3 install scikit-fuzzy
 $SUDO pip3 install scikit-learn
-$SUDO pip3 install ratelimitingfilter 
+$SUDO pip3 install ratelimitingfilter
+$SUDO pip3 install pillow>=9.2.0
 $SUDO apt install libatlas-base-dev -y
 
 # Setup config.txt to enable busses 
