@@ -885,16 +885,18 @@ def read_settings(filename='settings.json', init=False):
 
 		# If default version is different from what is currently saved, update version in saved settings
 		if 'versions' not in settings.keys():
-			settings['versions'] = {
-				'server' : settings_default['versions']['server']
-			}
+			settings['versions'] = settings_default['versions']
 			update_settings = True
 		elif settings_default['versions']['server'] != settings['versions']['server']:
 			backup_settings()  # Backup Old Settings Before Performing Upgrade 
 			prev_ver = semantic_ver_to_list(settings['versions']['server'])
 			settings = upgrade_settings(prev_ver, settings, settings_default)
-			settings['versions']['server'] = settings_default['versions']['server']
+			settings['versions'] = settings_default['versions']
 			update_settings = True
+
+		if settings['versions']['build'] != settings_default['versions']['build']:
+			settings['versions']['build'] = settings_default['versions']['build']
+			update_settings = True 
 
 		# Overlay the original settings on top of the default settings
 		for key in settings_default.keys():
@@ -959,7 +961,11 @@ def upgrade_settings(prev_ver, settings, settings_default):
 		settings['cycle_data'].pop('SmokeCycleTime') # Remove old SmokeCycleTime
 		settings['cycle_data']['SmokeOnCycleTime'] = 15  # Name change for SmokeCycleTime variable 
 		settings['cycle_data']['SmokeOffCycleTime'] = 45  # Added SmokeOffCycleTime variable 
-	
+	''' Import any new probe profiles '''
+	for profile in list(settings_default['probe_settings']['probe_profiles'].keys()):
+		if profile not in list(settings['probe_settings']['probe_profiles'].keys()):
+			settings['probe_settings']['probe_profiles'][profile] = settings_default['probe_settings']['probe_profiles'][profile]
+
 	settings['globals']['updated_message'] = True  # Display updated message after reset/reboot
 	return(settings)
 
