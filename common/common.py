@@ -894,7 +894,7 @@ def read_settings(filename='settings.json', init=False):
 			settings['versions'] = settings_default['versions']
 			update_settings = True
 
-		if settings['versions']['build'] != settings_default['versions']['build']:
+		if settings['versions'].get('build', None) != settings_default['versions']['build']:
 			settings['versions']['build'] = settings_default['versions']['build']
 			update_settings = True 
 
