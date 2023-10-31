@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 '''
 ==============================================================================
  PiFire Web UI (Flask App) Process
@@ -2392,6 +2390,11 @@ def wizard(action=None):
 	wizardData = read_wizard()
 	errors = []
 
+	if settings['globals']['venv']:
+		python_exec = 'bin/python'
+	else:
+		python_exec = 'python'
+
 	if request.method == 'GET':
 		if action=='installstatus':
 			percent, status, output = get_wizard_install_status()
@@ -2408,7 +2411,7 @@ def wizard(action=None):
 				wizardInstallInfo = prepare_wizard_data(r)
 				store_wizard_install_info(wizardInstallInfo)
 				set_wizard_install_status(0, 'Starting Install...', '')
-				os.system('python3 wizard.py &')	# Kickoff Installation
+				os.system(f'{python_exec} wizard.py &')	# Kickoff Installation
 				return render_template('wizard-finish.html', page_theme=settings['globals']['page_theme'],
 									grill_name=settings['globals']['grill_name'], wizardData=wizardData)
 			else:
@@ -2931,6 +2934,11 @@ def update_page(action=None):
 		'text' : ''
 	}
 
+	if settings['globals']['venv']:
+		python_exec = 'bin/python'
+	else:
+		python_exec = 'python'
+
 	if request.method == 'GET':
 		if action is None:
 			update_data = get_update_data(settings)
@@ -2956,7 +2964,7 @@ def update_page(action=None):
 
 		if 'update_remote_branches' in r:
 			if is_raspberry_pi():
-				os.system('python3 %s %s &' % ('updater.py', '-r'))	 # Update branches from remote 
+				os.system(f'{python_exec} %s %s &' % ('updater.py', '-r'))	 # Update branches from remote 
 				time.sleep(5)  # Artificial delay to avoid race condition
 			return redirect('/update')
 
@@ -2971,7 +2979,7 @@ def update_page(action=None):
 									   grill_name=settings['globals']['grill_name'])
 			else:
 				set_updater_install_status(0, 'Starting Branch Change...', '')
-				os.system('python3 %s %s %s &' % ('updater.py', '-b', r['branch_target']))	# Kickoff Branch Change
+				os.system(f'{python_exec} updater.py -b {r["branch_target"]} &')	# Kickoff Branch Change
 				return render_template('updater-status.html', page_theme=settings['globals']['page_theme'],
 									   grill_name=settings['globals']['grill_name'])
 
@@ -2979,7 +2987,7 @@ def update_page(action=None):
 			control = read_control()
 			if control['mode'] == 'Stop':
 				set_updater_install_status(0, 'Starting Update...', '')
-				os.system('python3 %s %s %s &' % ('updater.py', '-u', update_data['branch_target']))  # Kickoff Update
+				os.system(f'{python_exec} updater.py -u {update_data["branch_target"]} &') # Kickoff Update
 				return render_template('updater-status.html', page_theme=settings['globals']['page_theme'],
 									grill_name=settings['globals']['grill_name'])
 			else:
@@ -3848,6 +3856,12 @@ def post_app_data(action=None, type=None, json_data=None):
 
 @socketio.on('post_updater_data')
 def updater_action(type='none', branch=None):
+	global settings
+
+	if settings['globals']['venv']:
+		python_exec = 'bin/python'
+	else:
+		python_exec = 'python'
 
 	if type == 'change_branch':
 		if branch is not None:
@@ -3887,8 +3901,8 @@ def updater_action(type='none', branch=None):
 
 	elif type == 'update_remote_branches':
 		if is_raspberry_pi():
-			os.system('python3 %s %s &' % ('updater.py', '-r'))	 # Update branches from remote
-			time.sleep(2)
+			os.system(f'{python_exec} updater.py -r') # Update branches from remote
+			#time.sleep(2)
 			return {'response': {'result':'success', 'message': 'Branches successfully updated from remote' }}
 		else:
 			return {'response': {'result':'error', 'message': 'System is not a Raspberry Pi. Branches not updated.' }}

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 '''
 ==============================================================================
  PiFire Updater 
@@ -344,7 +342,13 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 		increment = 70 / items_remaining
 
 	# Install Py dependencies
-	launch_pip = ['pip3', 'install']
+	settings = read_settings()
+	if settings['globals']['venv']:
+		python_exec = 'bin/python'
+	else:
+		python_exec = 'python'
+	
+	launch_pip = [python_exec, '-m', 'pip', 'install']
 	status = 'Installing Python Dependencies...'
 	output = ' - Installing Python Dependencies'
 	set_updater_install_status(percent, status, output)

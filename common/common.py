@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 '''
 ==============================================================================
  PiFire Common Module
@@ -107,8 +105,12 @@ def default_settings():
 		'global_control_panel' : False,  # Set to True to display control panel on most pages (except Updater, Wizard, Cookfile and some other pages)
 		'boot_to_monitor' : False,  # Set to True to boot directly into monitor mode
 		'prime_ignition' : False,  # Set to True to enable the igniter in prime & startup mode
-		'updated_message' : False  # Set to True to display a pop-up message after the system has been updated 
+		'updated_message' : False,   # Set to True to display a pop-up message after the system has been updated 
+		'venv' : False  # Set to True if running in virtual environment (needed for Raspberry Pi OS Bookworm)
 	}
+
+	if os.path.exists('bin'):
+		settings['globals']['venv'] = True 
 
 	settings['outpins'] = {
 		'power' : 4,
