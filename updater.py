@@ -490,7 +490,7 @@ if __name__ == "__main__":
 		set_updater_install_status(percent, status, output)
 		time.sleep(2)
 
-		#success, status, output = install_update()
+		success, status, output = install_update()
 
 		percent = 20
 		set_updater_install_status(percent, status, output)
