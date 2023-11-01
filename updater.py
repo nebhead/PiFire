@@ -151,7 +151,7 @@ def do_update():
 		merge = subprocess.run(command, capture_output=True, text=True)
 		'''
 		error_msg = ''
-		if fetch.returncode == 0 and reset.returncode == 0 and merge.returncode == 0:
+		if fetch.returncode == 0 and reset.returncode == 0:
 			result = fetch.stdout.replace('\n', '<br>') + '<br>' + reset.stdout.replace('\n', '<br>') # + '<br>' + merge.stdout.replace('\n', '<br>')
 		else: 
 			result = 'ERROR Performing Update.'
