@@ -85,7 +85,7 @@
 		{% block notify %}
 			<!-- Begin Error Notification Section -->
 			{% if errors is defined %}
-				<br>
+				{% if errors != [] %}<br>{% endif %}
 				{% for error in errors %}
 					<div class="alert alert-danger alert-dismissible">
 						<button type="button" class="close" data-dismiss="alert">&times;</button>
@@ -94,12 +94,12 @@
 				{% endfor %}
 			{% endif %}
 			{% if warnings is defined %}
-				<br>
+				{% if warnings != [] %}<br>{% endif %}
 				{% for warning in warnings %}
-				<div class="alert alert-info alert-dismissible">
-					<button type="button" class="close" data-dismiss="alert">&times;</button>
-					<b><i class="fa-solid fa-circle-info"></i>&nbsp; Info:</b> <i>{{ warning }}</i>
-				</div>
+					<div class="alert alert-info alert-dismissible">
+						<button type="button" class="close" data-dismiss="alert">&times;</button>
+						<b><i class="fa-solid fa-circle-info"></i>&nbsp; Info:</b> <i>{{ warning }}</i>
+					</div>
 				{% endfor %}
 			{% endif %}
 			<!-- End Error Notification Section -->
