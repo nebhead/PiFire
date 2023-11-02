@@ -79,6 +79,7 @@ def dash():
 	global settings
 	control = read_control()
 	errors = read_errors()
+	warnings = read_warnings()
 
 	dash_template = 'dash_default.html'
 	for dash in settings['dashboard']['dashboards']:
@@ -90,6 +91,7 @@ def dash():
 						   settings=settings,
 						   control=control,
 						   errors=errors,
+						   warnings=warnings,
 						   page_theme=settings['globals']['page_theme'],
 						   grill_name=settings['globals']['grill_name'])
 
@@ -2141,10 +2143,7 @@ def admin_page(action=None):
 			return send_file(zip_file, as_attachment=True, max_age=0)
 		
 		if 'backupsettings' in response:
-			time_now = datetime.datetime.now()
-			time_str = time_now.strftime('%m-%d-%y_%H%M%S') # Truncate the microseconds
-			backup_file = BACKUP_PATH + 'PiFire_' + time_str + '.json'
-			os.system(f'cp settings.json {backup_file}')
+			backup_file = backup_settings()
 			return send_file(backup_file, as_attachment=True, max_age=0)
 
 		if 'restoresettings' in response:
@@ -3544,8 +3543,7 @@ def get_app_data(action=None, type=None):
 		time_str = time_now.strftime('%m-%d-%y_%H%M%S')
 
 		if type == 'settings':
-			backup_file = BACKUP_PATH + 'PiFire_' + time_str + '.json'
-			os.system(f'cp settings.json {backup_file}')
+			backup_settings()
 			return settings
 
 		if type == 'pelletdb':

@@ -791,6 +791,42 @@ def write_errors(errors):
 
 	cmdsts.set('errors', json.dumps(errors))
 
+def read_warnings():
+	"""
+	Read Warnings from Redis DB and then burn them
+
+	:return: warnings
+	"""
+	global cmdsts
+
+	try:
+		if not(cmdsts.exists('warnings')):
+			warnings = []
+		else:
+			# Read list of warnings 
+			warnings = cmdsts.lrange('warnings', 0, -1)
+			# Remove all warnings in Redis DB
+			cmdsts.delete('warnings')
+	except:
+		warnings = ['Unable to reach Redis database.  You may need to reinstall PiFire or enable redis-server.']
+		write_log(warnings[0])
+
+	return warnings
+
+def write_warning(warning):
+	"""
+	Write a warning to Redis DB
+
+	:param warnings: Warnings List 
+	"""
+	global cmdsts
+
+	try:
+		cmdsts.rpush('warnings', warning)
+	except:
+		event = 'Unable to reach Redis database.  You may need to reinstall PiFire or enable redis-server.'
+		write_log(event)
+
 def read_metrics(all=False):
 	"""
 	Read Metrics from Redis DB
@@ -887,14 +923,24 @@ def read_settings(filename='settings.json', init=False):
 
 		# If default version is different from what is currently saved, update version in saved settings
 		if 'versions' not in settings.keys():
+			''' Upgrading from extremely old version '''
 			settings['versions'] = settings_default['versions']
 			update_settings = True
-		elif settings_default['versions']['server'] != settings['versions']['server']:
-			backup_settings()  # Backup Old Settings Before Performing Upgrade 
+		elif semantic_ver_is_lower(settings['versions']['server'], settings_default['versions']['server']):
+			''' Upgrade Path '''
+			backup_settings()  # Backup Old Settings Before Performing Upgrade
+			warning = f'Upgrading your settings from {settings["versions"]["server"]} to {settings_default["versions"]["server"]}.'
+			write_warning(warning)
+			write_log(warning)
 			prev_ver = semantic_ver_to_list(settings['versions']['server'])
 			settings = upgrade_settings(prev_ver, settings, settings_default)
 			settings['versions'] = settings_default['versions']
 			update_settings = True
+		elif semantic_ver_is_lower(settings_default['versions']['server'], settings['versions']['server']):
+			''' Downgrade Path '''			
+			backup_settings()  # Backup Old Settings Before Performing Downgrade 
+			settings = downgrade_settings(settings, settings_default)
+			update_settings = True 
 
 		if settings['versions'].get('build', None) != settings_default['versions']['build']:
 			settings['versions']['build'] = settings_default['versions']['build']
@@ -932,10 +978,27 @@ def write_settings(settings):
 		settings_file.write(json_data_string)
 
 def backup_settings():
+	# Copy current settings file to a backup copy in /[BACKUP_PATH]/PiFire_[DATE]_[TIME].json 
 	time_now = datetime.datetime.now()
 	time_str = time_now.strftime('%m-%d-%y_%H%M%S') # Truncate the microseconds
 	backup_file = BACKUP_PATH + 'PiFire_' + time_str + '.json'
 	os.system(f'cp settings.json {backup_file}')
+	# Save a path to the backup copy in the updater_manifest.json
+	backup_manifest = read_generic_json('./backups/manifest.json')
+	if backup_manifest == {}:
+		backup_manifest = {
+			'server_settings' : {}
+		}
+		write_generic_json(backup_manifest, './backups/manifest.json')
+
+	settings = read_generic_json('settings.json')
+	server_version = settings['versions']['server']
+	backup_manifest['server_settings'][server_version] = backup_file
+	write_generic_json(backup_manifest, 'backups/manifest.json')
+	warning = f'Backed up your current settings to "{backup_file}" and setting these as the recovery settings for server version: {server_version}.'
+	write_warning(warning)
+	write_log(warning)
+	return backup_file 
 
 def upgrade_settings(prev_ver, settings, settings_default):
 	''' Check if upgrading from v1.4.x or earlier '''
@@ -969,6 +1032,26 @@ def upgrade_settings(prev_ver, settings, settings_default):
 			settings['probe_settings']['probe_profiles'][profile] = settings_default['probe_settings']['probe_profiles'][profile]
 
 	settings['globals']['updated_message'] = True  # Display updated message after reset/reboot
+	return(settings)
+
+def downgrade_settings(settings, settings_default):
+	''' Look for backup file for the downgrade '''
+	backup_manifest = read_generic_json('./backups/manifest.json')
+	if backup_manifest == {}:
+		backup_manifest = {
+			'server_settings' : {}
+		}
+		write_generic_json(backup_manifest, './backups/manifest.json')
+	server_version = settings_default['versions']['server']
+	backup_settings_file = backup_manifest['server_settings'].get(server_version, None)
+	if backup_settings_file is not None:
+		warning = f'Downgrade server version detected. [{settings["versions"]["server"]} -> {settings_default["versions"]["server"]}] Restoring settings from the following backup settings file: {backup_settings_file}.'
+		settings = read_settings(filename=backup_settings_file)
+	else: 
+		warning = f'Downgrade server version detected. [{settings["versions"]["server"]} -> {settings_default["versions"]["server"]}] Resetting settings to defaults, since no backup settings files were found.'
+		settings = settings_default
+	write_warning(warning)
+	write_log(warning)
 	return(settings)
 
 def read_pellet_db(filename='pelletdb.json'):
@@ -1610,10 +1693,20 @@ def read_generic_json(filename):
 		dictionary = json.loads(json_data)
 		json_file.close()
 	except: 
-		print(f'An error occurred loading {filename}')
-		raise
+		dictionary = {}
+		event = f'An error occurred loading {filename}'
+		write_log(event)
 
 	return dictionary
+
+def write_generic_json(dictionary, filename):
+	try: 
+		json_data_string = json.dumps(dictionary, indent=2, sort_keys=True)
+		with open(filename, 'w') as json_file:
+			json_file.write(json_data_string)
+	except:
+		event = f'Error writing generic json file ({filename})'
+		write_log(event)
 
 def write_status(status):
 	"""
