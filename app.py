@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 '''
 ==============================================================================
  PiFire Web UI (Flask App) Process
@@ -50,7 +48,8 @@ BACKUP_PATH = './backups/'  # Path to backups of settings.json, pelletdb.json
 UPLOAD_FOLDER = BACKUP_PATH  # Point uploads to the backup path
 HISTORY_FOLDER = './history/'  # Path to historical cook files
 RECIPE_FOLDER = './recipes/'  # Path to recipe files 
-ALLOWED_EXTENSIONS = {'json', 'pifire', 'pfrecipe', 'jpg', 'jpeg', 'png', 'gif', 'bmp'}
+LOGS_FOLDER = './logs/'  # Path to log files 
+ALLOWED_EXTENSIONS = {'json', 'pifire', 'pfrecipe', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'log'}
 server_status = 'available'
 
 app = Flask(__name__)
@@ -80,6 +79,7 @@ def dash():
 	global settings
 	control = read_control()
 	errors = read_errors()
+	warnings = read_warnings()
 
 	dash_template = 'dash_default.html'
 	for dash in settings['dashboard']['dashboards']:
@@ -91,6 +91,7 @@ def dash():
 						   settings=settings,
 						   control=control,
 						   errors=errors,
+						   warnings=warnings,
 						   page_theme=settings['globals']['page_theme'],
 						   grill_name=settings['globals']['grill_name'])
 
@@ -940,7 +941,7 @@ def events_page(action=None):
 	if(request.method == 'POST') and ('form' in request.content_type):
 		requestform = request.form 
 		if 'eventslist' in requestform:
-			event_list = read_log(legacy=False)
+			event_list = read_events(legacy=False)
 			page = int(requestform['page'])
 			reverse = True if requestform['reverse'] == 'true' else False
 			itemsperpage = int(requestform['itemsperpage'])
@@ -952,6 +953,44 @@ def events_page(action=None):
 	return render_template('events.html',
 							settings=settings,
 						   	control=control,
+						   	page_theme=settings['globals']['page_theme'],
+						   	grill_name=settings['globals']['grill_name'])
+
+@app.route('/logs/<action>', methods=['POST','GET'])
+@app.route('/logs', methods=['POST','GET'])
+def logs_page(action=None):
+	global settings
+	control = read_control()
+	# Get list of log files 
+	if not os.path.exists(LOGS_FOLDER):
+		os.mkdir(LOGS_FOLDER)
+	log_file_list = os.listdir(LOGS_FOLDER)
+	for file in log_file_list:
+		if not _allowed_file(file):
+			log_file_list.remove(file)
+
+	if(request.method == 'POST') and ('form' in request.content_type):
+		requestform = request.form 
+
+		if 'download' in requestform:
+			log_file_name = LOGS_FOLDER + requestform['selectLog']
+			return send_file(log_file_name, as_attachment=True, max_age=0)
+		elif 'eventslist' in requestform:
+			log_file_name = requestform['logfile']
+			event_list = read_log_file(LOGS_FOLDER + log_file_name)
+			event_list = add_line_numbers(event_list)
+			page = int(requestform['page'])
+			reverse = True if requestform['reverse'] == 'true' else False
+			itemsperpage = int(requestform['itemsperpage'])
+			pgntd_data = _paginate_list(event_list, reversesortorder=reverse, itemsperpage=itemsperpage, page=page)
+			return render_template('_log_list.html', pgntd_data = pgntd_data, log_file_name=log_file_name)
+		else:
+			return ('Error')
+
+	return render_template('logs.html',
+							settings=settings,
+							control=control,
+							log_file_list=log_file_list,
 						   	page_theme=settings['globals']['page_theme'],
 						   	grill_name=settings['globals']['grill_name'])
 
@@ -2104,10 +2143,7 @@ def admin_page(action=None):
 			return send_file(zip_file, as_attachment=True, max_age=0)
 		
 		if 'backupsettings' in response:
-			time_now = datetime.datetime.now()
-			time_str = time_now.strftime('%m-%d-%y_%H%M%S') # Truncate the microseconds
-			backup_file = BACKUP_PATH + 'PiFire_' + time_str + '.json'
-			os.system(f'cp settings.json {backup_file}')
+			backup_file = backup_settings()
 			return send_file(backup_file, as_attachment=True, max_age=0)
 
 		if 'restoresettings' in response:
@@ -2353,6 +2389,11 @@ def wizard(action=None):
 	wizardData = read_wizard()
 	errors = []
 
+	if settings['globals']['venv']:
+		python_exec = 'bin/python'
+	else:
+		python_exec = 'python'
+
 	if request.method == 'GET':
 		if action=='installstatus':
 			percent, status, output = get_wizard_install_status()
@@ -2369,7 +2410,7 @@ def wizard(action=None):
 				wizardInstallInfo = prepare_wizard_data(r)
 				store_wizard_install_info(wizardInstallInfo)
 				set_wizard_install_status(0, 'Starting Install...', '')
-				os.system('python3 wizard.py &')	# Kickoff Installation
+				os.system(f'{python_exec} wizard.py &')	# Kickoff Installation
 				return render_template('wizard-finish.html', page_theme=settings['globals']['page_theme'],
 									grill_name=settings['globals']['grill_name'], wizardData=wizardData)
 			else:
@@ -2892,6 +2933,11 @@ def update_page(action=None):
 		'text' : ''
 	}
 
+	if settings['globals']['venv']:
+		python_exec = 'bin/python'
+	else:
+		python_exec = 'python'
+
 	if request.method == 'GET':
 		if action is None:
 			update_data = get_update_data(settings)
@@ -2902,6 +2948,14 @@ def update_page(action=None):
 		elif action=='updatestatus':
 			percent, status, output = get_updater_install_status()
 			return jsonify({'percent' : percent, 'status' : status, 'output' : output})
+		
+		elif action=='post-message':
+			try:
+				with open('./updater/post-update-message.html','r') as file:
+					post_update_message_html = " ".join(line.rstrip() for line in file)
+			except:
+				post_update_message_html = 'An error has occurred fetching the post-update message.' 
+			return render_template_string(post_update_message_html)
 
 	if request.method == 'POST':
 		r = request.form
@@ -2909,8 +2963,8 @@ def update_page(action=None):
 
 		if 'update_remote_branches' in r:
 			if is_raspberry_pi():
-				os.system('python3 %s %s &' % ('updater.py', '-r'))	 # Update branches from remote 
-				time.sleep(4)  # Artificial delay to avoid race condition
+				os.system(f'{python_exec} %s %s &' % ('updater.py', '-r'))	 # Update branches from remote 
+				time.sleep(5)  # Artificial delay to avoid race condition
 			return redirect('/update')
 
 		if 'change_branch' in r:
@@ -2924,7 +2978,7 @@ def update_page(action=None):
 									   grill_name=settings['globals']['grill_name'])
 			else:
 				set_updater_install_status(0, 'Starting Branch Change...', '')
-				os.system('python3 %s %s %s &' % ('updater.py', '-b', r['branch_target']))	# Kickoff Branch Change
+				os.system(f'{python_exec} updater.py -b {r["branch_target"]} &')	# Kickoff Branch Change
 				return render_template('updater-status.html', page_theme=settings['globals']['page_theme'],
 									   grill_name=settings['globals']['grill_name'])
 
@@ -2932,7 +2986,7 @@ def update_page(action=None):
 			control = read_control()
 			if control['mode'] == 'Stop':
 				set_updater_install_status(0, 'Starting Update...', '')
-				os.system('python3 %s %s %s &' % ('updater.py', '-u', update_data['branch_target']))  # Kickoff Update
+				os.system(f'{python_exec} updater.py -u {update_data["branch_target"]} &') # Kickoff Update
 				return render_template('updater-status.html', page_theme=settings['globals']['page_theme'],
 									grill_name=settings['globals']['grill_name'])
 			else:
@@ -3424,7 +3478,7 @@ def get_app_data(action=None, type=None):
 		return read_pellet_db()
 
 	elif action == 'events_data':
-		event_list, num_events = read_log()
+		event_list, num_events = read_events()
 		events_trim = []
 		for x in range(min(num_events, 60)):
 			events_trim.append(event_list[x])
@@ -3489,8 +3543,7 @@ def get_app_data(action=None, type=None):
 		time_str = time_now.strftime('%m-%d-%y_%H%M%S')
 
 		if type == 'settings':
-			backup_file = BACKUP_PATH + 'PiFire_' + time_str + '.json'
-			os.system(f'cp settings.json {backup_file}')
+			backup_settings()
 			return settings
 
 		if type == 'pelletdb':
@@ -3801,6 +3854,12 @@ def post_app_data(action=None, type=None, json_data=None):
 
 @socketio.on('post_updater_data')
 def updater_action(type='none', branch=None):
+	global settings
+
+	if settings['globals']['venv']:
+		python_exec = 'bin/python'
+	else:
+		python_exec = 'python'
 
 	if type == 'change_branch':
 		if branch is not None:
@@ -3840,8 +3899,8 @@ def updater_action(type='none', branch=None):
 
 	elif type == 'update_remote_branches':
 		if is_raspberry_pi():
-			os.system('python3 %s %s &' % ('updater.py', '-r'))	 # Update branches from remote
-			time.sleep(2)
+			os.system(f'{python_exec} updater.py -r') # Update branches from remote
+			#time.sleep(2)
 			return {'response': {'result':'success', 'message': 'Branches successfully updated from remote' }}
 		else:
 			return {'response': {'result':'error', 'message': 'System is not a Raspberry Pi. Branches not updated.' }}

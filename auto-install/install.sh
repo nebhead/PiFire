@@ -39,7 +39,7 @@ r=$(( r < 20 ? 20 : r ))
 c=$(( c < 70 ? 70 : c ))
 
 # Display the welcome dialog
-whiptail --msgbox --backtitle "Welcome" --title "PiFire Automated Installer" "This installer will transform your Raspberry Pi into a connected Smoker Controller.  NOTE: This installer is intended to be run on a fresh install of Raspberry Pi OS Lite 32-Bit Buster or later." ${r} ${c}
+whiptail --msgbox --backtitle "Welcome" --title "PiFire Automated Installer" "This installer will transform your Raspberry Pi into a connected Smoker Controller.  NOTE: This installer is intended to be run on a fresh install of Raspberry Pi OS Lite 32-Bit Bullseye or later." ${r} ${c}
 
 # Starting actual steps for installation
 clear
@@ -64,30 +64,77 @@ echo "**                                                                     **"
 echo "*************************************************************************"
 $SUDO apt upgrade -y
 
-# Install dependencies
+# Install APT dependencies
 clear
 echo "*************************************************************************"
 echo "**                                                                     **"
 echo "**      Installing Dependencies... (This could take several minutes)   **"
 echo "**                                                                     **"
 echo "*************************************************************************"
-$SUDO apt install python3-dev python3-pip python3-pil libfreetype6-dev libjpeg-dev build-essential libopenjp2-7 libtiff5 nginx git gunicorn3 supervisor ttf-mscorefonts-installer redis-server -y
-$SUDO apt install python3-rpi.gpio -y
-$SUDO apt install -y python3-scipy
-$SUDO pip3 install flask==2.3.3
-$SUDO pip3 install flask-mobility
-$SUDO pip3 install flask-qrcode
-$SUDO pip3 install flask-socketio
-$SUDO pip3 install eventlet==0.30.2
-$SUDO pip3 install gpiozero
-$SUDO pip3 install redis
-$SUDO pip3 install uuid
-$SUDO pip3 install influxdb-client[ciso]
-$SUDO pip3 install apprise
-$SUDO pip3 install scikit-fuzzy
-$SUDO pip3 install scikit-learn
-$SUDO pip3 install ratelimitingfilter 
-$SUDO apt install libatlas-base-dev -y
+
+$SUDO apt install python3-dev python3-pip python3-venv python3-rpi.gpio python3-scipy nginx git supervisor ttf-mscorefonts-installer redis-server libatlas-base-dev libopenjp2-7 -y
+
+# Grab project files
+clear
+echo "*************************************************************************"
+echo "**                                                                     **"
+echo "**      Cloning PiFire from GitHub...                                  **"
+echo "**                                                                     **"
+echo "*************************************************************************"
+cd /usr/local/bin
+# Use a shallow clone to reduce download size
+$SUDO git clone --depth 1 https://github.com/nebhead/pifire
+# Replace the below command to fetch development branch
+#$SUDO git clone --depth 1 --branch development https://github.com/nebhead/pifire
+
+# After doing a shallow clone, to be able to checkout other branches from remote,
+# git remote set-branches origin '*'
+# git fetch -v
+# git checkout development
+
+# Setup Python VENV & Install Python dependencies
+clear
+echo "*************************************************************************"
+echo "**                                                                     **"
+echo "**      Setting up Python VENV and Installing Modules...               **"
+echo "**            (This could take several minutes)                        **"
+echo "**                                                                     **"
+echo "*************************************************************************"
+echo ""
+echo " - Setting Up PiFire Group"
+cd /usr/local/bin
+$SUDO groupadd pifire 
+$SUDO usermod -a -G pifire $USER 
+$SUDO usermod -a -G pifire root 
+# Change ownership to group=pifire for all files/directories in pifire 
+$SUDO chown -R $USER:pifire pifire 
+# Change ability for pifire group to read/write/execute 
+$SUDO chmod -R 775 pifire/
+
+echo " - Setting up VENV"
+# Setup VENV
+python -m venv --system-site-packages pifire
+cd /usr/local/bin/pifire
+source bin/activate 
+
+echo " - Installing module dependencies... "
+# Install module dependencies 
+python -m pip install "flask==2.3.3" 
+python -m pip install flask-mobility
+python -m pip install flask-qrcode
+python -m pip install flask-socketio
+python -m pip install eventlet
+python -m pip install gunicorn
+python -m pip install gpiozero
+python -m pip install redis
+python -m pip install uuid
+python -m pip install influxdb-client[ciso]
+python -m pip install apprise
+python -m pip install scikit-fuzzy
+python -m pip install scikit-learn
+python -m pip install ratelimitingfilter
+python -m pip install "pillow>=9.2.0"
+pip list
 
 # Setup config.txt to enable busses 
 clear
@@ -104,24 +151,6 @@ echo "dtparam=i2c_arm=on" | $SUDO tee -a /boot/config.txt > /dev/null
 echo "i2c-dev" | $SUDO tee -a /etc/modules > /dev/null
 # Enable Hardware PWM - Needed for hardware PWM support 
 echo "dtoverlay=pwm,pin=13,func=4" | $SUDO tee -a /boot/config.txt > /dev/null
-
-# Grab project files
-clear
-echo "*************************************************************************"
-echo "**                                                                     **"
-echo "**      Cloning PiFire from GitHub...                                  **"
-echo "**                                                                     **"
-echo "*************************************************************************"
-cd /usr/local/bin
-# Use a shallow clone to reduce download size
-$SUDO git clone --depth 1 https://github.com/nebhead/pifire
-# Replace the below command to fetch development branch
-#git clone --depth 1 --branch development https://github.com/nebhead/pifire
-
-# After doing a shallow clone, to be able to checkout other branches from remote,
-# git remote set-branches origin '*'
-# git fetch -v
-# git checkout development
 
 ### Setup nginx to proxy to gunicorn
 clear
@@ -154,8 +183,10 @@ echo "**                                                                     **"
 echo "*************************************************************************"
 
 # Copy configuration files (control.conf, webapp.conf) to supervisor config directory
-# NOTE: If you used a different directory for the installation then make sure you edit the *.conf files appropriately
 cd /usr/local/bin/pifire/auto-install/supervisor
+# Add the current username to the configuration files 
+echo "user=" $USER | tee -a control.conf > /dev/null
+echo "user=" $USER | tee -a webapp.conf > /dev/null
 
 $SUDO cp *.conf /etc/supervisor/conf.d/
 

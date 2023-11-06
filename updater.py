@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 '''
 ==============================================================================
  PiFire Updater 
@@ -20,6 +18,8 @@ from common import *
 import pkg_resources
 import subprocess
 import argparse
+
+DEBUG = False
 
 '''
 ==============================================================================
@@ -151,7 +151,7 @@ def do_update():
 		merge = subprocess.run(command, capture_output=True, text=True)
 		'''
 		error_msg = ''
-		if fetch.returncode == 0 and reset.returncode == 0 and merge.returncode == 0:
+		if fetch.returncode == 0 and reset.returncode == 0:
 			result = fetch.stdout.replace('\n', '<br>') + '<br>' + reset.stdout.replace('\n', '<br>') # + '<br>' + merge.stdout.replace('\n', '<br>')
 		else: 
 			result = 'ERROR Performing Update.'
@@ -283,65 +283,104 @@ def read_output(command):
 	return_code = process.poll()
 	print(f'Return Code: {return_code}')
 
-def install_dependencies():
+def install_dependencies(current_version_string='0.0.0', current_build=None):
 	result = 0
 	percent = 30
 	status = 'Calculating Python/Package Dependencies...'
 	output = ' - Calculating Python & Package Dependencies'
+	if DEBUG:
+		print(f'Percent: {percent}')
+		print(f'Status:  {status}')
+		print(f'Output:  {output}')
 	set_updater_install_status(percent, status, output)
 	time.sleep(2)
 
-	updaterInfo = read_dependencies()
+	updaterInfo = read_updater_manifest()
 
-	# Get PyPi & Apt dependencies
+	# Get ALL PyPi & Apt dependencies and commands to install / update 
 	py_dependencies = []
 	apt_dependencies = []
-	for section in updaterInfo['dependencies']:
-		for module in updaterInfo['dependencies'][section]['py_dependencies']:
-			try:
-				dist = pkg_resources.get_distribution(module)
-				print('{} ({}) is installed'.format(dist.key, dist.version))
-			except pkg_resources.DistributionNotFound:
-				print('{} is NOT installed'.format(module))
-				py_dependencies.append(module)
+	command_list = []
+	reboot = False
 
-		for package in updaterInfo['dependencies'][section]['apt_dependencies']:
-			if subprocess.call(["which", package]) != 0:
-				apt_dependencies.append(package)
+	for version_info in updaterInfo['versions']:
+		''' Walk list of versions in updater_manifest, check for dependencies '''	
+		if (semantic_ver_is_lower(current_version_string, version_info['version'])) or \
+			((current_version_string == version_info['version']) and \
+			(current_build <  version_info['build'])):
+			
+			# If the current version (pre-update) is less than this version information, install dependencies, etc.
+			for section in version_info['dependencies']:
+				for module in version_info['dependencies'][section]['py_dependencies']:
+					try:
+						dist = pkg_resources.get_distribution(module)
+						print('{} ({}) is installed'.format(dist.key, dist.version))
+					except pkg_resources.DistributionNotFound:
+						print('{} is NOT installed'.format(module))
+						py_dependencies.append(module)
+
+				for package in version_info['dependencies'][section]['apt_dependencies']:
+					if subprocess.call(["which", package]) != 0:
+						apt_dependencies.append(package)
+
+				for command in version_info['dependencies'][section]['command_list']:
+					command_list.append(command)
+				
+				if version_info['reboot_required']:
+					reboot = True 
+
+	if DEBUG:
+		print(f'py_dep: {py_dependencies}')
+		print(f'apt_dep:  {apt_dependencies}')
+		print(f'command:  {command_list}')
 
 	# Calculate the percent done from remaining items to install
-	items_remaining = len(py_dependencies) + len(apt_dependencies)
+	items_remaining = len(py_dependencies) + len(apt_dependencies) + len(command_list)
 	if items_remaining == 0:
 		increment = 70
 	else:
 		increment = 70 / items_remaining
 
 	# Install Py dependencies
-	launch_pip = ['pip3', 'install']
+	settings = read_settings()
+	if settings['globals']['venv']:
+		python_exec = 'bin/python'
+	else:
+		python_exec = 'python'
+	
+	launch_pip = [python_exec, '-m', 'pip', 'install']
 	status = 'Installing Python Dependencies...'
 	output = ' - Installing Python Dependencies'
 	set_updater_install_status(percent, status, output)
+	if DEBUG:
+		print(f'Percent: {percent}')
+		print(f'Status:  {status}')
+		print(f'Output:  {output}')
 
 	for py_item in py_dependencies:
 		command = []
 		command.extend(launch_pip)
 		command.append(py_item)
-
-		process = subprocess.Popen(command, stdout=subprocess.PIPE, encoding='utf-8')
-		while True:
-			output = process.stdout.readline()
-			if process.poll() is not None:
-				break
-			if output:
-				set_wizard_install_status(percent, status, output.strip())
-				print(output.strip())
-		return_code = process.poll()
-		result += return_code
-		print(f'Return Code: {return_code}')
-
+		if not DEBUG:
+			process = subprocess.Popen(command, stdout=subprocess.PIPE, encoding='utf-8')
+			while True:
+				output = process.stdout.readline()
+				if process.poll() is not None:
+					break
+				if output:
+					set_wizard_install_status(percent, status, output.strip())
+					print(output.strip())
+			return_code = process.poll()
+			result += return_code
+			print(f'Return Code: {return_code}')
+		
 		percent += increment
 		output = f' - Completed Install of {py_item}'
 		set_updater_install_status(percent, status, output)
+		if DEBUG:
+			print(f'Percent: {percent}')
+			print(f'Status:  {status}')
+			print(f'Output:  {output}')
 
 	time.sleep(4)
 
@@ -356,7 +395,39 @@ def install_dependencies():
 		command.extend(launch_apt)
 		command.append(apt_item)
 		command.append('-y')
+		if not DEBUG:
+			process = subprocess.Popen(command, stdout=subprocess.PIPE, encoding='utf-8')
+			while True:
+				output = process.stdout.readline()
+				if process.poll() is not None:
+					break
+				if output:
+					set_updater_install_status(percent, status, output.strip())
+					print(output.strip())
+			return_code = process.poll()
+			result += return_code
+			print(f'Return Code: {return_code}')
+		
+		percent += increment
+		output = f' - Completed Install of {apt_item}'
+		set_updater_install_status(percent, status, output)
+		if DEBUG:
+			print(f'Percent: {percent}')
+			print(f'Status:  {status}')
+			print(f'Output:  {output}')
 
+	time.sleep(4)
+
+	# Run system commands dependencies
+	status = 'Installing General Dependencies...'
+	output = ' - Installing General Dependencies'
+	set_updater_install_status(percent, status, output)
+	if DEBUG:
+		print(f'Percent: {percent}')
+		print(f'Status:  {status}')
+		print(f'Output:  {output}')
+	
+	for command in command_list:
 		process = subprocess.Popen(command, stdout=subprocess.PIPE, encoding='utf-8')
 		while True:
 			output = process.stdout.readline()
@@ -364,14 +435,18 @@ def install_dependencies():
 				break
 			if output:
 				set_updater_install_status(percent, status, output.strip())
-				print(output.strip())
+				print(f'command output: {output.strip()}')
 		return_code = process.poll()
 		result += return_code
 		print(f'Return Code: {return_code}')
 
 		percent += increment
-		output = f' - Completed Install of {apt_item}'
+		output = f' - Completed General Dependency Item'
 		set_updater_install_status(percent, status, output)
+		if DEBUG:
+			print(f'Percent: {percent}')
+			print(f'Status:  {status}')
+			print(f'Output:  {output}')
 
 	time.sleep(4)
 
@@ -379,14 +454,23 @@ def install_dependencies():
 	status = 'Finished!'
 	output = ' - Finished!  Restarting Server...'
 	set_updater_install_status(percent, status, output)
+	if DEBUG:
+		print(f'Percent: {percent}')
+		print(f'Status:  {status}')
+		print(f'Output:  {output}')
 
 	time.sleep(4)
 
-	percent = 101
+	percent = 142 if reboot else 101
 	set_updater_install_status(percent, status, output)
 
 	return result
 
+'''
+==============================================================================
+ Main
+==============================================================================
+'''
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Updater Script')
 	parser.add_argument('-b', '--branch', metavar='BRANCH', type=str, required=False, help="Change Branches")
@@ -396,6 +480,10 @@ if __name__ == "__main__":
 	args = parser.parse_args()
 
 	if args.update:
+		settings = read_generic_json('settings.json')
+		current_version = settings['versions']['server']
+		current_build = settings['versions'].get('build', 0)
+
 		percent = 10
 		status = f'Attempting Update on {args.update}...'
 		output = f' - Attempting an update on branch {args.update}'
@@ -408,9 +496,13 @@ if __name__ == "__main__":
 		set_updater_install_status(percent, status, output)
 		time.sleep(4)
 
-		install_dependencies()
+		install_dependencies(current_version, current_build)
 
 	elif args.branch:
+		settings = read_generic_json('settings.json')
+		current_version = settings['versions']['server']
+		current_build = settings['versions'].get('build', 0)
+
 		percent = 10
 		status = f'Changing Branch to {args.branch}...'
 		output = f' - Changing to selected branch {args.branch}'
@@ -423,7 +515,7 @@ if __name__ == "__main__":
 		set_updater_install_status(percent, status, output)
 		time.sleep(4)
 
-		install_dependencies()
+		install_dependencies(current_version, current_build)
 
 	elif args.remote:
 		error_msg = update_remote_branches()

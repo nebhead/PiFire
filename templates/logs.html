@@ -1,0 +1,57 @@
+{% extends 'base.html' %} 
+
+{% block title %}Logs{% endblock %} 
+
+{% block content %}
+
+	<br>
+	<div class="row">
+		<div class="col">
+			<div class="card shadow">
+				<div class="card-header bg-primary text-white">
+					<H5 class="float-left"><i class="fa-regular fa-file-lines"></i>&nbsp; Logs</H5>
+					<form action="/admin/setting" method="POST">
+						<!-- Download Logs -->
+						<button type="submit" class="btn btn-primary border-white btn-sm float-right" name="download_logs" value="true">
+							<i class="fa-solid fa-file-zipper"></i>&nbsp; Download All (zipped)
+						</button>
+					</form>
+				</div>
+				<div class="card-body">
+					<form action="/logs" method="POST">					
+						<div class="input-group mb-3">
+							<div class="input-group-prepend">
+							<label class="input-group-text" for="selectLog"><i class="fa-solid fa-file"></i>&nbsp; Log File</label>
+							</div>
+							<select class="custom-select" id="selectLog" name="selectLog" onchange="getData(this)">
+								<option selected>Choose...</option>
+								{% for log in log_file_list | sort %}
+								<option value="{{ log }}">{{ log }}</option>
+								{% endfor %}
+							</select>
+							<div class="input-group-append">
+								<button class="btn btn-outline-primary" type="submit" id="download" name="download" value="true"><i class="fa-solid fa-download"></i>&nbsp; Download Log</button>
+							</div>
+						</div>
+					</form>
+					<div class="card">
+						<div class="card-body">
+							<div id="logs_list">
+								<div class="text-center">
+									Select a log to display above.
+								</div>
+							</div>
+						</div>
+					</div>
+
+				</div> <!-- End of card body -->
+			</div> <!-- End of Card -->
+		</div> <!-- End of Column -->
+	</div> <!-- End of Row -->
+	<br><br><br>
+
+{% endblock %}
+
+{% block scripts %}
+	<script src="{{ url_for('static', filename='js/logs.js') }}"></script>
+{% endblock %}
