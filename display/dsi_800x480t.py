@@ -304,15 +304,34 @@ class Display(DisplayBase):
 	def _update_dash_objects(self):
 				
 		if self.in_data is not None and self.status_data is not None:
-			''' Update Mode Bar '''
-			if self.status_data['mode'] != self.last_status_data.get('mode', 'None'):
+			''' Update Mode Bar and Control Panel '''
+			if (self.status_data['mode'] != self.last_status_data.get('mode', 'None')) or (self.status_data['recipe_paused'] != self.last_status_data.get('recipe_paused', 'None')):
 				object_data = self.display_object_list[self.dash_map['mode_bar']].get_object_data()
-				object_data['text'] = self.status_data['mode']
+				if self.status_data['recipe'] and self.status_data['mode'] != 'Shutdown':
+					object_data['text'] = 'Recipe: ' + self.status_data['mode']
+				else: 
+					object_data['text'] = self.status_data['mode']
 				self.display_object_list[self.dash_map['mode_bar']].update_object_data(object_data)
 
 				object_data = self.display_object_list[self.dash_map['control_panel']].get_object_data()
 				object_data['button_active'] = self.status_data['mode']
-				if self.status_data['mode'] in ['Startup', 'Reignite']:
+				if self.status_data['recipe']:
+					''' Recipe Mode '''
+					list_item = 'cmd_none'
+					type_item = 'Error'
+					if self.status_data['mode'] in ['Startup', 'Reignite']:
+						type_item = 'Startup'
+					elif self.status_data['mode'] == 'Smoke':
+						type_item = 'Smoke'
+					elif self.status_data['mode'] == 'Hold':
+						type_item = 'Hold'
+					elif self.status_data['mode'] == 'Shutdown':
+						type_item = 'None'
+					object_data['button_list'] = ['cmd_next_step', list_item, 'cmd_stop', 'cmd_shutdown']
+					object_data['button_type'] = ['Next', type_item, 'Stop', 'Shutdown']
+					if self.status_data['recipe_paused']:
+						object_data['button_active'] = 'Next'
+				elif self.status_data['mode'] in ['Startup', 'Reignite']:
 					''' Startup Mode '''
 					object_data['button_list'] = ['cmd_startup', 'cmd_smoke', 'input_hold', 'cmd_stop']
 					object_data['button_type'] = ['Startup', 'Smoke', 'Hold', 'Stop']

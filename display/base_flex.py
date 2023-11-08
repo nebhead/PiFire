@@ -569,6 +569,10 @@ class DisplayObjects:
                 char_id = '\uf05b'  # FontAwesome Crosshairs Icon
             elif button_type[index - 1] == 'Shutdown':
                 char_id = '\uf11e'  # FontAwesome Finish Flag Icon
+            elif button_type[index - 1] == 'Next':
+                char_id = '\uf051'  # FontAwesome Step Icon
+            elif button_type[index - 1] == 'None':
+                char_id = '\uf068'  # FontAwesome Minus Icon
             else:
                 char_id = '\uf071'  # FontAwesome Error Triangle Icon 
             icon_canvas = self._create_icon(char_id, font_size, font_color)
@@ -1677,6 +1681,9 @@ class DisplayBase:
             self.display_active = 'dash'
             self.display_init = True
             self.display_loop_active = False 
+
+        if 'none' in self.command:
+            pass 
 
         self.command = None 
 
