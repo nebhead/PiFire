@@ -134,7 +134,6 @@ python -m pip install scikit-fuzzy
 python -m pip install scikit-learn
 python -m pip install ratelimitingfilter
 python -m pip install "pillow>=9.2.0"
-pip list
 
 # Setup config.txt to enable busses 
 clear
