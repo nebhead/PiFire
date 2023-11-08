@@ -385,7 +385,7 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 	time.sleep(4)
 
 	# Install Apt dependencies
-	launch_apt = ['apt', 'install']
+	launch_apt = ['sudo', 'apt', 'install']
 	status = 'Installing Package Dependencies...'
 	output = ' - Installing APT Package Dependencies'
 	set_updater_install_status(percent, status, output)

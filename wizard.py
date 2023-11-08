@@ -148,7 +148,7 @@ for py_item in py_dependencies:
 	set_wizard_install_status(percent, status, output)
 
 # Install Apt dependencies
-launch_apt = ['apt', 'install']
+launch_apt = ['sudo', 'apt', 'install']
 status = 'Installing Package Dependencies...'
 output = ' - Installing APT Package Dependencies'
 set_wizard_install_status(percent, status, output)
