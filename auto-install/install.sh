@@ -159,7 +159,7 @@ echo "**                                                                     **"
 echo "**      Configuring Backlight UDEV Rules                               **"
 echo "**                                                                     **"
 echo "*************************************************************************"
-echo 'SUBSYSTEM=="backlight",RUN+="/bin/chmod 666 /sys/class/backlight/%k/brightness /sys/class/backlight/%k/bl_power"' | $SUDO tee -a /etc/udev/rules.d/backlight-permissions.rules
+echo 'SUBSYSTEM=="backlight",RUN+="/bin/chmod 666 /sys/class/backlight/%k/brightness /sys/class/backlight/%k/bl_power"' | $SUDO tee -a /etc/udev/rules.d/backlight-permissions.rules > /dev/null
 
 ### Setup nginx to proxy to gunicorn
 clear
