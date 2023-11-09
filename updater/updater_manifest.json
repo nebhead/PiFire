@@ -85,7 +85,7 @@
     {
       "version" : "1.7.0",
       "build" : 0,
-      "reboot_required" : false,
+      "reboot_required" : true,
       "dependencies" : {
         "app": {
           "py_dependencies": [],

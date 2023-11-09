@@ -1119,9 +1119,9 @@
 				"friendly_name" : "DSI Connected Display 800x480 w/Touch",
 				"filename" : "dsi_800x480t",
 				"description" : "DSI Connected Display (such as the 7\" Raspberry Pi Touch Screen display. Several clones exist which should work perfectly well.",
-				"notes" : "",
+				"notes" : "This module may a very long time to install due to the OS dependencies that are required.  Please be aware that this may take more than 10 minutes to install.",
 				"default" : false,
-				"image" : "ili9341.png",
+				"image" : "dsi_touch.png",
 				"py_dependencies" : ["rpi-backlight", "pillow>=10.0.0", "pygame>=2.5.0"], 
 				"apt_dependencies" : ["lightdm", "libsdl2-2.0-0"],
 				"settings_dependencies" : {
