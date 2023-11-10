@@ -138,7 +138,11 @@ class DisplayObjects:
         if self.objectType == 'splus_control':
             self.objectCanvas = self._draw_splus_status()
             self._define_generic_touch_area()
-    
+
+        if self.objectType == 'hopper_status':
+            self.objectCanvas = self._draw_hopper_status()
+            self._define_generic_touch_area()
+
         ''' Convert the PIL Canvas to Pygame Surface '''
         self._canvas_to_surface()
 
@@ -1226,6 +1230,56 @@ class DisplayObjects:
 
         return canvas 
 
+    def _draw_hopper_status(self):
+        output_size = self.objectData['size']
+        size = (400,200)  # Working Canvas Size 
+        #fg_color = self.objectData['color']
+
+        color_index = int(self.objectData['data']['level'] // (100 / len(self.objectData['color_levels'])))
+        #print(f'color_index = {color_index-1} level={self.objectData["data"]["level"]}')
+        fg_color = self.objectData['color_levels'][max(color_index-1, 0)]
+
+        # Create canvas & drawing object
+        canvas = Image.new("RGBA", size)
+        draw = ImageDraw.Draw(canvas)
+
+        # Draw Transparent Rectangle
+        bg_color = (255,255,255,100) if color_index != 0 else fg_color
+        bg_color = list(bg_color)
+        bg_color[3] = 100
+        bg_color = tuple(bg_color)
+        draw.rounded_rectangle((15, 15, size[0]-15, size[1]-15), radius=20, fill=bg_color)
+
+        # Draw Title
+        text_displayed = self.objectData['label']
+        font_size = 40
+        text_line = self._draw_text(text_displayed, 'trebuc.ttf', font_size, fg_color)
+        text_pos = ((size[0] // 2) - (text_line.width // 2), 25)
+        canvas.paste(text_line, text_pos, text_line)
+
+        # Draw Hopper Percentage 
+        text_displayed = str(self.objectData['data']['level']) + '%'
+        font_size = 100
+        text_line = self._draw_text(text_displayed, 'trebuc.ttf', font_size, fg_color)
+        text_pos = ((size[0] // 2) - (text_line.width // 2), (size[1] // 2) - 25)
+        canvas.paste(text_line, text_pos, text_line)
+
+        # Draw Bar
+        level_bar = (40, 160, 360, 170)
+        current_level_adjusted = int((self.objectData['data']['level'] / 100) * 320) + 40 if self.objectData['data']['level'] > 0 else 40
+        if current_level_adjusted > 360:
+            current_level_adjusted = 360
+        current_level_bar = (40, 160, current_level_adjusted, 170)
+        draw.rounded_rectangle(level_bar, radius=10, fill=(0,0,0,200))
+        draw.rounded_rectangle(current_level_bar, radius=10, fill=fg_color)
+
+        # Resize and Prepare Output 
+        resized = canvas.resize(output_size)
+        canvas = Image.new("RGBA", (output_size[0], output_size[1]))
+        canvas.paste(resized, (0, 0), resized)
+
+        return canvas 
+
 '''
 ==================================================================================
 Display base class definition
@@ -1320,6 +1374,11 @@ class DisplayBase:
                     #print(f'[{key}] = {object[key]}')
                     self.display_data['dash'][index][key] = tuple(object[key])
                     #print(f'converted = {tuple(object[key])}')
+                if key in ['color_levels']:
+                    color_level_list = []
+                    for item in self.display_data['dash'][index][key]:
+                        color_level_list.append(tuple(item))
+                    self.display_data['dash'][index][key] = color_level_list
         for menu, object in self.display_data['menus'].items():
             for key in list(object.keys()):
                 if key in ['position', 'size', 'fg_color', 'bg_color', 'color', 'active_color', 'inactive_color']:
@@ -1681,6 +1740,12 @@ class DisplayBase:
             self.display_active = 'dash'
             self.display_init = True
             self.display_loop_active = False 
+
+        if 'hopper' in self.command:
+            data = {
+                'hopper_check' : True
+            }
+            write_control(data, origin='display')
 
         if 'none' in self.command:
             pass 

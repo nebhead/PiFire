@@ -5,7 +5,7 @@
         "screen_height" : 480,
         "dash_background" : "./static/img/display/background.png",
         "splash_image" : "./static/img/display/splash_800x480.png",
-        "max_food_probes" : 6
+        "max_food_probes" : 5
     },
     "home" : [],
     "dash" : [
@@ -122,25 +122,6 @@
             "name" : "food_probe_gauge_4", 
             "type" : "gauge_compact",
             "position" : [0, 275],
-            "animation_enabled" : false, 
-            "size" : [220, 110], 
-            "fg_color" : [255, 255, 255, 255], 
-            "bg_color" : [25, 25, 25, 255],
-            "glow" : true,
-            "font" : "trebuc.ttf",
-            "temps" : [0, 0, 0],
-            "label" : "Food Probe", 
-            "units" : "F", 
-            "max_temp" : 300,
-            "data" : {},
-            "button_list" : ["input_notify"],
-            "button_value" : [],
-            "touch_areas" : []
-        },
-        {
-            "name" : "food_probe_gauge_5", 
-            "type" : "gauge_compact",
-            "position" : [580, 275],
             "animation_enabled" : false, 
             "size" : [220, 110], 
             "fg_color" : [255, 255, 255, 255], 
@@ -299,6 +280,30 @@
             "button_list" : ["cmd_splus"],
             "touch_areas" : [],
             "button_value" : ["on"]
+        },
+        {
+            "name" : "hopper",
+            "type" : "hopper_status",
+            "position" : [580, 275],
+            "animation_enabled" : false, 
+            "size" : [220, 110],
+            "glow" : true,
+            "label" : "Hopper Level",
+            "active" : false, 
+            "color" : [255,255,255,255],
+            "color_levels" : [
+                [225, 50, 50, 255],
+                [225, 150, 50, 255],
+                [225, 225, 50, 255],
+                [50, 225, 50, 255],
+                [255, 255, 255, 255]
+            ],
+            "data" : {
+                "level" : 100
+            },
+            "button_list" : ["cmd_hopper_level"],
+            "button_value" : [],
+            "touch_areas" : []
         }
     ],
     "menus" : {

@@ -469,6 +469,14 @@ class Display(DisplayBase):
 				
 				self.display_object_list[self.dash_map['smoke_plus']].update_object_data(object_data)
 
+			''' Update Hopper Info '''
+			if self.status_data['hopper_level'] != self.last_status_data.get('hopper_level', None):
+				object_data = self.display_object_list[self.dash_map['hopper']].get_object_data()
+				object_data['data']['level'] = max(self.status_data['hopper_level'], 0)
+				object_data['data']['level'] = min(object_data['data']['level'], 100)
+
+				self.display_object_list[self.dash_map['hopper']].update_object_data(object_data)
+
 			''' After all the updates, update the last states/data '''
 			self.last_in_data = self.in_data.copy() 
 			self.last_status_data = self.status_data.copy()
