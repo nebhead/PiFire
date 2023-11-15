@@ -881,7 +881,7 @@ def write_metrics(metrics=default_metrics(), flush=False, new_metric=False):
 		cmdsts.rpop('metrics:general')
 		cmdsts.rpush('metrics:general', json.dumps(metrics))
 
-def read_settings(filename='settings.json', init=False):
+def read_settings(filename='settings.json', init=False, retry_count=0):
 	"""
 	Read Settings from file
 
@@ -895,9 +895,8 @@ def read_settings(filename='settings.json', init=False):
 		json_data_file.close()
 
 	except(IOError, OSError):
-		# Default settings
+		""" Settings file not found, create a new default settings file """
 		settings = default_settings()
-		# Issue with reading states JSON, so create one/write new one
 		write_settings(settings)
 		return(settings)
 	except(ValueError):
@@ -906,7 +905,14 @@ def read_settings(filename='settings.json', init=False):
 		write_log(event)
 		json_data_file.close()
 		# Retry Reading Settings
-		settings = read_settings(filename=filename)
+		if retry_count < 5: 
+			settings = read_settings(filename=filename, retry_count=retry_count+1)
+		else:
+			""" Undefined settings file load error, indicates corruption """
+			settings_default = default_settings()
+			settings = restore_settings(settings_default)
+			init = True
+			write_settings(settings)
 
 	if init:
 		# Get latest settings format
@@ -999,6 +1005,29 @@ def backup_settings():
 	write_warning(warning)
 	write_log(warning)
 	return backup_file 
+
+def restore_settings(settings_default):
+	''' Look for backup file to restore from '''
+	backup_manifest = read_generic_json('./backups/manifest.json')
+	if backup_manifest == {}:
+		backup_manifest = {
+			'server_settings' : {},
+			'pelletdb' : {
+				'current' : ''
+			}
+		}
+		write_generic_json(backup_manifest, './backups/manifest.json')
+	server_version = settings_default['versions']['server']
+	backup_settings_file = backup_manifest['server_settings'].get(server_version, None)
+	if backup_settings_file is not None:
+		warning = f'Something failed when reading the "settings.json" file.  Restoring settings from the following backup settings file: {backup_settings_file}.'
+		settings = read_settings(filename=backup_settings_file)
+	else: 
+		warning = f'Something failed when reading the "settings.json" file.  Resetting settings to defaults, since no backup settings files were found.'
+		settings = settings_default
+	write_warning(warning)
+	write_log(warning)
+	return settings
 
 def upgrade_settings(prev_ver, settings, settings_default):
 	''' Check if upgrading from v1.4.x or earlier '''
