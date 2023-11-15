@@ -1039,7 +1039,10 @@ def downgrade_settings(settings, settings_default):
 	backup_manifest = read_generic_json('./backups/manifest.json')
 	if backup_manifest == {}:
 		backup_manifest = {
-			'server_settings' : {}
+			'server_settings' : {},
+			'pelletdb' : {
+				'current' : ''
+			}
 		}
 		write_generic_json(backup_manifest, './backups/manifest.json')
 	server_version = settings_default['versions']['server']
@@ -1071,9 +1074,11 @@ def read_pellet_db(filename='pelletdb.json'):
 		json_data_file.close()
 	except(IOError, OSError):
 		# Issue with reading JSON, so create one/write new one
-		pelletdb = default_pellets()
 		write_pellet_db(pelletdb)
 		return(pelletdb)
+	except:
+		''' Restore PelletDB from backup if available '''
+		pelletdb_struct = backup_pellet_db(action='restore')
 
 	# Overlay the read values over the top of the default values
 	#  This ensures that any NEW fields are captured.  
@@ -1100,6 +1105,51 @@ def write_pellet_db(pelletdb):
 	json_data_string = json.dumps(pelletdb, indent=2, sort_keys=True)
 	with open("pelletdb.json", 'w') as json_file:
 		json_file.write(json_data_string)
+
+def backup_pellet_db(action='backup'):
+	''' Backup & Restore Pellet Database '''
+	backup_manifest = read_generic_json('./backups/manifest.json')
+	if backup_manifest == {}:
+		backup_manifest = {
+			'server_settings' : {},
+			'pelletdb' : {
+				'current' : ''
+			}
+		}
+		write_generic_json(backup_manifest, './backups/manifest.json')
+
+	if backup_manifest.get('pelletdb', None) == None:
+		''' If the structure doesn't exist, create it. '''
+		backup_manifest['pelletdb'] = { 'current' : None }
+
+	if action == 'backup':
+		time_now = datetime.datetime.now()
+		time_str = time_now.strftime('%m-%d-%y_%H%M%S') # Truncate the microseconds
+		backup_file = BACKUP_PATH + 'PelletDB_' + time_str + '.json'
+		os.system(f'cp pelletdb.json {backup_file}')
+		backup_manifest['pelletdb']['current'] = backup_file 
+		message = f'Pellet DB has been backed up to the following file: {backup_file}'
+		write_generic_json(backup_manifest, './backups/manifest.json')
+		write_log(message)
+		return backup_file
+	elif action == 'restore':
+		backup_pelletdb = backup_manifest['pelletdb'].get('current', None)
+		if backup_pelletdb is not None:
+			pelletdb_backup_file = backup_pelletdb
+			warning = f'There was an issue with loading the Pellet Database (possibly corruption).  Restoring from the following backup file: {backup_pelletdb}.'
+			pelletdb = read_pellet_db(filename=pelletdb_backup_file)
+			write_pellet_db(pelletdb)
+		else: 
+			warning = f'There was an issue with loading the Pellet Database (possibly corruption).  No backups found, setting to defaults.'
+			pelletdb = default_pellets()
+			write_pellet_db(pelletdb)
+		write_warning(warning)
+		write_log(warning)
+		return pelletdb
+	else:
+		pass 
+
+	return 
 
 def read_events(legacy=True):
 	"""

@@ -1023,6 +1023,7 @@ def pellets_page(action=None):
 				write_pellet_db(pelletdb)
 				event['type'] = 'updated'
 				event['text'] = 'Successfully loaded profile and logged.'
+				backup_pellet_db(action='backup')
 	elif request.method == 'GET' and action == 'hopperlevel':
 		control = {}
 		control['hopper_check'] = True
@@ -2177,10 +2178,7 @@ def admin_page(action=None):
 				notify = "error"
 
 		if 'backuppelletdb' in response:
-			time_now = datetime.datetime.now()
-			time_str = time_now.strftime('%m-%d-%y_%H%M%S') # Truncate the microseconds
-			backup_file = BACKUP_PATH + 'PelletDB_' + time_str + '.json'
-			os.system(f'cp pelletdb.json {backup_file}')
+			backup_file = backup_pellet_db(action='backup')
 			return send_file(backup_file, as_attachment=True, max_age=0)
 
 		if 'restorepelletdb' in response:
