@@ -127,7 +127,7 @@
                     </div>
                     <select class="form-control" id="addProbeDeviceSelect" name="addProbeDeviceSelect" onchange="probe_addShowDeviceConfig(this.value)">
                         <option value="none" selected disabled hidden>Select a Device Module</option>
-                        {% for module, object in modules.items()|sort %}
+                        {% for module, object in modules.items() %}
                         <option value="{{ module }}">
                         {{ object['friendly_name'] }}
                         </option>

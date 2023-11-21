@@ -86,18 +86,18 @@
 			} 
 		}, 
 		"probes" : {
-			"ads1115" : {
-				"friendly_name" : "ADS1115",
-				"filename" : "ads1115",
-				"description" : "This is an alternative PiFire module supporting the ADS1115 16-Bit ADC.  This module is no longer the default due to reports of issues.  If you experience trouble with this module, try the Adafruit modules.  There has been rumors of sellers shipping ADS1015 12-Bit ADC's instead of the ADS1115 16-Bit ADC's.  If you got one of these, you can try the 1015 library instead.",
-				"default" : false,
+			"ads1115_adafruit" : {
+				"friendly_name" : "ADS1115 Adafruit",
+				"filename" : "ads1115_adafruit",
+				"description" : "This is the default module supporting ALL of the ADS1115 16-Bit ADC's and is based on Adafruit's Circuit Python implementation/module.  This version is still actively updated and may support a wider range of hardware.  There has been rumors of sellers shipping ADS1015 12-Bit ADC's instead of the ADS1115 16-Bit ADC's.  If you got one of these, you can try the ADS1015 Adafruit library instead.",
+				"default" : true,
 				"image" : "ads1115.png",
-				"py_dependencies" : ["ADS1115"], 
+				"py_dependencies" : ["adafruit-circuitpython-ads1x15"], 
 				"apt_dependencies" : [],
 				"settings_dependencies" : {
 					"units" : {
 						"friendly_name" : "Temp Units",
-						"description" : "Select the temperature units to use for PiFire globally.  (This can be modified in settings later)",
+						"description" : "Select the temperature units to use for PiFire globally.  (this can be modified in settings later)",
 						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
 						"settings" : ["globals", "units"]
 					}
@@ -111,7 +111,7 @@
 							"description" : "Select the I2C bus address to use for this device.  Default is 0x48.  If you have more than one ADS1115, you can assign unique device bus address for up to four devices.",
 							"type" : "list", 
 							"list_values" : ["0x48", "0x49", "0x4A", "0x4B"],
-							"list_labels" : ["0x48", "0x49", "0x4A", "0x4B"],							
+							"list_labels" : ["0x48", "0x49", "0x4A", "0x4B"],
 							"default" : "0x48",
 							"hidden" : false
 						}, 
@@ -122,7 +122,7 @@
 							"type" : "int", 
 							"default" : 10000,
 							"min" : 1,
-							"max" : "",
+							"max" : "", 
 							"step" : 1,
 							"hidden" : false
 						}, 
@@ -260,93 +260,6 @@
 					]
 				}
 			},
-			"ads1115_adafruit" : {
-				"friendly_name" : "ADS1115 Adafruit",
-				"filename" : "ads1115_adafruit",
-				"description" : "This is the default module supporting the ADS1115 16-Bit ADC based on Adafruit's Circuit Python implementation/module.  This version is still actively updated and may support a wider range of hardware.  There has been rumors of sellers shipping ADS1015 12-Bit ADC's instead of the ADS1115 16-Bit ADC's.  If you got one of these, you can try the ADS1015 Adafruit library instead.",
-				"default" : true,
-				"image" : "ads1115.png",
-				"py_dependencies" : ["adafruit-circuitpython-ads1x15"], 
-				"apt_dependencies" : [],
-				"settings_dependencies" : {
-					"units" : {
-						"friendly_name" : "Temp Units",
-						"description" : "Select the temperature units to use for PiFire globally.  (this can be modified in settings later)",
-						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
-						"settings" : ["globals", "units"]
-					}
-				},
-				"device_specific" : {
-					"ports" : ["ADC0", "ADC1", "ADC2", "ADC3"],
-					"config" : [
-						{
-							"label" : "i2c_bus_addr", 
-							"friendly_name" : "I2C Bus Address",
-							"description" : "Select the I2C bus address to use for this device.  Default is 0x48.  If you have more than one ADS1115, you can assign unique device bus address for up to four devices.",
-							"type" : "list", 
-							"list_values" : ["0x48", "0x49", "0x4A", "0x4B"],
-							"list_labels" : ["0x48", "0x49", "0x4A", "0x4B"],
-							"default" : "0x48",
-							"hidden" : false
-						}, 
-						{
-							"label" : "ADC0_rd", 
-							"friendly_name" : "ADC0 Resistor Divider Value",
-							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
-							"type" : "int", 
-							"default" : 10000,
-							"min" : 1,
-							"max" : "", 
-							"step" : 1,
-							"hidden" : false
-						}, 
-						{
-							"label" : "ADC1_rd", 
-							"friendly_name" : "ADC1 Resistor Divider Value",
-							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
-							"type" : "int", 
-							"default" : 10000,
-							"min" : 1,
-							"max" : "",
-							"step" : 1,
-							"hidden" : false
-						},
-						{
-							"label" : "ADC2_rd", 
-							"friendly_name" : "ADC2 Resistor Divider Value",
-							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
-							"type" : "int", 
-							"default" : 10000,
-							"min" : 1,
-							"max" : "",
-							"step" : 1,
-							"hidden" : false
-						},
-						{
-							"label" : "ADC3_rd", 
-							"friendly_name" : "ADC3 Resistor Divider Value",
-							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
-							"type" : "int", 
-							"default" : 10000,
-							"min" : 1,
-							"max" : "",
-							"step" : 1,
-							"hidden" : false
-						},
-						{
-							"label" : "voltage_ref", 
-							"friendly_name" : "Voltage Source Reference",
-							"description" : "Select the voltage reference measured at the top of the resistor dividers (from the power supply source).  Default is 3.28V",
-							"type" : "float", 
-							"default" : 3.2,
-							"min" : 1,
-							"max" : 10,
-							"step" : 0.001,
-							"hidden" : false
-						}
-					]
-				}
-			},
 			"max31865" : {
 				"friendly_name" : "MAX31865 RTD",
 				"filename" : "max31865",
@@ -412,7 +325,7 @@
 				}
 			},
 			"max31865_adafruit" : {
-				"friendly_name" : "Adafruit MAX31865 RTD",
+				"friendly_name" : "MAX31865 RTD Adafruit",
 				"filename" : "max31865_adafruit",
 				"description" : "This SPI device reads RTD style probes, such as the Traeger PT100(PT1000) RTD probe.  This version uses the Adafruit CircuitPython modules.  It should be noted that this module does not allow the use of CE0 or CE1, thus another GPIO should be used for the CS pin. Note that special care may need to be taken if this is used with another SPI device (i.e. SPI Display) on the system.",
 				"default" : false,
@@ -476,7 +389,7 @@
 				}
 			},
 			"mcp9600_adafruit" : {
-				"friendly_name" : "Adafruit MCP9600 Thermocouple Amplifier",
+				"friendly_name" : "MCP9600 Thermocouple Amplifier Adafruit",
 				"filename" : "mcp9600_adafruit",
 				"description" : "This I2C device reads K-Type thermocouples / probes. Moreover the MCP9600 can interface with just about any thermocouple type: K, J, T, N, S, E, B and R type are all supported.  This version uses the Adafruit CircuitPython modules.",
 				"default" : false,
@@ -593,6 +506,93 @@
 						}
 					]
 				}			
+			},
+			"ads1115" : {
+				"friendly_name" : "Legacy ADS1115",
+				"filename" : "ads1115",
+				"description" : "WARNING: This module is no longer the default due to reports of issues.  If you experience trouble with this module, use the Adafruit modules.  This is an alternative PiFire module supporting the ADS1115 16-Bit ADC and should only be used if you are experiencing difficulty with the Adafruit module.",
+				"default" : false,
+				"image" : "ads1115.png",
+				"py_dependencies" : ["ADS1115"], 
+				"apt_dependencies" : [],
+				"settings_dependencies" : {
+					"units" : {
+						"friendly_name" : "Temp Units",
+						"description" : "Select the temperature units to use for PiFire globally.  (This can be modified in settings later)",
+						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
+						"settings" : ["globals", "units"]
+					}
+				},
+				"device_specific" : {
+					"ports" : ["ADC0", "ADC1", "ADC2", "ADC3"],
+					"config" : [
+						{
+							"label" : "i2c_bus_addr", 
+							"friendly_name" : "I2C Bus Address",
+							"description" : "Select the I2C bus address to use for this device.  Default is 0x48.  If you have more than one ADS1115, you can assign unique device bus address for up to four devices.",
+							"type" : "list", 
+							"list_values" : ["0x48", "0x49", "0x4A", "0x4B"],
+							"list_labels" : ["0x48", "0x49", "0x4A", "0x4B"],							
+							"default" : "0x48",
+							"hidden" : false
+						}, 
+						{
+							"label" : "ADC0_rd", 
+							"friendly_name" : "ADC0 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
+						}, 
+						{
+							"label" : "ADC1_rd", 
+							"friendly_name" : "ADC1 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
+						},
+						{
+							"label" : "ADC2_rd", 
+							"friendly_name" : "ADC2 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
+						},
+						{
+							"label" : "ADC3_rd", 
+							"friendly_name" : "ADC3 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
+						},
+						{
+							"label" : "voltage_ref", 
+							"friendly_name" : "Voltage Source Reference",
+							"description" : "Select the voltage reference measured at the top of the resistor dividers (from the power supply source).  Default is 3.28V",
+							"type" : "float", 
+							"default" : 3.2,
+							"min" : 1,
+							"max" : 10,
+							"step" : 0.001,
+							"hidden" : false
+						}
+					]
+				}
 			},
 			"virtual_average" : {
 				"friendly_name" : "Virtual Probes - Average",
