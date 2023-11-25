@@ -30,6 +30,8 @@ class Display(DisplayBase):
 
 	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F'):
 		super().__init__(dev_pins, buttonslevel, rotation, units)
+		self.last_direction = None
+
 
 	def _init_display_device(self):
 		# Init Device
@@ -54,6 +56,7 @@ class Display(DisplayBase):
 		sw_pin = self.dev_pins['input']['enter_sw'] 	# Switch - GPIO21
 		self.input_event = None
 		self.input_counter = 0
+		self.last_movement_time = 0
 
 		# Init Menu Structures
 		self._init_menu()
@@ -74,12 +77,20 @@ class Display(DisplayBase):
 		self.input_event='ENTER'
 
 	def _inc_callback(self, v):
-		self.input_event='UP'
-		self.input_counter += 1
+		current_time = time.time()
+		if self.last_direction is None or self.last_direction == 'UP' or current_time - self.last_movement_time > 0.5:
+			self.input_event='UP'
+			self.input_counter += 1
+			self.last_direction = 'UP'
+			self.last_movement_time = current_time
 
 	def _dec_callback(self, v):
-		self.input_event='DOWN'
-		self.input_counter += 1
+		current_time = time.time()
+		if self.last_direction is None or self.last_direction == 'DOWN' or current_time - self.last_movement_time > 0.5:
+			self.input_event='DOWN'
+			self.input_counter += 1
+			self.last_direction = 'DOWN'
+			self.last_movement_time = current_time
 
 	'''
 	============== Graphics / Display / Draw Methods ============= 
