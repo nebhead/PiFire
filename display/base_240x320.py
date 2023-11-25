@@ -208,7 +208,7 @@ class DisplayBase:
 			}
 
 		}
-		
+
 		self.menu['current'] = {}
 		self.menu['current']['mode'] = 'none'  # Current Menu Mode (inactive, active)
 		self.menu['current']['option'] = 0  # Current option in current mode
@@ -1089,7 +1089,7 @@ class DisplayBase:
 					control['updated'] = True
 					control['mode'] = 'Stop'
 					write_control(control, origin='display')
-				elif selected == 'Power Menu':
+				elif selected == 'Power':
 					self.menu['current']['mode'] = 'power_menu'
 					self.menu['current']['option'] = 0
 				elif 'Power_' in selected:
