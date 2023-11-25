@@ -114,7 +114,7 @@ class DisplayBase:
 			},
 			'Power':{
 				'displaytext': 'Power Menu',
-				'icon': '\ue0b7' #FontAwesome Power Icon
+				'icon': '\uf0e7' #FontAwesome Power Icon
 			}
 		}
 
@@ -1095,12 +1095,8 @@ class DisplayBase:
 				elif 'Power_' in selected:
 					control = read_control()
 					if 'Off' in selected:
-						display_device.display_text('SHUTTING DOWN')
-						time.sleep(3)
 						os.system('sudo shutdown -h now')
 					elif 'Restart' in selected:
-						display_device.display_text('REBOOTING')
-						time.sleep(3)
 						os.system('sudo reboot')
 
 				# Active Mode

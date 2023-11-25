@@ -574,7 +574,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 				# Set current last toggle time to now
 				auger_toggle_time = now
 				eventLogger.debug('Cycle Event: Auger Off')
-
+	
 		# Grab current probe profiles if they have changed since the last loop.
 		if control['probe_profile_update']:
 			settings = read_settings()
