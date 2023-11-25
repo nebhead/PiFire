@@ -66,7 +66,7 @@ class DisplayBase:
 			self.HEIGHT = 240
 
 		self.inc_pulse_color = True 
-		self.icon_color = 200
+		self.icon_color = 100
 		self.fan_rotation = 0
 		self.auger_step = 0
 
@@ -694,7 +694,7 @@ class DisplayBase:
 		font = ImageFont.truetype("impact.ttf", 42)
 		(font_width, font_height) = font.getsize(self.display_data)
 		draw.text((self.WIDTH // 2 - font_width // 2, self.HEIGHT // 2 - font_height // 2), self.display_data,
-				  font=font, fill=255)
+				  font=font, fill=200)
 
 		self._display_canvas(img)
 
