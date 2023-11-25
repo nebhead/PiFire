@@ -2,11 +2,11 @@
 
 # Automatic Installation Script
 # Many thanks to the PiVPN project (pivpn.io) for much of the inspiration for this script
-# Run from https://raw.githubusercontent.com/nebhead/pifire/master/auto-install/install.sh
+# Run from https://raw.githubusercontent.com/dogtreatfairy/pifire/master/auto-install/install.sh
 #
 # Install with this command (from your Pi):
 #
-# curl https://raw.githubusercontent.com/nebhead/pifire/master/auto-install/install.sh | bash
+# curl https://raw.githubusercontent.com/dogtreatfairy/pifire/master/auto-install/install.sh | bash
 #
 # NOTE: Pre-Requisites to run Raspi-Config first.  See README.md.
 
@@ -39,7 +39,7 @@ r=$(( r < 20 ? 20 : r ))
 c=$(( c < 70 ? 70 : c ))
 
 # Display the welcome dialog
-whiptail --msgbox --backtitle "Welcome" --title "PiFire Automated Installer" "This installer will transform your Raspberry Pi into a connected Smoker Controller.  NOTE: This installer is intended to be run on a fresh install of Raspberry Pi OS Lite 32-Bit Buster or later." ${r} ${c}
+whiptail --msgbox --backtitle "Welcome" --title "Dogtreatfairy PiFire Automated Installer" "This installer will transform your Raspberry Pi into a connected Smoker Controller.  NOTE: This installer is intended to be run on a fresh install of Raspberry Pi OS Lite 32-Bit Buster or later." ${r} ${c}
 
 # Starting actual steps for installation
 clear
@@ -111,9 +111,9 @@ echo "**                                                                     **"
 echo "*************************************************************************"
 cd /usr/local/bin
 # Use a shallow clone to reduce download size
-$SUDO git clone --depth 1 https://github.com/nebhead/pifire
+$SUDO git clone --depth 1 https://github.com/dogtreatfairy/pifire
 # Replace the below command to fetch development branch
-#git clone --depth 1 --branch development https://github.com/nebhead/pifire
+#git clone --depth 1 --branch development https://github.com/dogtreatfairy/pifire
 
 # After doing a shallow clone, to be able to checkout other branches from remote,
 # git remote set-branches origin '*'
