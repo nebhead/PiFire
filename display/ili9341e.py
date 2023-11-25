@@ -78,7 +78,7 @@ class Display(DisplayBase):
 
 	def _inc_callback(self, v):
 		current_time = time.time()
-		if self.last_direction is None or self.last_direction == 'UP' or current_time - self.last_movement_time > 0.5:
+		if self.last_direction is None or self.last_direction == 'UP' or current_time - self.last_movement_time > 0.3:
 			self.input_event='UP'
 			self.input_counter += 1
 			self.last_direction = 'UP'
@@ -86,7 +86,7 @@ class Display(DisplayBase):
 
 	def _dec_callback(self, v):
 		current_time = time.time()
-		if self.last_direction is None or self.last_direction == 'DOWN' or current_time - self.last_movement_time > 0.5:
+		if self.last_direction is None or self.last_direction == 'DOWN' or current_time - self.last_movement_time > 0.3:
 			self.input_event='DOWN'
 			self.input_counter += 1
 			self.last_direction = 'DOWN'
