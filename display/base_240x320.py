@@ -66,7 +66,7 @@ class DisplayBase:
 			self.HEIGHT = 240
 
 		self.inc_pulse_color = True 
-		self.icon_color = 100
+		self.icon_color = 200
 		self.fan_rotation = 0
 		self.auger_step = 0
 
