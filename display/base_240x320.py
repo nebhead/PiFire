@@ -113,7 +113,7 @@ class DisplayBase:
 				'icon': '\uf1eb'  # FontAwesome Wifi Icon
 			},
 			'Power Off':{
-				'displaytest': 'Power Off',
+				'displaytext': 'Power Off',
 				'icon': '\uf011' #FontAwesome Power Icon
 			}
 		}
