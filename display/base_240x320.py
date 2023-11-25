@@ -20,6 +20,7 @@ import time
 import socket
 import qrcode
 import logging
+import os
 from PIL import Image, ImageDraw, ImageFont
 from common import read_control, write_control
 
@@ -110,6 +111,10 @@ class DisplayBase:
 			'Network': {
 				'displaytext': 'IP QR Code',
 				'icon': '\uf1eb'  # FontAwesome Wifi Icon
+			},
+			'Power Off':{
+				'displaytest': 'Shutdown',
+				'icon': '\uf011' #FontAwesome Power Icon
 			}
 		}
 
@@ -1071,6 +1076,18 @@ class DisplayBase:
 					control['updated'] = True
 					control['mode'] = 'Stop'
 					write_control(control, origin='display')
+				elif selected == 'Power Off':
+					self.display_active = True
+					self.menu['current']['mode'] = 'none'
+					self.menu['current']['option'] = 0
+					self.menu_active = False
+					self.menu_time = 0
+					control = read_control()
+					control['updated'] = True
+					control['mode'] = 'Power Off'
+					write_control(control, origin='display')
+					os.system('sudo shutdown -h now')
+
 				# Active Mode
 				elif selected == 'Shutdown':
 					self.display_active = True
