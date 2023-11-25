@@ -112,8 +112,8 @@ class DisplayBase:
 				'displaytext': 'IP QR Code',
 				'icon': '\uf1eb'  # FontAwesome Wifi Icon
 			},
-			'Power Off':{
-				'displaytext': 'Power Off',
+			'Power':{
+				'displaytext': 'Power Menu',
 				'icon': '\uf011' #FontAwesome Power Icon
 			}
 		}
@@ -196,6 +196,19 @@ class DisplayBase:
 				'icon': '50'
 			}
 		}
+
+		self.menu['power_menu'] = {
+			'Power_Off' : {
+				'displaytext' : 'Shutdown',
+				'icon': '\uf011' # FontAwesome Power Button
+			},
+			'Power_Restart' : {
+				'displaytext': 'Restart',
+				'icon': '\uf2f9' # FontAwesome Circle Arrow
+			}
+
+		}
+		
 		self.menu['current'] = {}
 		self.menu['current']['mode'] = 'none'  # Current Menu Mode (inactive, active)
 		self.menu['current']['option'] = 0  # Current option in current mode
@@ -1076,17 +1089,15 @@ class DisplayBase:
 					control['updated'] = True
 					control['mode'] = 'Stop'
 					write_control(control, origin='display')
-				elif selected == 'Power Off':
-					self.display_active = True
-					self.menu['current']['mode'] = 'none'
+				elif selected == 'Power Menu':
+					self.menu['current']['mode'] = 'power_menu'
 					self.menu['current']['option'] = 0
-					self.menu_active = False
-					self.menu_time = 0
+				elif 'Power_' in selected:
 					control = read_control()
-					control['updated'] = True
-					control['mode'] = 'Power Off'
-					write_control(control, origin='display')
-					os.system('sudo shutdown -h now')
+					if 'Off' in selected:
+						os.system('sudo shutdown -h now')
+					elif 'Restart' in selected:
+						os.system('sudo reboot')
 
 				# Active Mode
 				elif selected == 'Shutdown':
