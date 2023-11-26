@@ -194,6 +194,10 @@ class DisplayBase:
 			'Prime_50_Start' : {
 				'displaytext': '\u00BB50g & Start',
 				'icon': '50'
+			},
+			'Menu_Back' : {
+				'displaytext' : 'Back',
+				'icon' : '\f060' # FontAwesome Back Arrow
 			}
 		}
 
@@ -205,6 +209,10 @@ class DisplayBase:
 			'Power_Restart' : {
 				'displaytext': 'Restart',
 				'icon': '\uf2f9' # FontAwesome Circle Arrow
+			},
+			'Menu_Back' : {
+				'displaytext' : 'Back',
+				'icon' : '\f060' # FontAwesome Back Arrow
 			}
 
 		}
@@ -1098,6 +1106,11 @@ class DisplayBase:
 						os.system('sudo shutdown -h now')
 					elif 'Restart' in selected:
 						os.system('sudo reboot')
+				elif 'Menu_Back' in selected:
+					self.menu['current']['mode'] = 'none'
+					self.menu['current']['option'] = 0
+					self.menu_active = False
+					self.menu_time = 0
 
 				# Active Mode
 				elif selected == 'Shutdown':
