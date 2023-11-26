@@ -87,8 +87,7 @@ class Display(DisplayBase):
 				self.input_counter += 1
 			self.last_direction = 'UP'
 			self.last_movement_time = current_time
-			while time.time() - self.last_movement_time < 0.3:
-				time.sleep(0.1)  # wait for 100ms
+			if time.time() - self.last_movement_time < 0.3:
 				if self.enter_received:
 					self.enter_received = False
 					return  # if enter command is received during this time, execute the enter command and not the up
@@ -101,11 +100,11 @@ class Display(DisplayBase):
 				self.input_counter += 1
 			self.last_direction = 'DOWN'
 			self.last_movement_time = current_time
-			while time.time() - self.last_movement_time < 0.3:
-				time.sleep(0.1)  # wait for 100ms
+			if time.time() - self.last_movement_time < 0.3:
 				if self.enter_received:
 					self.enter_received = False
 					return  # if enter command is received during this time, execute the enter command and not the down
+
 
 	'''
 	============== Graphics / Display / Draw Methods ============= 
