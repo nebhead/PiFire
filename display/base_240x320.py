@@ -197,7 +197,7 @@ class DisplayBase:
 			},
 			'Menu_Back' : {
 				'displaytext' : 'Back',
-				'icon' : '\f060' # FontAwesome Back Arrow
+				'icon' : '\uf060' # FontAwesome Back Arrow
 			}
 		}
 
@@ -212,7 +212,7 @@ class DisplayBase:
 			},
 			'Menu_Back' : {
 				'displaytext' : 'Back',
-				'icon' : '\f060' # FontAwesome Back Arrow
+				'icon' : '\uf060' # FontAwesome Back Arrow
 			}
 
 		}
