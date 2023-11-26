@@ -56,7 +56,9 @@ class Display(DisplayBase):
 		sw_pin = self.dev_pins['input']['enter_sw'] 	# Switch - GPIO21
 		self.input_event = None
 		self.input_counter = 0
+		self.last_direction = None
 		self.last_movement_time = 0
+		self.enter_received = False
 
 		# Init Menu Structures
 		self._init_menu()
@@ -74,23 +76,38 @@ class Display(DisplayBase):
 	============== Input Callbacks ============= 
 	'''
 	def _click_callback(self):
-		self.input_event='ENTER'
+		self.input_event = 'ENTER'
+		self.enter_received = True
 
 	def _inc_callback(self, v):
 		current_time = time.time()
-		if self.last_direction is None or self.last_direction == 'UP' or current_time - self.last_movement_time > 0.3:
-			self.input_event='UP'
-			self.input_counter += 1
+		if self.last_direction is None or self.last_direction == 'UP' or current_time - self.last_movement_time > 1:
+			if not self.enter_received:
+				self.input_event = 'UP'
+				self.input_counter += 1
 			self.last_direction = 'UP'
 			self.last_movement_time = current_time
+			time.sleep(0.5)  # wait for 500ms
+			if self.enter_received:
+				self.enter_received = False
+				return  # if enter command is received during this time, execute the enter command and not the up
+			elif current_time - self.last_movement_time < 1:
+				return  # if a second up command is received, execute one up and then continue running up
 
 	def _dec_callback(self, v):
 		current_time = time.time()
-		if self.last_direction is None or self.last_direction == 'DOWN' or current_time - self.last_movement_time > 0.3:
-			self.input_event='DOWN'
-			self.input_counter += 1
-			self.last_direction = 'DOWN'
+		if self.last_direction is None or self.last_direction == 'DOWN' or current_time - self.last_movement_time > 1:
+			if not self.enter_received:
+				self.input_event = 'DOWN'
+				self.input_counter += 1
+				self.last_direction = 'DOWN'
 			self.last_movement_time = current_time
+			time.sleep(0.5)  # wait for 500ms
+			if self.enter_received:
+				elf.enter_received = False
+				return  # if enter command is received during this time, execute the enter command and not the down
+			elif current_time - self.last_movement_time < 1:
+				return  # if a second down command is received, execute one down and then continue running down
 
 	'''
 	============== Graphics / Display / Draw Methods ============= 
