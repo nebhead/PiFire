@@ -702,7 +702,7 @@ class DisplayBase:
 		font = ImageFont.truetype("impact.ttf", 42)
 		(font_width, font_height) = font.getsize(self.display_data)
 		draw.text((self.WIDTH // 2 - font_width // 2, self.HEIGHT // 2 - font_height // 2), self.display_data,
-				  font=font, fill=200)
+				  font=font, fill=255)
 
 		self._display_canvas(img)
 
