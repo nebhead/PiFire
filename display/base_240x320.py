@@ -686,7 +686,7 @@ class DisplayBase:
 
 	def _display_text(self):
 		# Create canvas
-		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 255, 0))
+		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
 
 		# Create drawing object
 		draw = ImageDraw.Draw(img)
