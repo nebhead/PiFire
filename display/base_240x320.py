@@ -20,6 +20,7 @@ import time
 import socket
 import qrcode
 import logging
+import os
 from PIL import Image, ImageDraw, ImageFont
 from common import read_control, write_control
 
@@ -110,6 +111,10 @@ class DisplayBase:
 			'Network': {
 				'displaytext': 'IP QR Code',
 				'icon': '\uf1eb'  # FontAwesome Wifi Icon
+			},
+			'Power':{
+				'displaytext': 'Power Menu',
+				'icon': '\uf0e7' #FontAwesome Power Icon
 			}
 		}
 
@@ -189,8 +194,29 @@ class DisplayBase:
 			'Prime_50_Start' : {
 				'displaytext': '\u00BB50g & Start',
 				'icon': '50'
+			},
+			'Menu_Back' : {
+				'displaytext' : 'Back',
+				'icon' : '\uf060' # FontAwesome Back Arrow
 			}
 		}
+
+		self.menu['power_menu'] = {
+			'Power_Off' : {
+				'displaytext' : 'Shutdown',
+				'icon': '\uf011' # FontAwesome Power Button
+			},
+			'Power_Restart' : {
+				'displaytext': 'Restart',
+				'icon': '\uf2f9' # FontAwesome Circle Arrow
+			},
+			'Menu_Back' : {
+				'displaytext' : 'Back',
+				'icon' : '\uf060' # FontAwesome Back Arrow
+			}
+
+		}
+
 		self.menu['current'] = {}
 		self.menu['current']['mode'] = 'none'  # Current Menu Mode (inactive, active)
 		self.menu['current']['option'] = 0  # Current option in current mode
@@ -892,7 +918,7 @@ class DisplayBase:
 
 		# Grill Hopper Level (Lower Center)
 		text = "Hopper:" + str(status_data['hopper_level']) + "%"
-		if status_data['hopper_level'] > 70:
+		if status_data['hopper_level'] > 50:
 			hopper_color = (0, 255, 0)
 		elif status_data['hopper_level'] > 30:
 			hopper_color = (255, 150, 0)
@@ -1071,6 +1097,24 @@ class DisplayBase:
 					control['updated'] = True
 					control['mode'] = 'Stop'
 					write_control(control, origin='display')
+				elif selected == 'Power':
+					self.menu['current']['mode'] = 'power_menu'
+					self.menu['current']['option'] = 0
+				elif 'Power_' in selected:
+					control = read_control()
+					if 'Off' in selected:
+						os.system('sudo shutdown -h now')
+					elif 'Restart' in selected:
+						os.system('sudo reboot')
+				
+				# Master Menu Back Function
+				elif 'Menu_Back' in selected:
+					self.menu['current']['mode'] = 'none'
+					self.menu['current']['option'] = 0
+					self.menu['current']['option'] += 1
+
+
+
 				# Active Mode
 				elif selected == 'Shutdown':
 					self.display_active = True

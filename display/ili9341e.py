@@ -30,6 +30,8 @@ class Display(DisplayBase):
 
 	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F'):
 		super().__init__(dev_pins, buttonslevel, rotation, units)
+		self.last_direction = None
+
 
 	def _init_display_device(self):
 		# Init Device
@@ -54,6 +56,9 @@ class Display(DisplayBase):
 		sw_pin = self.dev_pins['input']['enter_sw'] 	# Switch - GPIO21
 		self.input_event = None
 		self.input_counter = 0
+		self.last_direction = None
+		self.last_movement_time = 0
+		self.enter_received = False
 
 		# Init Menu Structures
 		self._init_menu()
@@ -71,15 +76,35 @@ class Display(DisplayBase):
 	============== Input Callbacks ============= 
 	'''
 	def _click_callback(self):
-		self.input_event='ENTER'
+		self.input_event = 'ENTER'
+		self.enter_received = True
 
 	def _inc_callback(self, v):
-		self.input_event='UP'
-		self.input_counter += 1
+		current_time = time.time()
+		if self.last_direction is None or self.last_direction == 'UP' or current_time - self.last_movement_time > 0.5:
+			if not self.enter_received:
+				self.input_event = 'UP'
+				self.input_counter += 1
+			self.last_direction = 'UP'
+			self.last_movement_time = current_time
+			if time.time() - self.last_movement_time < 0.3:
+				if self.enter_received:
+					self.enter_received = False
+					return  # if enter command is received during this time, execute the enter command and not the up
 
 	def _dec_callback(self, v):
-		self.input_event='DOWN'
-		self.input_counter += 1
+		current_time = time.time()
+		if self.last_direction is None or self.last_direction == 'DOWN' or current_time - self.last_movement_time > 0.5:
+			if not self.enter_received:
+				self.input_event = 'DOWN'
+				self.input_counter += 1
+			self.last_direction = 'DOWN'
+			self.last_movement_time = current_time
+			if time.time() - self.last_movement_time < 0.3:
+				if self.enter_received:
+					self.enter_received = False
+					return  # if enter command is received during this time, execute the enter command and not the down
+
 
 	'''
 	============== Graphics / Display / Draw Methods ============= 
