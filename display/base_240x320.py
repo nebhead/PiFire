@@ -1106,9 +1106,11 @@ class DisplayBase:
 						os.system('sudo shutdown -h now')
 					elif 'Restart' in selected:
 						os.system('sudo reboot')
+				
+				# Master Menu Back Function
 				elif 'Menu_Back' in selected:
 					self.menu['current']['mode'] = 'none'
-					self.menu['current']['option'] = 0
+					self.menu['current']['option'] = 1
 					self.menu_active = False
 					self.menu_time = 0
 
