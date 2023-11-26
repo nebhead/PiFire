@@ -58,11 +58,11 @@ class DisplayBase:
 		270, 3 = 270 Degrees Rotation (Pimoroni Libraries, Luma.LCD Libraries)
 		'''
 		if self.rotation in [90, 270, 1, 3]:
-			self.WIDTH = 240
-			self.HEIGHT = 320
-		else:
 			self.WIDTH = 320
-			self.HEIGHT = 240
+			self.HEIGHT = 480
+		else:
+			self.WIDTH = 480
+			self.HEIGHT = 320
 
 		self.inc_pulse_color = True 
 		self.icon_color = 100
