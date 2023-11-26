@@ -1111,9 +1111,6 @@ class DisplayBase:
 				elif 'Menu_Back' in selected:
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
-					self.menu_active = False
-					self.menu_time = 0
-					self.cleardisplay()
 
 				# Active Mode
 				elif selected == 'Shutdown':
