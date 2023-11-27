@@ -71,7 +71,6 @@ echo "**                                                                     **"
 echo "**      Installing Dependencies... (This could take several minutes)   **"
 echo "**                                                                     **"
 echo "*************************************************************************"
-
 $SUDO apt install python3-dev python3-pip python3-venv python3-rpi.gpio python3-scipy nginx git supervisor ttf-mscorefonts-installer redis-server libatlas-base-dev libopenjp2-7 -y
 
 # Grab project files
@@ -86,11 +85,6 @@ cd /usr/local/bin
 $SUDO git clone --depth 1 https://github.com/nebhead/pifire
 # Replace the below command to fetch development branch
 #$SUDO git clone --depth 1 --branch development https://github.com/nebhead/pifire
-
-# After doing a shallow clone, to be able to checkout other branches from remote,
-# git remote set-branches origin '*'
-# git fetch -v
-# git checkout development
 
 # Setup Python VENV & Install Python dependencies
 clear
