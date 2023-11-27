@@ -1,0 +1,135 @@
+<!-- Pagination -->
+<div class="btn-toolbar" role="toolbar" aria-label="Pagination">
+  <div class="btn-group mr-2" role="group" aria-label="Previous Group">
+    <button type="button" class="btn btn-outline-primary" onclick="gotoPage(1, {{ pgntd_data['reverse'] }}, {{ pgntd_data['itemspage'] }}, '{{ log_file_name }}')">First</button>
+    <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntd_data['prevpage'] }}, {{ pgntd_data['reverse'] }}, {{ pgntd_data['itemspage'] }}, '{{ log_file_name }}')"><i class="fas fa-angle-left"></i></button>
+  </div>
+  <div class="btn-group mr-2" role="group" aria-label="Page Group">
+    {% if pgntd_data['curpage'] == 2 %}
+      <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntd_data['curpage'] - 1 }}, {{ pgntd_data['reverse'] }}, {{ pgntd_data['itemspage'] }}, '{{ log_file_name }}')">
+          {{ pgntd_data['curpage'] - 1}}
+      </button>
+    {% elif pgntd_data['curpage'] > 2 %}
+      <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntd_data['curpage'] - 2 }}, {{ pgntd_data['reverse'] }}, {{ pgntd_data['itemspage'] }}, '{{ log_file_name }}')">
+          {{ pgntd_data['curpage'] - 2}}
+      </button>
+      <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntd_data['curpage'] - 1 }}, {{ pgntd_data['reverse'] }}, {{ pgntd_data['itemspage'] }}, '{{ log_file_name }}')">
+          {{ pgntd_data['curpage'] - 1}}
+      </button>
+    {% endif %}
+      <button type="button" class="btn btn-primary"><strong>{{ pgntd_data['curpage'] }}</strong></button>
+    {% if pgntd_data['curpage'] <= pgntd_data['lastpage'] - 2 %}
+      <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntd_data['curpage'] + 1 }}, {{ pgntd_data['reverse'] }}, {{ pgntd_data['itemspage'] }}, '{{ log_file_name }}')">
+          {{ pgntd_data['curpage'] + 1}}
+      </button>
+      <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntd_data['curpage'] +2 }}, {{ pgntd_data['reverse'] }}, {{ pgntd_data['itemspage'] }}, '{{ log_file_name }}')">
+          {{ pgntd_data['curpage'] + 2}}
+      </button>
+    {% elif pgntd_data['curpage'] == pgntd_data['lastpage'] - 1 %}
+      <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntd_data['curpage'] + 1 }}, {{ pgntd_data['reverse'] }}, {{ pgntd_data['itemspage'] }}, '{{ log_file_name }}')">
+          {{ pgntd_data['curpage'] + 1}}
+      </button>
+    {% endif %}
+  </div>
+  <div class="btn-group" role="group" aria-label="Next Group">
+    <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntd_data['nextpage'] }}, {{ pgntd_data['reverse'] }}, {{ pgntd_data['itemspage'] }}, '{{ log_file_name }}')"><i class="fas fa-angle-right"></i></button>
+    <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntd_data['lastpage'] }}, {{ pgntd_data['reverse'] }}, {{ pgntd_data['itemspage'] }}, '{{ log_file_name }}')">Last</button>
+  </div>
+  &nbsp;
+  <div class="btn-group" role="group" aria-label="Sort Group">
+      {% if pgntd_data['reverse'] == 'true' %}
+      <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntd_data['curpage'] }}, false, {{ pgntd_data['itemspage'] }}, '{{ log_file_name }}')"><i class="fas fa-sort-numeric-up-alt"></i>&nbsp; Sort</button>
+      {% else %} 
+      <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntd_data['curpage'] }}, true, {{ pgntd_data['itemspage'] }}, '{{ log_file_name }}')"><i class="fas fa-sort-numeric-down"></i>&nbsp; Sort</button>
+      {% endif %}
+  </div>
+  &nbsp;
+  <div class="dropdown">
+      <button class="btn btn-outline-primary dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">
+        {{ pgntd_data['itemspage'] }}
+      </button>
+      <div class="dropdown-menu">
+        <button class="dropdown-item{% if pgntd_data['itemspage'] == 100 %} active{% endif %}" type="button" onclick="gotoPage({{ pgntd_data['curpage'] }}, {{ pgntd_data['reverse'] }}, 100, '{{ log_file_name }}')">100</button>
+        <button class="dropdown-item{% if pgntd_data['itemspage'] == 250 %} active{% endif %}" type="button" onclick="gotoPage({{ pgntd_data['curpage'] }}, {{ pgntd_data['reverse'] }}, 250, '{{ log_file_name }}')">250</button>
+        <button class="dropdown-item{% if pgntd_data['itemspage'] == 500 %} active{% endif %}" type="button" onclick="gotoPage({{ pgntd_data['curpage'] }}, {{ pgntd_data['reverse'] }}, 500, '{{ log_file_name }}')">500</button>
+        <button class="dropdown-item{% if pgntd_data['itemspage'] == 1000 %} active{% endif %}" type="button" onclick="gotoPage({{ pgntd_data['curpage'] }}, {{ pgntd_data['reverse'] }}, 1000, '{{ log_file_name }}')">1000</button>
+        <button class="dropdown-item{% if pgntd_data['itemspage'] == 5000 %} active{% endif %}" type="button" onclick="gotoPage({{ pgntd_data['curpage'] }}, {{ pgntd_data['reverse'] }}, 5000, '{{ log_file_name }}')">5000</button>
+      </div>
+  </div>
+</div>
+<br>
+
+<!-- Display Data -->
+<div style="font-family:courier">
+  <table class="table table-borderless table-sm">
+    <tbody>
+      {% for row in pgntd_data['displaydata'] %}
+      <tr>
+        <td class="text-muted">{{ row[0] }}</td>
+        <td>{{ row[1] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<br>
+
+<!-- Pagination -->
+<div class="btn-toolbar" role="toolbar" aria-label="Pagination">
+    <div class="btn-group mr-2" role="group" aria-label="Previous Group">
+      <button type="button" class="btn btn-outline-primary" onclick="gotoPage(1, {{ pgntd_data['reverse'] }}, {{ pgntd_data['itemspage'] }}, '{{ log_file_name }}')">First</button>
+      <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntd_data['prevpage'] }}, {{ pgntd_data['reverse'] }}, {{ pgntd_data['itemspage'] }}, '{{ log_file_name }}')"><i class="fas fa-angle-left"></i></button>
+    </div>
+    <div class="btn-group mr-2" role="group" aria-label="Page Group">
+      {% if pgntd_data['curpage'] == 2 %}
+        <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntd_data['curpage'] - 1 }}, {{ pgntd_data['reverse'] }}, {{ pgntd_data['itemspage'] }}, '{{ log_file_name }}')">
+            {{ pgntd_data['curpage'] - 1}}
+        </button>
+      {% elif pgntd_data['curpage'] > 2 %}
+        <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntd_data['curpage'] - 2 }}, {{ pgntd_data['reverse'] }}, {{ pgntd_data['itemspage'] }}, '{{ log_file_name }}')">
+            {{ pgntd_data['curpage'] - 2}}
+        </button>
+        <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntd_data['curpage'] - 1 }}, {{ pgntd_data['reverse'] }}, {{ pgntd_data['itemspage'] }}, '{{ log_file_name }}')">
+            {{ pgntd_data['curpage'] - 1}}
+        </button>
+      {% endif %}
+        <button type="button" class="btn btn-primary"><strong>{{ pgntd_data['curpage'] }}</strong></button>
+      {% if pgntd_data['curpage'] <= pgntd_data['lastpage'] - 2 %}
+        <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntd_data['curpage'] + 1 }}, {{ pgntd_data['reverse'] }}, {{ pgntd_data['itemspage'] }}, '{{ log_file_name }}')">
+            {{ pgntd_data['curpage'] + 1}}
+        </button>
+        <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntd_data['curpage'] +2 }}, {{ pgntd_data['reverse'] }}, {{ pgntd_data['itemspage'] }}, '{{ log_file_name }}')">
+            {{ pgntd_data['curpage'] + 2}}
+        </button>
+      {% elif pgntd_data['curpage'] == pgntd_data['lastpage'] - 1 %}
+        <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntd_data['curpage'] + 1 }}, {{ pgntd_data['reverse'] }}, {{ pgntd_data['itemspage'] }}, '{{ log_file_name }}')">
+            {{ pgntd_data['curpage'] + 1}}
+        </button>
+      {% endif %}
+    </div>
+    <div class="btn-group" role="group" aria-label="Next Group">
+      <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntd_data['nextpage'] }}, {{ pgntd_data['reverse'] }}, {{ pgntd_data['itemspage'] }}, '{{ log_file_name }}')"><i class="fas fa-angle-right"></i></button>
+      <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntd_data['lastpage'] }}, {{ pgntd_data['reverse'] }}, {{ pgntd_data['itemspage'] }}, '{{ log_file_name }}')">Last</button>
+    </div>
+    &nbsp;
+    <div class="btn-group" role="group" aria-label="Sort Group">
+        {% if pgntd_data['reverse'] == 'true' %}
+        <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntd_data['curpage'] }}, false, {{ pgntd_data['itemspage'] }}, '{{ log_file_name }}')"><i class="fas fa-sort-numeric-up-alt"></i>&nbsp; Sort</button>
+        {% else %} 
+        <button type="button" class="btn btn-outline-primary" onclick="gotoPage({{ pgntd_data['curpage'] }}, true, {{ pgntd_data['itemspage'] }}, '{{ log_file_name }}')"><i class="fas fa-sort-numeric-down"></i>&nbsp; Sort</button>
+        {% endif %}
+    </div>
+    &nbsp;
+    <div class="dropdown">
+        <button class="btn btn-outline-primary dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">
+          {{ pgntd_data['itemspage'] }}
+        </button>
+        <div class="dropdown-menu">
+          <button class="dropdown-item{% if pgntd_data['itemspage'] == 100 %} active{% endif %}" type="button" onclick="gotoPage({{ pgntd_data['curpage'] }}, {{ pgntd_data['reverse'] }}, 100, '{{ log_file_name }}')">100</button>
+          <button class="dropdown-item{% if pgntd_data['itemspage'] == 250 %} active{% endif %}" type="button" onclick="gotoPage({{ pgntd_data['curpage'] }}, {{ pgntd_data['reverse'] }}, 250, '{{ log_file_name }}')">250</button>
+          <button class="dropdown-item{% if pgntd_data['itemspage'] == 500 %} active{% endif %}" type="button" onclick="gotoPage({{ pgntd_data['curpage'] }}, {{ pgntd_data['reverse'] }}, 500, '{{ log_file_name }}')">500</button>
+          <button class="dropdown-item{% if pgntd_data['itemspage'] == 1000 %} active{% endif %}" type="button" onclick="gotoPage({{ pgntd_data['curpage'] }}, {{ pgntd_data['reverse'] }}, 1000, '{{ log_file_name }}')">1000</button>
+          <button class="dropdown-item{% if pgntd_data['itemspage'] == 5000 %} active{% endif %}" type="button" onclick="gotoPage({{ pgntd_data['curpage'] }}, {{ pgntd_data['reverse'] }}, 5000, '{{ log_file_name }}')">5000</button>
+        </div>
+    </div>
+</div>

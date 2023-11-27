@@ -65,7 +65,11 @@ $(document).ready(function() {
 				if (data.percent > 100) {
 					clearInterval(updateStatus);
 					setTimeout(function() {console.log('Done!')}, 5000);  // 2-second delay
-					location.href = '/admin/restart';  // Server Restart
+					if (data.percent == 142) {
+                        location.href = '/admin/reboot';  // Server Reboot
+                    } else {
+                        location.href = '/admin/restart';  // Server Restart
+                    }
 				};
 			});
 		}, 250); // Update every 0.25 second

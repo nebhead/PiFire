@@ -31,6 +31,7 @@
 			<a class="nav-link" id="v-pills-data-tab" data-toggle="pill" href="#v-pills-data" role="tab" aria-controls="v-pills-data" aria-selected="false">Data Management</a>
 			<a class="nav-link" id="v-pills-wizard-tab" data-toggle="pill" href="#v-pills-wizard" role="tab" aria-controls="v-pills-wizard" aria-selected="false">Config Wizard</a>
 			<a class="nav-link" id="v-pills-power-tab" data-toggle="pill" href="#v-pills-power" role="tab" aria-controls="v-pills-power" aria-selected="false">System Power</a>
+			<a class="nav-link" id="v-pills-boot-tab" data-toggle="pill" href="#v-pills-boot" role="tab" aria-controls="v-pills-boot" aria-selected="false">Boot Settings</a>
 			<a class="nav-link" id="v-pills-system-tab" data-toggle="pill" href="#v-pills-system" role="tab" aria-controls="v-pills-system" aria-selected="false">System Info</a>
 			<a class="nav-link" id="v-pills-gpio-tab" data-toggle="pill" href="#v-pills-gpio" role="tab" aria-controls="v-pills-gpio" aria-selected="false">GPIO Info</a>
 			<a class="nav-link" id="v-pills-modules-tab" data-toggle="pill" href="#v-pills-modules" role="tab" aria-controls="v-pills-modules" aria-selected="false">Module Info</a>
@@ -91,25 +92,62 @@
 				<div class="card shadow">
 					<div class="card-header bg-secondary text-white">
 						<h5>
-							<i class="fas fa-bug"></i>&nbsp; Debug Mode
+							<i class="fas fa-bug"></i>&nbsp; Debug Options
 						</h5>
 					</div>
 					<div class="card-body">
-						<form name="input" action="/admin/setting" method="POST">
-							<!-- Enable / Disable Debug Mode -->
-							{% if debug_mode == True %}
-							<button type="submit" name="debugenabled" value="disabled" class="btn btn-success btn-block shadow">Enabled</button>
-							{% else %}
-							<button type="submit" name="debugenabled" value="enabled" class="btn btn-outline-secondary btn-block shadow">Disabled</button>
-							{% endif %}
-						</form>
+						<div class="card">
+							<div class="card-header bg-success text-white">
+								<i class="fas fa-bug"></i>&nbsp; Enable Debug Mode
+							</div>
+							<div class="card-body">
+								<form name="input" action="/admin/setting" method="POST">
+									<!-- Enable / Disable Debug Mode -->
+									{% if debug_mode == True %}
+									<button type="submit" name="debugenabled" value="disabled" class="btn btn-success btn-block shadow"><i class="fa-solid fa-toggle-on"></i>&nbsp; Enabled</button>
+									{% else %}
+									<button type="submit" name="debugenabled" value="enabled" class="btn btn-outline-success btn-block shadow"><i class="fa-solid fa-toggle-off"></i>&nbsp; Disabled</button>
+									{% endif %}
+								</form>
+								<br>
+								<span class="badge badge-warning">NOTE:</span><i class="small"> This mode enables a debug.log to be generated with more verbose debug information provided.  May impact performance. </i>
+								<br>
+							</div>
+						</div>
 						<br>
-						<span class="badge badge-warning">NOTE:</span><i class="small"> This mode enables a debug.log to be generated with more verbose debug information provided.  May impact performance. </i>
+
+						<div class="card">
+							<div class="card-header bg-warning">
+								<i class="fas fa-sliders-h"></i>&nbsp; Manual Control Mode
+							</div>
+							<div class="card-body">
+								<a href="/manual" class="btn btn-outline-warning btn-block shadow" role="button"><i class="fas fa-sliders-h"></i>&nbsp; Manual Controls</a><br>
+								<span class="badge badge-warning">NOTE:</span><i class="small"> This mode cancels current mode and will allow you to control the Auger, Fan, Igniter and Power outputs from the relay.</i>
+								<br>
+							</div>
+						</div>
 						<br>
+				
+						<div class="card">
+							<div class="card-header bg-primary">
+								<i class="fa-regular fa-file-lines"></i>&nbsp; Logs 
+							</div>
+							<div class="card-body">
+								<form action="/admin/setting" method="POST">
+									<!-- Download Logs -->
+									<button type="submit" class="btn btn-outline-primary btn-block shadow" name="download_logs" value="true">
+										<i class="fa-solid fa-download"></i>&nbsp; Download Server Logs (zipped)
+									</button>
+								</form>
+								<br>
+								<a href="/logs" class="btn btn-outline-primary btn-block shadow" role="button">
+									<i class="fa-solid fa-eye"></i>&nbsp; Log Viewer
+								</a>
+								<br>
+							</div>
+						</div>
 						<br>
-						<a href="/manual" class="btn btn-outline-warning btn-block shadow" role="button"><i class="fas fa-sliders-h"></i> Manual Controls</a><br>
-						<span class="badge badge-warning">NOTE:</span><i class="small"> This mode cancels current mode and will allow you to control the Auger, Fan, Igniter and Power outputs from the relay.</i>
-						<br>
+
 					</div>
 				</div>
 				{% if not request.MOBILE %}<br><br><br>{% endif %}
@@ -125,11 +163,6 @@
 					</div>
 					<div class="card-body">
 						<form name="input" action="/admin/setting" method="POST">
-							<!-- Download Logs -->
-							<button type="submit" class="btn btn-outline-success btn-block shadow" name="download_logs" value="true">
-								Download Server Logs
-							</button>
-							<br>
 							<!-- Backup Settings -->
 							<button type="submit" class="btn btn-outline-success btn-block shadow" name="backupsettings" value="true">
 								Backup Settings
@@ -302,6 +335,9 @@
 							</div>
 							<!-- Modal body -->
 							<div class="modal-body text-center">
+								<span class="badge badge-warning">WARNING:</span>&nbsp; <i class="small"> Restart of the server will be done after restoring settings.  It's a good idea to backup your current settings before proceeding.</i>
+								<br><br>
+		
 								<div class="accordion" id="localremoteaccordian">
 									<div class="card">
 										<div class="card-header" id="localfiles">
@@ -353,7 +389,7 @@
 							<!-- Modal footer -->
 							<div class="modal-footer">
 								<button type="button" class="btn btn-warning" data-dismiss="modal">Cancel</button>
-								<button type="submit" class="btn btn-danger" name="restoresettings" value="true">Restore</button>
+								<button type="submit" class="btn btn-danger" name="restoresettings" value="true">Restore & Restart</button>
 							</div>
 						</div>
 					</div>
@@ -543,6 +579,31 @@
 				</div>
 				{% if not request.MOBILE %}<br><br><br>{% endif %}
 			</div><!-- End of Tab -->
+			<!-- ============================ Boot Settings ========================== -->
+			{% if request.MOBILE %}<br>{% endif %}
+
+			<div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-boot" role="tabpanel" aria-labelledby="v-pills-boot-tab">
+				<form name="input" action="/admin/boot" method="POST">
+				<div class="card shadow">
+					<div class="card-header bg-primary text-white">
+						<h5>
+							<i class="fas fa-power-off"></i>&nbsp; Boot Configuration
+						</h5>
+					</div>
+					<div class="card-body">
+						<div class="custom-control custom-switch">
+							<input type="checkbox" class="custom-control-input" id="boot_to_monitor" name="boot_to_monitor" {% if settings['globals']['boot_to_monitor'] %}checked{% endif %}>
+							<label class="custom-control-label" for="boot_to_monitor">Enable boot into monitor mode.</label>
+  					    </div>
+					</div>
+					<div class="card-footer">
+						<button type="submit" class="btn btn-primary">Save Boot Settings</button>
+					</div>
+				</div>
+				{% if not request.MOBILE %}<br><br><br>{% endif %}
+				</form>
+			</div><!-- End of Tab -->
+
 			<!-- ============================ System Info ========================== -->
 			{% if request.MOBILE %}<br>{% endif %}
 			<div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-system" role="tabpanel" aria-labelledby="v-pills-system-tab">

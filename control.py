@@ -22,6 +22,7 @@ Description: This script will start at boot, initialize the relays and
 import logging
 import importlib
 from common import *  # Common Module for WebUI and Control Program
+from common.process_mon import Process_Monitor
 from notify.notifications import *
 from file_mgmt.recipes import convert_recipe_units
 from file_mgmt.cookfile import create_cookfile
@@ -40,7 +41,7 @@ wizard_data = read_wizard()
 
 # Setup logging
 log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.ERROR
-controlLogger = create_logger('control', filename='./logs/control.log', level=log_level)
+controlLogger = create_logger('control', filename='./logs/control.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 
 log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
 eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
@@ -245,6 +246,11 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	:param display_device: Display Device
 	:param dist_device: Distance Device
 	"""
+
+	# Setup Process Monitor and Start 
+	monitor = Process_Monitor('control', ['supervisorctl', 'restart', 'control'], timeout=30)
+	monitor.start_monitor()
+
 	# Precondition for entering into main control loop 
 	status = 'Active'
 
@@ -337,13 +343,13 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		eventLogger.debug('Auger ON')
 
 	if mode in ('Startup', 'Reignite', 'Smoke'):
-		OnTime = settings['cycle_data']['SmokeCycleTime']  # Auger On Time (Default 15s)
-		OffTime = 45 + (settings['cycle_data']['PMode'] * 10)  # Auger Off Time
+		OnTime = settings['cycle_data']['SmokeOnCycleTime']  # Auger On Time (Default 15s) 
+		OffTime = settings['cycle_data']['SmokeOffCycleTime'] + (settings['cycle_data']['PMode'] * 10)  # Auger Off Time
 		CycleTime = OnTime + OffTime  # Total Cycle Time
 		CycleRatio = RawCycleRatio = OnTime / CycleTime  # Ratio of OnTime to CycleTime
 		# Write Metrics (note these will be overwritten if smart start is enabled)
 		metrics['p_mode'] = settings['cycle_data']['PMode']
-		metrics['auger_cycle_time'] = settings['cycle_data']['SmokeCycleTime']
+		metrics['auger_cycle_time'] = settings['cycle_data']['SmokeOnCycleTime']
 		write_metrics(metrics)
 
 	if mode == 'Hold':
@@ -375,6 +381,10 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		OffTime = 1  # Auger Off Time
 		CycleTime = OnTime + OffTime  # Total Cycle Time
 		CycleRatio = RawCycleRatio = OnTime / CycleTime  # Ratio of OnTime to CycleTime
+		''' Allow for the igniter to be turned on during prime mode - user selected '''
+		if settings['globals']['prime_ignition'] and control['next_mode'] == 'Startup':
+			grill_platform.igniter_on()
+			eventLogger.debug('Igniter ON')
 
 	# Get initial probe sensor data, temperatures 
 	sensor_data = probe_complex.read_probes()
@@ -425,7 +435,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		# Apply the profile 
 		profile_selected = control['smartstart']['profile_selected']
 		OnTime = settings['smartstart']['profiles'][profile_selected]['augerontime']  # Auger On Time (Default 15s)
-		OffTime = 45 + (settings['smartstart']['profiles'][profile_selected]['p_mode'] * 10)  # Auger Off Time
+		OffTime = settings['cycle_data']['SmokeOffCycleTime'] + (settings['smartstart']['profiles'][profile_selected]['p_mode'] * 10)  # Auger Off Time
 		CycleTime = OnTime + OffTime  # Total Cycle Time
 		CycleRatio = RawCycleRatio = OnTime / CycleTime  # Ratio of OnTime to CycleTime
 		startup_timer = settings['smartstart']['profiles'][profile_selected]['startuptime']
@@ -479,6 +489,15 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			control['settings_update'] = False
 			write_control(control, direct_write=True, origin='control')
 			settings = read_settings()
+			if mode in ('Startup', 'Reignite', 'Smoke'):
+				OnTime = settings['cycle_data']['SmokeOnCycleTime']  # Auger On Time (Default 15s) 
+				OffTime = settings['cycle_data']['SmokeOffCycleTime'] + (settings['cycle_data']['PMode'] * 10)  # Auger Off Time
+				CycleTime = OnTime + OffTime  # Total Cycle Time
+				CycleRatio = RawCycleRatio = OnTime / CycleTime  # Ratio of OnTime to CycleTime
+				# Write Metrics (note these will overwrite the previous value)
+				metrics['p_mode'] = settings['cycle_data']['PMode']
+				metrics['auger_cycle_time'] = settings['cycle_data']['SmokeOnCycleTime']
+				write_metrics(metrics)
 
 		# Check if user changed hopper levels and update if required
 		if control['distance_update']:
@@ -491,14 +510,16 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		# Check hopper level when requested or every 300 seconds
 		if control['hopper_check'] or (now - hopper_toggle_time) > 300:
 			pelletdb = read_pellet_db()
-			# Get current hopper level and save it to the current pellet information
-			pelletdb['current']['hopper_level'] = dist_device.get_level()			
-			write_pellet_db(pelletdb)
-			hopper_toggle_time = now
-			eventLogger.info("Hopper Level Checked @ " + str(pelletdb['current']['hopper_level']) + "%")
+			override = False 
 			if control['hopper_check']:
 				control['hopper_check'] = False
 				write_control(control, direct_write=True, origin='control')
+				override = True
+			# Get current hopper level and save it to the current pellet information
+			pelletdb['current']['hopper_level'] = dist_device.get_level(override=override)			
+			write_pellet_db(pelletdb)
+			hopper_toggle_time = now
+			eventLogger.info("Hopper Level Checked @ " + str(pelletdb['current']['hopper_level']) + "%")
 
 		# Check for update in ON/OFF Switch
 		if not standalone and last != grill_platform.get_input_status():
@@ -625,6 +646,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			status_data['prime_amount'] = prime_amount if mode == 'Prime' else 0  # Enable Display of Prime Amount
 			status_data['lid_open_detected'] = LidOpenDetect if mode == 'Hold' else False
 			status_data['lid_open_endtime'] = LidOpenEventExpires if mode == 'Hold' else 0
+			status_data['p_mode'] = metrics.get('p_mode', None)
 			if control['mode'] == 'Recipe':
 				status_data['recipe_paused'] = True if control['recipe']['step_data']['triggered'] and control['recipe']['step_data']['pause'] else False
 			else: 
@@ -636,7 +658,10 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 					status_data['outpins'][item] = current[item]
 				except KeyError:
 					continue
+			# Send Data to Display
 			display_device.display_status(in_data, status_data)
+			# Save Status Data to Redis 
+			write_status(status_data)
 			display_toggle_time = time.time()  # Reset the display_toggle_time to current time
 
 		# Safety Controls
@@ -757,11 +782,12 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 				grill_platform.set_duty_cycle(control['duty_cycle'])
 				eventLogger.debug('Temp Fan Control: Set to OFF, Fan Returned to Max Duty Cycle')
 
-		# Write History after 3 seconds has passed
+		# Write History & Issue Heartbeat after 3 seconds has passed
 		if (now - temp_toggle_time) > 3:
 			temp_toggle_time = time.time()
 			ext_data = True if settings['globals']['ext_data'] else False  # If passing in extended data, set to True
 			write_history(in_data, ext_data=ext_data)
+			monitor.heartbeat()  # Issue a heartbeat for the process monitor
 
 		# Check if startup time has elapsed since startup/reignite mode started
 		if mode in ('Startup', 'Reignite'):
@@ -841,6 +867,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	metrics['pellet_level_end'] = pelletdb['current']['hopper_level']
 	write_metrics(metrics)
 
+	monitor.stop_monitor()
 	return ()
 
 def _next_mode(next_mode, setpoint=0):			
@@ -957,6 +984,16 @@ controlLogger.info(f'Control Script Starting Up.')
 
 last = grill_platform.get_input_status()
 
+''' If the user has selected boot-to-monitor mode, then issue the command prior to the main loop '''
+if settings['globals']['boot_to_monitor']:
+	control = read_control()
+	control['mode'] = 'Monitor'
+	control['updated'] = True
+	write_control(control, direct_write=True, origin='control')
+
+''' Initialize the status data on first run. '''
+status = read_status(init=True)
+
 while True:
 
 	# Check the On/Off switch for changes
@@ -968,6 +1005,15 @@ while True:
 			control['updated'] = True  # Change mode
 			control['mode'] = 'Stop'
 			write_control(control, direct_write=True, origin='control')
+
+	status = read_status()
+	current = grill_platform.get_output_status()  # Get current pin settings
+	for item in settings['outpins']:
+		try:
+			status['outpins'][item] = current[item]
+		except KeyError:
+			continue
+	write_status(status)
 
 	# 1. Check control for commands
 	execute_commands()
@@ -997,7 +1043,7 @@ while True:
 	if control['hopper_check']:
 		pelletdb = read_pellet_db()
 		# Get current hopper level and save it to the current pellet information
-		pelletdb['current']['hopper_level'] = dist_device.get_level()
+		pelletdb['current']['hopper_level'] = dist_device.get_level(override=True)
 		write_pellet_db(pelletdb)
 		eventLogger.info("Hopper Level Checked @ " + str(pelletdb['current']['hopper_level']) + "%")
 		control['hopper_check'] = False
@@ -1045,6 +1091,15 @@ while True:
 				write_metrics(metrics)
 				if metrics_list[-1]['mode'] != 'Prime':
 					create_cookfile()
+
+			status['p_mode'] = 0  
+			status['mode'] = "Stop"
+			status['recipe'] = False
+			status['recipe_paused'] = False
+			status['start_time'] = 0
+			status['lid_open_detected'] = False 
+			status['lid_open_endtime'] = 0 
+			write_status(status)
 
 			if control['status'] == 'monitor' and control['mode'] == 'Error':
 				grill_platform.power_on()

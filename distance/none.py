@@ -38,5 +38,5 @@ class HopperLevel:
 		levels['full'] = self.full
 		return (levels)
 
-	def get_level(self):
+	def get_level(self, override=False):
 		return 100

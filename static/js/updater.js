@@ -1,4 +1,6 @@
 $(document).ready(function(){
+	$('#release_notes_html').load('/update/post-message');
+
 	req = $.ajax({
 		url : '/checkupdate',
 		type : 'GET'

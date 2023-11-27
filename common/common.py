@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 '''
 ==============================================================================
  PiFire Common Module
@@ -26,6 +24,7 @@ import redis
 import uuid
 import random
 import logging
+from ratelimitingfilter import RateLimitingFilter
 
 # *****************************************
 # Constants and Globals 
@@ -57,25 +56,31 @@ cmdsts = redis.StrictRedis('localhost', 6379, charset="utf-8", decode_responses=
 ==============================================================================
 '''
 def create_logger(name, filename='./logs/pifire.log', messageformat='%(asctime)s | %(levelname)s | %(message)s', level=logging.INFO):
-	"""Setup a custom logger"""
+	'''Create or Get Existing Logger'''
 	logger = logging.getLogger(name)
-	logger.setLevel(level)
+	''' 
+		If the logger does not exist, create one. Else return the logger. 
+		Note: If the a log-level change is needed, the developer should directly set the log level on the logger, instead of using 
+		this function.  
+	'''
 	if not logger.hasHandlers():
+		logger.setLevel(level)
 		formatter = logging.Formatter(fmt=messageformat, datefmt='%Y-%m-%d %H:%M:%S')
 		# datefmt='%Y-%m-%d %H:%M:%S'
+		# Add a rate limit filter for the voltage error logging 
+		config = {'match': ['An error occurred reading the voltage from one of the ports.']}
+		ratelimit = RateLimitingFilter(rate=1, per=60, burst=5, **config)  # Allow 1 per 60s (with periodic burst of 5)
 		handler = logging.FileHandler(filename)        
 		handler.setFormatter(formatter)
+		handler.addFilter(ratelimit)  # Add the rate limit filter
 		logger.addHandler(handler)
 	return logger
 
 def default_settings():
 	settings = {}
 
-	settings['versions'] = {
-		'server' : "1.5.4",
-		'cookfile' : "1.5.0",  # Current cookfile format version
-		'recipe' : "1.0.0"  # Current recipe file format version
-	}
+	updater_info = read_updater_manifest()
+	settings['versions'] = updater_info['metadata']['versions']
 
 	settings['probe_settings'] = {}
 	settings['probe_settings']['probe_profiles'] = _default_probe_profiles()
@@ -97,8 +102,15 @@ def default_settings():
 		'augerrate' : 0.3,  		# (grams per second) default auger load rate is 10 grams / 30 seconds
 		'first_time_setup' : True,  # Set to True on first setup, to run wizard on load 
 		'ext_data' : False,  # Set to True to allow tracking of extended data.  More data will be stored in the history database and can be reviewed in the CSV.
-		'global_control_panel' : False  # Set to True to display control panel on most pages (except Updater, Wizard, Cookfile and some other pages)
+		'global_control_panel' : False,  # Set to True to display control panel on most pages (except Updater, Wizard, Cookfile and some other pages)
+		'boot_to_monitor' : False,  # Set to True to boot directly into monitor mode
+		'prime_ignition' : False,  # Set to True to enable the igniter in prime & startup mode
+		'updated_message' : False,   # Set to True to display a pop-up message after the system has been updated 
+		'venv' : False  # Set to True if running in virtual environment (needed for Raspberry Pi OS Bookworm)
 	}
+
+	if os.path.exists('bin'):
+		settings['globals']['venv'] = True 
 
 	settings['outpins'] = {
 		'power' : 4,
@@ -129,11 +141,12 @@ def default_settings():
 	}
 
 	settings['cycle_data'] = {
-		'HoldCycleTime' : 20,
-		'SmokeCycleTime' : 15,
+		'HoldCycleTime' : 25,
+		'SmokeOnCycleTime' : 15,  # Smoke/Startup Auger On Time.
+		'SmokeOffCycleTime' : 45,  # Smoke/Startup Auger Off Time.  Starting value for PMode (10s is added for each PMode setting)
 		'PMode' : 2,  			# http://tipsforbbq.com/Definition/Traeger-P-Setting
-		'u_min' : 0.15,
-		'u_max' : 1.0,
+		'u_min' : 0.1,
+		'u_max' : 0.9,
 		'LidOpenDetectEnabled' : False,  #  Enable Lid Open Detection
 		'LidOpenThreshold' : 15,	 #  Percentage drop in temperature from the hold temp, to trigger lid open event
 		'LidOpenPauseTime' : 60  #  Number of seconds to pause when a lid open event is detected 
@@ -163,7 +176,7 @@ def default_settings():
 	settings['pwm'] = {
 		'pwm_control': False,
 		'update_time' : 10,
-		'frequency' : 30, 		# PWM Fan Frequency. This may vary with different fans
+		'frequency' : 25000,    # PWM Fan Frequency. Intel 4-wire PWM spec specifies 25 kHz
 		'min_duty_cycle' : 20, 	# This is the minimum duty cycle that can be set. Some fans stall below a certain speed
 		'max_duty_cycle' : 100, # This is the maximum duty cycle that can be set. Can limit fans that are overpowered
 		'temp_range_list' : [3, 7, 10, 15],  # Temp Bands for Each Profile
@@ -212,7 +225,7 @@ def default_settings():
 	}
 
 	settings['smartstart'] = {
-		'enabled' : True, 
+		'enabled' : False,   # Disable Smart Start by default on new installations
 		'temp_range_list' : [60, 80, 90],  # Min Temps for Each Profile
 		'profiles' : [
 			{
@@ -598,68 +611,8 @@ def default_pellets():
 
 def _default_probe_profiles():
 
-	probe_profiles = {}
-
-	probe_profiles['TWPS00'] = {
-		'Vs' : 3.28,		# Vs = Voltage Source input to resistor divider
-		'Rd' : 10000,		# Divider Resistance Ohms (Default 10k Ohm)
-		'A' : 7.3431401e-4,	# Coefficient A for SHH # from HeaterMeter?
-		'B' : 2.1574370e-4,	# Coefficient B for SHH
-		'C' : 9.5156860e-8,	# Coefficient C for SHH
-		'name' : 'Thermoworks-Pro-Series-HeaterMeter', 
-		'id' : 'TWPS00'
-	}
-
-	probe_profiles['ET73-HM'] = {
-		'Vs' : 3.28,			# Vs = Voltage Source input to resistor divider
-		'Rd' : 10000,			# Divider Resistance Ohms (Default 10k Ohm)
-		'A' : 2.4723753e-04,	# Coefficient A for SHH # from HeaterMeter?
-		'B' : 2.3402251e-04,	# Coefficient B for SHH
-		'C' : 1.3879768e-07,	# Coefficient C for SHH
-		'name' : 'ET-73-Heatermeter', 
-		'id' : 'ET73-HM'
-	}
-
-	probe_profiles['iGrill-HM'] = {
-		'Vs' : 3.28,			# Vs = Voltage Source input to resistor divider
-		'Rd' : 10000,			# Divider Resistance Ohms (Default 10k Ohm)
-		'A' : 0.7739251279e-3,	# Coefficient A for SHH # from HeaterMeter?
-		'B' : 2.088025997e-4,	# Coefficient B for SHH
-		'C' : 1.154400438e-7,	# Coefficient C for SHH
-		'name' : 'iGrill-Heatermeter', 
-		'id' : 'iGrill-HM'
-	}
-
-	probe_profiles['PT-1000-OEM'] = {
-		'Vs': 3.28,
-		'Rd': 10000,
-		'A': 0.04136906456,
-		'B': -0.00677987613,
-		'C': 2.760294589e-05,
-		'name': 'PT-1000-Grill-Probe-OEM', # This profile was for the original probe on my Traeger
-		'id' : 'PT-1000-OEM'
-	}
-
-	probe_profiles['PT-1000-PiFire'] = {
-		'Vs': 3.28,
-		'Rd': 10000,
-		'A': 0.05469905897345206,
-		'B': -0.009473055040089443,
-		'C': 4.3768560703857386e-5,
-		'name': "PT-1000-Grill-Probe-PiFire", # This profile is for a replacement PT-1000 grill probe
-		'id' : 'PT-1000-PiFire'
-	}
-
-	probe_profiles['ET73-SP'] = {
-		'Vs' : 3.28,  # Vs = Voltage Source input to resistor divider
-		'Rd' : 10000,  # Divider Resistance Ohms (Default 10k Ohm)
-		# from: https://github.com/skyeperry1/Maverick-ET-73-Meat-Probe-Arduino-Library/blob/master/ET73.h
-		'A' : 2.3067434E-4,
-		'B' : 2.3696596E-4,
-		'C' : 1.2636414E-7,
-		'name' : 'ET-73-skyeperry1',
-		'id' : 'ET73-SP'
-	}
+	probes_json = read_generic_json('./probes/probes.json')
+	probe_profiles = probes_json['profiles']
 
 	return probe_profiles
 
@@ -671,7 +624,14 @@ def default_probe_map(probe_profiles):
 			'device' : 'proto_adc',   # Unique name for the device
 			'module' : 'prototype',  # Module to support the hardware device
 			'ports' : ['ADC0', 'ADC1', 'ADC2', 'ADC3'],    # Optionally define ports, otherwise, leave this up to the module to define
-			'config' : {}  # Optional configuration data to pass to the module
+			'config' : {
+				'ADC0_rd': '10000',
+            	'ADC1_rd': '10000',
+            	'ADC2_rd': '10000',
+            	'ADC3_rd': '10000',
+            	'i2c_bus_addr': '0x48',
+            	'voltage_ref': '3.28'
+			}  # Configuration data to pass to the module
 		}
 	
 	probe_devices.append(device)
@@ -682,7 +642,7 @@ def default_probe_map(probe_profiles):
 			'type' : 'Primary',
 			'label' : 'Grill',
 			'name' : 'Grill',
-			'profile' : probe_profiles['PT-1000-PiFire'],
+			'profile' : probe_profiles['99b8f02d-233d-11ee-a7a2-e5396c02c5fd'],
 			'device' : 'proto_adc',
 			'port' : 'ADC0',
 			'enabled' : True
@@ -831,6 +791,42 @@ def write_errors(errors):
 
 	cmdsts.set('errors', json.dumps(errors))
 
+def read_warnings():
+	"""
+	Read Warnings from Redis DB and then burn them
+
+	:return: warnings
+	"""
+	global cmdsts
+
+	try:
+		if not(cmdsts.exists('warnings')):
+			warnings = []
+		else:
+			# Read list of warnings 
+			warnings = cmdsts.lrange('warnings', 0, -1)
+			# Remove all warnings in Redis DB
+			cmdsts.delete('warnings')
+	except:
+		warnings = ['Unable to reach Redis database.  You may need to reinstall PiFire or enable redis-server.']
+		write_log(warnings[0])
+
+	return warnings
+
+def write_warning(warning):
+	"""
+	Write a warning to Redis DB
+
+	:param warnings: Warnings List 
+	"""
+	global cmdsts
+
+	try:
+		cmdsts.rpush('warnings', warning)
+	except:
+		event = 'Unable to reach Redis database.  You may need to reinstall PiFire or enable redis-server.'
+		write_log(event)
+
 def read_metrics(all=False):
 	"""
 	Read Metrics from Redis DB
@@ -885,7 +881,7 @@ def write_metrics(metrics=default_metrics(), flush=False, new_metric=False):
 		cmdsts.rpop('metrics:general')
 		cmdsts.rpush('metrics:general', json.dumps(metrics))
 
-def read_settings(filename='settings.json', init=False):
+def read_settings(filename='settings.json', init=False, retry_count=0):
 	"""
 	Read Settings from file
 
@@ -899,9 +895,8 @@ def read_settings(filename='settings.json', init=False):
 		json_data_file.close()
 
 	except(IOError, OSError):
-		# Default settings
+		""" Settings file not found, create a new default settings file """
 		settings = default_settings()
-		# Issue with reading states JSON, so create one/write new one
 		write_settings(settings)
 		return(settings)
 	except(ValueError):
@@ -910,7 +905,14 @@ def read_settings(filename='settings.json', init=False):
 		write_log(event)
 		json_data_file.close()
 		# Retry Reading Settings
-		settings = read_settings(filename=filename)
+		if retry_count < 5: 
+			settings = read_settings(filename=filename, retry_count=retry_count+1)
+		else:
+			""" Undefined settings file load error, indicates corruption """
+			settings_default = default_settings()
+			settings = restore_settings(settings_default)
+			init = True
+			write_settings(settings)
 
 	if init:
 		# Get latest settings format
@@ -927,18 +929,30 @@ def read_settings(filename='settings.json', init=False):
 
 		# If default version is different from what is currently saved, update version in saved settings
 		if 'versions' not in settings.keys():
-			settings['versions'] = {
-				'server' : settings_default['versions']['server']
-			}
+			''' Upgrading from extremely old version '''
+			settings['versions'] = settings_default['versions']
 			update_settings = True
-		elif settings_default['versions']['server'] != settings['versions']['server']:
-			backup_settings()  # Backup Old Settings Before Performing Upgrade 
+		elif semantic_ver_is_lower(settings['versions']['server'], settings_default['versions']['server']):
+			''' Upgrade Path '''
+			backup_settings()  # Backup Old Settings Before Performing Upgrade
+			warning = f'Upgrading your settings from {settings["versions"]["server"]} to {settings_default["versions"]["server"]}.'
+			write_warning(warning)
+			write_log(warning)
 			prev_ver = semantic_ver_to_list(settings['versions']['server'])
 			settings = upgrade_settings(prev_ver, settings, settings_default)
-			settings['versions']['server'] = settings_default['versions']['server']
+			settings['versions'] = settings_default['versions']
 			update_settings = True
+		elif semantic_ver_is_lower(settings_default['versions']['server'], settings['versions']['server']):
+			''' Downgrade Path '''			
+			backup_settings()  # Backup Old Settings Before Performing Downgrade 
+			settings = downgrade_settings(settings, settings_default)
+			update_settings = True 
 
-		# Overalay the original settings ontop of the default settings
+		if settings['versions'].get('build', None) != settings_default['versions']['build']:
+			settings['versions']['build'] = settings_default['versions']['build']
+			update_settings = True 
+
+		# Overlay the original settings on top of the default settings
 		for key in settings_default.keys():
 			if key in settings.keys():
 				for subkey in settings_default[key].keys():
@@ -970,10 +984,50 @@ def write_settings(settings):
 		settings_file.write(json_data_string)
 
 def backup_settings():
+	# Copy current settings file to a backup copy in /[BACKUP_PATH]/PiFire_[DATE]_[TIME].json 
 	time_now = datetime.datetime.now()
 	time_str = time_now.strftime('%m-%d-%y_%H%M%S') # Truncate the microseconds
 	backup_file = BACKUP_PATH + 'PiFire_' + time_str + '.json'
 	os.system(f'cp settings.json {backup_file}')
+	# Save a path to the backup copy in the updater_manifest.json
+	backup_manifest = read_generic_json('./backups/manifest.json')
+	if backup_manifest == {}:
+		backup_manifest = {
+			'server_settings' : {}
+		}
+		write_generic_json(backup_manifest, './backups/manifest.json')
+
+	settings = read_generic_json('settings.json')
+	server_version = settings['versions']['server']
+	backup_manifest['server_settings'][server_version] = backup_file
+	write_generic_json(backup_manifest, 'backups/manifest.json')
+	warning = f'Backed up your current settings to "{backup_file}" and setting these as the recovery settings for server version: {server_version}.'
+	write_warning(warning)
+	write_log(warning)
+	return backup_file 
+
+def restore_settings(settings_default):
+	''' Look for backup file to restore from '''
+	backup_manifest = read_generic_json('./backups/manifest.json')
+	if backup_manifest == {}:
+		backup_manifest = {
+			'server_settings' : {},
+			'pelletdb' : {
+				'current' : ''
+			}
+		}
+		write_generic_json(backup_manifest, './backups/manifest.json')
+	server_version = settings_default['versions']['server']
+	backup_settings_file = backup_manifest['server_settings'].get(server_version, None)
+	if backup_settings_file is not None:
+		warning = f'Something failed when reading the "settings.json" file.  Restoring settings from the following backup settings file: {backup_settings_file}.'
+		settings = read_settings(filename=backup_settings_file)
+	else: 
+		warning = f'Something failed when reading the "settings.json" file.  Resetting settings to defaults, since no backup settings files were found.'
+		settings = settings_default
+	write_warning(warning)
+	write_log(warning)
+	return settings
 
 def upgrade_settings(prev_ver, settings, settings_default):
 	''' Check if upgrading from v1.4.x or earlier '''
@@ -995,7 +1049,41 @@ def upgrade_settings(prev_ver, settings, settings_default):
 		for profile in settings['probe_settings']['probe_profiles']:
 			if 'id' not in settings['probe_settings']['probe_profiles'][profile].keys():
 				settings['probe_settings']['probe_profiles'][profile]['id'] = profile
+	if prev_ver[0] <=1 and prev_ver[1] <= 5:
+		# if moving from v1.5 to v1.6, force a first-time setup to drive changes to the probe device setup
+		settings['globals']['first_time_setup'] = True
+		settings['cycle_data'].pop('SmokeCycleTime') # Remove old SmokeCycleTime
+		settings['cycle_data']['SmokeOnCycleTime'] = 15  # Name change for SmokeCycleTime variable 
+		settings['cycle_data']['SmokeOffCycleTime'] = 45  # Added SmokeOffCycleTime variable 
+	''' Import any new probe profiles '''
+	for profile in list(settings_default['probe_settings']['probe_profiles'].keys()):
+		if profile not in list(settings['probe_settings']['probe_profiles'].keys()):
+			settings['probe_settings']['probe_profiles'][profile] = settings_default['probe_settings']['probe_profiles'][profile]
 
+	settings['globals']['updated_message'] = True  # Display updated message after reset/reboot
+	return(settings)
+
+def downgrade_settings(settings, settings_default):
+	''' Look for backup file for the downgrade '''
+	backup_manifest = read_generic_json('./backups/manifest.json')
+	if backup_manifest == {}:
+		backup_manifest = {
+			'server_settings' : {},
+			'pelletdb' : {
+				'current' : ''
+			}
+		}
+		write_generic_json(backup_manifest, './backups/manifest.json')
+	server_version = settings_default['versions']['server']
+	backup_settings_file = backup_manifest['server_settings'].get(server_version, None)
+	if backup_settings_file is not None:
+		warning = f'Downgrade server version detected. [{settings["versions"]["server"]} -> {settings_default["versions"]["server"]}] Restoring settings from the following backup settings file: {backup_settings_file}.'
+		settings = read_settings(filename=backup_settings_file)
+	else: 
+		warning = f'Downgrade server version detected. [{settings["versions"]["server"]} -> {settings_default["versions"]["server"]}] Resetting settings to defaults, since no backup settings files were found.'
+		settings = settings_default
+	write_warning(warning)
+	write_log(warning)
 	return(settings)
 
 def read_pellet_db(filename='pelletdb.json'):
@@ -1015,9 +1103,11 @@ def read_pellet_db(filename='pelletdb.json'):
 		json_data_file.close()
 	except(IOError, OSError):
 		# Issue with reading JSON, so create one/write new one
-		pelletdb = default_pellets()
 		write_pellet_db(pelletdb)
 		return(pelletdb)
+	except:
+		''' Restore PelletDB from backup if available '''
+		pelletdb_struct = backup_pellet_db(action='restore')
 
 	# Overlay the read values over the top of the default values
 	#  This ensures that any NEW fields are captured.  
@@ -1045,7 +1135,52 @@ def write_pellet_db(pelletdb):
 	with open("pelletdb.json", 'w') as json_file:
 		json_file.write(json_data_string)
 
-def read_log(legacy=True):
+def backup_pellet_db(action='backup'):
+	''' Backup & Restore Pellet Database '''
+	backup_manifest = read_generic_json('./backups/manifest.json')
+	if backup_manifest == {}:
+		backup_manifest = {
+			'server_settings' : {},
+			'pelletdb' : {
+				'current' : ''
+			}
+		}
+		write_generic_json(backup_manifest, './backups/manifest.json')
+
+	if backup_manifest.get('pelletdb', None) == None:
+		''' If the structure doesn't exist, create it. '''
+		backup_manifest['pelletdb'] = { 'current' : None }
+
+	if action == 'backup':
+		time_now = datetime.datetime.now()
+		time_str = time_now.strftime('%m-%d-%y_%H%M%S') # Truncate the microseconds
+		backup_file = BACKUP_PATH + 'PelletDB_' + time_str + '.json'
+		os.system(f'cp pelletdb.json {backup_file}')
+		backup_manifest['pelletdb']['current'] = backup_file 
+		message = f'Pellet DB has been backed up to the following file: {backup_file}'
+		write_generic_json(backup_manifest, './backups/manifest.json')
+		write_log(message)
+		return backup_file
+	elif action == 'restore':
+		backup_pelletdb = backup_manifest['pelletdb'].get('current', None)
+		if backup_pelletdb is not None:
+			pelletdb_backup_file = backup_pelletdb
+			warning = f'There was an issue with loading the Pellet Database (possibly corruption).  Restoring from the following backup file: {backup_pelletdb}.'
+			pelletdb = read_pellet_db(filename=pelletdb_backup_file)
+			write_pellet_db(pelletdb)
+		else: 
+			warning = f'There was an issue with loading the Pellet Database (possibly corruption).  No backups found, setting to defaults.'
+			pelletdb = default_pellets()
+			write_pellet_db(pelletdb)
+		write_warning(warning)
+		write_log(warning)
+		return pelletdb
+	else:
+		pass 
+
+	return 
+
+def read_events(legacy=True):
 	"""
 	Read event.log and populate an array of events.
 
@@ -1088,18 +1223,35 @@ def read_log(legacy=True):
 
 	return(event_list, num_events)
 
+def read_log_file(filepath):
+	# Read all lines of events.log into a list(array)
+	try:
+		with open(filepath) as log_file:
+			log_file_lines = log_file.readlines()
+			log_file.close()
+	# If file not found error, then create events.log file
+	except(IOError, OSError):
+		event = f'Unable to open log file: {filepath}'
+		write_log(event)
+		return []
+
+	return log_file_lines 
+
+def add_line_numbers(event_list):
+	event_lines = []
+	for index, line in enumerate(event_list):
+		event_lines.append([index, line])
+	return event_lines 
+
 def write_log(event):
 	"""
 	Write event to event.log
 
 	:param event: String event
 	"""
-	now = str(datetime.datetime.now())
-	now = now[0:19] # Truncate the microseconds
-
-	logfile = open("/tmp/events.log", "a")
-	logfile.write(now + ' ' + event + '\n')
-	logfile.close()
+	log_level = logging.INFO
+	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
+	eventLogger.info(event)
 
 def write_event(settings, event):
 	"""
@@ -1473,7 +1625,7 @@ def set_wizard_install_status(percent, status, output):
 	cmdsts.set('wizard:status', status)
 	cmdsts.set('wizard:output', output)
 
-def read_dependencies(filename='updater/updater_manifest.json'):
+def read_updater_manifest(filename='updater/updater_manifest.json'):
 	"""
 	Read Updater Manifest Data from file
 
@@ -1498,7 +1650,7 @@ def read_dependencies(filename='updater/updater_manifest.json'):
 		write_log(event)
 		json_data_file.close()
 		# Retry Reading Settings
-		dependencies = read_dependencies(filename=filename)
+		dependencies = read_updater_manifest(filename=filename)
 
 	return(dependencies)
 
@@ -1580,6 +1732,26 @@ def semantic_ver_to_list(version_string):
 
 	return(ver_list)
 
+def semantic_ver_is_lower(version_A, version_B):
+	version_A = semantic_ver_to_list(version_A)
+	version_B = semantic_ver_to_list(version_B)
+	
+	if version_A [0] < version_B[0]:
+		return True
+	elif version_A [0] > version_B[0]:
+		return False
+	else:
+		if version_A [1] < version_B[1]:
+			return True
+		elif version_A [1] > version_B[1]:
+			return False
+		else:
+			if version_A [2] < version_B[2]:
+				return True
+			elif version_A [2] > version_B[2]:
+				return False
+	return False
+
 def seconds_to_string(seconds):
 	m, s = divmod(seconds, 60)
 	h, m = divmod(m, 60)
@@ -1594,5 +1766,68 @@ def seconds_to_string(seconds):
 	return time_string
 
 def read_generic_json(filename):
-	f = open(filename)
-	return json.load(f)
+	try:
+		json_file = os.fdopen(os.open(filename, os.O_RDONLY))
+		json_data = json_file.read()
+		dictionary = json.loads(json_data)
+		json_file.close()
+	except: 
+		dictionary = {}
+		event = f'An error occurred loading {filename}'
+		write_log(event)
+
+	return dictionary
+
+def write_generic_json(dictionary, filename):
+	try: 
+		json_data_string = json.dumps(dictionary, indent=2, sort_keys=True)
+		with open(filename, 'w') as json_file:
+			json_file.write(json_data_string)
+	except:
+		event = f'Error writing generic json file ({filename})'
+		write_log(event)
+
+def write_status(status):
+	"""
+	Write Status to Redis DB
+
+	:param status: Status Dictionary
+	"""
+	global cmdsts
+
+	cmdsts.set('control:status', json.dumps(status))
+
+def read_status(init=False):
+	"""
+	Read Status dictionary from Redis DB
+	"""
+	global cmdsts
+
+	if init:
+		status = {
+		  	"s_plus": False,
+  			"hopper_level": 100,
+			"units": "F",
+			"mode": "Stop",
+			"recipe": False,
+			"start_time": 0,
+			"start_duration": 0,
+			"shutdown_duration": 0,
+			"prime_duration": 0,
+			"prime_amount": 0,
+			"lid_open_detected": False,
+			"lid_open_endtime": 0,
+			"p_mode": 0,
+			"recipe_paused": False,
+			"outpins": {
+				"auger": False,
+				"fan": False,
+				"igniter": False,
+				"power": False
+			}
+		}
+		write_status(status)
+	else:
+		status = json.loads(cmdsts.get('control:status'))
+
+	return status 

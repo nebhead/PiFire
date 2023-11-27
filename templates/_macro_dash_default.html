@@ -24,12 +24,32 @@
 	<div class="card-footer justify-content-center">
 		<div class="btn-toolbar justify-content-center" role="toolbar">
 			<div class="btn-group mr-2 shadow" role="group">
-				<a href="/settings" class="btn btn-sm btn-outline-primary" role="button" data-toggle="tooltip" title="Settings for this probe."><i class="fas fa-cog"></i></a>
+				<button class="btn btn-sm btn-outline-primary" role="button" data-toggle="tooltip" title="Settings for this probe." onclick="window.location.href = '/settings';">
+					<i class="fas fa-cog"></i>
+				</button>
 				{% if probe_data['type'] == 'Primary' %}
 					<button type="button" class="btn btn-sm btn-outline-primary" id="{{ probe_data['label'] }}_primary_setpoint_btn" 
-					  onclick="launchSetpointModal()">
+					  onclick="launchSetpointModal()" style="display:none">
 						<i class="fas fa-crosshairs"></i>
 					</button>
+					<div id="pmode_group" class="btn-group dropup" role="group" data-toggle="tooltip" data-placement="top" title="Adjust the PMode" style="display:none">
+						<button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" id="pmode_btn" data-toggle="dropdown" aria-expanded="false">
+							<i class="fa-solid fa-p"></i>
+						</button>
+						<div class="dropdown-menu">
+						  <!-- Dropdown menu links -->
+						  <button class="dropdown-item" type="button" onclick="setPmode(0)">0 - Off</button>
+						  <button class="dropdown-item" type="button" onclick="setPmode(1)">1</button>
+						  <button class="dropdown-item" type="button" onclick="setPmode(2)">2</button>
+						  <button class="dropdown-item" type="button" onclick="setPmode(3)">3</button>
+						  <button class="dropdown-item" type="button" onclick="setPmode(4)">4</button>
+						  <button class="dropdown-item" type="button" onclick="setPmode(5)">5</button>
+						  <button class="dropdown-item" type="button" onclick="setPmode(6)">6</button>
+						  <button class="dropdown-item" type="button" onclick="setPmode(7)">7</button>
+						  <button class="dropdown-item" type="button" onclick="setPmode(8)">8</button>
+						  <button class="dropdown-item" type="button" onclick="setPmode(9)">9</button>
+						</div>
+					</div>
 				{% endif %}
 				{% for notify_info in control['notify_data'] %}
 					{% if notify_info['label'] == probe_data['label'] %} 
@@ -133,6 +153,49 @@
 	<div class="card-footer text-center">
 		<button type="button" class="btn btn-outline-primary" onclick="refreshHopperStatus()">Refresh Status</button>
 		<a href="/pellets" type="button" class="btn btn-outline-primary">Manager</a>
+	</div>
+</div>
+{% endmacro %}
+
+{% macro render_status_card() %}
+<div class="card shadow">
+	<div class="card-header bg-primary text-white text-center">
+		<i class="fas fa-info-circle"></i>&nbsp; Status: <span id="mode_status" style="color:yellow"><b>Stop</b></span>
+	</div>
+	<div class="card-body text-center text-large">
+
+			<table class="table table-sm table-borderless">
+				<tbody>
+				  <tr>
+					<td>
+						<span id="fan_status"><i class="fas fa-fan fa-2x" data-toggle="tooltip" data-placement="top" title="Fan ON" style="color:rgb(150, 150, 150)"></i></span>&nbsp;
+					</td>
+					<td>
+						<span id="auger_status"><i class="fas fa-angle-double-right fa-2x" data-toggle="tooltip" data-placement="top" title="Auger ON" style="color:rgb(150, 150, 150)"></i></span>&nbsp;
+					</td>
+					<td>
+						<span id="igniter_status"><i class="fas fa-fire fa-2x" data-toggle="tooltip" data-placement="top" title="Igniter ON" style="color:rgb(150, 150, 150)"></i></span>&nbsp;
+					</td>
+					<td>
+						<span id="pmode_status" class="fa-stack" style="vertical-align: top;">
+							<i class="far fa-square fa-stack-2x" style="color:rgb(150, 150, 150)" data-toggle="tooltip" data-placement="top" title="P-Mode"></i>
+							<i class="fas fa-minus fa-stack-1x" style="color:rgb(150, 150, 150)"></i>
+						</span>
+					</td>
+				  </tr>
+				  <tr>
+					<td><span class="badge badge-secondary">Fan</span></td>
+					<td><span class="badge badge-secondary">Auger</span></td>
+					<td><span class="badge badge-secondary">Igniter</span></td>
+					<td><span class="badge badge-secondary">P-Mode</span></td>
+				  </tr>
+				</tbody>
+			  </table>
+
+	</div>
+	<div id="status_footer" class="card-footer text-center" style="display:none">
+		<b id="mode_timer_label" style="color:green;display:none">Time Left in Mode: <span id="mode_timer"></span>s</b>
+		<b id="lid_open_label" style="color:green;display:none"></b>
 	</div>
 </div>
 {% endmacro %}

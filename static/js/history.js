@@ -28,6 +28,61 @@ var temperatureCharts = new Chart(document.getElementById('HistoryChart'), {
 			},
 			streaming: {
 				frameRate: 5   // chart is drawn 5 times every second
+			},
+			zoom: {
+				limits: {
+					y: {min: -30, max: 600}
+				  },
+				pan: {
+					enabled: true,
+					mode: 'xy',
+					onPanComplete: function({chart}) {
+						const xScale = chart.scales['x'];
+						const newMinTimestamp = xScale.min;
+	
+						const currentTimestamp = Date.now();
+
+						var num_mins = Math.floor(((currentTimestamp - xScale.min) / 1000) / 60); 
+	
+						if (num_mins <= 0) {
+							num_mins = 1;
+						}
+						// Replace data in a dataset
+						$("#minutes").val(num_mins);
+						$("#durationWindowInput").val(num_mins);
+						refreshChartData(true);
+					}
+				  },
+				zoom: {
+				  wheel: {
+					enabled: true,
+				  },
+				  pinch: {
+					enabled: true
+				  },
+				  mode: 'xy',
+				  onZoomComplete: function({chart}) {
+					const xScale = chart.scales['x'];
+					const newMinTimestamp = xScale.min;
+
+					const currentTimestamp = Date.now();
+
+					var num_mins = Math.floor(((currentTimestamp - xScale.min) / 1000) / 60); 
+
+					if (num_mins <= 0) {
+						num_mins = 1;
+					}
+					// Replace data in a dataset
+					$("#minutes").val(num_mins);
+					$("#durationWindowInput").val(num_mins);
+					refreshChartData(true);
+				  }
+				}
+			},
+			title: {
+				display: true,
+				position: 'bottom',
+				text: 'Zoom: Scroll Wheel or Pinch 		Pan: Click & Drag'
 			}
 		},
 		scales: {
@@ -120,7 +175,7 @@ function checkModeChange(mode) {
 		$('#graphcardbody').show();
 		$('#graphcardfooter').show();
 		if ((['PageLoad', 'Error'].includes(lastCookMode)) || (chartReady == false)) {
-			refreshChartData();
+			refreshChartData(false);
 		}; 
 		lastCookMode = mode;
 		checkAutorefresh();
@@ -137,11 +192,18 @@ function checkHashChange(cur_hash) {
 };
 
 // Get initial chart 
-function refreshChartData() {
+function refreshChartData(zoom) {
 	var newDuration = $("#minutes").val();
-	var postdata = { 
-		'num_mins' : newDuration
-	};
+	if(zoom) {
+		var postdata = { 
+			'zoom' : newDuration
+		};
+	} else {
+		var postdata = { 
+			'num_mins' : newDuration
+		};
+	}
+
 	req = $.ajax({
 		url : '/historyupdate/refresh',
 		type : 'POST',
@@ -149,8 +211,10 @@ function refreshChartData() {
 		contentType: "application/json; charset=utf-8",
 		traditional: true,
 		success: function (data) {
-			// Update duration scale (convert up to milliseconds)
-			temperatureCharts.options.scales.x.realtime.duration = newDuration * 60 * 1000;
+			if(!zoom) {
+				// Update duration scale (convert up to milliseconds)
+				temperatureCharts.options.scales.x.realtime.duration = newDuration * 60 * 1000;
+			};
 			// Update time label list
 			temperatureCharts.data.labels = data.time_labels;
 			// Update chart datasets
@@ -193,7 +257,7 @@ $("#autorefresh").click(function() {
 
 // Changing the duration window with the slider
 $("#durationWindowInput").change(function() {
-	refreshChartData();
+	refreshChartData(false);
 });
 
 // If a reload is required due to a server change, reload page
@@ -223,6 +287,11 @@ $("#annotation_enabled").change(function() {
 		// Update Chart
 		temperatureCharts.update();
 	};
+});
+
+// Reset Zoom on Graph
+$("#resetzoom").click(function() {
+	temperatureCharts.resetZoom();
 });
 
 $(document).ready(function(){

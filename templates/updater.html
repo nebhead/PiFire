@@ -86,6 +86,7 @@
 			</div>
 		</div>
 	</div>
+
 	<div class="col mb-4">
 		<div class="card shadow">
 			<div class="card-header bg-info">
@@ -93,6 +94,7 @@
 			</div>
 			<div class="card-body">
 				<b>Current Version:</b>&nbsp;&nbsp; <i>{{ update_data['version'] }}</i><br>
+				<b>Release Notes:</b>&nbsp;&nbsp; <button type="button" class="btn btn-outline-info btn-sm" data-toggle="modal" data-target="#release_notes_modal">Show Release Notes...</button><br>
 				<b>Branch:</b>&nbsp;&nbsp; <i>{{ update_data['branch_target'] }}</i><br>
 				<b>Remote:</b>&nbsp;&nbsp; <i>{{ update_data['remote_url'] }}</i><br>
 				<b>Remote Version:</b>&nbsp;&nbsp; <i>{{ update_data['remote_version'] }}</i><br>
@@ -100,7 +102,28 @@
 		</div>
 	</div>	
 </div>
-
+<!-- Release Message Modal -->
+<div class="modal fade" id="release_notes_modal" tabindex="-1" aria-labelledby="release_notes_modal_title" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-scrollable modal-xl">
+	  <div class="modal-content">
+		<div class="modal-header">
+		  <h5 class="modal-title" id="release_notes_modal_title"><i class="fa-solid fa-gift"></i>&nbsp; Release Notes</h5>
+		  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		  </button>
+		</div>
+		<div class="modal-body">
+			<div id="release_notes_html">
+				Loading...
+			</div>
+		</div>
+		<div class="modal-footer">
+		  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+		</div>
+	  </div>
+	</div>
+  </div>
+  
 <!-- Branch Selector Card -->
 <form method="POST" action="/update">
 <div class="card shadow">

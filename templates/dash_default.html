@@ -1,6 +1,6 @@
 {% extends 'base.html' %} 
 
-{% from '_macro_dash_default.html' import render_probe_card, render_hopper_card %}
+{% from '_macro_dash_default.html' import render_probe_card, render_hopper_card, render_status_card %}
 
 {% block cssextend %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dash_default.css') }}" type="text/css" />
@@ -22,15 +22,18 @@
 		</div>
 		{% endif %}
 	{% endfor %}
-		<div class="col-lg-4 col-md-6 col-sm-12">
+		<div class="col-lg-4 col-md-6 col-sm-12" {% if settings['modules']['dist'] == 'none' %}style="display:none"{% endif %}>
 			<br>
 			{{ render_hopper_card() }}
 			<br>
 		</div>
+		<div class="col-lg-4 col-md-6 col-sm-12">
+			<br>
+			{{ render_status_card() }}
+			<br>
+		</div>
 </div> <!-- End of Row -->
-<div class="row"> <!-- Hopper Card -->
 
-</div> <!-- End of Row -->
 <br>
 <br>
 

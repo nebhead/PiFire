@@ -67,7 +67,7 @@
 
     <!-- Device List Modals -->
     <!-- delProbeDeviceModal -->
-    <div class="modal fade" id="delProbeDeviceModal" tabindex="-1" aria-labelledby="delProbeDeviceModalLabel" aria-hidden="true">
+    <div class="modal fade" id="delProbeDeviceModal" data-backdrop="static" tabindex="-1" aria-labelledby="delProbeDeviceModalLabel" aria-hidden="true">
         <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -89,7 +89,7 @@
     </div>
 
     <!-- editProbeDeviceModal -->
-    <div class="modal fade" id="editProbeDeviceModal" tabindex="-1" aria-labelledby="editProbeDeviceModalLabel" aria-hidden="true">
+    <div class="modal fade" id="editProbeDeviceModal" data-backdrop="static" tabindex="-1" aria-labelledby="editProbeDeviceModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -110,7 +110,7 @@
     </div>
 
     <!-- addProbeDeviceModal -->
-    <div class="modal fade" id="addProbeDeviceModal" tabindex="-1" aria-labelledby="addProbeDeviceModalLabel" aria-hidden="true">
+    <div class="modal fade" id="addProbeDeviceModal" data-backdrop="static" tabindex="-1" aria-labelledby="addProbeDeviceModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -127,7 +127,7 @@
                     </div>
                     <select class="form-control" id="addProbeDeviceSelect" name="addProbeDeviceSelect" onchange="probe_addShowDeviceConfig(this.value)">
                         <option value="none" selected disabled hidden>Select a Device Module</option>
-                        {% for module, object in modules.items()|sort %}
+                        {% for module, object in modules.items() %}
                         <option value="{{ module }}">
                         {{ object['friendly_name'] }}
                         </option>
@@ -181,25 +181,37 @@
             {% for setting in moduleData['device_specific']['config'] %}
 			<tr>
 				<td>
-                    {{ moduleData['device_specific']['config'][setting]['friendly_name'] }}
+                    {{ setting['friendly_name'] }}
                 </td>
 				<td>
-                    {% if setting == 'probes_list' %} 
-                    <select multiple class="form-control deviceSpecific{{ mode }}" id="{{ moduleSection }}_devspec_{{ setting }}" name="{{ moduleSection }}_devspec_{{ setting }}">
+                    {% if setting['label'] == 'probes_list' %} 
+                    <select multiple class="form-control deviceSpecific{{ mode }}" id="{{ moduleSection }}_devspec_{{ setting['label'] }}" name="{{ moduleSection }}_devspec_{{ setting['label'] }}">
                         {% for probe in available_probes %}
                         <option value="{{ probe }}" {% if probe in defaultConfig['probes_list'] %}selected{% endif %}>{{ probe }}</option>
                         {% endfor %}
                     </select>
                     {% else %}
-                    <select class="form-control deviceSpecific{{ mode }}" id="{{ moduleSection }}_devspec_{{ setting }}" name="{{ moduleSection }}_devspec_{{ setting }}">
-					{% for option in moduleData['device_specific']['config'][setting]['options'] %}
-                        <option value="{{ option }}" {% if option == defaultConfig[setting] %}selected{% endif %}>{{ moduleData['device_specific']['config'][setting]['options'][option] }}</option>
-                    {% endfor %}
-					</select>
+                        {% if mode == 'Edit' %}
+                            {% if setting['type'] in ['float', 'int'] %}
+                                {{ render_input_float_int(moduleSection, mode, setting['label'], defaultConfig[setting['label']], setting['min'], setting['max'], setting['step']) }} 
+                            {% elif setting['type'] == 'list' %}
+                                {{ render_input_list(moduleSection, mode, setting['label'], defaultConfig[setting['label']], setting['list_values'], setting['list_labels']) }}
+                            {% else %}
+                                {{ render_input_string(moduleSection, mode, setting['label'], defaultConfig[setting['label']]) }}
+                            {% endif %}
+                        {% else %}
+                            {% if setting['type'] in ['float', 'int'] %}
+                                {{ render_input_float_int(moduleSection, mode, setting['label'], setting['default'], setting['min'], setting['max'], setting['step']) }} 
+                            {% elif setting['type'] == 'list' %}
+                                {{ render_input_list(moduleSection, mode, setting['label'], setting['default'], setting['list_values'], setting['list_labels']) }}
+                            {% else %}
+                                {{ render_input_string(moduleSection, mode, setting['label'], setting['default']) }}
+                            {% endif %}
+                        {% endif %}
                     {% endif %}
                 </td>
 				<td>
-                    {{ moduleData['device_specific']['config'][setting]['description'] }}
+                    {{ setting['description'] }}
                 </td>
 				</tr>
 			{% endfor %}
@@ -311,7 +323,7 @@
     <!-- Probe Port List Modals -->
 
     <!-- delProbePortModal -->
-    <div class="modal fade" id="delProbePortModal" tabindex="-1" aria-labelledby="delProbePortModalLabel" aria-hidden="true">
+    <div class="modal fade" id="delProbePortModal" data-backdrop="static" tabindex="-1" aria-labelledby="delProbePortModalLabel" aria-hidden="true">
         <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -332,7 +344,7 @@
     </div>
 
     <!-- editProbePortModal -->
-    <div class="modal fade" id="editProbePortModal" tabindex="-1" aria-labelledby="editProbePortModalLabel" aria-hidden="true">
+    <div class="modal fade" id="editProbePortModal" data-backdrop="static" tabindex="-1" aria-labelledby="editProbePortModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
@@ -355,7 +367,7 @@
     </div>
 
     <!-- addProbePortModal -->
-    <div class="modal fade" id="addProbePortModal" tabindex="-1" aria-labelledby="addProbePortModalLabel" aria-hidden="true">
+    <div class="modal fade" id="addProbePortModal" data-backdrop="static" tabindex="-1" aria-labelledby="addProbePortModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
@@ -417,4 +429,33 @@
     </tbody>
 </table>
 
+{% endmacro %}
+
+{% macro render_input_float_int(section, mode, label, default, min, max, step) %}
+<input type="number" class="form-control deviceSpecific{{ mode }}" aria-label="{{ label }}" 
+    aria-describedby="{{name}}_addon" 
+    value="{{ default }}" 
+    min="{{ min }}" 
+    max="{{ max }}" 
+    step="{{ step }}"
+    id="{{ section }}_devspec_{{ label }}" 
+    name="{{ section }}_devspec_{{ label }}"/>
+{% endmacro %}
+
+{% macro render_input_list(section, mode, label, default, list_values, list_labels) %}
+<select class="form-control deviceSpecific{{ mode }}"
+    id="{{ section }}_devspec_{{ label }}" 
+    name="{{ section }}_devspec_{{ label }}">
+    {% for item in list_values %}
+    <option value="{{ item }}"{% if default == item %} selected{% endif %}>{{ list_labels[loop.index0] }}</option>
+    {% endfor %}
+</select>
+{% endmacro %}
+
+{% macro render_input_string(section, mode, label, default) %}
+<input type="text" class="form-control deviceSpecific{{ mode }}" 
+    value="{{ default }}" aria-label="{{ label }}" 
+    aria-describedby="{{name}}_addon" 
+    id="{{ section }}_devspec_{{ label }}" 
+    name="{{ section }}_devspec_{{ label }}"/>
 {% endmacro %}

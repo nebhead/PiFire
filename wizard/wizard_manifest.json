@@ -30,7 +30,7 @@
 				"description" : "This is the PWM PiFire module supporting the Raspberry Pi Zero W (1/2).  Choose this module if PiFire is running on a Raspberry Pi and your PCB supports a 12v DC PWM Fan.",
 				"default" : false,
 				"image" : "raspizerow.png",
-				"py_dependencies" : [],
+				"py_dependencies" : ["rpi-hardware-pwm"],
 				"apt_dependencies" : [],
 				"settings_dependencies" : {
 					"standalone" : {
@@ -86,31 +86,91 @@
 			} 
 		}, 
 		"probes" : {
-			"ads1115" : {
-				"friendly_name" : "ADS1115",
-				"filename" : "ads1115",
-				"description" : "This is an alternative PiFire module supporting the ADS1115 16-Bit ADC.  This module is no longer the default due to reports of issues.  If you experience trouble with this module, try the Adafruit modules.  There has been rumors of sellers shipping ADS1015 12-Bit ADC's instead of the ADS1115 16-Bit ADC's.  If you got one of these, you can try the 1015 library instead.",
-				"default" : false,
+			"ads1115_adafruit" : {
+				"friendly_name" : "ADS1115 Adafruit",
+				"filename" : "ads1115_adafruit",
+				"description" : "This is the default module supporting ALL of the ADS1115 16-Bit ADC's and is based on Adafruit's Circuit Python implementation/module.  This version is still actively updated and may support a wider range of hardware.  There has been rumors of sellers shipping ADS1015 12-Bit ADC's instead of the ADS1115 16-Bit ADC's.  If you got one of these, you can try the ADS1015 Adafruit library instead.",
+				"default" : true,
 				"image" : "ads1115.png",
-				"py_dependencies" : ["ADS1115"], 
+				"py_dependencies" : ["adafruit-circuitpython-ads1x15"], 
 				"apt_dependencies" : [],
 				"settings_dependencies" : {
 					"units" : {
 						"friendly_name" : "Temp Units",
-						"description" : "Select the temperature units to use for PiFire globally.  (This can be modified in settings later)",
+						"description" : "Select the temperature units to use for PiFire globally.  (this can be modified in settings later)",
 						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
 						"settings" : ["globals", "units"]
 					}
 				},
 				"device_specific" : {
 					"ports" : ["ADC0", "ADC1", "ADC2", "ADC3"],
-					"config" : {
-						"i2c_bus_addr" : {
+					"config" : [
+						{
+							"label" : "i2c_bus_addr", 
 							"friendly_name" : "I2C Bus Address",
 							"description" : "Select the I2C bus address to use for this device.  Default is 0x48.  If you have more than one ADS1115, you can assign unique device bus address for up to four devices.",
-							"options" : {"0x48" : "0x48", "0x49": "0x49", "0x4A": "0x4A", "0x4B": "0x4B"}
+							"type" : "list", 
+							"list_values" : ["0x48", "0x49", "0x4A", "0x4B"],
+							"list_labels" : ["0x48", "0x49", "0x4A", "0x4B"],
+							"default" : "0x48",
+							"hidden" : false
+						}, 
+						{
+							"label" : "ADC0_rd", 
+							"friendly_name" : "ADC0 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "", 
+							"step" : 1,
+							"hidden" : false
+						}, 
+						{
+							"label" : "ADC1_rd", 
+							"friendly_name" : "ADC1 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
+						},
+						{
+							"label" : "ADC2_rd", 
+							"friendly_name" : "ADC2 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
+						},
+						{
+							"label" : "ADC3_rd", 
+							"friendly_name" : "ADC3 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
+						},
+						{
+							"label" : "voltage_ref", 
+							"friendly_name" : "Voltage Source Reference",
+							"description" : "Select the voltage reference measured at the top of the resistor dividers (from the power supply source).  Default is 3.28V",
+							"type" : "float", 
+							"default" : 3.2,
+							"min" : 1,
+							"max" : 10,
+							"step" : 0.001,
+							"hidden" : false
 						}
-					}
+					]
 				}
 			},
 			"ads1015_adafruit" : {
@@ -131,40 +191,73 @@
 				},
 				"device_specific" : {
 					"ports" : ["ADC0", "ADC1", "ADC2", "ADC3"],
-					"config" : {
-						"i2c_bus_addr" : {
+					"config" : [
+						{
+							"label" : "i2c_bus_addr", 
 							"friendly_name" : "I2C Bus Address",
 							"description" : "Select the I2C bus address to use for this device.  Default is 0x48.  If you have more than one ADS1115, you can assign unique device bus address for up to four devices.",
-							"options" : {"0x48" : "0x48", "0x49": "0x49", "0x4A": "0x4A", "0x4B": "0x4B"}
+							"type" : "list", 
+							"list_values" : ["0x48", "0x49", "0x4A", "0x4B"],
+							"list_labels" : ["0x48", "0x49", "0x4A", "0x4B"],						
+							"default" : "0x48",
+							"hidden" : false
+						}, 
+						{
+							"label" : "ADC0_rd", 
+							"friendly_name" : "ADC0 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
+						}, 
+						{
+							"label" : "ADC1_rd", 
+							"friendly_name" : "ADC1 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
+						},
+						{
+							"label" : "ADC2_rd", 
+							"friendly_name" : "ADC2 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
+						},
+						{
+							"label" : "ADC3_rd", 
+							"friendly_name" : "ADC3 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
+						},
+						{
+							"label" : "voltage_ref", 
+							"friendly_name" : "Voltage Source Reference",
+							"description" : "Select the voltage reference measured at the top of the resistor dividers (from the power supply source).  Default is 3.28V",
+							"type" : "float", 
+							"default" : 3.2,
+							"min" : 1,
+							"max" : 10,
+							"step" : 0.001,
+							"hidden" : false
 						}
-					}
-				}
-			},
-			"ads1115_adafruit" : {
-				"friendly_name" : "ADS1115 Adafruit",
-				"filename" : "ads1115_adafruit",
-				"description" : "This is the default module supporting the ADS1115 16-Bit ADC based on Adafruit's Circuit Python implementation/module.  This version is still actively updated and may support a wider range of hardware.  There has been rumors of sellers shipping ADS1015 12-Bit ADC's instead of the ADS1115 16-Bit ADC's.  If you got one of these, you can try the ADS1015 Adafruit library instead.",
-				"default" : true,
-				"image" : "ads1115.png",
-				"py_dependencies" : ["adafruit-circuitpython-ads1x15"], 
-				"apt_dependencies" : [],
-				"settings_dependencies" : {
-					"units" : {
-						"friendly_name" : "Temp Units",
-						"description" : "Select the temperature units to use for PiFire globally.  (this can be modified in settings later)",
-						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
-						"settings" : ["globals", "units"]
-					}
-				},
-				"device_specific" : {
-					"ports" : ["ADC0", "ADC1", "ADC2", "ADC3"],
-					"config" : {
-						"i2c_bus_addr" : {
-							"friendly_name" : "I2C Bus Address",
-							"description" : "Select the I2C bus address to use for this device.  Default is 0x48.  If you have more than one ADS1115, you can assign unique device bus address for up to four devices.",
-							"options" : {"0x48" : "0x48", "0x49": "0x49", "0x4A": "0x4A", "0x4B": "0x4B"}
-						}
-					}
+					]
 				}
 			},
 			"max31865" : {
@@ -185,32 +278,54 @@
 				},
 				"device_specific" : {
 					"ports" : ["RTD0"],
-					"config" : {
-						"cs" : {
+					"config" : [
+						{
+							"label" : "cs", 
 							"friendly_name" : "SPI Chip Select (CS)",
 							"description" : "SPI Chip Select (CS/CEx) pin used for this device.",
-							"options" : {"1" : "CS1", "0": "CS0"}
-						},
-						"rtd_nominal" : {
+							"type" : "list",
+							"list_values" : ["GPIO2", "GPIO3", "GPIO4", "GPIO5", "GPIO6", "GPIO12", "GPIO13", "GPIO14", "GPIO15", "GPIO16", "GPIO17", "GPIO18", "GPIO19", "GPIO20", "GPIO21", "GPIO22", "GPIO23", "GPIO24", "GPIO25", "GPIO26", "GPIO27"],
+							"list_labels" : ["D2", "D3", "D4", "D5", "D6", "D12", "D13", "D14", "D15", "D16", "D17", "D18", "D19", "D20", "D21", "D22", "D23", "D24", "D25", "D26", "D27"],
+							"default" : "D2",
+							"hidden" : false
+						}, 
+						{
+							"label" : "rtd_nominal", 
 							"friendly_name" : "RTD Nominal",
 							"description" : "RTD Nominal Resistance Value in Ohms. Default 1000 Ohms.",
-							"options" : {"1000" : "1000 Ohms", "100" : "100 Ohms"}
-						},
-						"ref_resistor" : {
+							"type" : "int",
+							"default" : 1000,
+							"min": 1, 
+							"max": 10000,
+							"step" : 1,
+							"hidden" : false
+						}, 
+						{
+							"label" : "ref_resistor", 
 							"friendly_name" : "Reference Resistor",
-							"description" : "Reference Resistor Value in Ohms. Default 4300 Ohms.",
-							"options" : {"4300" : "4300 Ohms", "430" : "430 Ohms"}
+							"description" : "Reference Resistor Value in Ohms. Default 4300 Ohms. (Typical options: 4300, 430)",
+							"type" : "int",
+							"default" : 4300,
+							"min": 1, 
+							"max": 10000,
+							"step" : 1,
+							"hidden" : false
 						},
-						"wires" : {
+						{
+							"label" : "wires", 
 							"friendly_name" : "RTD Wires",
 							"description" : "Number of RTD wires used for input.  Default 2",
-							"options" : {"2" : "2 Wires", "3" : "3 Wires", "4" : "4 Wires"}
+							"type" : "list",
+							"list_values" : ["2", "3", "4"],
+							"list_labels" : ["2 Wires", "3 Wires", "4 Wires"],
+							"default" : "2",
+							"hidden" : false
 						}
-					} 
+					]
 				}
 			},
 			"max31865_adafruit" : {
-				"friendly_name" : "Adafruit MAX31865 RTD",
+				"friendly_name" : "MAX31865 RTD Adafruit",
 				"filename" : "max31865_adafruit",
 				"description" : "This SPI device reads RTD style probes, such as the Traeger PT100(PT1000) RTD probe.  This version uses the Adafruit CircuitPython modules.  It should be noted that this module does not allow the use of CE0 or CE1, thus another GPIO should be used for the CS pin. Note that special care may need to be taken if this is used with another SPI device (i.e. SPI Display) on the system.",
 				"default" : false,
@@ -227,28 +342,82 @@
 				},
 				"device_specific" : {
 					"ports" : ["RTD0"],
-					"config" : {
-						"cs" : {
+					"config" : [
+						{
+							"label" : "cs", 
 							"friendly_name" : "SPI Chip Select (CS)",
 							"description" : "SPI Chip Select (CS/CEx) pin used for this device.",
-							"options" : {"D2" : "GPIO2", "D3": "GPIO3", "D4": "GPIO4", "D5": "GPIO5", "D6": "GPIO6", "D12": "GPI12", "D13": "GPIO13", "D14": "GPIO14", "D15": "GPIO15", "D16": "GPIO16", "D17": "GPIO17", "D18": "GPIO18", "D19": "GPIO19", "D20": "GPIO20", "D21": "GPIO21", "D22": "GPIO22", "D23": "GPIO23", "D24": "GPIO24", "D25": "GPIO25", "D26": "GPIO26", "D27": "GPIO27"}
-						},
-						"rtd_nominal" : {
+							"type" : "list",
+							"list_values" : ["GPIO2", "GPIO3", "GPIO4", "GPIO5", "GPIO6", "GPIO12", "GPIO13", "GPIO14", "GPIO15", "GPIO16", "GPIO17", "GPIO18", "GPIO19", "GPIO20", "GPIO21", "GPIO22", "GPIO23", "GPIO24", "GPIO25", "GPIO26", "GPIO27"],
+							"list_labels" : ["D2", "D3", "D4", "D5", "D6", "D12", "D13", "D14", "D15", "D16", "D17", "D18", "D19", "D20", "D21", "D22", "D23", "D24", "D25", "D26", "D27"],
+							"default" : "D2",
+							"hidden" : false
+						}, 
+						{
+							"label" : "rtd_nominal", 
 							"friendly_name" : "RTD Nominal",
 							"description" : "RTD Nominal Resistance Value in Ohms. Default 1000 Ohms.",
-							"options" : {"1000" : "1000 Ohms", "100" : "100 Ohms"}
-						},
-						"ref_resistor" : {
+							"type" : "int",
+							"default" : 1000,
+							"min": 1, 
+							"max": 10000,
+							"step" : 1,
+							"hidden" : false
+						}, 
+						{
+							"label" : "ref_resistor", 
 							"friendly_name" : "Reference Resistor",
-							"description" : "Reference Resistor Value in Ohms. Default 4300 Ohms.",
-							"options" : {"4300" : "4300 Ohms", "430" : "430 Ohms"}
+							"description" : "Reference Resistor Value in Ohms. Default 4300 Ohms. (Typical options: 4300, 430)",
+							"type" : "int",
+							"default" : 4300,
+							"min": 1, 
+							"max": 10000,
+							"step" : 1,
+							"hidden" : false
 						},
-						"wires" : {
+						{
+							"label" : "wires", 
 							"friendly_name" : "RTD Wires",
 							"description" : "Number of RTD wires used for input.  Default 2",
-							"options" : {"2" : "2 Wires", "3" : "3 Wires", "4" : "4 Wires"}
+							"type" : "list",
+							"list_values" : ["2", "3", "4"],
+							"list_labels" : ["2 Wires", "3 Wires", "4 Wires"],
+							"default" : "2",
+							"hidden" : false
 						}
-					} 
+					]
+				}
+			},
+			"mcp9600_adafruit" : {
+				"friendly_name" : "MCP9600 Thermocouple Amplifier Adafruit",
+				"filename" : "mcp9600_adafruit",
+				"description" : "This I2C device reads K-Type thermocouples / probes. Moreover the MCP9600 can interface with just about any thermocouple type: K, J, T, N, S, E, B and R type are all supported.  This version uses the Adafruit CircuitPython modules.",
+				"default" : false,
+				"image" : "mcp9600.png",
+				"py_dependencies" : ["adafruit-circuitpython-mcp9600"], 
+				"apt_dependencies" : [],
+				"settings_dependencies" : {
+					"units" : {
+						"friendly_name" : "Temp Units",
+						"description" : "Select the temperature units to use for PiFire globally.  (this can be modified in settings later)",
+						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
+						"settings" : ["globals", "units"]
+					}
+				},
+				"device_specific" : {
+					"ports" : ["KTT0"],
+					"config" : [
+						{
+							"label" : "i2c_bus_addr", 
+							"friendly_name" : "I2C Bus Address",
+							"description" : "Select the I2C bus address to use for this device.  Default is 0x67.  If you have more than one MCP9600, you can assign unique device bus address for up to five devices.",
+							"type" : "list", 
+							"list_values" : ["0x67", "0x66", "0x65", "0x64", "0x60"],
+							"list_labels" : ["0x67", "0x66", "0x65", "0x64", "0x60"],
+							"default" : "0x67",
+							"hidden" : false
+						}
+					]
 				}
 			},
 			"prototype" : {
@@ -269,8 +438,161 @@
 				},
 				"device_specific" : {
 					"ports" : ["ADC0", "ADC1", "ADC2", "ADC3"],
-					"config" : {}
+					"config" : [
+						{
+							"label" : "i2c_bus_addr", 
+							"friendly_name" : "I2C Bus Address",
+							"description" : "Select the I2C bus address to use for this device.  Default is 0x48.  If you have more than one ADS1115, you can assign unique device bus address for up to four devices.",
+							"type" : "list", 
+							"list_values" : ["0x48", "0x49", "0x4A", "0x4B"],
+							"list_labels" : ["0x48", "0x49", "0x4A", "0x4B"],
+							"default" : "0x48",
+							"hidden" : false
+						}, 
+						{
+							"label" : "ADC0_rd", 
+							"friendly_name" : "ADC0 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
+						}, 
+						{
+							"label" : "ADC1_rd", 
+							"friendly_name" : "ADC1 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
+						},
+						{
+							"label" : "ADC2_rd", 
+							"friendly_name" : "ADC2 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
+						},
+						{
+							"label" : "ADC3_rd", 
+							"friendly_name" : "ADC3 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
+						},
+						{
+							"label" : "voltage_ref", 
+							"friendly_name" : "Voltage Source Reference",
+							"description" : "Select the voltage reference measured at the top of the resistor dividers (from the power supply source).  Default is 3.28V",
+							"type" : "float", 
+							"default" : 3.2,
+							"min" : 1,
+							"max" : 10,
+							"step" : 0.001,
+							"hidden" : false
+						}
+					]
 				}			
+			},
+			"ads1115" : {
+				"friendly_name" : "Legacy ADS1115",
+				"filename" : "ads1115",
+				"description" : "WARNING: This module is no longer the default due to reports of issues.  If you experience trouble with this module, use the Adafruit modules.  This is an alternative PiFire module supporting the ADS1115 16-Bit ADC and should only be used if you are experiencing difficulty with the Adafruit module.",
+				"default" : false,
+				"image" : "ads1115.png",
+				"py_dependencies" : ["ADS1115"], 
+				"apt_dependencies" : [],
+				"settings_dependencies" : {
+					"units" : {
+						"friendly_name" : "Temp Units",
+						"description" : "Select the temperature units to use for PiFire globally.  (This can be modified in settings later)",
+						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
+						"settings" : ["globals", "units"]
+					}
+				},
+				"device_specific" : {
+					"ports" : ["ADC0", "ADC1", "ADC2", "ADC3"],
+					"config" : [
+						{
+							"label" : "i2c_bus_addr", 
+							"friendly_name" : "I2C Bus Address",
+							"description" : "Select the I2C bus address to use for this device.  Default is 0x48.  If you have more than one ADS1115, you can assign unique device bus address for up to four devices.",
+							"type" : "list", 
+							"list_values" : ["0x48", "0x49", "0x4A", "0x4B"],
+							"list_labels" : ["0x48", "0x49", "0x4A", "0x4B"],							
+							"default" : "0x48",
+							"hidden" : false
+						}, 
+						{
+							"label" : "ADC0_rd", 
+							"friendly_name" : "ADC0 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
+						}, 
+						{
+							"label" : "ADC1_rd", 
+							"friendly_name" : "ADC1 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
+						},
+						{
+							"label" : "ADC2_rd", 
+							"friendly_name" : "ADC2 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
+						},
+						{
+							"label" : "ADC3_rd", 
+							"friendly_name" : "ADC3 Resistor Divider Value",
+							"description" : "Select the resistor divider value for this probe port.  Default is 10000 Ohm for temperature probes.",
+							"type" : "int", 
+							"default" : 10000,
+							"min" : 1,
+							"max" : "",
+							"step" : 1,
+							"hidden" : false
+						},
+						{
+							"label" : "voltage_ref", 
+							"friendly_name" : "Voltage Source Reference",
+							"description" : "Select the voltage reference measured at the top of the resistor dividers (from the power supply source).  Default is 3.28V",
+							"type" : "float", 
+							"default" : 3.2,
+							"min" : 1,
+							"max" : 10,
+							"step" : 0.001,
+							"hidden" : false
+						}
+					]
+				}
 			},
 			"virtual_average" : {
 				"friendly_name" : "Virtual Probes - Average",
@@ -290,13 +612,15 @@
 				},
 				"device_specific" : {
 					"ports" : ["VIRT0"],
-					"config" : {
-						"probes_list" : {
+					"config" : [
+						{
+							"label" : "probes_list", 
 							"friendly_name" : "Average Probes",
 							"description" : "A list of probes from other devices, to average. Select which probes should be averaged together with ctrl+click.",
-							"options" : {"list" : "List of probes to average."}
+							"type" : "probes_list", 
+							"hidden" : false
 						}
-					}
+					]
 				}			
 			},
 			"virtual_highest" : {
@@ -317,13 +641,15 @@
 				},
 				"device_specific" : {
 					"ports" : ["VIRT0"],
-					"config" : {
-						"probes_list" : {
+					"config" : [
+						{
+							"label" : "probes_list", 
 							"friendly_name" : "Use Probes",
 							"description" : "A list of probes from other devices, to determine the highest value. Select which probes should used with ctrl+click.",
-							"options" : {"list" : "List of probes to utilize."}
+							"type" : "probes_list", 
+							"hidden" : false
 						}
-					}
+					]
 				}			
 			},
 			"virtual_lowest" : {
@@ -344,13 +670,15 @@
 				},
 				"device_specific" : {
 					"ports" : ["VIRT0"],
-					"config" : {
-						"probes_list" : {
+					"config" : [
+						{
+							"label" : "probes_list", 
 							"friendly_name" : "Use Probes",
 							"description" : "A list of probes from other devices, to determine the lowest value. Select which probes should used with ctrl+click.",
-							"options" : {"list" : "List of probes to utilize."}
+							"type" : "probes_list", 
+							"hidden" : false
 						}
-					}
+					]
 				}			
 			},
 			"virtual_median" : {
@@ -371,13 +699,15 @@
 				},
 				"device_specific" : {
 					"ports" : ["VIRT0"],
-					"config" : {
-						"probes_list" : {
+					"config" : [
+						{
+							"label" : "probes_list", 
 							"friendly_name" : "Use Probes",
 							"description" : "A list of probes from other devices, to determine the median value. Select which probes should used with ctrl+click.",
-							"options" : {"list" : "List of probes to utilize."}
+							"type" : "probes_list", 
+							"hidden" : false
 						}
-					}
+					]
 				}			
 			}
 		},
@@ -389,7 +719,7 @@
 				"notes" : "Pinout: Display - MISO = MISO(Pin 21), LED = GPIO05, SCK = SCLK(Pin 23), MOSI = MOSI(Pin 19), DC = GPIO24, RST = GPIO25, CS = CE0(Pin 24).  Encoder - CLK = GPIO16, DT = GPIO20, SW = GPIO21, GND = GND, VCC/+ = 3.3V",
 				"default" : false,
 				"image" : "ili9341-ky040.png",
-				"py_dependencies" : ["luma.lcd", "pyky040==0.1.4", "pillow==9.1.1"], 
+				"py_dependencies" : ["luma.lcd", "pyky040==0.1.4", ">=9.2.0"], 
 				"apt_dependencies" : [],
 				"settings_dependencies" : {
 					"disp_rotation" : {
@@ -407,7 +737,7 @@
 				"notes" : "Pinout: Display - MISO = MISO(Pin 21), LED = GPIO12, SCK = SCLK(Pin 23), MOSI = MOSI(Pin 19), DC = GPIO16, RST = GPIO20, CS = CE0(Pin 24). Encoder - CLK = GPIO25, DT = GPIO24, SW = GPIO23, GND = GND, VCC/+ = 3.3V",
 				"default" : false,
 				"image" : "ili9341-ky040.png",
-				"py_dependencies" : ["luma.lcd", "pyky040==0.1.4", "pillow==9.1.1"], 
+				"py_dependencies" : ["luma.lcd", "pyky040==0.1.4", "pillow>=9.2.0"], 
 				"apt_dependencies" : [],
 				"settings_dependencies" : {
 					"disp_rotation" : {
@@ -425,7 +755,7 @@
 				"notes" : "Pinout: MISO = MISO(Pin 21), LED = GPIO05, SCK = SCLK(Pin 23), MOSI = MOSI(Pin 19), DC = GPIO24, RST = GPIO25, CS = CE0(Pin 24)",
 				"default" : false,
 				"image" : "ili9341.png",
-				"py_dependencies" : ["luma.lcd", "pillow==9.1.1"], 
+				"py_dependencies" : ["luma.lcd", "pillow>=9.2.0"], 
 				"apt_dependencies" : [],
 				"settings_dependencies" : {
 					"disp_rotation" : {
@@ -443,8 +773,8 @@
 				"notes" : "Pinout:  Display - MISO = MISO(Pin 21), LED = GPIO05, SCK = SCLK(Pin 23), MOSI = MOSI(Pin 19), DC = GPIO24, RST = GPIO25, CS = CE0(Pin 24). Buttons - UP = GPIO16, DOWN = GPIO20, ENTER = GPIO21, GND = GND, VCC = 3.3V",
 				"default" : true,
 				"image" : "ili9341b.png",
-				"py_dependencies" : ["luma.lcd", "pillow==9.1.1"], 
-				"apt_dependencies" : ["python3-gpiozero"],
+				"py_dependencies" : ["luma.lcd", "pillow>=9.2.0", "gpiozero"], 
+				"apt_dependencies" : [],
 				"settings_dependencies" : {
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
@@ -467,8 +797,8 @@
 				"notes" : "Pinout:  Display - DIN = MOSI(Pin19), CLK=SCLK(Pin23), CS=CE0(Pin24), DC=GPIO24, RST=GPIO25, BL=GPIO05. Buttons - UP = GPIO16, DOWN = GPIO20, ENTER = GPIO21, GND = GND, VCC = 3.3V",
 				"default" : false,
 				"image" : "st7789b.png",
-				"py_dependencies" : ["st7789", "pillow==9.1.1"],
-				"apt_dependencies" : ["python3-gpiozero", "python3-pil", "python3-numpy"],
+				"py_dependencies" : ["st7789", "pillow>=9.2.0", "numpy"],
+				"apt_dependencies" : [],
 				"settings_dependencies" : {
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
@@ -491,8 +821,8 @@
 				"notes" : "Pinout:  Display - DIN = MOSI(Pin19), CLK=SCLK(Pin23), CS=CE0(Pin24), DC=GPIO24, RST=GPIO25, BL=GPIO05. Encoder - CLK = GPIO16, DT = GPIO20, SW = GPIO21, GND = GND, VCC/+ = 3.3V",
 				"default" : false,
 				"image" : "st7789e.png",
-				"py_dependencies" : ["st7789", "pyky040==0.1.4", "pillow==9.1.1"],
-				"apt_dependencies" : ["python3-pil", "python3-numpy"],
+				"py_dependencies" : ["st7789", "pyky040==0.1.4", "pillow>=9.2.0", "numpy"],
+				"apt_dependencies" : [],
 				"settings_dependencies" : {
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
@@ -509,8 +839,8 @@
 				"notes" : "Pinout:  DIN = MOSI(Pin19), CLK=SCLK(Pin23), CS=CE0(Pin24), DC=GPIO24, RST=GPIO25, BL=GPIO05",
 				"default" : false,
 				"image" : "st7789p.png",
-				"py_dependencies" : ["st7789", "pillow==9.1.1"],
-				"apt_dependencies" : ["python3-pil", "python3-numpy"],
+				"py_dependencies" : ["st7789", "pillow>=9.2.0", "numpy"],
+				"apt_dependencies" : [],
 				"settings_dependencies" : {
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
@@ -556,7 +886,7 @@
 				"description" : "This is the test module for display using Pygame.  This should be used for development & debug only.",
 				"default" : false,
 				"image" : "pygame.png",
-				"py_dependencies" : ["pygame", "pillow==9.1.1"], 
+				"py_dependencies" : ["pygame", "pillow>=9.2.0"], 
 				"apt_dependencies" : [],
 				"settings_dependencies" : {
 					"disp_rotation" : {
@@ -573,7 +903,7 @@
 				"description" : "This is the test module for display using Pygame.  This should be used for development & debug only.",
 				"default" : false,
 				"image" : "pygame.png",
-				"py_dependencies" : ["pygame", "pillow==9.1.1"], 
+				"py_dependencies" : ["pygame", "pillow>=9.2.0"], 
 				"apt_dependencies" : [],
 				"settings_dependencies" : {
 					"disp_rotation" : {
@@ -709,7 +1039,12 @@
 				"probe_devices": [
 				  {
 					"config": {
-						"i2c_bus_addr" : "0x48"
+						"ADC0_rd": "10000",
+						"ADC1_rd": "10000",
+						"ADC2_rd": "10000",
+						"ADC3_rd": "10000",
+						"i2c_bus_addr": "0x48",
+						"voltage_ref": "3.28"
 					},
 					"device": "ADS1115",
 					"module": "ads1115_adafruit",
@@ -733,10 +1068,8 @@
 					  "A": 0.04136906456,
 					  "B": -0.00677987613,
 					  "C": 2.760294589e-05,
-					  "Rd": 10000,
-					  "Vs": 3.28,
-					  "id": "PT-1000-OEM",
-					  "name": "PT-1000-Grill-Probe-OEM"
+					  "id": "99b8f02d-233d-11ee-a7a2-e5396c02c5fd",
+					  "name": "PT-1000-Ideal"
 					}
 				  },
 				  {
@@ -750,8 +1083,6 @@
 					  "A": 0.00073431401,
 					  "B": 0.0002157437,
 					  "C": 9.515686e-08,
-					  "Rd": 10000,
-					  "Vs": 3.28,
 					  "id": "TWPS00",
 					  "name": "Thermoworks-Pro-Series-HeaterMeter"
 					}
@@ -767,8 +1098,6 @@
 					  "A": 0.00073431401,
 					  "B": 0.0002157437,
 					  "C": 9.515686e-08,
-					  "Rd": 10000,
-					  "Vs": 3.28,
 					  "id": "TWPS00",
 					  "name": "Thermoworks-Pro-Series-HeaterMeter"
 					}

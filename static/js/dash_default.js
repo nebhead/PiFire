@@ -20,6 +20,12 @@ if (units == 'F') {
 	var maxTempPrimary = 300; 
 	var maxTempFood = 150;
 }
+var last_fan_status = null;
+var last_auger_status = null;
+var last_igniter_status = null;
+var last_pmode_status = null;
+var last_lid_open_status = false;
+var display_mode = null;
 
 // Credits to https://github.com/naikus for SVG-Gauge (https://github.com/naikus/svg-gauge) MIT License Copyright (c) 2016 Aniket Naik
 var Gauge = window.Gauge;
@@ -134,6 +140,38 @@ function updateProbeCards() {
 						clearPrimarySetpointBtn(primary);
 					};
 					mode = current.status.mode;
+					if (['Prime', 'Shutdown'].includes(mode)) {
+						$('#status_footer').slideDown();
+						$('#mode_timer_label').show();
+						$('#lid_open_label').hide();
+						$('#pmode_group').hide();
+					} else if (['Startup', 'Reignite'].includes(mode)) {
+						$('#status_footer').slideDown();
+						$('#mode_timer_label').show();
+						$('#lid_open_label').hide();
+						$('#pmode_group').show();
+					} else if (mode == 'Hold') {
+						$('#status_footer').slideUp();
+						$('#mode_timer_label').hide();
+						$('#lid_open_label').show();
+						$('#pmode_group').hide();
+					} else if (mode == 'Smoke') {
+						$('#status_footer').slideUp();
+						$('#mode_timer_label').hide();
+						$('#lid_open_label').hide();
+						$('#pmode_group').show();
+					} else {
+						$('#status_footer').slideUp();
+						$('#mode_timer_label').hide();
+						$('#lid_open_label').hide();
+						$('#pmode_group').hide();
+					};
+					$('#mode_status').html('<b>' + mode +'</b>');
+				};
+
+				if ((current.status.mode == 'Recipe') && (display_mode != current.status.display_mode)) {
+					display_mode = current.status.display_mode;
+					$('#mode_status').html('<b>Recipe | ' + display_mode +'</b>');
 				};
 
 				// Check for a primary_setpoint change
@@ -142,6 +180,102 @@ function updateProbeCards() {
 					primary_setpoint = current.current.PSP;
 				};					
 			};
+
+			if (current.status.outpins.fan != last_fan_status) {
+				last_fan_status = current.status.outpins.fan;
+				if (last_fan_status) {
+					document.getElementById('fan_status').innerHTML = '<i class="fas fa-fan fa-spin fa-2x" data-toggle="tooltip" data-placement="top" title="Fan ON" style="color:rgb(50, 122, 255)"></i>';
+				} else {
+					document.getElementById('fan_status').innerHTML = '<i class="fas fa-fan fa-2x" data-toggle="tooltip" data-placement="top" title="Fan OFF" style="color:rgb(150, 150, 150)"></i>';
+				};
+			};
+
+			if (current.status.outpins.auger != last_auger_status) {
+				last_auger_status = current.status.outpins.auger;
+				if (last_auger_status) {
+					document.getElementById('auger_status').innerHTML = '<i class="fas fa-angle-double-right fa-beat fa-2x" data-toggle="tooltip" data-placement="top" title="Auger ON" style="color:rgb(132, 206, 22)"></i>';
+				} else {
+					document.getElementById('auger_status').innerHTML = '<i class="fas fa-angle-double-right fa-2x" data-toggle="tooltip" data-placement="top" title="Auger OFF" style="color:rgb(150, 150, 150)"></i>';
+				};
+			}; 
+
+			if (current.status.outpins.igniter != last_igniter_status) {
+				last_igniter_status = current.status.outpins.igniter;
+				if (last_igniter_status) {
+
+					document.getElementById('igniter_status').innerHTML = '<i class="fas fa-fire fa-beat-fade fa-2x" data-toggle="tooltip" data-placement="top" title="Igniter ON" style="color:rgb(235, 212, 0)"></i>';
+				} else {
+					document.getElementById('igniter_status').innerHTML = '<i class="fas fa-fire fa-2x" data-toggle="tooltip" data-placement="top" title="Igniter OFF" style="color:rgb(150, 150, 150)"></i>';
+				};
+			};
+
+			if (current.status.p_mode != last_pmode_status) {
+				last_pmode_status = current.status.p_mode;
+				if (last_pmode_status == 0) {
+					document.getElementById('pmode_status').innerHTML = '<i class="far fa-square fa-stack-2x" style="color:rgb(150, 150, 150)" data-toggle="tooltip" data-placement="top" title="P-Mode"></i><i class="fas fa-minus fa-stack-1x" style="color:rgb(150, 150, 150)"></i>';
+					document.getElementById('pmode_btn').innerHTML = '<i class="fa-solid fa-p"></i>-<i class="fas fa-' + last_pmode_status + '"></i>';
+				} else if (last_pmode_status < 10) {
+					document.getElementById('pmode_status').innerHTML = '<i class="far fa-square fa-stack-2x" style="color:rgb(175, 0, 175)" data-toggle="tooltip" data-placement="top" title="P-Mode"></i><i class="fas fa-' + last_pmode_status + ' fa-stack-1x" style="color:rgb(175, 0, 175)"></i>';
+					document.getElementById('pmode_btn').innerHTML = '<i class="fa-solid fa-p"></i>-<i class="fas fa-' + last_pmode_status + '"></i>';
+				};
+			};
+
+			// Update Timers 
+			if (['Prime', 'Startup', 'Reignite', 'Shutdown'].includes(mode)) {
+				var duration = 0;
+				// Calculate time remaining
+				if (['Startup', 'Reignite'].includes(mode)) {
+					duration = current.status.start_duration;
+				} else if (mode == 'Prime') {
+					duration = current.status.prime_duration;
+				} else {
+					duration = current.status.shutdown_duration;
+				};
+				var now = new Date().getTime();
+				now = Math.floor(now / 1000)
+				var start_time = Math.floor(current.status.start_time);  
+				var countdown = Math.floor(duration - (now - start_time));
+				// Update #mode_timer if > 0, else 0 
+				if (countdown < 0) {
+					countdown = 0;
+				};
+				$('#mode_timer').html(countdown);
+			};
+
+			// Check Lid Status 
+			if ((mode == 'Hold') && (last_lid_open_status != current.status.lid_open_detected)) {
+				last_lid_open_status = current.status.lid_open_detected;
+				if (last_lid_open_status) {
+					$('#status_footer').slideDown();
+					$('#mode_timer_label').hide();
+					$('#lid_open_label').show();
+				} else {
+					$('#status_footer').slideUp();
+					$('#mode_timer_label').hide();
+					$('#lid_open_label').show();
+				};
+			}; 
+
+			if ((mode == 'Hold') && (last_lid_open_status)) {
+				// Calculate duration 
+				var countdown = 0;
+				var now = new Date().getTime();
+				now = Math.floor(now / 1000)
+				var end_time = Math.floor(current.status.lid_open_endtime);  
+				var countdown = Math.floor(end_time - now);
+				// Display duration
+				if (countdown < 0) {
+					countdown = 0;
+				};
+				$('#lid_open_label').html('Lid Open Detected: PID Paused ' + countdown + 's');
+			};
+			
+			//if (current.status.s_plus) {
+			//	document.getElementById('smokeplus_status').innerHTML = '<i class="fas fa-cloud fa-stack-2x" style="color:rgb(104, 0, 104)" data-toggle="tooltip" data-placement="top" title="Smoke Plus ON"></i><i class="fas fa-plus fa-stack-1x fa-inverse"></i>';
+			//} else {
+			//	document.getElementById('smokeplus_status').innerHTML = '<i class="fas fa-cloud fa-stack-2x" style="color:rgb(150, 150, 150)" data-toggle="tooltip" data-placement="top" title="Smoke Plus OFF"></i><i class="fas fa-plus fa-stack-1x fa-inverse"></i>';
+			//};
+
 		}
 	});
 };
@@ -325,6 +459,37 @@ function refreshHopperStatus() {
 // Launch the setpointModal from the notification toolbar
 function launchSetpointModal() {
 	$("#setpointModal").modal('show');
+};
+
+function setPmode(pmode) {
+    var postdata = { 
+        'cycle_data' : {
+			'PMode' : pmode
+		}
+    };
+
+	$.ajax({
+        url : '/api/settings',
+        type : 'POST',
+        data : JSON.stringify(postdata),
+        contentType: "application/json; charset=utf-8",
+        traditional: true,
+        success: function (data) {
+			var postdata = { 
+				'settings_update' : true
+			};
+
+			$.ajax({
+				url : '/api/control',
+				type : 'POST',
+				data : JSON.stringify(postdata),
+				contentType: "application/json; charset=utf-8",
+				traditional: true,
+				success: function (data) {
+				}
+			});
+        }
+    });
 };
 
 // Main

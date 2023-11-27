@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 '''
 ==============================================================================
  PiFire Module Wizard
@@ -115,7 +113,12 @@ else:
 	increment = 80 / items_remaining 
 
 # Install Py dependencies
-launch_pip = ['pip3', 'install']
+if settings['globals']['venv']:
+	python_exec = 'bin/python'
+else:
+	python_exec = 'python'
+
+launch_pip = [python_exec, '-m', 'pip', 'install']
 status = 'Installing Python Dependencies...'
 output = ' - Installing Python Dependencies'
 set_wizard_install_status(percent, status, output)
@@ -145,7 +148,7 @@ for py_item in py_dependencies:
 	set_wizard_install_status(percent, status, output)
 
 # Install Apt dependencies
-launch_apt = ['apt', 'install']
+launch_apt = ['sudo', 'apt', 'install']
 status = 'Installing Package Dependencies...'
 output = ' - Installing APT Package Dependencies'
 set_wizard_install_status(percent, status, output)

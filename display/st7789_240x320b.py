@@ -108,7 +108,7 @@ class Display(DisplayBase):
 		# Display canvas to screen for ST7789
 		# Turn on Backlight (just in case it was off)
 		self.device.set_backlight(1)
-		self.device.display(canvas)
+		self.device.display(canvas.convert(mode="RGB"))
 
 	'''
 	 ====================== Input & Menu Code ========================

@@ -161,20 +161,6 @@
                                         </div>
                                         <div class="input-group mb-3">
                                             <div class="input-group-prepend">
-                                                <span class="input-group-text" data-toggle="tooltip" title="Source Voltage (volts)">
-                                                    <i class="fas fa-bolt"></i>&nbsp; Vs </span>
-                                            </div>
-                                            <input id="Vs_{{ index }}" type="text" class="form-control" name="Vs_{{ index }}" value="{{ data['Vs'] }}">
-                                        </div>
-                                        <div class="input-group mb-3">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text" data-toggle="tooltip" title="R1 in resistor divider (ohms)">
-                                                    <i class="fas fa-divide"></i>&nbsp; Rd </span>
-                                            </div>
-                                            <input id="Rd_{{ index }}" type="text" class="form-control" name="Rd_{{ index }}" value="{{ data['Rd'] }}">
-                                        </div>
-                                        <div class="input-group mb-3">
-                                            <div class="input-group-prepend">
                                                 <span class="input-group-text" data-toggle="tooltip" title="Coefficient A in Steinhart Hart Calculation">
                                                     <i class="fas fa-calculator"></i>&nbsp; CoEff A </span>
                                             </div>
@@ -242,20 +228,6 @@
                                                     <i class="fas fa-user-circle"></i>&nbsp; Name </span>
                                             </div>
                                             <input id="Name" type="text" class="form-control" placeholder="Name" name="Name">
-                                        </div>
-                                        <div class="input-group mb-3">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text" data-toggle="tooltip" title="Source Voltage (volts)">
-                                                    <i class="fas fa-bolt"></i>&nbsp; Vs </span>
-                                            </div>
-                                            <input id="Vs" type="text" class="form-control" value="3.28" name="Vs">
-                                        </div>
-                                        <div class="input-group mb-3">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text" data-toggle="tooltip" title="R1 in resistor divider (ohms)">
-                                                    <i class="fas fa-divide"></i>&nbsp; Rd </span>
-                                            </div>
-                                            <input id="Rd" type="text" class="form-control" value="10000" name="Rd">
                                         </div>
                                         <div class="input-group mb-3">
                                             <div class="input-group-prepend">
@@ -361,18 +333,30 @@
                                     </h5>
                                 </div>
                                 <div class="card-body">
+                                    <span class="badge badge-info">INFO:</span>
+                                    During Startup and Smoke modes, the cycle time (Auger On Time + Auger Off Time) is fixed, and does not change dynamically based on any other inputs.
+                                    Effectively, this may allow you to adjust the rough smoke temperature depending other external factors like ambient temperature (seasonal), etc. <br><br>
+                                    The Auger On/Off Time can be configured here, to have a finer control over the cycle times. 
+                                    <br><br>
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text" data-toggle="tooltip" title="Auger-On Time for Smoke / Startup (seconds)[Default=15]">
                                                 <i class="far fa-clock"></i>&nbsp; Auger On Time
                                             </span>
                                         </div>
-                                        <input id="smokecycletime" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['SmokeCycleTime'] }}" value="{{ settings['cycle_data']['SmokeCycleTime'] }}" name="smokecycletime">
+                                        <input id="SmokeOnCycleTime" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['SmokeOnCycleTime'] }}" value="{{ settings['cycle_data']['SmokeOnCycleTime'] }}" name="SmokeOnCycleTime">
                                     </div>
-                                    <span class="badge badge-warning">NOTE:</span>
-                                    <i class="small"> More information about the PMode can be found <a href="http://tipsforbbq.com/Definition/Traeger-P-Setting" target="blank">here.</a> P-Mode is used for both Startup and Smoke modes, but not Hold mode. </i>
-                                    <br>
-                                    <br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Auger-Off Time for Smoke / Startup (seconds)[Default=45].  This is also used for the PMode below.">
+                                                <i class="far fa-clock"></i>&nbsp; Auger Off Time
+                                            </span>
+                                        </div>
+                                        <input id="SmokeOffCycleTime" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['SmokeOffCycleTime'] }}" value="{{ settings['cycle_data']['SmokeOffCycleTime'] }}" name="SmokeOffCycleTime">
+                                    </div>
+
+                                    <hr/>
+
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text" data-toggle="tooltip" title="(Auger-Off Time: Set P-Mode for Smoke Cycle (1-10)">
@@ -381,12 +365,26 @@
                                         </div>
                                         <input id="pmode" type="number" min="0" max="9" class="form-control" placeholder="{{ settings['cycle_data']['PMode'] }}" value="{{ settings['cycle_data']['PMode'] }}" name="pmode">
                                     </div>
+
+                                    <span class="badge badge-info">INFO:</span>
+                                    If a PMode of greater than zero is selected, the PMode is multiplied by 10s will be added to the Auger Off Time.  
+                                    [For example: <i>Cycle Time = Auger On Time + Auger Off Time + (Pmode * 10)</i>]  
+                                    This calculation is reflected in the table below.  If you don't want to use PMode to
+                                    configure the cycle time, then select a PMode of 0.<br><br>
+                                    
+                                    <i> More information about the PMode can be found <a href="http://tipsforbbq.com/Definition/Traeger-P-Setting" target="blank">here.</a> 
+                                        P-Mode is used for both Startup and Smoke modes, but not Hold mode.  Note that PMode settings may be overriden by the Smart Start feature.  
+                                        See the Startup/Shutdown settings tab to enable/disable and configure Smart Start.</i>
+                                    <br>
+                                    <br>
+
                                     <table class="table table-bordered">
                                         <thead class="thead-light">
                                             <tr>
                                                 <th>P-Mode</th>
                                                 <th>Auger ON Time</th>
                                                 <th>Auger OFF Time</th>
+                                                <th>Total Cycle Time</th>
                                             </tr>
                                         </thead>
                                         {% for row in range(10) %}
@@ -397,8 +395,9 @@
                                         <tr>
                                             {% endif %}
                                             <td>{{ row }} {% if (row == 2) %}(Factory Default){% endif %}</td>
-                                            <td>{{ settings['cycle_data']['SmokeCycleTime'] }}</td>
-                                            <td>{{ (row * 10)+45 }} seconds</td>
+                                            <td>{{ settings['cycle_data']['SmokeOnCycleTime'] }}s</td>
+                                            <td>{{ (row * 10) + settings['cycle_data']['SmokeOffCycleTime'] }}s</td>
+                                            <td>{{ settings['cycle_data']['SmokeOnCycleTime'] + (row * 10) + settings['cycle_data']['SmokeOffCycleTime'] }}s</td>
                                         </tr>
                                         {% endfor %}
                                         </tbody>
@@ -415,7 +414,10 @@
                                 </div>
                                 <div class="card-body">
                                     <span class="badge badge-warning">NOTE:</span>
-                                    <i class="small">Smoke Plus Mode can be toggled on/off by tapping the fan icon button on the dashboard. The icon will be highlighted blue indicating that smoke plus is enabled. Smoke Plus will cycle the fan on and off during smoke and hold mode to promote additional smoke generation. Fan cycling will only occur between the below min/max temperatures.</i>
+                                    <i class="small">Smoke Plus Mode can be toggled on/off by tapping the fan icon button on the dashboard. 
+                                        The icon will be highlighted blue indicating that smoke plus is enabled. Smoke Plus will cycle the fan on and off 
+                                        during smoke and hold mode to promote additional smoke generation. Fan cycling will only occur between the below 
+                                        min/max temperatures.</i>
                                     <br>
                                     <br>
                                     <div class="custom-control custom-switch">
@@ -542,15 +544,13 @@
                                     </h5>
                                 </div>
                                 <div class="card-body">
-                                    <span class="badge badge-warning">NOTE:</span>
-                                    <i class="small">The Keep Warm function will be activated when option is selected and a probe set point has been achieved or the set timer has expired. The Grill will exit the currently running mode and switch to Hold Mode then attempt to maintain the temperature set below. You can also enable or disable the Smoke Plus feature during Keep Warm.</i>
-                                    <br>
-                                    <br>
-                                    <div class="custom-control custom-switch">
-                                        <input type="checkbox" class="custom-control-input" id="keep_warm_s_plus" name="keep_warm_s_plus" {% if settings['keep_warm']['s_plus'] %}checked{% endif %}>
-                                        <label class="custom-control-label" for="keep_warm_s_plus">Smoke Plus Enabled</label>
-                                    </div>
-                                    <br>
+                                    The Keep Warm mode is a specified Hold temperature, that you can define, <u>that can be activated by a timer or 
+                                    notification targets.</u>  When the grill is active, you can click on the timer dialog and check the Keep Warm 
+                                    box.  Or you can click on the Notification Targets for any of the probes and select the Keep Warm box. 
+                                    The Keep Warm function will be activated when a probe notify target has been achieved 
+                                    or the timer has expired. The Grill will exit the currently running mode and switch to Hold Mode then 
+                                    attempt to maintain the temperature set below. 
+                                    <br><br>
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text" data-toggle="tooltip" title="Keep Warm Temperature ({{settings['globals']['units']}}) [Default: 165F/74C]">
@@ -559,6 +559,15 @@
                                         </div>
                                         <input id="keep_warm_temp" type="number" min="1" class="form-control" placeholder="{{ settings['keep_warm']['temp'] }}" value="{{ settings['keep_warm']['temp'] }}" name="keep_warm_temp">
                                     </div>
+                                    <br>
+                                    You can also enable or disable the Smoke Plus feature during Keep Warm.
+                                    <br>
+                                    <br>
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="keep_warm_s_plus" name="keep_warm_s_plus" {% if settings['keep_warm']['s_plus'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="keep_warm_s_plus">Smoke Plus Enabled During 'Keep Warm'</label>
+                                    </div>
+                                    <br>
                                 </div><!-- End of card body -->
                             </div><!-- End of Card -->
                         </div><!-- End of card body -->
@@ -1274,6 +1283,28 @@
                                     This value can be tuned for your auger speed, by going into manual mode and running the auger for 10 seconds, then weighing the pellets
                                     that have been dispensed into the firepot.  For example, if you run the auger for 10 seconds and 3 grams of pellets are dispensed, then
                                     the calculation would be 3g / 10s = 0.3.  That means 0.3 grams are dispensed per second of auger on time.     
+                                    </i>
+                                    <br>
+                                </div>
+                            </div>
+                            <br>
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h5>
+                                        <i class="fas fa-angle-double-right"></i>&nbsp; Prime Settings
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="prime_ignition" name="prime_ignition" {% if settings['globals']['prime_ignition'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="prime_ignition">Start Igniter During Prime + Startup</label>
+                                    </div>
+                                    <span class="badge badge-danger">DANGER:</span>
+                                    <i class="small"> 
+                                        Only enable the igniter during Priming, if you are absolutely sure that you need to do this.  
+                                        Enabling the igniter will ignite pellets and start the firepot, even without the fan enabled. 
+                                        This feature will only turn on the igniter if Prime & Startup is selected.  Otherwise, priming 
+                                        without startup will not utilize the igniter.  
                                     </i>
                                     <br>
                                 </div>
