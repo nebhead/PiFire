@@ -26,8 +26,8 @@ Display class definition
 '''
 class Display(DisplayBase):
 
-	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F'):
-		super().__init__(dev_pins, buttonslevel, rotation, units)
+	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F', config={}):
+		super().__init__(dev_pins, buttonslevel, rotation, units, config)
 
 	def _init_display_device(self):
 		# Init Device

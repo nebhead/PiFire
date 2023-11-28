@@ -391,7 +391,7 @@
 			"mcp9600_adafruit" : {
 				"friendly_name" : "MCP9600 Thermocouple Amplifier Adafruit",
 				"filename" : "mcp9600_adafruit",
-				"description" : "This I2C device reads K-Type thermocouples / probes. Moreover the MCP9600 can interface with just about any thermocouple type: K, J, T, N, S, E, B and R type are all supported.  This version uses the Adafruit CircuitPython modules.",
+				"description" : "This I2C device reads K-Type thermocouples / probes. Moreover the MCP9600 can interface with just about any thermocouple type: K, J, T, N, S, E, B and R type are all supported.  This version uses the Adafruit CircuitPython modules.  Note that this device can be intolerant of higher i2c bus speeds, so you may need to reduce the i2c bus speed manually.",
 				"default" : false,
 				"image" : "mcp9600.png",
 				"py_dependencies" : ["adafruit-circuitpython-mcp9600"], 
@@ -728,7 +728,19 @@
 						"options" : {"0" : "0 degrees", "1": "90 degrees", "2": "180 degrees", "3": "270 degrees"},
 						"settings" : ["globals", "disp_rotation"]
 					}
-				}
+				},
+				"config" : [
+					{
+						"option_name" : "rotation",
+						"option_friendly_name" : "Screen Rotation", 
+						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
+						"option_type" : "list",
+						"list_values" : [0, 900, 180, 270],
+						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
+						"default" : 0,
+						"hidden" : false
+					}
+				]
 			},
 			"ili9341em" : {
 				"friendly_name" : "ILI9341 TFT with Rotary Encoder Input (max31865 version)",
@@ -746,7 +758,19 @@
 						"options" : {"0" : "0 degrees", "1": "90 degrees", "2": "180 degrees", "3": "270 degrees"},
 						"settings" : ["globals", "disp_rotation"]
 					}
-				}
+				},
+				"config" : [
+					{
+						"option_name" : "rotation",
+						"option_friendly_name" : "Screen Rotation", 
+						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
+						"option_type" : "list",
+						"list_values" : [0, 900, 180, 270],
+						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
+						"default" : 0,
+						"hidden" : false
+					}
+				]
 			},
 			"ili9341" : {
 				"friendly_name" : "ILI9341 TFT",
@@ -764,7 +788,19 @@
 						"options" : {"0" : "0 degrees", "1": "90 degrees", "2": "180 degrees", "3": "270 degrees"},
 						"settings" : ["globals", "disp_rotation"]
 					}
-				}
+				},
+				"config" : [
+					{
+						"option_name" : "rotation",
+						"option_friendly_name" : "Screen Rotation", 
+						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
+						"option_type" : "list",
+						"list_values" : [0, 900, 180, 270],
+						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
+						"default" : 0,
+						"hidden" : false
+					}
+				]
 			},
 			"ili9341b" : {
 				"friendly_name" : "ILI9341 TFT with 3-Button Input",
@@ -788,7 +824,29 @@
 						"options" : {"HIGH" : "Pullups", "LOW": "Pulldowns"},
 						"settings" : ["globals", "buttonslevel"]
 					}
-				}
+				},
+				"config" : [
+					{
+						"option_name" : "rotation",
+						"option_friendly_name" : "Screen Rotation", 
+						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
+						"option_type" : "list",
+						"list_values" : [0, 900, 180, 270],
+						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
+						"default" : 0,
+						"hidden" : false
+					},
+					{
+						"option_name" : "buttonslevel",
+						"option_friendly_name" : "Button Signal Level", 
+						"option_description" : "Select whether the buttons are active high or active low.",
+						"option_type" : "list",
+						"list_values" : ["HIGH", "LOW"],
+						"list_labels" : ["Active High", "Active Low"],
+						"default" : "HIGH",
+						"hidden" : false
+					}
+				]
 			},
 			"st7789_240x320b" : {
 				"friendly_name" : "ST7789 IPS Display 240x320px w/Button Input",
@@ -812,7 +870,29 @@
 						"options" : {"HIGH" : "Pullups", "LOW": "Pulldowns"},
 						"settings" : ["globals", "buttonslevel"]
 					}
-				}
+				},
+				"config" : [
+					{
+						"option_name" : "rotation",
+						"option_friendly_name" : "Screen Rotation", 
+						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
+						"option_type" : "list",
+						"list_values" : [0, 900, 180, 270],
+						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
+						"default" : 0,
+						"hidden" : false
+					},
+					{
+						"option_name" : "buttonslevel",
+						"option_friendly_name" : "Button Signal Level", 
+						"option_description" : "Select whether the buttons are active high or active low.",
+						"option_type" : "list",
+						"list_values" : ["HIGH", "LOW"],
+						"list_labels" : ["Active High", "Active Low"],
+						"default" : "HIGH",
+						"hidden" : false
+					}
+				]
 			},
 			"st7789_240x320e" : {
 				"friendly_name" : "ST7789 IPS Display 240x320px w/ Rotary Encoder Input",
@@ -830,7 +910,19 @@
 						"options" : {"0" : "0 degrees", "90": "90 degrees", "180": "180 degrees", "270": "270 degrees"},
 						"settings" : ["globals", "disp_rotation"]
 					}
-				}
+				},
+				"config" : [
+					{
+						"option_name" : "rotation",
+						"option_friendly_name" : "Screen Rotation", 
+						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
+						"option_type" : "list",
+						"list_values" : [0, 900, 180, 270],
+						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
+						"default" : 0,
+						"hidden" : false
+					}
+				]
 			},
 			"st7789_240x320" : {
 				"friendly_name" : "ST7789 IPS Display 240x320px",
@@ -848,7 +940,19 @@
 						"options" : {"0" : "0 degrees", "90": "90 degrees", "180": "180 degrees", "270": "270 degrees"},
 						"settings" : ["globals", "disp_rotation"]
 					}
-				}
+				},
+				"config" : [
+					{
+						"option_name" : "rotation",
+						"option_friendly_name" : "Screen Rotation", 
+						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
+						"option_type" : "list",
+						"list_values" : [0, 900, 180, 270],
+						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
+						"default" : 0,
+						"hidden" : false
+					}
+				]
 			},
 			"none" : {
 				"friendly_name" : "None",
@@ -858,7 +962,8 @@
 				"image" : "none.png",
 				"py_dependencies" : [], 
 				"apt_dependencies" : [],
-				"settings_dependencies" : {}			
+				"settings_dependencies" : {},
+				"config" : []			
 			},
 			"prototype" : {
 				"friendly_name" : "Prototype",
@@ -868,7 +973,8 @@
 				"image" : "prototype.png",
 				"py_dependencies" : [], 
 				"apt_dependencies" : [],
-				"settings_dependencies" : {}			
+				"settings_dependencies" : {},
+				"config" : []			
 			},
 			"pygame_64x128" : {
 				"friendly_name" : "Pygame Test Module 64x128px",
@@ -878,7 +984,8 @@
 				"image" : "pygame.png",
 				"py_dependencies" : ["pygame"], 
 				"apt_dependencies" : [],
-				"settings_dependencies" : {}			
+				"settings_dependencies" : {},
+				"config" : []			
 			},
 			"pygame_240x320" : {
 				"friendly_name" : "Pygame Test Module 240x320px",
@@ -895,7 +1002,19 @@
 						"options" : {"0" : "0 degrees", "90": "90 degrees", "180": "180 degrees", "270": "270 degrees"},
 						"settings" : ["globals", "disp_rotation"]
 					}
-				}
+				},
+				"config" : [
+					{
+						"option_name" : "rotation",
+						"option_friendly_name" : "Screen Rotation", 
+						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
+						"option_type" : "list",
+						"list_values" : [0, 900, 180, 270],
+						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
+						"default" : 0,
+						"hidden" : false
+					}
+				]
 			},
 			"pygame_240x320b" : {
 				"friendly_name" : "Pygame Test Module 240x320px w/Button Input",
@@ -912,7 +1031,19 @@
 						"options" : {"0" : "0 degrees", "90": "90 degrees", "180": "180 degrees", "270": "270 degrees"},
 						"settings" : ["globals", "disp_rotation"]
 					}
-				}
+				},
+				"config" : [
+					{
+						"option_name" : "rotation",
+						"option_friendly_name" : "Screen Rotation", 
+						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
+						"option_type" : "list",
+						"list_values" : [0, 900, 180, 270],
+						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
+						"default" : 0,
+						"hidden" : false
+					}
+				]
 			},
 			"ssd1306" : {
 				"friendly_name" : "SSD1306 OLED 64x128px",
@@ -922,7 +1053,8 @@
 				"image" : "ssd1306.png",
 				"py_dependencies" : ["luma.oled"], 
 				"apt_dependencies" : [],
-				"settings_dependencies" : {}			
+				"settings_dependencies" : {},
+				"config" : []			
 			},
 			"ssd1306b" : {
 				"friendly_name" : "SSD1306 OLED 64x128px w/Buttons",
@@ -939,7 +1071,19 @@
 						"options" : {"HIGH" : "Pullups", "LOW": "Pulldowns"},
 						"settings" : ["globals", "buttonslevel"]
 					}
-				}
+				},
+				"config" : [
+					{
+						"option_name" : "buttonslevel",
+						"option_friendly_name" : "Button Signal Level", 
+						"option_description" : "Select whether the buttons are active high or active low.",
+						"option_type" : "list",
+						"list_values" : ["HIGH", "LOW"],
+						"list_labels" : ["Active High", "Active Low"],
+						"default" : "HIGH",
+						"hidden" : false
+					}
+				]
 			},
 			"st7789p" : {
 				"friendly_name" : "ST7789p IPS Display 240x240px",
@@ -957,7 +1101,57 @@
 						"options" : {"0" : "0 degrees", "180": "180 degrees"},
 						"settings" : ["globals", "disp_rotation"]
 					}
-				}
+				},
+				"config" : [
+					{
+						"option_name" : "rotation",
+						"option_friendly_name" : "Screen Rotation", 
+						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
+						"option_type" : "list",
+						"list_values" : [0, 900, 180, 270],
+						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
+						"default" : 0,
+						"hidden" : false
+					}
+				]
+			},
+			"dsi_800x480t" : {
+				"friendly_name" : "DSI Connected Display 800x480 w/Touch",
+				"filename" : "dsi_800x480t",
+				"description" : "DSI Connected Display (such as the 7\" Raspberry Pi Touch Screen display. Several clones exist which should work perfectly well.",
+				"notes" : "This module may a very long time to install due to the OS dependencies that are required.  Please be aware that this may take more than 10 minutes to install.",
+				"default" : false,
+				"image" : "dsi_touch.png",
+				"py_dependencies" : ["rpi-backlight", "pillow>=10.0.0", "pygame>=2.5.0"], 
+				"apt_dependencies" : ["lightdm", "libsdl2-2.0-0"],
+				"settings_dependencies" : {
+					"disp_rotation" : {
+						"friendly_name" : "Display Rotation",
+						"description" : "Select the display rotation angle (Usually 0 degrees)",
+						"options" : {"0" : "0 degrees", "1": "90 degrees", "2": "180 degrees", "3": "270 degrees"},
+						"settings" : ["globals", "disp_rotation"]
+					}
+				},
+				"config" : [
+					{
+						"option_name" : "rotation",
+						"option_friendly_name" : "Screen Rotation", 
+						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
+						"option_type" : "list",
+						"list_values" : [0, 900, 180, 270],
+						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
+						"default" : 0,
+						"hidden" : false
+					},
+					{
+						"option_name" : "display_data_filename",
+						"option_friendly_name" : "Display Data Filename", 
+						"option_description" : "JSON file with all of the display data and information.",
+						"option_type" : "string",
+						"default" : "./display/dsi_800x480t.json",
+						"hidden" : true
+					}
+				]
 			}
 		}, 
 		"distance" : {

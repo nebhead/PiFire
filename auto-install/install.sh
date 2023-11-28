@@ -145,6 +145,15 @@ echo "i2c-dev" | $SUDO tee -a /etc/modules > /dev/null
 # Enable Hardware PWM - Needed for hardware PWM support 
 echo "dtoverlay=pwm,pin=13,func=4" | $SUDO tee -a /boot/config.txt > /dev/null
 
+# Setup backlight / power permissions if a DSI screen is installed  
+clear
+echo "*************************************************************************"
+echo "**                                                                     **"
+echo "**      Configuring Backlight UDEV Rules                               **"
+echo "**                                                                     **"
+echo "*************************************************************************"
+echo 'SUBSYSTEM=="backlight",RUN+="/bin/chmod 666 /sys/class/backlight/%k/brightness /sys/class/backlight/%k/bl_power"' | $SUDO tee -a /etc/udev/rules.d/backlight-permissions.rules > /dev/null
+
 ### Setup nginx to proxy to gunicorn
 clear
 echo "*************************************************************************"

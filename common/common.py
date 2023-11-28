@@ -153,10 +153,15 @@ def default_settings():
 	}
 
 	settings['controller'] = {
-		'selected' : 'pid',
+		'selected' : 'pid'
 	}
 
 	settings['controller']['config'] = _default_controller_config()
+
+	settings['display'] = {
+		'selected' : 'none'
+	}
+	settings['display']['config'] = _default_display_config()
 
 	settings['keep_warm'] = {
 		'temp' : 165,
@@ -292,6 +297,18 @@ def _default_controller_config():
 		config[controller] = {}
 		for option in controller_metadata['metadata'][controller]['config']:
 			config[controller][option['option_name']] = option['option_default']
+
+	return config
+
+def _default_display_config():
+	display_metadata = read_generic_json('./wizard/wizard_manifest.json')
+	display_metadata = display_metadata['modules']['display']
+	#print(f'display_metadata = {display_metadata}')
+	config = {}
+	for display in display_metadata:
+		config[display] = {}
+		for option in display_metadata[display]['config']:
+			config[display][option['option_name']] = option['default']
 
 	return config
 
@@ -1830,4 +1847,23 @@ def read_status(init=False):
 	else:
 		status = json.loads(cmdsts.get('control:status'))
 
-	return status 
+	return status
+
+def get_probe_info(probe_info):
+	''' Create a structure with probe information for the display to use. '''
+	probe_structure = {
+		'primary' : {},
+		'food' : []
+	}
+	for probe in probe_info:
+		if probe['type'] == 'Primary':
+			probe_structure['primary']['name'] = probe['name']
+			probe_structure['primary']['label'] = probe['label']
+		elif probe['type'] == 'Food':
+			food_probe = {
+				'name' : probe['name'],
+				'label' : probe['label']
+			}
+			probe_structure['food'].append(food_probe)
+
+	return probe_structure 

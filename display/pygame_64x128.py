@@ -27,7 +27,7 @@ Display class definition
 '''
 class Display:
 
-	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F'):
+	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F', config={}):
 		# Init Global Variables and Constants
 		self.units = units
 		self.display_active = False

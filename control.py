@@ -134,6 +134,8 @@ Set up Display Module
 try: 
 	display_name = settings['modules']['display']
 	DisplayModule = importlib.import_module(f'display.{display_name}')
+	display_config = settings['display']['config'][display_name]
+	display_config['probe_info'] = get_probe_info(settings['probe_settings']['probe_map']['probe_info'])
 
 except:
 	controlLogger.exception(f'Error occurred loading the display module ({display_name}). Trace dump: ')
@@ -150,11 +152,11 @@ except:
 
 try:
 	display_device = DisplayModule.Display(dev_pins=dev_pins, buttonslevel=buttons_level,
-										   rotation=disp_rotation, units=units)
+										   rotation=disp_rotation, units=units, config=display_config)
 except:
 	controlLogger.exception(f'Error occurred configuring the display module ({filename}). Trace dump: ')
 	from display.none import Display  # Simulated Library for controlling the grill platform
-	display_device = Display(dev_pins=dev_pins, buttonslevel=buttons_level, rotation=disp_rotation, units=units)
+	display_device = Display(dev_pins=dev_pins, buttonslevel=buttons_level, rotation=disp_rotation, units=units, config={})
 	error_event = f'An error occurred configuring the [{settings["modules"]["display"]}] display object.  The ' \
 		f'"display_none" module has been loaded instead.  This sometimes means that the hardware is ' \
 		f'not connected properly, or the module is not configured.  Please run the configuration wizard ' \
@@ -473,6 +475,10 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	# Set Fan Ramping Boolean
 	pwm_fan_ramping = False
 
+	# Setup Display Data
+	status_data = {} 
+	in_data = {}
+
 	# ============ Main Work Cycle ============
 	while status == 'Active':
 		now = time.time()
@@ -608,7 +614,6 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		sensor_data = probe_complex.read_probes()
 		ptemp = list(sensor_data['primary'].values())[0]  # Primary Temperature or the Pit Temperature
 
-		in_data = {}
 		in_data['probe_history'] = sensor_data 
 		in_data['primary_setpoint'] = control['primary_setpoint'] if mode == 'Hold' else 0
 		in_data['notify_targets'] = get_notify_targets(control['notify_data'])
@@ -631,7 +636,6 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 
 		# Send Current Status / Temperature Data to Display Device every 0.5 second (Display Refresh)
 		if (now - display_toggle_time) > 0.5:
-			status_data = {} 
 			status_data['notify_data'] = control['notify_data']  # Get any flagged notifications
 			status_data['timer'] = control['timer']  # Get the timer information
 			status_data['s_plus'] = control['s_plus']
@@ -868,6 +872,12 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	write_metrics(metrics)
 
 	monitor.stop_monitor()
+
+	# Clean up display
+	status_data['mode'] = mode
+
+	display_device.display_status(in_data, status_data)
+
 	return ()
 
 def _next_mode(next_mode, setpoint=0):			

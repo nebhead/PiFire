@@ -1,10 +1,10 @@
 {
   "metadata" : {
     "versions" : {
-      "server" : "1.6.0",
+      "server" : "1.7.0",
       "cookfile" : "1.5.0",
       "recipe" : "1.0.0",
-      "build" : 45
+      "build" : 0
     },
     "update_notes" : "",
     "update_warnings" : ""
@@ -28,7 +28,8 @@
         "ratelimitingfilter"
       ],
       "apt_dependencies": [
-        "libatlas-base-dev"
+        "libatlas-base-dev",
+        "pillow>=10.0.0"
       ]
     }
   },
@@ -78,6 +79,25 @@
           ],
           "apt_dependencies": [],
           "command_list" : []
+        }
+      }
+    },
+    {
+      "version" : "1.7.0",
+      "build" : 0,
+      "reboot_required" : true,
+      "dependencies" : {
+        "app": {
+          "py_dependencies": [],
+          "apt_dependencies": [],
+          "command_list" : []
+        },
+        "control": {
+          "py_dependencies": [],
+          "apt_dependencies": [],
+          "command_list" : [
+            ["sudo", "bash", "updater/bl_udev_170.sh"]
+          ]
         }
       }
     }

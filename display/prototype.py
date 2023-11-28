@@ -17,7 +17,7 @@ import time
 
 class Display:
 
-	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F'):
+	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F', config={}):
 		self.units = units 
 		curses.wrapper(self._curses_main)
 		curses.curs_set(0)  # Invisible Cursor 
