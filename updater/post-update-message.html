@@ -1,115 +1,44 @@
-<!-- Post Update Message for v1.6.0 -->
+<!-- Post Update Message for v1.7.0 -->
 <H1>
     <img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="50" height="50" class="d-inline-block align-top" alt="">
-    PiFire 1.6.0 Release - November 2023
+    PiFire 1.7.0 Release - Month/Year TBD
 </H1>
 
-<p>In this month comes another <i>huge</i> update with lots of new features and bug fixes.  Many thanks to the users from discord that have been testing along the way (as well as submitting some bugs), what a great community we have!  Many of these features have been deployed on our development branch for some time, so they should be relatively stable.  Please do file issues on GitHub if you find any new bugs with the formal release.  With that, enjoy and happy grilling/smoking!</p>
+<p>
+    Description TBD.
+</p>
 
-<div class="card border-warning shadow">
-    <div class="card-header bg-warning">
-        <strong><i class="fa-solid fa-circle-exclamation"></i>&nbsp; Important!</strong>
-    </div>
-    <div class="card-body">
-        <strong>
-            Due to the addition of Vs (Voltage Source) and Rd (Resistor Divider) settings into the device settings of a specific device, it is important that users run the <a href="/wizard">Configuration Wizard</a> and setup these values in the ADS1115 device.  The values stored in the probe profiles will not longer be used, such that the probe profiles can be used with any of the devices regardless of the Vs and Rd values.  For example, in the probes device section of the configuration wizard, click on the edit icon for the ADS1115 device, edit the Vs and individual Rd settings.  Once you are finished, continue with the configuration wizard and install the changes.  
-        </strong>
-    </div>
-</div>
 <br>
 
-<p><i class="fa-regular fa-star"></i>&nbsp; <u>Here are just some of the <b>NEW</b> features that were added in this update:</u></p>
+<p>
+    <i class="fa-regular fa-star"></i>&nbsp; <u>Here are just some of the <b>NEW</b> features that were added in this update:</u>
+</p>
 
 <ul>
     <li>
-        Added Pan/Zoom capabilities to the chart in the <a href="/history">History/Status</a> page
+        TBD
     </li>
     <li>
-        Moved Vs and Rd settings (per-probe) to the Device settings in the <a href="/wizard">Configuration Wizard</a> so that these do not need to be configured via the profiles.  <strong>WARNING: </strong> <i>For this reason, it is required to go through the <a href="/wizard">Configuration Wizard</a> for this version to ensure that your Vs and Rd settings are correct in the device settings.  So if you have an ADS1115 installed, please ensure that you are configuring it before you run the system. </i>
+        ...
     </li>
     <li>
-        Added Auger Off Time control so that you can modify your P-Mode settings more precisely (<a href="/settings">Settings > Work Cycle</a>)
+        TBD
     </li>
-    <li>
-        Added a boot-to-monitor mode (enabled in <a href="/admin">Admin > Boot Settings</a>) so that you can go straight into monitor mode after boot.  This can be helpful to debug your displays and ensure that PiFire is coming up properly. 
-    </li>
-    <li>
-        Added a status card to the <a href="/dash">default and classic dashboards</a>.  Shows the status of the fan, auger, igniter and P-mode (when in Smoke or Startup) with animated icons.  Also displays a countdown for Prime, Startup, Re-Ignite and Shutdown modes. 
-    </li>
-    <li>
-        Added P-Mode selection to the <a href="/dash">default and classic dashboards</a>.  Allows you to select a new P-Mode directly from the dashboard when in Startup/Reignite/Smoke modes.  
-    </li>
-    <li>
-        Start Igniter in Prime Mode (Thanks to @calonmerc for the suggestion) (<a href="/settings">Settings > Pellets</a>)
-    </li>
-    <li>
-        Enhancements to PWM Fan to utilize the Hardware PWM on the Raspberry Pi.  Many thanks to GitHub user @ghandye for submitting the code change.<br>
-        <br>
-        <div class="card border-warning shadow" style="max-width: 40rem;">
-            <div class="card-header bg-warning">
-                <strong><i class="fa-solid fa-circle-exclamation"></i>&nbsp; Important!</strong>
-            </div>
-            <div class="card-body">
-                <strong>Important Note:</strong> The user may need to make the following manual changes to enable hardware PWM support:
-                <ul>
-                    <li>
-                        Adding this line to the end of <span style="font-family:courier;">/boot/config.txt</span>, and rebooting: <br><br>
-                        <span style="font-family:courier;">dtoverlay=pwm,pin=13,func=4</span>
-                        <br>
-                    </li>
-                </ul>
-            </div>
-        </div>
-        <br>
-    </li>
-    <li>
-        Add MCP9600 device support (note, this device requires a much slower I2C bus clock and may the user to manually change the bus clock frequency in /boot, however it should be noticed that it is still not stable) (<a href="/wizard">Configuration Wizard</a>)
-    </li>
-    <li>
-        Add 'Logs' page to display all of the various logs that are generated for debug (can be found via <a href="/admin">Admin > Debug</a> or on the <a href="/events">Events</a> page)
-    </li>
-    <li>
-        Improved update feature to exclude previously installed packages, which will hopefully speed-up updates
-    </li>
-    <li>
-        Added a pop-up dialog after update to show this message which is also available on the <a href="/update">update page</a>
-    </li>
-
 </ul>
 
 <p><i class="fa-solid fa-bug-slash"></i>&nbsp; <u>Here are some bug fixes in this update:</u></p>
 
 <ul>
     <li>
-        Add more of a description on how to use keep warm in <a href="/settings">Settings > Work Cycle</a>  
+        TBD
     </li>
     <li>
-        Rate limit some error messages in the log to prevent the logs from being swamped
+        ...
     </li>
     <li>
-        Change the color of PMode on Default/Classic Dashboard for dark mode (<a href="/dash">Dashboard</a>)
-    </li>
-    <li>
-        Fix bug where the 240x320 display expects 2 food probes and crashes if there are less than two. (Thanks @ChrisUsernameChanged)
-    </li>
-    <li>
-        Settings Restore Bug (apply settings and restart server) (<a href="/admin">Admin > Data Management</a>)
-    </li>
-    <li>
-        Default disable Smart Start feature.  This was causing some confusion with those who are using P-Mode to control their cooks, where Smart Start was automatically adjusting P-Mode for the initial startup, based on ambient temperature instead of using the manually set P-Mode. (<a href="/settings">Settings > Startup & Shutdown</a>)
-    </li>
-    <li>
-        Fixed default cycle settings for what is recommended in the PID settings (<a href="/settings">Settings > Work Cycle</a>)
-    </li>
-    <li>
-        Fixed divide by zero error in probes/base.py 
-    </li>
-    <li>
-        Fixed an issue where log-levels were being overridden.  
-    </li>
-    <li>
-        Improved VL530L0X resilience, where sometimes long distance reads can cause the control script heartbeat to fail and crash/restart.  Added this distance module to a separate thread so if there are delays in measurements, they do not cause the control script to crash. 
+        TBD
     </li>
 </ul>
+
 <br>
 <br>
