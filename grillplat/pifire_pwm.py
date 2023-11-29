@@ -7,7 +7,7 @@
 # Description: This library supports controlling the PiFire PWM PCB, which
 # integrates solid state relays and PWM amplifier circuitry to drive a 12V DC PWM fan.
 #
-# Relays (augur, igniter) are controlled via Raspberry Pi GPIO pins.
+# Relays (augur, igniter) are controlled via GPIO pins.
 #
 # 12V power to the fan is controlled via GPIO, which controls a power transistor.
 #

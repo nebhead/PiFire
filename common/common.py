@@ -106,7 +106,8 @@ def default_settings():
 		'boot_to_monitor' : False,  # Set to True to boot directly into monitor mode
 		'prime_ignition' : False,  # Set to True to enable the igniter in prime & startup mode
 		'updated_message' : False,   # Set to True to display a pop-up message after the system has been updated 
-		'venv' : False  # Set to True if running in virtual environment (needed for Raspberry Pi OS Bookworm)
+		'venv' : False,  # Set to True if running in virtual environment (needed for Raspberry Pi OS Bookworm)
+		'real_hw' : True  # Set to True if running on real hardware (i.e. Raspberry Pi), False if running in a test environment 
 	}
 
 	if os.path.exists('bin'):
@@ -1542,22 +1543,16 @@ def convert_settings_units(units, settings):
 			units, settings['smartstart']['temp_range_list'][temp])
 	return(settings)
 
-# **************************************
-# is_raspberrypi() function borrowed from user https://raspberrypi.stackexchange.com/users/126953/chris
-# in post: https://raspberrypi.stackexchange.com/questions/5100/detect-that-a-python-program-is-running-on-the-pi
-# **************************************
-def is_raspberry_pi():
+def is_real_hardware(settings=None):
 	"""
-	Check if device is a Raspberry Pi
+	Check if running on real hardware as opposed to a prototype/test environment.
 
-	:return: True if Raspberry Pi. False otherwise
+	:return: True if running on real hardware (i.e. Raspberry Pi), else False. 
 	"""
-	try:
-		with io.open('/sys/firmware/devicetree/base/model', 'r') as m:
-			if 'raspberry pi' in m.read().lower(): return True
-	except Exception:
-		pass
-	return False
+	if settings == None:
+		settings = read_settings()
+
+	return True if settings['globals']['real_hw'] else False 
 
 def restart_scripts():
 	"""
@@ -1565,7 +1560,7 @@ def restart_scripts():
 	"""
 	print('[DEBUG MSG] Restarting Scripts... ')
 	command = "sleep 3 && sudo service supervisor restart &"
-	if is_raspberry_pi():
+	if is_real_hardware():
 		os.system(command)
 
 def read_wizard(filename='wizard/wizard_manifest.json'):

@@ -6,8 +6,7 @@
 #
 # Description: This library simulates
 # 	controlling the Grill outputs via
-# 	Raspberry Pi GPIOs, to a 4-channel
-# 	relay
+# 	GPIOs, to a 4-channel relay
 #
 # *****************************************
 

@@ -21,6 +21,13 @@
 						"description" : "Select the trigger level for the relays on the platform.  ",
 						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
 						"settings" : ["globals", "triggerlevel"]
+					},
+					"real_hw" : {
+						"friendly_name" : "Real Hardware",
+						"description" : "Select Yes if running on real hardware (Default).  Select No if running in a test environment.",
+						"options" : { "True" : "Yes", "False" : "No (Test Only)" },
+						"settings" : ["globals", "real_hw"],
+						"hidden" : true
 					}
 				}
 			},
@@ -52,6 +59,13 @@
 						"options" : { "True" : "PWM DC Fan" },
 						"settings" : ["globals", "dc_fan"],
 						"hidden" : true
+					},
+					"real_hw" : {
+						"friendly_name" : "Real Hardware",
+						"description" : "Select Yes if running on real hardware (Default).  Select No if running in a test environment.",
+						"options" : { "True" : "Yes", "False" : "No (Test Only)" },
+						"settings" : ["globals", "real_hw"],
+						"hidden" : true
 					}
 				}
 			},
@@ -81,6 +95,12 @@
 						"description" : "Select if your platform supports a DC PWM fan or uses a regular AC Fan. ",
 						"options" : { "False" : "Standard AC Fan", "True" : "PWM DC Fan" },
 						"settings" : ["globals", "dc_fan"]
+					},
+					"real_hw" : {
+						"friendly_name" : "Real Hardware",
+						"description" : "Select Yes if running on real hardware.  Select No if running in a test environment (Default).",
+						"options" : { "False" : "No (Test Only)", "True" : "Yes" },
+						"settings" : ["globals", "real_hw"]
 					}
 				}
 			} 

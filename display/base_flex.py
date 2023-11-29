@@ -24,7 +24,7 @@ import io
 import os
 import pygame
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
-from common import read_control, write_control, is_raspberry_pi, read_generic_json, read_settings, write_settings
+from common import read_control, write_control, is_real_hardware, read_generic_json, read_settings, write_settings
 
 '''
 Display object class definition 
@@ -1308,7 +1308,7 @@ class DisplayBase:
         self.command_data = None
         self.input_origin = None
 
-        self.raspberry_pi = True if is_raspberry_pi() else False
+        self.real_hardware = True if is_real_hardware() else False
         # Attempt to set the log level of PIL so that it does not pollute the logs
         logging.getLogger('PIL').setLevel(logging.CRITICAL + 1)
         
@@ -1705,7 +1705,7 @@ class DisplayBase:
                 'mode' : 'Stop',
             }
             write_control(data, origin='display')
-            if self.raspberry_pi:
+            if self.real_hardware:
                 os.system('sleep 3 && sudo reboot &')
             else:
                 pass
@@ -1719,7 +1719,7 @@ class DisplayBase:
                 'mode' : 'Stop',
             }
             write_control(data, origin='display')
-            if self.raspberry_pi:
+            if self.real_hardware:
                 os.system('sleep 3 && sudo shutdown -h now &')
             else:
                 pass
@@ -1733,7 +1733,7 @@ class DisplayBase:
                 'mode' : 'Stop',
             }
             write_control(data, origin='display')
-            if self.raspberry_pi:
+            if self.real_hardware:
                 os.system('sleep 3 && sudo service supervisor restart &')
             else:
                 pass 

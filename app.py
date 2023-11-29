@@ -2063,7 +2063,7 @@ def admin_page(action=None):
 	if action == 'reboot':
 		event = "Admin: Reboot"
 		write_log(event)
-		if is_raspberry_pi():
+		if is_real_hardware():
 			os.system("sleep 3 && sudo reboot &")
 		server_status = 'rebooting'
 		return render_template('shutdown.html', action=action, page_theme=settings['globals']['page_theme'],
@@ -2072,7 +2072,7 @@ def admin_page(action=None):
 	elif action == 'shutdown':
 		event = "Admin: Shutdown"
 		write_log(event)
-		if is_raspberry_pi():
+		if is_real_hardware():
 			os.system("sleep 3 && sudo shutdown -h now &")
 		server_status = 'shutdown'
 		return render_template('shutdown.html', action=action, page_theme=settings['globals']['page_theme'],
@@ -2220,7 +2220,7 @@ def admin_page(action=None):
 
 	ifconfig = os.popen('ifconfig').readlines()
 
-	if is_raspberry_pi():
+	if is_real_hardware():
 		temp = _check_cpu_temp()
 	else:
 		temp = '---'
@@ -2960,7 +2960,7 @@ def update_page(action=None):
 		update_data = get_update_data(settings)
 
 		if 'update_remote_branches' in r:
-			if is_raspberry_pi():
+			if is_real_hardware():
 				os.system(f'{python_exec} %s %s &' % ('updater.py', '-r'))	 # Update branches from remote 
 				time.sleep(5)  # Artificial delay to avoid race condition
 			return redirect('/update')
@@ -3896,12 +3896,12 @@ def updater_action(type='none', branch=None):
 			return {'response': {'result':'error', 'message':'Error: Branch not specified in request'}}
 
 	elif type == 'update_remote_branches':
-		if is_raspberry_pi():
+		if is_real_hardware():
 			os.system(f'{python_exec} updater.py -r') # Update branches from remote
 			#time.sleep(2)
 			return {'response': {'result':'success', 'message': 'Branches successfully updated from remote' }}
 		else:
-			return {'response': {'result':'error', 'message': 'System is not a Raspberry Pi. Branches not updated.' }}
+			return {'response': {'result':'error', 'message': 'System is running in test environment. Branches not updated.' }}
 	else:
 		return {'response': {'result':'error', 'message':'Error: Received request without valid action'}}
 
@@ -3939,7 +3939,7 @@ def post_restore_data(type='none', filename='none', json_data=None):
 settings = read_settings(init=True)
 
 if __name__ == '__main__':
-	if is_raspberry_pi():
+	if is_real_hardware():
 		socketio.run(app, host='0.0.0.0')
 	else:
 		socketio.run(app, host='0.0.0.0', debug=True)

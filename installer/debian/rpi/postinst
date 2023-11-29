@@ -24,7 +24,7 @@ r=$((r < 20 ? 20 : r))
 c=$((c < 70 ? 70 : c))
 
 # Display the welcome dialog
-whiptail --msgbox --backtitle "Welcome" --title "PiFire Automated Installer" "This installer will transform your Raspberry Pi into a connected Smoker Controller.  NOTE: This installer is intended to be run on a fresh install of Raspbian Lite Stretch +.  This script is currently in Alpha testing so there may be bugs." ${r} ${c}
+whiptail --msgbox --backtitle "Welcome" --title "PiFire Automated Installer" "This installer will transform your Single Board Computer into a connected Smoker Controller.  NOTE: This installer is intended to be run on a fresh install of Raspbian Lite Stretch +.  This script is currently in Alpha testing so there may be bugs." ${r} ${c}
 
 # Install dependencies
 sudo -H pip3 install flask

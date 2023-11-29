@@ -47,7 +47,7 @@ class Display(DisplayBase):
 
 	def _init_display_device(self):
 		''' Init backlight '''
-		if self.raspberry_pi:
+		if self.real_hardware:
 			# Use the rpi-backlight module if running on the RasPi
 			from rpi_backlight import Backlight
 			self.backlight = Backlight()
@@ -76,7 +76,7 @@ class Display(DisplayBase):
 		pygame.display.set_caption('PiFire Device Display')
 		# Create Display Surface
 
-		if self.raspberry_pi:
+		if self.real_hardware:
 			flags = pygame.FULLSCREEN | pygame.DOUBLEBUF
 			self.display_surface = pygame.display.set_mode((0, 0), flags)
 			pygame.mouse.set_visible(False)  # make mouse pointer invisible 

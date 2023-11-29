@@ -128,7 +128,7 @@ for py_item in py_dependencies:
 	command.extend(launch_pip)
 	command.append(py_item)
 
-	if is_raspberry_pi():
+	if is_real_hardware():
 		process = subprocess.Popen(command, stdout=subprocess.PIPE, encoding='utf-8')
 		while True:
 			output = process.stdout.readline()
@@ -159,7 +159,7 @@ for apt_item in apt_dependencies:
 	command.append(apt_item)
 	command.append('-y')
 	
-	if is_raspberry_pi():
+	if is_real_hardware():
 		process = subprocess.Popen(command, stdout=subprocess.PIPE, encoding='utf-8')
 		while True:
 			output = process.stdout.readline()
