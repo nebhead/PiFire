@@ -95,6 +95,7 @@ def default_settings():
 		'disp_rotation' : 0,
 		'shutdown_timer' : 60,
 		'startup_timer' : 240,
+		'startup_exit_temp' : 0,  # Exit startup at this temperature threshold. [0 = disabled]
 		'auto_power_off' : False,
 		'dc_fan': False,
 		'standalone': True,
@@ -232,6 +233,7 @@ def default_settings():
 
 	settings['smartstart'] = {
 		'enabled' : False,   # Disable Smart Start by default on new installations
+		'exit_temp' : 120,  # Exit temperature - exits smart start if this temperature is achieved 
 		'temp_range_list' : [60, 80, 90],  # Min Temps for Each Profile
 		'profiles' : [
 			{
@@ -1532,6 +1534,7 @@ def convert_settings_units(units, settings):
 	:return: Updated Settings
 	"""
 	settings['globals']['units'] = units
+	settings['globals']['startup_exit_temp'] = convert_temp(units, settings['globals']['startup_exit_temp'])
 	settings['safety']['maxstartuptemp'] = convert_temp(units, settings['safety']['maxstartuptemp'])
 	settings['safety']['maxtemp'] = convert_temp(units, settings['safety']['maxtemp'])
 	settings['safety']['minstartuptemp'] = convert_temp(units, settings['safety']['minstartuptemp'])
@@ -1541,6 +1544,7 @@ def convert_settings_units(units, settings):
 	for temp in range(0, len(settings['smartstart']['temp_range_list'])):
 		settings['smartstart']['temp_range_list'][temp] = convert_temp(
 			units, settings['smartstart']['temp_range_list'][temp])
+	settings['smartstart']['exit_temp'] = convert_temp(units, settings['smartstart']['exit_temp'])
 	return(settings)
 
 def is_real_hardware(settings=None):

@@ -1834,6 +1834,10 @@ def settings_page(action=None):
 			settings['smartstart']['enabled'] = True
 		else:
 			settings['smartstart']['enabled'] = False
+		if _is_not_blank(response, 'smartstart_exit_temp'):
+			settings['smartstart']['exit_temp'] = int(response['smartstart_exit_temp'])
+		if _is_not_blank(response, 'startup_exit_temp'):
+			settings['globals']['startup_exit_temp'] = int(response['startup_exit_temp'])
 
 		settings['start_to_mode']['after_startup_mode'] = response['after_startup_mode']
 		settings['start_to_mode']['primary_setpoint'] = int(response['startup_mode_setpoint'])

@@ -805,6 +805,17 @@
 										<input id="startup_timer" type="number" min="{{ settings['safety']['maxstartuptemp'] }}" max="{{ settings['safety']['maxtemp'] }}" class="form-control" value="{{ settings['start_to_mode']['primary_setpoint'] }}" name="startup_mode_setpoint">
                                     </div>
 
+                                    <span class="badge badge-warning">NOTE:</span>
+									<i class="small"> Set this value to 0 to disable this startup exit temperature.</i>
+                                    <div class="input-group mb-3">
+										<div class="input-group-prepend">
+											<span class="input-group-text" data-toggle="tooltip" title="Exit startup when this temperature is achieved. [0 = Disabled]">
+												<i class="fas fa-temperature-high"></i>&nbsp; Exit Startup Temperature ({{ settings['globals']['units'] }})</span>
+										</div>
+										<input id="startup_exit_temp" type="number" min="0" class="form-control" placeholder="{{ settings['globals']['startup_exit_temp'] }}" value="{{ settings['globals']['startup_exit_temp'] }}" name="startup_exit_temp">
+									</div>
+
+
                                 </div>
 							</div>
 							<br>
@@ -941,6 +952,17 @@
 										</div>
 										</div>
 									</div><!-- End of Add Modal-->
+
+                                    <span class="badge badge-warning">NOTE:</span>
+									<i class="small"> Set this value to 0 to disable this startup exit temperature.</i>
+                                    <div class="input-group mb-3">
+										<div class="input-group-prepend">
+											<span class="input-group-text" data-toggle="tooltip" title="Exit startup when this temperature is achieved. [0 = Disabled]">
+												<i class="fas fa-temperature-high"></i>&nbsp; Exit Startup Temperature ({{ settings['globals']['units'] }})</span>
+										</div>
+										<input id="smartstart_exit_temp" type="number" min="0" class="form-control" placeholder="{{ settings['smartstart']['exit_temp'] }}" value="{{ settings['smartstart']['exit_temp'] }}" name="smartstart_exit_temp">
+									</div>
+
 								</div><!-- End of Smart Start Settings Card Body -->
 							</div><!-- End of Smart Start Settings Card-->
 							<br>

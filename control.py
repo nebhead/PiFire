@@ -798,9 +798,15 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			if settings['smartstart']['enabled']:
 				profile_selected = control['smartstart']['profile_selected']
 				startup_timer = settings['smartstart']['profiles'][profile_selected]['startuptime']
+				exit_temp = settings['smartstart']['exit_temp']
 			else: 
 				startup_timer = settings['globals']['startup_timer']
+				exit_temp = settings['globals']['startup_exit_temp']
+			
 			if (now - start_time) > startup_timer:
+				break
+
+			if (exit_temp != 0) and (ptemp >= exit_temp):
 				break
 
 		# Check if shutdown time has elapsed since shutdown mode started
