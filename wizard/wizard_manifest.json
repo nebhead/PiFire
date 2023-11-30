@@ -7,8 +7,10 @@
 				"description" : "This is the default PiFire module supporting the Raspberry Pi Zero W (1/2).  Choose this module if PiFire is running on a Raspberry Pi.",
 				"default" : true,
 				"image" : "raspizerow.png",
+				"reboot_required" : false,
 				"py_dependencies" : [], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {
 					"standalone" : {
 						"friendly_name" : "Standalone",
@@ -37,8 +39,12 @@
 				"description" : "This is the PWM PiFire module supporting the Raspberry Pi Zero W (1/2).  Choose this module if PiFire is running on a Raspberry Pi and your PCB supports a 12v DC PWM Fan.",
 				"default" : false,
 				"image" : "raspizerow.png",
+				"reboot_required" : true,
 				"py_dependencies" : ["rpi-hardware-pwm"],
 				"apt_dependencies" : [],
+				"command_list" : [
+					["sudo", "bash", "wizard/pwm_rpi_platform.sh"]
+				],
 				"settings_dependencies" : {
 					"standalone" : {
 						"friendly_name" : "Standalone",
@@ -75,8 +81,10 @@
 				"description" : "This module is used for testing and debug purposes only.  Only select this module if you know what you are doing.",
 				"default" : false,
 				"image" : "prototype.png",
+				"reboot_required" : false,
 				"py_dependencies" : [], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {
 					"standalone" : {
 						"friendly_name" : "Standalone",
@@ -112,8 +120,10 @@
 				"description" : "This is the default module supporting ALL of the ADS1115 16-Bit ADC's and is based on Adafruit's Circuit Python implementation/module.  This version is still actively updated and may support a wider range of hardware.  There has been rumors of sellers shipping ADS1015 12-Bit ADC's instead of the ADS1115 16-Bit ADC's.  If you got one of these, you can try the ADS1015 Adafruit library instead.",
 				"default" : true,
 				"image" : "ads1115.png",
+				"reboot_required" : false,
 				"py_dependencies" : ["adafruit-circuitpython-ads1x15"], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {
 					"units" : {
 						"friendly_name" : "Temp Units",
@@ -199,8 +209,10 @@
 				"description" : "This module supports the ADS1015 12-Bit ADC based on Adafruit's Circuit Python implementation/module.  This version can also be used with the ADS1115, as it is backward compatible.  Some fidelity may be lost due to the fact that the ADC has less bits to measure with, however in testing it seems to be reasonably good.  Use this if you are having issues with the default ADS1115 module.",
 				"default" : false,
 				"image" : "ads1115.png",
+				"reboot_required" : false,
 				"py_dependencies" : ["adafruit-circuitpython-ads1x15"], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {
 					"units" : {
 						"friendly_name" : "Temp Units",
@@ -286,8 +298,10 @@
 				"description" : "This SPI device reads RTD style probes, such as the Traeger PT100(PT1000) RTD probe.  Note that special care may need to be taken if this is used with another SPI device (i.e. SPI Display) on the system.",
 				"default" : false,
 				"image" : "max31865.png",
+				"reboot_required" : false,
 				"py_dependencies" : [], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {
 					"units" : {
 						"friendly_name" : "Temp Units",
@@ -350,8 +364,10 @@
 				"description" : "This SPI device reads RTD style probes, such as the Traeger PT100(PT1000) RTD probe.  This version uses the Adafruit CircuitPython modules.  It should be noted that this module does not allow the use of CE0 or CE1, thus another GPIO should be used for the CS pin. Note that special care may need to be taken if this is used with another SPI device (i.e. SPI Display) on the system.",
 				"default" : false,
 				"image" : "max31865.png",
+				"reboot_required" : false,
 				"py_dependencies" : ["adafruit-circuitpython-max31865"], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {
 					"units" : {
 						"friendly_name" : "Temp Units",
@@ -414,8 +430,10 @@
 				"description" : "This I2C device reads K-Type thermocouples / probes. Moreover the MCP9600 can interface with just about any thermocouple type: K, J, T, N, S, E, B and R type are all supported.  This version uses the Adafruit CircuitPython modules.  Note that this device can be intolerant of higher i2c bus speeds, so you may need to reduce the i2c bus speed manually.",
 				"default" : false,
 				"image" : "mcp9600.png",
+				"reboot_required" : false,
 				"py_dependencies" : ["adafruit-circuitpython-mcp9600"], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {
 					"units" : {
 						"friendly_name" : "Temp Units",
@@ -446,8 +464,10 @@
 				"description" : "This is the test module for probe input.  It should only be used for testing & debug.",
 				"default" : false,
 				"image" : "prototype.png",
+				"reboot_required" : false,
 				"py_dependencies" : [], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {
 					"units" : {
 						"friendly_name" : "Temp Units",
@@ -533,8 +553,10 @@
 				"description" : "WARNING: This module is no longer the default due to reports of issues.  If you experience trouble with this module, use the Adafruit modules.  This is an alternative PiFire module supporting the ADS1115 16-Bit ADC and should only be used if you are experiencing difficulty with the Adafruit module.",
 				"default" : false,
 				"image" : "ads1115.png",
+				"reboot_required" : false,
 				"py_dependencies" : ["ADS1115"], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {
 					"units" : {
 						"friendly_name" : "Temp Units",
@@ -620,8 +642,10 @@
 				"description" : "This is a virtual probe module that will average specific ports on real devices.",
 				"default" : false,
 				"image" : "virtual_probe.png",
+				"reboot_required" : false,
 				"py_dependencies" : [], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {
 					"units" : {
 						"friendly_name" : "Temp Units",
@@ -649,8 +673,10 @@
 				"description" : "This is a virtual probe module that will return the highest value from specific ports on real devices.",
 				"default" : false,
 				"image" : "virtual_probe.png",
+				"reboot_required" : false,
 				"py_dependencies" : [], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {
 					"units" : {
 						"friendly_name" : "Temp Units",
@@ -678,8 +704,10 @@
 				"description" : "This is a virtual probe module that will return the lowest value from specific ports on real devices.",
 				"default" : false,
 				"image" : "virtual_probe.png",
+				"reboot_required" : false,
 				"py_dependencies" : [], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {
 					"units" : {
 						"friendly_name" : "Temp Units",
@@ -707,8 +735,10 @@
 				"description" : "This is a virtual probe module that will return the median value from specific ports on real devices.",
 				"default" : false,
 				"image" : "virtual_probe.png",
+				"reboot_required" : false,
 				"py_dependencies" : [], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {
 					"units" : {
 						"friendly_name" : "Temp Units",
@@ -739,8 +769,10 @@
 				"notes" : "Pinout: Display - MISO = MISO(Pin 21), LED = GPIO05, SCK = SCLK(Pin 23), MOSI = MOSI(Pin 19), DC = GPIO24, RST = GPIO25, CS = CE0(Pin 24).  Encoder - CLK = GPIO16, DT = GPIO20, SW = GPIO21, GND = GND, VCC/+ = 3.3V",
 				"default" : false,
 				"image" : "ili9341-ky040.png",
+				"reboot_required" : false,
 				"py_dependencies" : ["luma.lcd", "pyky040==0.1.4", ">=9.2.0"], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
@@ -769,8 +801,10 @@
 				"notes" : "Pinout: Display - MISO = MISO(Pin 21), LED = GPIO12, SCK = SCLK(Pin 23), MOSI = MOSI(Pin 19), DC = GPIO16, RST = GPIO20, CS = CE0(Pin 24). Encoder - CLK = GPIO25, DT = GPIO24, SW = GPIO23, GND = GND, VCC/+ = 3.3V",
 				"default" : false,
 				"image" : "ili9341-ky040.png",
+				"reboot_required" : false,
 				"py_dependencies" : ["luma.lcd", "pyky040==0.1.4", "pillow>=9.2.0"], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
@@ -799,8 +833,10 @@
 				"notes" : "Pinout: MISO = MISO(Pin 21), LED = GPIO05, SCK = SCLK(Pin 23), MOSI = MOSI(Pin 19), DC = GPIO24, RST = GPIO25, CS = CE0(Pin 24)",
 				"default" : false,
 				"image" : "ili9341.png",
+				"reboot_required" : false,
 				"py_dependencies" : ["luma.lcd", "pillow>=9.2.0"], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
@@ -829,8 +865,10 @@
 				"notes" : "Pinout:  Display - MISO = MISO(Pin 21), LED = GPIO05, SCK = SCLK(Pin 23), MOSI = MOSI(Pin 19), DC = GPIO24, RST = GPIO25, CS = CE0(Pin 24). Buttons - UP = GPIO16, DOWN = GPIO20, ENTER = GPIO21, GND = GND, VCC = 3.3V",
 				"default" : true,
 				"image" : "ili9341b.png",
+				"reboot_required" : false,
 				"py_dependencies" : ["luma.lcd", "pillow>=9.2.0", "gpiozero"], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
@@ -875,8 +913,10 @@
 				"notes" : "Pinout:  Display - DIN = MOSI(Pin19), CLK=SCLK(Pin23), CS=CE0(Pin24), DC=GPIO24, RST=GPIO25, BL=GPIO05. Buttons - UP = GPIO16, DOWN = GPIO20, ENTER = GPIO21, GND = GND, VCC = 3.3V",
 				"default" : false,
 				"image" : "st7789b.png",
+				"reboot_required" : false,
 				"py_dependencies" : ["st7789", "pillow>=9.2.0", "numpy"],
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
@@ -921,8 +961,10 @@
 				"notes" : "Pinout:  Display - DIN = MOSI(Pin19), CLK=SCLK(Pin23), CS=CE0(Pin24), DC=GPIO24, RST=GPIO25, BL=GPIO05. Encoder - CLK = GPIO16, DT = GPIO20, SW = GPIO21, GND = GND, VCC/+ = 3.3V",
 				"default" : false,
 				"image" : "st7789e.png",
+				"reboot_required" : false,
 				"py_dependencies" : ["st7789", "pyky040==0.1.4", "pillow>=9.2.0", "numpy"],
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
@@ -951,8 +993,10 @@
 				"notes" : "Pinout:  DIN = MOSI(Pin19), CLK=SCLK(Pin23), CS=CE0(Pin24), DC=GPIO24, RST=GPIO25, BL=GPIO05",
 				"default" : false,
 				"image" : "st7789p.png",
+				"reboot_required" : false,
 				"py_dependencies" : ["st7789", "pillow>=9.2.0", "numpy"],
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
@@ -980,8 +1024,10 @@
 				"description" : "This is for systems without a display.  This module should be selected if no display is present.",
 				"default" : false,
 				"image" : "none.png",
+				"reboot_required" : false,
 				"py_dependencies" : [], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {},
 				"config" : []			
 			},
@@ -991,8 +1037,10 @@
 				"description" : "This is the test module for display.  This should be used for development & debug only.",
 				"default" : false,
 				"image" : "prototype.png",
+				"reboot_required" : false,
 				"py_dependencies" : [], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {},
 				"config" : []			
 			},
@@ -1002,8 +1050,10 @@
 				"description" : "This is the test module for display using Pygame.  This should be used for development & debug only.",
 				"default" : false,
 				"image" : "pygame.png",
+				"reboot_required" : false,
 				"py_dependencies" : ["pygame"], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {},
 				"config" : []			
 			},
@@ -1013,8 +1063,10 @@
 				"description" : "This is the test module for display using Pygame.  This should be used for development & debug only.",
 				"default" : false,
 				"image" : "pygame.png",
+				"reboot_required" : false,
 				"py_dependencies" : ["pygame", "pillow>=9.2.0"], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
@@ -1042,8 +1094,10 @@
 				"description" : "This is the test module for display using Pygame.  This should be used for development & debug only.",
 				"default" : false,
 				"image" : "pygame.png",
+				"reboot_required" : false,
 				"py_dependencies" : ["pygame", "pillow>=9.2.0"], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
@@ -1071,8 +1125,10 @@
 				"description" : "These displays are small, only about 1\" diagonal, but very readable due to the high contrast of an OLED display. This display is made of 128x64 individual white OLED pixels, each one is turned on or off by the controller chip.",
 				"default" : false,
 				"image" : "ssd1306.png",
+				"reboot_required" : false,
 				"py_dependencies" : ["luma.oled"], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {},
 				"config" : []			
 			},
@@ -1082,8 +1138,10 @@
 				"description" : "These displays are small, only about 1\" diagonal, but very readable due to the high contrast of an OLED display. This display is made of 128x64 individual white OLED pixels, each one is turned on or off by the controller chip.",
 				"default" : false,
 				"image" : "ssd1306b.png",
+				"reboot_required" : false,
 				"py_dependencies" : ["luma.oled"], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {
 					"buttonslevel" : {
 						"friendly_name" : "Button Level",
@@ -1112,8 +1170,10 @@
 				"notes" : "Pinout:  DIN = MOSI(Pin19), CLK=SCLK(Pin23), CS=CE0(Pin24), DC=GPIO24, RST=GPIO25, BL=GPIO05",
 				"default" : false,
 				"image" : "st7789p.png",
+				"reboot_required" : false,
 				"py_dependencies" : ["st7789"], 
 				"apt_dependencies" : ["python3-rpi.gpio", "python3-spidev", "python3-pil", "python3-numpy"],
+				"command_list" : [],
 				"settings_dependencies" : {
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
@@ -1142,8 +1202,10 @@
 				"notes" : "This module may a very long time to install due to the OS dependencies that are required.  Please be aware that this may take more than 10 minutes to install.",
 				"default" : false,
 				"image" : "dsi_touch.png",
+				"reboot_required" : true,
 				"py_dependencies" : ["rpi-backlight", "pillow>=10.0.0", "pygame>=2.5.0"], 
 				"apt_dependencies" : ["lightdm", "libsdl2-2.0-0"],
+				"command_list" : [],
 				"settings_dependencies" : {
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
@@ -1181,8 +1243,10 @@
 				"description" : "This economical sensor provides 2cm to 400cm of non-contact measurement functionality with a ranging accuracy that can reach up to 3mm.",
 				"default" : false,
 				"image" : "hcsr04.png",
+				"reboot_required" : false,
 				"py_dependencies" : ["hcsr04sensor"], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {}
 			},
 			"vl53l0x" : {
@@ -1191,8 +1255,10 @@
 				"description" : "The VL53L0X is a new generation Time-of-Flight (ToF) laser-ranging module and is the hopper sensor of choice for the PiFire project.",
 				"default" : false,
 				"image" : "vl53l0x.png",
+				"reboot_required" : false,
 				"py_dependencies" : ["git+https://github.com/pimoroni/VL53L0X-python.git"], 
 				"apt_dependencies" : ["python3-smbus"],
+				"command_list" : [],
 				"settings_dependencies" : {}
 			},
 			"prototype" : {
@@ -1201,8 +1267,10 @@
 				"description" : "This module should be chosen for testing & debug.",
 				"default" : false,
 				"image" : "prototype.png",
+				"reboot_required" : false,
 				"py_dependencies" : [], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {}			
 			},
 			"none" : {
@@ -1211,8 +1279,10 @@
 				"description" : "This module should be chosen if there is no distance sensor hardware installed.",
 				"default" : true,
 				"image" : "none.png",
+				"reboot_required" : false,
 				"py_dependencies" : [], 
 				"apt_dependencies" : [],
+				"command_list" : [],
 				"settings_dependencies" : {}			
 			}
 		}

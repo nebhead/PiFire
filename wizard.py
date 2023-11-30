@@ -92,21 +92,28 @@ write_settings(settings)
 
 percent = 20
 status = 'Calculating Python/Package Dependencies...'
-output = ' - Calculating Python & Package Dependencies'
+output = ' - Calculating Python, APT Package, and General Dependencies'
 set_wizard_install_status(percent, status, output)
 time.sleep(2)
 # Get PyPi & Apt dependencies
 py_dependencies = []
 apt_dependencies = []
+command_list = []
+reboot_required = False 
+
 for module in WizardInstallInfo['modules']:
 	for selected in WizardInstallInfo['modules'][module]['module_selected']:
 		for py_dependency in WizardData['modules'][module][selected]['py_dependencies']:
 			py_dependencies.append(py_dependency)
 		for apt_dependency in WizardData['modules'][module][selected]['apt_dependencies']:
 			apt_dependencies.append(apt_dependency)
+		for command in WizardData['modules'][module][selected]['command_list']:
+			command_list.append(command)
+		if WizardData['modules'][module][selected]['reboot_required']:
+			reboot_required = True
 
 # Calculate the percent done from remaining items to install 
-items_remaining = len(py_dependencies) + len(apt_dependencies)
+items_remaining = len(py_dependencies) + len(apt_dependencies) + len(command_list)
 if items_remaining == 0:
 	increment = 80
 else:
@@ -178,14 +185,42 @@ for apt_item in apt_dependencies:
 	output = f' - Completed Install of {apt_item}'
 	set_wizard_install_status(percent, status, output)
 
+# Run system commands dependencies
+status = 'Installing General Dependencies...'
+output = ' - Installing General Dependencies'
+set_wizard_install_status(percent, status, output)
+
+for command in command_list:
+	if is_real_hardware():
+		process = subprocess.Popen(command, stdout=subprocess.PIPE, encoding='utf-8')
+		while True:
+			output = process.stdout.readline()
+			if process.poll() is not None:
+				break
+			if output:
+				set_wizard_install_status(percent, status, output.strip())
+				print(f'command output: {output.strip()}')
+		#return_code = process.poll()
+	else:
+		# This path is for development/testing
+		time.sleep(2)
+		
+	percent += increment
+	output = f' - Completed General Dependency Item'
+	set_updater_install_status(percent, status, output)
+
 percent = 100
 status = 'Finished!'
-output = ' - Finished!  Restarting Server...'
+if reboot_required:
+	output = ' - Finished!  Rebooting Server...'
+else: 
+	output = ' - Finished!  Restarting Server...'
+
 set_wizard_install_status(percent, status, output)
 
 time.sleep(4)
 
-percent = 101
+percent = 142 if reboot_required else 101
 set_wizard_install_status(percent, status, output)
 
 # Clear First Time Setup Flag
