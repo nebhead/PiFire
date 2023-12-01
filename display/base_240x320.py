@@ -95,51 +95,67 @@ class DisplayBase:
 			# List of options for the 'inactive' menu.  This is the initial menu when smoker is not running.
 			'Startup': {
 				'displaytext': 'Startup',
-				'icon': '\uf04b'  # FontAwesome Play Icon
+				'icon': '\uf04b', # FontAwesome Play Icon
+				'iconcolor': (255,255,255)  
 			},
 			'Prime': {
 				'displaytext': 'Prime',
-				'icon': '\uf101'  # FontAwesome Double Arrow Right Icon
+				'icon': '\uf101',  # FontAwesome Double Arrow Right Icon
+				'iconcolor': (255,255,255)  
 			},
 			'Monitor': {
 				'displaytext': 'Monitor',
-				'icon': '\uf530'  # FontAwesome Glasses Icon
+				'icon': '\uf530',  # FontAwesome Glasses Icon
+				'iconcolor': (255,255,255)
 			},
 			'Stop': {
 				'displaytext': 'Stop',
-				'icon': '\uf04d'  # FontAwesome Stop Icon
+				'icon': '\uf04d',  # FontAwesome Stop Icon
+				'iconcolor': (255,255,255)
 			},
 			'Network': {
 				'displaytext': 'IP QR Code',
-				'icon': '\uf1eb'  # FontAwesome Wifi Icon
+				'icon': '\uf1eb', # FontAwesome Wifi Icon
+				'iconcolor': (255,255,255)
+			},
+			'Power':{
+				'displaytext': 'Power Menu',
+				'icon': '\uf0e7', #FontAwesome Power Icon
+				'iconcolor' : (255,255,255)
 			}
 		}
 
 		self.menu['active'] = {
 			# List of options for the 'active' menu.  This is the second level menu of options while running.
-			'Shutdown': {
-				'displaytext': 'Shutdown',
-				'icon': '\uf11e'  # FontAwesome Finish Icon
-			},
 			'Hold': {
 				'displaytext': 'Hold',
-				'icon': '\uf76b'  # FontAwesome Temperature Low Icon
+				'icon': '\uf76b',  # FontAwesome Temperature Low Icon
+				'iconcolor': (255,255,255) 
+			},
+			'Shutdown': {
+				'displaytext': 'Shutdown',
+				'icon': '\uf11e',  # FontAwesome Finish Icon
+				'iconcolor' : (255,255,255) # White Orange
 			},
 			'Smoke': {
 				'displaytext': 'Smoke',
-				'icon': '\uf0c2'  # FontAwesome Cloud Icon
-			},
-			'Stop': {
-				'displaytext': 'Stop',
-				'icon': '\uf04d'  # FontAwesome Stop Icon
+				'icon': '\uf0c2',  # FontAwesome Cloud Icon
+				'iconcolor': (255,255,255)
 			},
 			'SmokePlus': {
-				'displaytext': 'Toggle Smoke+',
-				'icon': '\uf0c2'  # FontAwesome Cloud Icon
+				'displaytext': 'Smoke+',
+				'icon': '\uf0c2',  # FontAwesome Cloud Icon
+				'iconcolor': (255,255,255)
+			},	
+			'Stop': {
+				'displaytext': 'Stop',
+				'icon': '\uf04d',  # FontAwesome Stop Icon
+				'iconcolor': (255,255,255)
 			},
 			'Network': {
 				'displaytext': 'IP QR Code',
-				'icon': '\uf1eb'  # FontAwesome Wifi Icon
+				'icon': '\uf1eb',  # FontAwesome Wifi Icon
+				'iconcolor': (255,255,255)
 			}
 		}
 
@@ -147,52 +163,86 @@ class DisplayBase:
 			# List of options for the 'active' menu.  This is the second level menu of options while running.
 			'NextStep': {
 				'displaytext': 'Next Recipe Step',
-				'icon': '\uf051'  # FontAwesome Step Forward Icon
+				'icon': '\uf051',  # FontAwesome Step Forward Icon
+				'iconcolor': (255,255,255)
 			},
 			'Shutdown': {
 				'displaytext': 'Shutdown',
-				'icon': '\uf11e'  # FontAwesome Finish Icon
+				'icon': '\uf11e',  # FontAwesome Finish Icon
+				'iconcolor' : (255,255,255) # White Orange
 			},
 			'Stop': {
 				'displaytext': 'Stop',
-				'icon': '\uf04d'  # FontAwesome Stop Icon
+				'icon': '\uf04d',  # FontAwesome Stop Icon
+				'iconcolor': (255,255,255)
 			},
 			'SmokePlus': {
-				'displaytext': 'Toggle Smoke+',
-				'icon': '\uf0c2'  # FontAwesome Cloud Icon
+				'displaytext': 'Smoke+',
+				'icon': '\uf0c2',  # FontAwesome Cloud Icon
+				'iconcolor': (255,255,255)
 			},
 			'Network': {
 				'displaytext': 'IP QR Code',
-				'icon': '\uf1eb'  # FontAwesome Wifi Icon
+				'icon': '\uf1eb',  # FontAwesome Wifi Icon
+				'iconcolor': (255,255,255)
 			}
 		}
 
 		self.menu['prime_selection'] = {
 			'Prime_10' : {
 				'displaytext': '\u00BB10g',
-				'icon': '10'
+				'icon': '10',
+				'iconcolor': (255,255,255)
 			},
 			'Prime_25' : {
 				'displaytext': '\u00BB25g',
-				'icon': '25'
+				'icon': '25',
+				'iconcolor': (255,255,255)
 			},
 			'Prime_50' : {
 				'displaytext': '\u00BB50g',
-				'icon': '50'
+				'icon': '50',
+				'iconcolor': (255,255,255)
 			},
 			'Prime_10_Start' : {
 				'displaytext': '\u00BB10g & Start',
-				'icon': '10'
+				'icon': '10',
+				'iconcolor': (255,255,255)
 			},
 			'Prime_25_Start' : {
 				'displaytext': '\u00BB25g & Start',
-				'icon': '25'
+				'icon': '25',
+				'iconcolor': (255,255,255)
 			},
 			'Prime_50_Start' : {
 				'displaytext': '\u00BB50g & Start',
-				'icon': '50'
+				'icon': '50',
+				'iconcolor': (255,255,255)
+			},
+			'Menu_Back' : {
+				'displaytext' : 'Back',
+				'icon' : '\uf060' # FontAwesome Back Arrow
 			}
 		}
+
+		self.menu['power_menu'] = {
+			'Power_Off' : {
+				'displaytext' : 'Shutdown',
+				'icon': '\uf011', # FontAwesome Power Button
+				'iconcolor': (255,255,255)
+			},
+			'Power_Restart' : {
+				'displaytext': 'Restart',
+				'icon': '\uf2f9', # FontAwesome Circle Arrow
+				'iconcolor': (255,255,255)
+			},
+			'Menu_Back' : {
+				'displaytext' : 'Back',
+				'icon' : '\uf060', # FontAwesome Back Arrow
+				'iconcolor': (255,255,255)
+			}
+		}
+
 		self.menu['current'] = {}
 		self.menu['current']['mode'] = 'none'  # Current Menu Mode (inactive, active)
 		self.menu['current']['option'] = 0  # Current option in current mode
@@ -1088,6 +1138,21 @@ class DisplayBase:
 					control['updated'] = True
 					control['mode'] = 'Stop'
 					write_control(control, origin='display')
+				elif selected == 'Power':
+					self.menu['current']['mode'] = 'power_menu'
+					self.menu['current']['option'] = 0
+				elif 'Power_' in selected:
+					control = read_control()
+					if 'Off' in selected:
+						os.system('sudo shutdown -h now &')
+					elif 'Restart' in selected:
+						os.system('sudo reboot &')
+				
+				# Master Menu Back Function
+				elif 'Menu_Back' in selected:
+					self.menu['current']['mode'] = 'inactive'
+					self.menu['current']['option'] = 0
+				
 				# Active Mode
 				elif selected == 'Shutdown':
 					self.display_active = True
@@ -1194,17 +1259,17 @@ class DisplayBase:
 			img.paste(label_canvas, label_origin, label_canvas)
 
 			# Current Mode (Bottom Center)
-			font_point_size = 36
+			font_point_size = 40
 			text = "Grill Set Point"
-			label_canvas = self._draw_text(text, self.primary_font, font_point_size, (255,255,255))
+			label_canvas = self._draw_text(text, self.primary_font, font_point_size, (0,0,0))
 
-			# Draw Black Rectangle
-			draw.rectangle([(0, (self.HEIGHT // 8) * 6), (self.WIDTH, self.HEIGHT)], fill=(0, 0, 0))
+			# Draw White Rectangle
+			draw.rectangle([(0, (self.HEIGHT // 8) * 6), (self.WIDTH, self.HEIGHT)], fill=(255, 255, 255))
 			# Draw White Line/Rectangle
 			draw.rectangle([(0, (self.HEIGHT // 8) * 6), (self.WIDTH, ((self.HEIGHT // 8) * 6) + 2)],
-						   fill=(255, 255, 255))
+						   fill=(130, 130, 130))
 			# Draw Text
-			label_origin = (int(self.WIDTH // 2 - label_canvas.width // 2), int((self.HEIGHT // 8) * 6.25))
+			label_origin = (int(self.WIDTH // 2 - label_canvas.width // 2), int((self.HEIGHT // 8) * 6.35))
 			img.paste(label_canvas, label_origin, label_canvas)
 
 		elif self.menu['current']['mode'] != 'none':
@@ -1217,8 +1282,9 @@ class DisplayBase:
 					break
 				index += 1
 			font_point_size = 80 if self.WIDTH == 240 else 120 
+			icon_color = self.menu[self.menu['current']['mode']][selected].get('iconcolor', (255,255,255))  # Get color from menu item, default to white if not defined
 			text = self.menu[self.menu['current']['mode']][selected]['icon']
-			label_canvas = self._draw_text(text, 'static/font/FA-Free-Solid.otf', font_point_size, (255,255,255))
+			label_canvas = self._draw_text(text, 'static/font/FA-Free-Solid.otf', font_point_size, icon_color)
 			label_origin = (int(self.WIDTH // 2 - label_canvas.width // 2), int(self.HEIGHT // 2.5 - label_canvas.height // 2))
 			img.paste(label_canvas, label_origin, label_canvas)
 
@@ -1231,16 +1297,16 @@ class DisplayBase:
 				img.paste(label_canvas, label_origin, label_canvas)
 
 			# Current Mode (Bottom Center)
-			# Draw Black Rectangle
-			draw.rectangle([(0, (self.HEIGHT // 8) * 6), (self.WIDTH, self.HEIGHT)], fill=(0, 0, 0))
-			# Draw White Line/Rectangle
+			# Draw White Rectangle
+			draw.rectangle([(0, (self.HEIGHT // 8) * 6), (self.WIDTH, self.HEIGHT)], fill=(255, 255, 255))
+			# Draw Gray Line/Rectangle
 			draw.rectangle([(0, (self.HEIGHT // 8) * 6), (self.WIDTH, ((self.HEIGHT // 8) * 6) + 2)],
-						   fill=(255, 255, 255))
+						   fill=(130, 130, 130))
 			# Draw Text
-			font_point_size = 36
+			font_point_size = 40
 			text = self.menu[self.menu['current']['mode']][selected]['displaytext']
-			label_canvas = self._draw_text(text, self.primary_font, font_point_size, (255,255,255))
-			label_origin = (int(self.WIDTH // 2 - label_canvas.width // 2), int((self.HEIGHT // 8) * 6.25))
+			label_canvas = self._draw_text(text, self.primary_font, font_point_size, (0,0,0))
+			label_origin = (int(self.WIDTH // 2 - label_canvas.width // 2), int((self.HEIGHT // 8) * 6.35))
 			img.paste(label_canvas, label_origin, label_canvas)
 
 		# Change color of Arrow for Up / Down when adjusting temperature
