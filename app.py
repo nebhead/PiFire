@@ -2387,6 +2387,7 @@ Wizard Route for PiFire Setup
 @app.route('/wizard', methods=['GET', 'POST'])
 def wizard(action=None):
 	global settings
+	control = read_control()
 
 	wizardData = read_wizard()
 	errors = []
@@ -2407,7 +2408,6 @@ def wizard(action=None):
 			write_settings(settings)
 			return redirect('/')
 		if action=='finish':
-			control = read_control()
 			if control['mode'] == 'Stop':
 				wizardInstallInfo = prepare_wizard_data(r)
 				store_wizard_install_info(wizardInstallInfo)
@@ -2415,8 +2415,6 @@ def wizard(action=None):
 				os.system(f'{python_exec} wizard.py &')	# Kickoff Installation
 				return render_template('wizard-finish.html', page_theme=settings['globals']['page_theme'],
 									grill_name=settings['globals']['grill_name'], wizardData=wizardData)
-			else:
-				errors.append('PiFire configuration wizard cannot be run while the system is active.  Please stop the current cook before continuing.')
 
 		if action=='modulecard':
 			module = r['module']
@@ -2435,10 +2433,13 @@ def wizard(action=None):
 	else:
 		wizardInstallInfo = wizardInstallInfoExisting(wizardData, settings)
 
-	store_wizard_install_info(wizardInstallInfo) 
+	store_wizard_install_info(wizardInstallInfo)
+
+	if control['mode'] != 'Stop':
+		errors.append('PiFire configuration wizard cannot be run while the system is active.  Please stop the current cook before continuing.')
 
 	return render_template('wizard.html', settings=settings, page_theme=settings['globals']['page_theme'],
-						   grill_name=settings['globals']['grill_name'], wizardData=wizardData, wizardInstallInfo=wizardInstallInfo, errors=errors)
+						   grill_name=settings['globals']['grill_name'], wizardData=wizardData, wizardInstallInfo=wizardInstallInfo, control=control, errors=errors)
 
 def get_settings_dependencies_values(settings, moduleData):
 	moduleSettings = {}

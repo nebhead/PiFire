@@ -10,7 +10,7 @@
 
 {% block content %}
 
-
+<br>
 <div class="row">
 	<div class="col-3" style="{% if request.MOBILE %}display:none;{% else %}display:visible;{% endif %}">
 	  <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
@@ -302,6 +302,28 @@
   </div>
 </form>
 
+<!-- Warning - Running Modal -->
+<div class="modal fade" id="runningModal" tabindex="-1" aria-labelledby="runningModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+	  <div class="modal-content">
+		<div class="modal-header">
+		  <h5 class="modal-title" id="runningModalLabel"><b>Warning!</b> System Active</h5>
+		  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		  </button>
+		</div>
+		<div class="modal-body text-danger">
+			<strong>The system is active/running and must be stopped before making configuration changes through this wizard.</strong><br>
+			Before continuing to make configuration changes, please stop the grill. 
+		</div>
+		<div class="modal-footer">
+		  <button type="button" class="btn btn-secondary" data-dismiss="modal">Got it!</button>
+		</div>
+	  </div>
+	</div>
+  </div>
+
+
 {% endblock %}
 
 {% block controlpanel %}{% endblock %}
@@ -310,4 +332,9 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/wizard.js') }}"></script>
 <script src="{{ url_for('static', filename='js/probes_config.js') }}"></script>
+{% if control['mode'] != 'Stop' %}
+<script>
+	$('#runningModal').modal('show')
+</script>
+{% endif %}
 {% endblock %}
