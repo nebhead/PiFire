@@ -304,8 +304,8 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	# Set DC fan frequency if it has changed since init
 	if dc_fan:
 		pwm_frequency = settings['pwm']['frequency']
-		status_data = grill_platform.get_output_status()
-		if not pwm_frequency == status_data['frequency']:
+		frequency_status = grill_platform.get_output_status()
+		if not pwm_frequency == frequency_status['frequency']:
 			grill_platform.set_pwm_frequency(pwm_frequency)
 
 	# Set Starting Configuration for Igniter, Fan , Auger
@@ -879,10 +879,9 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 
 	monitor.stop_monitor()
 
-	# Clean up display
-	status_data['mode'] = mode
-
-	display_device.display_status(in_data, status_data)
+	if status_data != {}:
+		status_data['mode'] = control['mode']
+		display_device.display_status(in_data, status_data)
 
 	return ()
 

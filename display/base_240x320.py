@@ -1356,10 +1356,10 @@ class DisplayBase:
 		"""
 		- Updates the current data for the display loop, if in a work mode
 		"""
-		self.units = status_data['units']
+		self.units = status_data.get('units', self.units)
 		self.display_active = True
 		self.in_data = in_data 
-		self.status_data = status_data 
+		self.status_data = status_data
 
 	def display_splash(self):
 		"""
