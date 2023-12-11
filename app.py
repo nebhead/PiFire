@@ -30,8 +30,6 @@ import zipfile
 import pathlib
 from threading import Thread
 from datetime import datetime
-from common import generate_uuid, epoch_to_time, prepare_csv
-from common.hacks import hack_read_control, hack_write_control, hack_read_settings, hack_write_settings, hack_prepare_data, hack_read_current
 from updater import *  # Library for doing project updates from GitHub
 from file_mgmt.common import fixup_assets, read_json_file_data, update_json_file_data, remove_assets
 from file_mgmt.cookfile import read_cookfile, upgrade_cookfile, prepare_chartdata
@@ -3406,25 +3404,9 @@ def emit_dash_data():
 	previous_data = ''
 
 	while (clients > 0):
-		settings = hack_read_settings()
-		control = hack_read_control()
+		control = read_control()
 		pelletdb = read_pellet_db()
-
-		probes_enabled = settings['probe_settings']['probes_enabled']
-		cur_probe_temps = hack_read_current()
-
-		current_temps = {
-			'grill_temp' : cur_probe_temps[0],
-			'probe1_temp' : cur_probe_temps[1],
-			'probe2_temp' : cur_probe_temps[2] }
-		enabled_probes = {
-			'grill' : bool(probes_enabled[0]),
-			'probe1' : bool(probes_enabled[1]),
-			'probe2' : bool(probes_enabled[2]) }
-		probe_titles = {
-			'grill_title' : control['probe_titles']['grill_title'],
-			'probe1_title' : control['probe_titles']['probe1_title'],
-			'probe2_title' : control['probe_titles']['probe2_title'] }
+		probe_info = read_current()
 
 		if control['timer']['end'] - time.time() > 0 or bool(control['timer']['paused']):
 			timer_info = {
@@ -3444,11 +3426,7 @@ def emit_dash_data():
 			}
 
 		current_data = {
-			'cur_probe_temps' : current_temps,
-			'probes_enabled' : enabled_probes,
-			'probe_titles' : probe_titles,
-			'set_points' : control['setpoints'],
-			'notify_req' : control['notify_req'],
+			'probe_info' : probe_info,
 			'notify_data' : control['notify_data'],
 			'timer_info' : timer_info,
 			'current_mode' : control['mode'],
@@ -3459,12 +3437,10 @@ def emit_dash_data():
 
 		if force_refresh:
 			socketio.emit('grill_control_data', current_data)
-			#socketio.emit('grill_control_data', current_data, broadcast=True)
 			force_refresh = False
 			socketio.sleep(2)
 		elif previous_data != current_data:
 			socketio.emit('grill_control_data', current_data)
-			#socketio.emit('grill_control_data', current_data, broadcast=True)
 			previous_data = current_data
 			socketio.sleep(2)
 		else:
@@ -3472,7 +3448,7 @@ def emit_dash_data():
 
 @socketio.on('get_app_data')
 def get_app_data(action=None, type=None):
-	settings = hack_read_settings()
+	global settings
 
 	if action == 'settings_data':
 		return settings
@@ -3486,23 +3462,6 @@ def get_app_data(action=None, type=None):
 		for x in range(min(num_events, 60)):
 			events_trim.append(event_list[x])
 		return { 'events_list' : events_trim }
-	
-	elif action == 'history_data':
-		num_items = settings['history_page']['minutes'] * 20
-		data_blob = hack_prepare_data(num_items, True, settings['history_page']['datapoints'])
-		# Converting time format from 'time from epoch' to H:M:S
-		# @weberbox:  Trying to keep the legacy format for the time labels so that I don't break the Android app
-		for index in range(0, len(data_blob['label_time_list'])): 
-			data_blob['label_time_list'][index] = datetime.datetime.fromtimestamp(
-				int(data_blob['label_time_list'][index]) / 1000).strftime('%H:%M:%S')
-
-		return { 'grill_temp_list' : data_blob['grill_temp_list'],
-				 'grill_settemp_list' : data_blob['grill_settemp_list'],
-				 'probe1_temp_list' : data_blob['probe1_temp_list'],
-				 'probe1_settemp_list' : data_blob['probe1_settemp_list'],
-				 'probe2_temp_list' : data_blob['probe2_temp_list'],
-				 'probe2_settemp_list' : data_blob['probe2_settemp_list'],
-				 'label_time_list' : data_blob['label_time_list'] }
 
 	elif action == 'info_data':
 		return {
@@ -3513,83 +3472,20 @@ def get_app_data(action=None, type=None):
 			'outpins' : settings['outpins'],
 			'inpins' : settings['inpins'],
 			'dev_pins' : settings['dev_pins'],
-			'server_version' : settings['versions']['server'] }
+			'server_version' : settings['versions']['server'],
+			'server_build' : settings['versions']['build'] }
 
 	elif action == 'manual_data':
-		control = hack_read_control()
+		control = read_control()
 		return {
 			'manual' : control['manual'],
 			'mode' : control['mode'] }
-
-	elif action == 'backup_list':
-		if not os.path.exists(BACKUP_PATH):
-			os.mkdir(BACKUP_PATH)
-		files = os.listdir(BACKUP_PATH)
-		for file in files[:]:
-			if not _allowed_file(file):
-				files.remove(file)
-
-		if type == 'settings':
-			for file in files[:]:
-				if not file.startswith('PiFire_'):
-					files.remove(file)
-			return json.dumps(files)
-
-		if type == 'pelletdb':
-			for file in files[:]:
-				if not file.startswith('PelletDB_'):
-					files.remove(file)
-		return json.dumps(files)
-
-	elif action == 'backup_data':
-		time_now = datetime.datetime.now()
-		time_str = time_now.strftime('%m-%d-%y_%H%M%S')
-
-		if type == 'settings':
-			backup_settings()
-			return settings
-
-		if type == 'pelletdb':
-			backup_file = BACKUP_PATH + 'PelletDB_' + time_str + '.json'
-			os.system(f'cp pelletdb.json {backup_file}')
-			return read_pellet_db()
-
-	elif action == 'updater_data':
-		avail_updates_struct = get_available_updates()
-
-		if avail_updates_struct['success']:
-			commits_behind = avail_updates_struct['commits_behind']
-		else:
-			message = avail_updates_struct['message']
-			write_log(message)
-			return {'response': {'result':'error', 'message':'Error: ' + message }}
-
-		if commits_behind > 0:
-			logs_result = get_log(commits_behind)
-		else:
-			logs_result = None
-
-		update_data = {}
-		update_data['branch_target'], error_msg = get_branch()
-		update_data['branches'], error_msg = get_available_branches()
-		update_data['remote_url'], error_msg = get_remote_url()
-		update_data['remote_version'], error_msg = get_remote_version()
-
-		return { 'check_success' : avail_updates_struct['success'],
-				 'version' : settings['versions']['server'],
-				 'branches' : update_data['branches'],
-				 'branch_target' : update_data['branch_target'],
-				 'remote_url' : update_data['remote_url'],
-				 'remote_version' : update_data['remote_version'],
-				 'commits_behind' : commits_behind,
-				 'logs_result' : logs_result,
-				 'error_message' : error_msg }
 	else:
 		return {'response': {'result':'error', 'message':'Error: Received request without valid action'}}
 
 @socketio.on('post_app_data')
 def post_app_data(action=None, type=None, json_data=None):
-	settings = hack_read_settings()
+	global settings
 
 	if json_data is not None:
 		request = json.loads(json_data)
@@ -3601,16 +3497,18 @@ def post_app_data(action=None, type=None, json_data=None):
 			for key in request.keys():
 				if key in settings.keys():
 					settings = _deep_dict_update(settings, request)
-					hack_write_settings(settings)
+					write_settings(settings)
 					return {'response': {'result':'success'}}
 				else:
 					return {'response': {'result':'error', 'message':'Error: Key not found in settings'}}
 		elif type == 'control':
-			control = hack_read_control()
+			control = read_control()
 			for key in request.keys():
 				if key in control.keys():
-					control = _deep_dict_update(control, request)
-					hack_write_control(control, origin='app-socketio')
+					'''
+						Updating of control input data is now done in common.py > execute_commands() 
+					'''
+					write_control(request, origin='app-socketio')
 					return {'response': {'result':'success'}}
 				else:
 					return {'response': {'result':'error', 'message':'Error: Key not found in control'}}
@@ -3664,20 +3562,20 @@ def post_app_data(action=None, type=None, json_data=None):
 	elif action == 'units_action':
 		if type == 'f_units' and settings['globals']['units'] == 'C':
 			settings = convert_settings_units('F', settings)
-			hack_write_settings(settings)
-			control = hack_read_control()
+			write_settings(settings)
+			control = read_control()
 			control['updated'] = True
 			control['units_change'] = True
-			hack_write_control(control, origin='app-socketio')
+			write_control(control, origin='app-socketio')
 			write_log("Changed units to Fahrenheit")
 			return {'response': {'result':'success'}}
 		elif type == 'c_units' and settings['globals']['units'] == 'F':
 			settings = convert_settings_units('C', settings)
-			hack_write_settings(settings)
-			control = hack_read_control()
+			write_settings(settings)
+			control = read_control()
 			control['updated'] = True
 			control['units_change'] = True
-			hack_write_control(control, origin='app-socketio')
+			write_control(control, origin='app-socketio')
 			write_log("Changed units to Celsius")
 			return {'response': {'result':'success'}}
 		else:
@@ -3689,7 +3587,7 @@ def post_app_data(action=None, type=None, json_data=None):
 				device = request['onesignal_device']['onesignal_player_id']
 				if device in settings['onesignal']['devices']:
 					settings['onesignal']['devices'].pop(device)
-				hack_write_settings(settings)
+				write_settings(settings)
 				return {'response': {'result':'success'}}
 			else:
 				return {'response': {'result':'error', 'message':'Error: Device not specified'}}
@@ -3706,17 +3604,17 @@ def post_app_data(action=None, type=None, json_data=None):
 				pelletdb['current']['date_loaded'] = now
 				pelletdb['current']['est_usage'] = 0
 				pelletdb['log'][now] = request['pellets_action']['profile']
-				control = hack_read_control()
+				control = read_control()
 				control['hopper_check'] = True
-				hack_write_control(control, origin='app-socketio')
+				write_control(control, origin='app-socketio')
 				write_pellet_db(pelletdb)
 				return {'response': {'result':'success'}}
 			else:
 				return {'response': {'result':'error', 'message':'Error: Profile not included in request'}}
 		elif type == 'hopper_check':
-			control = hack_read_control()
+			control = read_control()
 			control['hopper_check'] = True
-			hack_write_control(control, origin='app-socketio')
+			write_control(control, origin='app-socketio')
 			return {'response': {'result':'success'}}
 		elif type == 'edit_brands':
 			if 'delete_brand' in request['pellets_action']:
@@ -3758,9 +3656,9 @@ def post_app_data(action=None, type=None, json_data=None):
 				'comments' : request['pellets_action']['comments'] }
 			if request['pellets_action']['add_and_load']:
 				pelletdb['current']['pelletid'] = profile_id
-				control = hack_read_control()
+				control = read_control()
 				control['hopper_check'] = True
-				hack_write_control(control, origin='app-socketio')
+				write_control(control, origin='app-socketio')
 				now = str(datetime.datetime.now())
 				now = now[0:19]
 				pelletdb['current']['date_loaded'] = now
@@ -3809,9 +3707,12 @@ def post_app_data(action=None, type=None, json_data=None):
 			return {'response': {'result':'error', 'message':'Error: Received request without valid type'}}
 
 	elif action == 'timer_action':
-		control = hack_read_control()
+		control = read_control()
+		for index, notify_obj in enumerate(control['notify_data']):
+			if notify_obj['type'] == 'timer':
+				break
 		if type == 'start_timer':
-			control['notify_req']['timer'] = True
+			control['notify_data'][index]['req'] = True
 			if control['timer']['paused'] == 0:
 				now = time.time()
 				control['timer']['start'] = now
@@ -3819,10 +3720,10 @@ def post_app_data(action=None, type=None, json_data=None):
 					seconds = request['timer_action']['hours_range'] * 60 * 60
 					seconds = seconds + request['timer_action']['minutes_range'] * 60
 					control['timer']['end'] = now + seconds
-					control['notify_data']['timer_shutdown'] = request['timer_action']['timer_shutdown']
-					control['notify_data']['timer_keep_warm'] = request['timer_action']['timer_keep_warm']
+					control['notify_data'][index]['shutdown'] = request['timer_action']['timer_shutdown']
+					control['notify_data'][index]['keep_warm'] = request['timer_action']['timer_keep_warm']
 					write_log('Timer started.  Ends at: ' + epoch_to_time(control['timer']['end']))
-					hack_write_control(control, origin='app-socketio')
+					write_control(control, origin='app-socketio')
 					return {'response': {'result':'success'}}
 				else:
 					return {'response': {'result':'error', 'message':'Error: Start time not specified'}}
@@ -3831,110 +3732,29 @@ def post_app_data(action=None, type=None, json_data=None):
 				control['timer']['end'] = (control['timer']['end'] - control['timer']['paused']) + now
 				control['timer']['paused'] = 0
 				write_log('Timer unpaused.  Ends at: ' + epoch_to_time(control['timer']['end']))
-				hack_write_control(control, origin='app-socketio')
+				write_control(control, origin='app-socketio')
 				return {'response': {'result':'success'}}
 		elif type == 'pause_timer':
-			control['notify_req']['timer'] = False
+			control['notify_data'][index]['req'] = False
 			now = time.time()
 			control['timer']['paused'] = now
 			write_log('Timer paused.')
-			hack_write_control(control, origin='app-socketio')
+			write_control(control, origin='app-socketio')
 			return {'response': {'result':'success'}}
 		elif type == 'stop_timer':
-			control['notify_req']['timer'] = False
+			control['notify_data'][index]['req'] = False
 			control['timer']['start'] = 0
 			control['timer']['end'] = 0
 			control['timer']['paused'] = 0
-			control['notify_data']['timer_shutdown'] = False
-			control['notify_data']['timer_keep_warm'] = False
+			control['notify_data'][index]['shutdown'] = False
+			control['notify_data'][index]['keep_warm'] = False
 			write_log('Timer stopped.')
-			hack_write_control(control, origin='app-socketio')
+			write_control(control, origin='app-socketio')
 			return {'response': {'result':'success'}}
 		else:
 			return {'response': {'result':'error', 'message':'Error: Received request without valid type'}}
 	else:
 		return {'response': {'result':'error', 'message':'Error: Received request without valid action'}}
-
-@socketio.on('post_updater_data')
-def updater_action(type='none', branch=None):
-	global settings
-
-	if settings['globals']['venv']:
-		python_exec = 'bin/python'
-	else:
-		python_exec = 'python'
-
-	if type == 'change_branch':
-		if branch is not None:
-			success, status, output = change_branch(branch)
-			message = f'Changing to {branch} branch \n'
-			if success:
-				dependencies = 'Installing any required dependencies \n'
-				message += dependencies
-				if install_dependencies() == 0:
-					message += output
-					restart_scripts()
-					return {'response': {'result':'success', 'message': message }}
-				else:
-					return {'response': {'result':'error', 'message':'Error: Dependencies were not installed properly'}}
-			else:
-				return {'response': {'result':'error', 'message':'Error: ' + output }}
-		else:
-			return {'response': {'result':'error', 'message':'Error: Branch not specified in request'}}
-
-	elif type == 'do_update':
-		if branch is not None:
-			success, status, output = install_update()
-			message = f'Attempting update on {branch} \n'
-			if success:
-				dependencies = 'Installing any required dependencies \n'
-				message += dependencies
-				if install_dependencies() == 0:
-					message += output
-					restart_scripts()
-					return {'response': {'result':'success', 'message': message }}
-				else:
-					return {'response': {'result':'error', 'message':'Error: Dependencies were not installed properly'}}
-			else:
-				return {'response': {'result':'error', 'message':'Error: ' + output }}
-		else:
-			return {'response': {'result':'error', 'message':'Error: Branch not specified in request'}}
-
-	elif type == 'update_remote_branches':
-		if is_real_hardware():
-			os.system(f'{python_exec} updater.py -r') # Update branches from remote
-			#time.sleep(2)
-			return {'response': {'result':'success', 'message': 'Branches successfully updated from remote' }}
-		else:
-			return {'response': {'result':'error', 'message': 'System is running in test environment. Branches not updated.' }}
-	else:
-		return {'response': {'result':'error', 'message':'Error: Received request without valid action'}}
-
-@socketio.on('post_restore_data')
-def post_restore_data(type='none', filename='none', json_data=None):
-
-	if type == 'settings':
-		if filename != 'none':
-			read_settings(filename=BACKUP_PATH+filename)
-			restart_scripts()
-			return {'response': {'result':'success'}}
-		elif json_data is not None:
-			write_settings(json.loads(json_data))
-			return {'response': {'result':'success'}}
-		else:
-			return {'response': {'result':'error', 'message':'Error: Filename or JSON data not supplied'}}
-
-	elif type == 'pelletdb':
-		if filename != 'none':
-			read_pellet_db(filename=BACKUP_PATH+filename)
-			return {'response': {'result':'success'}}
-		elif json_data is not None:
-			write_pellet_db(json.loads(json_data))
-			return {'response': {'result':'success'}}
-		else:
-			return {'response': {'result':'error', 'message':'Error: Filename or JSON data not supplied'}}
-	else:
-		return {'response': {'result':'error', 'message':'Error: Received request without valid type'}}
 
 '''
 ==============================================================================

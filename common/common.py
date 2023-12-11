@@ -357,7 +357,7 @@ def default_notify_services():
 
 	services['apprise'] = {
 		'enabled': False,
-		'locations': {} 		# list of locations
+		'locations': [] 		# list of locations
 	}
 
 	services['ifttt'] = {
