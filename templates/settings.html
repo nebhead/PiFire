@@ -1018,8 +1018,8 @@
                             <div class="form-group">
                                 <label for="dashboardSelect">Select Dashboard</label>
                                 <select class="form-control" id="dashboardSelect" name="dashboardSelect">
-                                    {% for dashboard in settings['dashboard']['dashboards'] %}
-                                    <option value="{{ dashboard['name'] }}"{% if dashboard['name'] == settings['dashboard']['current'] %} selected{% endif %}>{{ dashboard['name'] }}</option>
+                                    {% for dashboard, dashinfo in settings['dashboard']['dashboards'].items() %}
+                                    <option value="{{ dashboard }}"{% if dashinfo['name'] == settings['dashboard']['current'] %} selected{% endif %}>{{ dashinfo['friendly_name'] }}</option>
                                     {% endfor %}
                                 </select>
                             </div>

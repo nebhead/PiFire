@@ -24,6 +24,7 @@ import redis
 import uuid
 import random
 import logging
+from collections.abc import Mapping
 from ratelimitingfilter import RateLimitingFilter
 
 # *****************************************
@@ -266,16 +267,26 @@ def default_settings():
 
 	settings['dashboard'] = {
 		'current' : 'Default', 
-		'dashboards' : [
-			{	'name' : 'Default',
+		'dashboards' : {
+			'Default' : {	
+				'name' : 'Default',
 				'friendly_name' : 'Default Dashboard', 
-				'html_name' : 'dash_default.html'
-			}, 
-			{	'name' : 'Basic',
+				'html_name' : 'dash_default.html',
+				'custom' : {
+					'hidden_cards' : []
+				},
+				'config' : {}
+			},
+			'Basic' : {	
+				'name' : 'Basic',
 				'friendly_name' : 'Basic Dashboard', 
-				'html_name' : 'dash_basic.html'
+				'html_name' : 'dash_basic.html',
+				'custom' : {
+					'hidden_cards' : []
+				},
+				'config' : {}
 			}
-		]
+		}
 	}
 
 	settings['notify_services'] = default_notify_services()
@@ -966,13 +977,21 @@ def read_settings(filename='settings.json', init=False, retry_count=0):
 			''' Downgrade Path '''			
 			backup_settings()  # Backup Old Settings Before Performing Downgrade 
 			settings = downgrade_settings(settings, settings_default)
-			update_settings = True 
+			update_settings = True
+		elif (settings_default['versions']['server'] == settings['versions']['server']) and (settings['versions']['build'] < settings_default['versions']['build']):
+			''' Minor Upgrade Path '''
+			prev_ver = semantic_ver_to_list(settings['versions']['server'])
+			settings = upgrade_settings(prev_ver, settings, settings_default)
+			settings['versions'] = settings_default['versions']
+			update_settings = True
 
 		if settings['versions'].get('build', None) != settings_default['versions']['build']:
 			settings['versions']['build'] = settings_default['versions']['build']
 			update_settings = True 
 
 		# Overlay the original settings on top of the default settings
+		settings = deep_update(settings_default, settings)
+		'''
 		for key in settings_default.keys():
 			if key in settings.keys():
 				for subkey in settings_default[key].keys():
@@ -981,9 +1000,10 @@ def read_settings(filename='settings.json', init=False, retry_count=0):
 				settings_default[key].update(settings.get(key, {}))
 			else:
 				update_settings = True
-
+		'''
 		# Move all changes to the settings variable
 		settings = settings_default 
+		update_settings = True
 
 		if update_settings or filename != 'settings.json': # If any of the keys were added, then write back the changes
 			write_settings(settings)
@@ -1075,6 +1095,10 @@ def upgrade_settings(prev_ver, settings, settings_default):
 		settings['cycle_data'].pop('SmokeCycleTime') # Remove old SmokeCycleTime
 		settings['cycle_data']['SmokeOnCycleTime'] = 15  # Name change for SmokeCycleTime variable 
 		settings['cycle_data']['SmokeOffCycleTime'] = 45  # Added SmokeOffCycleTime variable 
+	''' Check if upgrading from v1.7.0 Build 07 or earlier '''
+	if prev_ver[0] <=1 and prev_ver[1] <= 7 and settings['versions'].get('build', 0) <= 7:
+		settings['dashboard'].pop('dashboards')
+
 	''' Import any new probe profiles '''
 	for profile in list(settings_default['probe_settings']['probe_profiles'].keys()):
 		if profile not in list(settings['probe_settings']['probe_profiles'].keys()):
@@ -1866,3 +1890,13 @@ def get_probe_info(probe_info):
 			probe_structure['food'].append(food_probe)
 
 	return probe_structure 
+
+# Borrowed from: https://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
+# Attributed to Alex Martelli and Alex Telon 
+def deep_update(dictionary, updates):
+	for key, value in updates.items():
+		if isinstance(value, Mapping):
+			dictionary[key] = deep_update(dictionary.get(key, {}), value)
+		else:
+			dictionary[key] = value
+	return dictionary

@@ -1,4 +1,4 @@
-.gauge-container {
+  .gauge-container {
     width: 250px;
     height: 250px;
     display: inline-block;
@@ -29,4 +29,33 @@
     right: 48%;
     display: inline-block;
     font-size: 1.4em;
-  } 
+  }
+
+  .gear-icon {
+    position: fixed;
+    bottom: 85px;
+    left: 20px;
+    width: 50px;
+    height: 50px;
+    color: #ffffff;
+    background-color: #80808083;
+    border-radius: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease-in-out;
+  }
+  
+  .gear-icon:hover {
+    width: 200px;
+    background-color: #007bff;
+  }
+  
+  .gear-icon:hover::after {
+    content: "Dash Settings";
+    white-space: nowrap;
+    color: #fff;
+    font-size: 1.25rem;
+    margin-left: 10px;
+    transition: all 0.3s ease-in-out;
+  }

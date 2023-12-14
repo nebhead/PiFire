@@ -26,6 +26,7 @@ var last_igniter_status = null;
 var last_pmode_status = null;
 var last_lid_open_status = false;
 var display_mode = null;
+var dashDataStruct = {};
 
 // Credits to https://github.com/naikus for SVG-Gauge (https://github.com/naikus/svg-gauge) MIT License Copyright (c) 2016 Aniket Naik
 var Gauge = window.Gauge;
@@ -492,6 +493,75 @@ function setPmode(pmode) {
     });
 };
 
+// Show the Dashboard Settings Modal/Dialog when clicked
+function dashSettings() {
+	$("#dashSettingsModal").modal('show');
+	//dashData();
+};
+
+// Get dashboard data structure
+function dashGetData() {
+	req = $.ajax({
+		url : '/api/settings',
+		type : 'GET',
+		success : function(settings){
+			dashDataStruct = settings.settings.dashboard.dashboards.Default;
+			//console.log('dashData Hidden='+dashDataStruct.custom.hidden_cards);
+			//console.log('dashData Name='+dashDataStruct.name);
+		}
+	});
+};
+
+// Set dashboard data structure
+function dashSetData() {
+	var postdata = { 
+		'dashboard' : {
+			'dashboards' : {
+				'Default' : dashDataStruct
+			}
+		} 
+    };
+
+	$.ajax({
+        url : '/api/settings',
+        type : 'POST',
+        data : JSON.stringify(postdata),
+        contentType: "application/json; charset=utf-8",
+        traditional: true,
+        success: function (response) {
+            //console.log('dashSetData -> ' + response);
+        }
+    });
+};
+
+function dashToggleVisible(cardID) {
+	if ($('#card_'+cardID).is(":hidden")) {
+		// change card to visible
+		$('#card_'+cardID).show();
+		// update dash config icon
+		$('#visibleStatus_'+cardID).html('<i class="fa-solid fa-eye text-success"></i>&nbsp;');
+		// save to settings
+		var index = dashDataStruct.custom.hidden_cards.indexOf(cardID); // Index of cardID
+		if (index !== -1) {
+			dashDataStruct.custom.hidden_cards.splice(index, 1); // If found, remove
+		};
+		//console.log('dashData Hidden='+dashDataStruct.custom.hidden_cards);
+		dashSetData();
+	} else {
+		// change card to hidden
+		$('#card_'+cardID).hide();
+		// update dash config icon
+		$('#visibleStatus_'+cardID).html('<i class="fa-solid fa-eye-slash text-secondary"></i>&nbsp;');
+		// save to settings
+		var index = dashDataStruct.custom.hidden_cards.indexOf(cardID); // Index of cardID
+		if (index == -1) {
+			dashDataStruct.custom.hidden_cards.push(cardID); // If not found, add
+		};
+		//console.log('dashData Hidden='+dashDataStruct.custom.hidden_cards);
+		dashSetData();
+	};
+}
+
 // Main
 $(document).ready(function(){
 	// Setup Listeners 
@@ -499,6 +569,9 @@ $(document).ready(function(){
 		// Reload page when server side changes detected. 
 		location.reload(); 
 	});
+
+	// Initialize Dashboard Data
+	dashGetData();
 
 	// Initialize Probe Cards
 	initProbeCards();
