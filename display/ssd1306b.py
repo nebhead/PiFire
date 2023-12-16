@@ -238,7 +238,9 @@ class Display:
 	def _display_text(self):
 		with canvas(self.device) as draw:
 			font = ImageFont.truetype("impact.ttf", 42)
-			(font_width, font_height) = font.getsize(self.display_data)
+			font_bbox = font.getbbox(str(self.display_data))  # Grab the bounding box of the text
+			font_width = font_bbox[2]
+			font_height = font_bbox[3]
 			draw.text((128//2 - font_width//2, 64//2 - font_height//2), self.display_data, font=font, fill=255)
 
 
@@ -265,7 +267,9 @@ class Display:
 				font = ImageFont.truetype("impact.ttf", 38)
 			label = list(in_data['probe_history']['primary'].keys())[0]
 			text = str(in_data['probe_history']['primary'][label])[:5]
-			(font_width, font_height) = font.getsize(text)
+			font_bbox = font.getbbox(str(text))  # Grab the bounding box of the text
+			font_width = font_bbox[2]
+			font_height = font_bbox[3]
 			draw.text((128//2 - font_width//2,0), text, font=font, fill=255)
 			# Active Outputs F = Fan, I = Igniter, A = Auger (Upper Left)
 			font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 24)
@@ -274,16 +278,22 @@ class Display:
 				draw.text((0, 0), text, font=font, fill=255)
 			if status_data['outpins']['igniter']:
 				text = '\uf46a'
-				(font_width, font_height) = font.getsize(text)
+				font_bbox = font.getbbox(str(text))  # Grab the bounding box of the text
+				font_width = font_bbox[2]
+				font_height = font_bbox[3]
 				draw.text((0, 5 + (64//2 - font_height//2)), text, font=font, fill=255)
 			if status_data['outpins']['auger']:
 				text = '\uf101'
-				(font_width, font_height) = font.getsize(text)
+				font_bbox = font.getbbox(str(text))  # Grab the bounding box of the text
+				font_width = font_bbox[2]
+				font_height = font_bbox[3]
 				draw.text((128 - font_width, 5 + (64//2 - font_height//2)), text, font=font, fill=255)
 			# Current Mode (Bottom Left)
 			font = ImageFont.truetype("trebuc.ttf", 18)
 			text = status_data['mode'] + ' Mode'
-			(font_width, font_height) = font.getsize(text)
+			font_bbox = font.getbbox(str(text))  # Grab the bounding box of the text
+			font_width = font_bbox[2]
+			font_height = font_bbox[3]
 			draw.text((128//2 - font_width//2, 64 - font_height), text, font=font, fill=255)
 			# Notification Indicator (Upper Right)
 			font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 24)
@@ -291,7 +301,9 @@ class Display:
 			for index, item in enumerate(status_data['notify_data']):
 				if item['req'] and item['type'] != 'hopper':
 					text = '\uf0f3'
-			(font_width, font_height) = font.getsize(text)
+			font_bbox = font.getbbox(str(text))  # Grab the bounding box of the text
+			font_width = font_bbox[2]
+			font_height = font_bbox[3]
 			draw.text((128 - font_width, 0), text, font=font, fill=255)
 
 	'''
@@ -478,19 +490,25 @@ class Display:
 				# Grill Temperature (Large Centered) 
 				font = ImageFont.truetype("impact.ttf", 42)
 				text = str(self.menu['current']['option'])
-				(font_width, font_height) = font.getsize(text)
+				font_bbox = font.getbbox(str(text))  # Grab the bounding box of the text
+				font_width = font_bbox[2]
+				font_height = font_bbox[3]
 				draw.text((128//2 - font_width//2,0), text, font=font, fill=255)
 
 				# Current Mode (Bottom Center)
 				font = ImageFont.truetype("trebuc.ttf", 18)
 				text = "Grill Set Point"
-				(font_width, font_height) = font.getsize(text)
+				font_bbox = font.getbbox(str(text))  # Grab the bounding box of the text
+				font_width = font_bbox[2]
+				font_height = font_bbox[3]
 				draw.text((128//2 - font_width//2, 64 - font_height), text, font=font, fill=255)
 
 				# Up / Down Arrows (Middle Right)
 				font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 30)
 				text = '\uf0dc' # FontAwesome Icon Sort (Up/Down Arrows)
-				(font_width, font_height) = font.getsize(text)
+				font_bbox = font.getbbox(str(text))  # Grab the bounding box of the text
+				font_width = font_bbox[2]
+				font_height = font_bbox[3]
 				draw.text(((128 - font_width), (64//2 - font_height//2)), text, font=font, fill=255)
 		elif self.menu['current']['mode'] != 'none':
 			with canvas(self.device) as draw:
@@ -504,25 +522,33 @@ class Display:
 					index += 1
 				font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 42)
 				text = self.menu[self.menu['current']['mode']][selected]['icon']
-				(font_width, font_height) = font.getsize(text)
+				font_bbox = font.getbbox(str(text))  # Grab the bounding box of the text
+				font_width = font_bbox[2]
+				font_height = font_bbox[3]
 				draw.text((128//2 - font_width//2,0), text, font=font, fill=255)
 				# Draw a Plus Icon over the top of the Smoke Icon
 				if selected == 'SmokePlus':
 					font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 32)
 					text = '\uf067' # FontAwesome Icon for PLUS 
-					(font_width, font_height) = font.getsize(text)
+					font_bbox = font.getbbox(str(text))  # Grab the bounding box of the text
+					font_width = font_bbox[2]
+					font_height = font_bbox[3]
 					draw.text((128//2 - font_width//2,4), text, font=font, fill=0)
 				
 				# Current Mode (Bottom Center)
 				font = ImageFont.truetype("trebuc.ttf", 18)
 				text = self.menu[self.menu['current']['mode']][selected]['displaytext']
-				(font_width, font_height) = font.getsize(text)
+				font_bbox = font.getbbox(str(text))  # Grab the bounding box of the text
+				font_width = font_bbox[2]
+				font_height = font_bbox[3]
 				draw.text((128//2 - font_width//2, 64 - font_height), text, font=font, fill=255)
 
 				# Up / Down Arrows (Middle Right)
 				font = ImageFont.truetype("static/font/FA-Free-Solid.otf", 30)
 				text = '\uf0dc' # FontAwesome Icon Sort (Up/Down Arrows)
-				(font_width, font_height) = font.getsize(text)
+				font_bbox = font.getbbox(str(text))  # Grab the bounding box of the text
+				font_width = font_bbox[2]
+				font_height = font_bbox[3]
 				draw.text(((128 - font_width), (64//2 - font_height//2)), text, font=font, fill=255)
 
 
