@@ -59,3 +59,7 @@
     margin-left: 10px;
     transition: all 0.3s ease-in-out;
   }
+
+  .temperature-input {
+    font-size: 64px;
+  }

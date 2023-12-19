@@ -18,6 +18,10 @@
     .glowbutton {
       animation: glowing 1000ms infinite;
     }
+
+    .temperature-input {
+    font-size: 64px;
+    }
 </style>
 
 <!-- Control Panel -->
@@ -113,20 +117,22 @@
                 </div>
                 <!-- Modal body -->
                 <div class="modal-body text-center">
+                    <div class="row d-flex justify-content-center">
+                        <div class="input-group w-50">
+                            <input class="form-control text-center temperature-input border-0" name="tempOutput" id="tempOutputId" type="text" min="0" value="{% if settings['globals']['units'] == 'F' %}125{% else %}50{% endif %}" pattern="[0-9]*" inputmode="numeric" 
+                            oninput="tempInputId.value = tempOutputId.value">
+                        </div>
+                    </div>
                     {% if settings['globals']['units'] == 'F' %}
                         {% if control['primary_setpoint'] == 0 %}
-                        <h1><output name="tempOutput" id="tempOutputId">125</output>°{{ settings['globals']['units'] }}</h1>
                         <input type="range" class="custom-range" min="125" max="600" step="5" value="125" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
                         {% else %}
-                        <h1><output name="tempOutput" id="tempOutputId">{{ control['primary_setpoint'] }}</output>°{{ settings['globals']['units'] }}</h1>
                         <input type="range" class="custom-range" min="125" max="600" step="5" value="{{ control['primary_setpoint'] }}" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
                         {% endif %}
                     {% else %}
                         {% if control['primary_setpoint'] == 0 %}
-                        <h1><output name="tempOutput" id="tempOutputId">50</output>°{{ settings['globals']['units'] }}</h1>
                         <input type="range" class="custom-range" min="50" max="260" value="50" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
                         {% else %}
-                        <h1><output name="tempOutput" id="tempOutputId">{{ control['primary_setpoint'] }}</output>°{{ settings['globals']['units'] }}</h1>
                         <input type="range" class="custom-range" min="50" max="260" value="{{ control['primary_setpoint'] }}" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
                         {% endif %}
                     {% endif %}

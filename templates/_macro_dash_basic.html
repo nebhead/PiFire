@@ -80,7 +80,12 @@
 			<!-- Modal body -->
 			<div class="modal-body text-center">
 				Send a notification when this probe achieves the target temperature:
-				<h1><output name="{{ probe_data['label'] }}_tempOutput" id="{{ probe_data['label'] }}_tempOutputId">0</output>&deg;{% if settings['globals']['units'] == 'F' %}F{% else %}C{% endif %}</h1>
+				<div class="row d-flex justify-content-center">
+					<div class="input-group w-50">
+						<input class="form-control text-center temperature-input border-0" name="{{ probe_data['label'] }}_tempOutput" id="{{ probe_data['label'] }}_tempOutputId" type="text" min="0" value="0" pattern="[0-9]*" inputmode="numeric" 
+						oninput="{{ probe_data['label'] }}_tempInputId.value = {{ probe_data['label'] }}_tempOutputId.value">
+					</div>
+				</div>
 				{% if probe_data['type'] == 'Primary' %}
 					{% if settings['globals']['units'] == 'F' %}
 					<input type="range" class="custom-range" min="0" max="600" value="0" id="{{ probe_data['label'] }}_tempInputId" name="{{ probe_data['label'] }}_tempInputRange" oninput="{{ probe_data['label'] }}_tempOutputId.value = {{ probe_data['label'] }}_tempInputId.value">
