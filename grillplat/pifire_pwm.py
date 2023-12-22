@@ -31,6 +31,7 @@
 # Imported Libraries
 # *****************************************
 
+import subprocess
 from gpiozero import OutputDevice
 from gpiozero import Button
 from gpiozero.threads import GPIOThread
@@ -184,3 +185,50 @@ class GrillPlatform:
 			self.current_fan_speed_percent = fan_speed_percent # Keep track of our current fan percent speed
 			if self._ramp_thread.stopping.wait(delay):
 				break
+
+	def check_throttled():
+		"""Checks for under-voltage and throttling using vcgencmd.
+
+		Returns:
+			(bool, bool): A tuple of (under_voltage, throttled) indicating their status.
+		"""
+
+		output = subprocess.check_output(["vcgencmd", "get_throttled"])
+		status_str = output.decode("utf-8").strip()[10:]  # Extract the numerical value
+		status_int = int(status_str, 16)  # Convert from hex to decimal
+
+		under_voltage = bool(status_int & 0x10000)  # Check bit 16 for under-voltage
+		throttled = bool(status_int & 0x5)  # Check bits 0 and 2 for active throttling
+
+		return under_voltage, throttled
+	
+
+	def check_wifi_quality():
+		"""Checks the Wi-Fi signal quality on a Raspberry Pi and returns the percentage value (or None if not connected)."""
+
+		try:
+			# Use iwconfig to get the signal quality
+			output = subprocess.check_output(["iwconfig", "wlan0"])
+			lines = output.decode("utf-8").splitlines()
+
+			# Find the line containing "Link Quality" and extract the relevant part
+			for line in lines:
+				if "Link Quality=" in line:
+					quality_str = line.split("=")[1].strip()  # Isolate the part after "="
+					quality_parts = quality_str.split(" ")[0]  # Extract only the first part before spaces
+
+					try:
+						quality_value, quality_max = quality_parts.split("/")  # Split for numerical values
+						percentage = (int(quality_value) / int(quality_max)) * 100
+						return round(percentage, 2)  # Round to two decimal places
+
+					except ValueError:
+						# Handle cases where the value might not be directly convertible to an integer
+						return None
+
+		except subprocess.CalledProcessError:
+			# Handle errors, such as iwconfig not being found or wlan0 not existing
+			pass
+
+		# Return None if not connected or if there was an error
+		return None

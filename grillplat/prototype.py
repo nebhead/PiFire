@@ -123,3 +123,19 @@ class GrillPlatform:
 			#print('Set PWM Speed ' + str(percent))
 			if self._ramp_thread.stopping.wait(delay):
 				break
+
+	def check_throttled():
+		"""Checks for under-voltage and throttling using vcgencmd.
+
+		Returns:
+			(bool, bool): A tuple of (under_voltage, throttled) indicating their status.
+		"""
+		under_voltage = False
+		throttled = False
+
+		return under_voltage, throttled
+	
+	def check_wifi_quality():
+		"""Checks the Wi-Fi signal quality on a Raspberry Pi and returns the value (or None if not connected)."""
+		# Return None if not connected or if there was an error
+		return None
