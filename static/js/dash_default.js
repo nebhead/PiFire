@@ -301,6 +301,20 @@ function initTargets() {
 	};
 };
 
+function formatDuration(total_seconds) {
+	const hours = Math.floor(total_seconds / 3600);
+	const minutes = Math.floor((total_seconds % 3600) / 60);
+	const seconds = total_seconds % 60;
+  
+	if (hours) {
+	  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+	} else if (minutes) {
+	  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+	} else {
+	  return `${seconds.toString().padStart(2, '0')}s`;
+	}
+};
+
 // Update the notification information for the probe cards
 function updateNotificationCard(notify_info, mode) {
 	const label = notify_info.label;
@@ -308,9 +322,9 @@ function updateNotificationCard(notify_info, mode) {
 	const shutdown = notify_info.shutdown;
 	const keep_warm = notify_info.keep_warm;
 	const target = notify_info.target;
-	var eta = '--';
+	var eta = '<i class="fa-solid fa-spinner fa-spin-pulse"></i>';
 	if (notify_info.eta != null) {
-		eta = notify_info.eta;
+		eta = formatDuration(notify_info.eta);
 	};
 	console.log('Updating: ' + label + '  ETA: ' + eta);
 	// TODO: Update the page item with new data
@@ -320,7 +334,7 @@ function updateNotificationCard(notify_info, mode) {
 	if(req) {
 		console.log('Updating this notification: ' + notify_btn_id);
 		document.getElementById(notify_btn_id).innerHTML = '<i class="far fa-bell"></i>&nbsp; ' + target + '&deg;' + units; 
-		document.getElementById(eta_btn_id).innerHTML = '<i class="fa-solid fa-hourglass-half"></i>&nbsp; ' + eta + 's';;
+		document.getElementById(eta_btn_id).innerHTML = '<i class="fa-solid fa-hourglass-half"></i>&nbsp; ' + eta;
 		document.getElementById(notify_btn_id).className = 'btn btn-sm btn-primary';
 		$('#'+eta_btn_id).show();
 	} else {
