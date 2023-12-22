@@ -58,7 +58,7 @@ def check_notify(in_data, control, settings, pelletdb, grill_platform, update_et
 			if item['type'] == 'probe':
 				# Update the ETA, if requested for any active probe
 				if update_eta:
-					num_minutes = 5  # Number of minutes of history to grab
+					num_minutes = 20  # Number of minutes of history to grab
 					num_seconds = num_minutes * 60 
 					time_interval = 3  # 3-Second Time Intervals
 					# Get temperature history for this probe 
@@ -443,11 +443,15 @@ def _estimate_eta(temperatures, target_temperature, interval_seconds=3, max_hist
 
 		# Estimate the time to reach the target temperature
 		estimated_time = interpolator(target_temperature)
-		# If estimated time is over 24 hours, it's likely to be a bad guess
+		# If estimated time is over 24 hours or less than 0, it's likely to be a bad guess
 		if estimated_time > 86400 or estimated_time <= 0:
 			#print(f'DEBUG: ETA: Estimated time outside of bounds. [{estimated_time}]')
 			return None
 		eta = math.ceil(int(estimated_time) - times[-1])
+		if eta <= 0:
+			# Additional bounds testing
+			#print(f'DEBUG: ETA: Estimated time outside of bounds. [{eta}]')
+			return None
 		#print(f'===========================================')
 		#print(f'DEBUG: ETA: times = {times}')
 		#print(f'DEBUG: ETA: temps = {temperatures}')

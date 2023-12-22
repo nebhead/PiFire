@@ -480,6 +480,8 @@ def default_control():
 
 	control['prime_amount'] = 10  # Default Prime Amount in Grams
 
+	control['system'] = {}
+
 	return(control)
 
 def default_notify(settings):
@@ -774,19 +776,7 @@ def execute_commands():
 		control = read_control()
 		command = json.loads(cmdsts.lpop('control:command'))
 		command.pop('origin')
-		for key in control.keys():
-			if key in command.keys():
-				if key in ['safety', 'timer', 'manual', 'smart_start']:
-					control[key].update(command.get(key, {}))
-				elif key in ['recipe']:
-					for subkey in control[key].keys():
-						if subkey in command[key].keys():
-							if subkey in ['step_data']:
-								control[key][subkey].update(command[key].get(subkey, {}))
-							else:
-								control[key][subkey] = command[key][subkey]
-				else:
-					control[key] = command[key]
+		control = deep_update(control, command)
 		write_control(control, direct_write=True, origin='executor')
 	return status
 
