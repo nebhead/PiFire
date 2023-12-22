@@ -393,6 +393,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 
 	# Safety Controls
 	if mode in ('Startup', 'Reignite'):
+		raw_startup_temp = ptemp  # This value is needed for the case when the grill starts hot and exit temp has been exceeded
 		control['safety']['startuptemp'] = int(max((ptemp * 0.9), settings['safety']['minstartuptemp']))
 		control['safety']['startuptemp'] = int(
 			min(control['safety']['startuptemp'], settings['safety']['maxstartuptemp']))
@@ -801,15 +802,24 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			write_history(in_data, ext_data=ext_data)
 			monitor.heartbeat()  # Issue a heartbeat for the process monitor
 
-		# Check if startup time has elapsed since startup/reignite mode started
+		# Check if startup time has elapsed since startup/reignite mode started or if exit temperature has been achieved 
 		if mode in ('Startup', 'Reignite'):
 			if settings['smartstart']['enabled']:
 				profile_selected = control['smartstart']['profile_selected']
 				startup_timer = settings['smartstart']['profiles'][profile_selected]['startuptime']
-				exit_temp = settings['smartstart']['exit_temp']
+				# Check case where the grill starts hot (perhaps due to previous failure)
+				if raw_startup_temp >= settings['smartstart']['exit_temp']:
+					exit_temp = 0  # Force ignite
+				else:
+					exit_temp = settings['smartstart']['exit_temp']
 			else: 
 				startup_timer = settings['globals']['startup_timer']
 				exit_temp = settings['globals']['startup_exit_temp']
+				# Check case where the grill starts hot (perhaps due to previous failure)
+				if raw_startup_temp >= settings['globals']['startup_exit_temp']:
+					exit_temp = 0  # Force ignite
+				else:
+					exit_temp = settings['globals']['startup_exit_temp']
 			
 			if (now - start_time) > startup_timer:
 				break
