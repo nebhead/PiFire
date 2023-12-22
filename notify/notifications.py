@@ -437,9 +437,14 @@ def _estimate_eta(temperatures, target_temperature, interval_seconds=3, max_hist
 	for index in range(0, len(temperatures) * interval_seconds, interval_seconds):
 		times.append(index)
 
+	#print(f'===========================================')
+	#print(f'DEBUG: ETA: times = {times}')
+	#print(f'DEBUG: ETA: temps = {temperatures}')
+	#print(f'===========================================')
+
 	try:
 		# Create an interpolation function from the temperature data
-		interpolator = interp1d(temperatures, times, kind="linear", fill_value="extrapolate")
+		interpolator = interp1d(times, temperatures, kind="linear", fill_value="extrapolate")
 
 		# Estimate the time to reach the target temperature
 		estimated_time = interpolator(target_temperature)
@@ -453,14 +458,13 @@ def _estimate_eta(temperatures, target_temperature, interval_seconds=3, max_hist
 			#print(f'DEBUG: ETA: Estimated time outside of bounds. [{eta}]')
 			return None
 		#print(f'===========================================')
-		#print(f'DEBUG: ETA: times = {times}')
-		#print(f'DEBUG: ETA: temps = {temperatures}')
 		#print(f'DEBUG: ETA: {eta}s')
 		#print(f'===========================================')
 	
 	except:
 		# Something failed, return None
 		#print('DEBUG: ETA: An exception occurred.')
+		#raise
 		return None 
 
 	return eta
