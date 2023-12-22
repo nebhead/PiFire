@@ -117,7 +117,7 @@ python -m pip install "flask==2.3.3"
 python -m pip install flask-mobility
 python -m pip install flask-qrcode
 python -m pip install flask-socketio
-python -m pip install eventlet
+python -m pip install "eventlet==0.30.2"
 python -m pip install gunicorn
 python -m pip install gpiozero
 python -m pip install redis
