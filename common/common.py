@@ -496,7 +496,8 @@ def default_notify(settings):
 			'name' : probe[1], 
 			'type' : 'probe', 
 			'req' : False, 
-			'target' : 0, 
+			'target' : 0,
+			'eta' : None,
 			'shutdown' : False,
 			'keep_warm' : False, 
 		}

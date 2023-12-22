@@ -61,12 +61,14 @@ function updateProbeCards() {
 						if ((current.notify_data[item].target != notify_data[item].target) || 
 							(current.notify_data[item].req != notify_data[item].req) ||
 							(current.notify_data[item].shutdown != notify_data[item].shutdown) ||
-							(current.notify_data[item].keep_warm != notify_data[item].keep_warm) ) {
+							(current.notify_data[item].keep_warm != notify_data[item].keep_warm) || 
+								(current.notify_data[item].eta != notify_data[item].eta)
+								) {
 							console.log('Notification data change detected.')
 							// Update Page
 							updateNotificationCard(current.notify_data[item], current.status.mode);
 							// Store Notify Data
-							notify_data = JSON.parse(JSON.stringify(current.notify_data)); // Copy data to notify_data variable
+							notify_data[item] = JSON.parse(JSON.stringify(current.notify_data[item])); // Copy data to notify_data variable
 						};
 					};
 				};
@@ -246,17 +248,26 @@ function updateNotificationCard(notify_info, mode) {
 	const shutdown = notify_info.shutdown;
 	const keep_warm = notify_info.keep_warm;
 	const target = notify_info.target;
-	console.log('Updating: ' + label + ' Mode: ' + mode);
+	var eta = '--';
+	if (notify_info.eta != null) {
+		eta = notify_info.eta;
+	};
+	console.log('Updating: ' + label + '  ETA: ' + eta);
 	// TODO: Update the page item with new data
 	const notify_btn_id = label + "_notify_btn";
+    const eta_btn_id = label + "_eta_btn";
+
 	if(req) {
-		console.log('Turning on this notification: ' + notify_btn_id);
+		console.log('Updating this notification: ' + notify_btn_id);
 		document.getElementById(notify_btn_id).innerHTML = '<i class="far fa-bell"></i>&nbsp; ' + target + '&deg;' + units;
+        document.getElementById(eta_btn_id).innerHTML = '<i class="fa-solid fa-hourglass-half"></i>&nbsp; ' + eta + 's';;
 		document.getElementById(notify_btn_id).className = 'btn btn-sm btn-primary';
+        $('#'+eta_btn_id).show();
 	} else {
 		console.log('Turning off this notification: ' + notify_btn_id);
 		document.getElementById(notify_btn_id).innerHTML = '<i class="far fa-bell-slash"></i>';
 		document.getElementById(notify_btn_id).className = 'btn btn-sm btn-outline-primary';
+        $('#'+eta_btn_id).hide();
 	};
 };
 

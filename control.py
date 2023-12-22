@@ -29,7 +29,6 @@ from file_mgmt.cookfile import create_cookfile
 from file_mgmt.common import read_json_file_data
 from os.path import exists
 
-
 '''
 ==============================================================================
  Read and initialize Settings, Control, History, Metrics, and Error Data
@@ -454,6 +453,9 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	# Set time since toggle for temperature
 	temp_toggle_time = start_time
 
+	# Set time since toggle for checking ETA
+	eta_toggle_time = start_time
+
 	# Set time since toggle for auger
 	auger_toggle_time = start_time
 
@@ -631,8 +633,14 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		if control['tuning_mode']:
 			write_tr(in_data['probe_history']['tr'])
 
+		# Every 20 seconds, update ETA for any pending notifications
+		if (now - eta_toggle_time) > 20:
+			eta_toggle_time = time.time()
+			update_eta = True
+		else:
+			update_eta = False
 		# Check to see if there are any pending notifications (i.e. Timer / Temperature Settings)
-		control = check_notify(in_data, control, settings, pelletdb, grill_platform)
+		control = check_notify(in_data, control, settings, pelletdb, grill_platform, update_eta=update_eta)
 
 		# Send Current Status / Temperature Data to Display Device every 0.5 second (Display Refresh)
 		if (now - display_toggle_time) > 0.5:
@@ -989,7 +997,6 @@ def _recipe_mode(grill_platform, probe_complex, display_device, dist_device, sta
 	write_control(control, direct_write=True, origin='control')
 
 	return()
-
 
 # *****************************************
 # Main Program Start / Init and Loop
