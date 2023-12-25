@@ -498,6 +498,11 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			control['settings_update'] = False
 			write_control(control, direct_write=True, origin='control')
 			settings = read_settings()
+			# Change the log level if settings were updated
+			if settings['globals']['debug_mode']:
+				eventLogger.setLevel(logging.DEBUG)
+			else:
+				eventLogger.setLevel(logging.INFO)
 			if mode in ('Startup', 'Reignite', 'Smoke'):
 				OnTime = settings['cycle_data']['SmokeOnCycleTime']  # Auger On Time (Default 15s) 
 				OffTime = settings['cycle_data']['SmokeOffCycleTime'] + (settings['cycle_data']['PMode'] * 10)  # Auger Off Time

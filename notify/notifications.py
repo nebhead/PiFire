@@ -410,15 +410,18 @@ def _estimate_eta(temperatures, target_temperature, interval_seconds=3, max_hist
 		The estimated time (in seconds) it will take for the food probe to reach the target temperature.
 		None if the target temperature is already reached or the probe data is insufficient.
 	"""
+	eventLogger = create_logger('events', filename='/tmp/events.log')
 
 	# Ensure target temperature is not already reached
 	if target_temperature <= max(temperatures):
 		#print('DEBUG: ETA: Target temperature already achieved.')
+		eventLogger.debug(f'ETA: Target temperature already achieved.')
 		return None
 
 	# Ensure that interval is between 1 and 60 seconds 
 	if interval_seconds > 60 or interval_seconds < 1:
 		#print('DEBUG: ETA: History data interval not between 1 and 60 seconds.')
+		eventLogger.debug(f'ETA: History data interval not between 1 and 60 seconds.')
 		return None
 	
 	# If there is more data than needed, shorten the list 
@@ -430,6 +433,7 @@ def _estimate_eta(temperatures, target_temperature, interval_seconds=3, max_hist
 	# If there is less data than needed, return None
 	elif minutes_of_data < min_history_minutes:
 		#print('DEBUG: Not enough history data to make estimate.')
+		eventLogger.debug(f'ETA: Not enough history data to make estimate.')
 		return None
 
 	# Build times list
@@ -451,19 +455,23 @@ def _estimate_eta(temperatures, target_temperature, interval_seconds=3, max_hist
 		# If estimated time is over 24 hours or less than 0, it's likely to be a bad guess
 		if estimated_time > 86400 or estimated_time <= 0:
 			#print(f'DEBUG: ETA: Estimated time outside of bounds. [{estimated_time}]')
+			eventLogger.debug(f'ETA: Estimated time outside of bounds. [{estimated_time}]')
 			return None
 		eta = math.ceil(int(estimated_time) - times[-1])
 		if eta <= 0:
 			# Additional bounds testing
 			#print(f'DEBUG: ETA: Estimated time outside of bounds. [{eta}]')
+			eventLogger.debug(f'ETA: Estimated time outside of bounds. [{eta}]')
 			return None
 		#print(f'===========================================')
 		#print(f'DEBUG: ETA: {eta}s')
 		#print(f'===========================================')
+		eventLogger.debug(f'Calculated ETA: {eta}s')
 	
 	except:
 		# Something failed, return None
 		#print('DEBUG: ETA: An exception occurred.')
+		eventLogger.debug(f'ETA: An exception occurred.')
 		#raise
 		return None 
 
