@@ -1089,6 +1089,7 @@ def upgrade_settings(prev_ver, settings, settings_default):
 	''' Check if upgrading from v1.7.0 Build 07 or earlier '''
 	if prev_ver[0] <=1 and prev_ver[1] <= 7 and settings['versions'].get('build', 0) <= 7:
 		settings['dashboard'].pop('dashboards')
+		settings['dashboard'] = settings_default['dashboard']
 
 	''' Import any new probe profiles '''
 	for profile in list(settings_default['probe_settings']['probe_profiles'].keys()):
