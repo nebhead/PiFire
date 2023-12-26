@@ -982,18 +982,6 @@ def read_settings(filename='settings.json', init=False, retry_count=0):
 
 		# Overlay the original settings on top of the default settings
 		settings = deep_update(settings_default, settings)
-		'''
-		for key in settings_default.keys():
-			if key in settings.keys():
-				for subkey in settings_default[key].keys():
-					if subkey not in settings[key].keys():
-						update_settings = True
-				settings_default[key].update(settings.get(key, {}))
-			else:
-				update_settings = True
-		'''
-		# Move all changes to the settings variable
-		settings = settings_default 
 		update_settings = True
 
 		if update_settings or filename != 'settings.json': # If any of the keys were added, then write back the changes
@@ -1086,9 +1074,8 @@ def upgrade_settings(prev_ver, settings, settings_default):
 		settings['cycle_data'].pop('SmokeCycleTime') # Remove old SmokeCycleTime
 		settings['cycle_data']['SmokeOnCycleTime'] = 15  # Name change for SmokeCycleTime variable 
 		settings['cycle_data']['SmokeOffCycleTime'] = 45  # Added SmokeOffCycleTime variable 
-	''' Check if upgrading from v1.7.0 Build 07 or earlier '''
-	if prev_ver[0] <=1 and prev_ver[1] <= 7 and settings['versions'].get('build', 0) <= 7:
-		settings['dashboard'].pop('dashboards')
+	''' Check if upgrading from v1.6.x or v1.7.0 build 7 '''
+	if (prev_ver[0] <=1 and prev_ver[1] <= 6) or (prev_ver[0] ==1 and prev_ver[1] == 7 and settings['versions'].get('build', 0) <= 7):
 		settings['dashboard'] = settings_default['dashboard']
 
 	''' Import any new probe profiles '''
