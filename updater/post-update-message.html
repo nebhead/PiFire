@@ -5,7 +5,7 @@
 </H1>
 
 <p>
-    Description TBD.
+   This release contains bug fixes and feature updates since the previous version. 
 </p>
 
 <br>
@@ -16,13 +16,46 @@
 
 <ul>
     <li>
-        TBD
+        Added experimental DSI based touch display, allowing for touch input from a DSI based display on the Raspberry Pi.  
+        As of now, this is an experimental addition and should be expected to have bugs.  Performance is also a concern, as 
+        this module utilizes PyGame for displaying graphics and getting input from the touch display.  This will be fairly 
+        laggy on a Pi Zero 2W (or Pi 3 A+).   
     </li>
     <li>
-        ...
+        Exit Startup temperature (suggested by @EPGrillz), allows you to set a temperature/threshold where the grill will exit 
+        startup and go into the next mode.  This can be configured in settings.  If the grill starts hot and has already exceeded 
+        this temperature, then the grill will continue with startup for the normal amount of time.  
     </li>
     <li>
-        TBD
+        ILI9341 display menu and encoder improvements (submitted by @dogtreatfairy). Improves the display menu readability, adds 
+        back button and improves the encoder responsiveness. 
+    </li>
+    <li>
+        Added ETA feature for any probe with notification set.  This ETA is calculated using an interpolation function (currently linear)
+        which is still very much experimental.  This feature will continue to be worked on and enhanced.  
+    </li>
+    <li>
+        Default and Basic dashboards now have the ability to show/hide cards including the hopper and status cards.  Look for the gear 
+        icon in the corner of the window.  
+    </li>
+    <li>
+        Default, Basic dashboards and Control Panel now have the ability to take keyboard input for hold and notification values.  Just click 
+        value and change it using the keyboard.  The sliders will still work as normal if you prefer this.    
+    </li>
+    <li>
+        Added a warning to the Configuration Wizard, when the system is running/active so that you don't have to wait until the very end 
+        of the configuration to realize that you cannot submit changes.  (feature suggested by Discord user @Richie)
+    </li>
+    <li>
+        Added support for v2.1.0 Android Application.  Thank you to @weberbox for updating the app to work with the latest PiFire changes!
+    </li>
+    <li>
+        Behind the scenes improvements including:  Replace 'is_raspberry_pi' with 'is_real_hardware' functions planning for future
+        platform support.  Add require_reboot flag to Wizard items (Added to PWM / DSI Touch Display devices) if a reboot is required
+        when changing this configuration.  Add general commands list to Wizard items (Added to PWM board so no manual edits are required). 
+        Added configuration for dashboards that allow extending/saving features for different dashboards.  Updated the ChartJS version to v3.9.1.
+        Added common deep dictionary update function that allows dictionaries to be updated in a recursive way simplifying the logic of updating
+        dictionaries. Adding system level capabilities so that future functionality can be added (i.e. wifi signal strength, undervolt detection)
     </li>
 </ul>
 
@@ -30,13 +63,13 @@
 
 <ul>
     <li>
-        TBD
+        Fixed bug with/getsize function deprecation in SSD1306 displays causing the display to crash. 
     </li>
     <li>
-        ...
+        Fixed install issue with Eventlet (pinned to earlier version) causing the web front end to fail. 
     </li>
     <li>
-        TBD
+        Fixed settings upgrade logic issue. 
     </li>
 </ul>
 

@@ -125,15 +125,15 @@
                     </div>
                     {% if settings['globals']['units'] == 'F' %}
                         {% if control['primary_setpoint'] == 0 %}
-                        <input type="range" class="custom-range" min="125" max="600" step="5" value="125" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
+                        <input type="range" class="custom-range" min="125" max="600" step="5" value="125" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value" onclick="this.select();">
                         {% else %}
-                        <input type="range" class="custom-range" min="125" max="600" step="5" value="{{ control['primary_setpoint'] }}" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
+                        <input type="range" class="custom-range" min="125" max="600" step="5" value="{{ control['primary_setpoint'] }}" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value" onclick="this.select();">
                         {% endif %}
                     {% else %}
                         {% if control['primary_setpoint'] == 0 %}
-                        <input type="range" class="custom-range" min="50" max="260" value="50" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
+                        <input type="range" class="custom-range" min="50" max="260" value="50" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value" onclick="this.select();">
                         {% else %}
-                        <input type="range" class="custom-range" min="50" max="260" value="{{ control['primary_setpoint'] }}" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
+                        <input type="range" class="custom-range" min="50" max="260" value="{{ control['primary_setpoint'] }}" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value" onclick="this.select();">
                         {% endif %}
                     {% endif %}
                 </div>
