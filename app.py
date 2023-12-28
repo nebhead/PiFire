@@ -249,7 +249,8 @@ def history_update(action=None):
 		json_response['annotations'] = _prepare_annotations(displayed_starttime)
 		json_response['mode'] = control['mode']
 		json_response['ui_hash'] = create_ui_hash()
-
+		json_response['timestamp'] = int(time.time() * 1000)
+		
 		return jsonify(json_response)
 
 	elif action == 'refresh':

@@ -5,6 +5,8 @@ var annotation_enabled = true;
 var paused = false;
 var probe_mapper = {};
 var ui_hash;
+var temp_interval = 3000;  // Milliseconds between typical temperature reads (default 3000ms)
+var hiddenData = [];
 
 Chart.defaults.font.family = '"Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans"';
 
@@ -21,6 +23,22 @@ var temperatureCharts = new Chart(document.getElementById('HistoryChart'), {
 			legend: {
 				labels: {
 					usePointStyle: false,
+				},
+				// When the user clicks on the label in the legend, toggle visibility 
+				onClick: function(e, legendItem, legend) {
+					const index = legendItem.datasetIndex;
+					const ci = legend.chart;
+					if (ci.isDatasetVisible(index)) {
+						ci.hide(index);
+						legendItem.hidden = true;
+						//console.log('Dataset ' + index + ' is HIDDEN.')
+						hiddenData[index] = true;
+					} else {
+						ci.show(index);
+						legendItem.hidden = false;
+						//console.log('Dataset ' + index + ' is VISIBLE.')
+						hiddenData[index] = false;
+					}
 				}
 			}, 
 			annotation: {
@@ -37,8 +55,10 @@ var temperatureCharts = new Chart(document.getElementById('HistoryChart'), {
 					enabled: true,
 					mode: 'xy',
 					onPanComplete: function({chart}) {
+						//console.log('onPanComplete');
 						const xScale = chart.scales['x'];
 						const newMinTimestamp = xScale.min;
+						const newMaxTimestamp = xScale.max;
 	
 						const currentTimestamp = Date.now();
 
@@ -62,6 +82,7 @@ var temperatureCharts = new Chart(document.getElementById('HistoryChart'), {
 				  },
 				  mode: 'xy',
 				  onZoomComplete: function({chart}) {
+					//console.log('onZoomComplete');
 					const xScale = chart.scales['x'];
 					const newMinTimestamp = xScale.min;
 
@@ -89,29 +110,28 @@ var temperatureCharts = new Chart(document.getElementById('HistoryChart'), {
 			x: {
 				type: 'realtime',
 				realtime: {
-					duration: duration_window, 
-					delay: 2000,
-					refresh: 1000,
+					duration: 120000, 
+					delay: 1000,
+					refresh: 1000,    // onRefresh callback will be called every 1000 ms
 					pause: paused,
+					ttl: undefined,   // data will be automatically deleted as it disappears off the chart
+					frameRate: 5,    // data points are drawn 5 times every second
 					onRefresh: chart => {
 						$.get("/historyupdate/stream", function(data){
 							checkHashChange(data.ui_hash); 
 							checkModeChange(data.mode);
 							if (chartReady) {
-								var dateNow = Date.now();
-								// append the new label (time) to the label list
-								chart.data.labels.push(dateNow);
-								// append the new data array to the existing chart data
-								//chart.data.datasets[0].data.push(data.probe0_temp);
+								var timestamp = data.current.TS;
+								
 								for (probe in data.current.P) {
-									chart.data.datasets[probe_mapper['probes'][probe]].data.push(data.current.P[probe]);
-									chart.data.datasets[probe_mapper['primarysp'][probe]].data.push(data.current.PSP);
+									chart.data.datasets[probe_mapper['probes'][probe]].data.push({'x':timestamp, 'y':data.current.P[probe]});
+									chart.data.datasets[probe_mapper['primarysp'][probe]].data.push({'x':timestamp, 'y':data.current.PSP});
 								};
 								for (probe in data.current.F) {
-									chart.data.datasets[probe_mapper['probes'][probe]].data.push(data.current.F[probe]);
+									chart.data.datasets[probe_mapper['probes'][probe]].data.push({'x':timestamp, 'y':data.current.F[probe]});
 								};
 								for (probe in data.current.NT) {
-									chart.data.datasets[probe_mapper['targets'][probe]].data.push(data.current.NT[probe]);
+									chart.data.datasets[probe_mapper['targets'][probe]].data.push({'x':timestamp, 'y':data.current.NT[probe]});
 								};
 
 								if (annotation_enabled == true) {
@@ -119,6 +139,7 @@ var temperatureCharts = new Chart(document.getElementById('HistoryChart'), {
 								} else {
 									chart.options.plugins.annotation.annotations = {};
 								};
+
 							};
 						});
 					}
@@ -218,7 +239,24 @@ function refreshChartData(zoom) {
 			// Update time label list
 			temperatureCharts.data.labels = data.time_labels;
 			// Update chart datasets
-			temperatureCharts.data.datasets = data.chart_data;
+			if (chartReady) {
+				// Loop through dataset and see if any specific datasets are hidden
+				var chartIndex = 0;
+				temperatureCharts.data.datasets.forEach(function (arrayItem) {
+					if (hiddenData[chartIndex] == true) {
+						//console.log(arrayItem.label + ' at position ' + chartIndex + ' is hidden.');
+						data.chart_data[chartIndex]['hidden'] = true;
+					};
+					chartIndex++;
+				});
+				temperatureCharts.data.datasets = data.chart_data;
+			} else {
+				temperatureCharts.data.datasets = data.chart_data;
+				// Create hiddenData map
+				temperatureCharts.data.datasets.forEach(function () {
+					hiddenData.push(false);
+				});
+			};
 			// Update annotations 
 			temperatureCharts.options.plugins.annotation.annotations = data.annotations;
 			// Update Chart
