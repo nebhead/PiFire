@@ -32,7 +32,8 @@ from scipy.interpolate import interp1d
 ==============================================================================
 '''
 
-def check_notify(in_data, control, settings, pelletdb, grill_platform, update_eta=False):
+
+def check_notify(settings, control, in_data=None, pelletdb=None, grill_platform=None, pid_data=None, update_eta=False):
 	"""
 	Check for any pending notifications
 
@@ -42,6 +43,15 @@ def check_notify(in_data, control, settings, pelletdb, grill_platform, update_et
 	:param pelletdb: Pellet DB
 	:param grill_platform: Grill Platform
 	"""
+
+	# Forward to mqtt if enabled.
+	if settings['notify_services'].get('mqtt') != None and \
+	   settings['notify_services']['mqtt']['enabled'] == True:
+		_send_mqtt_notification(control, settings, pelletdb, in_data, grill_platform, pid_data)
+
+	if not pelletdb or not grill_platform:
+		return
+
 	if settings['notify_services']['influxdb']['url'] != '' and settings['notify_services']['influxdb']['enabled']:
 		_send_influxdb_notification('GRILL_STATE', control, settings, pelletdb, in_data, grill_platform)
 
@@ -210,7 +220,8 @@ def send_notifications(notify_event, control, settings, pelletdb, label='Probe',
 		_send_pushover_notification(settings, title_message, body_message)
 	if settings['notify_services']['onesignal']['app_id'] != '' and settings['notify_services']['onesignal']['enabled']:
 		_send_onesignal_notification(settings, title_message, body_message, channel)
-
+	if settings['notify_services']['mqtt']['broker'] != '' and settings['notify_services']['mqtt']['enabled']:
+		_send_mqtt_notification(control, settings, notify_event=title_message)
 
 def _send_apprise_notifications(settings, title_message, body_message):
 	"""
@@ -476,3 +487,44 @@ def _estimate_eta(temperatures, target_temperature, interval_seconds=3, max_hist
 		return None 
 
 	return eta
+=======
+mqtt_handler = None
+def _send_mqtt_notification(control, settings, 
+			pelletdb=None, in_data=None, grill_platform=None, pid_data=None, notify_event=None):
+	"""
+	Send mqtt Notifications
+
+	:param notify_event: String Event
+	:param control: Control
+	:param settings: Settings
+	:param pelletdb: Pellet DB
+	:param in_data: In Data (Probe Temps)
+	:param grill_platform: Grill Platform
+	"""
+	global mqtt_toggle_time
+	global mqtt_handler
+	
+	if not mqtt_handler:
+		from notify.mqtt_handler import MqttNotificationHandler
+		mqtt_handler = MqttNotificationHandler(settings)
+		mqtt_toggle_time = 0
+
+	# Send a notify_event immidiately
+	if notify_event != None:
+		payload = {'msg': notify_event }
+		mqtt_handler.notify("notify_event", payload)
+
+	mode_changed = (control['mode'] != mqtt_handler.last_mode)
+
+	# Write MQTT data only after x seconds has passed or we just changed mode
+	if (time.time() - mqtt_toggle_time) > float(settings['notify_services']['mqtt']['update_sec']) or \
+		(mode_changed):
+				
+		mqtt_toggle_time = 0 if mode_changed else time.time()
+
+		mqtt_handler.notify("control", control)
+		mqtt_handler.notify("system", control)
+		if grill_platform: mqtt_handler.notify("devices", grill_platform.current)
+		if in_data: mqtt_handler.notify("probe_data", in_data['probe_history'])
+		if pelletdb: mqtt_handler.notify("pellet", pelletdb['current'])
+		if pid_data: mqtt_handler.notify("pid", pid_data)

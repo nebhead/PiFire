@@ -1600,6 +1600,29 @@ def settings_page(action=None):
 		if 'influxdb_bucket' in response:
 			settings['notify_services']['influxdb']['bucket'] = response['influxdb_bucket']
 
+		if _is_checked(response, 'mqtt_enabled'):
+			settings['notify_services']['mqtt']['enabled'] = True
+		else:
+			settings['notify_services']['mqtt']['enabled'] = False
+		#if _is_checked(response, 'mqtt_control'):
+		#	settings['notify_services']['mqtt']['control'] = True
+		#else:
+		#	settings['notify_services']['mqtt']['control'] = False
+		if 'mqtt_id' in response:
+			settings['notify_services']['mqtt']['id'] = response['mqtt_id']
+		if 'mqtt_broker' in response:
+			settings['notify_services']['mqtt']['broker'] = response['mqtt_broker']
+		if 'mqtt_port' in response:
+			settings['notify_services']['mqtt']['port'] = response['mqtt_port']
+		if 'mqtt_user' in response:
+			settings['notify_services']['mqtt']['username'] = response['mqtt_user']
+		if 'mqtt_pw' in response:
+			settings['notify_services']['mqtt']['password'] = response['mqtt_pw']
+		if 'mqtt_auto_d' in response:
+			settings['notify_services']['mqtt']['homeassistant_autodiscovery_topic'] = response['mqtt_auto_d']
+		if 'mqtt_freq' in response:
+			settings['notify_services']['mqtt']['update_sec'] = response['mqtt_freq']
+
 		if 'delete_device' in response:
 			DeviceID = response['delete_device']
 			settings['notify_services']['onesignal']['devices'].pop(DeviceID)

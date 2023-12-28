@@ -1652,10 +1652,111 @@
                                     </div>
                                 </div><!-- End of card body -->
                             </div><!-- End of Card -->
-                        </div><!-- End of card body -->
-                        <div class="card-footer bg-light">
-                            <button type="submit" class="btn btn-outline-primary">Save</button>
-                        </div>
+                            <!-- MQTT -->
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h5>MQTT</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="mqtt_enabled" name="mqtt_enabled" {% if settings['notify_services']['mqtt']['enabled'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="mqtt_enabled">MQTT Enabled</label>
+                                    </div>
+                                    <br>
+                                    <div class="card-body">
+                                        <!--div class="custom-control custom-switch">
+                                            <input type="checkbox" class="custom-control-input" id="mqtt_control" name="mqtt_control" {% if settings['notify_services']['mqtt']['control'] %}checked{% endif %}>
+                                            <label class="custom-control-label" for="mqtt_control">Enable Controls</label>
+                                       </div>
+                                       <span class="badge badge-warning">NOTE:</span>
+                                       <i class="small"> 
+                                            If checked you will be able to control the mode and setpoint through mqtt.      
+                                        </i>
+                                        <br>
+                                        <br-->
+                                       <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-key"></i>&nbsp; PiFire Unique ID</span>
+                                            </div>
+                                            <input id="mqtt_id" type="text" class="form-control" name="mqtt_id" value="{{settings['notify_services']['mqtt']['id']}}">
+                                        </div>
+                                        <span class="badge badge-warning">NOTE:</span>
+                                        <i class="small"> 
+                                            Enter a unique name for this instance of PiFire.  This name is used as the root mqtt topic for this device.  Changing
+                                            it later will result in new mqtt topics being created, and if using Home Assistant will result in new sensors being created.      
+                                        </i>
+                                        <br>
+                                        <br>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-link"></i>&nbsp; MQTT Broker</span>
+                                            </div>
+                                            <input id="mqtt_broker" type="text" class="form-control" name="mqtt_broker" value="{{settings['notify_services']['mqtt']['broker']}}">
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-link"></i>&nbsp; MQTT Port</span>
+                                            </div>
+                                            <input id="mqtt_port" type="text" class="form-control" name="mqtt_port" value="{{settings['notify_services']['mqtt']['port']}}">
+                                        </div>      
+                                        <span class="badge badge-warning">NOTE:</span>
+                                        <i class="small"> 
+                                            Enter the IP or host name of your mqtt broker and port. ex:homeassistant.local 1883
+                                        </i>
+                                        <br>
+                                        <br>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-key"></i>&nbsp; Username</span>
+                                            </div>
+                                            <input id="mqtt_user" type="text" class="form-control" name="mqtt_user" value="{{settings['notify_services']['mqtt']['username']}}">
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-key"></i>&nbsp; Password</span>
+                                            </div>
+                                            <input id="mqtt_pw" type="text" class="form-control" name="mqtt_pw" value="{{settings['notify_services']['mqtt']['password']}}">
+                                        </div>
+                                        <span class="badge badge-warning">NOTE:</span>
+                                        <i class="small"> 
+                                            Leave the username and password blank if your broker does not require authentication.
+                                        </i>
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-clock"></i>&nbsp; Refresh Rate (sec)</span>
+                                        </div>
+                                        <input id="mqtt_freq" type="text" class="form-control" name="mqtt_freq" value="{{settings['notify_services']['mqtt']['update_sec']}}">
+                                    </div>                               
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> 
+                                        Specify in seconds, how often you would like to publish PiFire data to the mqtt broker.
+                                    </i>
+                                    <br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-wand-magic-sparkles"></i>&nbsp; Home Assistant Discovery Topic</span>
+                                        </div>
+                                        <input id="mqtt_auto_d" type="text" class="form-control" name="mqtt_auto_d" value="{{settings['notify_services']['mqtt']['homeassistant_autodiscovery_topic']}}">
+                                    </div>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> 
+                                        The <a href="https://www.home-assistant.io/integrations/mqtt/" target="blank">Home Asstant MQTT integration.</a> can automatically
+                                        add PiFire and its devices if you specify the discovery topic name here.
+                                    </i>
+                                </div><!-- End of card body -->
+                            </div><!-- End of card body -->
+                            <div class="card-footer bg-light">
+                                <button type="submit" class="btn btn-outline-primary">Save</button>
+                            </div>
+                        </div><!-- End of Card -->
                     </form>
                 </div><!-- End of Card -->
                 {% if not request.MOBILE %}<br><br><br>{% endif %}

@@ -403,6 +403,18 @@ def default_notify_services():
 		'org': '',
 		'bucket': ''
 	}
+	
+	services['mqtt'] = {
+      "broker": "homeassistant.local",
+      #"control": False,
+      "enabled": False,
+      "homeassistant_autodiscovery_topic": "homeassistant",
+      "id": "PiFire",
+      "password": "",
+      "port": "1883",
+      "update_sec": "30",
+      "username": ""
+    }
 
 	return services
 
