@@ -117,7 +117,13 @@ python -m pip install "flask==2.3.3"
 python -m pip install flask-mobility
 python -m pip install flask-qrcode
 python -m pip install flask-socketio
-python -m pip install "eventlet==0.30.2"
+if ! python -c "import sys; assert sys.version_info[:2] >= (3,11)" > /dev/null; then
+    echo "System is running a python version lower than 3.11, installing eventlet==0.30.2";
+    python -m pip install "eventlet==0.30.2"
+else
+    echo "System is running a python version 3.11 or greater, installing latest eventlet"
+    python -m pip install eventlet
+fi      
 python -m pip install gunicorn
 python -m pip install gpiozero
 python -m pip install redis
