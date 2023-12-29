@@ -1,7 +1,7 @@
 <!-- Post Update Message for v1.6.0 -->
 <H1>
     <img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="50" height="50" class="d-inline-block align-top" alt="">
-    PiFire 1.6.0 Release - November 2023
+    PiFire 1.6.3 Release - December 2023
 </H1>
 
 <p>In this month comes another <i>huge</i> update with lots of new features and bug fixes.  Many thanks to the users from discord that have been testing along the way (as well as submitting some bugs), what a great community we have!  Many of these features have been deployed on our development branch for some time, so they should be relatively stable.  Please do file issues on GitHub if you find any new bugs with the formal release.  With that, enjoy and happy grilling/smoking!</p>
@@ -109,6 +109,9 @@
     </li>
     <li>
         Improved VL530L0X resilience, where sometimes long distance reads can cause the control script heartbeat to fail and crash/restart.  Added this distance module to a separate thread so if there are delays in measurements, they do not cause the control script to crash. 
+    </li>
+    <li>
+        Fixed a bug where the wrong eventlet gets installed for Python v3.9 (Bullseye OS) or for Python v3.11 (Bookworm OS).  Installer now checks for v3.11 or greater otherwise installs eventlet v0.30.2.  
     </li>
 </ul>
 <br>
