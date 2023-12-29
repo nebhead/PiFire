@@ -1241,6 +1241,8 @@ while True:
 			write_control(control, direct_write=True, origin='control')
 			_work_cycle('Reignite', grill_platform, probe_complex, display_device, dist_device)
 			_next_mode(control['next_mode'], setpoint=setpoint)
+	
+	check_notify(settings, control, pelletdb=pelletdb)
 
 	time.sleep(0.1)
 # ===================
