@@ -249,7 +249,8 @@ def history_update(action=None):
 		json_response['annotations'] = _prepare_annotations(displayed_starttime)
 		json_response['mode'] = control['mode']
 		json_response['ui_hash'] = create_ui_hash()
-
+		json_response['timestamp'] = int(time.time() * 1000)
+		
 		return jsonify(json_response)
 
 	elif action == 'refresh':
@@ -1604,10 +1605,6 @@ def settings_page(action=None):
 			settings['notify_services']['mqtt']['enabled'] = True
 		else:
 			settings['notify_services']['mqtt']['enabled'] = False
-		#if _is_checked(response, 'mqtt_control'):
-		#	settings['notify_services']['mqtt']['control'] = True
-		#else:
-		#	settings['notify_services']['mqtt']['control'] = False
 		if 'mqtt_id' in response:
 			settings['notify_services']['mqtt']['id'] = response['mqtt_id']
 		if 'mqtt_broker' in response:

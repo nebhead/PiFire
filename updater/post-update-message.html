@@ -50,6 +50,9 @@
         Added support for v2.1.0 Android Application.  Thank you to @weberbox for updating the app to work with the latest PiFire changes!
     </li>
     <li>
+        Improved visibility of save buttons on the settings page. (Suggested by @chrisusernamechanged)
+    </li>
+    <li>
         Behind the scenes improvements including:  Replace 'is_raspberry_pi' with 'is_real_hardware' functions planning for future
         platform support.  Add require_reboot flag to Wizard items (Added to PWM / DSI Touch Display devices) if a reboot is required
         when changing this configuration.  Add general commands list to Wizard items (Added to PWM board so no manual edits are required). 
@@ -66,13 +69,16 @@
         Fixed bug with/getsize function deprecation in SSD1306 displays causing the display to crash. 
     </li>
     <li>
-        Fixed install issue with Eventlet (pinned to earlier version) causing the web front end to fail. 
+        Fixed install issue with Eventlet (pinned to earlier version for Python 3.9) causing the web front end to fail with Python version 3.9 on Raspberry Pi Bullseye. 
     </li>
     <li>
         Fixed settings upgrade logic issue. 
     </li>
     <li>
-        Fixed a bug where the wrong eventlet gets installed for Python v3.9 (Bullseye OS) or for Python v3.11 (Bookworm OS).  Installer now checks for v3.11 or greater otherwise installs eventlet v0.30.2.  
+        Fixed bug(s) with history charts streaming including a long standing bug where hidden datasets would go back to being shown when zooming/panning.  
+    </li>
+    <li>
+        ...
     </li>
 </ul>
 

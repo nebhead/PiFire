@@ -406,7 +406,6 @@ def default_notify_services():
 	
 	services['mqtt'] = {
       "broker": "homeassistant.local",
-      #"control": False,
       "enabled": False,
       "homeassistant_autodiscovery_topic": "homeassistant",
       "id": "PiFire",
@@ -1402,6 +1401,7 @@ def write_current(in_data):
 	current['F'] = in_data['probe_history']['food']
 	current['PSP'] = in_data['primary_setpoint']
 	current['NT'] = in_data['notify_targets']
+	current['TS'] = int(time.time() * 1000)  # Timestamp
 	cmdsts.set('control:current', json.dumps(current))
 
 def read_current(zero_out=False):

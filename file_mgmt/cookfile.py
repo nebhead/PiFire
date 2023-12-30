@@ -394,13 +394,13 @@ def prepare_chartdata(probe_config, chart_info={}, num_items=10, reduce=True, da
 		# Build all lists from file data
 		for index in range(list_length - num_items, list_length, step):
 			for key, value in history['P'].items():
-				chart_data[probe_mapper['probes'][key]]['data'].append(history['P'][key][index])
+				chart_data[probe_mapper['probes'][key]]['data'].append({'x':history['T'][index], 'y':history['P'][key][index]})
 			for key, value in history['F'].items():
-				chart_data[probe_mapper['probes'][key]]['data'].append(history['F'][key][index])
+				chart_data[probe_mapper['probes'][key]]['data'].append({'x':history['T'][index], 'y':history['F'][key][index]})
 			for key, value in history['NT'].items():
-				chart_data[probe_mapper['targets'][key]]['data'].append(history['NT'][key][index])
+				chart_data[probe_mapper['targets'][key]]['data'].append({'x':history['T'][index], 'y':history['NT'][key][index]})
 			for key in probe_mapper['primarysp']: 
-				chart_data[probe_mapper['primarysp'][key]]['data'].append(history['PSP'][index])
+				chart_data[probe_mapper['primarysp'][key]]['data'].append({'x':history['T'][index], 'y':history['PSP'][index]})
 				break 
 
 			time_labels.append(history['T'][index])
