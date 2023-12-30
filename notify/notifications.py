@@ -487,7 +487,7 @@ def _estimate_eta(temperatures, target_temperature, interval_seconds=3, max_hist
 		return None 
 
 	return eta
-=======
+
 mqtt_handler = None
 def _send_mqtt_notification(control, settings, 
 			pelletdb=None, in_data=None, grill_platform=None, pid_data=None, notify_event=None):

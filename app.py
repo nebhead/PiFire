@@ -1605,10 +1605,6 @@ def settings_page(action=None):
 			settings['notify_services']['mqtt']['enabled'] = True
 		else:
 			settings['notify_services']['mqtt']['enabled'] = False
-		#if _is_checked(response, 'mqtt_control'):
-		#	settings['notify_services']['mqtt']['control'] = True
-		#else:
-		#	settings['notify_services']['mqtt']['control'] = False
 		if 'mqtt_id' in response:
 			settings['notify_services']['mqtt']['id'] = response['mqtt_id']
 		if 'mqtt_broker' in response:

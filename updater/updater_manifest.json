@@ -4,7 +4,7 @@
       "server" : "1.7.0",
       "cookfile" : "1.5.0",
       "recipe" : "1.0.0",
-      "build" : 25
+      "build" : 26
     },
     "update_notes" : "",
     "update_warnings" : ""
@@ -93,7 +93,7 @@
           "command_list" : []
         },
         "control": {
-          "py_dependencies": [],
+          "py_dependencies": ["paho-mqtt"],
           "apt_dependencies": [],
           "command_list" : [
             ["sudo", "bash", "updater/bl_udev_170.sh"]
