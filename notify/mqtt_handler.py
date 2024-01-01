@@ -290,16 +290,6 @@ class MqttNotificationHandler:
 								discovery['enabled_by_default'] = False
 
 						case str():
-							# If this is for the mode, we need to set up a "select" platform so it is controllable
-							if device == 'mode' and self._mqtt_settings['control']:
-								component = "select"
-								#discovery['command_topic'] = f"{discovery['state_topic']}/set/{device}"
-								#discovery['options'] = ['Stop','Recipe','Error','Reignite','Monitor','Prime','Startup','Smoke','Hold','Shutdown','Manual']
-								discovery['options'] = ['Stop','Recipe','Error','Reignite','Monitor','Prime','Startup','Smoke','Hold','Shutdown','Manual']
-
-								# Subscribe to the command topic
-								self._subscribe(discovery['command_topic'])
-							else:
 								component = "sensor"
 
 						case int() | float():
@@ -420,9 +410,9 @@ class MqttNotificationHandler:
 
 			# Update the message state if we moved to a more advanced state (ignore Stop and Error)
 			# all modes ['Stop','Recipe','Error','Reignite','Monitor','Prime','Startup','Smoke','Hold','Shutdown','Manual']
-			if new_mode in ['Recipe', 'Reignite','Monitor','Prime','Startup','Smoke','Hold','Shutdown','Manual']:
-				payload = {'msg': f"Started {new_mode}" }
-				self.notify("notify_event", payload)
+			#if new_mode in ['Recipe', 'Reignite','Monitor','Prime','Startup','Smoke','Hold','Shutdown','Manual']:
+			payload = {'msg': f"Entered {new_mode} mode" }
+			self.notify("notify_event", payload)
 			
 			self.last_mode = data['mode']
 

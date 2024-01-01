@@ -1,7 +1,7 @@
 {
   "metadata" : {
     "versions" : {
-      "server" : "1.7.0",
+      "server" : "1.6.3",
       "cookfile" : "1.5.0",
       "recipe" : "1.0.0",
       "build" : 26
