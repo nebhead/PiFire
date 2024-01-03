@@ -459,7 +459,7 @@ def _estimate_eta(temperatures, target_temperature, interval_seconds=3, max_hist
 
 	try:
 		# Create an interpolation function from the temperature data
-		interpolator = interp1d(times, temperatures, kind="linear", fill_value="extrapolate")
+		interpolator = interp1d(times, temperatures, axis=0, bounds_error=False, kind="linear", fill_value="extrapolate")
 
 		# Estimate the time to reach the target temperature
 		estimated_time = interpolator(target_temperature)
