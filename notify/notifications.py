@@ -255,28 +255,37 @@ def _send_pushover_notification(settings, title_message, body_message):
 	:param title_message: Message Title
 	:param body_message: Message Body
 	"""
-	log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
-	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
-	url = 'https://api.pushover.net/1/messages.json'
+	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s')
+	if settings['globals']['debug_mode']:
+		eventLogger.setLevel(logging.DEBUG)
+	else:
+		eventLogger.setLevel(logging.INFO)
+
+	appriseHandler = apprise.Apprise()
+
+	token = settings["notify_services"]["pushover"]["APIKey"]
+	public_url = settings["notify_services"]["pushover"]["PublicURL"]
+
 	for user in settings['notify_services']['pushover']['UserKeys'].split(','):
-		try:
-			response = requests.post(url, data={
-				"token": settings['notify_services']['pushover']['APIKey'],
-				"user": user.strip(),
-				"message": body_message,
-				"title": title_message,
-				"url": settings['notify_services']['pushover']['PublicURL']
-			})
+		user_id = user.strip()
+		apprise_url = f'pover://{user_id}@{token}?url={public_url}'
+		appriseHandler.add(apprise_url)
+		
+	try:
+		result = appriseHandler.notify(
+			title=title_message,
+			body=body_message,
+		)
 
-			if not response.status_code == 200:
-				eventLogger.warning("Pushover Notification Failed: " + title_message)
+		if result:
+			eventLogger.debug(f"Pushover Notification to {user} was a success!")
+		else:
+			eventLogger.warning(f"Pushover Notification to {user} failed!")
 
-			eventLogger.debug("Pushover Response: " + response.text)
-
-		except Exception as e:
-			eventLogger.warning("Pushover Notification to %s failed: %s" % (user, e))
-		except:
-			eventLogger.warning("Pushover Notification to %s failed for unknown reason." % (user))
+	except Exception as e:
+		eventLogger.warning(f"Pushover Notification to {user} failed: {e}")
+	except:
+		eventLogger.warning(f"Pushover Notification to {user} failed for unknown reason.")
 
 
 def _send_pushbullet_notification(settings, title_message, body_message):
@@ -288,27 +297,35 @@ def _send_pushbullet_notification(settings, title_message, body_message):
 	:param body_message: Message Body
 	:return:
 	"""
-	log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
-	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
+	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s')
+	if settings['globals']['debug_mode']:
+		eventLogger.setLevel(logging.DEBUG)
+	else:
+		eventLogger.setLevel(logging.INFO)
+
+	appriseHandler = apprise.Apprise()
+
 	api_key = settings['notify_services']['pushbullet']['APIKey']
-	pushbullet_link = settings['notify_services']['pushbullet']['PublicURL']
-	url = "https://api.pushbullet.com/v2/pushes"
+	public_url = settings['notify_services']['pushbullet']['PublicURL']
 
-	headers = {"content-type": "application/json", "Authorization": 'Bearer ' + api_key}
-	payload = {"type": "link", "title": title_message, "url": pushbullet_link, "body": body_message}
-
+	apprise_url = f'pbul://{api_key}@{api_key}?url={public_url}'
+	appriseHandler.add(apprise_url)
+		
 	try:
-		response = requests.post(url, headers=headers, data=json.dumps(payload))
+		result = appriseHandler.notify(
+			title=title_message,
+			body=body_message,
+		)
 
-		if not response.status_code == 200:
-			eventLogger.warning("PushBullet Notification Failed: " + title_message)
-
-		eventLogger.debug("PushBullet Response: " + response.text)
+		if result:
+			eventLogger.debug(f'Push Bullet Notification to {api_key} was a success!')
+		else:
+			eventLogger.warning(f'Push Bullet Notification to {api_key} failed!')
 
 	except Exception as e:
-		eventLogger.warning("PushBullet Notification failed: %s" % (e))
+		eventLogger.warning(f'Push Bullet Notification to {api_key} failed: {e}')
 	except:
-		eventLogger.warning("PushBullet Notification failed for unknown reason.")
+		eventLogger.warning(f'Push Bullet Notification to {api_key} failed for unknown reason.')
 
 
 def _send_onesignal_notification(settings, title_message, body_message, channel):
