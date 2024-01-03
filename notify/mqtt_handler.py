@@ -73,6 +73,7 @@ class MqttNotificationHandler:
 			# Default payload for setting up home assistant auto discovery messagage.  
 			self.discovery_topic = self._mqtt_settings['homeassistant_autodiscovery_topic']
 			self.pifire_id = self._mqtt_settings['id']
+			grill_name = "PiFire" if len(self._global_settings['grill_name']) == 0 else self._global_settings['grill_name']
 			self.default_payload = {
 				'availability': [{
 				 	'topic': f"{self.pifire_id}/availability",
@@ -82,7 +83,7 @@ class MqttNotificationHandler:
 					'identifiers': [ self.pifire_id	],
 					'manufacturer': "PiFire",
 					'model': settings['modules']['grillplat'],
-					'name': self._global_settings['grill_name'],
+					'name': grill_name,
 					'configuration_url': f"http://{gethostname()}:5000/settings"
 					},
 				'enabled_by_default': True,
@@ -200,7 +201,7 @@ class MqttNotificationHandler:
 
 	def _publish_data(self, topic, payload, qos=0, retain=False, properties=None):
 
-	#	self._check_connection()
+		self._check_connection()
 
 		ret= self.client.publish(topic, payload, qos, retain, properties)
 
@@ -275,8 +276,8 @@ class MqttNotificationHandler:
 
 					discovery = self.default_payload.copy()
 					discovery['state_topic'] = f"{self.pifire_id}/{context}"
-					discovery['object_id'] = f"{self.pifire_id}_{device_name}"
-					discovery['unique_id'] = f"{self.pifire_id}_{device_name}"
+					discovery['object_id'] = f"{self.pifire_id}_{device_name}".lower()
+					discovery['unique_id'] = f"{self.pifire_id}_{device_name}".lower()
 					discovery['value_template'] = f"{{{{ value_json.{device} }}}}"
 					discovery['name'] = device.title().replace('_',' ')				
 
@@ -311,13 +312,19 @@ class MqttNotificationHandler:
 								# Find this probes name in the settings
 								for probe in self._probe_settings:
 									if probe['label'] == device:
-										discovery['name'] = f"{probe['name']} {suffix}"
+										discovery['name'] = f"{discovery['name']} {suffix}"
+										device_name = context + '_' + probe['port']
 										break
 
 							if context.startswith('control_notify'):
 								discovery['device_class'] = "temperature"
 								discovery['unit_of_measurement'] = f"°{self._global_settings['units']}"
-								discovery['name'] = data['name'] + ' Target'			
+								suffix = 'Target'
+								for probe in self._probe_settings:
+									if probe['label'] == data['label']:
+										discovery['name'] = f"{data['name']} {suffix}"
+										device_name = context
+										break
 
 							if context.startswith('pid'):
 								discovery['entity_category'] = "diagnostic"
@@ -380,7 +387,11 @@ class MqttNotificationHandler:
 			for key in data:
 				if key == 'notify_data':
 					for device in data[key]:
-						new_context = context + '_' + key + '_' + device['label']
+						#new_context = context + '_' + key + '_' + device['label']
+						for probe in self._probe_settings:
+							if probe['label'] == device['label']:
+								new_context = context + '_' + key + '_' + probe['port']
+								break
 						self.notify(new_context, device )
 				elif isinstance(data[key], dict):
 					new_context = context + '_' + key
