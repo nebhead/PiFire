@@ -17,7 +17,7 @@ import json
 import zipfile 
 import pathlib
 
-from common import read_settings, read_history, generate_uuid, read_metrics, write_metrics, process_metrics, semantic_ver_to_list, epoch_to_time, unpack_history, default_probe_config
+from common import read_settings, read_history, generate_uuid, read_metrics, write_metrics, process_metrics, semantic_ver_to_list, epoch_to_time, unpack_history, default_probe_config, create_logger
 from file_mgmt.common import read_json_file_data, update_json_file_data
 
 HISTORY_FOLDER = './history/'  # Path to historical cook files
@@ -66,6 +66,8 @@ def create_cookfile():
 	#global cmdsts
 	global HISTORY_FOLDER
 
+	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s')
+
 	settings = read_settings()
 
 	cook_file_struct = {}
@@ -104,29 +106,40 @@ def create_cookfile():
 		files_list = ['metadata', 'graph_data', 'raw_data', 'graph_labels', 'events', 'comments', 'assets']
 		if not os.path.exists(HISTORY_FOLDER):
 			os.mkdir(HISTORY_FOLDER)
-		os.mkdir(f'{HISTORY_FOLDER}{title}')  # Make temporary folder for all files
+		cook_file_path = f'{HISTORY_FOLDER}{title}'
+		cook_file_name = f'{cook_file_path}.pifire'
+		cook_file_duplicate = 0
+		while(os.path.exists(cook_file_name)):
+			# If file path exists, attempt to add a new path
+			cook_file_duplicate += 1
+			eventLogger.debug(f'{cook_file_name} exists, attempting to use {cook_file_path}-{cook_file_duplicate}.pifire')
+			cook_file_name = f'{cook_file_path}-{cook_file_duplicate}.pifire'
+			
+		os.mkdir(cook_file_path)  # Make temporary folder for all files
 		for item in files_list:
 			json_data_string = json.dumps(cook_file_struct[item], indent=2, sort_keys=True)
-			filename = f'{HISTORY_FOLDER}{title}/{item}.json'
+			filename = f'{cook_file_path}/{item}.json'
 			with open(filename, 'w+') as cook_file:
 				cook_file.write(json_data_string)
 		
 		# 2. Create empty data folder(s) & add default data 
-		os.mkdir(f'{HISTORY_FOLDER}{title}/assets')
-		os.mkdir(f'{HISTORY_FOLDER}{title}/assets/thumbs')
+		os.mkdir(f'{cook_file_path}/assets')
+		os.mkdir(f'{cook_file_path}/assets/thumbs')
 		#shutil.copy2('./static/img/pifire-cf-thumb.png', f'{HISTORY_FOLDER}{title}/assets/{thumbnail_UUID}.png')
 		#shutil.copy2('./static/img/pifire-cf-thumb.png', f'{HISTORY_FOLDER}{title}/assets/thumbs/{thumbnail_UUID}.png')
 
 		# 3. Create ZIP file of the folder 
-		directory = pathlib.Path(f'{HISTORY_FOLDER}{title}/')
-		filename = f'{HISTORY_FOLDER}{title}.pifire'
+		directory = pathlib.Path(f'{cook_file_path}/')
+		filename = cook_file_name
 
 		with zipfile.ZipFile(filename, "w", zipfile.ZIP_DEFLATED) as archive:
 			for file_path in directory.rglob("*"):
 				archive.write(file_path, arcname=file_path.relative_to(directory))
 
+		eventLogger.debug(f'Wrote {cook_file_name} to {HISTORY_FOLDER}.')
+
 		# 4. Cleanup temporary files
-		command = f'rm -rf {HISTORY_FOLDER}{title}'
+		command = f'rm -rf {cook_file_path}'
 		os.system(command)
 
 	# Delete Redis DB for history / current
