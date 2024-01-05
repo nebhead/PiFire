@@ -53,6 +53,10 @@
         Improved visibility of save buttons on the settings page. (Suggested by @chrisusernamechanged)
     </li>
     <li>
+        Added support for DS18B20 1-Wire Thermometer, mainly to be used for calibration of other probes as it does not have adequate temperature
+        ranges for actual grill usages. This probe is currently experimental. 
+    </li>
+    <li>
         Behind the scenes improvements including:  Replace 'is_raspberry_pi' with 'is_real_hardware' functions planning for future
         platform support.  Add require_reboot flag to Wizard items (Added to PWM / DSI Touch Display devices) if a reboot is required
         when changing this configuration.  Add general commands list to Wizard items (Added to PWM board so no manual edits are required). 
