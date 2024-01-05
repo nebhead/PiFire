@@ -88,13 +88,13 @@ def default_settings():
 	settings['probe_settings']['probe_map'] = default_probe_map(settings['probe_settings']['probe_profiles'])
 
 	settings['globals'] = {
-		'grill_name' : '',
+		'grill_name' : 'PB850-DTFE',
 		'debug_mode' : False,
-		'page_theme' : 'light',
-		'triggerlevel' : 'LOW',
+		'page_theme' : 'dark',
+		'triggerlevel' : 'HIGH',
 		'buttonslevel' : 'HIGH',
-		'disp_rotation' : 0,
-		'shutdown_timer' : 60,
+		'disp_rotation' : 180,
+		'shutdown_timer' : 180,
 		'startup_timer' : 240,
 		'startup_exit_temp' : 0,  # Exit startup at this temperature threshold. [0 = disabled]
 		'auto_power_off' : False,
@@ -104,7 +104,7 @@ def default_settings():
 		'augerrate' : 0.3,  		# (grams per second) default auger load rate is 10 grams / 30 seconds
 		'first_time_setup' : True,  # Set to True on first setup, to run wizard on load 
 		'ext_data' : False,  # Set to True to allow tracking of extended data.  More data will be stored in the history database and can be reviewed in the CSV.
-		'global_control_panel' : False,  # Set to True to display control panel on most pages (except Updater, Wizard, Cookfile and some other pages)
+		'global_control_panel' : True,  # Set to True to display control panel on most pages (except Updater, Wizard, Cookfile and some other pages)
 		'boot_to_monitor' : False,  # Set to True to boot directly into monitor mode
 		'prime_ignition' : False,  # Set to True to enable the igniter in prime & startup mode
 		'updated_message' : False,   # Set to True to display a pop-up message after the system has been updated 
@@ -150,9 +150,9 @@ def default_settings():
 		'PMode' : 2,  			# http://tipsforbbq.com/Definition/Traeger-P-Setting
 		'u_min' : 0.1,
 		'u_max' : 0.9,
-		'LidOpenDetectEnabled' : False,  #  Enable Lid Open Detection
+		'LidOpenDetectEnabled' : True,  #  Enable Lid Open Detection
 		'LidOpenThreshold' : 15,	 #  Percentage drop in temperature from the hold temp, to trigger lid open event
-		'LidOpenPauseTime' : 60  #  Number of seconds to pause when a lid open event is detected 
+		'LidOpenPauseTime' : 120  #  Number of seconds to pause when a lid open event is detected 
 	}
 
 	settings['controller'] = {
@@ -162,7 +162,7 @@ def default_settings():
 	settings['controller']['config'] = _default_controller_config()
 
 	settings['display'] = {
-		'selected' : 'none'
+		'selected' : 'ili9341e'
 	}
 	settings['display']['config'] = _default_display_config()
 
@@ -174,7 +174,7 @@ def default_settings():
 	settings['smoke_plus'] = {
 		'enabled' : False, 		# Sets default Enable/Disable (True = Enabled, False = Disabled)
 		'min_temp' : 160, 		# Minimum temperature to cycle fan on/off
-		'max_temp' : 220, 		# Maximum temperature to cycle fan on/off
+		'max_temp' : 230, 		# Maximum temperature to cycle fan on/off
 		'on_time' : 5, 			# Number of seconds the fan will remain ON
 		'off_time' : 5, 		# Number of seconds the fan will remain OFF
 		'duty_cycle' : 75, 		# Duty cycle that will be used during fan ramping. 20-100%
@@ -223,9 +223,9 @@ def default_settings():
 	}
 
 	settings['modules'] = {
-		'grillplat' : 'prototype',
-		'display' : 'none',
-		'dist' : 'none'
+		'grillplat' : 'pifire_pwm',
+		'display' : 'ili9341e',
+		'dist' : 'vl53l0x'
 	}
 
 	settings['lastupdated'] = {
@@ -233,7 +233,7 @@ def default_settings():
 	}
 
 	settings['smartstart'] = {
-		'enabled' : False,   # Disable Smart Start by default on new installations
+		'enabled' : True,   # Disable Smart Start by default on new installations
 		'exit_temp' : 120,  # Exit temperature - exits smart start if this temperature is achieved 
 		'temp_range_list' : [60, 80, 90],  # Min Temps for Each Profile
 		'profiles' : [
@@ -261,8 +261,8 @@ def default_settings():
 	}
 
 	settings['start_to_mode'] = {
-		'after_startup_mode' : 'Smoke',
-		'primary_setpoint' : 165  # If Hold, set the setpoint
+		'after_startup_mode' : 'Hold',
+		'primary_setpoint' : 220  # If Hold, set the setpoint
 	}
 
 	settings['dashboard'] = {
@@ -630,17 +630,17 @@ def default_pellets():
 		'Walnut'
 	]
 
-	pelletdb['brands'] = ['Generic', 'Custom']
+	pelletdb['brands'] = ['Generic', 'Custom', 'Traeger', 'Pitboss']
 
 	pelletdb['archive'] = {
 		ID : {
 			'id' : ID,
-			'brand' : 'Generic', 
-			'wood' : 'Alder', 
+			'brand' : 'Traeger', 
+			'wood' : 'Competition', 
 			'rating' : 4, 
-			'comments' : 'This is a placeholder profile.  Alder is generic and used in almost all pellets, '
-						'regardless of the wood type indicated on the packaging.  It tends to burn '
-						'consistently and produces a mild smoke.',
+			'comments' : 'This is the default profile.  Competition Blend is one of the most common, '
+						'pellet blends people buy. It burns consistently and produces a moderate '
+						'smoke flavor.',
 		}
 	}
 
@@ -670,7 +670,7 @@ def default_probe_map(probe_profiles):
 			'module' : 'prototype',  # Module to support the hardware device
 			'ports' : ['ADC0', 'ADC1', 'ADC2', 'ADC3'],    # Optionally define ports, otherwise, leave this up to the module to define
 			'config' : {
-				'ADC0_rd': '10000',
+				'ADC0_rd': '1000',
             	'ADC1_rd': '10000',
             	'ADC2_rd': '10000',
             	'ADC3_rd': '10000',
@@ -687,7 +687,7 @@ def default_probe_map(probe_profiles):
 			'type' : 'Primary',
 			'label' : 'Grill',
 			'name' : 'Grill',
-			'profile' : probe_profiles['99b8f02d-233d-11ee-a7a2-e5396c02c5fd'],
+			'profile' : probe_profiles['04204563-2335-11ee-9a44-e5396c02c605'], #PT-1000-OEM-2023
 			'device' : 'proto_adc',
 			'port' : 'ADC0',
 			'enabled' : True

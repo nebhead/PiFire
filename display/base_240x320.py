@@ -96,7 +96,7 @@ class DisplayBase:
 			'Startup': {
 				'displaytext': 'Startup',
 				'icon': '\uf04b', # FontAwesome Play Icon
-				'iconcolor': (255,255,255)  
+				'iconcolor': (9,235,62)  
 			},
 			'Prime': {
 				'displaytext': 'Prime',
@@ -106,12 +106,12 @@ class DisplayBase:
 			'Monitor': {
 				'displaytext': 'Monitor',
 				'icon': '\uf530',  # FontAwesome Glasses Icon
-				'iconcolor': (255,255,255)
+				'iconcolor': (49,114,235)
 			},
 			'Stop': {
 				'displaytext': 'Stop',
 				'icon': '\uf04d',  # FontAwesome Stop Icon
-				'iconcolor': (255,255,255)
+				'iconcolor': (235,64,52)
 			},
 			'Network': {
 				'displaytext': 'IP QR Code',
@@ -130,7 +130,7 @@ class DisplayBase:
 			'Hold': {
 				'displaytext': 'Hold',
 				'icon': '\uf76b',  # FontAwesome Temperature Low Icon
-				'iconcolor': (255,255,255) 
+				'iconcolor': (9,235,62) 
 			},
 			'Shutdown': {
 				'displaytext': 'Shutdown',
@@ -140,17 +140,17 @@ class DisplayBase:
 			'Smoke': {
 				'displaytext': 'Smoke',
 				'icon': '\uf0c2',  # FontAwesome Cloud Icon
-				'iconcolor': (255,255,255)
+				'iconcolor': (179,49,235)
 			},
 			'SmokePlus': {
 				'displaytext': 'Smoke+',
 				'icon': '\uf0c2',  # FontAwesome Cloud Icon
-				'iconcolor': (255,255,255)
+				'iconcolor': (179,49,235)
 			},	
 			'Stop': {
 				'displaytext': 'Stop',
 				'icon': '\uf04d',  # FontAwesome Stop Icon
-				'iconcolor': (255,255,255)
+				'iconcolor': (235,64,52)
 			},
 			'Network': {
 				'displaytext': 'IP QR Code',
@@ -174,12 +174,12 @@ class DisplayBase:
 			'Stop': {
 				'displaytext': 'Stop',
 				'icon': '\uf04d',  # FontAwesome Stop Icon
-				'iconcolor': (255,255,255)
+				'iconcolor': (235,64,52)
 			},
 			'SmokePlus': {
 				'displaytext': 'Smoke+',
 				'icon': '\uf0c2',  # FontAwesome Cloud Icon
-				'iconcolor': (255,255,255)
+				'iconcolor': (179,49,235)
 			},
 			'Network': {
 				'displaytext': 'IP QR Code',
@@ -229,12 +229,12 @@ class DisplayBase:
 			'Power_Off' : {
 				'displaytext' : 'Shutdown',
 				'icon': '\uf011', # FontAwesome Power Button
-				'iconcolor': (255,255,255)
+				'iconcolor': (235,64,52)
 			},
 			'Power_Restart' : {
 				'displaytext': 'Restart',
 				'icon': '\uf2f9', # FontAwesome Circle Arrow
-				'iconcolor': (255,255,255)
+				'iconcolor': (235,167,49)
 			},
 			'Menu_Back' : {
 				'displaytext' : 'Back',
@@ -345,8 +345,8 @@ class DisplayBase:
 	def _init_splash(self):
 		self.splash = Image.open('static/img/display/color-boot-splash.png')
 		(self.splash_width, self.splash_height) = self.splash.size
-		self.splash_width *= 2
-		self.splash_height *= 2
+		self.splash_width *= 1
+		self.splash_height *= 1
 		self.splash = self.splash.resize((self.splash_width, self.splash_height))
 
 	def _rounded_rectangle(self, draw, xy, rad, fill=None):
