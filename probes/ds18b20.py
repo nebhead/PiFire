@@ -33,7 +33,7 @@ import logging
 import time
 from w1thermsensor import W1ThermSensor, Unit
 from probes.base import ProbeInterface
-
+import RPi.GPIO as GPIO
 
 '''
 *****************************************
@@ -45,7 +45,11 @@ class DS18B20_Device():
 	''' DS18B20 Device Utilizing the w1thermsensor module '''
 	def __init__(self):
 		self.logger = logging.getLogger("control")
+		# Setup software pull-up which will wake the device connected
+		GPIO.setmode(GPIO.BCM)
+		GPIO.setup(6, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
+		time.sleep(4)  # Give time for the kernel to connect to the 1-wire bus and get the device IDs
 		self.sensor = W1ThermSensor()
 
 	@property
@@ -56,6 +60,7 @@ class ReadProbes(ProbeInterface):
 
 	def __init__(self, probe_info, device_info, units):
 		super().__init__(probe_info, device_info, units)
+		self.logger = logging.getLogger("control")
 
 	def _init_device(self):
 		self.time_delay = 0
@@ -63,7 +68,7 @@ class ReadProbes(ProbeInterface):
 		try:
 			self.device = DS18B20_Device()
 		except:
-			self.logger.error('Something went wrong when trying to initialize the MCP9600 device.')
+			self.logger.error('Something went wrong when trying to initialize the DS18B20 device.')
 			raise
 
 	def read_all_ports(self, output_data):
