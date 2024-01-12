@@ -20,7 +20,7 @@
                 {
                     "option_name" : "PB",
                     "option_friendly_name" : "Proportional Band(PB)", 
-                    "option_description" : "This is the temperature band centered around the set point, that the controller is active.  If the error is greater than PB/2, the command is 0.  If the error is less than PB/2, the command is 1.0",
+                    "option_description" : "This is the temperature band centered around the set point, that the controller is active.  If the error is greater than PB/2, the command is 0.  If the error is less than PB/2, the command is 1.0. [Default=60.0]",
                     "option_type" : "float",
                     "option_default" : 60.0,
                     "option_min" : null,
@@ -31,7 +31,7 @@
                 {
                     "option_name" : "Td",
                     "option_friendly_name" : "Derivative Time (Td)", 
-                    "option_description" : "Time (in seconds) to predict the future value.",
+                    "option_description" : "Time (in seconds) to predict the future value. [Default=45.0]",
                     "option_type" : "float",
                     "option_default" : 45.0,
                     "option_min" : null,
@@ -42,7 +42,7 @@
                 {
                     "option_name" : "Ti",
                     "option_friendly_name" : "Integral Time (Ti)", 
-                    "option_description" : "Time (in seconds) to eliminate the integral error.",
+                    "option_description" : "Time (in seconds) to eliminate the integral error. [Default=180.0]",
                     "option_type" : "float",
                     "option_default" : 180.0,
                     "option_min" : null,
@@ -53,7 +53,7 @@
                 {
                     "option_name" : "center",
                     "option_friendly_name" : "Center Ratio", 
-                    "option_description" : "Center of Cycle Ratio, which is specific to the way this PID will behave.",
+                    "option_description" : "Center of Cycle Ratio, which is specific to the way this PID will behave. [Default=0.5]",
                     "option_type" : "float",
                     "option_default" : 0.5,
                     "option_min" : null,

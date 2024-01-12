@@ -53,12 +53,17 @@
         Improved visibility of save buttons on the settings page. (Suggested by @chrisusernamechanged)
     </li>
     <li>
+        Added support for DS18B20 1-Wire Thermometer, mainly to be used for calibration of other probes as it does not have adequate temperature
+        ranges for actual grill usages. This probe is currently experimental. 
+    </li>
+    <li>
         Behind the scenes improvements including:  Replace 'is_raspberry_pi' with 'is_real_hardware' functions planning for future
         platform support.  Add require_reboot flag to Wizard items (Added to PWM / DSI Touch Display devices) if a reboot is required
         when changing this configuration.  Add general commands list to Wizard items (Added to PWM board so no manual edits are required). 
         Added configuration for dashboards that allow extending/saving features for different dashboards.  Updated the ChartJS version to v3.9.1.
         Added common deep dictionary update function that allows dictionaries to be updated in a recursive way simplifying the logic of updating
-        dictionaries. Adding system level capabilities so that future functionality can be added (i.e. wifi signal strength, undervolt detection)
+        dictionaries. Adding system level capabilities so that future functionality can be added (i.e. wifi signal strength, undervolt detection).  
+        Moved Push Bullet and Pushover notifications to utilize the Apprise module (no changes in how they are configured from the webUI).
     </li>
 </ul>
 
@@ -78,7 +83,7 @@
         Fixed bug(s) with history charts streaming including a long standing bug where hidden datasets would go back to being shown when zooming/panning.  
     </li>
     <li>
-        ...
+        Fixed bug (submitted by @ericpalmquist) where starting and stopping multiple times within a minute may cause a crash due to writing the same cookfile.  
     </li>
 </ul>
 

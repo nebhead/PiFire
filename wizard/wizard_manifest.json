@@ -636,6 +636,29 @@
 					]
 				}
 			},
+			"ds18b20" : {
+				"friendly_name" : "DS18B20 1-Wire Digital Thermometer",
+				"filename" : "ds18b20",
+				"description" : "The DS18B20 digital thermometer provides Celsius temperature measurements over a 1-wire communication bus.  This module is currently experimental, but may be useful for calibrating probe profiles for other probes as itself has been factory calibrated.",
+				"default" : false,
+				"image" : "ds18b20.png",
+				"reboot_required" : true,
+				"py_dependencies" : ["w1thermsensor"], 
+				"apt_dependencies" : [],
+				"command_list" : [["sudo", "bash", "wizard/ds18b20.sh"]],
+				"settings_dependencies" : {
+					"units" : {
+						"friendly_name" : "Temp Units",
+						"description" : "Select the temperature units to use for PiFire globally.  (this can be modified in settings later)",
+						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
+						"settings" : ["globals", "units"]
+					}
+				},
+				"device_specific" : {
+					"ports" : ["DS0"],
+					"config" : []
+				}
+			},
 			"virtual_average" : {
 				"friendly_name" : "Virtual Probes - Average",
 				"filename" : "virtual_average",

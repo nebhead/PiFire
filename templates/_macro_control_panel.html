@@ -120,7 +120,8 @@
                     <div class="row d-flex justify-content-center">
                         <div class="input-group w-50">
                             <input class="form-control text-center temperature-input border-0" name="tempOutput" id="tempOutputId" type="text" min="0" value="{% if settings['globals']['units'] == 'F' %}125{% else %}50{% endif %}" pattern="[0-9]*" inputmode="numeric" 
-                            oninput="tempInputId.value = tempOutputId.value">
+                            oninput="tempInputId.value = tempOutputId.value"
+                            onclick="this.select()">
                         </div>
                     </div>
                     {% if settings['globals']['units'] == 'F' %}
