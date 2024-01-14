@@ -130,13 +130,14 @@ class MqttNotificationHandler:
 				if ret == mqtt.MQTT_ERR_SUCCESS:
 					self.client.loop_start()	#Will run async forever, monitoring mqtt and sending keepalives
 				else:
-					self._mqttLogger.error(f"Failed to connected to {settings['broker']}.")
+					self._mqttLogger.error(f"Error {mqtt.connack_string(ret)} connecting to {settings['broker']}.")
 					self.client = None
 			except:
 				self._mqttLogger.exception(f'Error occurred connecting to the mqtt broker: ')
 
 	def _on_connect(self, client, userdata, flags, rc, properties):
 		self._mqttLogger.info(f"Connection to '{self._mqtt_settings['broker']}' returned result: '{mqtt.connack_string(rc)}'")
+		self.last_conn_time = 0
 		self._publish_data(topic=f"{self._mqtt_settings['id']}/availability",payload="online", qos=1)
 
 		# Restore any subscriptions that we have
@@ -146,8 +147,8 @@ class MqttNotificationHandler:
 	def _on_message(self, client, userdata, msg):
 		
 		# Ignore if we haven't finished intializing or haven't enabled control
-		if self.control == None: return
-		if self._mqtt_settings['control'] == False: return
+		#if self.control == None: return
+		#if self._mqtt_settings['control'] == False: return
 		
 		# element = msg.topic.split('/')[-1]
 		# payload = msg.payload.decode('utf-8')
@@ -175,6 +176,7 @@ class MqttNotificationHandler:
 
 		# 	case _:
 		# 		pass
+		pass
 
 	def _on_disconnect(self, client, userdata, rc, properties):
 		if rc != 0:
@@ -188,32 +190,40 @@ class MqttNotificationHandler:
 	def _check_connection(self):
 
 		# Connection process is async, so give it some time
-		#if time.time() < self.last_conn_time + 5: return False
+		if time.time() < self.last_conn_time + 5: return False
 		
 		# Connect if not already connected
 		if self.client is None or not self.client.is_connected():
-			self._mqttLogger.error(f"Need to connect")
+			self._mqttLogger.error(f"Need to connect to the broker")
 			self._connect()
 			self.last_conn_time = time.time()
+		
+		return self.client.is_connected()
 
 	def _check_homeassistant(self):
 		return len(self._mqtt_settings['homeassistant_autodiscovery_topic']) > 0
 
 	def _publish_data(self, topic, payload, qos=0, retain=False, properties=None):
 
-		self._check_connection()
+		if not self._check_connection(): 
+			return False
 
 		ret= self.client.publish(topic, payload, qos, retain, properties)
 
 		# Check the return
 		match ret.rc:
 			case mqtt.MQTT_ERR_SUCCESS:
-				pass
+				return True
 			case mqtt.MQTT_ERR_CONN_LOST:
 				self._mqttLogger.error(f"Cannot publish data for {topic} because the mqtt connection is lost.")
+				return False
+			case mqtt.MQTT_ERR_AUTH:
+				self._mqttLogger.error(f"Cannot publish data for {topic} because of error {mqtt.connack_string(ret.rc)}")
+				self.client = None
 			case _:
-				self._mqttLogger.error(f"Cannot publish data for {topic} because of error {ret.rc}")
-
+				self._mqttLogger.error(f"Cannot publish data for {topic} because of error {mqtt.connack_string(ret.rc)}")
+				return False
+			
 	def _publish_autodiscover(self, category, topic, payload, qos=2, retain=True, properties=None):
 
 		ret= self.client.publish(topic, payload, qos, retain, properties)
@@ -226,7 +236,7 @@ class MqttNotificationHandler:
 			case mqtt.MQTT_ERR_CONN_LOST:
 				self._mqttLogger.error(f"Cannot publish autodiscover data for {topic} because the mqtt connection is lost.")
 			case _:
-				self._mqttLogger.error(f"Cannot publish data for {topic} because of error {ret.rc}")
+				self._mqttLogger.error(f"Cannot publish autodiscover data for {topic} because of error {mqtt.connack_string(ret.rc)}")
 	
 	def _publish(self, context, data):
 
@@ -255,13 +265,11 @@ class MqttNotificationHandler:
 
 		if not change_detected: return
 		
-		self._publish_data(topic=f"{self._mqtt_settings['id']}/{context}", payload=json.dumps(payload))
+		if self._publish_data(topic=f"{self._mqtt_settings['id']}/{context}", payload=json.dumps(payload)):
 
-		# Publish home assitant auto-discovery info
-		if self._check_homeassistant:
-			self._create_autodiscover(context, data)
-			#if context.startswith('control_notify_data'):
-			#	self._create_autodiscover(context + "_notification", {})
+			# Publish home assitant auto-discovery info
+			if self._check_homeassistant:
+				self._create_autodiscover(context, data)
 	
 	def _subscribe(self,topic):
 		self.client.subscribe(topic)
@@ -271,6 +279,7 @@ class MqttNotificationHandler:
 	def _create_autodiscover(self, context, data):
 		for device in data:
 			device_name = context + '_' + device
+			topic_name = device_name
 			if device_name in self.last:
 				if not device_name in set(self.initialized_topics):
 
@@ -313,7 +322,7 @@ class MqttNotificationHandler:
 								for probe in self._probe_settings:
 									if probe['label'] == device:
 										discovery['name'] = f"{discovery['name']} {suffix}"
-										device_name = context + '_' + probe['port']
+										topic_name = context + '_' + probe['port']
 										break
 
 							if context.startswith('control_notify'):
@@ -323,7 +332,7 @@ class MqttNotificationHandler:
 								for probe in self._probe_settings:
 									if probe['label'] == data['label']:
 										discovery['name'] = f"{data['name']} {suffix}"
-										device_name = context
+										topic_name = context
 										break
 
 							if context.startswith('pid'):
@@ -370,7 +379,7 @@ class MqttNotificationHandler:
 							
 					self._publish_autodiscover(
 									device, 
-									f"{self.discovery_topic}/{component}/{self.pifire_id}/{device_name}/config", 
+									f"{self.discovery_topic}/{component}/{self.pifire_id}/{topic_name}/config", 
 									json.dumps(discovery))
 					
 					self.initialized_topics.append(device_name)
