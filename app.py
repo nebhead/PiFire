@@ -791,144 +791,179 @@ def updatecookdata(action=None):
 			return jsonify({'result' : result})
 
 	return jsonify({'result' : 'ERROR'})
-	
 
-@app.route('/tuning/<action>', methods=['POST','GET'])
-@app.route('/tuning', methods=['POST','GET'])
-def tuning_page(action=None):
-
-	global settings
+@app.route('/tuner/<action>', methods=['POST','GET'])
+@app.route('/tuner', methods=['POST','GET'])
+def tuner_page(action=None):
+	global settings 
 	control = read_control()
-
-	if(control['mode'] == 'Stop'): 
-		alert = 'Warning!  Grill must be in an active mode to perform tuning (i.e. Monitor Mode, Smoke Mode, ' \
-				'Hold Mode, etc.)'
-	else: 
-		alert = ''
-
-	pagectrl = {}
-
-	pagectrl['refresh'] = 'off'
-	pagectrl['selected'] = 'none'
-	pagectrl['showcalc'] = 'false'
-	pagectrl['low_trvalue'] = ''
-	pagectrl['med_trvalue'] = ''
-	pagectrl['high_trvalue'] = ''
-	pagectrl['low_tempvalue'] = ''
-	pagectrl['med_tempvalue'] = ''
-	pagectrl['high_tempvalue'] = ''
-
-	if request.method == 'POST':
-		response = request.form
-		if 'probe_select' in response:
-			pagectrl['selected'] = response['probe_select']
-			pagectrl['refresh'] = 'on'
-			control['tuning_mode'] = True  # Enable tuning mode
-			write_control(control, origin='app')
-
-			if'pause' in response:
-				if response['low_trvalue'] != '':
-					pagectrl['low_trvalue'] = response['low_trvalue']
-				if response['med_trvalue'] != '':
-					pagectrl['med_trvalue'] = response['med_trvalue']
-				if response['high_trvalue'] != '':
-					pagectrl['high_trvalue'] = response['high_trvalue']
-
-				if response['low_tempvalue'] != '':
-					pagectrl['low_tempvalue'] = response['low_tempvalue']
-				if response['med_tempvalue'] != '':
-					pagectrl['med_tempvalue'] = response['med_tempvalue']
-				if response['high_tempvalue'] != '':
-					pagectrl['high_tempvalue'] = response['high_tempvalue']
-
-				pagectrl['refresh'] = 'off'	
-				control['tuning_mode'] = False  # Disable tuning mode while paused
+	
+	# This POST path will load/render portions of the tuner page
+	if request.method == 'POST' and ('form' in request.content_type):
+		requestform = request.form
+		if 'command' in requestform.keys():
+			if 'render' in requestform['command']:
+				render_string = "{% from '_macro_tuner.html' import render_" + requestform["value"] + " %}{{ render_" + requestform["value"] + "(settings, control) }}"
+				return render_template_string(render_string, settings=settings, control=control)
+	
+	# This POST path provides data back to the page
+	if request.method == 'POST' and 'json' in request.content_type:
+		requestjson = request.json 
+		command = requestjson.get('command', None)
+		if command == 'stop_tuning':
+			print('Stop Tuning Called!!!')
+			if control['tuning_mode']:
+				control['tuning_mode'] = False  # Disable tuning mode
+				write_control(control, origin='app')
+			if control['mode'] == 'Monitor':
+				# If in Monitor Mode, stop
+				control['mode'] = 'Stop'  # Go to Stop mode
+				control['updated'] = True
+				write_control(control, origin='app')	
+		if command == 'read_tr':
+			if not control['tuning_mode']:
+				control['tuning_mode'] = True  # Enable tuning mode
 				write_control(control, origin='app')
 
-			elif 'save' in response:
-				if response['low_trvalue'] != '':
-					pagectrl['low_trvalue'] = response['low_trvalue']
-				if response['med_trvalue'] != '':
-					pagectrl['med_trvalue'] = response['med_trvalue']
-				if response['high_trvalue'] != '':
-					pagectrl['high_trvalue'] = response['high_trvalue']
+			if control['mode'] == 'Stop':
+				# Turn on Monitor Mode if the system is stopped
+				control['mode'] = 'Monitor'  # Enable monitor mode
+				control['updated'] = True
+				write_control(control, origin='app')
 
-				if response['low_tempvalue'] != '':
-					pagectrl['low_tempvalue'] = response['low_tempvalue']
-				if response['med_tempvalue'] != '':
-					pagectrl['med_tempvalue'] = response['med_tempvalue']
-				if response['high_tempvalue'] != '':
-					pagectrl['high_tempvalue'] = response['high_tempvalue']
+			cur_probe_tr = read_tr()
+			if requestjson['probe_selected'] in cur_probe_tr.keys():
+				return jsonify({ 'trohms' : cur_probe_tr[requestjson['probe_selected']]})
+			else:
+				return jsonify({ 'trohms' : 0 })
+		if command == 'manual_finish' or command == 'auto_finish':
+			if control['tuning_mode']:
+				control['tuning_mode'] = False  # Disable tuning mode
+				write_control(control, origin='app')
+			if control['mode'] == 'Monitor':
+				# If in Monitor Mode, stop
+				control['mode'] = 'Stop'  # Go to Stop mode
+				control['updated'] = True
+				write_control(control, origin='app')
+			
+			tunerManualHighTemp = requestjson.get('tunerManualHighTemp', 0.1)
+			tunerManualHighTemp = 0 if tunerManualHighTemp == '' else int(tunerManualHighTemp)
+			tunerManualHighTr = requestjson.get('tunerManualHighTr', 0.1)
+			tunerManualHighTr = 0 if tunerManualHighTr == '' else int(tunerManualHighTr)
 
-				if (pagectrl['low_tempvalue'] != '' and pagectrl['med_tempvalue'] != '' and
-						pagectrl['high_tempvalue'] != ''):
-					pagectrl['refresh'] = 'off'
-					control['tuning_mode'] = False  # Disable tuning mode when complete
-					write_control(control, origin='app')
-					pagectrl['showcalc'] = 'true'
-					a, b, c = _calc_shh_coefficients(int(pagectrl['low_tempvalue']), int(pagectrl['med_tempvalue']),
-													int(pagectrl['high_tempvalue']), int(pagectrl['low_trvalue']),
-													int(pagectrl['med_trvalue']), int(pagectrl['high_trvalue']))
-					pagectrl['a'] = a
-					pagectrl['b'] = b
-					pagectrl['c'] = c
-					
-					pagectrl['templist'] = ''
-					pagectrl['trlist'] = ''
+			tunerManualMediumTemp = requestjson.get('tunerManualMediumTemp', 0.1)
+			tunerManualMediumTemp = 0 if tunerManualMediumTemp == '' else int(tunerManualMediumTemp)
+			tunerManualMediumTr = requestjson.get('tunerManualMediumTr', 0.1)
+			tunerManualMediumTr = 0 if tunerManualMediumTr == '' else int(tunerManualMediumTr)
 
-					range_size = abs(int(pagectrl['low_trvalue']) - int(pagectrl['high_trvalue']))
-					range_step = int(range_size / 20)
+			tunerManualLowTemp = requestjson.get('tunerManualLowTemp', 0.1)
+			tunerManualLowTemp = 0 if tunerManualLowTemp == '' else int(tunerManualLowTemp)
+			tunerManualLowTr = requestjson.get('tunerManualLowTr', 0.1)
+			tunerManualLowTr = 0 if tunerManualLowTr == '' else int(tunerManualLowTr)
 
-					if int(pagectrl['low_trvalue']) < int(pagectrl['high_trvalue']):
-						# Add 5% to the resistance at the low temperature side
-						low_tr_range = int(int(pagectrl['low_trvalue']) - (range_size * 0.05))
-						# Add 5% to the resistance at the high temperature side
-						high_tr_range = int(int(pagectrl['high_trvalue']) + (range_size * 0.05))
-						# Swap Tr values for the loop below, so that we start with a low value and go high
-						high_tr_range, low_tr_range = low_tr_range, high_tr_range
-						# Swapped Value Case (i.e. Low Temp = Low Resistance)
-						for index in range(high_tr_range, low_tr_range, range_step):
-							if index == high_tr_range:
-								pagectrl['trlist'] = str(index)
-								pagectrl['templist'] = str(_tr_to_temp(index, a, b, c))
-							else:
-								pagectrl['trlist'] = str(index) + ', ' + pagectrl['trlist']
-								pagectrl['templist'] = str(_tr_to_temp(index, a, b, c)) + ', ' + pagectrl['templist']
-					else:
-						# Add 5% to the resistance at the low temperature side
-						low_tr_range = int(int(pagectrl['low_trvalue']) + (range_size * 0.05))
-						# Add 5% to the resistance at the high temperature side
-						high_tr_range = int(int(pagectrl['high_trvalue']) - (range_size * 0.05))
-						# Normal Value Case (i.e. Low Temp = High Resistance)
-						for index in range(high_tr_range, low_tr_range, range_step):
-							if index == high_tr_range:
-								pagectrl['trlist'] = str(index)
-								pagectrl['templist'] = str(_tr_to_temp(index, a, b, c))
-							else:
-								pagectrl['trlist'] += ', ' + str(index)
-								pagectrl['templist'] += ', ' + str(_tr_to_temp(index, a, b, c))
+			a, b, c = _calc_shh_coefficients(tunerManualLowTemp, tunerManualMediumTemp,
+											tunerManualHighTemp, tunerManualLowTr,
+											tunerManualMediumTr, tunerManualHighTr,
+											units=settings['globals']['units'])
+			tr_points = [int(tunerManualHighTr), int(tunerManualMediumTr), int(tunerManualLowTr)]
+			labels, chart_data = _calc_shh_chart(a, b, c, units=settings['globals']['units'], temp_range=220, tr_points=tr_points)
+			return jsonify({'labels' : labels, 'chart_data' : chart_data, 'coefficients' : {'a' : a, 'b': b, 'c': c}})
+		if command == 'read_auto_status':
+			first_run = False 
+			if not control['tuning_mode']:
+				control['tuning_mode'] = True  # Enable tuning mode
+				write_control(control, origin='app')
+				read_autotune(flush=True)  # Flush autotune data
+				first_run = True
+
+			if control['mode'] == 'Stop':
+				# Turn on Monitor Mode if the system is stopped
+				control['mode'] = 'Monitor'  # Enable monitor mode
+				control['updated'] = True
+				write_control(control, origin='app')
+
+			status_data = {
+				'current_tr' : 0,
+				'current_temp' : 0,
+				'high_tr' : 0,
+				'high_temp' : 0, 
+				'medium_tr' : 0,
+				'medium_temp' : 0,
+				'low_tr' : 0,
+				'low_temp' : 0,
+				'ready' : False
+			}
+			
+			# Get Tr Data from all probes 
+			cur_probe_tr = read_tr()
+			if requestjson['probe_selected'] in cur_probe_tr.keys():
+				status_data['current_tr'] = cur_probe_tr[requestjson['probe_selected']]
+			else:
+				status_data['current_tr'] = -1
+			
+			# Get Temp Data from all probes 
+			cur_probe_temps = read_current()
+			if requestjson['probe_reference'] in cur_probe_temps['P'].keys():
+				status_data['current_temp'] = cur_probe_temps['P'][requestjson['probe_reference']]
+			elif requestjson['probe_reference'] in cur_probe_temps['F'].keys():
+				status_data['current_temp'] = cur_probe_temps['F'][requestjson['probe_reference']]
+			elif requestjson['probe_reference'] in cur_probe_temps['AUX'].keys():
+				status_data['current_temp'] = cur_probe_temps['AUX'][requestjson['probe_reference']]
+			else:
+				status_data['current_temp'] = -1
+
+			if status_data['current_tr'] >= 0 and status_data['current_temp'] >= 0 and not first_run:
+				# Record Temperature / Tr Values in Auto-Tune Record
+				data = {
+					'ref_T' : status_data['current_temp'],
+					'probe_Tr' : status_data['current_tr']
+				}
+				write_autotune(data)
+
+			data = read_autotune()
+			if len(data) > 10:
+				temp_list = []
+				tr_list = []
+				for datapoint in data:
+					temp_list.append(datapoint['ref_T'])
+					tr_list.append(datapoint['probe_Tr'])
+
+				# Determine High Temp / Tr
+				status_data['high_temp'] = max(temp_list)
+				index = temp_list.index(max(temp_list))
+				status_data['high_tr'] = tr_list[index]
+
+				# Determine Low Temp / Tr 
+				status_data['low_temp'] = min(temp_list)
+				index = temp_list.index(min(temp_list))
+				status_data['low_tr'] = tr_list[index]
+
+				# Determine Medium Temp / Tr
+				# Find best fit to Medium Temp
+				medium_temp = ((status_data['high_temp'] - status_data['low_temp']) // 2) + status_data['low_temp']
+				delta_temp = 1000  # Initial value is outside of any normal expected bounds
+				for index, temp in enumerate(temp_list):
+					if abs(temp - medium_temp) < delta_temp:
+						delta_temp = abs(temp - medium_temp)
+						delta_index = index
+				status_data['medium_temp'] = temp_list[delta_index]
+				status_data['medium_tr'] = tr_list[delta_index]
+				# Minimum range to be able to calculate temp
+				if settings['globals']['units'] == 'F':
+					min_range = 50
 				else:
-					pagectrl['refresh'] = 'on'
-					control['tuning_mode'] = True  # Enable tuning mode
-					write_control(control, origin='app')
-	
-	return render_template('tuning.html',
-						   control=control,
-						   settings=settings,
-						   pagectrl=pagectrl,
-						   page_theme=settings['globals']['page_theme'],
-						   grill_name=settings['globals']['grill_name'],
-						   alert=alert)
+					min_range = 25
 
-@app.route('/_gettr', methods=['GET', 'POST'])
-def get_tr():
-	requestjson = request.json 
-	cur_probe_tr = read_tr()
-	if requestjson['probe_selected'] in cur_probe_tr.keys():
-		return jsonify({ 'trohms' : cur_probe_tr[requestjson['probe_selected']]})
-	else:
-		return jsonify({ 'trohms' : 0 })
+				if (status_data['high_temp'] - status_data['low_temp']) >= min_range:
+					status_data['ready'] = True
 
+			return jsonify(status_data)
+
+	return render_template('tuner.html',
+						control=control,
+						settings=settings,
+						page_theme=settings['globals']['page_theme'],
+						grill_name=settings['globals']['grill_name'])
 
 @app.route('/events/<action>', methods=['POST','GET'])
 @app.route('/events', methods=['POST','GET'])
@@ -1711,10 +1746,17 @@ def settings_page(action=None):
 					'name' : response['Name'], 
 					'id' : UniqueID
 				}
-				event['type'] = 'updated'
-				event['text'] = 'Successfully added ' + response['Name'] + ' profile.'
+				print(f'Response: {response}')
+				if response.get('apply_profile', False):
+					probe_selected = response['apply_profile']
+					for index, probe in enumerate(settings['probe_settings']['probe_map']['probe_info']):
+						if probe['label'] == probe_selected:
+							settings['probe_settings']['probe_map']['probe_info'][index]['profile'] = settings['probe_settings']['probe_profiles'][UniqueID]
+
 				# Write the new probe profile to disk
 				write_settings(settings)
+				event['type'] = 'updated'
+				event['text'] = 'Successfully added ' + response['Name'] + ' profile.'
 
 			except:
 				event['type'] = 'error'
@@ -3283,12 +3325,18 @@ def _get_recipefilelist_details(recipefilelist):
 			recipefiledetails.append({'filename' : item['filename'], 'title' : 'ERROR', 'thumbnail' : ''})
 	return(recipefiledetails)
 
-def _calc_shh_coefficients(t1, t2, t3, r1, r2, r3):
+def _calc_shh_coefficients(t1, t2, t3, r1, r2, r3, units='F'):
 	try: 
-		# Convert Temps from Fahrenheit to Kelvin
-		t1 = ((t1 - 32) * (5 / 9)) + 273.15
-		t2 = ((t2 - 32) * (5 / 9)) + 273.15
-		t3 = ((t3 - 32) * (5 / 9)) + 273.15
+		if units=='F':
+			# Convert Temps from Fahrenheit to Kelvin
+			t1 = ((t1 - 32) * (5 / 9)) + 273.15
+			t2 = ((t2 - 32) * (5 / 9)) + 273.15
+			t3 = ((t3 - 32) * (5 / 9)) + 273.15
+		else:
+			# Convert Temps from Celsius to Kelvin
+			t1 = t1 + 273.15
+			t2 = t2 + 273.15
+			t3 = t3 + 273.15
 
 		# https://en.wikipedia.org/wiki/Steinhart%E2%80%93Hart_equation
 
@@ -3321,26 +3369,31 @@ def _calc_shh_coefficients(t1, t2, t3, r1, r2, r3):
 
 	return(a, b, c)
 
-def _temp_to_tr(temp_f, a, b, c):
+def _temp_to_tr(temp, a, b, c, units='F'):
+	'''
+	# Not recommended for use, as it commonly produces a complex number
+	'''
+
 	try: 
-		temp_k = ((temp_f - 32) * (5 / 9)) + 273.15
+		if units == 'F':
+			temp_k = ((temp - 32) * (5 / 9)) + 273.15
+		else:
+			temp_k = temp + 273.15
 
 		# https://en.wikipedia.org/wiki/Steinhart%E2%80%93Hart_equation
 		# Inverse of the equation, to determine Tr = Resistance Value of the thermistor
 
-		# Not recommended for use, as it commonly produces a complex number
-
-		x = (1 / (2 * c)) * (a - (1 / temp_k))
-
-		y = math.sqrt(math.pow((b / (3 * c)), 3) + math.pow(x, 2))
-
-		Tr = math.exp(((y - x) ** (1 / 3)) - ((y + x) ** (1 / 3)))
+		x = (a - (1 / temp_k)) / c
+		y1 = math.pow((b/(3*c)), 3) 
+		y2 = ((x*x)/4)
+		y = math.sqrt(y1+y2)  # If the result of y1 + y2 is negative, this will throw an exception
+		Tr = math.exp(math.pow(y - (x/2), (1/3)) - math.pow(y + (x/2), (1/3)))
 	except: 
 		Tr = 0
 
-	return int(Tr) 
+	return int(Tr)
 
-def _tr_to_temp(tr, a, b, c):
+def _tr_to_temp(tr, a, b, c, units='F'):
 	try:
 		#Steinhart Hart Equation
 		# 1/T = A + B(ln(R)) + C(ln(R))^3
@@ -3350,10 +3403,37 @@ def _tr_to_temp(tr, a, b, c):
 		t2 = c * math.pow(ln_ohm, 3) # c[ln(ohm)]^3
 		temp_k = 1/(a + t1 + t2) # calculate temperature in Kelvin
 		temp_c = temp_k - 273.15 # Kelvin to Celsius
-		temp_c = temp_c * (9 / 5) + 32 # Celsius to Fahrenheit
+		temp_f = temp_c * (9 / 5) + 32 # Celsius to Fahrenheit
 	except:
 		temp_c = 0.0
-	return int(temp_c) # Return Calculated Temperature and Thermistor Value in Ohms
+		temp_f = 0
+	if units == 'F': 
+		return int(temp_f) # Return Calculated Temperature and Thermistor Value in Ohms
+	else:
+		return temp_c
+
+def _calc_shh_chart(a, b, c, units='F', temp_range=220, tr_points=[]):
+	'''
+	Based on SHH Coefficients determined during tuning, show Temp (x) vs. Tr (y) chart
+	'''
+
+	labels = []
+
+	for label in range(0, temp_range, temp_range//20):
+		labels.append(label)
+
+	chart_data = []
+
+	for T in labels:
+		R = _temp_to_tr(T, a, b, c, units=units)
+		if R != 0:
+			chart_data.append({'x': int(T), 'y': int(R)})
+		else:
+			# Error/Exception occurred calculating the temperature, break and return
+			chart_data = []
+			break
+
+	return labels, chart_data
 
 def _str_td(td):
 	s = str(td).split(", ", 1)

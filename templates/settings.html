@@ -137,6 +137,73 @@
                 <div class="card shadow">
                     <div class="card-header bg-primary text-white">
                         <h5>
+                        <i class="fas fa-toolbox"></i>&nbsp; Probe Profile Creation Tools
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <a href="/tuner" class="btn btn-outline-primary btn-block shadow" role="button"><i class="fa-solid fa-rocket"></i>&nbsp; Goto Tools</a>
+                    </div>
+                </div>
+                <br>
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h5>
+                            <i class="fa-solid fa-file-circle-plus"></i>&nbsp; New Probe Profile
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        
+                        <div class="card shadow">
+                            <form name="addprofile" action="/settings/addprofile" method="POST">
+                                <div class="card-header bg-light text-dark">
+                                    <h5>
+                                        <a href="#addprofile" data-toggle="collapse">
+                                            <i class="fas fa-plus-circle"></i>&nbsp; Add Profile </a>
+                                    </h5>
+                                </div>
+                                <div id="addprofile" class="collapse">
+                                    <div class="card-body">
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="Human readable name for profile. Used to display above.">
+                                                    <i class="fas fa-user-circle"></i>&nbsp; Name </span>
+                                            </div>
+                                            <input id="Name" type="text" class="form-control" placeholder="Name" name="Name" required>
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="Coefficient A in Steinhart Hart Calculation">
+                                                    <i class="fas fa-calculator"></i>&nbsp; CoEff A </span>
+                                            </div>
+                                            <input id="A" type="text" class="form-control" name="A" required>
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="Coefficient B in Steinhart Hart Calculation">
+                                                    <i class="fas fa-calculator"></i>&nbsp; CoEff B </span>
+                                            </div>
+                                            <input id="B" type="text" class="form-control" name="B" required>
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend"><span class="input-group-text" data-toggle="tooltip" title="Coefficient C in Steinhart Hart Calculation">
+                                                <i class="fas fa-calculator"></i>&nbsp; CoEff C </span>
+                                            </div>
+                                            <input id="C" type="text" class="form-control" name="C" required>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer bg-light">
+                                        <button type="submit" class="btn btn-outline-danger">Save</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                    </div>
+                </div>
+                <br>
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h5>
                             <i class="fas fa-edit"></i>&nbsp; Probe Profile Editor
                         </h5>
                     </div>
@@ -210,52 +277,6 @@
                         </div>
                         <br>
                         {% endfor %}
-                        <a href="/tuning" class="btn btn-outline-primary btn-block shadow" role="button"><i class="fas fa-toolbox"></i> Tune Probe Coefficients Tool </a>
-                        <br>
-                        <div class="card shadow">
-                            <form name="addprofile" action="/settings/addprofile" method="POST">
-                                <div class="card-header bg-light text-dark">
-                                    <h5>
-                                        <a href="#addprofile" data-toggle="collapse">
-                                            <i class="fas fa-plus-circle"></i>&nbsp; Add Profile </a>
-                                    </h5>
-                                </div>
-                                <div id="addprofile" class="collapse">
-                                    <div class="card-body">
-                                        <div class="input-group mb-3">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text" data-toggle="tooltip" title="Human readable name for profile. Used to display above.">
-                                                    <i class="fas fa-user-circle"></i>&nbsp; Name </span>
-                                            </div>
-                                            <input id="Name" type="text" class="form-control" placeholder="Name" name="Name">
-                                        </div>
-                                        <div class="input-group mb-3">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text" data-toggle="tooltip" title="Coefficient A in Steinhart Hart Calculation">
-                                                    <i class="fas fa-calculator"></i>&nbsp; CoEff A </span>
-                                            </div>
-                                            <input id="A" type="text" class="form-control" name="A">
-                                        </div>
-                                        <div class="input-group mb-3">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text" data-toggle="tooltip" title="Coefficient B in Steinhart Hart Calculation">
-                                                    <i class="fas fa-calculator"></i>&nbsp; CoEff B </span>
-                                            </div>
-                                            <input id="B" type="text" class="form-control" name="B">
-                                        </div>
-                                        <div class="input-group mb-3">
-                                            <div class="input-group-prepend"><span class="input-group-text" data-toggle="tooltip" title="Coefficient C in Steinhart Hart Calculation">
-                                                <i class="fas fa-calculator"></i>&nbsp; CoEff C </span>
-                                            </div>
-                                            <input id="C" type="text" class="form-control" name="C">
-                                        </div>
-                                    </div>
-                                    <div class="card-footer bg-light">
-                                        <button type="submit" class="btn btn-outline-danger">Save</button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
                     </div><!-- End of card body -->
                 </div><!-- End of Card -->
                 {% if not request.MOBILE %}<br><br><br>{% endif %}

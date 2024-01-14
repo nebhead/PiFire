@@ -1399,6 +1399,7 @@ def write_current(in_data):
 	current = {}
 	current['P'] = in_data['probe_history']['primary']
 	current['F'] = in_data['probe_history']['food']
+	current['AUX'] = in_data['probe_history']['aux']
 	current['PSP'] = in_data['primary_setpoint']
 	current['NT'] = in_data['notify_targets']
 	current['TS'] = int(time.time() * 1000)  # Timestamp
@@ -1420,7 +1421,8 @@ def read_current(zero_out=False):
 			'P' : {}, 
 			'F' : {},
 			'PSP' : 0,
-			'NT' : {}
+			'NT' : {},
+			'AUX' : {}
 		}
 
 		for probe in settings['probe_settings']['probe_map']['probe_info']:
@@ -1428,6 +1430,8 @@ def read_current(zero_out=False):
 				current['P'][probe['label']] = 0
 			if probe['type'] == 'Food':
 				current['F'][probe['label']] = 0
+			if probe['type'] == 'Aux':
+				current['AUX'][probe['label']] = 0
 			current['NT'][probe['label']] = 0
 
 		cmdsts.set('control:current', json.dumps(current))
@@ -1461,6 +1465,26 @@ def read_tr():
 		tr_data = json.loads(cmdsts.get('control:tuning'))
 
 	return(tr_data)
+
+def write_autotune(data):
+	global cmdsts 
+	# Push data string to the list in the last position
+	cmdsts.rpush('control:autotune', json.dumps(data))
+
+def read_autotune(flush=False):
+	global cmdsts 
+
+	output_data = []
+	# If a flushhistory is requested, then flush the control:history key (and data)
+	if flush:
+		if cmdsts.exists('control:autotune'):
+			cmdsts.delete('control:autotune')
+	elif cmdsts.exists('control:autotune'):
+		autotune_data = cmdsts.lrange('control:autotune', 0, -1)
+		for datapoint in autotune_data:
+			output_data.append(json.loads(datapoint))
+
+	return output_data
 
 def prepare_csv(data=[], filename=''):
 	# Create filename if no name specified
