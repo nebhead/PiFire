@@ -811,7 +811,6 @@ def tuner_page(action=None):
 		requestjson = request.json 
 		command = requestjson.get('command', None)
 		if command == 'stop_tuning':
-			print('Stop Tuning Called!!!')
 			if control['tuning_mode']:
 				control['tuning_mode'] = False  # Disable tuning mode
 				write_control(control, origin='app')

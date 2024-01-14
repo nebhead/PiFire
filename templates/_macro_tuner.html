@@ -48,6 +48,9 @@
       {% endfor %}
     </select>
     <br>
+    <div class="alert alert-warning" role="alert">
+      <i><strong>Note:</strong> If you leave this page during the tuning process, the tuning data will be lost.</i>
+    </div>
     Once a probe is selected and you are ready to begin with manual tuning, click the below start button. 
   </div>
   <div class="card-footer">
@@ -181,8 +184,13 @@
       {% endfor %}
     </select>
     <br>
+    <div class="alert alert-info" role="alert">
+      <i><strong>Info:</strong> The probe you are tuning may not be the same as the reference probe.</i>
+    </div>
+    <div class="alert alert-warning" role="alert">
+      <i><strong>Note:</strong> If you leave this page during the tuning process, the tuning data will be lost.</i>
+    </div>
     Once both probes are selected and you are ready to begin with auto tuning, click the below start button. 
-    <i><strong>Note: </strong> The probe you are tuning may not be the same as the reference probe.</i>
   </div>
   <div class="card-footer">
     <button class="btn btn-success btn-block" id="tuner_auto_start_btn" onclick="tunerStartAutoTool();" disabled>
