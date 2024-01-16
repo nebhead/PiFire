@@ -911,7 +911,13 @@ def tuner_page(action=None):
 			else:
 				status_data['current_temp'] = -1
 
-			if status_data['current_tr'] >= 0 and status_data['current_temp'] >= 0 and not first_run:
+			# Some probes (i.e. the DS18B20) may be slow to respond when Monitor mode starts, and may report 0 degrees
+			# Thus we should ignore these first few data points if they are 0
+			autotune_data_size = read_autotune(size_only=True)
+			if (autotune_data_size > 4 or status_data['current_temp'] > 0) and \
+					status_data['current_tr'] >= 0 and \
+	  				status_data['current_temp'] >= 0 and \
+					not first_run:
 				# Record Temperature / Tr Values in Auto-Tune Record
 				data = {
 					'ref_T' : status_data['current_temp'],

@@ -1471,7 +1471,7 @@ def write_autotune(data):
 	# Push data string to the list in the last position
 	cmdsts.rpush('control:autotune', json.dumps(data))
 
-def read_autotune(flush=False):
+def read_autotune(flush=False, size_only=False):
 	global cmdsts 
 
 	output_data = []
@@ -1479,6 +1479,9 @@ def read_autotune(flush=False):
 	if flush:
 		if cmdsts.exists('control:autotune'):
 			cmdsts.delete('control:autotune')
+	elif size_only:
+		size = cmdsts.llen('control:autotune')
+		return size
 	elif cmdsts.exists('control:autotune'):
 		autotune_data = cmdsts.lrange('control:autotune', 0, -1)
 		for datapoint in autotune_data:
