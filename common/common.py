@@ -296,8 +296,9 @@ def default_settings():
 		'clearhistoryonstart' : True, 	# Clear history when StartUp Mode selected
 		'autorefresh' : 'on', 			# Sets history graph to auto refresh ('live' graph)
 		'datapoints' : 60, 				# Number of data points to show on the history chart
-		'probe_config' : default_probe_config(settings)
+		'probe_config' : {}				# Empty probe config
 	}
+	settings['history_page']['probe_config'] = default_probe_config(settings)
 
 	settings['recipe'] = {}
 	settings['recipe']['probe_map'] = _default_recipe_probe_map(settings)
@@ -317,7 +318,7 @@ def _default_controller_config():
 def _default_display_config():
 	display_metadata = read_generic_json('./wizard/wizard_manifest.json')
 	display_metadata = display_metadata['modules']['display']
-	#print(f'display_metadata = {display_metadata}')
+
 	config = {}
 	for display in display_metadata:
 		config[display] = {}
@@ -346,21 +347,28 @@ def default_probe_config(settings):
 	for probe in settings['probe_settings']['probe_map']['probe_info']:
 		if probe['type'] in ['Primary', 'Food']:
 			label = probe['label']
-			probe_config[label] = {
-				'name' : probe['name'],
-				'type' : probe['type'],
-				'enabled' : probe['enabled'],
-				'line_color' : COLOR_LIST[color_index][0],
-				'line_color_target' : COLOR_LIST[color_index][1],
-				'dash_setpoint' : True,
-				'bg_color' : COLOR_LIST[color_index][0], 
-				'bg_color_target' : COLOR_LIST[color_index][1], 
-				'fill' : False
-			}
-			if probe['type'] == 'Primary':
-				probe_config[label]['bg_color_setpoint'] = COLOR_LIST[color_index][0]
-				probe_config[label]['line_color_setpoint'] = COLOR_LIST[color_index][0]
-			color_index += 1		
+			# Check if the label exists in settings already.  
+			if label in settings['history_page']['probe_config'].keys():
+				probe_config[label] = settings['history_page']['probe_config'][label]
+			else:
+				probe_config[label] = {
+					'name' : probe['name'],
+					'type' : probe['type'],
+					'enabled' : probe['enabled'],
+					'line_color' : COLOR_LIST[color_index][0],
+					'line_color_target' : COLOR_LIST[color_index][1],
+					'dash_setpoint' : True,
+					'bg_color' : COLOR_LIST[color_index][0], 
+					'bg_color_target' : COLOR_LIST[color_index][1], 
+					'fill' : False
+				}
+				if probe['type'] == 'Primary':
+					probe_config[label]['bg_color_setpoint'] = COLOR_LIST[color_index][0]
+					probe_config[label]['line_color_setpoint'] = COLOR_LIST[color_index][0]
+			color_index += 1
+			# If color index has gotten to the end of the COLOR_LIST, loop back to zero
+			if color_index >= len(COLOR_LIST):
+				color_index = 0
 	return probe_config
 
 def default_notify_services():
@@ -770,7 +778,6 @@ def write_control(control, direct_write=False, origin='unknown'):
 	else: 
 		control['origin'] = origin 
 		cmdsts.rpush('control:command', json.dumps(control))
-		#print(f' -> Command Pushed to Queue by {origin}')
 
 def execute_commands():
 	"""
@@ -994,6 +1001,7 @@ def read_settings(filename='settings.json', init=False, retry_count=0):
 		# Overlay the original settings on top of the default settings
 		settings = deep_update(settings_default, settings)
 		update_settings = True
+		settings['history_page']['probe_config'] = default_probe_config(settings)  # Fix issue with probe_configs resetting to defaults
 
 		if update_settings or filename != 'settings.json': # If any of the keys were added, then write back the changes
 			write_settings(settings)
