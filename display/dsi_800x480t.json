@@ -3,8 +3,10 @@
         "name" : "dsi_800x480t",
         "screen_width" : 800,
         "screen_height" : 480,
+        "framerate" : 20,
         "dash_background" : "./static/img/display/background.png",
         "splash_image" : "./static/img/display/splash_800x480.png",
+        "splash_delay" : 500,
         "max_food_probes" : 5
     },
     "home" : [],
@@ -448,6 +450,24 @@
             "button_list" : ["menu_close", "cmd_pmode", "cmd_pmode", "cmd_pmode", "cmd_pmode", "cmd_pmode", "cmd_pmode", "cmd_pmode", "cmd_pmode", "cmd_pmode", "cmd_pmode"],
             "button_text" : ["Close Menu", "PMode 0", "PMode 1", "PMode 2", "PMode 3", "PMode 4", "PMode 5", "PMode 6", "PMode 7", "PMode 8", "PMode 9"],
             "button_value" : [0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            "touch_areas" : []
+        },
+        "message" : {
+            "type" : "menu",
+            "position" : [100, 40],
+            "animation_enabled" : false, 
+            "size" : [600, 400],
+            "glow" : true,
+            "font" : "trebuc.ttf",
+            "label" : "message",
+            "title_text" : "Message", 
+            "color" : [255,255,255,255],
+            "data" : {
+                "text" : ""
+            },
+            "button_list" : ["menu_close", "menu_close"],
+            "button_text" : ["Close Menu", "OK"], 
+            "button_value" : [],
             "touch_areas" : []
         }
     },
