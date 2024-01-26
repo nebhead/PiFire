@@ -217,3 +217,19 @@
 	</div>
 </div>
 {% endmacro %}
+
+{% macro render_time_elapsed_card() %}
+<div class="card shadow">
+	<div class="card-header bg-primary text-white text-center">
+		<i class="fa-regular fa-clock"></i>&nbsp; Time Elapsed Since Start
+	</div>
+	<div class="card-body text-center text-large">
+		<h1>
+			<b>
+				<span id="time_elapsed_string" class="text-secondary">--</span>
+			</b>
+		</h1>
+		<span class="badge badge-secondary">HH:MM:SS</span>
+	</div>
+</div>
+{% endmacro %}

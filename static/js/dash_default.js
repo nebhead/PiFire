@@ -273,6 +273,20 @@ function updateProbeCards() {
 				$('#lid_open_label').html('Lid Open Detected: PID Paused ' + countdown + 's');
 			};
 			
+			// Update Elapsed Time 
+			if (current.status.startup_timestamp != 0) {
+				var time_now = new Date().getTime();
+				time_now = Math.floor(time_now / 1000);
+				//console.log('Time Now Adjusted: ' + time_now);
+				var time_elapsed = time_now - Math.floor(current.status.startup_timestamp);
+				var time_elapsed_string = formatDuration(time_elapsed);
+				$('#time_elapsed_string').html(time_elapsed_string);
+				document.getElementById('time_elapsed_string').className = 'text-primary';
+			} else {
+				$('#time_elapsed_string').html('--');
+				document.getElementById('time_elapsed_string').className = 'text-secondary';
+			};
+
 			//if (current.status.s_plus) {
 			//	document.getElementById('smokeplus_status').innerHTML = '<i class="fas fa-cloud fa-stack-2x" style="color:rgb(104, 0, 104)" data-toggle="tooltip" data-placement="top" title="Smoke Plus ON"></i><i class="fas fa-plus fa-stack-1x fa-inverse"></i>';
 			//} else {

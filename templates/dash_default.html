@@ -1,6 +1,6 @@
 {% extends 'base.html' %} 
 
-{% from '_macro_dash_default.html' import render_probe_card, render_hopper_card, render_status_card %}
+{% from '_macro_dash_default.html' import render_probe_card, render_hopper_card, render_status_card, render_time_elapsed_card %}
 
 {% block cssextend %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dash_default.css') }}" type="text/css" />
@@ -41,6 +41,14 @@
 			{{ render_status_card() }}
 			<br>
 		</div>
+		<div id="card_time_elapsed" class="col-lg-4 col-md-6 col-sm-12" 
+		{% if 'time_elapsed' in dash_data['custom']['hidden_cards'] %}
+			style="display:none"
+		{% endif %}>
+		<br>
+		{{ render_time_elapsed_card() }}
+		<br>
+	</div>
 </div> <!-- End of Row -->
 
 <br>
@@ -169,6 +177,18 @@
 						</tr>
 						{% endif %}
 						</tbody>
+						<tr onclick="dashToggleVisible('time_elapsed');">
+							<td>
+								<span id="visibleStatus_status">
+								{% if 'time_elapsed' not in dash_data['custom']['hidden_cards'] %}
+								<i class="fa-solid fa-eye text-success"></i>&nbsp;
+								{% else %}
+								<i class="fa-solid fa-eye-slash text-secondary"></i>&nbsp;
+								{% endif %}
+								</span>
+								Time Elapsed Card
+							</td>
+						</tr>
 					</table>
 				</div>
 

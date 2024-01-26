@@ -2410,6 +2410,7 @@ def api_page(action=None):
 			status['lid_open_endtime'] = display['lid_open_endtime']
 			status['p_mode'] = display['p_mode']
 			status['outpins'] = display['outpins']
+			status['startup_timestamp'] = display['startup_timestamp']
 			status['ui_hash'] = create_ui_hash()
 			return jsonify({'current':current_temps, 'notify_data':notify_data, 'status':status}), 201
 		elif action == 'hopper':

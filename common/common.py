@@ -499,6 +499,8 @@ def default_control():
 
 	control['prime_amount'] = 10  # Default Prime Amount in Grams
 
+	control['startup_timestamp'] = 0  # Timestamp of startup, used for cook time
+
 	control['system'] = {}
 
 	return(control)
@@ -1876,6 +1878,7 @@ def read_status(init=False):
 			"units": "F",
 			"mode": "Stop",
 			"recipe": False,
+			"startup_timestamp" : 0,
 			"start_time": 0,
 			"start_duration": 0,
 			"shutdown_duration": 0,

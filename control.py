@@ -451,6 +451,10 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	# Set the start time
 	start_time = time.time()
 
+	if mode == 'Startup':
+		control['startup_timestamp'] = start_time 
+		write_control(control, direct_write=True, origin='control')
+
 	# Set time since toggle for temperature
 	temp_toggle_time = start_time
 
@@ -665,6 +669,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			status_data['lid_open_detected'] = LidOpenDetect if mode == 'Hold' else False
 			status_data['lid_open_endtime'] = LidOpenEventExpires if mode == 'Hold' else 0
 			status_data['p_mode'] = metrics.get('p_mode', None)
+			status_data['startup_timestamp'] = control['startup_timestamp']
 			if control['mode'] == 'Recipe':
 				status_data['recipe_paused'] = True if control['recipe']['step_data']['triggered'] and control['recipe']['step_data']['pause'] else False
 			else: 
@@ -1135,13 +1140,15 @@ while True:
 			status['recipe_paused'] = False
 			status['start_time'] = 0
 			status['lid_open_detected'] = False 
-			status['lid_open_endtime'] = 0 
+			status['lid_open_endtime'] = 0
+			status['startup_timestamp'] = 0
 			write_status(status)
 
 			if control['status'] == 'monitor' and control['mode'] == 'Error':
 				grill_platform.power_on()
 			else:
 				grill_platform.power_off()
+			
 			if control['mode'] == 'Stop':
 				eventLogger.info('Stop Mode Started.')
 				display_device.clear_display()  # When in error mode, leave the display showing ERROR
@@ -1152,6 +1159,7 @@ while True:
 				control['tuning_mode'] = False  # Turn off Tuning Mode on Stop just in case it is on
 				control['next_mode'] = 'Stop'
 				control['safety']['reigniteretries'] = settings['safety']['reigniteretries']  # Reset retry counter to default
+				control['startup_timestamp'] = 0  # Reset the startup timestamp to 0
 				write_control(control, direct_write=True, origin='control')
 			else:
 				eventLogger.error('An error has occurred, Stop Mode enabled.')
