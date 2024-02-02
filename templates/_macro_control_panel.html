@@ -26,7 +26,7 @@
 
 <!-- Control Panel -->
 <div class="container" id="cp_container">
-	{% if page_theme == 'dark' %}
+	{% if settings['globals']['page_theme'] == 'dark' %}
 	<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #aaaaaa;">
 	{% else %}
 	<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #dddddd;">
@@ -52,7 +52,7 @@
             </div>
         </div>
         <div id="inactive_core_group" class="btn-group mr-2 shadow" role="group">
-            <button type="button" data-toggle="tooltip" title="Startup" class="btn btn-outline-success border border-secondary" id="startup_btn" name="setmodestartup" value="true"><i class="fas fa-play"></i></button>
+            <button type="button" title="Startup" class="btn btn-outline-success border border-secondary" id="startup_btn" name="setmodestartup" value="true" data-toggle="modal" data-target="#startupModal"><i class="fas fa-play"></i></button>
             <button type="button" data-toggle="tooltip" title="Monitor" class="btn btn-outline-secondary border border-secondary" id="monitor_btn" name="setmodemonitor" value="true"><i class="fas fa-glasses"></i></button>
             <button type="button" data-toggle="tooltip" title="Smoke Mode" class="btn btn-outline-secondary border border-secondary" id="smoke_inactive_btn" name="setmodesmoke" value="true"{% if control['mode'] not in ['Startup', 'Reignite'] %} style="display:none"{% endif %}><i class="fas fa-cloud"></i></button>
             <button type="button" data-toggle="modal" data-target="#setpointModal" class="btn btn-outline-secondary border border-secondary" id="hold_inactive_btn"{% if control['mode'] not in ['Startup', 'Reignite'] %} style="display:none"{% endif %}><i class="fas fa-crosshairs"></i></button>
@@ -147,6 +147,29 @@
         </div>
     </div>
 
+    <!-- Startup Modal -->
+    <div class="modal" id="startupModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title"><i class="fa-solid fa-triangle-exclamation"></i> Startup Check</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <!-- Modal body -->
+                <div class="modal-body text-center">
+                    Do you want to startup the grill?<br><br>
+                    <input type="range" class="w-75 custom-range" min="0" max="1" step="0.1" value="0" id="startupSlider" onchange="if(this.value == 1) {cpStartup();};" width="75%">
+                    <br><span class="badge badge-secondary">Slide to right to enter Startup</span>
+                </div>
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
 </div> <!-- End of Container --> 
 
 {% endmacro %}
