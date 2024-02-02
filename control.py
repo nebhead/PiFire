@@ -490,7 +490,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	while status == 'Active':
 		now = time.time()
 
-		execute_commands()
+		execute_control_writes()
 		control = read_control()
 
 		# Check if new mode has been requested
@@ -914,7 +914,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	return ()
 
 def _next_mode(next_mode, setpoint=0):			
-	execute_commands()
+	execute_control_writes()
 	control = read_control()
 	# If no other request, then transition to next mode, otherwise exit
 	if not control['updated']:
@@ -983,7 +983,7 @@ def _recipe_mode(grill_platform, probe_complex, display_device, dist_device, sta
 		_work_cycle(recipe['steps'][step_num]['mode'], grill_platform, probe_complex, display_device, dist_device)
 		
 		# 4c. If reignite is required, run a reignite cycle and retry current step
-		execute_commands()
+		execute_control_writes()
 		control = read_control()
 		if control['mode'] == 'Reignite' and control['updated']:
 			control['updated'] = False
@@ -1057,8 +1057,8 @@ while True:
 			continue
 	write_status(status)
 
-	# 1. Check control for commands
-	execute_commands()
+	# 1. Check control for changes 
+	execute_control_writes()
 	control = read_control()
 
 	# Check if there is a timer running, see if it has expired, send notification and reset

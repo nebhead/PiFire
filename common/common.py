@@ -778,12 +778,13 @@ def write_control(control, direct_write=False, origin='unknown'):
 	if direct_write: 
 		cmdsts.set('control:general', json.dumps(control))
 	else: 
+		# Add changes to control write queue 
 		control['origin'] = origin 
-		cmdsts.rpush('control:command', json.dumps(control))
+		cmdsts.rpush('control:write', json.dumps(control))
 
-def execute_commands():
+def execute_control_writes():
 	"""
-	Execute Control Commands in Queue from Redis DB
+	Execute Control Writes in Queue from Redis DB
 
 	:param None
 
@@ -792,12 +793,12 @@ def execute_commands():
 	global cmdsts 
 
 	status = 'OK'
-	while cmdsts.llen('control:command') > 0:
+	while cmdsts.llen('control:write') > 0:
 		control = read_control()
-		command = json.loads(cmdsts.lpop('control:command'))
+		command = json.loads(cmdsts.lpop('control:write'))
 		command.pop('origin')
 		control = deep_update(control, command)
-		write_control(control, direct_write=True, origin='executor')
+		write_control(control, direct_write=True, origin='writer')
 	return status
 
 def read_errors(flush=False):
