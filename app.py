@@ -2003,6 +2003,10 @@ def settings_page(action=None):
 			settings['safety']['reigniteretries'] = int(response['reigniteretries'])
 		if _is_not_blank(response, 'maxtemp'):
 			settings['safety']['maxtemp'] = int(response['maxtemp'])
+		if _is_checked(response, 'startup_check'):
+			settings['safety']['startup_check'] = True
+		else:
+			settings['safety']['startup_check'] = False
 
 		event['type'] = 'updated'
 		event['text'] = 'Successfully updated safety settings.'

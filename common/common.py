@@ -211,7 +211,8 @@ def default_settings():
 		'minstartuptemp' : 75, 	# User Defined. Minimum temperature allowed for startup.
 		'maxstartuptemp' : 100, # User Defined. Take this value if the startup temp is higher than maxstartuptemp
 		'maxtemp' : 550, 		# User Defined. If temp exceeds value in any mode, shut off. (including monitor mode)
-		'reigniteretries' : 1 	# Number of tries to reignite grill if it has gone below the safe temp (0 to disable)
+		'reigniteretries' : 1, 	# Number of tries to reignite grill if it has gone below the safe temp (0 to disable)
+		'startup_check' : True	# True = Enabled
 	}
 
 	settings['pelletlevel'] = {

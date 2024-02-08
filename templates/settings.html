@@ -1189,6 +1189,13 @@
                             </h5>
                         </div>
                         <div class="card-body">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="startup_check" name="startup_check" {% if settings['safety']['startup_check'] %}checked{% endif %}>
+                                <label class="custom-control-label" for="startup_check" data-toggle="tooltip" title="Enables an additional check after clicking startup, to prevent accidental startup.">Enable Startup Check</label>
+                            </div>
+                            <span class="badge badge-warning">NOTE:</span>
+                            <i class="small"> Enables an additional check after clicking startup, to prevent accidental startup.</i>
+                            <br><br>
                             <div class="input-group mb-3">
                                 <div class="input-group-prepend">
                                     <span class="input-group-text" data-toggle="tooltip" title="Lowest temperature after startup allowed.  Shut down grill to prevent firepot overload.">

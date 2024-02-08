@@ -284,8 +284,17 @@ function cpRecipeUnpause() {
     update_recipe_pause();
 };
 
+function cpStartupCheck(enable) {
+    // Check if user has bypassed startup_enable
+    if (enable == 'False') {
+        cpStartup();
+    } else {
+        $('#startupModal').modal('show');
+    };
+};
+
 function cpStartup() {
-    $('#startupModal').modal('hide')
+    $('#startupModal').modal('hide');
     var postdata = { 
         'updated' : true,
         'mode' : 'Startup'	
