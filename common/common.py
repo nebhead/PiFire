@@ -1615,10 +1615,22 @@ def restart_scripts():
 	"""
 	Restart the Control and WebApp Scripts
 	"""
-	print('[DEBUG MSG] Restarting Scripts... ')
-	command = "sleep 3 && sudo service supervisor restart &"
 	if is_real_hardware():
-		os.system(command)
+		os.system("sleep 3 && sudo service supervisor restart &")
+
+def reboot_system():
+	"""
+	Reboot the system
+	"""
+	if is_real_hardware():
+		os.system("sleep 3 && sudo reboot &")
+
+def shutdown_system():
+	"""
+	Shutdown the system
+	"""
+	if is_real_hardware():
+		os.system("sleep 3 && sudo shutdown -h now &")
 
 def read_wizard(filename='wizard/wizard_manifest.json'):
 	"""
@@ -1930,3 +1942,589 @@ def deep_update(dictionary, updates):
 		else:
 			dictionary[key] = value
 	return dictionary
+
+MODE_MAP = {
+	'startup' : 'Startup',
+	'smoke' : 'Smoke',
+	'shutdown' : 'Shutdown',
+	'stop' : 'Stop',
+	'reignite' : 'Reignite',
+	'monitor' : 'Monitor',
+	'error' : 'Error',
+	'prime' : 'Prime',
+	'hold' : 'Hold',
+	'manual' : 'Manual'
+}
+
+# Borrowed from: https://pythonhow.com/how/check-if-a-string-is-a-float/ 
+# Attributed to Python How
+# Slightly modified to check if string is None
+def is_float(string):
+	if string is not None:
+		if string.replace(".", "").isnumeric():
+			return True
+	return False
+
+def process_command(action=None, arglist=[], origin='unknown', direct_write=False):
+	'''
+	Process incoming command from API or elsewhere
+	'''
+	data = {} 
+	data['result'] = 'OK'
+	data['message'] = 'Command was accepted successfully.'
+	data['data'] = {}
+
+	control = read_control()
+	settings = read_settings() 
+	
+	''' Populate any empty args with None just in case '''
+	num_args = len(arglist)
+	max_args = 4  # Needs updating if API adds deeper number of arguments 
+
+	for _ in range(max_args - num_args):
+		arglist.append(None)
+
+	if action == 'get':
+		''' GET Commands '''
+
+		if arglist[0] == 'temp':
+			'''
+			Get Temperature 
+			/api/get/temp/{probe label}
+
+
+			Returns: 
+			{ 
+				'temp' : <probe temperature> 
+				'result' : 'OK'
+			}
+			'''
+			current_temps = read_current()
+
+			if arglist[1] in current_temps['P'].keys():
+				data['data']['temp'] = current_temps['P'][arglist[1]]
+			elif arglist[1] in current_temps['F'].keys():
+				data['data']['temp'] = current_temps['F'][arglist[1]]
+			elif arglist[1] in current_temps['AUX'].keys():
+				data['data']['temp'] = current_temps['AUX'][arglist[1]]
+			else:
+				data['result'] = 'ERROR'
+				data['message'] = f'Probe {arglist[1]} not found or not specified.'
+
+		elif arglist[0] == 'current':
+			'''
+			Get Current Temp Data Structure 
+			/api/get/current
+
+			Returns (Example): 
+			{
+				"AUX": {},
+				"F": {
+					"Probe1": 204,
+					"Probe2": 206
+				},
+				"NT": {
+					"Grill": 0,
+					"Probe1": 0,
+					"Probe2": 0
+				},
+				"P": {
+					"Grill": 518
+				},
+				"PSP": 0,
+				"TS": 1707345482984
+			}
+			'''
+			current_temps = read_current()
+
+			data['data'] = current_temps
+
+		elif arglist[0] == 'mode':
+			'''
+			Get Current Mode 
+			/api/get/mode
+
+			Returns: 
+			{ 
+				'mode' : <Current Mode> 
+			}
+			'''
+			data['data']['mode'] = control['mode']
+
+		elif arglist[0] == 'hopper':
+			'''
+			Get Hopper Level 
+			/api/get/hopper
+
+			Returns: 
+			{ 
+				'hopper' : <level> 
+			}
+			'''
+			control['hopper_check'] = True 
+			write_control(control, direct_write=direct_write, origin=origin)
+			time.sleep(3)
+			pelletdb = read_pellet_db()
+			data['data']['hopper'] = pelletdb['current']['hopper_level']
+		
+		elif arglist[0] == 'timer':
+			'''
+			Get Timer Data
+			/api/get/timer
+
+			Returns:
+			{ 
+				'start' : control['timer']['start'], 
+				'paused' : control['timer']['paused'],
+				'end' : control['timer']['end'], 
+				'shutdown' : control['notify_data'][]['shutdown'],
+				'keep_warm' : control['notify_data'][]['keep_warm'],
+			}
+			'''
+			data['data']['start'] = control['timer']['start']
+			data['data']['paused'] = control['timer']['paused']
+			data['data']['end'] = control['timer']['end']
+			''' Get index of timer object '''
+			for index, notify_obj in enumerate(control['notify_data']):
+				if notify_obj['type'] == 'timer':
+					break 
+			data['data']['shutdown'] = control['notify_data'][index]['shutdown']
+			data['data']['keep_warm'] = control['notify_data'][index]['keep_warm']
+
+		elif arglist[0] == 'notify':
+			'''
+			Get Notify Data
+			/api/get/notify
+
+			Returns:
+				[
+					{
+					"eta": null,
+					"keep_warm": false,
+					"label": "Grill",
+					"name": "GrillMain",
+					"req": false,
+					"shutdown": false,
+					"target": 0,
+					"type": "probe"
+					},
+					...
+					{
+					"keep_warm": false,
+					"label": "Hopper",
+					"last_check": 0,
+					"req": true,
+					"shutdown": false,
+					"type": "hopper"
+					}
+				]
+			'''
+			data['data'] = control['notify_data']
+
+		elif arglist[0] == 'status':
+			'''
+			Get Status Information for Key Items
+			/api/get/status
+
+			Returns (Example):
+			{
+				"display_mode": "Stop",
+				"lid_open_detected": false,
+				"lid_open_endtime": 0,
+				"mode": "Stop",
+				"name": "Development",
+				"outpins": {
+					"auger": false,
+					"fan": false,
+					"igniter": false,
+					"power": false
+				},
+				"p_mode": 0,
+				"prime_amount": 0,
+				"prime_duration": 0,
+				"s_plus": false,
+				"shutdown_duration": 10,
+				"start_duration": 30,
+				"start_time": 0,
+				"startup_timestamp": 0,
+				"status": "",
+				"ui_hash": 5734093427135650890,
+				"units": "F"
+			}
+			'''
+			status = read_status()
+
+			data['data']['mode'] = control['mode']
+			data['data']['display_mode'] = status['mode']
+			data['data']['status'] = control['status']
+			data['data']['s_plus'] = control['s_plus']
+			data['data']['units'] = settings['globals']['units']
+			data['data']['name'] = settings['globals']['grill_name']
+			data['data']['start_time'] = status['start_time']
+			data['data']['start_duration'] = status['start_duration']
+			data['data']['shutdown_duration'] = status['shutdown_duration']
+			data['data']['prime_duration'] = status['prime_duration']
+			data['data']['prime_amount'] = status['prime_amount']
+			data['data']['lid_open_detected'] = status['lid_open_detected']
+			data['data']['lid_open_endtime'] = status['lid_open_endtime']
+			data['data']['p_mode'] = status['p_mode']
+			data['data']['outpins'] = status['outpins']
+			data['data']['startup_timestamp'] = status['startup_timestamp']
+			data['data']['ui_hash'] = hash(json.dumps(settings['probe_settings']['probe_map']['probe_info']))
+
+		else:
+			data['result'] = 'ERROR'
+			data['message'] = f'Get API Argument: [{arglist[0]}] not recognized.'
+	
+	elif action == 'set':
+		''' SET Commands '''
+
+		if arglist[0] == 'psp':
+			'''
+			Primary Setpoint 
+			/api/set/psp/{integer/float temperature}
+			'''
+			if is_float(arglist[1]):
+				control['mode'] = 'Hold'
+				if settings['globals']['units'] == 'F':
+					control['primary_setpoint'] = int(float(arglist[1]))
+				else:
+					control['primary_setpoint'] = float(arglist[1])
+				control['updated'] = True
+				write_control(control, direct_write=direct_write, origin=origin)
+			else:
+				data['result'] = 'ERROR'
+				data['message'] = f'Primary set point should be an integer or float in degrees {settings["globals"]["units"]}'
+
+		elif arglist[0] == 'mode':
+			'''
+			Mode
+			/api/set/mode/{mode} where mode = 'startup', 'smoke', 'shutdown', 'stop', 'reignite', 'monitor', 'error'
+			/api/set/mode/prime/{prime amount in grams}[/{next mode}]
+			/api/set/mode/hold/{integer/float temperature}
+			'''
+			if arglist[1] in ['startup', 'smoke', 'shutdown', 'stop', 'reignite', 'monitor', 'error', 'manual']:
+				control['mode'] = MODE_MAP[arglist[1]]
+				control['updated'] = True
+				write_control(control, direct_write=direct_write, origin=origin)
+			elif arglist[1] == 'prime':
+				try:
+					if arglist[2] is not None: 
+						if arglist[2].isdigit():
+							control['mode'] = MODE_MAP[arglist[1]]
+							control['prime_amount'] = int(arglist[2])
+							control['updated'] = True
+							if arglist[3] in ['startup', 'monitor']:
+								control['next_mode'] = MODE_MAP[arglist[3]]
+							else:
+								control['next_mode'] = 'Stop'
+							write_control(control, direct_write=direct_write, origin=origin)
+						else:
+							data['result'] = 'ERROR'
+							data['message'] = f'Prime amount should be an integer in grams.'
+					else:
+						data['result'] = 'ERROR'
+						data['message'] = f'Prime amount not specified.'
+				except:
+					data['result'] = 'ERROR'
+					data['message'] = f'Set Mode {arglist[1]} with {arglist[2]} caused an exception.'
+			elif arglist[1] == 'hold':
+				if arglist[2] is not None: 
+					if is_float(arglist[2]):
+						control['mode'] = MODE_MAP[arglist[1]]
+						if settings['globals']['units'] == 'F':
+							control['primary_setpoint'] = int(float(arglist[2]))
+						else:
+							control['primary_setpoint'] = float(arglist[2])
+						control['updated'] = True
+						write_control(control, direct_write=direct_write, origin=origin)
+					else:
+						data['result'] = 'ERROR'
+						data['message'] = f'Set Mode {arglist[1]} with {arglist[2]} failed [not a number].'
+				else:
+					data['result'] = 'ERROR'
+					data['message'] = f'Set Mode {arglist[1]} with {arglist[2]} failed [no hold temp specified].'
+			else:
+				data['result'] = 'ERROR'
+				data['message'] = f'Get API Argument: {arglist[2]} not recognized.'
+		
+		elif arglist[0] == 'pmode':
+			'''
+			PMode
+			/api/set/pmode/{pmode value} where pmode value is between 0-9 
+			'''
+			if arglist[1] is not None: 
+				if arglist[1].isdigit():
+					if int(arglist[1]) >= 0 and int(arglist[1]) < 10:
+						settings['cycle_data']['PMode'] = int(arglist[1])
+						write_settings(settings)
+						control['settings_update'] = True 
+						write_control(control, direct_write=False, origin=origin)
+					else:
+						data['result'] = 'ERROR'
+						data['message'] = f'Set PMode out of range(0-9): {arglist[1]}'
+				else:
+					data['result'] = 'ERROR'
+					data['message'] = f'Set PMode invalid value.'
+			else:
+				data['result'] = 'ERROR'
+				data['message'] = f'Set PMode invalid arguments.'
+		
+		elif arglist[0] == 'splus':
+			'''
+			Smoke Plus 
+			/api/set/splus/{true/false}
+			'''
+			if arglist[1] == 'true':
+				control['s_plus'] = True
+			else:
+				control['s_plus'] = False 
+			write_control(control, direct_write=direct_write, origin=origin)
+		
+		elif arglist[0] == 'notify':
+			'''
+			Notify Settings
+			/api/set/notify/{object}/ where object = probe label, 'Timer', 'Hopper' 
+
+			/api/set/notify/{object}/req/{true/false} 
+			/api/set/notify/{object}/target/{value}  (not valid for Timer or Hopper)
+			/api/set/notify/{object}/shutdown/{true/false}
+			/api/set/notify/{object}/keep_warm/{true/false} 
+			'''
+
+			if arglist[1] is not None:
+				found = False
+				for index, object in enumerate(control['notify_data']):
+					if object['label'] == arglist[1]:
+						print('FOUND')
+						found = True
+						if arglist[2] in ['req', 'shutdown', 'keep_warm']:
+							if arglist[3] == 'true':
+								control['notify_data'][index][arglist[2]] = True
+							else: 
+								control['notify_data'][index][arglist[2]] = False
+						elif arglist[2] == 'target' and arglist[1] not in ['Timer', 'Hopper']:
+							if is_float(arglist[3]):
+								if settings['globals']['units'] == 'F':
+									control['notify_data'][index]['target'] = int(float(arglist[3]))
+								else:
+									control['primary_setpoint'] = float(arglist[3])
+							else:
+								data['result'] = 'ERROR'
+								data['message'] = f'Notify object target value invalid or missing.'
+						else:
+							data['result'] = 'ERROR'
+							data['message'] = f'Notify object update failed.'
+						break
+				if not found:
+					data['result'] = 'ERROR'
+					data['message'] = f'Notify object label {arglist[1]} was not found.'
+				else:
+					write_control(control, direct_write=False, origin=origin)
+			else:
+				data['result'] = 'ERROR'
+				data['message'] = f'Notify object label was not specified.'
+				
+		elif arglist[0] == 'pwm':
+			'''
+			PWM Control
+
+			/api/set/pwm/{true/false} 
+			'''
+			if arglist[1] == 'true':
+				control['pwm_control'] = True
+			else:
+				control['pwm_control'] = False 
+			write_control(control, direct_write=direct_write, origin=origin) 
+
+		elif arglist[0] == 'duty_cycle':
+			'''
+			Duty Cycle
+
+			/api/set/duty_cycle/{0-100 percent} 
+			'''
+			if is_float(arglist[1]):
+				duty_cycle = int(arglist[1])
+				if duty_cycle >= 0 and duty_cycle <= 100:
+					control['duty_cycle'] = duty_cycle
+					write_control(control, direct_write=False, origin=origin)
+				else:
+					data['result'] = 'ERROR'
+					data['message'] = f'Duty cycle must be an integer between 0-100.'
+			else:
+				data['result'] = 'ERROR'
+				data['message'] = f'Duty cycle must be specified as an integer between 0-100 percent.'
+
+		elif arglist[0] == 'tuning_mode':
+			'''
+			Tuning Mode Enable
+
+			/api/set/tuning_mode/{true/false} 
+			'''
+			if arglist[1] == 'true':
+				control['tuning_mode'] = True
+			else:
+				control['tuning_mode'] = False 
+			write_control(control, direct_write=direct_write, origin=origin)
+
+		elif arglist[0] == 'timer':
+			'''
+			Timer Control
+
+			/api/set/timer/start/{seconds} 
+			/api/set/timer/pause 
+			/api/set/timer/stop
+			/api/set/timer/shutdown/{true/false}
+			/api/set/timer/keep_warm/{true/false}
+			'''
+
+			''' Get index of timer object '''
+			for index, notify_obj in enumerate(control['notify_data']):
+				if notify_obj['type'] == 'timer':
+					break 
+			''' Get timestamp '''
+			now = time.time()
+
+			if arglist[1] == 'start':
+				control['notify_data'][index]['req'] = True
+				# If starting new timer
+				if control['timer']['paused'] == 0:
+					control['timer']['start'] = now
+					if is_float(arglist[2]):
+						seconds = int(float(arglist[2]))
+						control['timer']['end'] = now + seconds
+					else:
+						control['timer']['end'] = now + 60
+					write_log('Timer started.  Ends at: ' + epoch_to_time(control['timer']['end']))
+					write_control(control, direct_write=direct_write, origin='app')
+				else:	# If Timer was paused, restart with new end time.
+					control['timer']['end'] = (control['timer']['end'] - control['timer']['paused']) + now
+					control['timer']['paused'] = 0
+					write_log('Timer unpaused.  Ends at: ' + epoch_to_time(control['timer']['end']))
+					write_control(control, direct_write=direct_write, origin='app')
+			elif arglist[1] == 'pause':
+				if control['timer']['start'] != 0:
+					control['notify_data'][index]['req'] = False
+					control['timer']['paused'] = now
+					write_log('Timer paused.')
+					write_control(control, direct_write=direct_write, origin='app')
+				else:
+					control['notify_data'][index]['req'] = False
+					control['timer']['start'] = 0
+					control['timer']['end'] = 0
+					control['timer']['paused'] = 0
+					control['notify_data'][index]['shutdown'] = False
+					control['notify_data'][index]['keep_warm'] = False
+					write_log('Timer cleared.')
+					write_control(control, direct_write=direct_write, origin='app')
+			elif arglist[1] == 'stop':
+				control['notify_data'][index]['req'] = False
+				control['timer']['start'] = 0
+				control['timer']['end'] = 0
+				control['notify_data'][index]['shutdown'] = False
+				control['notify_data'][index]['keep_warm'] = False
+				write_log('Timer stopped.')
+				write_control(control, direct_write=direct_write, origin='app')
+			elif arglist[1] == 'shutdown':
+				if arglist[2] == 'true':
+					control['notify_data'][index]['shutdown'] = True
+				else:
+					control['notify_data'][index]['shutdown'] = False 
+				write_control(control, direct_write=direct_write, origin=origin)
+			elif arglist[1] == 'keep_warm':
+				if arglist[2] == 'true':
+					control['notify_data'][index]['keep_warm'] = True
+				else:
+					control['notify_data'][index]['keep_warm'] = False 
+				write_control(control, direct_write=direct_write, origin=origin)
+			else:
+				data['result'] = 'ERROR'
+				data['message'] = f'Timer command not recognized.'
+
+		elif arglist[0] == 'manual':
+			'''
+			Manual Control
+			Note: Must already be in Manual mode (see set/mode command)
+			/api/set/manual/power/{true/false}
+			/api/set/manual/igniter/{true/false}
+			/api/set/manual/fan/{true/false}
+			/api/set/manual/auger/{true/false}
+			/api/set/manual/pwm/{speed}
+			'''
+
+			if control['mode'] == 'Manual':
+				if arglist[1] == 'power':
+					control['manual']['change'] = True
+					if arglist[2] == 'true':
+						control['manual']['power'] = True
+					else:
+						control['manual']['power'] = False 
+				elif arglist[1] == 'igniter':
+					control['manual']['change'] = True
+					if arglist[2] == 'true':
+						control['manual']['igniter'] = True
+					else:
+						control['manual']['igniter'] = False 
+				elif arglist[1] == 'fan':
+					control['manual']['change'] = True
+					if arglist[2] == 'true':
+						control['manual']['fan'] = True
+					else:
+						control['manual']['fan'] = False 
+						control['manual']['pwm'] = 100
+				elif arglist[1] == 'auger':
+					control['manual']['change'] = True
+					if arglist[2] == 'true':
+						control['manual']['auger'] = True
+					else:
+						control['manual']['auger'] = False
+				elif arglist[1] == 'pwm' and is_float(arglist[2]):
+					control['manual']['change'] = True
+					control['manual']['pwm'] = int(float(arglist[2]))
+				else:
+					data['result'] = 'ERROR'
+					data['message'] = f'Manual command not recognized or contained an error.'
+				if control['manual']['change']:
+					write_control(control, direct_write=direct_write, origin=origin)
+
+			else:
+				data['result'] = 'ERROR'
+				data['message'] = f'Before changing manual outputs, system must be put into Manual mode.'
+
+		else:
+			data['result'] = 'ERROR'
+			data['message'] = f'Set API Argument: {arglist[0]} not recognized.'
+
+	elif action == 'cmd':
+		''' System CMD Commands '''
+
+		if arglist[0] == 'restart':
+			'''
+			Restart Scripts 
+			/api/cmd/restart
+			'''
+			restart_scripts()
+		
+		elif arglist[0] == 'reboot':
+			'''
+			Reboot System 
+			/api/cmd/reboot
+			'''
+			reboot_system()
+		
+		elif arglist[0] == 'shutdown':
+			'''
+			Shutdown System 
+			/api/cmd/shutdown
+			'''
+			shutdown_system()
+		
+		else:
+			data['result'] = 'ERROR'
+			data['message'] = f'CMD API Argument: {arglist[0]} not recognized.'
+	
+	else:
+		data['result'] = 'ERROR'
+		data['message'] = f'Action [{action}] not valid/recognized.'
+
+	return data

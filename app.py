@@ -2131,18 +2131,16 @@ def admin_page(action=None):
 	if action == 'reboot':
 		event = "Admin: Reboot"
 		write_log(event)
-		if is_real_hardware():
-			os.system("sleep 3 && sudo reboot &")
 		server_status = 'rebooting'
+		reboot_system()
 		return render_template('shutdown.html', action=action, page_theme=settings['globals']['page_theme'],
 							   grill_name=settings['globals']['grill_name'])
 
 	elif action == 'shutdown':
 		event = "Admin: Shutdown"
 		write_log(event)
-		if is_real_hardware():
-			os.system("sleep 3 && sudo shutdown -h now &")
 		server_status = 'shutdown'
+		shutdown_system()
 		return render_template('shutdown.html', action=action, page_theme=settings['globals']['page_theme'],
 							   grill_name=settings['globals']['grill_name'])
 
@@ -2364,13 +2362,25 @@ def manual_page(action=None):
 						   	page_theme=settings['globals']['page_theme'],
 						   	grill_name=settings['globals']['grill_name'])
 
-@app.route('/api/<action>', methods=['POST','GET'])
 @app.route('/api', methods=['POST','GET'])
-def api_page(action=None):
+@app.route('/api/<action>', methods=['POST','GET'])
+@app.route('/api/<action>/<arg0>', methods=['POST','GET'])
+@app.route('/api/<action>/<arg0>/<arg1>', methods=['POST','GET'])
+@app.route('/api/<action>/<arg0>/<arg1>/<arg2>', methods=['POST','GET'])
+@app.route('/api/<action>/<arg0>/<arg1>/<arg2>/<arg3>', methods=['POST','GET'])
+def api_page(action=None, arg0=None, arg1=None, arg2=None, arg3=None):
 	global settings
 	global server_status
 
-	if request.method == 'GET':
+	if action in ['get', 'set', 'cmd']:
+		#print(f'action={action}\narg0={arg0}\narg1={arg1}\narg2={arg2}\narg3={arg3}')
+		arglist = []
+		arglist.extend([arg0, arg1, arg2, arg3])
+
+		data = process_command(action=action, arglist=arglist, origin='api')
+		return jsonify(data), 201
+	
+	elif request.method == 'GET':
 		if action == 'settings':
 			return jsonify({'settings':settings}), 201
 		elif action == 'server':
@@ -2421,6 +2431,7 @@ def api_page(action=None):
 			return jsonify({'hopper_level': pelletlevel, 'hopper_pellets': pellets}) 
 		else:
 			return jsonify({'Error':'Received GET request, without valid action'}), 404
+	
 	elif request.method == 'POST':
 		if not request.json:
 			event = "Local API Call Failed"
