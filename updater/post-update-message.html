@@ -72,6 +72,11 @@
         New API capabilities including a much simplified API interface for setting and getting data.  Details in the updated documentation. 
     </li>
     <li>
+        Added 'Always Prime on Startup' feature which allows the user to have a default prime amount on startup.  Note that if the user selects startup
+        again during priming that was initiated with this feature then priming will be cancelled and the grill will enter startup mode.  (feature initially 
+        suggested by Discord user @TSJ)
+    </li>
+    <li>
         Behind the scenes improvements including:  Replace 'is_raspberry_pi' with 'is_real_hardware' functions planning for future
         platform support.  Add require_reboot flag to Wizard items (Added to PWM / DSI Touch Display devices) if a reboot is required
         when changing this configuration.  Add general commands list to Wizard items (Added to PWM board so no manual edits are required). 

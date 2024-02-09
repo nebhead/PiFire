@@ -810,7 +810,10 @@
 									<i class="small"> Select what mode to transition to after initial startup. Default is 'Smoke Mode'.</i>
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
-                                          <label class="input-group-text" for="after_startup_mode">Goto Mode After Startup: </label>
+                                          <label class="input-group-text" for="after_startup_mode">
+                                            <i class="fa-solid fa-diamond-turn-right"></i>&nbsp;
+                                             Goto Mode After Startup: 
+                                          </label>
                                         </div>
                                         <select class="custom-select" id="after_startup_mode" name="after_startup_mode">
                                           <option value="Smoke" {% if settings['start_to_mode']['after_startup_mode'] == 'Smoke' %}selected{% endif %}>Smoke Mode</option>
@@ -826,16 +829,36 @@
 										<input id="startup_timer" type="number" min="{{ settings['safety']['maxstartuptemp'] }}" max="{{ settings['safety']['maxtemp'] }}" class="form-control" value="{{ settings['start_to_mode']['primary_setpoint'] }}" name="startup_mode_setpoint">
                                     </div>
 
-                                    <span class="badge badge-warning">NOTE:</span>
-									<i class="small"> Set this value to 0 to disable this startup exit temperature.</i>
-                                    <div class="input-group mb-3">
-										<div class="input-group-prepend">
-											<span class="input-group-text" data-toggle="tooltip" title="Exit startup when this temperature is achieved. [0 = Disabled]">
-												<i class="fas fa-temperature-high"></i>&nbsp; Exit Startup Temperature ({{ settings['globals']['units'] }})</span>
-										</div>
-										<input id="startup_exit_temp" type="number" min="0" class="form-control" placeholder="{{ settings['globals']['startup_exit_temp'] }}" value="{{ settings['globals']['startup_exit_temp'] }}" name="startup_exit_temp">
+                                    <br>
+                                    <div class="custom-control custom-switch">
+										<input type="checkbox" class="custom-control-input" id="startup_exit_temp_toggle" {% if settings['globals']['startup_exit_temp'] > 0 %}checked{% endif %}>
+										<label class="custom-control-label" for="startup_exit_temp_toggle">Exit Startup @ Temperature</label>
 									</div>
-
+                                    <br>
+                                    <div id="startup_exit_temp_input" class="input-group mb-3"{% if settings['globals']['startup_exit_temp'] == 0 %} style="display:none"{% endif %}>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="Exit startup when this temperature is achieved. [0 = Disabled]">
+                                                    <i class="fas fa-temperature-high"></i>&nbsp; Exit Startup Temperature ({{ settings['globals']['units'] }})</span>
+                                            </div>
+                                            <input id="startup_exit_temp" type="number" min="0" class="form-control" value="{{ settings['globals']['startup_exit_temp'] }}" name="startup_exit_temp">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="custom-control custom-switch">
+										<input type="checkbox" class="custom-control-input" id="prime_on_startup_toggle" {% if settings['startup']['prime_on_startup'] > 0 %}checked{% endif %}>
+										<label class="custom-control-label" for="prime_on_startup_toggle">Always Prime on Startup</label>
+									</div>
+                                    <br>
+                                    <div id="prime_on_startup_input" class="input-group mb-3"{% if settings['startup']['prime_on_startup'] == 0 %} style="display:none"{% endif %}>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="Always prime on startup, value in grams of pellets to prime. [0 = Disabled/Default] [max = 200grams]">
+                                                    <i class="fa-solid fa-angles-right"></i>&nbsp; Prime on Startup (grams)</span>
+                                            </div>
+                                            <input id="prime_on_startup" type="number" min="0" max="200" class="form-control" value="{{ settings['startup']['prime_on_startup'] }}" name="prime_on_startup">
+                                        </div>
+                                    </div>
 
                                 </div>
 							</div>

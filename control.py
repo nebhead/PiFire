@@ -1196,14 +1196,27 @@ while True:
 			# Clear History (in the case it wasn't already cleared fromt he last run)
 			eventLogger.debug('Clearing History and Current Log on Startup Mode.')
 			read_history(0, flushhistory=True)  # Clear all history
-			# Setup Next Mode (after startup mode)
-			control['next_mode'] = settings['start_to_mode']['after_startup_mode']
-			write_control(control, direct_write=True, origin='control')
-			# Call Work Cycle for Startup Mode
-			_work_cycle('Startup', grill_platform, probe_complex, display_device, dist_device)
-			# Select Next Mode
-			settings = read_settings()
-			_next_mode(control['next_mode'], setpoint=settings['start_to_mode']['primary_setpoint'])			
+			# Check if Prime on Startup is selected
+			if settings['startup']['prime_on_startup'] > 0:
+				control['prime_amount'] = settings['startup']['prime_on_startup']
+				control['mode'] = 'Prime'
+				write_control(control, direct_write=True, origin='control')
+				# Call Work Cycle for Prime Mode
+				_work_cycle('Prime', grill_platform, probe_complex, display_device, dist_device)
+				control = read_control()  # Refresh control in case any changes were made during the cycle
+				if control['mode'] in ['Prime', 'Startup']:
+					control['updated'] = False 
+					control['mode'] = 'Startup'
+			# Check if there was a mode change during Priming
+			if control['mode'] == 'Startup':
+				# Setup Next Mode (after startup mode)
+				control['next_mode'] = settings['start_to_mode']['after_startup_mode']
+				write_control(control, direct_write=True, origin='control')
+				# Call Work Cycle for Startup Mode
+				_work_cycle('Startup', grill_platform, probe_complex, display_device, dist_device)
+				# Select Next Mode
+				settings = read_settings()
+				_next_mode(control['next_mode'], setpoint=settings['start_to_mode']['primary_setpoint'])			
 
 		# Smoke (smoke cycle)
 		elif control['mode'] == 'Smoke':

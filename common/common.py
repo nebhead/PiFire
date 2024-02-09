@@ -266,6 +266,10 @@ def default_settings():
 		'primary_setpoint' : 165  # If Hold, set the setpoint
 	}
 
+	settings['startup'] = {
+		'prime_on_startup' : 0  # 0 for disabled, or 1-200 for grams
+	}
+
 	settings['dashboard'] = {
 		'current' : 'Default', 
 		'dashboards' : {

@@ -1902,6 +1902,11 @@ def settings_page(action=None):
 			settings['smartstart']['exit_temp'] = int(response['smartstart_exit_temp'])
 		if _is_not_blank(response, 'startup_exit_temp'):
 			settings['globals']['startup_exit_temp'] = int(response['startup_exit_temp'])
+		if _is_not_blank(response, 'prime_on_startup'):
+			prime_amount = int(response['prime_on_startup'])
+			if prime_amount < 0 or prime_amount > 200:
+				prime_amount = 0  # Validate input, set to disabled if exceeding limits.  
+			settings['startup']['prime_on_startup'] = int(response['prime_on_startup'])
 
 		settings['start_to_mode']['after_startup_mode'] = response['after_startup_mode']
 		settings['start_to_mode']['primary_setpoint'] = int(response['startup_mode_setpoint'])
