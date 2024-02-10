@@ -420,32 +420,32 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 				send_notifications("Grill_Error_03", control, settings, pelletdb)
 
 	# Apply Smart Start Settings if Enabled 
-	startup_timer = settings['globals']['startup_timer']
-	if settings['smartstart']['enabled'] and mode in ('Startup', 'Reignite', 'Smoke'):
+	startup_timer = settings['startup']['duration']
+	if settings['startup']['smartstart']['enabled'] and mode in ('Startup', 'Reignite', 'Smoke'):
 		# If Startup, then save initial temperature & select the profile
 		if mode in ('Startup', 'Reignite'):
 			control['smartstart']['startuptemp'] = int(ptemp)
 			# Cycle through profiles, and set profile if startup temperature falls below the minimum temperature
-			for profile_selected in range(0, len(settings['smartstart']['temp_range_list'])):
-				if control['smartstart']['startuptemp'] < settings['smartstart']['temp_range_list'][profile_selected]:
+			for profile_selected in range(0, len(settings['startup']['smartstart']['temp_range_list'])):
+				if control['smartstart']['startuptemp'] < settings['startup']['smartstart']['temp_range_list'][profile_selected]:
 					control['smartstart']['profile_selected'] = profile_selected
 					write_control(control, direct_write=True, origin='control')
 					break  # Break out of the loop
-				if profile_selected == len(settings['smartstart']['temp_range_list']) - 1:
+				if profile_selected == len(settings['startup']['smartstart']['temp_range_list']) - 1:
 					control['smartstart']['profile_selected'] = profile_selected + 1
 					write_control(control, direct_write=True, origin='control')
 		# Apply the profile 
 		profile_selected = control['smartstart']['profile_selected']
-		OnTime = settings['smartstart']['profiles'][profile_selected]['augerontime']  # Auger On Time (Default 15s)
-		OffTime = settings['cycle_data']['SmokeOffCycleTime'] + (settings['smartstart']['profiles'][profile_selected]['p_mode'] * 10)  # Auger Off Time
+		OnTime = settings['startup']['smartstart']['profiles'][profile_selected]['augerontime']  # Auger On Time (Default 15s)
+		OffTime = settings['cycle_data']['SmokeOffCycleTime'] + (settings['startup']['smartstart']['profiles'][profile_selected]['p_mode'] * 10)  # Auger Off Time
 		CycleTime = OnTime + OffTime  # Total Cycle Time
 		CycleRatio = RawCycleRatio = OnTime / CycleTime  # Ratio of OnTime to CycleTime
-		startup_timer = settings['smartstart']['profiles'][profile_selected]['startuptime']
+		startup_timer = settings['startup']['smartstart']['profiles'][profile_selected]['startuptime']
 		# Write Metrics
 		metrics['smart_start_profile'] = profile_selected
 		metrics['startup_temp'] = control['smartstart']['startuptemp']
-		metrics['p_mode'] = settings['smartstart']['profiles'][profile_selected]['p_mode']
-		metrics['auger_cycle_time'] = settings['smartstart']['profiles'][profile_selected]['augerontime']
+		metrics['p_mode'] = settings['startup']['smartstart']['profiles'][profile_selected]['p_mode']
+		metrics['auger_cycle_time'] = settings['startup']['smartstart']['profiles'][profile_selected]['augerontime']
 		write_metrics(metrics)
 
 	# Set the start time
@@ -663,7 +663,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			status_data['recipe'] = True if control['mode'] == 'Recipe' else False
 			status_data['start_time'] = start_time
 			status_data['start_duration'] = startup_timer
-			status_data['shutdown_duration'] = settings['globals']['shutdown_timer']
+			status_data['shutdown_duration'] = settings['shutdown']['shutdown_duration']
 			status_data['prime_duration'] = prime_duration if mode == 'Prime' else 0  # Enable Timer for Prime Mode 
 			status_data['prime_amount'] = prime_amount if mode == 'Prime' else 0  # Enable Display of Prime Amount
 			status_data['lid_open_detected'] = LidOpenDetect if mode == 'Hold' else False
@@ -814,22 +814,22 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 
 		# Check if startup time has elapsed since startup/reignite mode started or if exit temperature has been achieved 
 		if mode in ('Startup', 'Reignite'):
-			if settings['smartstart']['enabled']:
+			if settings['startup']['smartstart']['enabled']:
 				profile_selected = control['smartstart']['profile_selected']
-				startup_timer = settings['smartstart']['profiles'][profile_selected]['startuptime']
+				startup_timer = settings['startup']['smartstart']['profiles'][profile_selected]['startuptime']
 				# Check case where the grill starts hot (perhaps due to previous failure)
-				if raw_startup_temp >= settings['smartstart']['exit_temp']:
+				if raw_startup_temp >= settings['startup']['smartstart']['exit_temp']:
 					exit_temp = 0  # Force ignite
 				else:
-					exit_temp = settings['smartstart']['exit_temp']
+					exit_temp = settings['startup']['smartstart']['exit_temp']
 			else: 
-				startup_timer = settings['globals']['startup_timer']
-				exit_temp = settings['globals']['startup_exit_temp']
+				startup_timer = settings['startup']['duration']
+				exit_temp = settings['startup']['startup_exit_temp']
 				# Check case where the grill starts hot (perhaps due to previous failure)
-				if raw_startup_temp >= settings['globals']['startup_exit_temp']:
+				if raw_startup_temp >= settings['startup']['startup_exit_temp']:
 					exit_temp = 0  # Force ignite
 				else:
-					exit_temp = settings['globals']['startup_exit_temp']
+					exit_temp = settings['startup']['startup_exit_temp']
 			
 			if (now - start_time) > startup_timer:
 				break
@@ -838,7 +838,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 				break
 
 		# Check if shutdown time has elapsed since shutdown mode started
-		if mode == 'Shutdown' and (now - start_time) > settings['globals']['shutdown_timer']:
+		if mode == 'Shutdown' and (now - start_time) > settings['shutdown']['shutdown_duration']:
 			break
 
 		# Check if prime time has elapsed
@@ -1186,7 +1186,7 @@ while True:
 			_work_cycle('Prime', grill_platform, probe_complex, display_device, dist_device)
 			# Select Next Mode
 			settings = read_settings()
-			_next_mode(control['next_mode'], setpoint=settings['start_to_mode']['primary_setpoint'])			
+			_next_mode(control['next_mode'], setpoint=settings['startup']['start_to_mode']['primary_setpoint'])			
 
 		# Startup (startup sequence)
 		elif control['mode'] == 'Startup':
@@ -1210,13 +1210,13 @@ while True:
 			# Check if there was a mode change during Priming
 			if control['mode'] == 'Startup':
 				# Setup Next Mode (after startup mode)
-				control['next_mode'] = settings['start_to_mode']['after_startup_mode']
+				control['next_mode'] = settings['startup']['start_to_mode']['after_startup_mode']
 				write_control(control, direct_write=True, origin='control')
 				# Call Work Cycle for Startup Mode
 				_work_cycle('Startup', grill_platform, probe_complex, display_device, dist_device)
 				# Select Next Mode
 				settings = read_settings()
-				_next_mode(control['next_mode'], setpoint=settings['start_to_mode']['primary_setpoint'])			
+				_next_mode(control['next_mode'], setpoint=settings['startup']['start_to_mode']['primary_setpoint'])			
 
 		# Smoke (smoke cycle)
 		elif control['mode'] == 'Smoke':
@@ -1234,7 +1234,7 @@ while True:
 			write_control(control, direct_write=True, origin='control')
 			_work_cycle('Shutdown', grill_platform, probe_complex, display_device, dist_device)
 			_next_mode(control['next_mode'])			
-			if settings['globals']['auto_power_off']:
+			if settings['shutdown']['auto_power_off']:
 				eventLogger.info('Shutdown mode ended powering off grill')
 				os.system("sleep 3 && sudo shutdown -h now &")
 

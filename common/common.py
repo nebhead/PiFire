@@ -94,10 +94,6 @@ def default_settings():
 		'triggerlevel' : 'LOW',
 		'buttonslevel' : 'HIGH',
 		'disp_rotation' : 0,
-		'shutdown_timer' : 60,
-		'startup_timer' : 240,
-		'startup_exit_temp' : 0,  # Exit startup at this temperature threshold. [0 = disabled]
-		'auto_power_off' : False,
 		'dc_fan': False,
 		'standalone': True,
 		'units' : 'F',
@@ -233,41 +229,46 @@ def default_settings():
 		'time' : math.trunc(time.time())
 	}
 
-	settings['smartstart'] = {
-		'enabled' : False,   # Disable Smart Start by default on new installations
-		'exit_temp' : 120,  # Exit temperature - exits smart start if this temperature is achieved 
-		'temp_range_list' : [60, 80, 90],  # Min Temps for Each Profile
-		'profiles' : [
-			{
-				'startuptime' : 360,  
-				'augerontime' : 15,
-				'p_mode' : 0
-			},
-			{
-				'startuptime' : 360,  
-				'augerontime' : 15,
-				'p_mode' : 1
-			},
-			{
-				'startuptime' : 240,  
-				'augerontime' : 15,
-				'p_mode' : 3
-			},
-			{
-				'startuptime' : 240,  
-				'augerontime' : 15,
-				'p_mode' : 5
-			}
-		]
-	}
-
-	settings['start_to_mode'] = {
-		'after_startup_mode' : 'Smoke',
-		'primary_setpoint' : 165  # If Hold, set the setpoint
-	}
-
 	settings['startup'] = {
-		'prime_on_startup' : 0  # 0 for disabled, or 1-200 for grams
+		'duration' : 240,  # Default startup time (seconds)
+		'prime_on_startup' : 0,  # Prime Amount (grams) [0 = disabled]
+		'startup_exit_temp' : 0,  # Exit startup at this temperature threshold. [0 = disabled]
+		'start_to_mode' : {
+			'after_startup_mode' : 'Smoke',  # Transition to this mode after startup completes
+			'primary_setpoint' : 165  # If Hold, set the setpoint
+		},
+		'smartstart' : {
+			'enabled' : False,   # Disable Smart Start by default on new installations
+			'exit_temp' : 120,  # Exit temperature - exits smart start if this temperature is achieved 
+			'temp_range_list' : [60, 80, 90],  # Min Temps for Each Profile
+			'profiles' : [
+				{
+					'startuptime' : 360,  
+					'augerontime' : 15,
+					'p_mode' : 0
+				},
+				{
+					'startuptime' : 360,  
+					'augerontime' : 15,
+					'p_mode' : 1
+				},
+				{
+					'startuptime' : 240,  
+					'augerontime' : 15,
+					'p_mode' : 3
+				},
+				{
+					'startuptime' : 240,  
+					'augerontime' : 15,
+					'p_mode' : 5
+				}
+			]
+		}
+	}
+
+	settings['shutdown'] = {
+		'shutdown_duration' : 240,  # Default Shutdown time (seconds)
+		'auto_power_off' : False  # Power off the system after shutdown (False = disabled)
 	}
 
 	settings['dashboard'] = {
@@ -1080,7 +1081,7 @@ def upgrade_settings(prev_ver, settings, settings_default):
 	if prev_ver[0] <=1 and prev_ver[1] <= 4:
 		settings['versions'] = settings_default['versions']
 		settings['globals']['first_time_setup'] = True  # Force configuration for probes
-		settings['start_to_mode']['primary_setpoint'] = settings['start_to_mode']['grill1_setpoint']
+		settings['startup']['start_to_mode']['primary_setpoint'] = settings['start_to_mode']['grill1_setpoint']
 		settings['start_to_mode'].pop('grill1_setpoint')
 		settings['dashboard'] = settings_default['dashboard']
 		# Move Notification Settings
@@ -1104,6 +1105,23 @@ def upgrade_settings(prev_ver, settings, settings_default):
 	''' Check if upgrading from v1.6.x or v1.7.0 build 7 '''
 	if (prev_ver[0] <=1 and prev_ver[1] <= 6) or (prev_ver[0] ==1 and prev_ver[1] == 7 and settings['versions'].get('build', 0) <= 7):
 		settings['dashboard'] = settings_default['dashboard']
+	''' Check if upgrading from v1.7.0 build 45 '''
+	if (prev_ver[0] <=1 and prev_ver[1] <= 6) or (prev_ver[0] ==1 and prev_ver[1] == 7 and settings['versions'].get('build', 0) <= 45):
+		# Move startup defaults to new 'startup' section of settings 
+		settings['startup'] = settings_default['startup']
+		settings['startup']['duration'] = settings['globals'].get('startup_timer', settings_default['startup']['duration'])
+		settings['globals'].pop('startup_timer', None)
+		settings['startup']['startup_exit_temp'] = settings['globals'].get('startup_exit_temp', settings_default['startup']['startup_exit_temp'])
+		settings['globals'].pop('startup_exit_temp', None)
+		settings['startup']['start_to_mode'] = settings.get('start_to_mode', settings_default['startup']['start_to_mode'])
+		settings.pop('start_to_mode', None)
+		settings['startup']['smartstart'] = settings.get('smartstart', settings_default['startup']['smartstart'])
+		settings.pop('smartstart', None)
+		settings['shutdown'] = settings_default['shutdown']
+		settings['shutdown']['shutdown_duration'] = settings['globals'].get('shutdown_timer', settings_default['shutdown']['shutdown_duration'])
+		settings['globals'].pop('shutdown_timer', None)
+		settings['shutdown']['auto_power_off'] = settings['globals'].get('auto_power_off', settings_default['shutdown']['auto_power_off'])
+		settings['globals'].pop('auto_power_off', None)
 
 	''' Import any new probe profiles '''
 	for profile in list(settings_default['probe_settings']['probe_profiles'].keys()):
@@ -1592,17 +1610,17 @@ def convert_settings_units(units, settings):
 	:return: Updated Settings
 	"""
 	settings['globals']['units'] = units
-	settings['globals']['startup_exit_temp'] = convert_temp(units, settings['globals']['startup_exit_temp'])
+	settings['startup']['startup_exit_temp'] = convert_temp(units, settings['startup']['startup_exit_temp'])
 	settings['safety']['maxstartuptemp'] = convert_temp(units, settings['safety']['maxstartuptemp'])
 	settings['safety']['maxtemp'] = convert_temp(units, settings['safety']['maxtemp'])
 	settings['safety']['minstartuptemp'] = convert_temp(units, settings['safety']['minstartuptemp'])
 	settings['smoke_plus']['max_temp'] = convert_temp(units, settings['smoke_plus']['max_temp'])
 	settings['smoke_plus']['min_temp'] = convert_temp(units, settings['smoke_plus']['min_temp'])
 	settings['keep_warm']['temp'] = convert_temp(units, settings['keep_warm']['temp'])
-	for temp in range(0, len(settings['smartstart']['temp_range_list'])):
-		settings['smartstart']['temp_range_list'][temp] = convert_temp(
-			units, settings['smartstart']['temp_range_list'][temp])
-	settings['smartstart']['exit_temp'] = convert_temp(units, settings['smartstart']['exit_temp'])
+	for temp in range(0, len(settings['startup']['smartstart']['temp_range_list'])):
+		settings['startup']['smartstart']['temp_range_list'][temp] = convert_temp(
+			units, settings['startup']['smartstart']['temp_range_list'][temp])
+	settings['startup']['smartstart']['exit_temp'] = convert_temp(units, settings['startup']['smartstart']['exit_temp'])
 	return(settings)
 
 def is_real_hardware(settings=None):

@@ -52,7 +52,7 @@
             {% if settings['globals']['dc_fan'] %}
             <a class="nav-link" id="v-pills-pwm-tab" data-toggle="pill" href="#v-pills-pwm" role="tab" aria-controls="v-pills-pwm" aria-selected="false">PWM Settings</a>
             {% endif %}
-            <a class="nav-link" id="v-pills-timers-tab" data-toggle="pill" href="#v-pills-timers" role="tab" aria-controls="v-pills-timers" aria-selected="false">Startup & Shutdown</a>
+            <a class="nav-link" id="v-pills-startup-tab" data-toggle="pill" href="#v-pills-startup" role="tab" aria-controls="v-pills-startup" aria-selected="false">Startup & Shutdown</a>
             <a class="nav-link" id="v-pills-dash-tab" data-toggle="pill" href="#v-pills-dash" role="tab" aria-controls="v-pills-dash" aria-selected="false">Dashboard</a>
             <a class="nav-link" id="v-pills-history-tab" data-toggle="pill" href="#v-pills-history" role="tab" aria-controls="v-pills-history" aria-selected="false">History</a>
             <a class="nav-link" id="v-pills-safety-tab" data-toggle="pill" href="#v-pills-safety" role="tab" aria-controls="v-pills-safety" aria-selected="false">Safety</a>
@@ -779,9 +779,9 @@
             <!-- End of Tab -->
             <!-- ============================ Startup/Shutdown Settings ========================== -->
             {% if request.MOBILE %}<br>{% endif %}
-            <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-timers" role="tabpanel" aria-labelledby="v-pills-timers-tab">
+            <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-startup" role="tabpanel" aria-labelledby="v-pills-startup-tab">
                 <div class="card shadow">
-                    <form name="startshutdowntimers" action="/settings/timers" method="POST">
+                    <form name="startup_shutdown_settings" action="/settings/startup" method="POST">
                         <div class="card-header bg-primary text-white">
                             <h5>
                                 <i class="fas fa-tools"></i>&nbsp; Startup & Shutdown Settings
@@ -800,10 +800,10 @@
 									<i class="small"> Amount of time for startup before transitioning to next mode or attempting a reignite</i>
                                     <div class="input-group mb-3">
 										<div class="input-group-prepend">
-											<span class="input-group-text" data-toggle="tooltip" title="Startup timer (seconds) [Default=240]">
-												<i class="far fa-clock"></i>&nbsp; Startup Timer (seconds)</span>
+											<span class="input-group-text" data-toggle="tooltip" title="Startup Duration (seconds) [Default=240]">
+												<i class="far fa-clock"></i>&nbsp; Startup Duration (seconds)</span>
 										</div>
-										<input id="startup_timer" type="number" min="1" class="form-control" placeholder="{{ settings['globals']['startup_timer'] }}" value="{{ settings['globals']['startup_timer'] }}" name="startup_timer">
+										<input id="startup_duration" type="number" min="1" class="form-control" placeholder="{{ settings['startup']['duration'] }}" value="{{ settings['startup']['duration'] }}" name="startup_duration">
 									</div>
 
 									<span class="badge badge-warning">NOTE:</span>
@@ -816,32 +816,32 @@
                                           </label>
                                         </div>
                                         <select class="custom-select" id="after_startup_mode" name="after_startup_mode">
-                                          <option value="Smoke" {% if settings['start_to_mode']['after_startup_mode'] == 'Smoke' %}selected{% endif %}>Smoke Mode</option>
-                                          <option value="Hold" {% if settings['start_to_mode']['after_startup_mode'] == 'Hold' %}selected{% endif %}>Hold Mode</option>
+                                          <option value="Smoke" {% if settings['startup']['start_to_mode']['after_startup_mode'] == 'Smoke' %}selected{% endif %}>Smoke Mode</option>
+                                          <option value="Hold" {% if settings['startup']['start_to_mode']['after_startup_mode'] == 'Hold' %}selected{% endif %}>Hold Mode</option>
                                         </select>
                                     </div>
 
-                                    <div id="startup_hold_value_input" class="input-group mb-3"{% if settings['start_to_mode']['after_startup_mode'] != 'Hold' %} style="display:none"{% endif %}>
+                                    <div id="startup_hold_value_input" class="input-group mb-3"{% if settings['startup']['start_to_mode']['after_startup_mode'] != 'Hold' %} style="display:none"{% endif %}>
 										<div class="input-group-prepend">
 											<span class="input-group-text" data-toggle="tooltip" title="Setpoint Temperature for Hold Mode">
                                                 <i class="fas fa-temperature-low"></i>&nbsp; Hold Temp</span>
 										</div>
-										<input id="startup_timer" type="number" min="{{ settings['safety']['maxstartuptemp'] }}" max="{{ settings['safety']['maxtemp'] }}" class="form-control" value="{{ settings['start_to_mode']['primary_setpoint'] }}" name="startup_mode_setpoint">
+										<input id="startup_duration" type="number" min="{{ settings['safety']['maxstartuptemp'] }}" max="{{ settings['safety']['maxtemp'] }}" class="form-control" value="{{ settings['startup']['start_to_mode']['primary_setpoint'] }}" name="startup_mode_setpoint">
                                     </div>
 
                                     <br>
                                     <div class="custom-control custom-switch">
-										<input type="checkbox" class="custom-control-input" id="startup_exit_temp_toggle" {% if settings['globals']['startup_exit_temp'] > 0 %}checked{% endif %}>
+										<input type="checkbox" class="custom-control-input" id="startup_exit_temp_toggle" {% if settings['startup']['startup_exit_temp'] > 0 %}checked{% endif %}>
 										<label class="custom-control-label" for="startup_exit_temp_toggle">Exit Startup @ Temperature</label>
 									</div>
                                     <br>
-                                    <div id="startup_exit_temp_input" class="input-group mb-3"{% if settings['globals']['startup_exit_temp'] == 0 %} style="display:none"{% endif %}>
+                                    <div id="startup_exit_temp_input" class="input-group mb-3"{% if settings['startup']['startup_exit_temp'] == 0 %} style="display:none"{% endif %}>
                                         <div class="input-group mb-3">
                                             <div class="input-group-prepend">
                                                 <span class="input-group-text" data-toggle="tooltip" title="Exit startup when this temperature is achieved. [0 = Disabled]">
                                                     <i class="fas fa-temperature-high"></i>&nbsp; Exit Startup Temperature ({{ settings['globals']['units'] }})</span>
                                             </div>
-                                            <input id="startup_exit_temp" type="number" min="0" class="form-control" value="{{ settings['globals']['startup_exit_temp'] }}" name="startup_exit_temp">
+                                            <input id="startup_exit_temp" type="number" min="0" class="form-control" value="{{ settings['startup']['startup_exit_temp'] }}" name="startup_exit_temp">
                                         </div>
                                     </div>
                                     
@@ -876,7 +876,7 @@
                                     <br>
                                     <br>
 									<div class="custom-control custom-switch">
-										<input type="checkbox" class="custom-control-input" id="smartstart_enable" name="smartstart_enable" {% if settings['smartstart']['enabled'] %}checked{% endif %}>
+										<input type="checkbox" class="custom-control-input" id="smartstart_enable" name="smartstart_enable" {% if settings['startup']['smartstart']['enabled'] %}checked{% endif %}>
 										<label class="custom-control-label" for="smartstart_enable">Smart Start Enabled</label>
 									</div>
                                     <br>
@@ -1004,7 +1004,7 @@
 											<span class="input-group-text" data-toggle="tooltip" title="Exit startup when this temperature is achieved. [0 = Disabled]">
 												<i class="fas fa-temperature-high"></i>&nbsp; Exit Startup Temperature ({{ settings['globals']['units'] }})</span>
 										</div>
-										<input id="smartstart_exit_temp" type="number" min="0" class="form-control" placeholder="{{ settings['smartstart']['exit_temp'] }}" value="{{ settings['smartstart']['exit_temp'] }}" name="smartstart_exit_temp">
+										<input id="smartstart_exit_temp" type="number" min="0" class="form-control" placeholder="{{ settings['startup']['smartstart']['exit_temp'] }}" value="{{ settings['startup']['smartstart']['exit_temp'] }}" name="smartstart_exit_temp">
 									</div>
 
 								</div><!-- End of Smart Start Settings Card Body -->
@@ -1021,16 +1021,16 @@
 									<div class="input-group mb-3">
 										<div class="input-group-prepend">
 											<span class="input-group-text" data-toggle="tooltip" title="Shutdown timer (seconds) [Default=60]">
-												<i class="far fa-clock"></i>&nbsp; Shutdown Timer (seconds)</span>
+												<i class="far fa-clock"></i>&nbsp; Shutdown Duration (seconds)</span>
 										</div>
-										<input id="shutdown_timer" type="number" min="1" class="form-control" placeholder="{{ settings['globals']['shutdown_timer'] }}" value="{{ settings['globals']['shutdown_timer'] }}" name="shutdown_timer">
+										<input id="shutdown_duration" type="number" min="1" class="form-control" placeholder="{{ settings['shutdown']['shutdown_duration'] }}" value="{{ settings['shutdown']['shutdown_duration'] }}" name="shutdown_duration">
 									</div>
 									<span class="badge badge-warning">NOTE:</span>
 									<i class="small"> Amount of time fan will run after shutdown is selected </i>
 									<br>
 									<br>
 									<div class="custom-control custom-switch">
-										<input type="checkbox" class="custom-control-input" id="auto_power_off" name="auto_power_off" {% if settings['globals']['auto_power_off'] %}checked{% endif %}>
+										<input type="checkbox" class="custom-control-input" id="auto_power_off" name="auto_power_off" {% if settings['shutdown']['auto_power_off'] %}checked{% endif %}>
 										<label class="custom-control-label" for="auto_power_off">Auto Power Off</label>
 									</div>
                                     <br>

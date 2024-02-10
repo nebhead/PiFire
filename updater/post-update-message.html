@@ -77,13 +77,39 @@
         suggested by Discord user @TSJ)
     </li>
     <li>
-        Behind the scenes improvements including:  Replace 'is_raspberry_pi' with 'is_real_hardware' functions planning for future
-        platform support.  Add require_reboot flag to Wizard items (Added to PWM / DSI Touch Display devices) if a reboot is required
-        when changing this configuration.  Add general commands list to Wizard items (Added to PWM board so no manual edits are required). 
-        Added configuration for dashboards that allow extending/saving features for different dashboards.  Updated the ChartJS version to v3.9.1.
-        Added common deep dictionary update function that allows dictionaries to be updated in a recursive way simplifying the logic of updating
-        dictionaries. Adding system level capabilities so that future functionality can be added (i.e. wifi signal strength, undervolt detection).  
-        Moved Push Bullet and Pushover notifications to utilize the Apprise module (no changes in how they are configured from the webUI).
+        Behind the scenes improvements including:  
+        <ul>
+            <li>
+                Replace 'is_raspberry_pi' with 'is_real_hardware' functions planning for future platform support.  
+            </li>
+            <li>
+                Add require_reboot flag to Wizard items (Added to PWM / DSI Touch Display devices) if a reboot is required
+                when changing this configuration.
+            </li>
+            <li>
+                Add general commands list to Wizard items (Added to PWM board so no manual edits are required). 
+            </li>
+            <li>
+                Added configuration for dashboards that allow extending/saving features for different dashboards.
+            </li>
+            <li>
+                Updated the ChartJS version to v3.9.1.
+            </li>
+            <li>
+                Added common deep dictionary update function that allows dictionaries to be updated in a recursive way simplifying the logic of updating
+                dictionaries.
+            </li>
+            <li>
+                Adding system level capabilities so that future functionality can be added (i.e. wifi signal strength, undervolt detection). 
+            </li>
+            <li>
+                Moved Push Bullet and Pushover notifications to utilize the Apprise module (no changes in how they are configured from the webUI).
+            </li>
+            <li>
+                Moved most startup and shutdown settings to 'startup' and 'shutdown' respectively in the settings.json file for housekeeping purposes. 
+                Heads up to anyone working on any forks or applications that might rely on these settings. 
+            </li>
+        </ul>
     </li>
 </ul>
 

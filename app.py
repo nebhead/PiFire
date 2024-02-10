@@ -1883,33 +1883,33 @@ def settings_page(action=None):
 		write_settings(settings)
 		write_control(control, origin='app')
 
-	if request.method == 'POST' and action == 'timers':
+	if request.method == 'POST' and action == 'startup':
 		response = request.form
 
-		if _is_not_blank(response, 'shutdown_timer'):
-			settings['globals']['shutdown_timer'] = int(response['shutdown_timer'])
-		if _is_not_blank(response, 'startup_timer'):
-			settings['globals']['startup_timer'] = int(response['startup_timer'])
+		if _is_not_blank(response, 'shutdown_duration'):
+			settings['shutdown']['shutdown_duration'] = int(response['shutdown_duration'])
+		if _is_not_blank(response, 'startup_duration'):
+			settings['startup']['duration'] = int(response['startup_duration'])
 		if _is_checked(response, 'auto_power_off'):
-			settings['globals']['auto_power_off'] = True
+			settings['shutdown']['auto_power_off'] = True
 		else:
-			settings['globals']['auto_power_off'] = False
+			settings['shutdown']['auto_power_off'] = False
 		if _is_checked(response, 'smartstart_enable'):
-			settings['smartstart']['enabled'] = True
+			settings['startup']['smartstart']['enabled'] = True
 		else:
-			settings['smartstart']['enabled'] = False
+			settings['startup']['smartstart']['enabled'] = False
 		if _is_not_blank(response, 'smartstart_exit_temp'):
-			settings['smartstart']['exit_temp'] = int(response['smartstart_exit_temp'])
+			settings['startup']['smartstart']['exit_temp'] = int(response['smartstart_exit_temp'])
 		if _is_not_blank(response, 'startup_exit_temp'):
-			settings['globals']['startup_exit_temp'] = int(response['startup_exit_temp'])
+			settings['startup']['startup_exit_temp'] = int(response['startup_exit_temp'])
 		if _is_not_blank(response, 'prime_on_startup'):
 			prime_amount = int(response['prime_on_startup'])
 			if prime_amount < 0 or prime_amount > 200:
 				prime_amount = 0  # Validate input, set to disabled if exceeding limits.  
 			settings['startup']['prime_on_startup'] = int(response['prime_on_startup'])
 
-		settings['start_to_mode']['after_startup_mode'] = response['after_startup_mode']
-		settings['start_to_mode']['primary_setpoint'] = int(response['startup_mode_setpoint'])
+		settings['startup']['start_to_mode']['after_startup_mode'] = response['after_startup_mode']
+		settings['startup']['start_to_mode']['primary_setpoint'] = int(response['startup_mode_setpoint'])
 		
 		event['type'] = 'updated'
 		event['text'] = 'Successfully updated startup/shutdown settings.'
@@ -2087,14 +2087,14 @@ def settings_page(action=None):
 	Smart Start Settings
 	'''
 	if request.method == 'GET' and action == 'smartstart':
-		temps = settings['smartstart']['temp_range_list']
-		profiles = settings['smartstart']['profiles']
+		temps = settings['startup']['smartstart']['temp_range_list']
+		profiles = settings['startup']['smartstart']['profiles']
 		return(jsonify({'temps_list' : temps, 'profiles' : profiles}))
 
 	if request.method == 'POST' and action == 'smartstart':
 		response = request.json 
-		settings['smartstart']['temp_range_list'] = response['temps_list']
-		settings['smartstart']['profiles'] = response['profiles']
+		settings['startup']['smartstart']['temp_range_list'] = response['temps_list']
+		settings['startup']['smartstart']['profiles'] = response['profiles']
 		write_settings(settings)
 		return(jsonify({'result' : 'success'}))
 
