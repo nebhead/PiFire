@@ -99,6 +99,9 @@ def hopper_level():
 						 pelletdb['archive'][pelletdb['current']['pelletid']]['wood']
 	return jsonify({ 'hopper_level' : pelletdb['current']['hopper_level'], 'cur_pellets' : cur_pellets_string })
 
+'''
+This route will be deprecated in an upcoming release and has been replaced with the API calls /api/[get,set]/timer
+'''
 @app.route('/timer', methods=['POST','GET'])
 def timer():
 	global settings 
