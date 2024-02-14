@@ -28,50 +28,54 @@
 		<!-- Navbar Header -->
 		<nav class="navbar sticky-top navbar-dark bg-dark">
 
-			<a class="navbar-brand" href="/">
+			<a class="navbar-brand text-truncate" {% if request.MOBILE %}style="max-width: 210px;"{% endif %} href="/">
 				<img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="30" height="30" class="d-inline-block align-top" alt="">
-				<b>Pi<i class="text-danger">Fire</i></b>{% if grill_name != '' %} | {{ grill_name }}{% endif %}</a>
+				<b>Pi<i class="text-danger">Fire</i></b>
+				{% if grill_name != '' %}
+					| <small class="">{{ grill_name }}</small> 
+				{% endif %}
+			</a>
 				
-				<div class="btn-toolbar" role="toolbar">
-					<div class="btn-group mr-2" role="group">
-						<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-							<i class="fas fa-bars"></i>
-						</button>
-					</div>
-					{% block timer_toggler %}
-					<div class="btn-group mr-2" role="group">
-						<button type="button" class="btn btn-outline-secondary border-secondary" id="timerButton" onclick="timerToggle()">
-							<i class="fas fa-stopwatch"></i>
-						</button>
-					</div>
-					{% endblock %}
+			<div class="btn-toolbar flex-nowrap" role="toolbar">
+				<div class="btn-group mr-2" role="group">
+					<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+						<i class="fas fa-bars"></i>
+					</button>
 				</div>
+				{% block timer_toggler %}
+				<div class="btn-group mr-2" role="group">
+					<button type="button" class="btn btn-outline-secondary border-secondary" id="timerButton" onclick="timerToggle()">
+						<i class="fas fa-stopwatch"></i>
+					</button>
+				</div>
+				{% endblock %}
+			</div>
 
-				<div class="collapse navbar-collapse" id="navbarNav">
-					<ul class="nav navbar-nav mr-auto">
-						<li class="nav-item">
-							<a class="nav-link" href="/">Dashboard</a>
-						</li>
-                        <li class="nav-item">
-							<a class="nav-link" href="/recipes">Recipes</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/pellets">Pellet Manager</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/history">History</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/events">Events</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/settings">Settings</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/admin">Admin</a>
-						</li>
-					</ul>
-				</div>
+			<div class="collapse navbar-collapse" id="navbarNav">
+				<ul class="nav navbar-nav mr-auto">
+					<li class="nav-item">
+						<a class="nav-link" href="/">Dashboard</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="/recipes">Recipes</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="/pellets">Pellet Manager</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="/history">History</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="/events">Events</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="/settings">Settings</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="/admin">Admin</a>
+					</li>
+				</ul>
+			</div>
 		</nav>
 
 		{% block timer_bar %}

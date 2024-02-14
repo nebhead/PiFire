@@ -2444,6 +2444,7 @@ def process_command(action=None, arglist=[], origin='unknown', direct_write=Fals
 				control['notify_data'][index]['req'] = False
 				control['timer']['start'] = 0
 				control['timer']['end'] = 0
+				control['timer']['paused'] = 0
 				control['notify_data'][index]['shutdown'] = False
 				control['notify_data'][index]['keep_warm'] = False
 				write_log('Timer stopped.')
