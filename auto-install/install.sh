@@ -135,6 +135,7 @@ python -m pip install scikit-learn
 python -m pip install ratelimitingfilter
 python -m pip install "pillow>=9.2.0"
 python -m pip install paho-mqtt
+python -m pip install psutil
 
 # Setup config.txt to enable busses 
 clear

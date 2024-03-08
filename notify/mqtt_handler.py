@@ -111,7 +111,7 @@ class MqttNotificationHandler:
 				if self.client == None:
 					
 					# Future: may want to make these configurable
-					self.client = mqtt.Client(transport='tcp', protocol=mqtt.MQTTv5)
+					self.client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, transport='tcp', protocol=mqtt.MQTTv5)
 					self.client.on_connect = self._on_connect
 					self.client.on_disconnect = self._on_disconnect
 					self.client.on_connect_fail = self._on_connect_fail
@@ -155,8 +155,7 @@ class MqttNotificationHandler:
 
 		# self._mqttLogger.debug(f"Recieved message {payload} for {element}")
 
-		# match element:
-		# 	case "mode":
+		# if element == "mode":
 		# 		# If going into Hold mode we need to set the setpoint as well.  Default to 150 if not set.
 		# 		if payload == 'Hold':
 		# 			self.control['primary_setpoint'] = max(self.control['primary_setpoint'], 150)
@@ -167,14 +166,14 @@ class MqttNotificationHandler:
 
 		# 		#TODO when switching to HOLD mode we also need to send a setpoint
 
-		# 	case "primary_setpoint":
+		# elif element == "primary_setpoint":
 		# 		#Only adjust the setpoint if we are in Hold mode
 		# 		if (self.control['mode']) == 'Hold':
 		# 			self.control[element] = int(payload)
 		# 			self.control['updated'] = 'yes'
 		# 			write_control(self.control, direct_write=False, origin='mqtt')
 
-		# 	case _:
+		# 	else:
 		# 		pass
 		pass
 
@@ -211,32 +210,30 @@ class MqttNotificationHandler:
 		ret= self.client.publish(topic, payload, qos, retain, properties)
 
 		# Check the return
-		match ret.rc:
-			case mqtt.MQTT_ERR_SUCCESS:
-				return True
-			case mqtt.MQTT_ERR_CONN_LOST:
-				self._mqttLogger.error(f"Cannot publish data for {topic} because the mqtt connection is lost.")
-				return False
-			case mqtt.MQTT_ERR_AUTH:
-				self._mqttLogger.error(f"Cannot publish data for {topic} because of error {mqtt.connack_string(ret.rc)}")
-				self.client = None
-			case _:
-				self._mqttLogger.error(f"Cannot publish data for {topic} because of error {mqtt.connack_string(ret.rc)}")
-				return False
+		if ret.rc == mqtt.MQTT_ERR_SUCCESS:
+			return True
+		elif ret.rc == mqtt.MQTT_ERR_CONN_LOST:
+			self._mqttLogger.error(f"Cannot publish data for {topic} because the mqtt connection is lost.")
+			return False
+		elif ret.rc == mqtt.MQTT_ERR_AUTH:
+			self._mqttLogger.error(f"Cannot publish data for {topic} because of error {mqtt.connack_string(ret.rc)}")
+			self.client = None
+		else:
+			self._mqttLogger.error(f"Cannot publish data for {topic} because of error {mqtt.connack_string(ret.rc)}")
+			return False
 			
 	def _publish_autodiscover(self, category, topic, payload, qos=2, retain=True, properties=None):
 
 		ret= self.client.publish(topic, payload, qos, retain, properties)
 
 		# Check the return
-		match ret.rc:
-			case mqtt.MQTT_ERR_SUCCESS:
-				if not category in self.initialized_topics:
-					self.initialized_topics.append(category)
-			case mqtt.MQTT_ERR_CONN_LOST:
-				self._mqttLogger.error(f"Cannot publish autodiscover data for {topic} because the mqtt connection is lost.")
-			case _:
-				self._mqttLogger.error(f"Cannot publish autodiscover data for {topic} because of error {mqtt.connack_string(ret.rc)}")
+		if ret.rc == mqtt.MQTT_ERR_SUCCESS:
+			if not category in self.initialized_topics:
+				self.initialized_topics.append(category)
+		elif ret.rc == mqtt.MQTT_ERR_CONN_LOST:
+			self._mqttLogger.error(f"Cannot publish autodiscover data for {topic} because the mqtt connection is lost.")
+		else:
+			self._mqttLogger.error(f"Cannot publish autodiscover data for {topic} because of error {mqtt.connack_string(ret.rc)}")
 	
 	def _publish(self, context, data):
 
@@ -290,92 +287,91 @@ class MqttNotificationHandler:
 					discovery['value_template'] = f"{{{{ value_json.{device} }}}}"
 					discovery['name'] = device.title().replace('_',' ')				
 
-					match data[device]:
-						case bool():
-							component = "binary_sensor"
-							discovery['payload_on'] = True
-							discovery['payload_off'] = False
+					if data[device] == bool():
+						component = "binary_sensor"
+						discovery['payload_on'] = True
+						discovery['payload_off'] = False
+						
+						if device not in {'auger','igniter','power','fan'}:
+							discovery['enabled_by_default'] = False
+
+					elif data[device] == str():
+						component = "sensor"
+
+					elif data[device] == int() or data[device] == float():
+						component = "sensor"
+						discovery['state_class'] = "measurement"
+
+						if context in ['probe_data_primary', 'probe_data_food','probe_data_aux']:
+							discovery['device_class'] = "temperature"
+							discovery['unit_of_measurement'] = f"°{self._global_settings['units']}"
+							suffix = 'Temp'
+
+						if context == 'probe_data_tr':
+							discovery['unit_of_measurement'] = "ohms"
+							discovery['enabled_by_default'] = False
+							discovery['entity_category'] = "diagnostic"
+							suffix = 'RTD Ohms'
+
+						if context.startswith('probe_data'):
+							# Find this probes name in the settings
+							for probe in self._probe_settings:
+								if probe['label'] == device:
+									discovery['name'] = f"{discovery['name']} {suffix}"
+									topic_name = context + '_' + probe['port']
+									break
+
+						if context.startswith('control_notify'):
+							discovery['device_class'] = "temperature"
+							discovery['unit_of_measurement'] = f"°{self._global_settings['units']}"
+							suffix = 'Target'
+							for probe in self._probe_settings:
+								if probe['label'] == data['label']:
+									discovery['name'] = f"{data['name']} {suffix}"
+									topic_name = context
+									break
+
+						if context.startswith('pid'):
+							discovery['entity_category'] = "diagnostic"
+							if device in ['p','i','d','u']:
+								discovery['unit_of_measurement'] = "%"
+								discovery['value_template'] = f"{{{{ value_json.{device} | round(2)}}}}"
+							discovery['enabled_by_default'] = False
 							
-							if device not in {'auger','igniter','power','fan'}:
-								discovery['enabled_by_default'] = False
+						if device in ['u_min', 'u_max', 'center']:
+							discovery['value_template'] = f"{{{{ value_json.{device} * 100 }}}}"
+							discovery['unit_of_measurement'] = "%"
+							discovery['enabled_by_default'] = False
 
-						case str():
-								component = "sensor"
+						if device in ['available_memory', 'free_memory']:
+								discovery['unit_of_measurement'] = "b"
 
-						case int() | float():
-							component = "sensor"
-							discovery['state_class'] = "measurement"
+						if device in ['duty_cycle', 'hopper_level','cpu']:
+							discovery['unit_of_measurement'] = "%"
 
-							if context in ['probe_data_primary', 'probe_data_food','probe_data_aux']:
-								discovery['device_class'] = "temperature"
-								discovery['unit_of_measurement'] = f"°{self._global_settings['units']}"
-								suffix = 'Temp'
+						if device in ['PB', 'Td', 'Ti', 'HoldCycleTime', 'LidOpenPauseTime']:
+							discovery['unit_of_measurement'] = "s"
+							discovery['enabled_by_default'] = False
 
-							if context == 'probe_data_tr':
-								discovery['unit_of_measurement'] = "ohms"
-								discovery['enabled_by_default'] = False
-								discovery['entity_category'] = "diagnostic"
-								suffix = 'RTD Ohms'
+						if device == 'cpu_temp':
+							discovery['device_class'] = "temperature"
+							discovery['unit_of_measurement'] = "°C"
 
-							if context.startswith('probe_data'):
-								# Find this probes name in the settings
-								for probe in self._probe_settings:
-									if probe['label'] == device:
-										discovery['name'] = f"{discovery['name']} {suffix}"
-										topic_name = context + '_' + probe['port']
-										break
+						if device in ['primary_setpoint']:
+							discovery['device_class'] = "temperature"
+							discovery['unit_of_measurement'] = f"°{self._global_settings['units']}"
 
-							if context.startswith('control_notify'):
-								discovery['device_class'] = "temperature"
-								discovery['unit_of_measurement'] = f"°{self._global_settings['units']}"
-								suffix = 'Target'
-								for probe in self._probe_settings:
-									if probe['label'] == data['label']:
-										discovery['name'] = f"{data['name']} {suffix}"
-										topic_name = context
-										break
+							#if self._mqtt_settings['control']:
+								#component = "number"
 
-							if context.startswith('pid'):
-								discovery['entity_category'] = "diagnostic"
-								if device in ['p','i','d','u']:
-									discovery['unit_of_measurement'] = "%"
-									discovery['value_template'] = f"{{{{ value_json.{device} | round(2)}}}}"
-								discovery['enabled_by_default'] = False
-								
-							if device in ['u_min', 'u_max', 'center']:
-								discovery['value_template'] = f"{{{{ value_json.{device} * 100 }}}}"
-								discovery['unit_of_measurement'] = "%"
-								discovery['enabled_by_default'] = False
-
-							if device in ['available_memory', 'free_memory']:
-									discovery['unit_of_measurement'] = "b"
-
-							if device in ['duty_cycle', 'hopper_level','cpu']:
-								discovery['unit_of_measurement'] = "%"
-
-							if device in ['PB', 'Td', 'Ti', 'HoldCycleTime', 'LidOpenPauseTime']:
-								discovery['unit_of_measurement'] = "s"
-								discovery['enabled_by_default'] = False
-
-							if device == 'cpu_temp':
-								discovery['device_class'] = "temperature"
-								discovery['unit_of_measurement'] = "°C"
-
-							if device in ['primary_setpoint']:
-								discovery['device_class'] = "temperature"
-								discovery['unit_of_measurement'] = f"°{self._global_settings['units']}"
-
-								#if self._mqtt_settings['control']:
-									#component = "number"
-
-									# Make setpoint subscribeable and subscribe to it
-									#discovery['command_topic'] = f"{discovery['state_topic']}/set/{device}"
-									#discovery['min'] = 100
-									#discovery['max'] = 700
-									#discovery['mode'] = 'auto'
-									#discovery['optimistic'] = 'false'
-									#discovery['step'] = 1
-									#self._subscribe(discovery['command_topic'])
+								# Make setpoint subscribeable and subscribe to it
+								#discovery['command_topic'] = f"{discovery['state_topic']}/set/{device}"
+								#discovery['min'] = 100
+								#discovery['max'] = 700
+								#discovery['mode'] = 'auto'
+								#discovery['optimistic'] = 'false'
+								#discovery['step'] = 1
+								#self._subscribe(discovery['command_topic'])
 							
 					self._publish_autodiscover(
 									device, 
@@ -450,15 +446,15 @@ class MqttNotificationHandler:
 				aux_data = {}
 				tr_data = {}
 				for probe in self._probe_settings:
-					match probe['type']:
-						case 'Food':
-							food_data[probe['label']] = 0
-						case 'Primary':
-							primary_data[probe['label']] = 0
-						case 'aux':
-							aux_data[probe['label']] = 0
-						case _:
-							pass
+					if probe['type'] == 'Food':
+						food_data[probe['label']] = 0
+					elif probe['type'] ==  'Primary':
+						primary_data[probe['label']] = 0
+					elif probe['type'] ==  'aux':
+						aux_data[probe['label']] = 0
+					else:
+						pass
+
 					tr_data[probe['label']] = 0
 				self._publish('probe_data_primary', primary_data)
 				self._publish('probe_data_food', food_data)
