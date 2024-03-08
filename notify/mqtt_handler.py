@@ -111,7 +111,7 @@ class MqttNotificationHandler:
 				if self.client == None:
 					
 					# Future: may want to make these configurable
-					self.client = mqtt.Client(transport='tcp', protocol=mqtt.MQTTv5)
+					self.client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, transport='tcp', protocol=mqtt.MQTTv5)
 					self.client.on_connect = self._on_connect
 					self.client.on_disconnect = self._on_disconnect
 					self.client.on_connect_fail = self._on_connect_fail
