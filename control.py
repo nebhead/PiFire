@@ -23,6 +23,7 @@ import logging
 import importlib
 from common import *  # Common Module for WebUI and Control Program
 from common.process_mon import Process_Monitor
+from common.redis_queue import RedisQueue
 from notify.notifications import *
 from file_mgmt.recipes import convert_recipe_units
 from file_mgmt.cookfile import create_cookfile
@@ -236,6 +237,28 @@ def _start_fan(settings, duty_cycle=None):
 	else:
 		grill_platform.fan_on()
 
+def _process_system_commands(grill_platform):
+	# Setup access to the system command queue 
+	system_commands = RedisQueue('control:systemq')
+	# Setup access to the system output queue
+	system_output = RedisQueue('control:systemo')
+	# Get list of supported system commands 
+	supported_cmds = grill_platform.supported_commands(None)['data']['supported_cmds']
+	
+	while system_commands.length() > 0:
+		command = system_commands.pop()
+		if command[0] in supported_cmds:
+			command_method = getattr(grill_platform, command[0])
+			result = command_method(command)
+			result['command'] = command
+		else:
+			result = {
+				'command' : command,
+				'result' : 'ERROR',
+				'message' : f'ERROR: Command [{command[0]}] is not supported with the current platform.',
+				'data' : {}
+			}
+		system_output.push(result)
 
 def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device):
 	"""
@@ -492,6 +515,8 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 
 		execute_control_writes()
 		control = read_control()
+
+		_process_system_commands(grill_platform)
 
 		# Check if new mode has been requested
 		if control['updated']:
@@ -1060,6 +1085,8 @@ while True:
 	# 1. Check control for changes 
 	execute_control_writes()
 	control = read_control()
+	# 2. Check for system commands
+	_process_system_commands(grill_platform)
 
 	# Check if there is a timer running, see if it has expired, send notification and reset
 	for index, item in enumerate(control['notify_data']):

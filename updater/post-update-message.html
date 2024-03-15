@@ -86,6 +86,12 @@
                      Attempted to address the issue on the mobile Web UI where a long Grill Name (on the NAV Bar) would push the navbar menu to the next line.
                  </li>
                  <li>
+                     Added wifi link quality to the admin system information. 
+                 </li>
+                 <li>
+                     Added throttling and undervoltage detection which is currently reported via the admin system information. 
+                 </li>
+                 <li>
                      Behind the scenes improvements including:  
                      <ul>
                          <li>
@@ -117,6 +123,9 @@
                          <li>
                              Moved most startup and shutdown settings to 'startup' and 'shutdown' respectively in the settings.json file for housekeeping purposes. 
                              Heads up to anyone working on any forks or applications that might rely on these settings. 
+                         </li>
+                         <li>
+                             Added system functions/commands so that specific system commands can be customized per platform (i.e. in the future allow for other SBCs)
                          </li>
                      </ul>
                  </li>

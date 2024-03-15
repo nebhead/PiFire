@@ -26,6 +26,7 @@ import random
 import logging
 from collections.abc import Mapping
 from ratelimitingfilter import RateLimitingFilter
+from common.redis_queue import RedisQueue
 
 # *****************************************
 # Constants and Globals 
@@ -759,6 +760,9 @@ def read_control(flush=False):
 			# Remove all control structures in Redis DB (not history or current)
 			cmdsts.delete('control:general')
 			cmdsts.delete('control:command')
+			cmdsts.delete('control:write')
+			cmdsts.delete('control:systemq')
+			cmdsts.delete('control:systemo')
 			# The following set's no persistence so that we don't get writes to the disk / SDCard 
 			cmdsts.config_set('appendonly', 'no')
 			cmdsts.config_set('save', '')
@@ -2542,11 +2546,17 @@ def process_command(action=None, arglist=[], origin='unknown', direct_write=Fals
 			/api/cmd/shutdown
 			'''
 			shutdown_system()
-		
+
 		else:
 			data['result'] = 'ERROR'
 			data['message'] = f'CMD API Argument: {arglist[0]} not recognized.'
-	
+
+	elif action == 'sys':
+		''' System Control Commands '''
+		
+		system_command_queue = RedisQueue('control:systemq')
+		system_command_queue.push(arglist)
+
 	else:
 		data['result'] = 'ERROR'
 		data['message'] = f'Action [{action}] not valid/recognized.'

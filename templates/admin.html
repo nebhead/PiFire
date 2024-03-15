@@ -2,23 +2,6 @@
 
 {% block title %}Admin{% endblock %} 
 
-{% block notify %}
-<!-- Settings Success -->
-{% if (notify == "success") %}
-<br>
-<div class="alert alert-success alert-dismissible">
-	<button type="button" class="close" data-dismiss="alert">&times;</button>
-	<b> Changes Successfully Applied.</b>
-</div>
-{% elif notify == "error" %}
-<br>
-<div class="alert alert-danger alert-dismissible">
-	<button type="button" class="close" data-dismiss="alert">&times;</button>
-	<b> There was an error with the attempted action.</b>
-</div>
-{% endif %}
-{% endblock %}
-
 {% block content %}
 <br>
 <div class="row">
@@ -619,6 +602,59 @@
 					</div>
 				</div>
 				<br>
+				<!-- Wifi Card -->
+				{% if 'wifi_quality_percentage' in control['system'].keys() %}
+				<div class="card shadow">
+					<div class="card-header bg-secondary text-white">
+						<h5>
+							<i class="fa-solid fa-house-signal"></i>&nbsp; Wifi Quality
+						</h5>
+					</div>
+					<div class="card-body">
+						<b>Wifi Link Quality: </b>{{ control['system']['wifi_quality_value'] }} / {{ control['system']['wifi_quality_max'] }}<br>
+						<b>Wifi Quality Percentage: </b>
+						<span style="color:{% if control['system']['wifi_quality_percentage'] > 70 %}green{% elif control['system']['wifi_quality_percentage'] > 25 %}orange{% else %}red{% endif %}">
+						{{ control['system']['wifi_quality_percentage'] }}%<br>
+						</span>
+					</div>
+				</div>
+				<br>
+				{% endif %}
+				<!-- CPU Card -->
+				{% if 'cpu_temp' in control['system'].keys() %}
+				<div class="card shadow">
+					<div class="card-header bg-secondary text-white">
+						<h5>
+							<i class="fa-solid fa-microchip"></i>&nbsp; CPU Status/Health
+						</h5>
+					</div>
+					<div class="card-body">
+						<b>CPU Temperature: </b>
+						<span style="color:{% if control['system']['cpu_temp'] < 50 %}green{% elif control['system']['cpu_temp'] < 80 %}orange{% else %}red{% endif %}">
+						{{ control['system']['cpu_temp'] }}&deg;C
+						</span><br>
+						{% if 'cpu_throttled' in control['system'].keys() %}
+						<b>CPU Throttled: </b>
+							{% if control['system']['cpu_throttled'] %}
+							<span style="color:red"><i class="fa-regular fa-hand"></i>&nbsp;CPU Throttling was detected!</span>
+							{% else %}
+							<span style="color:green"><i class="fa-solid fa-road-circle-check"></i>&nbsp;No throttling was detected.</span>
+							{% endif %}
+							<br>
+						{% endif %}
+						{% if 'cpu_under_voltage' in control['system'].keys() %}
+						<b>CPU Under-voltage Event: </b>
+							{% if control['system']['cpu_under_voltage'] %}
+							<span style="color:red"><i class="fa-solid fa-bolt"></i>&nbsp;CPU Under-voltage was detected! Check your power supply.</span> 
+							{% else %}
+							<span style="color:green"><i class="fa-solid fa-plug-circle-check"></i>&nbsp;No under-voltage events were detected.</span>
+							{% endif %}
+							<br>
+						{% endif %}
+					</div>
+				</div>
+				<br>
+				{% endif %}
 				<!-- System Info -->
 				<div class="card shadow">
 					<div class="card-header bg-secondary text-white">
@@ -627,14 +663,12 @@
 						</h5>
 					</div>
 					<div class="card-body">
-						<b>CPU Info</b><br>
+						<b>CPU Info:</b><br>
 						{% for line in cpuinfo %}
 							{{ line }}<br>
 						{% endfor %}
 						<br>
-						<p><b>CPU Temperature:</b> {{ temp }}</p>
-						<br>
-						<b>Network Info</b><br>
+						<b>Network Info:</b><br>
 						{% for lines in ifconfig %}
 							{{ lines }}<br>
 						{% endfor %}

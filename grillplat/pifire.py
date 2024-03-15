@@ -16,6 +16,7 @@
 # *****************************************
 
 import subprocess
+from common import is_float
 from gpiozero import OutputDevice
 from gpiozero import Button
 
@@ -73,7 +74,24 @@ class GrillPlatform:
 		self.current['fan'] = self.fan.is_active
 		return self.current
 	
-	def check_throttled():
+	def supported_commands(self, arglist):
+		supported_commands = [
+			'check_throttled',
+			'check_wifi_quality',
+			'check_cpu_temp',
+			'supported_commands'
+		]
+
+		data = {
+			'result' : 'OK',
+			'message' : 'Supported commands listed in "data".',
+			'data' : {
+				'supported_cmds' : supported_commands
+			}
+		}
+		return data
+
+	def check_throttled(self, arglist):
 		"""Checks for under-voltage and throttling using vcgencmd.
 
 		Returns:
@@ -87,11 +105,29 @@ class GrillPlatform:
 		under_voltage = bool(status_int & 0x10000)  # Check bit 16 for under-voltage
 		throttled = bool(status_int & 0x5)  # Check bits 0 and 2 for active throttling
 
-		return under_voltage, throttled
+		if under_voltage or throttled:
+			message = 'WARNING: Under-voltage or throttled situation detected'
+		else:
+			message = 'No under-voltage or throttling detected.'
+
+		data = {
+			'result' : 'OK',
+			'message' : message,
+			'data' : {
+				'under_voltage' : under_voltage,
+				'throttled' : throttled
+			}
+		}
+		return data
 
 
-	def check_wifi_quality():
+	def check_wifi_quality(self, arglist):
 		"""Checks the Wi-Fi signal quality on a Raspberry Pi and returns the percentage value (or None if not connected)."""
+		data = {
+			'result' : 'ERROR',
+			'message' : 'Unable to obtain wifi quality data.',
+			'data' : {}
+		}
 
 		try:
 			# Use iwconfig to get the signal quality
@@ -107,15 +143,36 @@ class GrillPlatform:
 					try:
 						quality_value, quality_max = quality_parts.split("/")  # Split for numerical values
 						percentage = (int(quality_value) / int(quality_max)) * 100
-						return round(percentage, 2)  # Round to two decimal places
+						data['result'] = 'OK'
+						data['message'] = 'Successfully obtained wifi quality data.'
+						data['data']['quality_value'] = int(quality_value)
+						data['data']['quality_max'] = int(quality_max)
+						data['data']['quality_percentage'] = round(percentage, 2)  # Round to two decimal places
 
 					except ValueError:
 						# Handle cases where the value might not be directly convertible to an integer
-						return None
+						return data
 
 		except subprocess.CalledProcessError:
 			# Handle errors, such as iwconfig not being found or wlan0 not existing
 			pass
 
-		# Return None if not connected or if there was an error
-		return None
+		return data
+
+	def check_cpu_temp(self, arglist):
+		output = subprocess.check_output(["vcgencmd", "measure_temp"])
+		temp = output.decode("utf-8").replace("temp=","").replace("'C", "").replace("\n", "")
+
+		if is_float(temp):
+			temp = float(temp)
+		else:
+			temp = 0.0
+
+		data = {
+			'result' : 'OK',
+			'message' : 'Success.',
+			'data' : {
+				'cpu_temp' : float(temp)
+			}
+		}
+		return data

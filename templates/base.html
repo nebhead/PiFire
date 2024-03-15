@@ -106,6 +106,15 @@
 					</div>
 				{% endfor %}
 			{% endif %}
+			{% if success is defined %}
+				{% if success != [] %}<br>{% endif %}
+				{% for message in success %}
+					<div class="alert alert-success alert-dismissible">
+						<button type="button" class="close" data-dismiss="alert">&times;</button>
+						<b><i class="fa-solid fa-circle-info"></i>&nbsp; Success:</b> <i>{{ message }}</i>
+					</div>
+				{% endfor %}
+			{% endif %}
 			<!-- End Error Notification Section -->
 		{% endblock %}
 
