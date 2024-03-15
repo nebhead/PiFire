@@ -2311,6 +2311,9 @@ def admin_page(action=None):
 	if 'check_wifi_quality' in supported_cmds:
 		process_command(action='sys', arglist=['check_wifi_quality'], origin='admin')  # Request supported commands 
 		data = _get_system_command_output(requested='check_wifi_quality')
+		if data['result'] != 'OK':
+			event = data['message']
+			errors.append(event)
 		control['system']['wifi_quality_value'] = data['data'].get('wifi_quality_value', None)
 		control['system']['wifi_quality_max'] = data['data'].get('wifi_quality_max', None)
 		control['system']['wifi_quality_percentage'] = data['data'].get('wifi_quality_percentage', None)
@@ -2318,6 +2321,9 @@ def admin_page(action=None):
 	if 'check_throttled' in supported_cmds:
 		process_command(action='sys', arglist=['check_throttled'], origin='admin')  # Request supported commands 
 		data = _get_system_command_output(requested='check_throttled')
+		if data['result'] != 'OK':
+			event = data['message']
+			errors.append(event)
 		control['system']['cpu_throttled'] = data['data'].get('cpu_throttled', None)
 		control['system']['cpu_under_voltage'] = data['data'].get('cpu_under_voltage', None)
 
@@ -2329,6 +2335,9 @@ def admin_page(action=None):
 	if 'check_cpu_temp' in supported_cmds:
 		process_command(action='sys', arglist=['check_cpu_temp'], origin='admin')  # Request supported commands 
 		data = _get_system_command_output(requested='check_cpu_temp')
+		if data['result'] != 'OK':
+			event = data['message']
+			errors.append(event)
 		control['system']['cpu_temp'] = data['data'].get('cpu_temp', None)
 
 	write_control(control)
@@ -2421,6 +2430,11 @@ def api_page(action=None, arg0=None, arg1=None, arg2=None, arg3=None):
 		arglist.extend([arg0, arg1, arg2, arg3])
 
 		data = process_command(action=action, arglist=arglist, origin='api')
+
+		if action == 'sys':
+			''' If system command, wait for output from control '''
+			data = _get_system_command_output(requested=arg0)
+		
 		return jsonify(data), 201
 	
 	elif request.method == 'GET':

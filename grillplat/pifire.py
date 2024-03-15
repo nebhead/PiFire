@@ -16,13 +16,14 @@
 # *****************************************
 
 import subprocess
-from common import is_float
+from common import is_float, create_logger
 from gpiozero import OutputDevice
 from gpiozero import Button
 
 class GrillPlatform:
 
 	def __init__(self, outpins, inpins, triggerlevel='LOW'):
+		self.logger = create_logger('control')
 		self.outpins = outpins # { 'power' : 4, 'auger' : 14, 'fan' : 15, 'igniter' : 18 }
 		self.inpins = inpins # { 'selector' : 17 }
 		self.current = {}
@@ -74,6 +75,10 @@ class GrillPlatform:
 		self.current['fan'] = self.fan.is_active
 		return self.current
 	
+	'''
+	System Commands 
+	'''
+
 	def supported_commands(self, arglist):
 		supported_commands = [
 			'check_throttled',
@@ -114,10 +119,11 @@ class GrillPlatform:
 			'result' : 'OK',
 			'message' : message,
 			'data' : {
-				'under_voltage' : under_voltage,
-				'throttled' : throttled
+				'cpu_under_voltage' : under_voltage,
+				'cpu_throttled' : throttled
 			}
 		}
+		self.logger.debug(f'Check Throttled Called. [data = {data}]')
 		return data
 
 
@@ -145,18 +151,20 @@ class GrillPlatform:
 						percentage = (int(quality_value) / int(quality_max)) * 100
 						data['result'] = 'OK'
 						data['message'] = 'Successfully obtained wifi quality data.'
-						data['data']['quality_value'] = int(quality_value)
-						data['data']['quality_max'] = int(quality_max)
-						data['data']['quality_percentage'] = round(percentage, 2)  # Round to two decimal places
+						data['data']['wifi_quality_value'] = int(quality_value)
+						data['data']['wifi_quality_max'] = int(quality_max)
+						data['data']['wifi_quality_percentage'] = round(percentage, 2)  # Round to two decimal places
 
 					except ValueError:
 						# Handle cases where the value might not be directly convertible to an integer
-						return data
+						pass
 
 		except subprocess.CalledProcessError:
 			# Handle errors, such as iwconfig not being found or wlan0 not existing
+			self.logger.debug(f'Check Throttled had a subprocess error')
 			pass
 
+		self.logger.debug(f'Check Throttled Called. [data = {data}]')
 		return data
 
 	def check_cpu_temp(self, arglist):
@@ -175,4 +183,5 @@ class GrillPlatform:
 				'cpu_temp' : float(temp)
 			}
 		}
+		self.logger.debug(f'Check CPU Temp Called. [data = {data}]')
 		return data

@@ -65,7 +65,7 @@ try:
 	GrillPlatModule = importlib.import_module(f'grillplat.{grill_platform}')
 
 except:
-	controlLogger.exception(f'Error occurred loading grillplatform module ({filename}). Trace dump: ')
+	controlLogger.exception(f'Error occurred loading grillplatform module ({settings["modules"]["grillplat"]}). Trace dump: ')
 	GrillPlatModule = importlib.import_module('grillplat.prototype')
 	error_event = f'An error occurred loading the [{settings["modules"]["grillplat"]}] platform module.  The ' \
 		f'prototype module has been loaded instead.  This sometimes means that the hardware is not connected ' \
@@ -94,7 +94,7 @@ try:
 	else:
 		grill_platform = GrillPlatModule.GrillPlatform(out_pins, in_pins, trigger_level)
 except:
-	controlLogger.exception(f'Error occurred configuring grillplatform module ({filename}). Trace dump: ')
+	controlLogger.exception(f'Error occurred configuring grillplatform module ({settings["modules"]["grillplat"]}). Trace dump: ')
 	from grillplat.prototype import GrillPlatform  # Simulated Library for controlling the grill platform
 	grill_platform = GrillPlatform(out_pins, in_pins, trigger_level)
 	error_event = f'An error occurred configuring the [{settings["modules"]["grillplat"]}] platform object.  The ' \
@@ -154,7 +154,7 @@ try:
 	display_device = DisplayModule.Display(dev_pins=dev_pins, buttonslevel=buttons_level,
 										   rotation=disp_rotation, units=units, config=display_config)
 except:
-	controlLogger.exception(f'Error occurred configuring the display module ({filename}). Trace dump: ')
+	controlLogger.exception(f'Error occurred configuring the display module ({settings["modules"]["display"]}). Trace dump: ')
 	from display.none import Display  # Simulated Library for controlling the grill platform
 	display_device = Display(dev_pins=dev_pins, buttonslevel=buttons_level, rotation=disp_rotation, units=units, config={})
 	error_event = f'An error occurred configuring the [{settings["modules"]["display"]}] display object.  The ' \
@@ -242,10 +242,13 @@ def _process_system_commands(grill_platform):
 	system_commands = RedisQueue('control:systemq')
 	# Setup access to the system output queue
 	system_output = RedisQueue('control:systemo')
-	# Get list of supported system commands 
-	supported_cmds = grill_platform.supported_commands(None)['data']['supported_cmds']
-	
+	# Initialize variable for supported commands (only look for supported commands if we have something to process)
+	supported_cmds = []
+
 	while system_commands.length() > 0:
+		if supported_cmds == []:
+			# Get list of supported system commands 
+			supported_cmds = grill_platform.supported_commands(None)['data']['supported_cmds']
 		command = system_commands.pop()
 		if command[0] in supported_cmds:
 			command_method = getattr(grill_platform, command[0])
