@@ -613,7 +613,7 @@
 					<div class="card-body">
 						<b>Wifi Link Quality: </b>{{ control['system']['wifi_quality_value'] }} / {{ control['system']['wifi_quality_max'] }}<br>
 						<b>Wifi Quality Percentage: </b>
-						{% if control['system']['wifi_quality_percentage'] is not None %}
+						{% if control['system']['wifi_quality_percentage'] is not none %}
 						<span style="color:{% if control['system']['wifi_quality_percentage'] > 70 %}green{% elif control['system']['wifi_quality_percentage'] > 25 %}orange{% else %}red{% endif %}">
 						{{ control['system']['wifi_quality_percentage'] }}%<br>
 						</span>
