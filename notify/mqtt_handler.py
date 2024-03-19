@@ -285,9 +285,11 @@ class MqttNotificationHandler:
 					discovery['object_id'] = f"{self.pifire_id}_{device_name}".lower()
 					discovery['unique_id'] = f"{self.pifire_id}_{device_name}".lower()
 					discovery['value_template'] = f"{{{{ value_json.{device} }}}}"
-					discovery['name'] = device.title().replace('_',' ')				
+					discovery['name'] = device.title().replace('_',' ')	
 
-					if data[device] == bool():
+					datatype = type(data[device])			
+
+					if datatype == bool:
 						component = "binary_sensor"
 						discovery['payload_on'] = True
 						discovery['payload_off'] = False
@@ -295,10 +297,10 @@ class MqttNotificationHandler:
 						if device not in {'auger','igniter','power','fan'}:
 							discovery['enabled_by_default'] = False
 
-					elif data[device] == str():
+					elif datatype == str:
 						component = "sensor"
 
-					elif data[device] == int() or data[device] == float():
+					elif datatype == int or datatype == float:
 						component = "sensor"
 						discovery['state_class'] = "measurement"
 
@@ -413,7 +415,11 @@ class MqttNotificationHandler:
 				data['available_memory'] = psutil.virtual_memory().available
 				data['free_memory'] = psutil.virtual_memory().free
 				if 'sensors_temperatures' in dir(psutil):
-					data['cpu_temp'] = psutil.sensors_temperatures()["cpu_thermal"][0]
+					# This is for raspberry PI.  Other hardware may be different
+					temps = psutil.sensors_temperatures()
+					if 'cpu_thermal' in temps:
+						cpu_temps = temps['cpu_thermal']
+						data['cpu_temp'] = cpu_temps[0].current
 
 			# Publish the data we are interested in
 			if context in self.CONTEXTS or context.startswith('control_notify_data'): 
