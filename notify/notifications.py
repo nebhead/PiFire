@@ -44,28 +44,30 @@ def check_notify(settings, control, in_data=None, pelletdb=None, grill_platform=
 	:param grill_platform: Grill Platform
 	"""
 
+	# If pelletdb or grill_platform is not populated, exit
+	if not pelletdb or not grill_platform:
+		return
+
 	# Forward to mqtt if enabled.
 	if settings['notify_services'].get('mqtt') != None and \
 	   settings['notify_services']['mqtt']['enabled'] == True:
 		_send_mqtt_notification(control, settings, pelletdb, in_data, grill_platform, pid_data)
-
-	if not pelletdb or not grill_platform:
-		return
 
 	if settings['notify_services']['influxdb']['url'] != '' and settings['notify_services']['influxdb']['enabled']:
 		_send_influxdb_notification('GRILL_STATE', control, settings, pelletdb, in_data, grill_platform)
 
 	''' Get simple list of temperatures key:value pairs '''
 	probe_temp_list = {}
-	for group in in_data['probe_history']:
-		if group != 'tr':
-			for probe in in_data['probe_history'][group]:
-				probe_temp_list[probe] = in_data['probe_history'][group][probe]
+	if in_data is not None:
+		for group in in_data['probe_history']:
+			if group != 'tr':
+				for probe in in_data['probe_history'][group]:
+					probe_temp_list[probe] = in_data['probe_history'][group][probe]
 
 	''' Process all registered notification items '''
 	for index, item in enumerate(control['notify_data']):
 		if item['req']: 
-			if item['type'] == 'probe':
+			if item['type'] == 'probe' and in_data is not None:
 				# Update the ETA, if requested for any active probe
 				if update_eta:
 					num_minutes = 20  # Number of minutes of history to grab
@@ -111,6 +113,11 @@ def check_notify(settings, control, in_data=None, pelletdb=None, grill_platform=
 						send_notifications("Pellet_Level_Low", control, settings, pelletdb)
 						control['notify_data'][index]['last_check'] = time.time()
 			
+			elif item['type'] == 'test':
+				send_notifications("Test_Notify", control, settings, pelletdb)
+				control['notify_data'][index]['last_check'] = time.time()
+				control['notify_data'][index]['req'] = False
+
 			''' Do Shutdown or Keep Warm if Requested '''
 			if item['shutdown'] and control['mode'] in ('Reignite', 'Startup', 'Smoke', 'Hold') and not control['notify_data'][index]['req']:
 				control['mode'] = 'Shutdown'
@@ -201,6 +208,12 @@ def send_notifications(notify_event, control, settings, pelletdb, label='Probe',
 		body_message = control['recipe']['step_data']['message'] + str(now)
 		channel = 'pifire_recipe_message'
 		query_args = {"value1": control['recipe']['step_data']['message']}
+		eventLogger.info(body_message)
+	elif "Test_Notify" in notify_event:
+		title_message = "Test Notification"
+		body_message = "This is a test notification from PiFire."
+		channel = 'pifire_test_message'
+		query_args = {"value1": "This is a test notification from PiFire."}
 		eventLogger.info(body_message)
 	else:
 		title_message = "PiFire: Unknown Notification issue"

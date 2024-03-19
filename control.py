@@ -1091,6 +1091,15 @@ while True:
 	# 2. Check for system commands
 	_process_system_commands(grill_platform)
 
+	# Check if there were updates to any of the settings that were flagged
+	if control['settings_update']:
+		control['settings_update'] = False
+		write_control(control, direct_write=True, origin='control')
+		settings = read_settings()
+
+	# Check if there are any notifications pending
+	check_notify(settings, control, pelletdb=pelletdb, grill_platform=grill_platform)
+
 	# Check if there is a timer running, see if it has expired, send notification and reset
 	for index, item in enumerate(control['notify_data']):
 		if item['type'] == 'timer' and item['req']:
@@ -1246,7 +1255,7 @@ while True:
 				_work_cycle('Startup', grill_platform, probe_complex, display_device, dist_device)
 				# Select Next Mode
 				settings = read_settings()
-				_next_mode(control['next_mode'], setpoint=settings['startup']['start_to_mode']['primary_setpoint'])			
+				_next_mode(control['next_mode'], setpoint=settings['startup']['start_to_mode']['primary_setpoint'])
 
 		# Smoke (smoke cycle)
 		elif control['mode'] == 'Smoke':
@@ -1292,8 +1301,6 @@ while True:
 			write_control(control, direct_write=True, origin='control')
 			_work_cycle('Reignite', grill_platform, probe_complex, display_device, dist_device)
 			_next_mode(control['next_mode'], setpoint=setpoint)
-	
-	check_notify(settings, control, pelletdb=pelletdb)
 
 	time.sleep(0.1)
 # ===================

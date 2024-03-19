@@ -25,7 +25,7 @@
                  </li>
                  <li>
                      Exit Startup temperature (suggested by @EPGrillz), allows you to set a temperature/threshold where the grill will exit 
-                     startup and go into the next mode.  This can be configured in settings.  If the grill starts hot and has already exceeded 
+                     startup and go into the next mode.  This can be configured in <a href="/settings">settings</a>.  If the grill starts hot and has already exceeded 
                      this temperature, then the grill will continue with startup for the normal amount of time.  
                  </li>
                  <li>
@@ -52,14 +52,14 @@
                      Added support for v2.1.0 Android Application.  Thank you to @weberbox for updating the app to work with the latest PiFire changes!
                  </li>
                  <li>
-                     Improved visibility of save buttons on the settings page. (Suggested by @chrisusernamechanged)
+                     Improved visibility of save buttons on the <a href="/settings">settings</a> page. (Suggested by @chrisusernamechanged)
                  </li>
                  <li>
                      Added support for DS18B20 1-Wire Thermometer, mainly to be used for calibration of other probes as it does not have adequate temperature
                      ranges for actual grill usages. This probe is currently experimental. 
                  </li>
                  <li>
-                     Complete overhaul of the tuning tool, including adding an auto-tuner. The tools are now more mobile friendly, meaning you can use your phone
+                     Complete overhaul of the <a href="/tuner">tuning tools</a>, including adding an auto-tuner. The tools are now more mobile friendly, meaning you can use your phone
                      to go through the process of tuning your probes.  In addition, the auto-tuner allows you to tune any of your resistance based probes against
                      any other probe in the system (for example utilizing the new DS18B20 probe).  
                  </li>
@@ -68,7 +68,7 @@
                  </li>
                  <li>
                      Added safety feature to require a confirmation when pressing the startup button on the WebUI control panel.  This will help to prevent 
-                     false/accidental startup button presses.
+                     false/accidental startup button presses. This can be disabled in <a href="/settings">settings</a> if desired.
                  </li>
                  <li>
                      New API capabilities including a much simplified API interface for setting and getting data.  Details in the updated documentation. 
@@ -76,7 +76,7 @@
                  <li>
                      Added 'Always Prime on Startup' feature which allows the user to have a default prime amount on startup.  Note that if the user selects startup
                      again during priming that was initiated with this feature then priming will be cancelled and the grill will enter startup mode.  (feature initially 
-                     suggested by Discord user @TSJ)
+                     suggested by Discord user @TSJ) This can be enabled in <a href="/settings">settings</a>.
                  </li>
                  <li>
                      Overhauled timer UI on the web interface to utilize the newly created API calls (Eventually may deprecate the /timer function) and improve the UX.  
@@ -86,10 +86,13 @@
                      Attempted to address the issue on the mobile Web UI where a long Grill Name (on the NAV Bar) would push the navbar menu to the next line.
                  </li>
                  <li>
-                     Added wifi link quality to the admin system information. 
+                     Added wifi link quality to the <a href="/admin">admin page</a> system information. 
                  </li>
                  <li>
-                     Added throttling and undervoltage detection which is currently reported via the admin system information. 
+                     Added throttling and undervoltage detection which is currently reported via the <a href="/admin">admin page</a> system information. 
+                 </li>
+                 <li>
+                     Added 'Send Test Notification' to the Notifications section of <a href="/settings">settings</a>.  Note that this will send notification to the services that have already been enabled and saved. 
                  </li>
                  <li>
                      Behind the scenes improvements including:  

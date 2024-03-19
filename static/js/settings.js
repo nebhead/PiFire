@@ -638,6 +638,23 @@ $('#selectController').on('change', function() {
 	$('#controller_config').load("/settings/controller_card", {"selected" : this.value});
 });
 
+function sendTestNotification() {
+	$.ajax({
+		url: '/api/set/notify/Test/req/true',
+		type: 'GET',
+		contentType: "application/json; charset=utf-8",
+		traditional: true,
+		success: function(data) {
+			//console.log('Data: ' + data['result'] + data['message']);
+			if (data['result'] == 'OK') {
+				alert('Test notification sent.');
+			} else {
+				alert('Something went wrong. Try again.');
+			}
+		}
+	});
+};
+
 // On page load...
 $(document).ready(function() {
 	// Setup Color Picker for all elements whose id starts with 'clrpck_'
