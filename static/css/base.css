@@ -1,0 +1,41 @@
+		body {
+			padding-top: 35px;
+		}
+		.navbar {
+			padding-top: 0.3rem;
+			padding-bottom: 0.3rem;
+		}
+		.navbar-brand, .navbar-nav .nav-link {
+			padding-top: 0.3rem;
+			padding-bottom: 0.3rem;
+		}
+		.timer-bar-config {
+			top: 15px;
+		}
+		@media (max-width: 992px) { /* Small devices */
+			.timer-offset .timer-bar-config {
+				top: 50px;
+			}
+		}
+		@media (max-width: 992px) { /* Large devices (landscape tablets, less than 1200px) */
+			.fas.fa-bars{
+				padding: 0.1em 0;
+			}
+			.navbar-nav {
+				text-align: center;
+			}
+			.nav-item {
+				display: inline-block;
+				float: none;
+			}
+			.navbar-collapse {
+				width: 100%;
+				background-color: rgba(44, 44, 44); /* Semi-transparent black */
+			}
+		}
+		@media (min-width: 992px) { /* Large devices (landscape tablets, 1200px and up) */
+			.navbar-collapse {
+				display: flex;
+				justify-content: center;
+			}
+		}

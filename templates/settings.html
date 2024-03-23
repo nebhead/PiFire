@@ -1,8 +1,11 @@
 {% extends 'base.html' %}
 {% from '_macro_settings.html' import render_controller_config %}
 
+{% block body_class %}timer-offset{% endblock %}
+
 {% block cssextend %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-colorpicker.min.css') }}" type="text/css" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}" type="text/css" />
 {% endblock %}
 
 {% block title %}Settings{% endblock %}
@@ -39,39 +42,45 @@
 {% block content %}
 <input type="hidden" id="units" name="units" value="{{ settings['globals']['units'] }}">
 <br>
-<div class="row">
-    {% if not request.MOBILE %}
-    <div class="col-3">
-        <!-- Side Navigation Row -->
-        <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-            <a class="nav-link active" id="v-pills-probes-tab" data-toggle="pill" href="#v-pills-probes" role="tab" aria-controls="v-pills-probes" aria-selected="true">Probe Settings</a>
-            <a class="nav-link" id="v-pills-probe-profiles-tab" data-toggle="pill" href="#v-pills-probe-profiles" role="tab" aria-controls="v-pills-probe-profiles" aria-selected="false">Probe Profiles</a>
-            <a class="nav-link" id="v-pills-units-tab" data-toggle="pill" href="#v-pills-units" role="tab" aria-controls="v-pills-units" aria-selected="false">Units</a>
-            <a class="nav-link" id="v-pills-name-tab" data-toggle="pill" href="#v-pills-name" role="tab" aria-controls="v-pills-name" aria-selected="false">Grill Name</a>
-            <a class="nav-link" id="v-pills-work-mode-tab" data-toggle="pill" href="#v-pills-work-mode" role="tab" aria-controls="v-pills-work-mode" aria-selected="false">Work Mode</a>
-            {% if settings['globals']['dc_fan'] %}
-            <a class="nav-link" id="v-pills-pwm-tab" data-toggle="pill" href="#v-pills-pwm" role="tab" aria-controls="v-pills-pwm" aria-selected="false">PWM Settings</a>
-            {% endif %}
-            <a class="nav-link" id="v-pills-startup-tab" data-toggle="pill" href="#v-pills-startup" role="tab" aria-controls="v-pills-startup" aria-selected="false">Startup & Shutdown</a>
-            <a class="nav-link" id="v-pills-dash-tab" data-toggle="pill" href="#v-pills-dash" role="tab" aria-controls="v-pills-dash" aria-selected="false">Dashboard</a>
-            <a class="nav-link" id="v-pills-history-tab" data-toggle="pill" href="#v-pills-history" role="tab" aria-controls="v-pills-history" aria-selected="false">History</a>
-            <a class="nav-link" id="v-pills-safety-tab" data-toggle="pill" href="#v-pills-safety" role="tab" aria-controls="v-pills-safety" aria-selected="false">Safety</a>
-            <a class="nav-link" id="v-pills-pellets-tab" data-toggle="pill" href="#v-pills-pellets" role="tab" aria-controls="v-pills-pellets" aria-selected="false">Pellets</a>
-            <a class="nav-link" id="v-pills-theme-tab" data-toggle="pill" href="#v-pills-theme" role="tab" aria-controls="v-pills-theme" aria-selected="false">Theme</a>
-            <a class="nav-link" id="v-pills-notifications-tab" data-toggle="pill" href="#v-pills-notifications" role="tab" aria-controls="v-pills-notifications" aria-selected="false">Notifications</a>
-        </div>
-    </div>
-    {% endif %}
-    <div class="{% if request.MOBILE %}col-12{% else %}col-9{% endif %}">
-        <!-- ============================ Probe Settings =============================== -->
-        <div class="tab-content" id="v-pills-tabContent">
-            <div class="tab-pane fade show active" id="v-pills-probes" role="tabpanel" aria-labelledby="v-pills-probes-tab">
-                <div class="card shadow">
-                    <div class="card-header bg-primary text-white">
-                        <h5>
-                            <i class="fas fa-thermometer"></i>&nbsp; Probe Settings
-                        </h5>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Navigation -->
+        <div class="col-lg-3 nav-settings-fixed">
+            <nav class="navbar navbar-expand-lg navbar-dark flex-lg-column">
+                <a class="navbar d-lg-none dropdown-toggle btn btn-primary settings-button" href="#" id="navbarDropdown" role="button" data-toggle="collapse" data-target="#settingsNav" aria-haspopup="true" aria-expanded="false">
+                    Settings
+                </a>
+                <div class="collapse navbar-collapse" id="settingsNav">
+                    <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                        <a class="nav-link active" id="v-pills-probes-tab" data-toggle="pill" href="#v-pills-probes" role="tab" aria-controls="v-pills-probes" aria-selected="true">Probe Settings</a>
+                        <a class="nav-link" id="v-pills-probe-profiles-tab" data-toggle="pill" href="#v-pills-probe-profiles" role="tab" aria-controls="v-pills-probe-profiles" aria-selected="false">Probe Profiles</a>
+                        <a class="nav-link" id="v-pills-units-tab" data-toggle="pill" href="#v-pills-units" role="tab" aria-controls="v-pills-units" aria-selected="false">Units</a>
+                        <a class="nav-link" id="v-pills-name-tab" data-toggle="pill" href="#v-pills-name" role="tab" aria-controls="v-pills-name" aria-selected="false">Grill Name</a>
+                        <a class="nav-link" id="v-pills-work-mode-tab" data-toggle="pill" href="#v-pills-work-mode" role="tab" aria-controls="v-pills-work-mode" aria-selected="false">Work Mode</a>
+                        {% if settings['globals']['dc_fan'] %}
+                        <a class="nav-link" id="v-pills-pwm-tab" data-toggle="pill" href="#v-pills-pwm" role="tab" aria-controls="v-pills-pwm" aria-selected="false">PWM Settings</a>
+                        {% endif %}
+                        <a class="nav-link" id="v-pills-startup-tab" data-toggle="pill" href="#v-pills-startup" role="tab" aria-controls="v-pills-startup" aria-selected="false">Startup & Shutdown</a>
+                        <a class="nav-link" id="v-pills-dash-tab" data-toggle="pill" href="#v-pills-dash" role="tab" aria-controls="v-pills-dash" aria-selected="false">Dashboard</a>
+                        <a class="nav-link" id="v-pills-history-tab" data-toggle="pill" href="#v-pills-history" role="tab" aria-controls="v-pills-history" aria-selected="false">History</a>
+                        <a class="nav-link" id="v-pills-safety-tab" data-toggle="pill" href="#v-pills-safety" role="tab" aria-controls="v-pills-safety" aria-selected="false">Safety</a>
+                        <a class="nav-link" id="v-pills-pellets-tab" data-toggle="pill" href="#v-pills-pellets" role="tab" aria-controls="v-pills-pellets" aria-selected="false">Pellets</a>
+                        <a class="nav-link" id="v-pills-theme-tab" data-toggle="pill" href="#v-pills-theme" role="tab" aria-controls="v-pills-theme" aria-selected="false">Theme</a>
+                        <a class="nav-link" id="v-pills-notifications-tab" data-toggle="pill" href="#v-pills-notifications" role="tab" aria-controls="v-pills-notifications" aria-selected="false">Notifications</a>
                     </div>
+                </div>
+            </nav>
+        </div>
+        <div class="col-lg-9 main-content">
+            <!-- ============================ Probe Settings =============================== -->
+            <div class="tab-content" id="v-pills-tabContent">
+                <div class="tab-pane fade show active" id="v-pills-probes" role="tabpanel" aria-labelledby="v-pills-probes-tab">
+                    <div class="card shadow">
+                        <div class="card-header bg-primary text-white">
+                            <h5>
+                                <i class="fas fa-thermometer"></i>&nbsp; Probe Settings
+                            </h5>
+                        </div>
                     <div class="card-body">
                         <div class="card shadow">
                             <div class="card-header">
@@ -129,11 +138,9 @@
                         </div> <!-- End of card for Probe Display Names -->
                     </div><!-- End of Probe Settings Card body -->
                 </div><!-- End of Probe Settings Card -->
-                {% if not request.MOBILE %}<br><br><br>{% endif %}
             </div><!-- End of Tab -->
             <!-- ============================ Edit / Add / Delete Probe Profiles ========================== -->
-            {% if request.MOBILE %}<br>{% endif %}
-            <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-probe-profiles" role="tabpanel" aria-labelledby="v-pills-probe-profiles-tab">
+            <div class="tab-pane fade" id="v-pills-probe-profiles" role="tabpanel" aria-labelledby="v-pills-probe-profiles-tab">
                 <div class="card shadow">
                     <div class="card-header bg-primary text-white">
                         <h5>
@@ -279,11 +286,9 @@
                         {% endfor %}
                     </div><!-- End of card body -->
                 </div><!-- End of Card -->
-                {% if not request.MOBILE %}<br><br><br>{% endif %}
             </div><!-- End of Tab -->
             <!-- ============================ Select Temp Units ========================== -->
-            {% if request.MOBILE %}<br>{% endif %}
-            <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-units" role="tabpanel" aria-labelledby="v-pills-units-tab">
+            <div class="tab-pane fade" id="v-pills-units" role="tabpanel" aria-labelledby="v-pills-units-tab">
                 <div class="card shadow">
                     <form name="Units" action="/settings/units" method="POST">
                         <div class="card-header bg-primary text-white">
@@ -307,19 +312,17 @@
                             <button type="submit" class="btn btn-outline-danger">Save</button>
                         </div>
                     </form>
-                </div><!-- End of Card -->
-                {% if not request.MOBILE %}<br><br><br>{% endif %}
-            </div><!-- End of Tab -->
-            <!-- ============================ Grill Name ========================== -->
-            {% if request.MOBILE %}<br>{% endif %}
-            <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-name" role="tabpanel" aria-labelledby="v-pills-name-tab">
-                <div class="card shadow">
-                    <form name="GrillName" action="/settings/grillname" method="POST">
-                        <div class="card-header bg-primary text-white">
-                            <h5>
-                                <i class="fas fa-file-signature"></i>&nbsp; Grill Name
-                            </h5>
-                        </div>
+                    </div><!-- End of Card -->
+                </div><!-- End of Tab -->
+                <!-- ============================ Grill Name ========================== -->
+                <div class="tab-pane fade" id="v-pills-name" role="tabpanel" aria-labelledby="v-pills-name-tab">
+                    <div class="card shadow">
+                        <form name="GrillName" action="/settings/grillname" method="POST">
+                            <div class="card-header bg-primary text-white">
+                                <h5>
+                                    <i class="fas fa-file-signature"></i>&nbsp; Grill Name
+                                </h5>
+                            </div>
                         <div class="card-body">
                             <div class="input-group mb-3">
                                 <div class="input-group-prepend">
@@ -333,19 +336,17 @@
                             <button type="submit" class="btn btn-outline-danger">Save</button>
                         </div>
                     </form>
-                </div><!-- End of Card -->
-                {% if not request.MOBILE %}<br><br><br>{% endif %}
-            </div><!-- End of Tab -->
-            <!-- ============================ Work Mode Settings ========================== -->
-            {% if request.MOBILE %}<br>{% endif %}
-            <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-work-mode" role="tabpanel" aria-labelledby="v-pills-work-mode-tab">
-                <div class="card shadow">
-                    <form name="cycle_settings" action="/settings/cycle" method="POST">
-                        <div class="card-header bg-primary text-white">
-                            <h5>
-                                <i class="fas fa-tools"></i>&nbsp; Work Mode Settings
-                            </h5>
-                        </div>
+                    </div><!-- End of Card -->
+                </div><!-- End of Tab -->
+                <!-- ============================ Work Mode Settings ========================== -->
+                <div class="tab-pane fade" id="v-pills-work-mode" role="tabpanel" aria-labelledby="v-pills-work-mode-tab">
+                    <div class="card shadow">
+                        <form name="cycle_settings" action="/settings/cycle" method="POST">
+                            <div class="card-header bg-primary text-white">
+                                <h5>
+                                    <i class="fas fa-tools"></i>&nbsp; Work Mode Settings
+                                </h5>
+                            </div>
                         <div class="card-body">
                             <div class="card shadow">
                                 <div class="card-header">
@@ -596,20 +597,18 @@
                             <button type="submit" class="btn btn-outline-danger">Save</button>
                         </div>
                     </form>
-                </div><!-- End of Card -->
-                {% if not request.MOBILE %}<br><br><br>{% endif %}
-            </div><!-- End of Tab -->
-            <!-- ============================ PWM Settings ========================== -->
-            {% if settings['globals']['dc_fan'] %}
-            {% if request.MOBILE %}<br>{% endif %}
-            <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-pwm" role="tabpanel" aria-labelledby="v-pills-pwm-tab">
-                <div class="card shadow">
-                    <form name="pwm" action="/settings/pwm" method="POST">
-                        <div class="card-header bg-primary text-white">
-                            <h5>
-                                <i class="fas fa-tools"></i>&nbsp; PWM Settings
-                            </h5>
-                        </div>
+                    </div><!-- End of Card -->
+                </div><!-- End of Tab -->
+                <!-- ============================ PWM Settings ========================== -->
+                {% if settings['globals']['dc_fan'] %}
+                <div class="tab-pane fade" id="v-pills-pwm" role="tabpanel" aria-labelledby="v-pills-pwm-tab">
+                    <div class="card shadow">
+                        <form name="pwm" action="/settings/pwm" method="POST">
+                            <div class="card-header bg-primary text-white">
+                                <h5>
+                                    <i class="fas fa-tools"></i>&nbsp; PWM Settings
+                                </h5>
+                            </div>
                         <div class="card-body">
                             <!-- Temp Fan Control Settings -->
                             <div class="card shadow">
@@ -772,21 +771,20 @@
                             <button type="submit" class="btn btn-outline-danger">Save</button>
                         </div>
                     </form>
-                </div><!-- End of Card -->
-                {% if not request.MOBILE %}<br><br><br>{% endif %}
-            </div>
-            {% endif %}
-            <!-- End of Tab -->
-            <!-- ============================ Startup/Shutdown Settings ========================== -->
-            {% if request.MOBILE %}<br>{% endif %}
-            <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-startup" role="tabpanel" aria-labelledby="v-pills-startup-tab">
-                <div class="card shadow">
-                    <form name="startup_shutdown_settings" action="/settings/startup" method="POST">
-                        <div class="card-header bg-primary text-white">
-                            <h5>
-                                <i class="fas fa-tools"></i>&nbsp; Startup & Shutdown Settings
-                            </h5>
-                        </div>
+                    </div><!-- End of Card -->
+
+                </div>
+                {% endif %}
+                <!-- End of Tab -->
+                <!-- ============================ Startup/Shutdown Settings ========================== -->
+                <div class="tab-pane fade" id="v-pills-startup" role="tabpanel" aria-labelledby="v-pills-startup-tab">
+                    <div class="card shadow">
+                        <form name="startup_shutdown_settings" action="/settings/startup" method="POST">
+                            <div class="card-header bg-primary text-white">
+                                <h5>
+                                    <i class="fas fa-tools"></i>&nbsp; Startup & Shutdown Settings
+                                </h5>
+                            </div>
                         <div class="card-body">
                             <!-- Startup Settings -->
 							<div class="card shadow">
@@ -1044,19 +1042,16 @@
                             <button type="submit" class="btn btn-outline-danger">Save</button>
                         </div>
                     </form>
-                </div><!-- End of Card -->
-                {% if not request.MOBILE %}<br><br><br>{% endif %}
-            </div><!-- End of Tab -->
-            
-            <!-- ============================ Dashboard Settings ========================== -->
-            {% if request.MOBILE %}<br>{% endif %}
-            <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-dash" role="tabpanel" aria-labelledby="v-pills-dash-tab">
-                <div class="card shadow">
-                    <form name="miscsettings" action="/settings/dashboard" method="POST">
-                        <div class="card-header bg-primary text-white">
-                            <h5>
-                                <i class="fas fa-tools"></i>&nbsp; Dashboard Settings
-                            </h5>
+                    </div><!-- End of Card -->
+                </div><!-- End of Tab -->
+                <!-- ============================ Dashboard Settings ========================== -->
+                <div class="tab-pane fade" id="v-pills-dash" role="tabpanel" aria-labelledby="v-pills-dash-tab">
+                    <div class="card shadow">
+                        <form name="miscsettings" action="/settings/dashboard" method="POST">
+                            <div class="card-header bg-primary text-white">
+                                <h5>
+                                    <i class="fas fa-tools"></i>&nbsp; Dashboard Settings
+                                </h5>
                         </div>
                         <div class="card-body">
                             <div class="form-group">
@@ -1072,22 +1067,18 @@
                             <button type="submit" class="btn btn-outline-danger">Save</button>
                         </div>
                     </form>
-                </div><!-- End of Card -->
-                {% if not request.MOBILE %}<br><br><br>{% endif %}
-            </div><!-- End of Tab -->
-
-
-            <!-- ============================ History Settings ========================== -->
-            {% if request.MOBILE %}<br>{% endif %}
-            <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-history" role="tabpanel" aria-labelledby="v-pills-history-tab">
-                <div class="card shadow">
-                    <form name="miscsettings" action="/settings/history" method="POST">
-                        <div class="card-header bg-primary text-white">
-                            <h5>
-                                <i class="fas fa-tools"></i>&nbsp; History Settings
-                            </h5>
-                        </div>
-                        <div class="card-body">
+                    </div><!-- End of Card -->
+                </div><!-- End of Tab -->
+                <!-- ============================ History Settings ========================== -->
+                <div class="tab-pane fade" id="v-pills-history" role="tabpanel" aria-labelledby="v-pills-history-tab">
+                    <div class="card shadow">
+                        <form name="miscsettings" action="/settings/history" method="POST">
+                            <div class="card-header bg-primary text-white">
+                                <h5>
+                                    <i class="fas fa-tools"></i>&nbsp; History Settings
+                                </h5>
+                            </div>
+                            <div class="card-body">
                             <div class="input-group mb-3">
                                 <div class="input-group-prepend">
                                     <span class="input-group-text" data-toggle="tooltip" title="Amount of history to display on the history page (minutes). [Default = 60]">
@@ -1199,11 +1190,9 @@
                         </div>
                     </form>
                 </div><!-- End of Card -->
-                {% if not request.MOBILE %}<br><br><br>{% endif %}
             </div><!-- End of Tab -->
             <!-- ============================ Safety Settings ========================== -->
-            {% if request.MOBILE %}<br>{% endif %}
-            <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-safety" role="tabpanel" aria-labelledby="v-pills-safety-tab">
+            <div class="tab-pane fade" id="v-pills-safety" role="tabpanel" aria-labelledby="v-pills-safety-tab">
                 <div class="card shadow">
                     <form name="safetysettings" action="/settings/safety" method="POST">
                         <div class="card-header bg-primary text-white">
@@ -1258,20 +1247,18 @@
                         <div class="card-footer bg-light">
                             <button type="submit" class="btn btn-outline-danger">Save</button>
                         </div>
-                    </form>
-                </div><!-- End of Card -->
-                {% if not request.MOBILE %}<br><br><br>{% endif %}
-            </div><!-- End of Tab -->
-            <!-- ============================ Pellet Settings ========================== -->
-            {% if request.MOBILE %}<br>{% endif %}
-            <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-pellets" role="tabpanel" aria-labelledby="v-pills-pellets-tab">
-                <div class="card shadow">
-                    <form name="pelletsettings" action="/settings/pellets" method="POST">
-                        <div class="card-header bg-primary text-white">
-                            <h5>
-                                <i class="fas fa-tools"></i>&nbsp; Pellet Settings
-                            </h5>
-                        </div>
+                        </form>
+                    </div><!-- End of Card -->
+                </div><!-- End of Tab -->
+                <!-- ============================ Pellet Settings ========================== -->
+                <div class="tab-pane fade" id="v-pills-pellets" role="tabpanel" aria-labelledby="v-pills-pellets-tab">
+                    <div class="card shadow">
+                        <form name="pelletsettings" action="/settings/pellets" method="POST">
+                            <div class="card-header bg-primary text-white">
+                                <h5>
+                                    <i class="fas fa-tools"></i>&nbsp; Pellet Settings
+                                </h5>
+                            </div>
                         <div class="card-body">
                             <div class="card shadow">
                                 <div class="card-header">
@@ -1388,11 +1375,9 @@
                         </div>
                     </form>
                 </div><!-- End of Card -->
-                {% if not request.MOBILE %}<br><br><br>{% endif %}
             </div><!-- End of Tab -->
             <!-- ============================ Page Settings ========================== -->
-            {% if request.MOBILE %}<br>{% endif %}
-            <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-theme" role="tabpanel" aria-labelledby="v-pills-theme-tab">
+            <div class="tab-pane fade" id="v-pills-theme" role="tabpanel" aria-labelledby="v-pills-theme-tab">
                 <div class="card shadow">
                     <form name="pagesettings" action="/settings/pagesettings" method="POST">
                         <div class="card-header bg-primary text-white">
@@ -1416,19 +1401,17 @@
                             <button type="submit" class="btn btn-outline-danger">Save</button>
                         </div>
                     </form>
-                </div><!-- End of Card -->
-                {% if not request.MOBILE %}<br><br><br>{% endif %}
-            </div><!-- End of Tab -->
-            <!-- ========================== Notification Settings ========================== -->
-            {% if request.MOBILE %}<br>{% endif %}
-            <div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-notifications" role="tabpanel" aria-labelledby="v-pills-notifications-tab">
-                <div class="card shadow">
-                    <form name="notify" action="/settings/notify" method="POST">
-                        <div class="card-header bg-primary text-white">
-                            <h5>
-                                <i class="far fa-bell"></i>&nbsp; Notification Settings
-                            </h5>
-                        </div>
+                    </div><!-- End of Card -->
+                </div><!-- End of Tab -->
+                <!-- ========================== Notification Settings ========================== -->
+                <div class="tab-pane fade" id="v-pills-notifications" role="tabpanel" aria-labelledby="v-pills-notifications-tab">
+                    <div class="card shadow">
+                        <form name="notify" action="/settings/notify" method="POST">
+                            <div class="card-header bg-primary text-white">
+                                <h5>
+                                    <i class="far fa-bell"></i>&nbsp; Notification Settings
+                                </h5>
+                            </div>
                         <div class="card-body">
                             <!-- Apprise Notifications -->
                             <div class="card shadow-sm">
@@ -1806,18 +1789,23 @@
                             </div>
                         </div><!-- End of Card -->
                     </form>
-                </div><!-- End of Card -->
-                {% if not request.MOBILE %}<br><br><br>{% endif %}
-            </div><!-- End of Tab -->
+                </div><!-- End of Tab -->
+            </div>
         </div>
     </div>
-</div>
 {% endblock %}
 {% block postcontainer %}
 {% endblock %}
 {% block scripts %}
 <script>
     var dc_fan_enabled = "{{ settings['globals']['dc_fan'] }}";
+</script>
+<script>
+    $(document).ready(function() {
+        $('#settingsNav .nav-link').on('click', function() {
+            $('#settingsNav').collapse('hide');
+        });
+    });
 </script>
 <script src="{{ url_for('static', filename='js/bootstrap-colorpicker.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/settings.js') }}"></script>

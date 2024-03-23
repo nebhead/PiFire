@@ -13,6 +13,9 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css" />
         {% endif %}
 
+		<!-- Navbar CSS -->
+		<link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" type="text/css" /> 
+
         {% block cssextend %} {% endblock %}
 
         <!-- Adding a Favicon -->
@@ -24,10 +27,9 @@
         <title>{% block title %}{% endblock %}{% if grill_name != '' %} | {{ grill_name }}{% endif %}</title>
 
     </head>
-    <body>
+    <body class="{% block body_class %}{% endblock %}">
 		<!-- Navbar Header -->
-		<nav class="navbar sticky-top navbar-dark bg-dark">
-
+		<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
 			<a class="navbar-brand text-truncate" {% if request.MOBILE %}style="max-width: 210px;"{% endif %} href="/">
 				<img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="30" height="30" class="d-inline-block align-top" alt="">
 				<b>Pi<i class="text-danger">Fire</i></b>
@@ -35,44 +37,34 @@
 					| <small class="">{{ grill_name }}</small> 
 				{% endif %}
 			</a>
-				
-			<div class="btn-toolbar flex-nowrap" role="toolbar">
-				<div class="btn-group mr-2" role="group">
-					<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-						<i class="fas fa-bars"></i>
-					</button>
-				</div>
+			<div class="ml-auto d-flex order-0 order-lg-1">
 				{% block timer_toggler %}
-				<div class="btn-group mr-2" role="group">
+				<div class="btn-group mr-2 custom-toggler" role="group">
 					<button type="button" class="btn btn-outline-secondary border-secondary" id="timerButton" onclick="timerToggle()">
 						<i class="fas fa-stopwatch"></i>
 					</button>
 				</div>
 				{% endblock %}
+				<button class="navbar-toggler btn btn-outline-secondary border-secondary" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+					<i class="fas fa-bars"></i>
+				</button>
 			</div>
-
-			<div class="collapse navbar-collapse" id="navbarNav">
-				<ul class="nav navbar-nav mr-auto">
+			<div class="collapse navbar-collapse order-1 order-lg-0 d-lg-flex justify-content-lg-start mx-lg-0" id="navbarNav">
+				<ul class="navbar-nav mx-auto mx-lg-0 text-center">
 					<li class="nav-item">
-						<a class="nav-link" href="/">Dashboard</a>
+						<a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">Dashboard</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" href="/recipes">Recipes</a>
+						<a class="nav-link {% if request.path == '/history' %}active{% endif %}" href="/history">History</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" href="/pellets">Pellet Manager</a>
+						<a class="nav-link {% if request.path == '/events' %}active{% endif %}" href="/events">Events</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" href="/history">History</a>
+						<a class="nav-link {% if request.path == '/settings' %}active{% endif %}" href="/settings">Settings</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" href="/events">Events</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link" href="/settings">Settings</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link" href="/admin">Admin</a>
+						<a class="nav-link {% if request.path == '/admin' %}active{% endif %}" href="/admin">Admin</a>
 					</li>
 				</ul>
 			</div>
@@ -189,7 +181,16 @@
 			{% endif %}
 		{% endblock %}
 
-		{% block scripts %} {% endblock %}
+		{% block scripts %} 
+		<!--Select input text in modal dialogue-->
+		<script>
+			document.getElementById('setpointModal').addEventListener('shown.bs.modal', function () {
+				var input = document.getElementById('tempOutputId');
+				input.focus();
+				input.select();
+			});
+		</script>
+		{% endblock %}		
 
     </body>
 </html>

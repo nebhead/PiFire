@@ -1,6 +1,6 @@
 {% extends 'base.html' %} 
 
-{% from '_macro_dash_default.html' import render_probe_card, render_hopper_card, render_status_card, render_time_elapsed_card %}
+{% from '_macro_dash_default.html' import render_probe_card, render_status_card, render_time_elapsed_card %}
 
 {% block cssextend %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dash_default.css') }}" type="text/css" />
@@ -9,7 +9,6 @@
 {% block title %}Dashboard{% endblock %} 
 
 {% block content %}
-<br>
 <!-- Card Section -->
 <div class="row"> <!-- Probe Cards -->
 	{% for probe in settings['probe_settings']['probe_map']['probe_info'] %}
@@ -25,21 +24,13 @@
 		</div>
 		{% endif %}
 	{% endfor %}
-		<div id="card_hopper" class="col-lg-4 col-md-6 col-sm-12" 
-			{% if (settings['modules']['dist'] == 'none') or ('hopper' in dash_data['custom']['hidden_cards']) %}
-				style="display:none"
-			{% endif %}>
-			<br>
-			{{ render_hopper_card() }}
-			<br>
-		</div>
 		<div id="card_status" class="col-lg-4 col-md-6 col-sm-12" 
-			{% if 'status' in dash_data['custom']['hidden_cards'] %}
-				style="display:none"
-			{% endif %}>
-			<br>
-			{{ render_status_card() }}
-			<br>
+		{% if 'status' in dash_data['custom']['hidden_cards'] %}
+			style="display:none"
+		{% endif %}>
+		<br>
+		{{ render_status_card(settings) }}
+		<br>
 		</div>
 		<div id="card_time_elapsed" class="col-lg-4 col-md-6 col-sm-12" 
 		{% if 'time_elapsed' in dash_data['custom']['hidden_cards'] %}
@@ -162,20 +153,6 @@
 								Status Card
 							</td>
 						</tr>
-						{% if settings['modules']['dist'] != 'none' %}
-						<tr onclick="dashToggleVisible('hopper');">
-							<td>
-								<span id="visibleStatus_hopper">
-								{% if 'hopper' not in dash_data['custom']['hidden_cards'] %}
-								<i class="fa-solid fa-eye text-success"></i>&nbsp;
-								{% else %}
-								<i class="fa-solid fa-eye-slash text-secondary"></i>&nbsp;
-								{% endif %}
-								</span>
-								Hopper Card
-							</td>
-						</tr>
-						{% endif %}
 						</tbody>
 						<tr onclick="dashToggleVisible('time_elapsed');">
 							<td>
