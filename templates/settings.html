@@ -11,32 +11,34 @@
 {% block title %}Settings{% endblock %}
 
 {% block notify %}
-<!-- Settings Success -->
-{% if (alert['type'] == "updated") %}
-<br>
-<div class="alert alert-success alert-dismissible">
-    <button type="button" class="close" data-dismiss="alert">&times;</button>
-    <b>
-        <i class="far fa-check-circle"></i>&nbsp; {{ alert['text'] }}
-    </b>
+<div class="container-fluid">
+    <!-- Settings Success -->
+    {% if (alert['type'] == "updated") %}
+    <br>
+    <div class="alert alert-success alert-dismissible">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <b>
+            <i class="far fa-check-circle"></i>&nbsp; {{ alert['text'] }}
+        </b>
+    </div>
+    {% elif (alert['type'] == "warning") %}
+    <br>
+    <div class="alert alert-warning alert-dismissible">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <b>
+            <i class="far fa-exclamation-circle"></i>&nbsp; {{ alert['text'] }}
+        </b>
+    </div>
+    {% elif (alert['type'] == "error") %}
+    <br>
+    <div class="alert alert-danger alert-dismissible">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <b>
+            <i class="fas fa-bomb"></i>&nbsp; {{ alert['text'] }}
+        </b>
+    </div>
+    {% endif %}
 </div>
-{% elif (alert['type'] == "warning") %}
-<br>
-<div class="alert alert-warning alert-dismissible">
-    <button type="button" class="close" data-dismiss="alert">&times;</button>
-    <b>
-        <i class="far fa-exclamation-circle"></i>&nbsp; {{ alert['text'] }}
-    </b>
-</div>
-{% elif (alert['type'] == "error") %}
-<br>
-<div class="alert alert-danger alert-dismissible">
-    <button type="button" class="close" data-dismiss="alert">&times;</button>
-    <b>
-        <i class="fas fa-bomb"></i>&nbsp; {{ alert['text'] }}
-    </b>
-</div>
-{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -45,7 +47,7 @@
 <div class="container-fluid">
     <div class="row">
         <!-- Navigation -->
-        <div class="col-lg-3 nav-settings-fixed">
+        <div class="col-lg-3">
             <nav class="navbar navbar-expand-lg navbar-dark flex-lg-column">
                 <a class="navbar d-lg-none dropdown-toggle btn btn-primary settings-button" href="#" id="navbarDropdown" role="button" data-toggle="collapse" data-target="#settingsNav" aria-haspopup="true" aria-expanded="false">
                     Settings
@@ -71,7 +73,7 @@
                 </div>
             </nav>
         </div>
-        <div class="col-lg-9 main-content">
+        <div class="col-lg-9">
             <!-- ============================ Probe Settings =============================== -->
             <div class="tab-content" id="v-pills-tabContent">
                 <div class="tab-pane fade show active" id="v-pills-probes" role="tabpanel" aria-labelledby="v-pills-probes-tab">

@@ -158,8 +158,10 @@
 
 {% macro render_hopper_card() %}
 
-	<div class="card-body text-left">
-		<h5><b>Pellets:</b>  <span id="hopperPellets" class="text-truncate"></span></h5>
+<div class="card">
+	<div class="card-body text-center">
+		<b>Pellets:</b>  <span id="hopperPellets" class="text-truncate"></span>
+		<br><br>
 		<!-- Hopper Level Indicator-->
 		<div class="progress shadow" style="height:30px">
 			<div id="hopperLevel" class="progress-bar progress-bar-striped bg-success" style="width:100%;height:30px">100%</div>
@@ -169,6 +171,7 @@
 		<button type="button" class="btn btn-outline-primary" onclick="refreshHopperStatus()">Refresh Status</button>
 		<a href="/pellets" type="button" class="btn btn-outline-primary">Manager</a>
 	</div>
+</div>
 
 {% endmacro %}
 
