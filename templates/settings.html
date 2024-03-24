@@ -126,7 +126,7 @@
                                                 <span class="input-group-text" data-toggle="tooltip" title="Probe name displayed by PiFire on the Dashboard and Graphs">
                                                 {{ probe['name'] }} &nbsp;<i class="fas fa-arrow-right"></i></span>
                                             </div>
-                                            <input id="probe_name_{{ probe['label'] }}" type="text" class="form-control" name="probe_name_{{ probe['label'] }}" value="{{ probe['name'] }}">
+                                            <input id="probe_name_{{ probe['label'] }}" type="text" class="form-control" name="probe_name_{{ probe['label'] }}" value="{{ probe['name'] }}" style="min-width: 11ch;">
                                         </div>
                                         {% endfor %}
                                     
@@ -175,27 +175,27 @@
                                                 <span class="input-group-text" data-toggle="tooltip" title="Human readable name for profile. Used to display above.">
                                                     <i class="fas fa-user-circle"></i>&nbsp; Name </span>
                                             </div>
-                                            <input id="Name" type="text" class="form-control" placeholder="Name" name="Name" required>
+                                            <input id="Name" type="text" class="form-control" placeholder="Name" name="Name" required style="min-width: 11ch;">
                                         </div>
                                         <div class="input-group mb-3">
                                             <div class="input-group-prepend">
                                                 <span class="input-group-text" data-toggle="tooltip" title="Coefficient A in Steinhart Hart Calculation">
                                                     <i class="fas fa-calculator"></i>&nbsp; CoEff A </span>
                                             </div>
-                                            <input id="A" type="text" class="form-control" name="A" required>
+                                            <input id="A" type="text" class="form-control" name="A" required style="min-width: 11ch;">
                                         </div>
                                         <div class="input-group mb-3">
                                             <div class="input-group-prepend">
                                                 <span class="input-group-text" data-toggle="tooltip" title="Coefficient B in Steinhart Hart Calculation">
                                                     <i class="fas fa-calculator"></i>&nbsp; CoEff B </span>
                                             </div>
-                                            <input id="B" type="text" class="form-control" name="B" required>
+                                            <input id="B" type="text" class="form-control" name="B" required style="min-width: 11ch;">
                                         </div>
                                         <div class="input-group mb-3">
                                             <div class="input-group-prepend"><span class="input-group-text" data-toggle="tooltip" title="Coefficient C in Steinhart Hart Calculation">
                                                 <i class="fas fa-calculator"></i>&nbsp; CoEff C </span>
                                             </div>
-                                            <input id="C" type="text" class="form-control" name="C" required>
+                                            <input id="C" type="text" class="form-control" name="C" required style="min-width: 11ch;">
                                         </div>
                                     </div>
                                     <div class="card-footer bg-light">
@@ -231,28 +231,28 @@
                                                 <span class="input-group-text" data-toggle="tooltip" title="Human readable name for profile. Used to display above.">
                                                     <i class="fas fa-user-circle"></i>&nbsp; Name </span>
                                             </div>
-                                            <input id="Name_{{ index }}" type="text" class="form-control" name="Name_{{ index }}" value="{{ data['name'] }}">
+                                            <input id="Name_{{ index }}" type="text" class="form-control" name="Name_{{ index }}" value="{{ data['name'] }}" style="min-width: 11ch;">
                                         </div>
                                         <div class="input-group mb-3">
                                             <div class="input-group-prepend">
                                                 <span class="input-group-text" data-toggle="tooltip" title="Coefficient A in Steinhart Hart Calculation">
                                                     <i class="fas fa-calculator"></i>&nbsp; CoEff A </span>
                                             </div>
-                                            <input id="A_{{ index }}" type="text" class="form-control" name="A_{{ index }}" value="{{ data['A'] }}">
+                                            <input id="A_{{ index }}" type="text" class="form-control" name="A_{{ index }}" value="{{ data['A'] }}" style="min-width: 11ch;">
                                         </div>
                                         <div class="input-group mb-3">
                                             <div class="input-group-prepend">
                                                 <span class="input-group-text" data-toggle="tooltip" title="Coefficient B in Steinhart Hart Calculation">
                                                     <i class="fas fa-calculator"></i>&nbsp; CoEff B </span>
                                             </div>
-                                            <input id="B_{{ index }}" type="text" class="form-control" name="B_{{ index }}" value="{{ data['B'] }}">
+                                            <input id="B_{{ index }}" type="text" class="form-control" name="B_{{ index }}" value="{{ data['B'] }}" style="min-width: 11ch;">
                                         </div>
                                         <div class="input-group mb-3">
                                             <div class="input-group-prepend">
                                                 <span class="input-group-text" data-toggle="tooltip" title="Coefficient C in Steinhart Hart Calculation">
                                                     <i class="fas fa-calculator"></i>&nbsp; CoEff C </span>
                                             </div>
-                                            <input id="C_{{ index }}" type="text" class="form-control" name="C_{{ index }}" value="{{ data['C'] }}">
+                                            <input id="C_{{ index }}" type="text" class="form-control" name="C_{{ index }}" value="{{ data['C'] }}" style="min-width: 11ch;">
                                         </div>
                                     </div>
                                     <div class="card-footer bg-light">
@@ -329,7 +329,7 @@
                                     <span class="input-group-text" data-toggle="tooltip" title="Choose a name for your grill!">
                                         <i class="fas fa-user-ninja"></i>&nbsp; Grill Name </span>
                                 </div>
-                                <input id="grill_name" type="text" class="form-control" placeholder="{{ settings['globals']['grill_name'] }}" value="{{ settings['globals']['grill_name'] }}" name="grill_name">
+                                <input id="grill_name" type="text" class="form-control" placeholder="{{ settings['globals']['grill_name'] }}" value="{{ settings['globals']['grill_name'] }}" name="grill_name" style="min-width: 11ch;">
                             </div>
                         </div><!-- End of card body -->
                         <div class="card-footer bg-light">
@@ -366,7 +366,7 @@
                                                 <i class="far fa-clock"></i>&nbsp; Auger On Time
                                             </span>
                                         </div>
-                                        <input id="SmokeOnCycleTime" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['SmokeOnCycleTime'] }}" value="{{ settings['cycle_data']['SmokeOnCycleTime'] }}" name="SmokeOnCycleTime">
+                                        <input id="SmokeOnCycleTime" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['SmokeOnCycleTime'] }}" value="{{ settings['cycle_data']['SmokeOnCycleTime'] }}" name="SmokeOnCycleTime" style="min-width: 5ch;">
                                     </div>
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
@@ -374,7 +374,7 @@
                                                 <i class="far fa-clock"></i>&nbsp; Auger Off Time
                                             </span>
                                         </div>
-                                        <input id="SmokeOffCycleTime" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['SmokeOffCycleTime'] }}" value="{{ settings['cycle_data']['SmokeOffCycleTime'] }}" name="SmokeOffCycleTime">
+                                        <input id="SmokeOffCycleTime" type="number" min="1" class="form-control" placeholder="{{ settings['cycle_data']['SmokeOffCycleTime'] }}" value="{{ settings['cycle_data']['SmokeOffCycleTime'] }}" name="SmokeOffCycleTime" style="min-width: 5ch;">
                                     </div>
 
                                     <hr/>
@@ -385,7 +385,7 @@
                                                 <i class="fas fa-cog"></i>&nbsp; P-Mode
                                             </span>
                                         </div>
-                                        <input id="pmode" type="number" min="0" max="9" class="form-control" placeholder="{{ settings['cycle_data']['PMode'] }}" value="{{ settings['cycle_data']['PMode'] }}" name="pmode">
+                                        <input id="pmode" type="number" min="0" max="9" class="form-control" placeholder="{{ settings['cycle_data']['PMode'] }}" value="{{ settings['cycle_data']['PMode'] }}" name="pmode" style="min-width: 3ch;">
                                     </div>
 
                                     <span class="badge badge-info">INFO:</span>
@@ -463,7 +463,7 @@
                                                 <i class="far fa-clock"></i>&nbsp; Ramp Duty Cycle (%)
                                             </span>
                                         </div>
-                                        <input id="sp_duty_cycle" type="number" min="20" max="100" class="form-control" placeholder="{{ settings['smoke_plus']['duty_cycle'] }}" value="{{ settings['smoke_plus']['duty_cycle'] }}" name="sp_duty_cycle">
+                                        <input id="sp_duty_cycle" type="number" min="20" max="100" class="form-control" placeholder="{{ settings['smoke_plus']['duty_cycle'] }}" value="{{ settings['smoke_plus']['duty_cycle'] }}" name="sp_duty_cycle" style="min-width: 5ch;">
                                     </div>
                                     {% endif %}
                                     <div class="input-group mb-3">
@@ -472,7 +472,7 @@
                                                 <i class="far fa-clock"></i>&nbsp; Fan ON Time (s)
                                             </span>
                                         </div>
-                                        <input id="sp_on_time" type="number" min="sp_fade_in.value" class="form-control" placeholder="{{ settings['smoke_plus']['on_time'] }}" value="{{ settings['smoke_plus']['on_time'] }}" name="sp_on_time">
+                                        <input id="sp_on_time" type="number" min="sp_fade_in.value" class="form-control" placeholder="{{ settings['smoke_plus']['on_time'] }}" value="{{ settings['smoke_plus']['on_time'] }}" name="sp_on_time" style="min-width: 5ch;">
                                     </div>
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
@@ -480,7 +480,7 @@
                                                 <i class="far fa-clock"></i>&nbsp; Fan OFF Time (s)
                                             </span>
                                         </div>
-                                        <input id="sp_off_time" type="number" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['off_time'] }}" value="{{ settings['smoke_plus']['off_time'] }}" name="sp_off_time">
+                                        <input id="sp_off_time" type="number" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['off_time'] }}" value="{{ settings['smoke_plus']['off_time'] }}" name="sp_off_time" style="min-width: 5ch;">
                                     </div>
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
@@ -488,7 +488,7 @@
                                                 <i class="fas fa-temperature-high"></i>&nbsp; Min Operational Temp ({{settings['globals']['units']}})
                                             </span>
                                         </div>
-                                        <input id="sp_min_temp" type="number" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['min_temp'] }}" value="{{ settings['smoke_plus']['min_temp'] }}" name="sp_min_temp">
+                                        <input id="sp_min_temp" type="number" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['min_temp'] }}" value="{{ settings['smoke_plus']['min_temp'] }}" name="sp_min_temp" style="min-width: 5ch;">
                                     </div>
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
@@ -496,7 +496,7 @@
                                                 <i class="fas fa-temperature-high"></i>&nbsp; Max Operational Temp ({{settings['globals']['units']}})
                                             </span>
                                         </div>
-                                        <input id="sp_max_temp" type="number" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['max_temp'] }}" value="{{ settings['smoke_plus']['max_temp'] }}" name="sp_max_temp">
+                                        <input id="sp_max_temp" type="number" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['max_temp'] }}" value="{{ settings['smoke_plus']['max_temp'] }}" name="sp_max_temp" style="min-width: 5ch;">
                                     </div>
                                 </div><!-- End of card body -->
                             </div><!-- End of Card -->
@@ -544,7 +544,7 @@
                                                 <i class="fas fa-percent"></i>&nbsp; Lid Open Threshold Percentage
                                             </span>
                                         </div>
-                                        <input id="lid_open_threshold" type="number" min="1" step="1" max="80" class="form-control" placeholder="{{ settings['cycle_data']['LidOpenThreshold'] }}" value="{{ settings['cycle_data']['LidOpenThreshold'] }}" name="lid_open_threshold">
+                                        <input id="lid_open_threshold" type="number" min="1" step="1" max="80" class="form-control" placeholder="{{ settings['cycle_data']['LidOpenThreshold'] }}" value="{{ settings['cycle_data']['LidOpenThreshold'] }}" name="lid_open_threshold" style="min-width: 4ch;">
                                     </div>
 
                                     <div class="input-group mb-3">
@@ -553,7 +553,7 @@
                                                 <i class="fas fa-clock"></i>&nbsp; Lid Open Pause Time (s)
                                             </span>
                                         </div>
-                                        <input id="lid_open_pausetime" type="number" min="10" step="1" max="1000" class="form-control" placeholder="{{ settings['cycle_data']['LidOpenPauseTime'] }}" value="{{ settings['cycle_data']['LidOpenPauseTime'] }}" name="lid_open_pausetime">
+                                        <input id="lid_open_pausetime" type="number" min="10" step="1" max="1000" class="form-control" placeholder="{{ settings['cycle_data']['LidOpenPauseTime'] }}" value="{{ settings['cycle_data']['LidOpenPauseTime'] }}" name="lid_open_pausetime" style="min-width: 6ch;">
                                     </div>
 
                                 </div><!-- End of card body -->
@@ -579,7 +579,7 @@
                                                 <i class="fas fa-temperature-high"></i>&nbsp; Keep Warm Temp ({{settings['globals']['units']}})
                                             </span>
                                         </div>
-                                        <input id="keep_warm_temp" type="number" min="1" class="form-control" placeholder="{{ settings['keep_warm']['temp'] }}" value="{{ settings['keep_warm']['temp'] }}" name="keep_warm_temp">
+                                        <input id="keep_warm_temp" type="number" min="1" class="form-control" placeholder="{{ settings['keep_warm']['temp'] }}" value="{{ settings['keep_warm']['temp'] }}" name="keep_warm_temp"  style="min-width: 4ch;">
                                     </div>
                                     <br>
                                     You can also enable or disable the Smoke Plus feature during Keep Warm.
@@ -633,7 +633,7 @@
                                                 <i class="far fa-clock"></i>&nbsp; Update Time (s)
                                             </span>
                                         </div>
-                                        <input id="pwm_update" type="number" min="1" class="form-control" placeholder="{{ settings['pwm']['update_time'] }}" value="{{ settings['pwm']['update_time'] }}" name="pwm_update">
+                                        <input id="pwm_update" type="number" min="1" class="form-control" placeholder="{{ settings['pwm']['update_time'] }}" value="{{ settings['pwm']['update_time'] }}" name="pwm_update" style="min-width: 4ch;">
                                     </div>
                                     <br>
                                     <span class="badge badge-warning">NOTE:</span>
@@ -679,13 +679,13 @@
                                                         <div class="input-group-prepend">
                                                             <span class="input-group-text" id="dc_temp_label">Temp Range ({{ settings['globals']['units'] }})</span>
                                                         </div>
-                                                        <input type="number" class="form-control" value="5" min="1" max="100" name="dc_temp" id="dc_temp" aria-label="Temp Range" aria-describedby="dc_temp_label">
+                                                        <input type="number" class="form-control" value="5" min="1" max="100" name="dc_temp" id="dc_temp" aria-label="Temp Range" aria-describedby="dc_temp_label" style="min-width: 4ch;">
                                                     </div>
                                                     <div class="input-group mb-3">
                                                         <div class="input-group-prepend">
                                                             <span class="input-group-text" id="dc_duty_cycle_label">Duty Cycle (%)</span>
                                                         </div>
-                                                        <input type="number" class="form-control" value="50" min="1" max="100" name="dc_duty_cycle" id="dc_duty_cycle" aria-label="Duty Cycle" aria-describedby="dc_duty_cycle_label">
+                                                        <input type="number" class="form-control" value="50" min="1" max="100" name="dc_duty_cycle" id="dc_duty_cycle" aria-label="Duty Cycle" aria-describedby="dc_duty_cycle_label" style="min-width: 4ch;">
                                                     </div>
                                                 </div>
                                                 <div class="modal-footer">
@@ -714,13 +714,13 @@
                                                         <div class="input-group-prepend">
                                                             <span class="input-group-text" id="dc_edit_temp_label">Temp Range ({{ settings['globals']['units'] }})</span>
                                                         </div>
-                                                        <input type="number" class="form-control" value="55" min="0" max="200" name="dc_edit_temp" id="dc_edit_temp" aria-label="Temp Range" aria-describedby="dc_edit_temp_label">
+                                                        <input type="number" class="form-control" value="55" min="0" max="200" name="dc_edit_temp" id="dc_edit_temp" aria-label="Temp Range" aria-describedby="dc_edit_temp_label" style="min-width: 4ch;">
                                                     </div>
                                                     <div class="input-group mb-3">
                                                         <div class="input-group-prepend">
                                                             <span class="input-group-text" id="dc_edit_duty_cycle_label">Duty Cycle (%)</span>
                                                         </div>
-                                                        <input type="number" class="form-control" value="50" min="1" max="100" name="dc_edit_duty_cycle" id="dc_edit_duty_cycle" aria-label="Duty Cycle" aria-describedby="dc_edit_duty_cycle_label">
+                                                        <input type="number" class="form-control" value="50" min="1" max="100" name="dc_edit_duty_cycle" id="dc_edit_duty_cycle" aria-label="Duty Cycle" aria-describedby="dc_edit_duty_cycle_label" style="min-width: 4ch;">
                                                     </div>
                                                 </div>
                                                 <div class="modal-footer">
@@ -801,7 +801,7 @@
 											<span class="input-group-text" data-toggle="tooltip" title="Startup Duration (seconds) [Default=240]">
 												<i class="far fa-clock"></i>&nbsp; Startup Duration (seconds)</span>
 										</div>
-										<input id="startup_duration" type="number" min="1" class="form-control" placeholder="{{ settings['startup']['duration'] }}" value="{{ settings['startup']['duration'] }}" name="startup_duration">
+										<input id="startup_duration" type="number" min="1" class="form-control" placeholder="{{ settings['startup']['duration'] }}" value="{{ settings['startup']['duration'] }}" name="startup_duration" style="min-width: 4ch;">
 									</div>
 
 									<span class="badge badge-warning">NOTE:</span>
@@ -824,7 +824,7 @@
 											<span class="input-group-text" data-toggle="tooltip" title="Setpoint Temperature for Hold Mode">
                                                 <i class="fas fa-temperature-low"></i>&nbsp; Hold Temp</span>
 										</div>
-										<input id="startup_duration" type="number" min="{{ settings['safety']['maxstartuptemp'] }}" max="{{ settings['safety']['maxtemp'] }}" class="form-control" value="{{ settings['startup']['start_to_mode']['primary_setpoint'] }}" name="startup_mode_setpoint">
+										<input id="startup_duration" type="number" min="{{ settings['safety']['maxstartuptemp'] }}" max="{{ settings['safety']['maxtemp'] }}" class="form-control" value="{{ settings['startup']['start_to_mode']['primary_setpoint'] }}" name="startup_mode_setpoint" style="min-width: 4ch;">
                                     </div>
 
                                     <br>
@@ -839,7 +839,7 @@
                                                 <span class="input-group-text" data-toggle="tooltip" title="Exit startup when this temperature is achieved. [0 = Disabled]">
                                                     <i class="fas fa-temperature-high"></i>&nbsp; Exit Startup Temperature ({{ settings['globals']['units'] }})</span>
                                             </div>
-                                            <input id="startup_exit_temp" type="number" min="0" class="form-control" value="{{ settings['startup']['startup_exit_temp'] }}" name="startup_exit_temp">
+                                            <input id="startup_exit_temp" type="number" min="0" class="form-control" value="{{ settings['startup']['startup_exit_temp'] }}" name="startup_exit_temp" style="min-width: 4ch;">
                                         </div>
                                     </div>
                                     
@@ -854,7 +854,7 @@
                                                 <span class="input-group-text" data-toggle="tooltip" title="Always prime on startup, value in grams of pellets to prime. [0 = Disabled/Default] [max = 200grams]">
                                                     <i class="fa-solid fa-angles-right"></i>&nbsp; Prime on Startup (grams)</span>
                                             </div>
-                                            <input id="prime_on_startup" type="number" min="0" max="200" class="form-control" value="{{ settings['startup']['prime_on_startup'] }}" name="prime_on_startup">
+                                            <input id="prime_on_startup" type="number" min="0" max="200" class="form-control" value="{{ settings['startup']['prime_on_startup'] }}" name="prime_on_startup" style="min-width: 4ch;">
                                         </div>
                                     </div>
 
@@ -920,25 +920,25 @@
 													<div class="input-group-prepend">
 													  <span class="input-group-text" id="minTempLabel">Min Temperature({{ settings['globals']['units'] }})</span>
 													</div>
-													<input type="number" class="form-control" value="55" min="0" max="200" name="minTemp" id="minTemp" aria-label="Min Temperature" aria-describedby="minTempLabel">
+													<input type="number" class="form-control" value="55" min="0" max="200" name="minTemp" id="minTemp" aria-label="Min Temperature" aria-describedby="minTempLabel" style="min-width: 4ch;">
 												</div>
 												<div class="input-group mb-3">
 													<div class="input-group-prepend">
 													  <span class="input-group-text" id="startupTimeLabel">Startup Time(s)</span>
 													</div>
-													<input type="number" class="form-control" value="240" min="30" max="1200" name="startupTime" id="startupTime" aria-label="Startup Time" aria-describedby="startupTimeLabel">
+													<input type="number" class="form-control" value="240" min="30" max="1200" name="startupTime" id="startupTime" aria-label="Startup Time" aria-describedby="startupTimeLabel" style="min-width: 5ch;">
 												</div>
 												<div class="input-group mb-3">
 													<div class="input-group-prepend">
 													  <span class="input-group-text" id="augeronTimeLabel">Auger On Time(s)</span>
 													</div>
-													<input type="number" class="form-control" value="15" min="1" max="1000" name="augeronTime" id="augeronTime" aria-label="Auger On Time" aria-describedby="augeronTimeLabel">
+													<input type="number" class="form-control" value="15" min="1" max="1000" name="augeronTime" id="augeronTime" aria-label="Auger On Time" aria-describedby="augeronTimeLabel" style="min-width: 5ch;">
 												</div>
 												<div class="input-group mb-3">
 													<div class="input-group-prepend">
 													  <span class="input-group-text" id="pModeLabel">P-Mode</span>
 													</div>
-													<input type="number" class="form-control" value="2" min="0" max="9" name="pMode" id="pMode" aria-label="P-Mode" aria-describedby="pModeLabel">
+													<input type="number" class="form-control" value="2" min="0" max="9" name="pMode" id="pMode" aria-label="P-Mode" aria-describedby="pModeLabel" style="min-width: 3ch;">
 												</div>
 
 											</div>
@@ -966,25 +966,25 @@
 													<div class="input-group-prepend">
 													  <span class="input-group-text" id="edit_minTempLabel">Max Temperature({{ settings['globals']['units'] }})</span>
 													</div>
-													<input type="number" class="form-control" value="55" min="0" max="200" name="edit_minTemp" id="edit_minTemp" aria-label="Min Temperature" aria-describedby="edit_minTempLabel">
+													<input type="number" class="form-control" value="55" min="0" max="200" name="edit_minTemp" id="edit_minTemp" aria-label="Min Temperature" aria-describedby="edit_minTempLabel" style="min-width: 4ch;">
 												</div>
 												<div class="input-group mb-3">
 													<div class="input-group-prepend">
 													  <span class="input-group-text" id="edit_startupTimeLabel">Startup Time(s)</span>
 													</div>
-													<input type="number" class="form-control" value="240" min="30" max="1200" name="edit_startupTime" id="edit_startupTime" aria-label="Startup Time" aria-describedby="edit_startupTimeLabel">
+													<input type="number" class="form-control" value="240" min="30" max="1200" name="edit_startupTime" id="edit_startupTime" aria-label="Startup Time" aria-describedby="edit_startupTimeLabel" style="min-width: 5ch;">
 												</div>
 												<div class="input-group mb-3">
 													<div class="input-group-prepend">
 													  <span class="input-group-text" id="edit_augeronTimeLabel">Auger On Time(s)</span>
 													</div>
-													<input type="number" class="form-control" value="15" min="1" max="1000" name="edit_augeronTime" id="edit_augeronTime" aria-label="Auger On Time" aria-describedby="edit_augeronTimeLabel">
+													<input type="number" class="form-control" value="15" min="1" max="1000" name="edit_augeronTime" id="edit_augeronTime" aria-label="Auger On Time" aria-describedby="edit_augeronTimeLabel" style="min-width: 5ch;">
 												</div>
 												<div class="input-group mb-3">
 													<div class="input-group-prepend">
 													  <span class="input-group-text" id="edit_pModeLabel">P-Mode</span>
 													</div>
-													<input type="number" class="form-control" value="2" min="0" max="9" name="edit_pMode" id="edit_pMode" aria-label="P-Mode" aria-describedby="edit_pModeLabel">
+													<input type="number" class="form-control" value="2" min="0" max="9" name="edit_pMode" id="edit_pMode" aria-label="P-Mode" aria-describedby="edit_pModeLabel" style="min-width: 3ch;">
 												</div>
 											</div>
 											<div class="modal-footer">
@@ -1002,7 +1002,7 @@
 											<span class="input-group-text" data-toggle="tooltip" title="Exit startup when this temperature is achieved. [0 = Disabled]">
 												<i class="fas fa-temperature-high"></i>&nbsp; Exit Startup Temperature ({{ settings['globals']['units'] }})</span>
 										</div>
-										<input id="smartstart_exit_temp" type="number" min="0" class="form-control" placeholder="{{ settings['startup']['smartstart']['exit_temp'] }}" value="{{ settings['startup']['smartstart']['exit_temp'] }}" name="smartstart_exit_temp">
+										<input id="smartstart_exit_temp" type="number" min="0" class="form-control" placeholder="{{ settings['startup']['smartstart']['exit_temp'] }}" value="{{ settings['startup']['smartstart']['exit_temp'] }}" name="smartstart_exit_temp" style="min-width: 4ch;">
 									</div>
 
 								</div><!-- End of Smart Start Settings Card Body -->
@@ -1021,7 +1021,7 @@
 											<span class="input-group-text" data-toggle="tooltip" title="Shutdown timer (seconds) [Default=60]">
 												<i class="far fa-clock"></i>&nbsp; Shutdown Duration (seconds)</span>
 										</div>
-										<input id="shutdown_duration" type="number" min="1" class="form-control" placeholder="{{ settings['shutdown']['shutdown_duration'] }}" value="{{ settings['shutdown']['shutdown_duration'] }}" name="shutdown_duration">
+										<input id="shutdown_duration" type="number" min="1" class="form-control" placeholder="{{ settings['shutdown']['shutdown_duration'] }}" value="{{ settings['shutdown']['shutdown_duration'] }}" name="shutdown_duration" style="min-width: 4ch;">
 									</div>
 									<span class="badge badge-warning">NOTE:</span>
 									<i class="small"> Amount of time fan will run after shutdown is selected </i>
@@ -1084,14 +1084,14 @@
                                     <span class="input-group-text" data-toggle="tooltip" title="Amount of history to display on the history page (minutes). [Default = 60]">
                                         <i class="far fa-clock"></i>&nbsp; History to Display (mins)</span>
                                 </div>
-                                <input id="historymins" type="number" min="1" class="form-control" placeholder="{{ settings['history_page']['minutes'] }}" value="{{ settings['history_page']['minutes'] }}" name="historymins">
+                                <input id="historymins" type="number" min="1" class="form-control" placeholder="{{ settings['history_page']['minutes'] }}" value="{{ settings['history_page']['minutes'] }}" name="historymins" style="min-width: 4ch;">
                             </div>
                             <div class="input-group mb-3">
                                 <div class="input-group-prepend">
                                     <span class="input-group-text" data-toggle="tooltip" title="Number of datapoints to display per page.">
                                         <i class="far fa-clock"></i>&nbsp; Datapoints to Display</span>
                                 </div>
-                                <input id="datapoints" type="number" min="10" class="form-control" placeholder="{{ settings['history_page']['datapoints'] }}" value="{{ settings['history_page']['datapoints'] }}" name="datapoints">
+                                <input id="datapoints" type="number" min="10" class="form-control" placeholder="{{ settings['history_page']['datapoints'] }}" value="{{ settings['history_page']['datapoints'] }}" name="datapoints" style="min-width: 4ch;">
                             </div>
 
                             <div class="custom-control custom-switch">
@@ -1127,7 +1127,7 @@
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">{{ settings['history_page']['probe_config'][probe]['name'] }} Temperature Color</span>
                                         </div>
-                                        <input type="text" class="form-control input-lg" id="clr_temp_{{ probe }}" name="clr_temp_{{ probe }}"/>
+                                        <input type="text" class="form-control input-lg" id="clr_temp_{{ probe }}" name="clr_temp_{{ probe }}" style="min-width: 11ch;"/>
                                         <span class="input-group-append">
                                             <span class="input-group-text colorpicker-input-addon"><i></i></span>
                                         </span>
@@ -1136,7 +1136,7 @@
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">{{ settings['history_page']['probe_config'][probe]['name'] }} Background Temperature Color</span>
                                         </div>
-                                        <input type="text" class="form-control input-lg" id="clrbg_temp_{{ probe }}" name="clrbg_temp_{{ probe }}"/>
+                                        <input type="text" class="form-control input-lg" id="clrbg_temp_{{ probe }}" name="clrbg_temp_{{ probe }}" style="min-width: 11ch;"/>
                                         <span class="input-group-append">
                                             <span class="input-group-text colorpicker-input-addon"><i></i></span>
                                         </span>
@@ -1146,7 +1146,7 @@
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">{{ settings['history_page']['probe_config'][probe]['name'] }} Setpoint Color</span>
                                         </div>
-                                        <input type="text" class="form-control input-lg" id="clr_setpoint_{{ probe }}" name="clr_setpoint_{{ probe }}"/>
+                                        <input type="text" class="form-control input-lg" id="clr_setpoint_{{ probe }}" name="clr_setpoint_{{ probe }}" style="min-width: 11ch;"/>
                                         <span class="input-group-append">
                                             <span class="input-group-text colorpicker-input-addon"><i></i></span>
                                         </span>
@@ -1155,7 +1155,7 @@
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">{{ settings['history_page']['probe_config'][probe]['name'] }} Background Setpoint Color</span>
                                         </div>
-                                        <input type="text" class="form-control input-lg" id="clrbg_setpoint_{{ probe }}" name="clrbg_setpoint_{{ probe }}"/>
+                                        <input type="text" class="form-control input-lg" id="clrbg_setpoint_{{ probe }}" name="clrbg_setpoint_{{ probe }}" style="min-width: 11ch;"/>
                                         <span class="input-group-append">
                                             <span class="input-group-text colorpicker-input-addon"><i></i></span>
                                         </span>
@@ -1165,7 +1165,7 @@
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">{{ settings['history_page']['probe_config'][probe]['name'] }} Notify Target Color</span>
                                         </div>
-                                        <input type="text" class="form-control input-lg" id="clr_target_{{ probe }}" name="clr_target_{{ probe }}"/>
+                                        <input type="text" class="form-control input-lg" id="clr_target_{{ probe }}" name="clr_target_{{ probe }}" style="min-width: 11ch;"/>
                                         <span class="input-group-append">
                                             <span class="input-group-text colorpicker-input-addon"><i></i></span>
                                         </span>
@@ -1174,7 +1174,7 @@
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">{{ settings['history_page']['probe_config'][probe]['name'] }} Background Notify Target Color</span>
                                         </div>
-                                        <input type="text" class="form-control input-lg" id="clrbg_target_{{ probe }}" name="clrbg_target_{{ probe }}"/>
+                                        <input type="text" class="form-control input-lg" id="clrbg_target_{{ probe }}" name="clrbg_target_{{ probe }}" style="min-width: 11ch;"/>
                                         <span class="input-group-append">
                                             <span class="input-group-text colorpicker-input-addon"><i></i></span>
                                         </span>
@@ -1214,28 +1214,28 @@
                                         <i class="fas fa-temperature-high"></i>&nbsp; Min Startup Temp ({{settings['globals']['units']}})
                                     </span>
                                 </div>
-                                <input id="minstartuptemp" type="number" min="1" class="form-control" placeholder="{{ settings['safety']['minstartuptemp'] }}" value="{{ settings['safety']['minstartuptemp'] }}" name="minstartuptemp">
+                                <input id="minstartuptemp" type="number" min="1" class="form-control" placeholder="{{ settings['safety']['minstartuptemp'] }}" value="{{ settings['safety']['minstartuptemp'] }}" name="minstartuptemp" style="min-width: 4ch;">
                             </div>
                             <div class="input-group mb-3">
                                 <div class="input-group-prepend">
                                     <span class="input-group-text" data-toggle="tooltip" title="Lowest allowed operational temperature, after startup has completed. Shut down grill to prevent firepot overload.">
                                         <i class="fas fa-temperature-high"></i>&nbsp; Max Startup Temp ({{settings['globals']['units']}})</span>
                                 </div>
-                                <input id="maxstartuptemp" type="number" min="1" class="form-control" placeholder="{{ settings['safety']['maxstartuptemp'] }}" value="{{ settings['safety']['maxstartuptemp'] }}" name="maxstartuptemp">
+                                <input id="maxstartuptemp" type="number" min="1" class="form-control" placeholder="{{ settings['safety']['maxstartuptemp'] }}" value="{{ settings['safety']['maxstartuptemp'] }}" name="maxstartuptemp" style="min-width: 4ch;">
                             </div>
                             <div class="input-group mb-3">
                                 <div class="input-group-prepend">
                                     <span class="input-group-text" data-toggle="tooltip" title="Number of retries to attempt re-ignite after the grill temperature goes too low. Set to zero to disable. [default=1]">
                                         <i class="fas fa-redo-alt"></i>&nbsp; Reignite Retries</span>
                                 </div>
-                                <input id="reigniteretries" type="number" min="0" max="10" class="form-control" placeholder="{{ settings['safety']['reigniteretries'] }}" value="{{ settings['safety']['reigniteretries'] }}" name="reigniteretries">
+                                <input id="reigniteretries" type="number" min="0" max="10" class="form-control" placeholder="{{ settings['safety']['reigniteretries'] }}" value="{{ settings['safety']['reigniteretries'] }}" name="reigniteretries" style="min-width: 4ch;">
                             </div>
                             <div class="input-group mb-3">
                                 <div class="input-group-prepend">
                                     <span class="input-group-text" data-toggle="tooltip" title="Maximum allowable temperature.  Shut down grill to prevent potential damage.">
                                         <i class="fas fa-temperature-high"></i>&nbsp; Max Operational Temp ({{settings['globals']['units']}})</span>
                                 </div>
-                                <input id="maxtemp" type="number" min="1" class="form-control" placeholder="{{ settings['safety']['maxtemp'] }}" value="{{ settings['safety']['maxtemp'] }}" name="maxtemp">
+                                <input id="maxtemp" type="number" min="1" class="form-control" placeholder="{{ settings['safety']['maxtemp'] }}" value="{{ settings['safety']['maxtemp'] }}" name="maxtemp" style="min-width: 4ch;">
                             </div>
                             <span class="badge badge-warning">NOTE:</span>
                             <i class="small"> In an error condition (temp too low, temp too high) the grill will immediately shutdown and log the error in the events log. Notifications of an error will be sent if enabled. The Max Temp safety setting is also enabled in Monitor mode.</i>
@@ -1278,7 +1278,7 @@
                                                 <i class="far fa-clock"></i>&nbsp; Check Time (mins)
                                             </span>
                                         </div>
-                                        <input id="warning_time" type="number" min="5" max="240" class="form-control" placeholder="{{ settings['pelletlevel']['warning_time'] }}" value="{{ settings['pelletlevel']['warning_time'] }}" name="warning_time">
+                                        <input id="warning_time" type="number" min="5" max="240" class="form-control" placeholder="{{ settings['pelletlevel']['warning_time'] }}" value="{{ settings['pelletlevel']['warning_time'] }}" name="warning_time"  style="min-width: 4ch;">
                                     </div>
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
@@ -1286,7 +1286,7 @@
                                                 <i class="fas fa-exclamation-triangle"></i>&nbsp; Level Warning (%)
                                             </span>
                                         </div>
-                                        <input id="warning_level" type="number" min="0" max="100" class="form-control" placeholder="{{ settings['pelletlevel']['warning_level'] }}" value="{{ settings['pelletlevel']['warning_level'] }}" name="warning_level">
+                                        <input id="warning_level" type="number" min="0" max="100" class="form-control" placeholder="{{ settings['pelletlevel']['warning_level'] }}" value="{{ settings['pelletlevel']['warning_level'] }}" name="warning_level" style="min-width: 4ch;">
                                     </div>
                                     <span class="badge badge-warning">NOTE:</span>
                                     <i class="small"> Pellet levels below the input percent will receive notifications every {{ settings['pelletlevel']['warning_time'] }} minutes during a cook</i>
@@ -1307,7 +1307,7 @@
                                                 <i class="fas fa-level-up-alt"></i>&nbsp; Hopper Full Distance (cm)
                                             </span>
                                         </div>
-                                        <input id="full" type="number" min="0" max="100" class="form-control" placeholder="{{ settings['pelletlevel']['full'] }}" value="{{ settings['pelletlevel']['full'] }}" name="full">
+                                        <input id="full" type="number" min="0" max="100" class="form-control" placeholder="{{ settings['pelletlevel']['full'] }}" value="{{ settings['pelletlevel']['full'] }}" name="full" style="min-width: 4ch;">
                                     </div>
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
@@ -1315,7 +1315,7 @@
                                                 <i class="fas fa-level-down-alt"></i>&nbsp; Hopper Empty Distance (cm)
                                             </span>
                                         </div>
-                                        <input id="empty" type="number" min="1" max="100" class="form-control" placeholder="{{ settings['pelletlevel']['empty'] }}" value="{{ settings['pelletlevel']['empty'] }}" name="empty">
+                                        <input id="empty" type="number" min="1" max="100" class="form-control" placeholder="{{ settings['pelletlevel']['empty'] }}" value="{{ settings['pelletlevel']['empty'] }}" name="empty" style="min-width: 4ch;">
                                     </div>
                                     <span class="badge badge-warning">NOTE:</span>
                                     <i class="small"> The distance value for full must be smaller than the value for empty. </i>
@@ -1336,7 +1336,7 @@
                                                 <i class="fas fa-angle-double-right"></i>&nbsp; Auger Rate (g/s)
                                             </span>
                                         </div>
-                                        <input id="auger_rate" type="number" min="0" step="0.05" class="form-control" value="{{ settings['globals']['augerrate'] }}" name="auger_rate">
+                                        <input id="auger_rate" type="number" min="0" step="0.05" class="form-control" value="{{ settings['globals']['augerrate'] }}" name="auger_rate" style="min-width: 4ch;">
                                     </div>
                                     <span class="badge badge-warning">NOTE:</span>
                                     <i class="small"> This value is used to calculate how long to run the auger when priming, and to calculate estimated pellet usage.
@@ -1430,7 +1430,7 @@
                                             <span class="input-group-text">
                                                 <i class="fas fa-link"></i>&nbsp; Location</span>
                                         </div>
-                                        <input id="appriselocations" type="text" class="form-control" name="appriselocations" value="{{location}}" placeholder="format://user@location/authorization">
+                                        <input id="appriselocations" type="text" class="form-control" name="appriselocations" value="{{location}}" placeholder="format://user@location/authorization" style="min-width: 11ch;">
                                         <div class="input-group-append">
                                             <button type="button" name="appriseDeleteRow" class="btn btn-danger"><i class="fas fa-minus"></i></button>
                                         </div>
@@ -1440,7 +1440,7 @@
                                             <span class="input-group-text">
                                                 <i class="fas fa-link"></i>&nbsp; Location</span>
                                         </div>
-                                        <input id="appriselocations" type="text" class="form-control" name="appriselocations" value="" placeholder="format://user@location/authorization">
+                                        <input id="appriselocations" type="text" class="form-control" name="appriselocations" value="" placeholder="format://user@location/authorization" style="min-width: 11ch;">
                                         <div class="input-group-append">
                                             <button type="button" name="appriseDeleteRow" class="btn btn-danger"><i class="fas fa-minus"></i></button>
                                         </div>
@@ -1469,7 +1469,7 @@
                                             <span class="input-group-text">
                                                 <i class="fas fa-key"></i>&nbsp; API Key</span>
                                         </div>
-                                        <input id="iftttapi" type="text" class="form-control" name="iftttapi" value="{{settings['notify_services']['ifttt']['APIKey']}}">
+                                        <input id="iftttapi" type="text" class="form-control" name="iftttapi" value="{{settings['notify_services']['ifttt']['APIKey']}}" style="min-width: 11ch;">
                                     </div>
                                 </div><!-- End of card body -->
                             </div><!-- End of Card -->
@@ -1490,14 +1490,14 @@
                                             <span class="input-group-text">
                                                 <i class="fas fa-key"></i>&nbsp; API Key</span>
                                         </div>
-                                        <input id="pushover_apikey" type="text" class="form-control" name="pushover_apikey" value="{{settings['notify_services']['pushover']['APIKey']}}">
+                                        <input id="pushover_apikey" type="text" class="form-control" name="pushover_apikey" value="{{settings['notify_services']['pushover']['APIKey']}}" style="min-width: 11ch;">
                                     </div>
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">
                                                 <i class="fas fa-key"></i>&nbsp; User Keys</span>
                                         </div>
-                                        <input id="pushover_userkeys" type="text" class="form-control" name="pushover_userkeys" value="{{settings['notify_services']['pushover']['UserKeys']}}">
+                                        <input id="pushover_userkeys" type="text" class="form-control" name="pushover_userkeys" value="{{settings['notify_services']['pushover']['UserKeys']}}" style="min-width: 11ch;">
                                     </div>
                                     <span class="badge badge-warning">NOTE:</span>
                                     <i class="small"> Add commas for multiple user keys. Leave blank to disable.</i>
@@ -1508,7 +1508,7 @@
                                             <span class="input-group-text">
                                                 <i class="fas fa-link"></i>&nbsp; Public URL </span>
                                         </div>
-                                        <input id="pushover_publicurl" type="text" class="form-control" name="pushover_publicurl" value="{{settings['notify_services']['pushover']['PublicURL']}}">
+                                        <input id="pushover_publicurl" type="text" class="form-control" name="pushover_publicurl" value="{{settings['notify_services']['pushover']['PublicURL']}}" style="min-width: 11ch;">
                                     </div>
                                     <span class="badge badge-warning">NOTE:</span>
                                     <i class="small"> URL to be added to Pushover notifications.</i>
@@ -1531,14 +1531,14 @@
                                             <span class="input-group-text">
                                                 <i class="fas fa-key"></i>&nbsp; API Key</span>
                                         </div>
-                                        <input id="pushbullet_apikey" type="text" class="form-control" name="pushbullet_apikey" value="{{settings['notify_services']['pushbullet']['APIKey']}}">
+                                        <input id="pushbullet_apikey" type="text" class="form-control" name="pushbullet_apikey" value="{{settings['notify_services']['pushbullet']['APIKey']}}" style="min-width: 11ch;">
                                     </div>
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">
                                                 <i class="fas fa-link"></i>&nbsp; Public URL</span>
                                         </div>
-                                        <input id="pushbullet_publicurl" type="text" class="form-control" name="pushbullet_publicurl" value="{{settings['notify_services']['pushbullet']['PublicURL']}}">
+                                        <input id="pushbullet_publicurl" type="text" class="form-control" name="pushbullet_publicurl" value="{{settings['notify_services']['pushbullet']['PublicURL']}}" style="min-width: 11ch;">
                                     </div>
                                     <span class="badge badge-warning">NOTE:</span>
                                     <i class="small"> URL to be added to Pushbullet notifications.</i>
@@ -1579,21 +1579,21 @@
                                                             <i class="fas fa-user-circle"></i>&nbsp; Friendly Name
                                                         </span>
                                                     </div>
-                                                    <input id="FriendlyName_{{ index }}" type="text" class="form-control" name="FriendlyName_{{ index }}" value="{{ data['friendly_name'] }}">
+                                                    <input id="FriendlyName_{{ index }}" type="text" class="form-control" name="FriendlyName_{{ index }}" value="{{ data['friendly_name'] }}" style="min-width: 11ch;">
                                                 </div>
                                                 <div class="input-group mb-3">
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" data-toggle="tooltip" title="The factory device name">
                                                             <i class="fas fa-user-circle"></i>&nbsp; Device Name</span>
                                                     </div>
-                                                    <input id="DeviceName_{{ index }}" type="text" class="form-control" name="DeviceName_{{ index }}" value="{{ data['device_name'] }}" readonly>
+                                                    <input id="DeviceName_{{ index }}" type="text" class="form-control" name="DeviceName_{{ index }}" value="{{ data['device_name'] }}" readonly style="min-width: 11ch;">
                                                 </div>
                                                 <div class="input-group mb-3">
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" data-toggle="tooltip" title="Android app version">
                                                             <i class="fas fa-info-circle"></i>&nbsp; App Version</span>
                                                     </div>
-                                                    <input id="AppVersion_{{ index }}" type="text" class="form-control" name="AppVersion_{{ index }}" value="{{ data['app_version'] }}" readonly>
+                                                    <input id="AppVersion_{{ index }}" type="text" class="form-control" name="AppVersion_{{ index }}" value="{{ data['app_version'] }}" readonly style="min-width: 11ch;">
                                                 </div>
                                                 <div class="input-group mb-3">
                                                     <div class="input-group-prepend">
@@ -1661,28 +1661,28 @@
                                     <span class="input-group-text">
                                         <i class="fas fa-key"></i>&nbsp; URL </span>
                                         </div>
-                                        <input id="influxdb_url" type="text" class="form-control" name="influxdb_url" value="{{settings['notify_services']['influxdb']['url']}}">
+                                        <input id="influxdb_url" type="text" class="form-control" name="influxdb_url" value="{{settings['notify_services']['influxdb']['url']}}" style="min-width: 11ch;">
                                     </div>
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
                                     <span class="input-group-text">
                                         <i class="fas fa-key"></i>&nbsp; token </span>
                                         </div>
-                                        <input id="influxdb_token" type="text" class="form-control" name="influxdb_token" value="{{settings['notify_services']['influxdb']['token']}}">
+                                        <input id="influxdb_token" type="text" class="form-control" name="influxdb_token" value="{{settings['notify_services']['influxdb']['token']}}" style="min-width: 11ch;">
                                     </div>
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
                                     <span class="input-group-text">
                                         <i class="fas fa-key"></i>&nbsp; org </span>
                                         </div>
-                                        <input id="influxdb_org" type="text" class="form-control" name="influxdb_org" value="{{settings['notify_services']['influxdb']['org']}}">
+                                        <input id="influxdb_org" type="text" class="form-control" name="influxdb_org" value="{{settings['notify_services']['influxdb']['org']}}" style="min-width: 11ch;">
                                     </div>
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
                                     <span class="input-group-text">
                                         <i class="fas fa-key"></i>&nbsp; bucket </span>
                                         </div>
-                                        <input id="influxdb_bucket" type="text" class="form-control" name="influxdb_bucket" value="{{settings['notify_services']['influxdb']['bucket']}}">
+                                        <input id="influxdb_bucket" type="text" class="form-control" name="influxdb_bucket" value="{{settings['notify_services']['influxdb']['bucket']}}" style="min-width: 11ch;">
                                     </div>
                                 </div><!-- End of card body -->
                             </div><!-- End of Card -->
@@ -1703,7 +1703,7 @@
                                             <span class="input-group-text">
                                                 <i class="fas fa-key"></i>&nbsp; PiFire Unique ID</span>
                                         </div>
-                                        <input id="mqtt_id" type="text" class="form-control" name="mqtt_id" value="{{settings['notify_services']['mqtt']['id']}}">
+                                        <input id="mqtt_id" type="text" class="form-control" name="mqtt_id" value="{{settings['notify_services']['mqtt']['id']}}" style="min-width: 11ch;">
                                     </div>
                                     <span class="badge badge-warning">NOTE:</span>
                                     <i class="small"> 
@@ -1717,14 +1717,14 @@
                                             <span class="input-group-text">
                                                 <i class="fas fa-link"></i>&nbsp; MQTT Broker</span>
                                         </div>
-                                        <input id="mqtt_broker" type="text" class="form-control" name="mqtt_broker" value="{{settings['notify_services']['mqtt']['broker']}}">
+                                        <input id="mqtt_broker" type="text" class="form-control" name="mqtt_broker" value="{{settings['notify_services']['mqtt']['broker']}}" style="min-width: 16ch;">
                                     </div>
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">
                                                 <i class="fas fa-link"></i>&nbsp; MQTT Port</span>
                                         </div>
-                                        <input id="mqtt_port" type="text" class="form-control" name="mqtt_port" value="{{settings['notify_services']['mqtt']['port']}}">
+                                        <input id="mqtt_port" type="text" class="form-control" name="mqtt_port" value="{{settings['notify_services']['mqtt']['port']}}" style="min-width: 5ch;">
                                     </div>      
                                     <span class="badge badge-warning">NOTE:</span>
                                     <i class="small"> 
@@ -1737,14 +1737,14 @@
                                             <span class="input-group-text">
                                                 <i class="fas fa-key"></i>&nbsp; Username</span>
                                         </div>
-                                        <input id="mqtt_user" type="text" class="form-control" name="mqtt_user" value="{{settings['notify_services']['mqtt']['username']}}">
+                                        <input id="mqtt_user" type="text" class="form-control" name="mqtt_user" value="{{settings['notify_services']['mqtt']['username']}}" style="min-width: 11ch;">
                                     </div>
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">
                                                 <i class="fas fa-key"></i>&nbsp; Password</span>
                                         </div>
-                                        <input id="mqtt_pw" type="text" class="form-control" name="mqtt_pw" value="{{settings['notify_services']['mqtt']['password']}}">
+                                        <input id="mqtt_pw" type="text" class="form-control" name="mqtt_pw" value="{{settings['notify_services']['mqtt']['password']}}" style="min-width: 11ch;">
                                     </div>
                                     <span class="badge badge-warning">NOTE:</span>
                                     <i class="small"> 
@@ -1756,7 +1756,7 @@
                                             <span class="input-group-text">
                                                 <i class="fas fa-clock"></i>&nbsp; Refresh Rate (sec)</span>
                                         </div>
-                                        <input id="mqtt_freq" type="text" class="form-control" name="mqtt_freq" value="{{settings['notify_services']['mqtt']['update_sec']}}">
+                                        <input id="mqtt_freq" type="text" class="form-control" name="mqtt_freq" value="{{settings['notify_services']['mqtt']['update_sec']}}" style="min-width: 4ch;">
                                     </div>                               
                                     <span class="badge badge-warning">NOTE:</span>
                                     <i class="small"> 
@@ -1768,7 +1768,7 @@
                                             <span class="input-group-text">
                                                 <i class="fas fa-wand-magic-sparkles"></i>&nbsp; Home Assistant Discovery Topic</span>
                                         </div>
-                                        <input id="mqtt_auto_d" type="text" class="form-control" name="mqtt_auto_d" value="{{settings['notify_services']['mqtt']['homeassistant_autodiscovery_topic']}}">
+                                        <input id="mqtt_auto_d" type="text" class="form-control" name="mqtt_auto_d" value="{{settings['notify_services']['mqtt']['homeassistant_autodiscovery_topic']}}" style="min-width: 11ch;">
                                     </div>
                                     <span class="badge badge-warning">NOTE:</span>
                                     <i class="small"> 

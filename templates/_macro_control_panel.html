@@ -22,14 +22,19 @@
     .temperature-input {
     font-size: 64px;
     }
+    @media (max-width: 992px) {
+        .navbar-bottom {
+            padding-bottom: 20px;
+        }
+    }
 </style>
 
 <!-- Control Panel -->
 <div class="container" id="cp_container">
 	{% if settings['globals']['page_theme'] == 'dark' %}
-	<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #aaaaaa;">
+	<nav class="navbar fixed-bottom navbar-light justify-content-center navbar-bottom" style="background-color: #aaaaaa;">
 	{% else %}
-	<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #dddddd;">
+	<nav class="navbar fixed-bottom navbar-light justify-content-center navbar-bottom" style="background-color: #dddddd;">
 	{% endif %}
     <span class="navbar-text">
 
