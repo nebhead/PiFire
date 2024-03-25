@@ -124,13 +124,23 @@ class GrillPlatform:
 			#print('Set PWM Speed ' + str(percent))
 			if self._ramp_thread.stopping.wait(delay):
 				break
+	
+	"""
+	==============================
+	  System / Platform Commands 
+	==============================
+	
+		Commands callable by outside processes to get status or information, for the platform.  
+	
+	"""
 
 	def supported_commands(self, arglist):
 		supported_commands = [
 			'check_throttled',
 			'check_wifi_quality',
 			'check_cpu_temp',
-			'supported_commands'
+			'supported_commands',
+			'check_alive'
 		]
 
 		data = {
@@ -195,5 +205,17 @@ class GrillPlatform:
 			'data' : {
 				'cpu_temp' : temp
 			}
+		}
+		return data
+	
+	def check_alive(self, arglist):
+		'''
+		 Simple check to see if the platform is up and running. 
+		'''
+		
+		data = {
+			'result' : 'OK',
+			'message' : 'The control script is running.',
+			'data' : {}
 		}
 		return data

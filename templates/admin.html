@@ -141,6 +141,27 @@
 						</div>
 						<br>
 
+						<div class="card">
+							<div class="card-header bg-primary">
+								<i class="fa-regular fa-file-lines"></i>&nbsp; Download Debug Data  
+							</div>
+							<div class="card-body">
+								<form action="/admin/setting" method="POST">
+									<!-- Download settings.json -->
+									<button type="submit" class="btn btn-outline-primary btn-block shadow" name="download_settings" value="true">
+										<i class="fa-solid fa-download"></i>&nbsp; Download current settings ('settings.json')
+									</button>
+									<br>
+									<!-- Download control:general database -->
+									<button type="submit" class="btn btn-outline-primary btn-block shadow" name="download_control" value="true">
+										<i class="fa-solid fa-download"></i>&nbsp; Download control:general database (current)
+									</button>
+								</form>
+								<br>
+							</div>
+						</div>
+						<br>
+
 					</div>
 				</div>
 

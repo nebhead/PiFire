@@ -75,18 +75,24 @@ class GrillPlatform:
 		self.current['fan'] = self.fan.is_active
 		return self.current
 	
-	'''
-	System Commands 
-	'''
+	"""
+	==============================
+	  System / Platform Commands 
+	==============================
+	
+		Commands callable by outside processes to get status or information, for the platform.  
+	
+	"""
 
 	def supported_commands(self, arglist):
 		supported_commands = [
 			'check_throttled',
 			'check_wifi_quality',
 			'check_cpu_temp',
-			'supported_commands'
+			'supported_commands',
+			'check_alive'
 		]
-
+		
 		data = {
 			'result' : 'OK',
 			'message' : 'Supported commands listed in "data".',
@@ -184,4 +190,16 @@ class GrillPlatform:
 			}
 		}
 		self.logger.debug(f'Check CPU Temp Called. [data = {data}]')
+		return data
+		
+	def check_alive(self, arglist):
+		'''
+		 Simple check to see if the platform is up and running. 
+		'''
+		
+		data = {
+			'result' : 'OK',
+			'message' : 'The control script is running.',
+			'data' : {}
+		}
 		return data
