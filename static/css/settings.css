@@ -4,21 +4,7 @@
 .input-group .input-group-text {
     width: 100%;
 }
-.nav-settings-fixed {
-    position: fixed;
-    left: 0;
-    top: 50px;
-    bottom: 0;
-    width: 20%; /* Adjust this value as needed */
-    min-width: 300px; /* Minimum width of 300px */
-    overflow: auto;
-}
 
-.main-content {
-    z-index: 1;
-    margin-bottom: 110px;
-    margin-left: 20%; /* This should match the width of the nav-settings-fixed div */
-}
 .power-modal{
     margin-top:35px;
     z-index:9999;

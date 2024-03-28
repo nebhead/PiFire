@@ -83,7 +83,29 @@
 
 		{% block notify %}
 			<!-- Begin Error Notification Section -->
+			<!-- First check if we have any notifications, and insert blank space at the top of the screen if we do. -->
+			{% set notify_offset = False %}
 			{% if errors is defined %}
+				{% if errors != [] %}
+					{% set notify_offset = True %}
+				{% endif %}
+			{% endif %}
+			{% if warnings is defined %}
+				{% if warnings != [] %}
+					{% set notify_offset = True %}
+				{% endif %}
+			{% endif %}
+			{% if success is defined %}
+				{% if success != [] %}
+					{% set notify_offset = True %}
+				{% endif %}
+			{% endif %}
+			{% if notify_offset %}
+				<br><br> 
+			{% endif %}
+
+			<div class="row">
+				{% if errors is defined %}
 				{% if errors != [] %}<br>{% endif %}
 				{% for error in errors %}
 					<div class="alert alert-danger alert-dismissible">
@@ -91,8 +113,8 @@
 						<b><i class="fas fa-exclamation-triangle"></i>&nbsp; ERROR:</b> <i>{{ error }}</i>
 					</div>
 				{% endfor %}
-			{% endif %}
-			{% if warnings is defined %}
+				{% endif %}
+				{% if warnings is defined %}
 				{% if warnings != [] %}<br>{% endif %}
 				{% for warning in warnings %}
 					<div class="alert alert-info alert-dismissible">
@@ -100,8 +122,8 @@
 						<b><i class="fa-solid fa-circle-info"></i>&nbsp; Info:</b> <i>{{ warning }}</i>
 					</div>
 				{% endfor %}
-			{% endif %}
-			{% if success is defined %}
+				{% endif %}
+				{% if success is defined %}
 				{% if success != [] %}<br>{% endif %}
 				{% for message in success %}
 					<div class="alert alert-success alert-dismissible">
@@ -109,7 +131,8 @@
 						<b><i class="fa-solid fa-circle-info"></i>&nbsp; Success:</b> <i>{{ message }}</i>
 					</div>
 				{% endfor %}
-			{% endif %}
+				{% endif %}
+			</div>
 			<!-- End Error Notification Section -->
 		{% endblock %}
 

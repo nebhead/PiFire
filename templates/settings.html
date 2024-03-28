@@ -11,7 +11,7 @@
 {% block title %}Settings{% endblock %}
 
 {% block notify %}
-<div class="container-fluid">
+<div class="container-fluid main-content">
     <!-- Settings Success -->
     {% if (alert['type'] == "updated") %}
     <br>
@@ -47,7 +47,7 @@
 <div class="container-fluid">
     <div class="row">
         <!-- Navigation -->
-        <div class="col-lg-3">
+        <div class="col-lg-3 nav-settings-fixed">
             <nav class="navbar navbar-expand-lg navbar-dark flex-lg-column">
                 <a class="navbar d-lg-none dropdown-toggle btn btn-primary settings-button" href="#" id="navbarDropdown" role="button" data-toggle="collapse" data-target="#settingsNav" aria-haspopup="true" aria-expanded="false">
                     Settings
@@ -73,7 +73,7 @@
                 </div>
             </nav>
         </div>
-        <div class="col-lg-9">
+        <div class="col-lg-9 main-content">
             <!-- ============================ Probe Settings =============================== -->
             <div class="tab-content" id="v-pills-tabContent">
                 <div class="tab-pane fade show active" id="v-pills-probes" role="tabpanel" aria-labelledby="v-pills-probes-tab">
@@ -140,6 +140,7 @@
                         </div> <!-- End of card for Probe Display Names -->
                     </div><!-- End of Probe Settings Card body -->
                 </div><!-- End of Probe Settings Card -->
+                <br><br><br>
             </div><!-- End of Tab -->
             <!-- ============================ Edit / Add / Delete Probe Profiles ========================== -->
             <div class="tab-pane fade" id="v-pills-probe-profiles" role="tabpanel" aria-labelledby="v-pills-probe-profiles-tab">
@@ -288,6 +289,7 @@
                         {% endfor %}
                     </div><!-- End of card body -->
                 </div><!-- End of Card -->
+                <br><br><br>
             </div><!-- End of Tab -->
             <!-- ============================ Select Temp Units ========================== -->
             <div class="tab-pane fade" id="v-pills-units" role="tabpanel" aria-labelledby="v-pills-units-tab">
@@ -315,6 +317,7 @@
                         </div>
                     </form>
                     </div><!-- End of Card -->
+                    <br><br><br>
                 </div><!-- End of Tab -->
                 <!-- ============================ Grill Name ========================== -->
                 <div class="tab-pane fade" id="v-pills-name" role="tabpanel" aria-labelledby="v-pills-name-tab">
@@ -339,6 +342,7 @@
                         </div>
                     </form>
                     </div><!-- End of Card -->
+                    <br><br><br>
                 </div><!-- End of Tab -->
                 <!-- ============================ Work Mode Settings ========================== -->
                 <div class="tab-pane fade" id="v-pills-work-mode" role="tabpanel" aria-labelledby="v-pills-work-mode-tab">
@@ -600,6 +604,7 @@
                         </div>
                     </form>
                     </div><!-- End of Card -->
+                    <br><br><br>
                 </div><!-- End of Tab -->
                 <!-- ============================ PWM Settings ========================== -->
                 {% if settings['globals']['dc_fan'] %}
@@ -774,7 +779,7 @@
                         </div>
                     </form>
                     </div><!-- End of Card -->
-
+                    <br><br><br>
                 </div>
                 {% endif %}
                 <!-- End of Tab -->
@@ -1045,6 +1050,7 @@
                         </div>
                     </form>
                     </div><!-- End of Card -->
+                    <br><br><br>
                 </div><!-- End of Tab -->
                 <!-- ============================ Dashboard Settings ========================== -->
                 <div class="tab-pane fade" id="v-pills-dash" role="tabpanel" aria-labelledby="v-pills-dash-tab">
@@ -1070,6 +1076,7 @@
                         </div>
                     </form>
                     </div><!-- End of Card -->
+                    <br><br><br>
                 </div><!-- End of Tab -->
                 <!-- ============================ History Settings ========================== -->
                 <div class="tab-pane fade" id="v-pills-history" role="tabpanel" aria-labelledby="v-pills-history-tab">
@@ -1192,6 +1199,7 @@
                         </div>
                     </form>
                 </div><!-- End of Card -->
+                <br><br><br>
             </div><!-- End of Tab -->
             <!-- ============================ Safety Settings ========================== -->
             <div class="tab-pane fade" id="v-pills-safety" role="tabpanel" aria-labelledby="v-pills-safety-tab">
@@ -1251,6 +1259,7 @@
                         </div>
                         </form>
                     </div><!-- End of Card -->
+                    <br><br><br>
                 </div><!-- End of Tab -->
                 <!-- ============================ Pellet Settings ========================== -->
                 <div class="tab-pane fade" id="v-pills-pellets" role="tabpanel" aria-labelledby="v-pills-pellets-tab">
@@ -1377,6 +1386,7 @@
                         </div>
                     </form>
                 </div><!-- End of Card -->
+                <br><br><br>
             </div><!-- End of Tab -->
             <!-- ============================ Page Settings ========================== -->
             <div class="tab-pane fade" id="v-pills-theme" role="tabpanel" aria-labelledby="v-pills-theme-tab">
@@ -1404,6 +1414,7 @@
                         </div>
                     </form>
                     </div><!-- End of Card -->
+                    <br><br><br>
                 </div><!-- End of Tab -->
                 <!-- ========================== Notification Settings ========================== -->
                 <div class="tab-pane fade" id="v-pills-notifications" role="tabpanel" aria-labelledby="v-pills-notifications-tab">
@@ -1791,7 +1802,9 @@
                             </div>
                         </div><!-- End of Card -->
                     </form>
+
                 </div><!-- End of Tab -->
+                <br><br><br>
             </div>
         </div>
     </div>
