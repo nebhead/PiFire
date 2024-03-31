@@ -870,7 +870,7 @@ def tuning_page(action=None):
 					pagectrl['showcalc'] = 'true'
 					a, b, c = _calc_shh_coefficients(int(pagectrl['low_tempvalue']), int(pagectrl['med_tempvalue']),
 													int(pagectrl['high_tempvalue']), int(pagectrl['low_trvalue']),
-													int(pagectrl['med_trvalue']), int(pagectrl['high_trvalue']))
+													int(pagectrl['med_trvalue']), int(pagectrl['high_trvalue']), units=settings['globals']['units'])
 					pagectrl['a'] = a
 					pagectrl['b'] = b
 					pagectrl['c'] = c
@@ -892,10 +892,10 @@ def tuning_page(action=None):
 						for index in range(high_tr_range, low_tr_range, range_step):
 							if index == high_tr_range:
 								pagectrl['trlist'] = str(index)
-								pagectrl['templist'] = str(_tr_to_temp(index, a, b, c))
+								pagectrl['templist'] = str(_tr_to_temp(index, a, b, c, units=settings['globals']['units']))
 							else:
 								pagectrl['trlist'] = str(index) + ', ' + pagectrl['trlist']
-								pagectrl['templist'] = str(_tr_to_temp(index, a, b, c)) + ', ' + pagectrl['templist']
+								pagectrl['templist'] = str(_tr_to_temp(index, a, b, c, units=settings['globals']['units'])) + ', ' + pagectrl['templist']
 					else:
 						# Add 5% to the resistance at the low temperature side
 						low_tr_range = int(int(pagectrl['low_trvalue']) + (range_size * 0.05))
@@ -905,10 +905,10 @@ def tuning_page(action=None):
 						for index in range(high_tr_range, low_tr_range, range_step):
 							if index == high_tr_range:
 								pagectrl['trlist'] = str(index)
-								pagectrl['templist'] = str(_tr_to_temp(index, a, b, c))
+								pagectrl['templist'] = str(_tr_to_temp(index, a, b, c, units=settings['globals']['units']))
 							else:
 								pagectrl['trlist'] += ', ' + str(index)
-								pagectrl['templist'] += ', ' + str(_tr_to_temp(index, a, b, c))
+								pagectrl['templist'] += ', ' + str(_tr_to_temp(index, a, b, c, units=settings['globals']['units']))
 				else:
 					pagectrl['refresh'] = 'on'
 					control['tuning_mode'] = True  # Enable tuning mode
@@ -3258,12 +3258,18 @@ def _get_recipefilelist_details(recipefilelist):
 			recipefiledetails.append({'filename' : item['filename'], 'title' : 'ERROR', 'thumbnail' : ''})
 	return(recipefiledetails)
 
-def _calc_shh_coefficients(t1, t2, t3, r1, r2, r3):
+def _calc_shh_coefficients(t1, t2, t3, r1, r2, r3, units='F'):
 	try: 
-		# Convert Temps from Fahrenheit to Kelvin
-		t1 = ((t1 - 32) * (5 / 9)) + 273.15
-		t2 = ((t2 - 32) * (5 / 9)) + 273.15
-		t3 = ((t3 - 32) * (5 / 9)) + 273.15
+		if units=='F':
+			# Convert Temps from Fahrenheit to Kelvin
+			t1 = ((t1 - 32) * (5 / 9)) + 273.15
+			t2 = ((t2 - 32) * (5 / 9)) + 273.15
+			t3 = ((t3 - 32) * (5 / 9)) + 273.15
+		else:
+			# Convert Temps from Celsius to Kelvin
+			t1 = t1 + 273.15
+			t2 = t2 + 273.15
+			t3 = t3 + 273.15
 
 		# https://en.wikipedia.org/wiki/Steinhart%E2%80%93Hart_equation
 
@@ -3315,7 +3321,7 @@ def _temp_to_tr(temp_f, a, b, c):
 
 	return int(Tr) 
 
-def _tr_to_temp(tr, a, b, c):
+def _tr_to_temp(tr, a, b, c, units='F'):
 	try:
 		#Steinhart Hart Equation
 		# 1/T = A + B(ln(R)) + C(ln(R))^3
@@ -3324,11 +3330,13 @@ def _tr_to_temp(tr, a, b, c):
 		t1 = (b * ln_ohm) # b[ln(ohm)]
 		t2 = c * math.pow(ln_ohm, 3) # c[ln(ohm)]^3
 		temp_k = 1/(a + t1 + t2) # calculate temperature in Kelvin
-		temp_c = temp_k - 273.15 # Kelvin to Celsius
-		temp_c = temp_c * (9 / 5) + 32 # Celsius to Fahrenheit
+		result = temp_k - 273.15 # Kelvin to Celsius
+		if units=='F':
+			result = result * (9 / 5) + 32 # Celsius to Fahrenheit
 	except:
-		temp_c = 0.0
-	return int(temp_c) # Return Calculated Temperature and Thermistor Value in Ohms
+		result = 0.0
+
+	return int(result) # Return Calculated Temperature and Thermistor Value in Ohms
 
 def _str_td(td):
 	s = str(td).split(", ", 1)
