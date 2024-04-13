@@ -57,6 +57,11 @@ errors = read_errors(flush=True)
 
 eventLogger.info('Flushing Redis DB and creating new control structure')
 
+platform_config = settings['platform']
+platform_config['frequency'] = settings['pwm']['frequency']
+disp_rotation = settings['globals']['disp_rotation']
+units = settings['globals']['units']
+
 '''
 Set up GrillPlatform Module
 '''
@@ -77,26 +82,12 @@ except:
 	if settings['globals']['debug_mode']:
 		raise
 
-out_pins = settings['outpins']
-in_pins = settings['inpins']
-trigger_level = settings['globals']['triggerlevel']
-buttons_level = settings['globals']['buttonslevel']
-dc_fan = settings['globals']['dc_fan']
-frequency = settings['pwm']['frequency']
-standalone = settings['globals']['standalone']
-disp_rotation = settings['globals']['disp_rotation']
-units = settings['globals']['units']
-dev_pins = settings['dev_pins']
-
 try:
-	if dc_fan:
-		grill_platform = GrillPlatModule.GrillPlatform(out_pins, in_pins, trigger_level, dc_fan, frequency)
-	else:
-		grill_platform = GrillPlatModule.GrillPlatform(out_pins, in_pins, trigger_level)
+	grill_platform = GrillPlatModule.GrillPlatform(platform_config)
 except:
 	controlLogger.exception(f'Error occurred configuring grillplatform module ({settings["modules"]["grillplat"]}). Trace dump: ')
 	from grillplat.prototype import GrillPlatform  # Simulated Library for controlling the grill platform
-	grill_platform = GrillPlatform(out_pins, in_pins, trigger_level)
+	grill_platform = GrillPlatform(platform_config)
 	error_event = f'An error occurred configuring the [{settings["modules"]["grillplat"]}] platform object.  The ' \
 		f'prototype module has been loaded instead.  This sometimes means that the hardware is not ' \
 		f'connected properly, or the module is not configured.  Please run the configuration wizard ' \
@@ -151,12 +142,12 @@ except:
 		raise
 
 try:
-	display_device = DisplayModule.Display(dev_pins=dev_pins, buttonslevel=buttons_level,
+	display_device = DisplayModule.Display(dev_pins=settings['platform']['devices'], buttonslevel=settings['platform']['buttonslevel'],
 										   rotation=disp_rotation, units=units, config=display_config)
 except:
 	controlLogger.exception(f'Error occurred configuring the display module ({settings["modules"]["display"]}). Trace dump: ')
 	from display.none import Display  # Simulated Library for controlling the grill platform
-	display_device = Display(dev_pins=dev_pins, buttonslevel=buttons_level, rotation=disp_rotation, units=units, config={})
+	display_device = Display(dev_pins=settings['platform']['devices'], buttonslevel=settings['platform']['buttonslevel'], rotation=disp_rotation, units=units, config={})
 	error_event = f'An error occurred configuring the [{settings["modules"]["display"]}] display object.  The ' \
 		f'"display_none" module has been loaded instead.  This sometimes means that the hardware is ' \
 		f'not connected properly, or the module is not configured.  Please run the configuration wizard ' \
@@ -189,17 +180,17 @@ try:
 	if settings['modules']['grillplat'] == 'prototype' and settings['modules']['dist'] == 'prototype':
 		# If in prototype mode, enable test reading (i.e. random values from proto distance sensor)
 		dist_device = DistanceModule.HopperLevel(
-			dev_pins=dev_pins, empty=settings['pelletlevel']['empty'], full=settings['pelletlevel']['full'],
+			dev_pins=settings['platform']['devices'], empty=settings['pelletlevel']['empty'], full=settings['pelletlevel']['full'],
 			debug=settings['globals']['debug_mode'], random=True)
 	else:
 		dist_device = DistanceModule.HopperLevel(
-			dev_pins=dev_pins, empty=settings['pelletlevel']['empty'], full=settings['pelletlevel']['full'],
+			dev_pins=settings['platform']['devices'], empty=settings['pelletlevel']['empty'], full=settings['pelletlevel']['full'],
 			debug=settings['globals']['debug_mode'])
 except:
 	controlLogger.exception(f'Error occurred configuring the distance module ({dist_name}). Trace dump: ')
 	from distance.none import HopperLevel  # Simulated Library for controlling the grill platform
 	dist_device = HopperLevel(
-		dev_pins=dev_pins, empty=settings['pelletlevel']['empty'], full=settings['pelletlevel']['full'],
+		dev_pins=settings['platform']['devices'], empty=settings['pelletlevel']['empty'], full=settings['pelletlevel']['full'],
 		debug=settings['globals']['debug_mode'])
 	error_event = f'An error occurred configuring the [{settings["modules"]["dist"]}] distance object.  The ' \
 		f'none module has been loaded instead.  This sometimes means that the hardware is not ' \
@@ -227,7 +218,7 @@ def _start_fan(settings, duty_cycle=None):
 	:param settings: Settings
 	:param duty_cycle: Duty Cycle to set. If not provided will be set to max_duty_cycle (dc_fan only)
 	"""
-	if dc_fan:
+	if settings['platform']['dc_fan']:
 		if duty_cycle is not None:
 			adjusted_dc = max(duty_cycle, settings['pwm']['min_duty_cycle'])
 			adjusted_dc = min(adjusted_dc, settings['pwm']['max_duty_cycle'])
@@ -327,7 +318,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	last = grill_platform.get_input_status()
 
 	# Set DC fan frequency if it has changed since init
-	if dc_fan:
+	if settings['platform']['dc_fan']:
 		pwm_frequency = settings['pwm']['frequency']
 		frequency_status = grill_platform.get_output_status()
 		if not pwm_frequency == frequency_status['frequency']:
@@ -568,7 +559,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			eventLogger.info("Hopper Level Checked @ " + str(pelletdb['current']['hopper_level']) + "%")
 
 		# Check for update in ON/OFF Switch
-		if not standalone and last != grill_platform.get_input_status():
+		if not settings['platform']['standalone'] and last != grill_platform.get_input_status():
 			last = grill_platform.get_input_status()
 			if not last:
 				eventLogger.info('Switch set to off, going to monitor mode.')
@@ -606,7 +597,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 				elif not control['manual']['power'] and current_output_status['power']:
 					grill_platform.power_off()
 					eventLogger.debug('Power OFF')
-				if dc_fan and control['manual']['fan'] and current_output_status['fan'] and \
+				if settings['platform']['dc_fan'] and control['manual']['fan'] and current_output_status['fan'] and \
 					not control['manual']['pwm'] == current_output_status['pwm']:
 					speed = control['manual']['pwm']
 					eventLogger.debug('PWM Speed: ' + str(speed) + '%')
@@ -704,7 +695,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 				status_data['recipe_paused'] = False
 			status_data['outpins'] = {}
 			current = grill_platform.get_output_status()  # Get current pin settings
-			for item in settings['outpins']:
+			for item in settings['platform']['outputs']:
 				try:
 					status_data['outpins'][item] = current[item]
 				except KeyError:
@@ -758,7 +749,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 					LidOpenDetect = False
 
 			# If PWM Fan Control enabled set duty_cycle based on temperature
-			if (dc_fan and mode == 'Hold' and control['pwm_control'] and
+			if (settings['platform']['dc_fan'] and mode == 'Hold' and control['pwm_control'] and
 					(now - fan_update_time) > settings['pwm']['update_time']):
 				fan_update_time = now
 				if ptemp > control['primary_setpoint']:
@@ -795,7 +786,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 				elif ((now - sp_cycle_toggle_time) > settings['smoke_plus']['off_time'] and
 					  not current_output_status['fan']):
 					sp_cycle_toggle_time = now
-					if (dc_fan and (mode == 'Smoke' or (mode == 'Hold' and not control['pwm_control'])) and
+					if (settings['platform']['dc_fan'] and (mode == 'Smoke' or (mode == 'Hold' and not control['pwm_control'])) and
 							settings['smoke_plus']['fan_ramp']):
 						on_time = settings['smoke_plus']['on_time']
 						max_duty_cycle = settings['pwm']['max_duty_cycle']
@@ -814,19 +805,19 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 				eventLogger.debug('Smoke Plus: Fan Returned to On')
 
 			# If Smoke Plus was disabled while fan was ramping return it to the correct duty cycle
-			elif (dc_fan and current_output_status['pwm'] != control['duty_cycle'] and not
+			elif (settings['platform']['dc_fan'] and current_output_status['pwm'] != control['duty_cycle'] and not
 					control['s_plus'] and pwm_fan_ramping):
 				pwm_fan_ramping = False
 				grill_platform.set_duty_cycle(control['duty_cycle'])
 				eventLogger.debug('Smoke Plus: Fan Returned to ' + str(control['duty_cycle']) + '% duty cycle')
 
 			# Set Fan Duty Cycle based on Average Grill Temp Using Profile
-			elif dc_fan and control['pwm_control'] and current_output_status['pwm'] != control['duty_cycle']:
+			elif settings['platform']['dc_fan'] and control['pwm_control'] and current_output_status['pwm'] != control['duty_cycle']:
 				grill_platform.set_duty_cycle(control['duty_cycle'])
 				eventLogger.debug('Temp Fan Control: Fan Set to ' + str(control['duty_cycle']) + '% duty cycle')
 
 			# If PWM Fan Control is turned off check current Duty Cycle and set back to max_duty_cycle if required
-			elif (dc_fan and not control['pwm_control'] and current_output_status['pwm'] !=
+			elif (settings['platform']['dc_fan'] and not control['pwm_control'] and current_output_status['pwm'] !=
 				  	settings['pwm']['max_duty_cycle']):
 				control['duty_cycle'] = settings['pwm']['max_duty_cycle']
 				write_control(control, direct_write=True, origin='control')
@@ -1067,7 +1058,7 @@ status = read_status(init=True)
 while True:
 
 	# Check the On/Off switch for changes
-	if not standalone and last != grill_platform.get_input_status():
+	if not settings['platform']['standalone'] and last != grill_platform.get_input_status():
 		last = grill_platform.get_input_status()
 		if not last:
 			eventLogger.info('Switch set to off, going to stop mode.')
@@ -1078,7 +1069,7 @@ while True:
 
 	status = read_status()
 	current = grill_platform.get_output_status()  # Get current pin settings
-	for item in settings['outpins']:
+	for item in settings['platform']['outputs']:
 		try:
 			status['outpins'][item] = current[item]
 		except KeyError:
@@ -1219,7 +1210,7 @@ while True:
 
 		# Prime (dump preset amount of pellets into the firepot)
 		elif control['mode'] == 'Prime':
-			if not standalone and not grill_platform.get_input_status():
+			if not settings['platform']['standalone'] and not grill_platform.get_input_status():
 				eventLogger.warning('PiFire is set to OFF. This doesn\'t prevent startup, but this means the switch won\'t behave as normal.')
 			# Call Work Cycle for Startup Mode
 			_work_cycle('Prime', grill_platform, probe_complex, display_device, dist_device)
@@ -1229,7 +1220,7 @@ while True:
 
 		# Startup (startup sequence)
 		elif control['mode'] == 'Startup':
-			if not standalone and not grill_platform.get_input_status():
+			if not settings['platform']['standalone'] and not grill_platform.get_input_status():
 				eventLogger.warning('PiFire is set to OFF. This doesn\'t prevent startup, but this means the switch won\'t behave as normal.')
 			settings = read_settings()
 			# Clear History (in the case it wasn't already cleared fromt he last run)
@@ -1293,7 +1284,7 @@ while True:
 		
 		# Reignite (reignite sequence)
 		elif control['mode'] == 'Reignite':
-			if (not standalone) and (not grill_platform.get_input_status()):
+			if (not settings['platform']['standalone']) and (not grill_platform.get_input_status()):
 				eventLogger.warning("PiFire is set to OFF. This doesn't prevent reignite, "
 									   "but this means the switch won't behave as normal.")
 			control['next_mode'] = control['safety']['reignitelaststate']

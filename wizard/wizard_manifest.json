@@ -1,117 +1,879 @@
 {
 	"modules" : {
 		"grillplatform" : {
-			"pifire" : {
-				"friendly_name" : "PiFire Standard",
-				"filename" : "pifire",
-				"description" : "This is the default PiFire module supporting the Raspberry Pi Zero W (1/2).  Choose this module if PiFire is running on a Raspberry Pi.",
-				"default" : true,
-				"image" : "raspizerow.png",
-				"reboot_required" : false,
+			"custom" : {
+				"friendly_name" : "Custom Build",
+				"filename" : "raspberry_pi_all",
+				"description" : "Choose this configuration if you have a custom configuration and need to modify all available platform settings.",
+				"default" : false,
+				"image" : "custom.png",
+				"reboot_required" : true,
 				"py_dependencies" : [], 
 				"apt_dependencies" : [],
 				"command_list" : [],
 				"settings_dependencies" : {
+					"current" : {
+						"friendly_name" : "Platform Selected",
+						"description" : "Selects the current platform.",
+						"options" : { "custom" : "Custom Build" },
+						"settings" : ["platform", "current"],
+						"hidden" : true
+					},
+					"system_type" : {
+						"friendly_name" : "System Type",
+						"description" : "Select the system that you will be using.  By default on most platforms will be the Raspberry Pi.  Select Prototype only if you are doing development testing.",
+						"options" : { "raspberry_pi_all" : "Raspberry Pi (ALL)", "prototype" : "Prototype / Test Only" },
+						"settings" : ["platform", "system_type"]
+					},
 					"standalone" : {
 						"friendly_name" : "Standalone",
 						"description" : "Select if your are using PiFire alongside the OEM Controller. ",
 						"options" : { "True" : "PiFire Only", "False" : "OEM Controller Present" },
-						"settings" : ["globals", "standalone"]
+						"settings" : ["platform", "standalone"]
 					},
 					"triggerlevel" : {
 						"friendly_name" : "Relay Type",
 						"description" : "Select the trigger level for the relays on the platform.  ",
 						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
-						"settings" : ["globals", "triggerlevel"]
-					},
-					"real_hw" : {
-						"friendly_name" : "Real Hardware",
-						"description" : "Select Yes if running on real hardware (Default).  Select No if running in a test environment.",
-						"options" : { "True" : "Yes", "False" : "No (Test Only)" },
-						"settings" : ["globals", "real_hw"],
-						"hidden" : true
-					}
-				}
-			},
-			"pifire_pwm" : {
-				"friendly_name" : "PiFire PWM Support",
-				"filename" : "pifire_pwm",
-				"description" : "This is the PWM PiFire module supporting the Raspberry Pi Zero W (1/2).  Choose this module if PiFire is running on a Raspberry Pi and your PCB supports a 12v DC PWM Fan.",
-				"default" : false,
-				"image" : "raspizerow.png",
-				"reboot_required" : true,
-				"py_dependencies" : ["rpi-hardware-pwm"],
-				"apt_dependencies" : [],
-				"command_list" : [
-					["sudo", "bash", "wizard/pwm_rpi_platform.sh"]
-				],
-				"settings_dependencies" : {
-					"standalone" : {
-						"friendly_name" : "Standalone",
-						"description" : "Select if your are using PiFire alongside the OEM Controller ",
-						"options" : { "True" : "PiFire Only" },
-						"settings" : ["globals", "standalone"],
-						"hidden": true
-					},
-					"triggerlevel" : {
-						"friendly_name" : "Relay Type",
-						"description" : "Select the trigger level for the relays on the platform.  ",
-						"options" : { "HIGH" : "Active High", "LOW" : "Active Low" },
-						"settings" : ["globals", "triggerlevel"]
+						"settings" : ["platform", "triggerlevel"]
 					},
 					"dc_fan" : {
 						"friendly_name" : "Fan Type",
-						"description" : "Select if your platform supports a DC PWM fan or uses a regular AC Fan. ",
-						"options" : { "True" : "PWM DC Fan" },
-						"settings" : ["globals", "dc_fan"],
-						"hidden" : true
+						"description" : "Select if your platform supports a DC(PWM) fan or uses a regular AC Fan. ",
+						"options" : { "True" : "DC Fan (PWM)", "False" : "AC Fan" },
+						"settings" : ["platform", "dc_fan"]
+					},
+					"output_auger" : {
+						"friendly_name" : "Auger Relay GPIO Pin",
+						"description" : "Select the GPIO used for the Auger relay.",
+						"options" : { "14" : "GPIO14", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "outputs", "auger"]
+					},
+					"output_dc_fan" : {
+						"friendly_name" : "DC Fan GPIO Pin",
+						"description" : "Select the GPIO used for the DC Fan.",
+						"options" : { "26" : "GPIO26", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "27" : "GPIO27" },
+						"settings" : ["platform", "outputs", "dc_fan"]
+					},
+					"output_fan" : {
+						"friendly_name" : "AC Fan Relay GPIO Pin",
+						"description" : "Select the GPIO used for enabling/disabling fan.",
+						"options" : { "15" : "GPIO15", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "outputs", "fan"]
+					},
+					"output_igniter" : {
+						"friendly_name" : "Igniter Relay GPIO Pin",
+						"description" : "Select the GPIO used for the Igniter relay.",
+						"options" : { "18" : "GPIO18", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "outputs", "igniter"]
+					},
+					"output_power" : {
+						"friendly_name" : "Power Gate Relay GPIO Pin",
+						"description" : "Select the GPIO used for the AC Power Gate.",
+						"options" : { "4" : "GPIO4", "2" : "GPIO2", "3" : "GPIO3", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "outputs", "power"]
+					},
+					"output_pwm" : {
+						"friendly_name" : "DC Fan PWM GPIO Pin",
+						"description" : "Select the GPIO used for the DC Fan PWM.  Note that this should be a PWM capable GPIO.",
+						"options" : { "13" : "GPIO13", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "outputs", "pwm"]
+					},
+					"input_selector" : {
+						"friendly_name" : "Controller Select GPIO Pin",
+						"description" : "If the OEM controller is present alongside the PiFire controller, this GPIO will be used to select the active controller. Note that this will not be utilized unless 'Standalone' is set to False.  This should be set to 'None' if not utilized.",
+						"options" : { "None" : "None", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "inputs", "selector"]
+					},
+					"input_shutdown" : {
+						"friendly_name" : "System Shutdown GPIO Pin",
+						"description" : "GPIO Pin configured to shutdown the system.  Used for the wake/shutdown button on some designs.  Set this to 'None' if not utilized.",
+						"options" : { "None" : "None", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "inputs", "shutdown"]
+					},
+					"device_display_dc" : {
+						"friendly_name" : "SPI Display DC Pin",
+						"description" : "GPIO Pin for the SPI Display DC Pin.",
+						"options" : { "24" : "GPIO24", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "devices", "display", "dc"]
+					},
+					"device_display_led" : {
+						"friendly_name" : "SPI Display LED Backlight Pin",
+						"description" : "GPIO Pin for the SPI Display LED Backlight.",
+						"options" : { "5" : "GPIO5", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" }, 
+						"settings" : ["platform", "devices", "display", "led"]
+					},
+					"device_display_rst" : {
+						"friendly_name" : "SPI Display Reset Pin",
+						"description" : "GPIO Pin for the SPI Display Reset.",
+						"options" : { "25" : "GPIO25", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "devices", "display", "rst"]
+					},
+					"device_distance_echo" : {
+						"friendly_name" : "Distance Sensor ECHO GPIO",
+						"description" : "GPIO Pin for the HCSR04 Ultrasonic distance sensor ECHO",
+						"options" : { "27" : "GPIO27", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26" },
+						"settings" : ["platform", "devices", "distance", "echo"]
+					},
+					"device_distance_trig" : {
+						"friendly_name" : "Distance Sensor Trigger GPIO",
+						"description" : "GPIO Pin for the HCSR04 Ultrasonic distance sensor Trigger",
+						"options" : { "23" : "GPIO23", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "devices", "distance", "trig"]
+					},
+					"device_input_down_dt" : {
+						"friendly_name" : "Down Button / Encoder DT",
+						"description" : "GPIO Pin for Down Button / Encoder DT",
+						"options" : { "20" : "GPIO20", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "devices", "input", "down_dt"]
+					},
+					"device_input_enter_sw" : {
+						"friendly_name" : "Enter Button / Encoder SW",
+						"description" : "GPIO Pin for Enter Button / Encoder SW",
+						"options" : { "21" : "GPIO21", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "devices", "input", "enter_sw"]
+					},
+					"device_input_up_clk" : {
+						"friendly_name" : "Up Button / Encoder CLK",
+						"description" : "GPIO Pin for Up Button / Encoder CLK",
+						"options" : { "16" : "GPIO16", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "devices", "input", "up_clk"]
 					},
 					"real_hw" : {
 						"friendly_name" : "Real Hardware",
 						"description" : "Select Yes if running on real hardware (Default).  Select No if running in a test environment.",
 						"options" : { "True" : "Yes", "False" : "No (Test Only)" },
-						"settings" : ["globals", "real_hw"],
-						"hidden" : true
-					}
+						"settings" : ["platform", "real_hw"]
+					}					
 				}
 			},
-			"prototype" : {
-				"friendly_name" : "Prototype Test/Debug",
-				"filename" : "prototype",
-				"description" : "This module is used for testing and debug purposes only.  Only select this module if you know what you are doing.",
+			"pcb_2.00a" : {
+				"friendly_name" : "PiFire PCB v2.00a",
+				"filename" : "raspberry_pi_all",
+				"description" : "Default settings/configuration for the PiFire PCB v2.00a designed by Ben Parmeter.",
 				"default" : false,
-				"image" : "prototype.png",
-				"reboot_required" : false,
+				"image" : "pcb_2.00a.png",
+				"reboot_required" : true,
 				"py_dependencies" : [], 
 				"apt_dependencies" : [],
 				"command_list" : [],
 				"settings_dependencies" : {
+					"current" : {
+						"friendly_name" : "Platform Selected",
+						"description" : "Selects the current platform.",
+						"options" : { "pcb_2.00a" : "PiFire PCB v2.00a" },
+						"settings" : ["platform", "current"],
+						"hidden" : true
+					},
+					"system_type" : {
+						"friendly_name" : "System Type",
+						"description" : "Select the system that you will be using.  By default on most platforms will be the Raspberry Pi.  Select Prototype only if you are doing development testing.",
+						"options" : { "raspberry_pi_all" : "Raspberry Pi (ALL)", "prototype" : "Prototype / Test Only" },
+						"settings" : ["platform", "system_type"]
+					},
 					"standalone" : {
 						"friendly_name" : "Standalone",
-						"description" : "Select if your are using PiFire alongside the OEM Controller ",
+						"description" : "Select if your are using PiFire alongside the OEM Controller. ",
 						"options" : { "True" : "PiFire Only", "False" : "OEM Controller Present" },
-						"settings" : ["globals", "standalone"]
+						"settings" : ["platform", "standalone"]
 					},
 					"triggerlevel" : {
 						"friendly_name" : "Relay Type",
 						"description" : "Select the trigger level for the relays on the platform.  ",
 						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
-						"settings" : ["globals", "triggerlevel"]
+						"settings" : ["platform", "triggerlevel"]
 					},
 					"dc_fan" : {
 						"friendly_name" : "Fan Type",
-						"description" : "Select if your platform supports a DC PWM fan or uses a regular AC Fan. ",
-						"options" : { "False" : "Standard AC Fan", "True" : "PWM DC Fan" },
-						"settings" : ["globals", "dc_fan"]
+						"description" : "Select if your platform supports a DC(PWM) fan or uses a regular AC Fan. ",
+						"options" : { "False" : "AC Fan" },
+						"settings" : ["platform", "dc_fan"],
+						"hidden" : true
+					},
+					"output_auger" : {
+						"friendly_name" : "Auger Relay GPIO Pin",
+						"description" : "Select the GPIO used for the Auger relay.",
+						"options" : { "14" : "GPIO14" },
+						"settings" : ["platform", "outputs", "auger"],
+						"hidden" : true
+					},
+					"output_dc_fan" : {
+						"friendly_name" : "DC Fan GPIO Pin",
+						"description" : "Select the GPIO used for the DC Fan.",
+						"options" : { "None" : "None" },  
+						"settings" : ["platform", "outputs", "dc_fan"],
+						"hidden" : true
+					},
+					"output_fan" : {
+						"friendly_name" : "AC Fan Relay GPIO Pin",
+						"description" : "Select the GPIO used for enabling/disabling fan.",
+						"options" : { "15" : "GPIO15" },						"settings" : ["platform", "outputs", "fan"],
+						"hidden" : true
+					},
+					"output_igniter" : {
+						"friendly_name" : "Igniter Relay GPIO Pin",
+						"description" : "Select the GPIO used for the Igniter relay.",
+						"options" : { "18" : "GPIO18" },
+						"settings" : ["platform", "outputs", "igniter"],
+						"hidden" : true
+					},
+					"output_power" : {
+						"friendly_name" : "Power Gate Relay GPIO Pin",
+						"description" : "Select the GPIO used for the AC Power Gate.",
+						"options" : { "4" : "GPIO4" },
+						"settings" : ["platform", "outputs", "power"],
+						"hidden" : true
+					},
+					"output_pwm" : {
+						"friendly_name" : "DC Fan PWM GPIO Pin",
+						"description" : "Select the GPIO used for the DC Fan PWM.  Note that this should be a PWM capable GPIO.",
+						"options" : { "None" : "None" },
+						"settings" : ["platform", "outputs", "pwm"],
+						"hidden" : true
+					},
+					"input_selector" : {
+						"friendly_name" : "Controller Select GPIO Pin",
+						"description" : "If the OEM controller is present alongside the PiFire controller, this GPIO will be used to select the active controller. Note that this will not be utilized unless 'Standalone' is set to False.  This should be set to 'None' if not utilized.",
+						"options" : { "17" : "GPIO17" },
+						"settings" : ["platform", "inputs", "selector"],
+						"hidden" : true
+					},
+					"input_shutdown" : {
+						"friendly_name" : "System Shutdown GPIO Pin",
+						"description" : "GPIO Pin configured to shutdown the system.  Used for the wake/shutdown button on some designs.  Set this to 'None' if not utilized.",
+						"options" : { "None" : "None" },
+						"settings" : ["platform", "inputs", "shutdown"],
+						"hidden" : true
+					},
+					"device_display_dc" : {
+						"friendly_name" : "SPI Display DC Pin",
+						"description" : "GPIO Pin for the SPI Display DC Pin.",
+						"options" : { "24" : "GPIO24" },
+						"settings" : ["platform", "devices", "display", "dc"],
+						"hidden" : true
+					},
+					"device_display_led" : {
+						"friendly_name" : "SPI Display LED Backlight Pin",
+						"description" : "GPIO Pin for the SPI Display LED Backlight.",
+						"options" : { "5" : "GPIO5" },
+						"settings" : ["platform", "devices", "display", "led"],
+						"hidden" : true
+					},
+					"device_display_rst" : {
+						"friendly_name" : "SPI Display Reset Pin",
+						"description" : "GPIO Pin for the SPI Display Reset.",
+						"options" : { "25" : "GPIO25" },
+						"settings" : ["platform", "devices", "display", "rst"],
+						"hidden" : true
+					},
+					"device_distance_echo" : {
+						"friendly_name" : "Distance Sensor ECHO GPIO",
+						"description" : "GPIO Pin for the HCSR04 Ultrasonic distance sensor ECHO",
+						"options" : {"27" : "GPIO27", "6" : "GPIO6", "12" : "GPIO12", "13" : "GPIO13", "16": "GPIO16", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "26" : "GPIO26" },
+						"settings" : ["platform", "devices", "distance", "echo"]
+					},
+					"device_distance_trig" : {
+						"friendly_name" : "Distance Sensor Trigger GPIO",
+						"description" : "GPIO Pin for the HCSR04 Ultrasonic distance sensor Trigger",
+						"options" : { "23" : "GPIO23", "6" : "GPIO6", "12" : "GPIO12", "13" : "GPIO13", "16": "GPIO16", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "devices", "distance", "trig"]
+					},
+					"device_input_down_dt" : {
+						"friendly_name" : "Down Button / Encoder DT",
+						"description" : "GPIO Pin for Down Button / Encoder DT",
+						"options" : { "20" : "GPIO20", "6" : "GPIO6", "12" : "GPIO12", "13" : "GPIO13", "16": "GPIO16", "19" : "GPIO19", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "devices", "input", "down_dt"]
+					},
+					"device_input_enter_sw" : {
+						"friendly_name" : "Enter Button / Encoder SW",
+						"description" : "GPIO Pin for Enter Button / Encoder SW",
+						"options" : { "21" : "GPIO21", "6" : "GPIO6", "12" : "GPIO12", "13" : "GPIO13", "16": "GPIO16", "19" : "GPIO19", "20" : "GPIO20", "22" : "GPIO22", "23" : "GPIO23", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "devices", "input", "enter_sw"]
+					},
+					"device_input_up_clk" : {
+						"friendly_name" : "Up Button / Encoder CLK",
+						"description" : "GPIO Pin for Up Button / Encoder CLK",
+						"options" : { "16" : "GPIO16", "6" : "GPIO6", "12" : "GPIO12", "13" : "GPIO13", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "devices", "input", "up_clk"]
+					},
+					"system_1wire" : {
+						"friendly_name" : "1Wire GPIO Pin",
+						"description" : "GPIO Pin for 1Wire bus/interface.  Used for DS18B20 sensors.",
+						"options" : { "None" : "None", "6" : "GPIO6", "12" : "GPIO12", "13" : "GPIO13", "16": "GPIO16", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "system", "1WIRE"]
+					},
+					"system_spi0_ce0" : {
+						"friendly_name" : "SPI0 CE0 GPIO Pin",
+						"description" : "GPIO Pin for SPI0 bus/interface CE/CS0.",
+						"options" : { "8" : "GPIO8"},
+						"settings" : ["platform", "system", "SPI0", "CE0"],
+						"hidden" : true
+					},
+					"system_spi0_ce1" : {
+						"friendly_name" : "SPI0 CE1 GPIO Pin",
+						"description" : "GPIO Pin for SPI0 bus/interface CE/CS1.",
+						"options" : { "7" : "GPIO7"},
+						"settings" : ["platform", "system", "SPI0", "CE1"],
+						"hidden" : true
 					},
 					"real_hw" : {
 						"friendly_name" : "Real Hardware",
-						"description" : "Select Yes if running on real hardware.  Select No if running in a test environment (Default).",
-						"options" : { "False" : "No (Test Only)", "True" : "Yes" },
-						"settings" : ["globals", "real_hw"]
-					}
+						"description" : "Select Yes if running on real hardware (Default).  Select No if running in a test environment.",
+						"options" : { "True" : "Yes", "False" : "No (Test Only)" },
+						"settings" : ["platform", "real_hw"]
+					}					
 				}
-			} 
+			},
+			"pcb_3.01a" : {
+				"friendly_name" : "PiFire PCB v3.01a",
+				"filename" : "raspberry_pi_all",
+				"description" : "Default settings/configuration for the PiFire PCB v3.01a designed by James Weber.",
+				"default" : true,
+				"image" : "pcb_3.01a.png",
+				"reboot_required" : true,
+				"py_dependencies" : [], 
+				"apt_dependencies" : [],
+				"command_list" : [],
+				"settings_dependencies" : {
+					"current" : {
+						"friendly_name" : "Platform Selected",
+						"description" : "Selects the current platform.",
+						"options" : { "pcb_3.01a" : "PiFire PCB v3.01a" },
+						"settings" : ["platform", "current"],
+						"hidden" : true
+					},
+					"system_type" : {
+						"friendly_name" : "System Type",
+						"description" : "Select the system that you will be using.  By default on most platforms will be the Raspberry Pi.  Select Prototype only if you are doing development testing.",
+						"options" : { "raspberry_pi_all" : "Raspberry Pi (ALL)", "prototype" : "Prototype / Test Only" },
+						"settings" : ["platform", "system_type"]
+					},
+					"standalone" : {
+						"friendly_name" : "Standalone",
+						"description" : "Select if your are using PiFire alongside the OEM Controller. ",
+						"options" : { "True" : "PiFire Only", "False" : "OEM Controller Present" },
+						"settings" : ["platform", "standalone"]
+					},
+					"triggerlevel" : {
+						"friendly_name" : "Relay Type",
+						"description" : "Select the trigger level for the relays on the platform.  ",
+						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevel"]
+					},
+					"dc_fan" : {
+						"friendly_name" : "Fan Type",
+						"description" : "Select if your platform supports a DC(PWM) fan or uses a regular AC Fan. ",
+						"options" : { "False" : "AC Fan" },
+						"settings" : ["platform", "dc_fan"],
+						"hidden" : true
+					},
+					"output_auger" : {
+						"friendly_name" : "Auger Relay GPIO Pin",
+						"description" : "Select the GPIO used for the Auger relay.",
+						"options" : { "14" : "GPIO14" },
+						"settings" : ["platform", "outputs", "auger"],
+						"hidden" : true
+					},
+					"output_dc_fan" : {
+						"friendly_name" : "DC Fan GPIO Pin",
+						"description" : "Select the GPIO used for the DC Fan.",
+						"options" : { "None" : "None" },  
+						"settings" : ["platform", "outputs", "dc_fan"],
+						"hidden" : true
+					},
+					"output_fan" : {
+						"friendly_name" : "AC Fan Relay GPIO Pin",
+						"description" : "Select the GPIO used for enabling/disabling fan.",
+						"options" : { "15" : "GPIO15" },						
+						"settings" : ["platform", "outputs", "fan"],
+						"hidden" : true
+					},
+					"output_igniter" : {
+						"friendly_name" : "Igniter Relay GPIO Pin",
+						"description" : "Select the GPIO used for the Igniter relay.",
+						"options" : { "18" : "GPIO18" },
+						"settings" : ["platform", "outputs", "igniter"],
+						"hidden" : true
+					},
+					"output_power" : {
+						"friendly_name" : "Power Gate Relay GPIO Pin",
+						"description" : "Select the GPIO used for the AC Power Gate.",
+						"options" : { "4" : "GPIO4" },
+						"settings" : ["platform", "outputs", "power"],
+						"hidden" : true
+					},
+					"output_pwm" : {
+						"friendly_name" : "DC Fan PWM GPIO Pin",
+						"description" : "Select the GPIO used for the DC Fan PWM.  Note that this should be a PWM capable GPIO.",
+						"options" : { "None" : "None" },
+						"settings" : ["platform", "outputs", "pwm"],
+						"hidden" : true
+					},
+					"input_selector" : {
+						"friendly_name" : "Controller Select GPIO Pin",
+						"description" : "If the OEM controller is present alongside the PiFire controller, this GPIO will be used to select the active controller. Note that this will not be utilized unless 'Standalone' is set to False.  This should be set to 'None' if not utilized.",
+						"options" : { "17" : "GPIO17" },
+						"settings" : ["platform", "inputs", "selector"],
+						"hidden" : true
+					},
+					"input_shutdown" : {
+						"friendly_name" : "System Shutdown GPIO Pin",
+						"description" : "GPIO Pin configured to shutdown the system.  Used for the wake/shutdown button on some designs.  Set this to 'None' if not utilized.",
+						"options" : { "None" : "None" },
+						"settings" : ["platform", "inputs", "shutdown"],
+						"hidden" : true
+					},
+					"device_display_dc" : {
+						"friendly_name" : "SPI Display DC Pin",
+						"description" : "GPIO Pin for the SPI Display DC Pin.",
+						"options" : { "24" : "GPIO24" },
+						"settings" : ["platform", "devices", "display", "dc"],
+						"hidden" : true
+					},
+					"device_display_led" : {
+						"friendly_name" : "SPI Display LED Backlight Pin",
+						"description" : "GPIO Pin for the SPI Display LED Backlight.",
+						"options" : { "5" : "GPIO5" },
+						"settings" : ["platform", "devices", "display", "led"],
+						"hidden" : true
+					},
+					"device_display_rst" : {
+						"friendly_name" : "SPI Display Reset Pin",
+						"description" : "GPIO Pin for the SPI Display Reset.",
+						"options" : { "25" : "GPIO25" },
+						"settings" : ["platform", "devices", "display", "rst"],
+						"hidden" : true
+					},
+					"device_distance_echo" : {
+						"friendly_name" : "Distance Sensor ECHO GPIO",
+						"description" : "GPIO Pin for the HCSR04 Ultrasonic distance sensor ECHO",
+						"options" : { "27" : "GPIO27" },
+						"settings" : ["platform", "devices", "distance", "echo"],
+						"hidden" : true
+					},
+					"device_distance_trig" : {
+						"friendly_name" : "Distance Sensor Trigger GPIO",
+						"description" : "GPIO Pin for the HCSR04 Ultrasonic distance sensor Trigger",
+						"options" : { "23" : "GPIO23" },
+						"settings" : ["platform", "devices", "distance", "trig"],
+						"hidden" : true
+					},
+					"device_input_down_dt" : {
+						"friendly_name" : "Down Button / Encoder DT",
+						"description" : "GPIO Pin for Down Button / Encoder DT",
+						"options" : { "20" : "GPIO20" },
+						"settings" : ["platform", "devices", "input", "down_dt"],
+						"hidden" : true
+					},
+					"device_input_enter_sw" : {
+						"friendly_name" : "Enter Button / Encoder SW",
+						"description" : "GPIO Pin for Enter Button / Encoder SW",
+						"options" : { "21" : "GPIO21" },
+						"settings" : ["platform", "devices", "input", "enter_sw"],
+						"hidden" : true
+					},
+					"device_input_up_clk" : {
+						"friendly_name" : "Up Button / Encoder CLK",
+						"description" : "GPIO Pin for Up Button / Encoder CLK",
+						"options" : { "16" : "GPIO16" },
+						"settings" : ["platform", "devices", "input", "up_clk"],
+						"hidden" : true
+					},
+					"system_1wire" : {
+						"friendly_name" : "1Wire GPIO Pin",
+						"description" : "GPIO Pin for 1Wire bus/interface.  Used for DS18B20 sensors.",
+						"options" : { "None" : "None", "6" : "GPIO6", "12" : "GPIO12", "13" : "GPIO13", "19" : "GPIO19", "23" : "GPIO23", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "system", "1WIRE"]
+					},
+					"system_spi0_ce0" : {
+						"friendly_name" : "SPI0 CE0 GPIO Pin",
+						"description" : "GPIO Pin for SPI0 bus/interface CE/CS0.",
+						"options" : { "8" : "GPIO8"},
+						"settings" : ["platform", "system", "SPI0", "CE0"],
+						"hidden" : true
+					},
+					"system_spi0_ce1" : {
+						"friendly_name" : "SPI0 CE1 GPIO Pin",
+						"description" : "GPIO Pin for SPI0 bus/interface CE/CS1.",
+						"options" : { "7" : "GPIO7"},
+						"settings" : ["platform", "system", "SPI0", "CE1"],
+						"hidden" : true
+					},
+					"real_hw" : {
+						"friendly_name" : "Real Hardware",
+						"description" : "Select Yes if running on real hardware (Default).  Select No if running in a test environment.",
+						"options" : { "True" : "Yes", "False" : "No (Test Only)" },
+						"settings" : ["platform", "real_hw"]
+					}					
+				}
+			},
+			"pcb_pwm" : {
+				"friendly_name" : "PiFire PCB PWM",
+				"filename" : "raspberry_pi_all",
+				"description" : "Default settings/configuration for the PiFire PCB PWM designed by James Weber.",
+				"default" : false,
+				"image" : "pcb_pwm.png",
+				"reboot_required" : true,
+				"py_dependencies" : [], 
+				"apt_dependencies" : [],
+				"command_list" : [],
+				"settings_dependencies" : {
+					"current" : {
+						"friendly_name" : "Platform Selected",
+						"description" : "Selects the current platform.",
+						"options" : { "pcb_pwm" : "PiFire PCB PWM" },
+						"settings" : ["platform", "current"],
+						"hidden" : true
+					},
+					"system_type" : {
+						"friendly_name" : "System Type",
+						"description" : "Select the system that you will be using.  By default on most platforms will be the Raspberry Pi.  Select Prototype only if you are doing development testing.",
+						"options" : { "raspberry_pi_all" : "Raspberry Pi (ALL)", "prototype" : "Prototype / Test Only" },
+						"settings" : ["platform", "system_type"]
+					},
+					"standalone" : {
+						"friendly_name" : "Standalone",
+						"description" : "Select if your are using PiFire alongside the OEM Controller. ",
+						"options" : { "True" : "PiFire Only", "False" : "OEM Controller Present" },
+						"settings" : ["platform", "standalone"]
+					},
+					"triggerlevel" : {
+						"friendly_name" : "Relay Type",
+						"description" : "Select the trigger level for the relays on the platform.  ",
+						"options" : { "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevel"],
+						"hidden" : true
+					},
+					"dc_fan" : {
+						"friendly_name" : "Fan Type",
+						"description" : "Select if your platform supports a DC(PWM) fan or uses a regular AC Fan. ",
+						"options" : { "True" : "DC Fan" },
+						"settings" : ["platform", "dc_fan"],
+						"hidden" : true
+					},
+					"output_auger" : {
+						"friendly_name" : "Auger Relay GPIO Pin",
+						"description" : "Select the GPIO used for the Auger relay.",
+						"options" : { "14" : "GPIO14" },
+						"settings" : ["platform", "outputs", "auger"],
+						"hidden" : true
+					},
+					"output_dc_fan" : {
+						"friendly_name" : "DC Fan GPIO Pin",
+						"description" : "Select the GPIO used for the DC Fan.",
+						"options" : { "26" : "GPIO26" },  
+						"settings" : ["platform", "outputs", "dc_fan"],
+						"hidden" : true
+					},
+					"output_fan" : {
+						"friendly_name" : "AC Fan Relay GPIO Pin",
+						"description" : "Select the GPIO used for enabling/disabling fan.",
+						"options" : { "15" : "GPIO15" },						
+						"settings" : ["platform", "outputs", "fan"],
+						"hidden" : true
+					},
+					"output_igniter" : {
+						"friendly_name" : "Igniter Relay GPIO Pin",
+						"description" : "Select the GPIO used for the Igniter relay.",
+						"options" : { "18" : "GPIO18" },
+						"settings" : ["platform", "outputs", "igniter"],
+						"hidden" : true
+					},
+					"output_power" : {
+						"friendly_name" : "Power Gate Relay GPIO Pin",
+						"description" : "Select the GPIO used for the AC Power Gate.",
+						"options" : { "4" : "GPIO4" },
+						"settings" : ["platform", "outputs", "power"],
+						"hidden" : true
+					},
+					"output_pwm" : {
+						"friendly_name" : "DC Fan PWM GPIO Pin",
+						"description" : "Select the GPIO used for the DC Fan PWM.  Note that this should be a PWM capable GPIO.",
+						"options" : { "13" : "GPIO13" },
+						"settings" : ["platform", "outputs", "pwm"],
+						"hidden" : true
+					},
+					"input_selector" : {
+						"friendly_name" : "Controller Select GPIO Pin",
+						"description" : "If the OEM controller is present alongside the PiFire controller, this GPIO will be used to select the active controller. Note that this will not be utilized unless 'Standalone' is set to False.  This should be set to 'None' if not utilized.",
+						"options" : { "17" : "GPIO17" },
+						"settings" : ["platform", "inputs", "selector"],
+						"hidden" : true
+					},
+					"input_shutdown" : {
+						"friendly_name" : "System Shutdown GPIO Pin",
+						"description" : "GPIO Pin configured to shutdown the system.  Used for the wake/shutdown button on some designs.  Set this to 'None' if not utilized.",
+						"options" : { "None" : "None" },
+						"settings" : ["platform", "inputs", "shutdown"],
+						"hidden" : true
+					},
+					"device_display_dc" : {
+						"friendly_name" : "SPI Display DC Pin",
+						"description" : "GPIO Pin for the SPI Display DC Pin.",
+						"options" : { "24" : "GPIO24" },
+						"settings" : ["platform", "devices", "display", "dc"],
+						"hidden" : true
+					},
+					"device_display_led" : {
+						"friendly_name" : "SPI Display LED Backlight Pin",
+						"description" : "GPIO Pin for the SPI Display LED Backlight.",
+						"options" : { "5" : "GPIO5" },
+						"settings" : ["platform", "devices", "display", "led"],
+						"hidden" : true
+					},
+					"device_display_rst" : {
+						"friendly_name" : "SPI Display Reset Pin",
+						"description" : "GPIO Pin for the SPI Display Reset.",
+						"options" : { "25" : "GPIO25" },
+						"settings" : ["platform", "devices", "display", "rst"],
+						"hidden" : true
+					},
+					"device_distance_echo" : {
+						"friendly_name" : "Distance Sensor ECHO GPIO",
+						"description" : "GPIO Pin for the HCSR04 Ultrasonic distance sensor ECHO",
+						"options" : { "27" : "GPIO27" },
+						"settings" : ["platform", "devices", "distance", "echo"],
+						"hidden" : true
+					},
+					"device_distance_trig" : {
+						"friendly_name" : "Distance Sensor Trigger GPIO",
+						"description" : "GPIO Pin for the HCSR04 Ultrasonic distance sensor Trigger",
+						"options" : { "23" : "GPIO23" },
+						"settings" : ["platform", "devices", "distance", "trig"],
+						"hidden" : true
+					},
+					"device_input_down_dt" : {
+						"friendly_name" : "Down Button / Encoder DT",
+						"description" : "GPIO Pin for Down Button / Encoder DT",
+						"options" : { "20" : "GPIO20" },
+						"settings" : ["platform", "devices", "input", "down_dt"],
+						"hidden" : true
+					},
+					"device_input_enter_sw" : {
+						"friendly_name" : "Enter Button / Encoder SW",
+						"description" : "GPIO Pin for Enter Button / Encoder SW",
+						"options" : { "21" : "GPIO21" },
+						"settings" : ["platform", "devices", "input", "enter_sw"],
+						"hidden" : true
+					},
+					"device_input_up_clk" : {
+						"friendly_name" : "Up Button / Encoder CLK",
+						"description" : "GPIO Pin for Up Button / Encoder CLK",
+						"options" : { "16" : "GPIO16" },
+						"settings" : ["platform", "devices", "input", "up_clk"],
+						"hidden" : true
+					},
+					"system_1wire" : {
+						"friendly_name" : "1Wire GPIO Pin",
+						"description" : "GPIO Pin for 1Wire bus/interface.  Used for DS18B20 sensors.",
+						"options" : { "None" : "None" },
+						"settings" : ["platform", "system", "1WIRE"],
+						"hidden" : true
+					},
+					"system_spi0_ce0" : {
+						"friendly_name" : "SPI0 CE0 GPIO Pin",
+						"description" : "GPIO Pin for SPI0 bus/interface CE/CS0.",
+						"options" : { "8" : "GPIO8"},
+						"settings" : ["platform", "system", "SPI0", "CE0"],
+						"hidden" : true
+					},
+					"system_spi0_ce1" : {
+						"friendly_name" : "SPI0 CE1 GPIO Pin",
+						"description" : "GPIO Pin for SPI0 bus/interface CE/CS1.",
+						"options" : { "7" : "GPIO7"},
+						"settings" : ["platform", "system", "SPI0", "CE1"],
+						"hidden" : true
+					},
+					"real_hw" : {
+						"friendly_name" : "Real Hardware",
+						"description" : "Select Yes if running on real hardware (Default).  Select No if running in a test environment.",
+						"options" : { "True" : "Yes", "False" : "No (Test Only)" },
+						"settings" : ["platform", "real_hw"]
+					}					
+				}
+			},
+			"pcb_4.0.1" : {
+				"friendly_name" : "PiFire PCB 4.0.1 Modular PCB",
+				"filename" : "raspberry_pi_all",
+				"description" : "Default settings/configuration for the PiFire PCB v4.0.1 modular PCB.  This PCB aims to provide modular options to the user for probe inputs and relay outputs.",
+				"default" : false,
+				"image" : "pcb_4.0.1.png",
+				"reboot_required" : true,
+				"py_dependencies" : [], 
+				"apt_dependencies" : [],
+				"command_list" : [],
+				"settings_dependencies" : {
+					"current" : {
+						"friendly_name" : "Platform Selected",
+						"description" : "Selects the current platform.",
+						"options" : { "pcb_4.0.1" : "PiFire PCB v4.0.1" },
+						"settings" : ["platform", "current"],
+						"hidden" : true
+					},
+					"system_type" : {
+						"friendly_name" : "System Type",
+						"description" : "Select the system that you will be using.  By default on most platforms will be the Raspberry Pi.  Select Prototype only if you are doing development testing.",
+						"options" : { "raspberry_pi_all" : "Raspberry Pi (ALL)", "prototype" : "Prototype / Test Only" },
+						"settings" : ["platform", "system_type"]
+					},
+					"standalone" : {
+						"friendly_name" : "Standalone",
+						"description" : "Select if your are using PiFire alongside the OEM Controller. ",
+						"options" : { "True" : "PiFire Only" },
+						"settings" : ["platform", "standalone"],
+						"hidden" : true
+					},
+					"triggerlevel" : {
+						"friendly_name" : "Relay Type",
+						"description" : "Select the trigger level for the relays attached to the platform.",
+						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevel"]
+					},
+					"dc_fan" : {
+						"friendly_name" : "Fan Type",
+						"description" : "Select if your platform supports a DC(PWM) fan or uses a regular AC Fan.",
+						"options" : { "True" : "DC Fan (PWM)", "False" : "AC Fan" },
+						"settings" : ["platform", "dc_fan"]
+					},
+					"output_auger" : {
+						"friendly_name" : "Auger Relay GPIO Pin",
+						"description" : "Select the GPIO used for the Auger relay.",
+						"options" : { "23" : "GPIO23" },
+						"settings" : ["platform", "outputs", "auger"],
+						"hidden" : true
+					},
+					"output_dc_fan" : {
+						"friendly_name" : "DC Fan GPIO Pin",
+						"description" : "Select the GPIO used for the DC Fan.",
+						"options" : { "26" : "GPIO26" },  
+						"settings" : ["platform", "outputs", "dc_fan"],
+						"hidden" : true
+					},
+					"output_fan" : {
+						"friendly_name" : "AC Fan Relay GPIO Pin",
+						"description" : "Select the GPIO used for enabling/disabling fan.",
+						"options" : { "26": "GPIO26" },
+						"settings" : ["platform", "outputs", "fan"],
+						"hidden" : true
+					},
+					"output_igniter" : {
+						"friendly_name" : "Igniter Relay GPIO Pin",
+						"description" : "Select the GPIO used for the Igniter relay.",
+						"options" : { "18" : "GPIO18" },
+						"settings" : ["platform", "outputs", "igniter"],
+						"hidden" : true
+					},
+					"output_power" : {
+						"friendly_name" : "Power Gate Relay GPIO Pin",
+						"description" : "Select the GPIO used for the AC Power Gate.",
+						"options" : { "22" : "GPIO22" },
+						"settings" : ["platform", "outputs", "power"],
+						"hidden" : true
+					},
+					"output_pwm" : {
+						"friendly_name" : "DC Fan PWM GPIO Pin",
+						"description" : "Select the GPIO used for the DC Fan PWM.  Note that this should be a PWM capable GPIO.",
+						"options" : { "13" : "GPIO13" },
+						"settings" : ["platform", "outputs", "pwm"],
+						"hidden" : true
+					},
+					"input_selector" : {
+						"friendly_name" : "Controller Select GPIO Pin",
+						"description" : "If the OEM controller is present alongside the PiFire controller, this GPIO will be used to select the active controller. Note that this will not be utilized unless 'Standalone' is set to False.  This should be set to 'None' if not utilized.",
+						"options" : { "None" : "None" },
+						"settings" : ["platform", "inputs", "selector"],
+						"hidden" : true
+					},
+					"input_shutdown" : {
+						"friendly_name" : "System Shutdown GPIO Pin",
+						"description" : "GPIO Pin configured to shutdown the system.  Used for the wake/shutdown button on some designs.  Set this to 'None' if not utilized.",
+						"options" : { "17" : "GPIO17" },
+						"settings" : ["platform", "inputs", "shutdown"],
+						"hidden" : true
+					},
+					"device_display_dc" : {
+						"friendly_name" : "SPI Display DC Pin",
+						"description" : "GPIO Pin for the SPI Display DC Pin.",
+						"options" : { "24" : "GPIO24" },
+						"settings" : ["platform", "devices", "display", "dc"],
+						"hidden" : true
+					},
+					"device_display_led" : {
+						"friendly_name" : "SPI Display LED Backlight Pin",
+						"description" : "GPIO Pin for the SPI Display LED Backlight.",
+						"options" : { "5" : "GPIO5" },
+						"settings" : ["platform", "devices", "display", "led"],
+						"hidden" : true
+					},
+					"device_display_rst" : {
+						"friendly_name" : "SPI Display Reset Pin",
+						"description" : "GPIO Pin for the SPI Display Reset.",
+						"options" : { "25" : "GPIO25" },
+						"settings" : ["platform", "devices", "display", "rst"],
+						"hidden" : true
+					},
+					"device_distance_echo" : {
+						"friendly_name" : "Distance Sensor ECHO GPIO",
+						"description" : "GPIO Pin for the HCSR04 Ultrasonic distance sensor ECHO",
+						"options" : { "27" : "GPIO27" },
+						"settings" : ["platform", "devices", "distance", "echo"],
+						"hidden" : true
+					},
+					"device_distance_trig" : {
+						"friendly_name" : "Distance Sensor Trigger GPIO",
+						"description" : "GPIO Pin for the HCSR04 Ultrasonic distance sensor Trigger",
+						"options" : { "23" : "GPIO23" },
+						"settings" : ["platform", "devices", "distance", "trig"],
+						"hidden" : true
+					},
+					"device_input_down_dt" : {
+						"friendly_name" : "Down Button / Encoder DT",
+						"description" : "GPIO Pin for Down Button / Encoder DT",
+						"options" : { "20" : "GPIO20" },
+						"settings" : ["platform", "devices", "input", "down_dt"],
+						"hidden" : true
+					},
+					"device_input_enter_sw" : {
+						"friendly_name" : "Enter Button / Encoder SW",
+						"description" : "GPIO Pin for Enter Button / Encoder SW",
+						"options" : { "21" : "GPIO21" },
+						"settings" : ["platform", "devices", "input", "enter_sw"],
+						"hidden" : true
+					},
+					"device_input_up_clk" : {
+						"friendly_name" : "Up Button / Encoder CLK",
+						"description" : "GPIO Pin for Up Button / Encoder CLK",
+						"options" : { "16" : "GPIO16" },
+						"settings" : ["platform", "devices", "input", "up_clk"],
+						"hidden" : true
+					},
+					"system_1wire" : {
+						"friendly_name" : "1Wire GPIO Pin",
+						"description" : "GPIO Pin for 1Wire bus/interface.  Used for DS18B20 sensors.",
+						"options" : { "4" : "GPIO4" },
+						"settings" : ["platform", "system", "1WIRE"],
+						"hidden" : true
+					},
+					"system_spi0_ce0" : {
+						"friendly_name" : "SPI0 CE0 GPIO Pin",
+						"description" : "GPIO Pin for SPI0 bus/interface CE/CS0. (SPI Display Port)",
+						"options" : { "8" : "GPIO8", "7" : "GPIO7"},
+						"settings" : ["platform", "system", "SPI0", "CE0"]
+					},
+					"system_spi0_ce1" : {
+						"friendly_name" : "SPI0 CE1 GPIO Pin",
+						"description" : "GPIO Pin for SPI0 bus/interface CE/CS1. (SPI Aux Port)",
+						"options" : { "7" : "GPIO7", "8" : "GPIO8", "6" : "GPIO6" },
+						"settings" : ["platform", "system", "SPI0", "CE1"]
+					},
+					"real_hw" : {
+						"friendly_name" : "Real Hardware",
+						"description" : "Select Yes if running on real hardware (Default).  Select No if running in a test environment.",
+						"options" : { "True" : "Yes", "False" : "No (Test Only)" },
+						"settings" : ["platform", "real_hw"]
+					}					
+				}
+			}
 		}, 
 		"probes" : {
 			"ads1115_adafruit" : {
@@ -903,7 +1665,7 @@
 						"friendly_name" : "Button Level",
 						"description" : "Select how your button hardware is configured. (HIGH - Pullups, LOW - Pulldowns)",
 						"options" : {"HIGH" : "Pullups", "LOW": "Pulldowns"},
-						"settings" : ["globals", "buttonslevel"]
+						"settings" : ["platform", "buttonslevel"]
 					}
 				},
 				"config" : [
@@ -951,7 +1713,7 @@
 						"friendly_name" : "Button Level",
 						"description" : "Select how your button hardware is configured. (HIGH - Pullups, LOW - Pulldowns)",
 						"options" : {"HIGH" : "Pullups", "LOW": "Pulldowns"},
-						"settings" : ["globals", "buttonslevel"]
+						"settings" : ["platform", "buttonslevel"]
 					}
 				},
 				"config" : [
@@ -1170,7 +1932,7 @@
 						"friendly_name" : "Button Level",
 						"description" : "Select how your button hardware is configured. (HIGH - Pullups, LOW - Pulldowns)",
 						"options" : {"HIGH" : "Pullups", "LOW": "Pulldowns"},
-						"settings" : ["globals", "buttonslevel"]
+						"settings" : ["platform", "buttonslevel"]
 					}
 				},
 				"config" : [
@@ -1338,10 +2100,10 @@
 		}
 	},
 	"boards" : {
-		"PiFirev2x" : {
-			"name" : "PiFire v2.x",  
-			"id" : "PiFirev2x",
-			"description" : "Description of the board here.  Future expansion of PiFire wizard/configuration.",
+		"pcb_2.00a" : {
+			"name" : "PiFire v2.00a",  
+			"id" : "pcb_2.00a",
+			"description" : "Original PiFire PCB design with three usable probes exposed.",
 			"probe_map": {
 				"probe_devices": [
 				  {
@@ -1401,6 +2163,273 @@
 					"label": "Probe2",
 					"device": "ADS1115",
 					"port": "ADC2",
+					"profile": {
+					  "A": 0.00073431401,
+					  "B": 0.0002157437,
+					  "C": 9.515686e-08,
+					  "id": "TWPS00",
+					  "name": "Thermoworks-Pro-Series-HeaterMeter"
+					}
+				  }
+				]
+			}
+		},
+		"pcb_3.01a" : {
+			"name" : "PiFire v3.01a",  
+			"id" : "pcb_3.01a",
+			"description" : "PiFire PCB variant designed by James Weber with all four probes exposed and a button header.",
+			"probe_map": {
+				"probe_devices": [
+				  {
+					"config": {
+						"ADC0_rd": "10000",
+						"ADC1_rd": "10000",
+						"ADC2_rd": "10000",
+						"ADC3_rd": "10000",
+						"i2c_bus_addr": "0x48",
+						"voltage_ref": "3.28"
+					},
+					"device": "ADS1115",
+					"module": "ads1115_adafruit",
+					"ports": [
+					  "ADC0",
+					  "ADC1",
+					  "ADC2",
+					  "ADC3"
+					]
+				  }
+				],
+				"probe_info": [
+				  {
+					"name": "Grill",
+					"type": "Primary",
+					"enabled": true,
+					"label": "Grill",
+					"device": "ADS1115",
+					"port": "ADC0",
+					"profile": {
+					  "A": 0.04136906456,
+					  "B": -0.00677987613,
+					  "C": 2.760294589e-05,
+					  "id": "99b8f02d-233d-11ee-a7a2-e5396c02c5fd",
+					  "name": "PT-1000-Ideal"
+					}
+				  },
+				  {
+					"name": "Probe-1",
+					"type": "Food",
+					"enabled": true,
+					"label": "Probe1",
+					"device": "ADS1115",
+					"port": "ADC1",
+					"profile": {
+					  "A": 0.00073431401,
+					  "B": 0.0002157437,
+					  "C": 9.515686e-08,
+					  "id": "TWPS00",
+					  "name": "Thermoworks-Pro-Series-HeaterMeter"
+					}
+				  },
+				  {
+					"name": "Probe-2",
+					"type": "Food",
+					"enabled": true,
+					"label": "Probe2",
+					"device": "ADS1115",
+					"port": "ADC2",
+					"profile": {
+					  "A": 0.00073431401,
+					  "B": 0.0002157437,
+					  "C": 9.515686e-08,
+					  "id": "TWPS00",
+					  "name": "Thermoworks-Pro-Series-HeaterMeter"
+					}
+				  },
+				  {
+					"name": "Probe-3",
+					"type": "Food",
+					"enabled": true,
+					"label": "Probe3",
+					"device": "ADS1115",
+					"port": "ADC3",
+					"profile": {
+					  "A": 0.00073431401,
+					  "B": 0.0002157437,
+					  "C": 9.515686e-08,
+					  "id": "TWPS00",
+					  "name": "Thermoworks-Pro-Series-HeaterMeter"
+					}
+				  }
+				]
+			}
+		},
+		"pcb_pwm" : {
+			"name" : "PiFire PWM",  
+			"id" : "pcb_pwm",
+			"description" : "PiFire PWM board designed by James Weber with ADS1115 default.",
+			"probe_map": {
+				"probe_devices": [
+				  {
+					"config": {
+						"ADC0_rd": "10000",
+						"ADC1_rd": "10000",
+						"ADC2_rd": "10000",
+						"ADC3_rd": "10000",
+						"i2c_bus_addr": "0x48",
+						"voltage_ref": "3.28"
+					},
+					"device": "ADS1115",
+					"module": "ads1115_adafruit",
+					"ports": [
+					  "ADC0",
+					  "ADC1",
+					  "ADC2",
+					  "ADC3"
+					]
+				  }
+				],
+				"probe_info": [
+				  {
+					"name": "Grill",
+					"type": "Primary",
+					"enabled": true,
+					"label": "Grill",
+					"device": "ADS1115",
+					"port": "ADC0",
+					"profile": {
+					  "A": 0.04136906456,
+					  "B": -0.00677987613,
+					  "C": 2.760294589e-05,
+					  "id": "99b8f02d-233d-11ee-a7a2-e5396c02c5fd",
+					  "name": "PT-1000-Ideal"
+					}
+				  },
+				  {
+					"name": "Probe-1",
+					"type": "Food",
+					"enabled": true,
+					"label": "Probe1",
+					"device": "ADS1115",
+					"port": "ADC1",
+					"profile": {
+					  "A": 0.00073431401,
+					  "B": 0.0002157437,
+					  "C": 9.515686e-08,
+					  "id": "TWPS00",
+					  "name": "Thermoworks-Pro-Series-HeaterMeter"
+					}
+				  },
+				  {
+					"name": "Probe-2",
+					"type": "Food",
+					"enabled": true,
+					"label": "Probe2",
+					"device": "ADS1115",
+					"port": "ADC2",
+					"profile": {
+					  "A": 0.00073431401,
+					  "B": 0.0002157437,
+					  "C": 9.515686e-08,
+					  "id": "TWPS00",
+					  "name": "Thermoworks-Pro-Series-HeaterMeter"
+					}
+				  },
+				  {
+					"name": "Probe-3",
+					"type": "Food",
+					"enabled": true,
+					"label": "Probe3",
+					"device": "ADS1115",
+					"port": "ADC3",
+					"profile": {
+					  "A": 0.00073431401,
+					  "B": 0.0002157437,
+					  "C": 9.515686e-08,
+					  "id": "TWPS00",
+					  "name": "Thermoworks-Pro-Series-HeaterMeter"
+					}
+				  }
+				]
+			}
+		},
+		"pcb_4.0.1" : {
+			"name" : "PiFire v4.0.1",  
+			"id" : "pcb_4.0.1",
+			"description" : "PiFire PCB v4.0.1 with module design allowing for multiple types of probe devices to be attached.",
+			"probe_map": {
+				"probe_devices": [
+				  {
+					"config": {
+						"ADC0_rd": "10000",
+						"ADC1_rd": "10000",
+						"ADC2_rd": "10000",
+						"ADC3_rd": "10000",
+						"i2c_bus_addr": "0x48",
+						"voltage_ref": "3.28"
+					},
+					"device": "ADS1115",
+					"module": "ads1115_adafruit",
+					"ports": [
+					  "ADC0",
+					  "ADC1",
+					  "ADC2",
+					  "ADC3"
+					]
+				  }
+				],
+				"probe_info": [
+				  {
+					"name": "Grill",
+					"type": "Primary",
+					"enabled": true,
+					"label": "Grill",
+					"device": "ADS1115",
+					"port": "ADC0",
+					"profile": {
+					  "A": 0.04136906456,
+					  "B": -0.00677987613,
+					  "C": 2.760294589e-05,
+					  "id": "99b8f02d-233d-11ee-a7a2-e5396c02c5fd",
+					  "name": "PT-1000-Ideal"
+					}
+				  },
+				  {
+					"name": "Probe-1",
+					"type": "Food",
+					"enabled": true,
+					"label": "Probe1",
+					"device": "ADS1115",
+					"port": "ADC1",
+					"profile": {
+					  "A": 0.00073431401,
+					  "B": 0.0002157437,
+					  "C": 9.515686e-08,
+					  "id": "TWPS00",
+					  "name": "Thermoworks-Pro-Series-HeaterMeter"
+					}
+				  },
+				  {
+					"name": "Probe-2",
+					"type": "Food",
+					"enabled": true,
+					"label": "Probe2",
+					"device": "ADS1115",
+					"port": "ADC2",
+					"profile": {
+					  "A": 0.00073431401,
+					  "B": 0.0002157437,
+					  "C": 9.515686e-08,
+					  "id": "TWPS00",
+					  "name": "Thermoworks-Pro-Series-HeaterMeter"
+					}
+				  },
+				  {
+					"name": "Probe-3",
+					"type": "Food",
+					"enabled": true,
+					"label": "Probe3",
+					"device": "ADS1115",
+					"port": "ADC3",
 					"profile": {
 					  "A": 0.00073431401,
 					  "B": 0.0002157437,
