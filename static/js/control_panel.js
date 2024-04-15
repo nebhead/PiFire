@@ -242,6 +242,7 @@ function check_state() {
                 update_recipe_mode();
             } else if((!cpRecipeMode) && (cpMode != cpLastMode)) {
                 update_mode();
+                update_pwm(); // fix bug where PWM Fan control was not showing up in hold mode
             };
             if(splus_state != last_splus_state) {
                 update_splus();
