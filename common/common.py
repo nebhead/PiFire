@@ -1184,7 +1184,7 @@ def upgrade_settings(prev_ver, settings, settings_default):
 			settings.pop('outpins')
 		''' Migrate module settings for the appropriate module support '''
 		settings['platform']['current'] = 'custom'  # Since we do not know what PCB / System is installed on upgrade, set to custom 
-		if settings['modules']['grillplatform'] == 'prototype':
+		if settings['modules']['grillplat'] == 'prototype':
 			settings['platform']['system_type'] = 'prototype'
 		else: 
 			settings['platform']['system_type'] = 'raspberry_pi_all'
