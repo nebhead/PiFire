@@ -10,7 +10,7 @@
 				"reboot_required" : true,
 				"py_dependencies" : [], 
 				"apt_dependencies" : [],
-				"command_list" : [],
+				"command_list" : [["python", "board-config.py", "-pwm", "-ow", "-bl", "-s", "-i"]],
 				"settings_dependencies" : {
 					"current" : {
 						"friendly_name" : "Platform Selected",
@@ -156,7 +156,7 @@
 				"reboot_required" : true,
 				"py_dependencies" : [], 
 				"apt_dependencies" : [],
-				"command_list" : [],
+				"command_list" : [["python", "board-config.py", "-ow", "-s", "-i"]],
 				"settings_dependencies" : {
 					"current" : {
 						"friendly_name" : "Platform Selected",
@@ -333,7 +333,7 @@
 				"reboot_required" : true,
 				"py_dependencies" : [], 
 				"apt_dependencies" : [],
-				"command_list" : [],
+				"command_list" : [["python", "board-config.py", "-ow", "-s", "-i"]],
 				"settings_dependencies" : {
 					"current" : {
 						"friendly_name" : "Platform Selected",
@@ -516,7 +516,7 @@
 				"reboot_required" : true,
 				"py_dependencies" : [], 
 				"apt_dependencies" : [],
-				"command_list" : [],
+				"command_list" : [["python", "board-config.py", "-pwm", "-s", "-i"]],
 				"settings_dependencies" : {
 					"current" : {
 						"friendly_name" : "Platform Selected",
@@ -701,7 +701,7 @@
 				"reboot_required" : true,
 				"py_dependencies" : [], 
 				"apt_dependencies" : [],
-				"command_list" : [],
+				"command_list" : [["python", "board-config.py", "-pwm", "-ow", "-bl", "-s", "-i", "-gs"]],
 				"settings_dependencies" : {
 					"current" : {
 						"friendly_name" : "Platform Selected",
@@ -1557,7 +1557,7 @@
 				"reboot_required" : false,
 				"py_dependencies" : ["luma.lcd", "pyky040==0.1.4", ">=9.2.0"], 
 				"apt_dependencies" : [],
-				"command_list" : [],
+				"command_list" : [["python", "board-config.py", "-s"]],
 				"settings_dependencies" : {
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
@@ -1589,7 +1589,7 @@
 				"reboot_required" : false,
 				"py_dependencies" : ["luma.lcd", "pyky040==0.1.4", "pillow>=9.2.0"], 
 				"apt_dependencies" : [],
-				"command_list" : [],
+				"command_list" : [["python", "board-config.py", "-s"]],
 				"settings_dependencies" : {
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
@@ -1621,7 +1621,7 @@
 				"reboot_required" : false,
 				"py_dependencies" : ["luma.lcd", "pillow>=9.2.0"], 
 				"apt_dependencies" : [],
-				"command_list" : [],
+				"command_list" : [["python", "board-config.py", "-s"]],
 				"settings_dependencies" : {
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
@@ -1653,7 +1653,7 @@
 				"reboot_required" : false,
 				"py_dependencies" : ["luma.lcd", "pillow>=9.2.0", "gpiozero"], 
 				"apt_dependencies" : [],
-				"command_list" : [],
+				"command_list" : [["python", "board-config.py", "-s"]],
 				"settings_dependencies" : {
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
@@ -1701,7 +1701,7 @@
 				"reboot_required" : false,
 				"py_dependencies" : ["st7789", "pillow>=9.2.0", "numpy"],
 				"apt_dependencies" : [],
-				"command_list" : [],
+				"command_list" : [["python", "board-config.py", "-s"]],
 				"settings_dependencies" : {
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
@@ -1749,7 +1749,7 @@
 				"reboot_required" : false,
 				"py_dependencies" : ["st7789", "pyky040==0.1.4", "pillow>=9.2.0", "numpy"],
 				"apt_dependencies" : [],
-				"command_list" : [],
+				"command_list" : [["python", "board-config.py", "-s"]],
 				"settings_dependencies" : {
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
@@ -1781,7 +1781,7 @@
 				"reboot_required" : false,
 				"py_dependencies" : ["st7789", "pillow>=9.2.0", "numpy"],
 				"apt_dependencies" : [],
-				"command_list" : [],
+				"command_list" : [["python", "board-config.py", "-s"]],
 				"settings_dependencies" : {
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
@@ -1913,7 +1913,7 @@
 				"reboot_required" : false,
 				"py_dependencies" : ["luma.oled"], 
 				"apt_dependencies" : [],
-				"command_list" : [],
+				"command_list" : [["python", "board-config.py", "-i"]],
 				"settings_dependencies" : {},
 				"config" : []			
 			},
@@ -1926,7 +1926,7 @@
 				"reboot_required" : false,
 				"py_dependencies" : ["luma.oled"], 
 				"apt_dependencies" : [],
-				"command_list" : [],
+				"command_list" : [["python", "board-config.py", "-i"]],
 				"settings_dependencies" : {
 					"buttonslevel" : {
 						"friendly_name" : "Button Level",
@@ -1958,7 +1958,7 @@
 				"reboot_required" : false,
 				"py_dependencies" : ["st7789"], 
 				"apt_dependencies" : ["python3-rpi.gpio", "python3-spidev", "python3-pil", "python3-numpy"],
-				"command_list" : [],
+				"command_list" : [["python", "board-config.py", "-s"]],
 				"settings_dependencies" : {
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",
@@ -1990,7 +1990,7 @@
 				"reboot_required" : true,
 				"py_dependencies" : ["rpi-backlight", "pillow>=10.0.0", "pygame>=2.5.0"], 
 				"apt_dependencies" : ["lightdm", "libsdl2-2.0-0"],
-				"command_list" : [],
+				"command_list" : [["python", "board-config.py", "-bl"]],
 				"settings_dependencies" : {
 					"disp_rotation" : {
 						"friendly_name" : "Display Rotation",

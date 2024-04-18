@@ -150,7 +150,7 @@ def default_settings():
 		"buttonslevel": "HIGH",  # Active LOW / Active HIGH for the button inputs 
 		"standalone": True,  # Standalone (without OEM controller present)
 		"real_hw" : True,  # Set to True if running on real hardware (i.e. Raspberry Pi), False if running in a test environment 
-		"system_type" : "raspberry_pi_all",  # System type / core  (i.e. Raspberry Pi Zero W, Zero 2W, 3A, 3B, 3B+, 4, 5) 
+		"system_type" : "prototype",  # System type / core  (i.e. Raspberry Pi Zero W, Zero 2W, 3A, 3B, 3B+, 4, 5) 
 	}
 
 	settings['cycle_data'] = {
