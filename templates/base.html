@@ -3,7 +3,7 @@
     <head>
         <!-- Required meta tags -->
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
         {% block head %} {% endblock %}
 
         <!-- Bootstrap CSS -->
@@ -12,6 +12,9 @@
         {% else %}
         <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css" />
         {% endif %}
+
+		<!-- Navbar CSS -->
+		<link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" type="text/css" /> 
 
         {% block cssextend %} {% endblock %}
 
@@ -24,10 +27,9 @@
         <title>{% block title %}{% endblock %}{% if grill_name != '' %} | {{ grill_name }}{% endif %}</title>
 
     </head>
-    <body>
+    <body class="{% block body_class %}{% endblock %}">
 		<!-- Navbar Header -->
-		<nav class="navbar sticky-top navbar-dark bg-dark">
-
+		<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
 			<a class="navbar-brand text-truncate" {% if request.MOBILE %}style="max-width: 210px;"{% endif %} href="/">
 				<img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="30" height="30" class="d-inline-block align-top" alt="">
 				<b>Pi<i class="text-danger">Fire</i></b>
@@ -35,44 +37,37 @@
 					| <small class="">{{ grill_name }}</small> 
 				{% endif %}
 			</a>
-				
-			<div class="btn-toolbar flex-nowrap" role="toolbar">
-				<div class="btn-group mr-2" role="group">
-					<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-						<i class="fas fa-bars"></i>
-					</button>
-				</div>
+			<div class="ml-auto d-flex order-0 order-lg-1">
 				{% block timer_toggler %}
-				<div class="btn-group mr-2" role="group">
+				<div class="btn-group mr-2 custom-toggler" role="group">
 					<button type="button" class="btn btn-outline-secondary border-secondary" id="timerButton" onclick="timerToggle()">
 						<i class="fas fa-stopwatch"></i>
 					</button>
 				</div>
 				{% endblock %}
+				<button class="navbar-toggler btn btn-outline-secondary border-secondary" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+					<i class="fas fa-bars"></i>
+				</button>
 			</div>
-
-			<div class="collapse navbar-collapse" id="navbarNav">
-				<ul class="nav navbar-nav mr-auto">
+			<div class="collapse navbar-collapse order-1 order-lg-0 d-lg-flex justify-content-lg-start mx-lg-0" id="navbarNav">
+				<ul class="navbar-nav mx-auto mx-lg-0 text-center">
 					<li class="nav-item">
-						<a class="nav-link" href="/">Dashboard</a>
+						<a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">Dashboard</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" href="/recipes">Recipes</a>
+						<a class="nav-link {% if request.path == '/recipes' %}active{% endif %}" href="/recipes">Recipes</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" href="/pellets">Pellet Manager</a>
+						<a class="nav-link {% if request.path == '/history' %}active{% endif %}" href="/history">History</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" href="/history">History</a>
+						<a class="nav-link {% if request.path == '/events' %}active{% endif %}" href="/events">Events</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" href="/events">Events</a>
+						<a class="nav-link {% if request.path == '/settings' %}active{% endif %}" href="/settings">Settings</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" href="/settings">Settings</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link" href="/admin">Admin</a>
+						<a class="nav-link {% if request.path == '/admin' %}active{% endif %}" href="/admin">Admin</a>
 					</li>
 				</ul>
 			</div>
@@ -88,7 +83,29 @@
 
 		{% block notify %}
 			<!-- Begin Error Notification Section -->
+			<!-- First check if we have any notifications, and insert blank space at the top of the screen if we do. -->
+			{% set notify_offset = False %}
 			{% if errors is defined %}
+				{% if errors != [] %}
+					{% set notify_offset = True %}
+				{% endif %}
+			{% endif %}
+			{% if warnings is defined %}
+				{% if warnings != [] %}
+					{% set notify_offset = True %}
+				{% endif %}
+			{% endif %}
+			{% if success is defined %}
+				{% if success != [] %}
+					{% set notify_offset = True %}
+				{% endif %}
+			{% endif %}
+			{% if notify_offset %}
+				<br><br> 
+			{% endif %}
+
+			<div class="row">
+				{% if errors is defined %}
 				{% if errors != [] %}<br>{% endif %}
 				{% for error in errors %}
 					<div class="alert alert-danger alert-dismissible">
@@ -96,8 +113,8 @@
 						<b><i class="fas fa-exclamation-triangle"></i>&nbsp; ERROR:</b> <i>{{ error }}</i>
 					</div>
 				{% endfor %}
-			{% endif %}
-			{% if warnings is defined %}
+				{% endif %}
+				{% if warnings is defined %}
 				{% if warnings != [] %}<br>{% endif %}
 				{% for warning in warnings %}
 					<div class="alert alert-info alert-dismissible">
@@ -105,7 +122,17 @@
 						<b><i class="fa-solid fa-circle-info"></i>&nbsp; Info:</b> <i>{{ warning }}</i>
 					</div>
 				{% endfor %}
-			{% endif %}
+				{% endif %}
+				{% if success is defined %}
+				{% if success != [] %}<br>{% endif %}
+				{% for message in success %}
+					<div class="alert alert-success alert-dismissible">
+						<button type="button" class="close" data-dismiss="alert">&times;</button>
+						<b><i class="fa-solid fa-circle-info"></i>&nbsp; Success:</b> <i>{{ message }}</i>
+					</div>
+				{% endfor %}
+				{% endif %}
+			</div>
 			<!-- End Error Notification Section -->
 		{% endblock %}
 
@@ -127,7 +154,7 @@
 			{% if settings is defined %}
 				{% if settings['globals']['updated_message'] %}
 				<!-- Updater Message Modal -->
-				<div class="modal fade" id="updater_message_modal" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="udpate_message_title" aria-hidden="true">
+				<div class="modal fade" id="updater_message_modal" data-backdrop="false" data-keyboard="false" tabindex="-1" aria-labelledby="udpate_message_title" aria-hidden="true">
 					<div class="modal-dialog modal-dialog-scrollable modal-xl">
 					<div class="modal-content">
 						<div class="modal-header">
@@ -180,7 +207,16 @@
 			{% endif %}
 		{% endblock %}
 
-		{% block scripts %} {% endblock %}
+		{% block scripts %} 
+		<!--Select input text in modal dialogue-->
+		<script>
+			document.getElementById('setpointModal').addEventListener('shown.bs.modal', function () {
+				var input = document.getElementById('tempOutputId');
+				input.focus();
+				input.select();
+			});
+		</script>
+		{% endblock %}		
 
     </body>
 </html>

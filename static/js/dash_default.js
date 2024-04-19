@@ -584,7 +584,7 @@ function dashToggleVisible(cardID) {
 		if (index !== -1) {
 			dashDataStruct.custom.hidden_cards.splice(index, 1); // If found, remove
 		};
-		//console.log('dashData Hidden='+dashDataStruct.custom.hidden_cards);
+		console.log('dashData Hidden='+dashDataStruct.custom.hidden_cards);
 		dashSetData();
 	} else {
 		// change card to hidden
@@ -596,7 +596,7 @@ function dashToggleVisible(cardID) {
 		if (index == -1) {
 			dashDataStruct.custom.hidden_cards.push(cardID); // If not found, add
 		};
-		//console.log('dashData Hidden='+dashDataStruct.custom.hidden_cards);
+		console.log('dashData Hidden='+dashDataStruct.custom.hidden_cards);
 		dashSetData();
 	};
 }

@@ -11,6 +11,7 @@
 # *****************************************
 
 from gpiozero.threads import GPIOThread
+from common import is_float
 
 class GrillPlatform:
 
@@ -123,8 +124,35 @@ class GrillPlatform:
 			#print('Set PWM Speed ' + str(percent))
 			if self._ramp_thread.stopping.wait(delay):
 				break
+	
+	"""
+	==============================
+	  System / Platform Commands 
+	==============================
+	
+		Commands callable by outside processes to get status or information, for the platform.  
+	
+	"""
 
-	def check_throttled():
+	def supported_commands(self, arglist):
+		supported_commands = [
+			'check_throttled',
+			'check_wifi_quality',
+			'check_cpu_temp',
+			'supported_commands',
+			'check_alive'
+		]
+
+		data = {
+			'result' : 'OK',
+			'message' : 'Supported commands listed in "data".',
+			'data' : {
+				'supported_cmds' : supported_commands
+			}
+		}
+		return data
+
+	def check_throttled(self, arglist):
 		"""Checks for under-voltage and throttling using vcgencmd.
 
 		Returns:
@@ -133,9 +161,61 @@ class GrillPlatform:
 		under_voltage = False
 		throttled = False
 
-		return under_voltage, throttled
+		if under_voltage or throttled:
+			message = 'WARNING: Under-voltage or throttled situation detected'
+		else:
+			message = 'No under-voltage or throttling detected.'
+
+		data = {
+			'result' : 'OK',
+			'message' : message,
+			'data' : {
+				'cpu_under_voltage' : under_voltage,
+				'cpu_throttled' : throttled
+			}
+		}
+		return data
 	
-	def check_wifi_quality():
+	def check_wifi_quality(self, arglist):
 		"""Checks the Wi-Fi signal quality on a Raspberry Pi and returns the value (or None if not connected)."""
 		# Return None if not connected or if there was an error
-		return None
+
+		data = {
+			'result' : 'OK',
+			'message' : 'Success.',
+			'data' : {
+				'wifi_quality_value' : 60,
+				'wifi_quality_max' : 70,
+				'wifi_quality_percentage' : 80
+			}
+		}
+		return data
+
+	def check_cpu_temp(self, arglist):
+		temp = '40.0'
+		
+		if is_float(temp):
+			temp = float(temp)
+		else:
+			temp = 0.0
+		
+		data = {
+			'result' : 'OK',
+			'message' : 'Success.',
+			'data' : {
+				'cpu_temp' : temp
+			}
+		}
+		return data
+	
+	def check_alive(self, arglist):
+		'''
+		 Simple check to see if the platform is up and running. 
+		'''
+		
+		data = {
+			'result' : 'OK',
+			'message' : 'The control script is running.',
+			'data' : {}
+		}
+		return data

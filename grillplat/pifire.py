@@ -16,12 +16,14 @@
 # *****************************************
 
 import subprocess
+from common import is_float, create_logger
 from gpiozero import OutputDevice
 from gpiozero import Button
 
 class GrillPlatform:
 
 	def __init__(self, outpins, inpins, triggerlevel='LOW'):
+		self.logger = create_logger('control')
 		self.outpins = outpins # { 'power' : 4, 'auger' : 14, 'fan' : 15, 'igniter' : 18 }
 		self.inpins = inpins # { 'selector' : 17 }
 		self.current = {}
@@ -73,7 +75,34 @@ class GrillPlatform:
 		self.current['fan'] = self.fan.is_active
 		return self.current
 	
-	def check_throttled():
+	"""
+	==============================
+	  System / Platform Commands 
+	==============================
+	
+		Commands callable by outside processes to get status or information, for the platform.  
+	
+	"""
+
+	def supported_commands(self, arglist):
+		supported_commands = [
+			'check_throttled',
+			'check_wifi_quality',
+			'check_cpu_temp',
+			'supported_commands',
+			'check_alive'
+		]
+		
+		data = {
+			'result' : 'OK',
+			'message' : 'Supported commands listed in "data".',
+			'data' : {
+				'supported_cmds' : supported_commands
+			}
+		}
+		return data
+
+	def check_throttled(self, arglist):
 		"""Checks for under-voltage and throttling using vcgencmd.
 
 		Returns:
@@ -87,11 +116,30 @@ class GrillPlatform:
 		under_voltage = bool(status_int & 0x10000)  # Check bit 16 for under-voltage
 		throttled = bool(status_int & 0x5)  # Check bits 0 and 2 for active throttling
 
-		return under_voltage, throttled
+		if under_voltage or throttled:
+			message = 'WARNING: Under-voltage or throttled situation detected'
+		else:
+			message = 'No under-voltage or throttling detected.'
+
+		data = {
+			'result' : 'OK',
+			'message' : message,
+			'data' : {
+				'cpu_under_voltage' : under_voltage,
+				'cpu_throttled' : throttled
+			}
+		}
+		self.logger.debug(f'Check Throttled Called. [data = {data}]')
+		return data
 
 
-	def check_wifi_quality():
+	def check_wifi_quality(self, arglist):
 		"""Checks the Wi-Fi signal quality on a Raspberry Pi and returns the percentage value (or None if not connected)."""
+		data = {
+			'result' : 'ERROR',
+			'message' : 'Unable to obtain wifi quality data.',
+			'data' : {}
+		}
 
 		try:
 			# Use iwconfig to get the signal quality
@@ -107,15 +155,51 @@ class GrillPlatform:
 					try:
 						quality_value, quality_max = quality_parts.split("/")  # Split for numerical values
 						percentage = (int(quality_value) / int(quality_max)) * 100
-						return round(percentage, 2)  # Round to two decimal places
+						data['result'] = 'OK'
+						data['message'] = 'Successfully obtained wifi quality data.'
+						data['data']['wifi_quality_value'] = int(quality_value)
+						data['data']['wifi_quality_max'] = int(quality_max)
+						data['data']['wifi_quality_percentage'] = round(percentage, 2)  # Round to two decimal places
 
 					except ValueError:
 						# Handle cases where the value might not be directly convertible to an integer
-						return None
+						pass
 
 		except subprocess.CalledProcessError:
 			# Handle errors, such as iwconfig not being found or wlan0 not existing
+			self.logger.debug(f'Check Throttled had a subprocess error')
 			pass
 
-		# Return None if not connected or if there was an error
-		return None
+		self.logger.debug(f'Check Throttled Called. [data = {data}]')
+		return data
+
+	def check_cpu_temp(self, arglist):
+		output = subprocess.check_output(["vcgencmd", "measure_temp"])
+		temp = output.decode("utf-8").replace("temp=","").replace("'C", "").replace("\n", "")
+
+		if is_float(temp):
+			temp = float(temp)
+		else:
+			temp = 0.0
+
+		data = {
+			'result' : 'OK',
+			'message' : 'Success.',
+			'data' : {
+				'cpu_temp' : float(temp)
+			}
+		}
+		self.logger.debug(f'Check CPU Temp Called. [data = {data}]')
+		return data
+		
+	def check_alive(self, arglist):
+		'''
+		 Simple check to see if the platform is up and running. 
+		'''
+		
+		data = {
+			'result' : 'OK',
+			'message' : 'The control script is running.',
+			'data' : {}
+		}
+		return data

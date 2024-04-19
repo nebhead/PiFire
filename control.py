@@ -23,6 +23,7 @@ import logging
 import importlib
 from common import *  # Common Module for WebUI and Control Program
 from common.process_mon import Process_Monitor
+from common.redis_queue import RedisQueue
 from notify.notifications import *
 from file_mgmt.recipes import convert_recipe_units
 from file_mgmt.cookfile import create_cookfile
@@ -64,7 +65,7 @@ try:
 	GrillPlatModule = importlib.import_module(f'grillplat.{grill_platform}')
 
 except:
-	controlLogger.exception(f'Error occurred loading grillplatform module ({filename}). Trace dump: ')
+	controlLogger.exception(f'Error occurred loading grillplatform module ({settings["modules"]["grillplat"]}). Trace dump: ')
 	GrillPlatModule = importlib.import_module('grillplat.prototype')
 	error_event = f'An error occurred loading the [{settings["modules"]["grillplat"]}] platform module.  The ' \
 		f'prototype module has been loaded instead.  This sometimes means that the hardware is not connected ' \
@@ -93,7 +94,7 @@ try:
 	else:
 		grill_platform = GrillPlatModule.GrillPlatform(out_pins, in_pins, trigger_level)
 except:
-	controlLogger.exception(f'Error occurred configuring grillplatform module ({filename}). Trace dump: ')
+	controlLogger.exception(f'Error occurred configuring grillplatform module ({settings["modules"]["grillplat"]}). Trace dump: ')
 	from grillplat.prototype import GrillPlatform  # Simulated Library for controlling the grill platform
 	grill_platform = GrillPlatform(out_pins, in_pins, trigger_level)
 	error_event = f'An error occurred configuring the [{settings["modules"]["grillplat"]}] platform object.  The ' \
@@ -153,7 +154,7 @@ try:
 	display_device = DisplayModule.Display(dev_pins=dev_pins, buttonslevel=buttons_level,
 										   rotation=disp_rotation, units=units, config=display_config)
 except:
-	controlLogger.exception(f'Error occurred configuring the display module ({filename}). Trace dump: ')
+	controlLogger.exception(f'Error occurred configuring the display module ({settings["modules"]["display"]}). Trace dump: ')
 	from display.none import Display  # Simulated Library for controlling the grill platform
 	display_device = Display(dev_pins=dev_pins, buttonslevel=buttons_level, rotation=disp_rotation, units=units, config={})
 	error_event = f'An error occurred configuring the [{settings["modules"]["display"]}] display object.  The ' \
@@ -236,6 +237,31 @@ def _start_fan(settings, duty_cycle=None):
 	else:
 		grill_platform.fan_on()
 
+def _process_system_commands(grill_platform):
+	# Setup access to the system command queue 
+	system_commands = RedisQueue('control:systemq')
+	# Setup access to the system output queue
+	system_output = RedisQueue('control:systemo')
+	# Initialize variable for supported commands (only look for supported commands if we have something to process)
+	supported_cmds = []
+
+	while system_commands.length() > 0:
+		if supported_cmds == []:
+			# Get list of supported system commands 
+			supported_cmds = grill_platform.supported_commands(None)['data']['supported_cmds']
+		command = system_commands.pop()
+		if command[0] in supported_cmds:
+			command_method = getattr(grill_platform, command[0])
+			result = command_method(command)
+			result['command'] = command
+		else:
+			result = {
+				'command' : command,
+				'result' : 'ERROR',
+				'message' : f'ERROR: Command [{command[0]}] is not supported with the current platform.',
+				'data' : {}
+			}
+		system_output.push(result)
 
 def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device):
 	"""
@@ -493,6 +519,8 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		execute_control_writes()
 		control = read_control()
 
+		_process_system_commands(grill_platform)
+
 		# Check if new mode has been requested
 		if control['updated']:
 			break
@@ -603,6 +631,9 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 					CycleTime = OnTime + OffTime
 					eventLogger.debug('On Time = ' + str(OnTime) + ', OffTime = ' + str(
 						OffTime) + ', CycleTime = ' + str(CycleTime) + ', CycleRatio = ' + str(CycleRatio))
+
+					#publish pid info to mqtt 				
+					check_notify(settings, control, pid_data=controllerCore.__dict__)
 
 			# If Auger is ON and time since toggle is greater than On Time
 			if current_output_status['auger'] and (now - auger_toggle_time) > (CycleTime * CycleRatio):
@@ -1060,6 +1091,17 @@ while True:
 	# 1. Check control for changes 
 	execute_control_writes()
 	control = read_control()
+	# 2. Check for system commands
+	_process_system_commands(grill_platform)
+
+	# Check if there were updates to any of the settings that were flagged
+	if control['settings_update']:
+		control['settings_update'] = False
+		write_control(control, direct_write=True, origin='control')
+		settings = read_settings()
+
+	# Check if there are any notifications pending
+	check_notify(settings, control, pelletdb=pelletdb, grill_platform=grill_platform)
 
 	# Check if there is a timer running, see if it has expired, send notification and reset
 	for index, item in enumerate(control['notify_data']):
@@ -1216,7 +1258,7 @@ while True:
 				_work_cycle('Startup', grill_platform, probe_complex, display_device, dist_device)
 				# Select Next Mode
 				settings = read_settings()
-				_next_mode(control['next_mode'], setpoint=settings['startup']['start_to_mode']['primary_setpoint'])			
+				_next_mode(control['next_mode'], setpoint=settings['startup']['start_to_mode']['primary_setpoint'])
 
 		# Smoke (smoke cycle)
 		elif control['mode'] == 'Smoke':

@@ -83,6 +83,12 @@ def dash():
 	dash_template = settings['dashboard']['dashboards'][current].get('html_name', 'dash_default.html')
 	dash_data = settings['dashboard']['dashboards'].get(current, {})
 
+	''' Check if control process is up and running. '''
+	process_command(action='sys', arglist=['check_alive'], origin='dash')  # Request supported commands 
+	data = _get_system_command_output(requested='check_alive')
+	if data['result'] != 'OK':
+		errors.append('The control process did not respond to a request and may be stopped.  Try reloading the page or restarting the system.  Check logs for details.')
+
 	return render_template(dash_template,
 						   settings=settings,
 						   control=control,
@@ -99,6 +105,9 @@ def hopper_level():
 						 pelletdb['archive'][pelletdb['current']['pelletid']]['wood']
 	return jsonify({ 'hopper_level' : pelletdb['current']['hopper_level'], 'cur_pellets' : cur_pellets_string })
 
+'''
+This route will be deprecated in an upcoming release and has been replaced with the API calls /api/[get,set]/timer
+'''
 @app.route('/timer', methods=['POST','GET'])
 def timer():
 	global settings 
@@ -2128,7 +2137,10 @@ def admin_page(action=None):
 	global settings
 	control = read_control()
 	pelletdb = read_pellet_db()
-	notify = ''
+
+	errors = []
+	warnings = []
+	success = []
 
 	if not os.path.exists(BACKUP_PATH):
 		os.mkdir(BACKUP_PATH)
@@ -2218,6 +2230,14 @@ def admin_page(action=None):
 			zip_file = _zip_files_logs('logs')
 			return send_file(zip_file, as_attachment=True, max_age=0)
 		
+		if 'download_settings' in response: 
+			return send_file('settings.json', as_attachment=True, max_age=0)
+
+		if 'download_control' in response:
+			filename = '/tmp/control_general.json'
+			write_generic_json(control, filename)
+			return send_file(filename, as_attachment=True, max_age=0)
+
 		if 'backupsettings' in response:
 			backup_file = backup_settings()
 			return send_file(backup_file, as_attachment=True, max_age=0)
@@ -2240,7 +2260,7 @@ def admin_page(action=None):
 				if remote_file and _allowed_file(remote_file.filename):
 					filename = secure_filename(remote_file.filename)
 					remote_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-					notify = "success"
+					success.append('Successfully restored settings.')
 					new_settings = read_settings(filename=BACKUP_PATH+filename)
 					write_settings(new_settings)
 					server_status = 'restarting'
@@ -2248,9 +2268,9 @@ def admin_page(action=None):
 					return render_template('shutdown.html', action='restart', page_theme=settings['globals']['page_theme'],
 									   		grill_name=settings['globals']['grill_name'])
 				else:
-					notify = "error"
+					errors.append('There was an error restoring settings.  File either is a disallowed type or was not found.')
 			else:
-				notify = "error"
+				errors.append('There was an error restoring settings.  Restore file wasn\'t specified or found')
 
 		if 'backuppelletdb' in response:
 			backup_file = backup_pellet_db(action='backup')
@@ -2264,20 +2284,20 @@ def admin_page(action=None):
 			if local_file != 'none':
 				pelletdb = read_pellet_db(filename=BACKUP_PATH+local_file)
 				write_pellet_db(pelletdb)
-				notify = "success"
+				success.append('Successfully restored pellet database.')
 			elif remote_file.filename != '':
 				# If the user does not select a file, the browser submits an
 				# empty file without a filename.
 				if remote_file and _allowed_file(remote_file.filename):
 					filename = secure_filename(remote_file.filename)
 					remote_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-					notify = "success"
+					success.append('Successfully restored pellet database.')
 					pelletdb = read_pellet_db(filename=BACKUP_PATH+filename)
 					write_pellet_db(pelletdb)
 				else:
-					notify = "error"
+					errors.append('There was an error restoring the pellet database.  File either is a disallowed type or was not found.')
 			else:
-				notify = "error"
+				errors.append('There was an error restoring pellet database.  Restore file wasn\'t specified or found')
 	
 	if request.method == 'POST' and action == 'boot':
 		response = request.form
@@ -2289,26 +2309,63 @@ def admin_page(action=None):
 		
 		write_settings(settings)
 
+	''' 
+		Get System Information 
+	'''
+
+	# TODO: Convert uptime, cpu_info, infconfig to system commands
 	uptime = os.popen('uptime').readline()
 
 	cpu_info = os.popen('cat /proc/cpuinfo').readlines()
 
 	ifconfig = os.popen('ifconfig').readlines()
 
-	if is_real_hardware():
-		temp = _check_cpu_temp()
-	else:
-		temp = '---'
+	supported_cmds = _get_supported_cmds()
+
+	if 'check_wifi_quality' in supported_cmds:
+		process_command(action='sys', arglist=['check_wifi_quality'], origin='admin')  # Request supported commands 
+		data = _get_system_command_output(requested='check_wifi_quality')
+		if data['result'] != 'OK':
+			event = data['message']
+			errors.append(event)
+		control['system']['wifi_quality_value'] = data['data'].get('wifi_quality_value', None)
+		control['system']['wifi_quality_max'] = data['data'].get('wifi_quality_max', None)
+		control['system']['wifi_quality_percentage'] = data['data'].get('wifi_quality_percentage', None)
+
+	if 'check_throttled' in supported_cmds:
+		process_command(action='sys', arglist=['check_throttled'], origin='admin')  # Request supported commands 
+		data = _get_system_command_output(requested='check_throttled')
+		if data['result'] != 'OK':
+			event = data['message']
+			errors.append(event)
+		control['system']['cpu_throttled'] = data['data'].get('cpu_throttled', None)
+		control['system']['cpu_under_voltage'] = data['data'].get('cpu_under_voltage', None)
+
+		if control['system']['cpu_throttled'] or control['system']['cpu_under_voltage']: 
+			event = "CPU Throttled / Undervoltage event has occurred.  Check your power supply for proper voltage."
+			errors.append(event)
+			print(event)
+
+	if 'check_cpu_temp' in supported_cmds:
+		process_command(action='sys', arglist=['check_cpu_temp'], origin='admin')  # Request supported commands 
+		data = _get_system_command_output(requested='check_cpu_temp')
+		if data['result'] != 'OK':
+			event = data['message']
+			errors.append(event)
+		control['system']['cpu_temp'] = data['data'].get('cpu_temp', None)
+
+	write_control(control)
 
 	debug_mode = settings['globals']['debug_mode']
 
 	url = request.url_root
 
-	return render_template('admin.html', settings=settings, notify=notify, uptime=uptime, cpuinfo=cpu_info, temp=temp,
+	return render_template('admin.html', settings=settings, uptime=uptime, cpuinfo=cpu_info,
 						   ifconfig=ifconfig, debug_mode=debug_mode, qr_content=url,
 						   control=control,
 						   page_theme=settings['globals']['page_theme'],
-						   grill_name=settings['globals']['grill_name'], files=files)
+						   grill_name=settings['globals']['grill_name'], 
+						   files=files, errors=errors, warnings=warnings, success=success)
 
 @app.route('/manual/<action>', methods=['POST','GET'])
 @app.route('/manual', methods=['POST','GET'])
@@ -2381,12 +2438,17 @@ def api_page(action=None, arg0=None, arg1=None, arg2=None, arg3=None):
 	global settings
 	global server_status
 
-	if action in ['get', 'set', 'cmd']:
+	if action in ['get', 'set', 'cmd', 'sys']:
 		#print(f'action={action}\narg0={arg0}\narg1={arg1}\narg2={arg2}\narg3={arg3}')
 		arglist = []
 		arglist.extend([arg0, arg1, arg2, arg3])
 
 		data = process_command(action=action, arglist=arglist, origin='api')
+
+		if action == 'sys':
+			''' If system command, wait for output from control '''
+			data = _get_system_command_output(requested=arg0)
+		
 		return jsonify(data), 201
 	
 	elif request.method == 'GET':
@@ -3151,8 +3213,12 @@ def _allowed_file(filename):
 		   filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def _check_cpu_temp():
-	temp = os.popen('vcgencmd measure_temp').readline()
-	return temp.replace("temp=","")
+	process_command(action='sys', arglist=['check_cpu_temp'], origin='admin')  # Request supported commands 
+	data = _get_system_command_output(requested='check_cpu_temp')
+	control = read_control()
+	control['system']['cpu_temp'] = data['data'].get('cpu_temp', None)
+	write_control(control)
+	return f"{control['system']['cpu_temp']}C"
 
 def create_ui_hash():
 	global settings 
@@ -3487,6 +3553,30 @@ def _zip_files_logs(dir_name):
 		for file_path in directory.rglob("*"):
 			archive.write(file_path, arcname=file_path.relative_to(directory))
 	return file_name
+
+def _get_supported_cmds():
+	process_command(action='sys', arglist=['supported_commands'], origin='admin')  # Request supported commands 
+	data = _get_system_command_output(requested='supported_commands')
+	if data['result'] != 'ERROR':
+		return data['data']['supported_cmds']
+	else:
+		return data
+
+def _get_system_command_output(requested='supported_commands', timeout=1):
+	system_output = RedisQueue('control:systemo')
+	endtime = timeout + time.time()
+	while time.time() < endtime:
+		while system_output.length() > 0:
+			data = system_output.pop()
+			if data['command'][0] == requested:
+				return data
+
+	return {
+		'command' : [requested, None, None, None],
+		'result' : 'ERROR',
+		'message' : 'The requested command output could not be found.',
+		'data' : {'Response_Was' : 'To_Fast'}
+	}
 
 '''
 ==============================================================================
