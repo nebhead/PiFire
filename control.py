@@ -632,6 +632,12 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 					eventLogger.debug('On Time = ' + str(OnTime) + ', OffTime = ' + str(
 						OffTime) + ', CycleTime = ' + str(CycleTime) + ', CycleRatio = ' + str(CycleRatio))
 
+					#publish pid info to mqtt if enabled				
+					if settings['notify_services'].get('mqtt') != None and settings['notify_services']['mqtt']['enabled']:
+						pid_data = controllerCore.__dict__
+						pid_data['cycle_ratio'] = round(CycleRatio, 2)
+						check_notify(settings, control, pid_data=pid_data)
+
 			# If Auger is ON and time since toggle is greater than On Time
 			if current_output_status['auger'] and (now - auger_toggle_time) > (CycleTime * CycleRatio):
 				grill_platform.auger_off()
@@ -679,6 +685,12 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			update_eta = False
 		# Check to see if there are any pending notifications (i.e. Timer / Temperature Settings)
 		control = check_notify(settings, control, in_data=in_data, pelletdb=pelletdb, grill_platform=grill_platform, update_eta=update_eta)
+
+		# Publish the cycle ratio to mqtt.  Note if in HOLD mode it was already published.
+		if mode in ('Startup', 'Smoke') and 'CycleRatio' in locals():
+			pid_data = {}
+			pid_data['cycle_ratio'] = round(CycleRatio, 2)
+			check_notify(settings, control, pid_data=pid_data)
 
 		# Send Current Status / Temperature Data to Display Device every 0.5 second (Display Refresh)
 		if (now - display_toggle_time) > 0.5:
@@ -1301,6 +1313,9 @@ while True:
 			write_control(control, direct_write=True, origin='control')
 			_work_cycle('Reignite', grill_platform, probe_complex, display_device, dist_device)
 			_next_mode(control['next_mode'], setpoint=setpoint)
+	
+	if settings['notify_services'].get('mqtt') != None and settings['notify_services']['mqtt']['enabled']:
+		check_notify(settings, control, pelletdb=pelletdb)
 
 	time.sleep(0.1)
 # ===================

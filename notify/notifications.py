@@ -518,43 +518,51 @@ def _estimate_eta(temperatures, target_temperature, interval_seconds=3, max_hist
 
 	return eta
 
-mqtt_handler = None
+mqtt = None
 def _send_mqtt_notification(control, settings, 
 			pelletdb=None, in_data=None, grill_platform=None, pid_data=None, notify_event=None):
 	"""
 	Send mqtt Notifications
 
 	:param notify_event: String Event
-	:param control: Control
+	:param control: mode info
 	:param settings: Settings
-	:param pelletdb: Pellet DB
+	:param pelletdb: Pellet level
 	:param in_data: In Data (Probe Temps)
-	:param grill_platform: Grill Platform
+	:param grill_platform: Device status
+	"param pid_data: pid configuration, and actual values
 	"""
-	global mqtt_toggle_time
-	global mqtt_handler
+	global mqtt
 	
-	if not mqtt_handler:
+	if not mqtt:
 		from notify.mqtt_handler import MqttNotificationHandler
-		mqtt_handler = MqttNotificationHandler(settings)
-		mqtt_toggle_time = 0
+		mqtt = MqttNotificationHandler(settings)
 
 	# Send a notify_event immidiately
 	if notify_event != None:
 		payload = {'msg': notify_event }
-		mqtt_handler.notify("notify_event", payload)
+		mqtt.notify("notify_event", payload)
 
-	mode_changed = (control['mode'] != mqtt_handler.last_mode)
+	# Write other data if we changed modes or we've exceeded the configured
+	# update rate
 
-	# Write MQTT data only after x seconds has passed or we just changed mode
-	if (time.time() - mqtt_toggle_time) > float(settings['notify_services']['mqtt']['update_sec']) or \
-		(mode_changed):
-				
-		mqtt_toggle_time = 0 if mode_changed else time.time()
+	mode_changed = (control['mode'] != mqtt.last_mode)
+	current_time = time.time()
 
-		mqtt_handler.notify("control", control)
-		mqtt_handler.notify("system", control)
-		if grill_platform: mqtt_handler.notify("devices", grill_platform.current)
-		if in_data: mqtt_handler.notify("probe_data", in_data['probe_history'])
-		if pelletdb: mqtt_handler.notify("pellet", pelletdb['current'])
-		if pid_data: mqtt_handler.notify("pid", pid_data)
+	if pid_data and \
+		(mode_changed or current_time > mqtt.pub_times['pid'] + mqtt.pub_rate):
+		mqtt.pub_times['pid'] = current_time
+		mqtt.notify("pid", pid_data)
+
+	if pelletdb and \
+		(mode_changed or current_time > mqtt.pub_times['pellet'] + mqtt.pub_rate):
+		mqtt.pub_times['pellet'] = current_time
+		mqtt.notify("pellet", pelletdb['current'])
+
+	if mode_changed or \
+		current_time > mqtt.pub_times['base'] + mqtt.pub_rate:
+		mqtt.pub_times['base'] = current_time
+		mqtt.notify("control", control)
+		mqtt.notify("system", control)
+		if grill_platform: mqtt.notify("devices", grill_platform.current)
+		if in_data: mqtt.notify("probe_data", in_data['probe_history'])

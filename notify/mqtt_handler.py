@@ -18,7 +18,7 @@ import paho.mqtt.client as mqtt
 import json
 import logging
 import time
-from socket import gethostname
+from socket import getfqdn
 from common import create_logger
 import psutil
 #from common import write_control
@@ -44,6 +44,11 @@ class MqttNotificationHandler:
 			self.subscriptions = []			# Topics we have subscribed to so we can be remotely controlled
 			self.control = None				# Link to the control structure so we can send controls to the Control app
 
+			# Keep track of the last time we published different types of MQTT data so that we can
+			# throttle our updates to the configured rate
+			self.pub_times = {'base': 0, 'pellet': 0, 'pid': 0}
+			self.pub_rate = float(settings['notify_services']['mqtt']['update_sec'])
+
 			# Create shortcuts to settings we will use frequently
 			self._global_settings = settings['globals']
 			self._probe_settings  = settings['probe_settings']['probe_map']['probe_info']
@@ -59,7 +64,7 @@ class MqttNotificationHandler:
 			self.CONTROL_SENSORS = ['mode','next_mode','s_plus','pwm_control','duty_cycle','status','primary_setpoint']
 			self.PID_CONFIG_SENSORS = ['PB','Td','Ti','center']
 			self.PID_CYCLE_TIME_SENSORS = ['HoldCycleTime','LidOpenPauseTime','LidOpenThreshold','PMode','SmokeCycleTime','u_max','u_min']
-			self.PID_SENSORS = ['kp','ki','kd','p','i','d','u','error','derv','inter','inter_max']
+			self.PID_SENSORS = ['kp','ki','kd','p','i','d','u','error','derv','inter','inter_max','cycle_ratio']
 			self.HOPPER_SENSORS = ['hopper_level']
 			self.CONTROL_NOTIFY_SENSORS = ['target']
 			#self.LAST_NOTIFICATION = ['msg']
@@ -84,7 +89,7 @@ class MqttNotificationHandler:
 					'manufacturer': "PiFire",
 					'model': settings['modules']['grillplat'],
 					'name': grill_name,
-					'configuration_url': f"http://{gethostname()}:5000/settings"
+					'configuration_url': f"http://{getfqdn()}:5000/settings"
 					},
 				'enabled_by_default': True,
 				}
@@ -309,13 +314,13 @@ class MqttNotificationHandler:
 							discovery['unit_of_measurement'] = f"°{self._global_settings['units']}"
 							suffix = 'Temp'
 
-						if context == 'probe_data_tr':
+						elif context == 'probe_data_tr':
 							discovery['unit_of_measurement'] = "ohms"
 							discovery['enabled_by_default'] = False
 							discovery['entity_category'] = "diagnostic"
 							suffix = 'RTD Ohms'
 
-						if context.startswith('probe_data'):
+						elif context.startswith('probe_data'):
 							# Find this probes name in the settings
 							for probe in self._probe_settings:
 								if probe['label'] == device:
@@ -323,7 +328,7 @@ class MqttNotificationHandler:
 									topic_name = context + '_' + probe['port']
 									break
 
-						if context.startswith('control_notify'):
+						elif context.startswith('control_notify'):
 							discovery['device_class'] = "temperature"
 							discovery['unit_of_measurement'] = f"°{self._global_settings['units']}"
 							suffix = 'Target'
@@ -333,33 +338,30 @@ class MqttNotificationHandler:
 									topic_name = context
 									break
 
-						if context.startswith('pid'):
+						elif context.startswith('pid'):
 							discovery['entity_category'] = "diagnostic"
-							if device in ['p','i','d','u']:
-								discovery['unit_of_measurement'] = "%"
-								discovery['value_template'] = f"{{{{ value_json.{device} | round(2)}}}}"
 							discovery['enabled_by_default'] = False
-							
-						if device in ['u_min', 'u_max', 'center']:
-							discovery['value_template'] = f"{{{{ value_json.{device} * 100 }}}}"
+						
+						if device in ['u_min','u_max','center','p','i','d','u','cycle_ratio']:
 							discovery['unit_of_measurement'] = "%"
 							discovery['enabled_by_default'] = False
+							discovery['value_template'] = f"{{{{ value_json.{device} | round(2)}}}}"
 
-						if device in ['available_memory', 'free_memory']:
+						elif device in ['available_memory', 'free_memory']:
 								discovery['unit_of_measurement'] = "b"
 
-						if device in ['duty_cycle', 'hopper_level','cpu']:
+						elif device in ['duty_cycle', 'hopper_level','cpu']:
 							discovery['unit_of_measurement'] = "%"
 
-						if device in ['PB', 'Td', 'Ti', 'HoldCycleTime', 'LidOpenPauseTime']:
+						elif device in ['PB', 'Td', 'Ti', 'HoldCycleTime', 'LidOpenPauseTime']:
 							discovery['unit_of_measurement'] = "s"
 							discovery['enabled_by_default'] = False
 
-						if device == 'cpu_temp':
+						elif device == 'cpu_temp':
 							discovery['device_class'] = "temperature"
 							discovery['unit_of_measurement'] = "°C"
 
-						if device in ['primary_setpoint']:
+						elif device in ['primary_setpoint']:
 							discovery['device_class'] = "temperature"
 							discovery['unit_of_measurement'] = f"°{self._global_settings['units']}"
 
