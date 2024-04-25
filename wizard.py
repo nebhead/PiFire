@@ -70,6 +70,10 @@ for module in WizardInstallInfo['modules']:
 		if selected_setting == 'True' or selected_setting == 'False':
 			selected_setting = selected_setting == 'True'
 		
+		# Convert 'None' to None 
+		if selected_setting == 'None':
+			selected_setting = None 
+
 		# Special Handling for Units
 		if setting == 'units':
 			units = WizardInstallInfo['modules'][module]['settings'][setting]

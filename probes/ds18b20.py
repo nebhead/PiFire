@@ -31,9 +31,8 @@ Description:
 '''
 import logging 
 import time
-from w1thermsensor import W1ThermSensor, Unit
+from w1thermsensor import W1ThermSensor, Unit, Sensor 
 from probes.base import ProbeInterface
-import RPi.GPIO as GPIO
 
 '''
 *****************************************
@@ -45,12 +44,22 @@ class DS18B20_Device():
 	''' DS18B20 Device Utilizing the w1thermsensor module '''
 	def __init__(self):
 		self.logger = logging.getLogger("control")
-		# Setup software pull-up which will wake the device connected
-		GPIO.setmode(GPIO.BCM)
-		GPIO.setup(6, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+		self.available = False 
+		try:
+			self.init_device()
+			self.check_availability()
+		except:
+			''' Device is unavailable for some reason '''
+			self.logger.info('DS18B20 device wasn\'t initialized because it was not found.')
+			pass 
 
-		time.sleep(4)  # Give time for the kernel to connect to the 1-wire bus and get the device IDs
+	def init_device(self):	
 		self.sensor = W1ThermSensor()
+
+	def check_availability(self):
+		for sensor in self.sensor.get_available_sensors([Sensor.DS18B20]):
+			self.available = True 
+		return self.available
 
 	@property
 	def temperature(self):
@@ -69,12 +78,18 @@ class ReadProbes(ProbeInterface):
 			self.device = DS18B20_Device()
 		except:
 			self.logger.error('Something went wrong when trying to initialize the DS18B20 device.')
-			raise
 
 	def read_all_ports(self, output_data):
-		''' Read temperature from device '''
-		tempC = round(self.device.temperature, 1)
-		tempF = int(tempC * (9/5) + 32) # Celsius to Fahrenheit
+		''' Check availability '''
+		if self.device.check_availability():
+			''' Read temperature from device '''
+			tempC = round(self.device.temperature, 1)
+			tempF = int(tempC * (9/5) + 32) # Celsius to Fahrenheit
+		else: 
+			''' Device not available '''
+			tempC = None
+			tempF = None
+
 		port = self.device_info['ports'][0]
 
 		''' Read resistance from device '''

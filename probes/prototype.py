@@ -20,7 +20,8 @@ Description:
             	'ADC2_rd': '10000',
             	'ADC3_rd': '10000',
             	'i2c_bus_addr': '0x48',
-            	'voltage_ref': '3.28'
+            	'voltage_ref': '3.28',
+				'transient' : False
 			} 
 		}
 

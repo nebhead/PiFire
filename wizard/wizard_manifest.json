@@ -8,7 +8,7 @@
 				"default" : false,
 				"image" : "custom.png",
 				"reboot_required" : true,
-				"py_dependencies" : [], 
+				"py_dependencies" : ["rpi_hardware_pwm"], 
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-pwm", "-ow", "-bl", "-s", "-i"]],
 				"settings_dependencies" : {
@@ -514,7 +514,7 @@
 				"default" : false,
 				"image" : "pcb_pwm.png",
 				"reboot_required" : true,
-				"py_dependencies" : [], 
+				"py_dependencies" : ["rpi_hardware_pwm"], 
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-pwm", "-s", "-i"]],
 				"settings_dependencies" : {
@@ -699,7 +699,7 @@
 				"default" : false,
 				"image" : "pcb_4.0.1.png",
 				"reboot_required" : true,
-				"py_dependencies" : [], 
+				"py_dependencies" : ["rpi_hardware_pwm"], 
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-pwm", "-ow", "-bl", "-s", "-i", "-gs"]],
 				"settings_dependencies" : {
@@ -961,6 +961,16 @@
 							"max" : 10,
 							"step" : 0.001,
 							"hidden" : false
+						},
+						{
+							"label" : "transient", 
+							"friendly_name" : "Transient",
+							"description" : "Select whether this device is fixed/always attached (default) or if it is transient/sometimes detached.",
+							"type" : "list", 
+							"list_values" : ["False", "True"],
+							"list_labels" : ["Fixed (always attached)", "Transient (sometimes detached)"],
+							"default" : "False",
+							"hidden" : true
 						}
 					]
 				}
@@ -1050,6 +1060,16 @@
 							"max" : 10,
 							"step" : 0.001,
 							"hidden" : false
+						},
+						{
+							"label" : "transient", 
+							"friendly_name" : "Transient",
+							"description" : "Select whether this device is fixed/always attached (default) or if it is transient/sometimes detached.",
+							"type" : "list", 
+							"list_values" : ["False", "True"],
+							"list_labels" : ["Fixed (always attached)", "Transient (sometimes detached)"],
+							"default" : "False",
+							"hidden" : true
 						}
 					]
 				}
@@ -1116,6 +1136,16 @@
 							"list_labels" : ["2 Wires", "3 Wires", "4 Wires"],
 							"default" : "2",
 							"hidden" : false
+						},
+						{
+							"label" : "transient", 
+							"friendly_name" : "Transient",
+							"description" : "Select whether this device is fixed/always attached (default) or if it is transient/sometimes detached.",
+							"type" : "list", 
+							"list_values" : ["False", "True"],
+							"list_labels" : ["Fixed (always attached)", "Transient (sometimes detached)"],
+							"default" : "False",
+							"hidden" : true
 						}
 					]
 				}
@@ -1182,6 +1212,16 @@
 							"list_labels" : ["2 Wires", "3 Wires", "4 Wires"],
 							"default" : "2",
 							"hidden" : false
+						},
+						{
+							"label" : "transient", 
+							"friendly_name" : "Transient",
+							"description" : "Select whether this device is fixed/always attached (default) or if it is transient/sometimes detached.",
+							"type" : "list", 
+							"list_values" : ["False", "True"],
+							"list_labels" : ["Fixed (always attached)", "Transient (sometimes detached)"],
+							"default" : "False",
+							"hidden" : true
 						}
 					]
 				}
@@ -1216,6 +1256,16 @@
 							"list_labels" : ["0x67", "0x66", "0x65", "0x64", "0x60"],
 							"default" : "0x67",
 							"hidden" : false
+						},
+						{
+							"label" : "transient", 
+							"friendly_name" : "Transient",
+							"description" : "Select whether this device is fixed/always attached (default) or if it is transient/sometimes detached.",
+							"type" : "list", 
+							"list_values" : ["False", "True"],
+							"list_labels" : ["Fixed (always attached)", "Transient (sometimes detached)"],
+							"default" : "False",
+							"hidden" : true
 						}
 					]
 				}
@@ -1304,6 +1354,16 @@
 							"min" : 1,
 							"max" : 10,
 							"step" : 0.001,
+							"hidden" : false
+						},
+						{
+							"label" : "transient", 
+							"friendly_name" : "Transient",
+							"description" : "Select whether this device is fixed/always attached (default) or if it is transient/sometimes detached.",
+							"type" : "list", 
+							"list_values" : ["False", "True"],
+							"list_labels" : ["Fixed (always attached)", "Transient (sometimes detached)"],
+							"default" : "False",
 							"hidden" : false
 						}
 					]
@@ -1394,6 +1454,16 @@
 							"max" : 10,
 							"step" : 0.001,
 							"hidden" : false
+						},
+						{
+							"label" : "transient", 
+							"friendly_name" : "Transient",
+							"description" : "Select whether this device is fixed/always attached (default) or if it is transient/sometimes detached.",
+							"type" : "list", 
+							"list_values" : ["False", "True"],
+							"list_labels" : ["Fixed (always attached)", "Transient (sometimes detached)"],
+							"default" : "False",
+							"hidden" : true
 						}
 					]
 				}
@@ -1418,7 +1488,18 @@
 				},
 				"device_specific" : {
 					"ports" : ["DS0"],
-					"config" : []
+					"config" : [
+						{
+							"label" : "transient", 
+							"friendly_name" : "Transient",
+							"description" : "Select whether this device is fixed/always attached (default) or if it is transient/sometimes detached.",
+							"type" : "list", 
+							"list_values" : ["False", "True"],
+							"list_labels" : ["Fixed (always attached)", "Transient (sometimes detached)"],
+							"default" : "True",
+							"hidden" : false
+						}
+					]
 				}
 			},
 			"virtual_average" : {
@@ -1448,6 +1529,16 @@
 							"description" : "A list of probes from other devices, to average. Select which probes should be averaged together with ctrl+click.",
 							"type" : "probes_list", 
 							"hidden" : false
+						},
+						{
+							"label" : "transient", 
+							"friendly_name" : "Transient",
+							"description" : "Select whether this device is fixed/always attached (default) or if it is transient/sometimes detached.",
+							"type" : "list", 
+							"list_values" : ["False", "True"],
+							"list_labels" : ["Fixed (always attached)", "Transient (sometimes detached)"],
+							"default" : "False",
+							"hidden" : true
 						}
 					]
 				}			
@@ -1479,6 +1570,16 @@
 							"description" : "A list of probes from other devices, to determine the highest value. Select which probes should used with ctrl+click.",
 							"type" : "probes_list", 
 							"hidden" : false
+						},
+						{
+							"label" : "transient", 
+							"friendly_name" : "Transient",
+							"description" : "Select whether this device is fixed/always attached (default) or if it is transient/sometimes detached.",
+							"type" : "list", 
+							"list_values" : ["False", "True"],
+							"list_labels" : ["Fixed (always attached)", "Transient (sometimes detached)"],
+							"default" : "False",
+							"hidden" : true
 						}
 					]
 				}			
@@ -1510,6 +1611,16 @@
 							"description" : "A list of probes from other devices, to determine the lowest value. Select which probes should used with ctrl+click.",
 							"type" : "probes_list", 
 							"hidden" : false
+						},
+						{
+							"label" : "transient", 
+							"friendly_name" : "Transient",
+							"description" : "Select whether this device is fixed/always attached (default) or if it is transient/sometimes detached.",
+							"type" : "list", 
+							"list_values" : ["False", "True"],
+							"list_labels" : ["Fixed (always attached)", "Transient (sometimes detached)"],
+							"default" : "False",
+							"hidden" : true
 						}
 					]
 				}			
@@ -1541,6 +1652,16 @@
 							"description" : "A list of probes from other devices, to determine the median value. Select which probes should used with ctrl+click.",
 							"type" : "probes_list", 
 							"hidden" : false
+						},
+						{
+							"label" : "transient", 
+							"friendly_name" : "Transient",
+							"description" : "Select whether this device is fixed/always attached (default) or if it is transient/sometimes detached.",
+							"type" : "list", 
+							"list_values" : ["False", "True"],
+							"list_labels" : ["Fixed (always attached)", "Transient (sometimes detached)"],
+							"default" : "False",
+							"hidden" : true
 						}
 					]
 				}			
@@ -2091,7 +2212,7 @@
 		"profile_id" : {
 			"display_name" : "Probe Profile",
 			"options" : {},
-			"description" : "The probe profile that will be applied to this probe."
+			"description" : "The probe profile that will be applied to this probe (if applicable for the device)."
 		}, 
 		"enabled" : {
 			"display_name" : "Enabled",
