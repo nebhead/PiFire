@@ -8,18 +8,33 @@ PiFire Probes DS18B20 Module
 Description: 
   This module utilizes the DS18B20 hardware and returns temperature data.
 	Depends on: pip install w1thermsensor
+	Details on this module can be found here: https://github.com/timofurrer/w1thermsensor 
 
-	Note: Still experimental.  Expects this device to be connected to GPIO 6 (Pin 31)
-	  Edit /boot/config.txt to add: 
-	  	dtoverlay=w1-gpio,gpiopin=6,pullup="y"
-	  
+	Note: This device is not recommended (currently) for anything other than a reference probe.  Thus, the recommendation
+		is to utilize this probe for calibrating / tuning probe profiles only. PiFire will operate best if it is added to 
+		the configuration only when needed to do calibration, then removed from the configuration during normal usage.  
+		This prevents the probe from being queried every time the temperature is read from other devices.  However, if it is 
+		left enabled, the probe can be hot-plugged and should read temperatures when attached and initialized by the kernel.  
+		Set this probe to AUX in the configuration wizard so that it does not appear in the user interface.  
+	
+	Note: Expects this device to be connected to a specific GPIO Pin defined in config.txt, 
+		should be pulled up through a physical 4.7-10k pull-up to 3.3V.  Removed the passive pull-up 
+		code from this version going forward.  
+
+	  Edit /boot/config.txt (or /boot/firmware/config.txt) to add: 
+	  	dtoverlay=w1-gpio,gpiopin=[pin_number]
+
+		(This is automatically added by the configuration wizard)
+
 	Ex Device Definition: 
 	
-	device = {
+	device_info = {
 			'device' : 'your_device_name',	# Unique name for the device
 			'module' : 'ds18b20',  # Must be populated for this module to load properly
 			'ports' : ['DS0'],    			# This is defined in the module, so this does not need to be defined.
-			'config' : {} 
+			'config' : {
+				'transient' = 'True'
+			}
 		}
 
 '''
@@ -44,26 +59,45 @@ class DS18B20_Device():
 	''' DS18B20 Device Utilizing the w1thermsensor module '''
 	def __init__(self):
 		self.logger = logging.getLogger("control")
-		self.available = False 
+		self.available = False
+		self.initialized = False
 		try:
 			self.init_device()
-			self.check_availability()
 		except:
 			''' Device is unavailable for some reason '''
 			self.logger.info('DS18B20 device wasn\'t initialized because it was not found.')
-			pass 
 
 	def init_device(self):	
-		self.sensor = W1ThermSensor()
+		try:
+			self.sensor = W1ThermSensor()
+			self.available = True
+			self.initialized = True
+		except:
+			self.available = False
+			self.initialized = False 
 
 	def check_availability(self):
-		for sensor in self.sensor.get_available_sensors([Sensor.DS18B20]):
-			self.available = True 
+		try:
+			if not self.initialized:
+				self.init_device()
+			for sensor in self.sensor.get_available_sensors([Sensor.DS18B20]):
+				self.available = True
+		except:
+			self.available = False 
 		return self.available
 
 	@property
 	def temperature(self):
-		return self.sensor.get_temperature()
+		try:
+			if not self.initialized:
+				self.init_device()
+			if self.available:
+				temp_C = self.sensor.get_temperature()
+		except:
+			temp_C = None
+			self.available = False
+
+		return temp_C
 
 class ReadProbes(ProbeInterface):
 
@@ -74,10 +108,7 @@ class ReadProbes(ProbeInterface):
 	def _init_device(self):
 		self.time_delay = 0
 		self.device_info['ports'] = ['DS0']
-		try:
-			self.device = DS18B20_Device()
-		except:
-			self.logger.error('Something went wrong when trying to initialize the DS18B20 device.')
+		self.device = DS18B20_Device()
 
 	def read_all_ports(self, output_data):
 		''' Check availability '''

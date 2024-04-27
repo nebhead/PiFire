@@ -32,6 +32,11 @@ class ProbeInterface:
 	def __init__(self, probe_info, device_info, units):
 		self.units = units 
 		self.device_info = device_info
+		if self.device_info['config'].get('transient', 'False') == 'True':
+			self.transient = True
+		else:
+			self.transient = False
+		print(f'Device Name: {device_info["device"]} Transient: {self.transient}')
 		self.set_profiles(probe_info)
 		self._build_port_map(probe_info)
 		self._build_output_data(probe_info)
@@ -123,6 +128,10 @@ class ProbeInterface:
 		return Tr 
 
 	def _voltage_to_temp(self, voltage, probe_profile):
+		if voltage == None:
+			''' Transient probe detected. '''
+			return None, 0
+
 		''' Check to make sure voltage is between 0V and Vs defined in profile, plus some guard band '''
 		if(voltage > 0) and (voltage <= ((probe_profile['Vs'] * 1000) * 1.01)):
 			'''
@@ -192,15 +201,20 @@ class ProbeInterface:
 			port_values[port], self.output_data['tr'][self.port_map[port]] = self._voltage_to_temp(port_values[port], self.probe_profiles[port])
 
 			''' Enqueue the Temperature Readings to Port Queues '''
-			self.port_queues[port].enqueue(port_values[port])
+			if port_values[port] == None:
+				''' If the read value is None, pass that to the output instead of adding to the queue '''
+				output_value = None
+			else:
+				self.port_queues[port].enqueue(port_values[port])
+				output_value = self.port_queues[port].average() 
 
 			''' Get average temperature from the queue and store it in the output data structure'''
 			if port == self.primary_port:
-				self.output_data['primary'][self.port_map[port]] = self.port_queues[port].average()
+				self.output_data['primary'][self.port_map[port]] = output_value
 			elif port in self.food_ports:
-				self.output_data['food'][self.port_map[port]] = self.port_queues[port].average()
+				self.output_data['food'][self.port_map[port]] = output_value
 			elif port in self.aux_ports:
-				self.output_data['aux'][self.port_map[port]] = self.port_queues[port].average()
+				self.output_data['aux'][self.port_map[port]] = output_value
 
 			if self.time_delay:
 				time.sleep(self.time_delay)  # Time delay, if needed for single-shot mode on some ADC's

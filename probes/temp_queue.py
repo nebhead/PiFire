@@ -35,7 +35,7 @@ class TempQueue():
 			self.last_average = 0
 			return(0)
 		elif self.last_average == 0:
-			# Handle case if lastaverage isn't initialized
+			# Handle case if last_average isn't initialized
 			average = (sum(self.queue) / self.qlength)
 			self.last_average = average
 			if self.units == 'F':

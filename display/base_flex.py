@@ -389,7 +389,7 @@ class DisplayBase:
                     
                     ''' Update the Primary Gauge '''
                     object_data = self.display_object_list[self.dash_map['primary_gauge']].get_object_data()
-                    object_data['temps'][0] = self.in_data['P'][primary_key]
+                    object_data['temps'][0] = self.in_data['P'][primary_key] if self.in_data['P'][primary_key] is not None else 0
                     object_data['temps'][1] = self.in_data['NT'][primary_key]
                     object_data['temps'][2] = self.in_data['PSP']
                     object_data['units'] = self.units 
@@ -407,7 +407,7 @@ class DisplayBase:
                         
                         ''' Update this food gauge '''
                         object_data = self.display_object_list[self.dash_map[gauge]].get_object_data()
-                        object_data['temps'][0] = self.in_data['F'][key]
+                        object_data['temps'][0] = self.in_data['F'][key] if self.in_data['F'][key] is not None else 0
                         object_data['temps'][1] = self.in_data['NT'][key]
                         object_data['temps'][2] = 0  # There is no set temp for food probes 
                         object_data['units'] = self.units

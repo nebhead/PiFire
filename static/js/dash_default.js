@@ -16,9 +16,11 @@ var probesReady = false; // Pre-initialized state
 if (units == 'F') {
 	var maxTempPrimary = 600; 
 	var maxTempFood = 300;
+	var minTemp = 0;
 } else {
 	var maxTempPrimary = 300; 
-	var maxTempFood = 150;
+	var maxTempFood = 225;
+	var minTemp = -20;
 }
 var last_fan_status = null;
 var last_auger_status = null;
@@ -62,16 +64,17 @@ function initProbeGauge(key) {
 	};
 	var probeGauge = Gauge(document.getElementById(key+"_gauge"), {
 		max: maxTemp,
+		min: minTemp,
 		// custom label renderer
 		label: function(value) {
-		return Math.round(value);
+				return Math.round(value);
 		},
 		value: 0,
 		// Custom dial colors (Optional)
 		color: function(value) {
-			if(value <= maxTemp) {
+			if(value <= (maxTemp * 0.9)) {
 				return "#3498db"; // default color
-			}else {
+			} else {
 				return "#ef4655"; // if exceeds max value, RED 
 			};
 		}
@@ -299,6 +302,15 @@ function updateProbeCards() {
 
 // Update the temperature for a specific probe/card 
 function updateTempCard(key, temp) {
+	//console.log('Update Temp Card: ' + key + ' temp: ' + temp);
+	var index = dashDataStruct.custom.hidden_cards.indexOf(key); // Index of cardID
+	if (index == -1) {
+		if ((temp != null) && $('#card_'+key).is(":hidden")) {
+			$('#card_'+key).show();
+		} else if (temp == null) {
+			$('#card_'+key).hide();
+		};
+	};
 	probeGauges[key].setValueAnimated(temp, 0.25); // (value, animation duration in seconds)
 };
 
@@ -584,7 +596,7 @@ function dashToggleVisible(cardID) {
 		if (index !== -1) {
 			dashDataStruct.custom.hidden_cards.splice(index, 1); // If found, remove
 		};
-		console.log('dashData Hidden='+dashDataStruct.custom.hidden_cards);
+		//console.log('dashData Hidden='+dashDataStruct.custom.hidden_cards);
 		dashSetData();
 	} else {
 		// change card to hidden
@@ -596,7 +608,7 @@ function dashToggleVisible(cardID) {
 		if (index == -1) {
 			dashDataStruct.custom.hidden_cards.push(cardID); // If not found, add
 		};
-		console.log('dashData Hidden='+dashDataStruct.custom.hidden_cards);
+		//console.log('dashData Hidden='+dashDataStruct.custom.hidden_cards);
 		dashSetData();
 	};
 }

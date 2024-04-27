@@ -23,6 +23,11 @@
                      of the board.  This also removes any extraneous configuration options. 
                  </li>
                  <li>
+                     Added transient probe configuration types so that probes can be marked as transient(not always available).  This means that if probes/probe 
+                     ports are not fixed (like in the case of the DS18B20 device), then the control script can return None type for the temperature.  This allows 
+                     the dashboard to do things like hide the card in the case where this probe isn't present.  
+                 </li>
+                 <li>
                      Behind the scenes improvements including:  
                      <ul>
                          <li>

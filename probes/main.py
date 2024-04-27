@@ -83,3 +83,7 @@ class ProbesMain:
 	def update_probe_profiles(self, probe_info):
 		for device in self.probe_device_list:
 			device.set_profiles(probe_info)
+
+	def update_units(self, units):
+		for device in self.probe_device_list:
+			device.update_units(units)

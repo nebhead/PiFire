@@ -2207,7 +2207,7 @@
 		"type" : {
 			"display_name" : "Probe Type",
 			"options" : {"Food": "Food Probe", "Primary": "Primary Probe", "Aux": "Auxillary Probe"},
-			"description" : "Probe types are as follows: <i><br><strong>Food</strong> - Used as a food probe to track the temperature of food items.  This probe will be displayed in the UI and tracked in history. <br><strong>Primary</strong> - Used as the primary probe to control the grill/smoker in hold mode, etc.  There must be one Primary probe, and only one.  This probe is displayed in the UI and tracked in the history.  <br><strong>Aux</strong> - Auxillary temperature input, not displayed in the UI, but tracked in the history.</i>"
+			"description" : "Probe types are as follows: <i><br><strong>Food</strong> - Used as a food probe to track the temperature of food items.  This probe will be displayed in the UI and tracked in history. <br><strong>Primary</strong> - Used as the primary probe to control the grill/smoker in hold mode, etc.  There must be one Primary probe, and only one.  This probe is displayed in the UI and tracked in the history.  <br><strong>Aux</strong> - Auxillary temperature input, not displayed in the UI, but tracked in the history. Used by virtual probes or for reference in tuning.</i>"
 		}, 
 		"profile_id" : {
 			"display_name" : "Probe Profile",
