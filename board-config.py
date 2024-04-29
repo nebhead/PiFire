@@ -252,7 +252,7 @@ def rpi_config_write(config_type, feature, add_config={}, pin=0, param=''):
 			config_dict = {}
 			if config_type == 'dtoverlay':
 				config_dict[feature] = {}
-				config_dict[feature]['gpiopin'] = pin
+				config_dict[feature]['gpio_pin'] = pin
 				if add_config != {}:
 					for key, value in add_config.items():
 						config_dict[feature][key] = value 
