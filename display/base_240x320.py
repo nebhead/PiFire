@@ -758,7 +758,9 @@ class DisplayBase:
 		percents = [0,0,0]
 
 		temps[0] = in_data['probe_history']['primary'][label]
-		if temps[0] <= 0:
+		if temps[0] == None:
+			temps[0] = 0
+		if temps[0] == None or temps[0] <= 0:
 			percents[0] = 0
 		elif self.units == 'F':
 			percents[0] = round((temps[0] / 600) * 100)  # F Temp Range [0 - 600F] for Grill
@@ -799,7 +801,9 @@ class DisplayBase:
 			percents = [0,0,0]
 
 			temps[0] = in_data['probe_history']['food'][label]
-			if temps[0] <= 0:
+			if temps[0] == None:
+				temps[0] = 0
+			if temps[0] == None or temps[0] <= 0:
 				percents[0] = 0
 			elif self.units == 'F':
 				percents[0] = round((temps[0] / 300) * 100)  # F Temp Range [0 - 300F] for probe
@@ -836,7 +840,9 @@ class DisplayBase:
 			percents = [0,0,0]
 
 			temps[0] = in_data['probe_history']['food'][label]
-			if temps[0] <= 0:
+			if temps[0] == None:
+				temps[0] = 0
+			if temps[0] == None or temps[0] <= 0:
 				percents[0] = 0
 			elif self.units == 'F':
 				percents[0] = round((temps[0] / 300) * 100)  # F Temp Range [0 - 300F] for probe

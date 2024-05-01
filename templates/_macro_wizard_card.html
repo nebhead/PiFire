@@ -2,7 +2,7 @@
 <!-- Form for Selected Module -->
 <div class="card">
 	<div class="media">
-		<img src="{{ url_for('static', filename='img/wizard/' + moduleData['image']) }}">
+		<img src="{{ url_for('static', filename='img/wizard/' + moduleData['image']) }}" class="p-2 rounded">
 		<div class="media-body">
 			<h5 class="mt-0">{{ moduleData['friendly_name'] }}</h5>
 			<br>
@@ -33,7 +33,7 @@
 				<td>
 					<select class="form-control" id="{{ moduleSection }}_{{ setting }}" name="{{ moduleSection }}_{{ setting }}">
 					{% for option in moduleData['settings_dependencies'][setting]['options'] %}
-						<option value="{{ option }}"{% if moduleSettings[setting] == option %} selected{% endif %}>{{ moduleData['settings_dependencies'][setting]['options'][option] }}</option>
+						<option value="{{ option }}"{% if moduleSettings[setting]|string == option %} selected{% endif %}>{{ moduleData['settings_dependencies'][setting]['options'][option] }}</option>
 					{% endfor %}
 					</select>
 				</td>

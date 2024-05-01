@@ -37,10 +37,10 @@ output = ' - Adding selected modules to the settings.json file. '
 set_wizard_install_status(percent, status, output)
 time.sleep(2)
 
-settings['modules']['grillplat'] = WizardInstallInfo['modules']['grillplatform']['module_selected'][0]
-#settings['modules']['adc'] = WizardInstallInfo['modules']['probes']['module_selected']		
-settings['modules']['display'] = WizardInstallInfo['modules']['display']['module_selected'][0]
-settings['modules']['dist'] = WizardInstallInfo['modules']['distance']['module_selected'][0]		
+display_selected = WizardInstallInfo['modules']['display']['profile_selected'][0]
+settings['modules']['display'] = WizardData['modules']['display'][display_selected]['filename']
+distance_selected = WizardInstallInfo['modules']['distance']['profile_selected'][0]
+settings['modules']['dist'] = WizardData['modules']['distance'][distance_selected]['filename']
 
 ''' Configuring Probes Data '''
 settings['probe_settings']['probe_map'] = WizardInstallInfo['probe_map']
@@ -56,7 +56,7 @@ time.sleep(2)
 
 for module in WizardInstallInfo['modules']:
 	for setting in WizardInstallInfo['modules'][module]['settings']:
-		selected = WizardInstallInfo['modules'][module]['module_selected'][0]
+		selected = WizardInstallInfo['modules'][module]['profile_selected'][0]
 		settingsLocation = WizardData['modules'][module][selected]['settings_dependencies'][setting]['settings']
 		selected_setting = WizardInstallInfo['modules'][module]['settings'][setting]
 
@@ -70,6 +70,10 @@ for module in WizardInstallInfo['modules']:
 		if selected_setting == 'True' or selected_setting == 'False':
 			selected_setting = selected_setting == 'True'
 		
+		# Convert 'None' to None 
+		if selected_setting == 'None':
+			selected_setting = None 
+
 		# Special Handling for Units
 		if setting == 'units':
 			units = WizardInstallInfo['modules'][module]['settings'][setting]
@@ -77,15 +81,15 @@ for module in WizardInstallInfo['modules']:
 				settings = convert_settings_units('C', settings)
 			elif(units == 'F') and (settings['globals']['units'] == 'C'):
 				settings = convert_settings_units('F', settings)
-		elif len(settingsLocation) == 1:
-			settings[settingsLocation[0]] = selected_setting
-		elif len(settingsLocation) == 2:
-			settings[settingsLocation[0]][settingsLocation[1]] = selected_setting
-		elif len(settingsLocation) == 3:
-			settings[settingsLocation[0]][settingsLocation[1]][settingsLocation[2]] = selected_setting
-
+		else:
+			settings = set_nested_key_value(settings, settingsLocation, selected_setting)
 		output = f'   + Set {setting} in settings.json'
 		set_wizard_install_status(percent, status, output)
+
+''' Set the grillplatform module per the system_type '''
+settings['modules']['grillplat'] = 'prototype'
+if settings['platform']['system_type'] == 'raspberry_pi_all':
+	settings['modules']['grillplat'] = 'raspberry_pi_all'
 
 # Commit Settings to JSON
 write_settings(settings)
@@ -102,7 +106,9 @@ command_list = []
 reboot_required = False 
 
 for module in WizardInstallInfo['modules']:
-	for selected in WizardInstallInfo['modules'][module]['module_selected']:
+	for selected in WizardInstallInfo['modules'][module]['profile_selected']:
+		if module == 'grillplatform':
+			selected = WizardInstallInfo['modules'][module]['settings']['current']
 		for py_dependency in WizardData['modules'][module][selected]['py_dependencies']:
 			py_dependencies.append(py_dependency)
 		for apt_dependency in WizardData['modules'][module][selected]['apt_dependencies']:
