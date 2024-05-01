@@ -26,7 +26,7 @@ import time
 import threading 
 import subprocess 
 import logging 
-from common import create_logger, is_raspberry_pi
+from common import create_logger, is_real_hardware
 
 '''
 ==============================================================================
@@ -44,7 +44,7 @@ class Process_Monitor:
         self.active = False 
         self.kill = False 
 
-        self.is_pi = is_raspberry_pi() 
+        self.is_real_hw = is_real_hardware() 
 
         # Setup logging
         log_level = logging.ERROR
@@ -85,8 +85,8 @@ class Process_Monitor:
                     message = f'The {self.process} process experienced a timeout event (no heartbeat detected in {self.timeout} seconds) and is being reset.'
                     self.event_logger.error(message)
                     self.process_logger.error(message)
-                    # Execute command on raspberry pi only 
-                    if self.is_pi:
+                    # Execute command on real hardware only 
+                    if self.is_real_hw:
                         subprocess.run(self.command)
                     else: 
                         print(message)

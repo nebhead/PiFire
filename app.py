@@ -30,8 +30,6 @@ import zipfile
 import pathlib
 from threading import Thread
 from datetime import datetime
-from common import generate_uuid, epoch_to_time, prepare_csv
-from common.hacks import hack_read_control, hack_write_control, hack_read_settings, hack_write_settings, hack_prepare_data, hack_read_current
 from updater import *  # Library for doing project updates from GitHub
 from file_mgmt.common import fixup_assets, read_json_file_data, update_json_file_data, remove_assets
 from file_mgmt.cookfile import read_cookfile, upgrade_cookfile, prepare_chartdata
@@ -81,15 +79,20 @@ def dash():
 	errors = read_errors()
 	warnings = read_warnings()
 
-	dash_template = 'dash_default.html'
-	for dash in settings['dashboard']['dashboards']:
-		if dash['name'] == settings['dashboard']['current']:
-			dash_template = dash['html_name']
-			break
+	current = settings['dashboard']['current']
+	dash_template = settings['dashboard']['dashboards'][current].get('html_name', 'dash_default.html')
+	dash_data = settings['dashboard']['dashboards'].get(current, {})
+
+	''' Check if control process is up and running. '''
+	process_command(action='sys', arglist=['check_alive'], origin='dash')  # Request supported commands 
+	data = _get_system_command_output(requested='check_alive')
+	if data['result'] != 'OK':
+		errors.append('The control process did not respond to a request and may be stopped.  Try reloading the page or restarting the system.  Check logs for details.')
 
 	return render_template(dash_template,
 						   settings=settings,
 						   control=control,
+						   dash_data=dash_data,
 						   errors=errors,
 						   warnings=warnings,
 						   page_theme=settings['globals']['page_theme'],
@@ -102,6 +105,9 @@ def hopper_level():
 						 pelletdb['archive'][pelletdb['current']['pelletid']]['wood']
 	return jsonify({ 'hopper_level' : pelletdb['current']['hopper_level'], 'cur_pellets' : cur_pellets_string })
 
+'''
+This route will be deprecated in an upcoming release and has been replaced with the API calls /api/[get,set]/timer
+'''
 @app.route('/timer', methods=['POST','GET'])
 def timer():
 	global settings 
@@ -252,7 +258,8 @@ def history_update(action=None):
 		json_response['annotations'] = _prepare_annotations(displayed_starttime)
 		json_response['mode'] = control['mode']
 		json_response['ui_hash'] = create_ui_hash()
-
+		json_response['timestamp'] = int(time.time() * 1000)
+		
 		return jsonify(json_response)
 
 	elif action == 'refresh':
@@ -793,144 +800,184 @@ def updatecookdata(action=None):
 			return jsonify({'result' : result})
 
 	return jsonify({'result' : 'ERROR'})
-	
 
-@app.route('/tuning/<action>', methods=['POST','GET'])
-@app.route('/tuning', methods=['POST','GET'])
-def tuning_page(action=None):
-
-	global settings
+@app.route('/tuner/<action>', methods=['POST','GET'])
+@app.route('/tuner', methods=['POST','GET'])
+def tuner_page(action=None):
+	global settings 
 	control = read_control()
-
-	if(control['mode'] == 'Stop'): 
-		alert = 'Warning!  Grill must be in an active mode to perform tuning (i.e. Monitor Mode, Smoke Mode, ' \
-				'Hold Mode, etc.)'
-	else: 
-		alert = ''
-
-	pagectrl = {}
-
-	pagectrl['refresh'] = 'off'
-	pagectrl['selected'] = 'none'
-	pagectrl['showcalc'] = 'false'
-	pagectrl['low_trvalue'] = ''
-	pagectrl['med_trvalue'] = ''
-	pagectrl['high_trvalue'] = ''
-	pagectrl['low_tempvalue'] = ''
-	pagectrl['med_tempvalue'] = ''
-	pagectrl['high_tempvalue'] = ''
-
-	if request.method == 'POST':
-		response = request.form
-		if 'probe_select' in response:
-			pagectrl['selected'] = response['probe_select']
-			pagectrl['refresh'] = 'on'
-			control['tuning_mode'] = True  # Enable tuning mode
-			write_control(control, origin='app')
-
-			if'pause' in response:
-				if response['low_trvalue'] != '':
-					pagectrl['low_trvalue'] = response['low_trvalue']
-				if response['med_trvalue'] != '':
-					pagectrl['med_trvalue'] = response['med_trvalue']
-				if response['high_trvalue'] != '':
-					pagectrl['high_trvalue'] = response['high_trvalue']
-
-				if response['low_tempvalue'] != '':
-					pagectrl['low_tempvalue'] = response['low_tempvalue']
-				if response['med_tempvalue'] != '':
-					pagectrl['med_tempvalue'] = response['med_tempvalue']
-				if response['high_tempvalue'] != '':
-					pagectrl['high_tempvalue'] = response['high_tempvalue']
-
-				pagectrl['refresh'] = 'off'	
-				control['tuning_mode'] = False  # Disable tuning mode while paused
+	
+	# This POST path will load/render portions of the tuner page
+	if request.method == 'POST' and ('form' in request.content_type):
+		requestform = request.form
+		if 'command' in requestform.keys():
+			if 'render' in requestform['command']:
+				render_string = "{% from '_macro_tuner.html' import render_" + requestform["value"] + " %}{{ render_" + requestform["value"] + "(settings, control) }}"
+				return render_template_string(render_string, settings=settings, control=control)
+	
+	# This POST path provides data back to the page
+	if request.method == 'POST' and 'json' in request.content_type:
+		requestjson = request.json 
+		command = requestjson.get('command', None)
+		if command == 'stop_tuning':
+			if control['tuning_mode']:
+				control['tuning_mode'] = False  # Disable tuning mode
+				write_control(control, origin='app')
+			if control['mode'] == 'Monitor':
+				# If in Monitor Mode, stop
+				control['mode'] = 'Stop'  # Go to Stop mode
+				control['updated'] = True
+				write_control(control, origin='app')	
+		if command == 'read_tr':
+			if not control['tuning_mode']:
+				control['tuning_mode'] = True  # Enable tuning mode
 				write_control(control, origin='app')
 
-			elif 'save' in response:
-				if response['low_trvalue'] != '':
-					pagectrl['low_trvalue'] = response['low_trvalue']
-				if response['med_trvalue'] != '':
-					pagectrl['med_trvalue'] = response['med_trvalue']
-				if response['high_trvalue'] != '':
-					pagectrl['high_trvalue'] = response['high_trvalue']
+			if control['mode'] == 'Stop':
+				# Turn on Monitor Mode if the system is stopped
+				control['mode'] = 'Monitor'  # Enable monitor mode
+				control['updated'] = True
+				write_control(control, origin='app')
 
-				if response['low_tempvalue'] != '':
-					pagectrl['low_tempvalue'] = response['low_tempvalue']
-				if response['med_tempvalue'] != '':
-					pagectrl['med_tempvalue'] = response['med_tempvalue']
-				if response['high_tempvalue'] != '':
-					pagectrl['high_tempvalue'] = response['high_tempvalue']
+			cur_probe_tr = read_tr()
+			if requestjson['probe_selected'] in cur_probe_tr.keys():
+				return jsonify({ 'trohms' : cur_probe_tr[requestjson['probe_selected']]})
+			else:
+				return jsonify({ 'trohms' : 0 })
+		if command == 'manual_finish' or command == 'auto_finish':
+			if control['tuning_mode']:
+				control['tuning_mode'] = False  # Disable tuning mode
+				write_control(control, origin='app')
+			if control['mode'] == 'Monitor':
+				# If in Monitor Mode, stop
+				control['mode'] = 'Stop'  # Go to Stop mode
+				control['updated'] = True
+				write_control(control, origin='app')
+			
+			tunerManualHighTemp = requestjson.get('tunerManualHighTemp', 0.1)
+			tunerManualHighTemp = 0 if tunerManualHighTemp == '' else int(tunerManualHighTemp)
+			tunerManualHighTr = requestjson.get('tunerManualHighTr', 0.1)
+			tunerManualHighTr = 0 if tunerManualHighTr == '' else int(tunerManualHighTr)
 
-				if (pagectrl['low_tempvalue'] != '' and pagectrl['med_tempvalue'] != '' and
-						pagectrl['high_tempvalue'] != ''):
-					pagectrl['refresh'] = 'off'
-					control['tuning_mode'] = False  # Disable tuning mode when complete
-					write_control(control, origin='app')
-					pagectrl['showcalc'] = 'true'
-					a, b, c = _calc_shh_coefficients(int(pagectrl['low_tempvalue']), int(pagectrl['med_tempvalue']),
-													int(pagectrl['high_tempvalue']), int(pagectrl['low_trvalue']),
-													int(pagectrl['med_trvalue']), int(pagectrl['high_trvalue']), units=settings['globals']['units'])
-					pagectrl['a'] = a
-					pagectrl['b'] = b
-					pagectrl['c'] = c
-					
-					pagectrl['templist'] = ''
-					pagectrl['trlist'] = ''
+			tunerManualMediumTemp = requestjson.get('tunerManualMediumTemp', 0.1)
+			tunerManualMediumTemp = 0 if tunerManualMediumTemp == '' else int(tunerManualMediumTemp)
+			tunerManualMediumTr = requestjson.get('tunerManualMediumTr', 0.1)
+			tunerManualMediumTr = 0 if tunerManualMediumTr == '' else int(tunerManualMediumTr)
 
-					range_size = abs(int(pagectrl['low_trvalue']) - int(pagectrl['high_trvalue']))
-					range_step = int(range_size / 20)
+			tunerManualLowTemp = requestjson.get('tunerManualLowTemp', 0.1)
+			tunerManualLowTemp = 0 if tunerManualLowTemp == '' else int(tunerManualLowTemp)
+			tunerManualLowTr = requestjson.get('tunerManualLowTr', 0.1)
+			tunerManualLowTr = 0 if tunerManualLowTr == '' else int(tunerManualLowTr)
 
-					if int(pagectrl['low_trvalue']) < int(pagectrl['high_trvalue']):
-						# Add 5% to the resistance at the low temperature side
-						low_tr_range = int(int(pagectrl['low_trvalue']) - (range_size * 0.05))
-						# Add 5% to the resistance at the high temperature side
-						high_tr_range = int(int(pagectrl['high_trvalue']) + (range_size * 0.05))
-						# Swap Tr values for the loop below, so that we start with a low value and go high
-						high_tr_range, low_tr_range = low_tr_range, high_tr_range
-						# Swapped Value Case (i.e. Low Temp = Low Resistance)
-						for index in range(high_tr_range, low_tr_range, range_step):
-							if index == high_tr_range:
-								pagectrl['trlist'] = str(index)
-								pagectrl['templist'] = str(_tr_to_temp(index, a, b, c, units=settings['globals']['units']))
-							else:
-								pagectrl['trlist'] = str(index) + ', ' + pagectrl['trlist']
-								pagectrl['templist'] = str(_tr_to_temp(index, a, b, c, units=settings['globals']['units'])) + ', ' + pagectrl['templist']
-					else:
-						# Add 5% to the resistance at the low temperature side
-						low_tr_range = int(int(pagectrl['low_trvalue']) + (range_size * 0.05))
-						# Add 5% to the resistance at the high temperature side
-						high_tr_range = int(int(pagectrl['high_trvalue']) - (range_size * 0.05))
-						# Normal Value Case (i.e. Low Temp = High Resistance)
-						for index in range(high_tr_range, low_tr_range, range_step):
-							if index == high_tr_range:
-								pagectrl['trlist'] = str(index)
-								pagectrl['templist'] = str(_tr_to_temp(index, a, b, c, units=settings['globals']['units']))
-							else:
-								pagectrl['trlist'] += ', ' + str(index)
-								pagectrl['templist'] += ', ' + str(_tr_to_temp(index, a, b, c, units=settings['globals']['units']))
+			a, b, c = _calc_shh_coefficients(tunerManualLowTemp, tunerManualMediumTemp,
+											tunerManualHighTemp, tunerManualLowTr,
+											tunerManualMediumTr, tunerManualHighTr,
+											units=settings['globals']['units'])
+			tr_points = [int(tunerManualHighTr), int(tunerManualMediumTr), int(tunerManualLowTr)]
+			labels, chart_data = _calc_shh_chart(a, b, c, units=settings['globals']['units'], temp_range=220, tr_points=tr_points)
+			return jsonify({'labels' : labels, 'chart_data' : chart_data, 'coefficients' : {'a' : a, 'b': b, 'c': c}})
+		if command == 'read_auto_status':
+			first_run = False 
+			if not control['tuning_mode']:
+				control['tuning_mode'] = True  # Enable tuning mode
+				write_control(control, origin='app')
+				read_autotune(flush=True)  # Flush autotune data
+				first_run = True
+
+			if control['mode'] == 'Stop':
+				# Turn on Monitor Mode if the system is stopped
+				control['mode'] = 'Monitor'  # Enable monitor mode
+				control['updated'] = True
+				write_control(control, origin='app')
+
+			status_data = {
+				'current_tr' : 0,
+				'current_temp' : 0,
+				'high_tr' : 0,
+				'high_temp' : 0, 
+				'medium_tr' : 0,
+				'medium_temp' : 0,
+				'low_tr' : 0,
+				'low_temp' : 0,
+				'ready' : False
+			}
+			
+			# Get Tr Data from all probes 
+			cur_probe_tr = read_tr()
+			if requestjson['probe_selected'] in cur_probe_tr.keys():
+				status_data['current_tr'] = cur_probe_tr[requestjson['probe_selected']]
+			else:
+				status_data['current_tr'] = -1
+			
+			# Get Temp Data from all probes 
+			cur_probe_temps = read_current()
+			if requestjson['probe_reference'] in cur_probe_temps['P'].keys():
+				status_data['current_temp'] = cur_probe_temps['P'][requestjson['probe_reference']]
+			elif requestjson['probe_reference'] in cur_probe_temps['F'].keys():
+				status_data['current_temp'] = cur_probe_temps['F'][requestjson['probe_reference']]
+			elif requestjson['probe_reference'] in cur_probe_temps['AUX'].keys():
+				status_data['current_temp'] = cur_probe_temps['AUX'][requestjson['probe_reference']]
+			else:
+				status_data['current_temp'] = -1
+
+			# Some probes (i.e. the DS18B20) may be slow to respond when Monitor mode starts, and may report 0 degrees
+			# Thus we should ignore these first few data points if they are 0
+			autotune_data_size = read_autotune(size_only=True)
+			if (autotune_data_size > 4 or status_data['current_temp'] > 0) and \
+					status_data['current_tr'] >= 0 and \
+	  				status_data['current_temp'] >= 0 and \
+					not first_run:
+				# Record Temperature / Tr Values in Auto-Tune Record
+				data = {
+					'ref_T' : status_data['current_temp'],
+					'probe_Tr' : status_data['current_tr']
+				}
+				write_autotune(data)
+
+			data = read_autotune()
+			if len(data) > 10:
+				temp_list = []
+				tr_list = []
+				for datapoint in data:
+					temp_list.append(datapoint['ref_T'])
+					tr_list.append(datapoint['probe_Tr'])
+
+				# Determine High Temp / Tr
+				status_data['high_temp'] = max(temp_list)
+				index = temp_list.index(max(temp_list))
+				status_data['high_tr'] = tr_list[index]
+
+				# Determine Low Temp / Tr 
+				status_data['low_temp'] = min(temp_list)
+				index = temp_list.index(min(temp_list))
+				status_data['low_tr'] = tr_list[index]
+
+				# Determine Medium Temp / Tr
+				# Find best fit to Medium Temp
+				medium_temp = ((status_data['high_temp'] - status_data['low_temp']) // 2) + status_data['low_temp']
+				delta_temp = 1000  # Initial value is outside of any normal expected bounds
+				for index, temp in enumerate(temp_list):
+					if abs(temp - medium_temp) < delta_temp:
+						delta_temp = abs(temp - medium_temp)
+						delta_index = index
+				status_data['medium_temp'] = temp_list[delta_index]
+				status_data['medium_tr'] = tr_list[delta_index]
+				# Minimum range to be able to calculate temp
+				if settings['globals']['units'] == 'F':
+					min_range = 50
 				else:
-					pagectrl['refresh'] = 'on'
-					control['tuning_mode'] = True  # Enable tuning mode
-					write_control(control, origin='app')
-	
-	return render_template('tuning.html',
-						   control=control,
-						   settings=settings,
-						   pagectrl=pagectrl,
-						   page_theme=settings['globals']['page_theme'],
-						   grill_name=settings['globals']['grill_name'],
-						   alert=alert)
+					min_range = 25
 
-@app.route('/_gettr', methods=['GET', 'POST'])
-def get_tr():
-	requestjson = request.json 
-	cur_probe_tr = read_tr()
-	if requestjson['probe_selected'] in cur_probe_tr.keys():
-		return jsonify({ 'trohms' : cur_probe_tr[requestjson['probe_selected']]})
-	else:
-		return jsonify({ 'trohms' : 0 })
+				if (status_data['high_temp'] - status_data['low_temp']) >= min_range:
+					status_data['ready'] = True
 
+			return jsonify(status_data)
+
+	return render_template('tuner.html',
+						control=control,
+						settings=settings,
+						page_theme=settings['globals']['page_theme'],
+						grill_name=settings['globals']['grill_name'])
 
 @app.route('/events/<action>', methods=['POST','GET'])
 @app.route('/events', methods=['POST','GET'])
@@ -1603,6 +1650,25 @@ def settings_page(action=None):
 		if 'influxdb_bucket' in response:
 			settings['notify_services']['influxdb']['bucket'] = response['influxdb_bucket']
 
+		if _is_checked(response, 'mqtt_enabled'):
+			settings['notify_services']['mqtt']['enabled'] = True
+		else:
+			settings['notify_services']['mqtt']['enabled'] = False
+		if 'mqtt_id' in response:
+			settings['notify_services']['mqtt']['id'] = response['mqtt_id']
+		if 'mqtt_broker' in response:
+			settings['notify_services']['mqtt']['broker'] = response['mqtt_broker']
+		if 'mqtt_port' in response:
+			settings['notify_services']['mqtt']['port'] = response['mqtt_port']
+		if 'mqtt_user' in response:
+			settings['notify_services']['mqtt']['username'] = response['mqtt_user']
+		if 'mqtt_pw' in response:
+			settings['notify_services']['mqtt']['password'] = response['mqtt_pw']
+		if 'mqtt_auto_d' in response:
+			settings['notify_services']['mqtt']['homeassistant_autodiscovery_topic'] = response['mqtt_auto_d']
+		if 'mqtt_freq' in response:
+			settings['notify_services']['mqtt']['update_sec'] = response['mqtt_freq']
+
 		if 'delete_device' in response:
 			DeviceID = response['delete_device']
 			settings['notify_services']['onesignal']['devices'].pop(DeviceID)
@@ -1694,10 +1760,17 @@ def settings_page(action=None):
 					'name' : response['Name'], 
 					'id' : UniqueID
 				}
-				event['type'] = 'updated'
-				event['text'] = 'Successfully added ' + response['Name'] + ' profile.'
+				print(f'Response: {response}')
+				if response.get('apply_profile', False):
+					probe_selected = response['apply_profile']
+					for index, probe in enumerate(settings['probe_settings']['probe_map']['probe_info']):
+						if probe['label'] == probe_selected:
+							settings['probe_settings']['probe_map']['probe_info'][index]['profile'] = settings['probe_settings']['probe_profiles'][UniqueID]
+
 				# Write the new probe profile to disk
 				write_settings(settings)
+				event['type'] = 'updated'
+				event['text'] = 'Successfully added ' + response['Name'] + ' profile.'
 
 			except:
 				event['type'] = 'error'
@@ -1819,24 +1892,33 @@ def settings_page(action=None):
 		write_settings(settings)
 		write_control(control, origin='app')
 
-	if request.method == 'POST' and action == 'timers':
+	if request.method == 'POST' and action == 'startup':
 		response = request.form
 
-		if _is_not_blank(response, 'shutdown_timer'):
-			settings['globals']['shutdown_timer'] = int(response['shutdown_timer'])
-		if _is_not_blank(response, 'startup_timer'):
-			settings['globals']['startup_timer'] = int(response['startup_timer'])
+		if _is_not_blank(response, 'shutdown_duration'):
+			settings['shutdown']['shutdown_duration'] = int(response['shutdown_duration'])
+		if _is_not_blank(response, 'startup_duration'):
+			settings['startup']['duration'] = int(response['startup_duration'])
 		if _is_checked(response, 'auto_power_off'):
-			settings['globals']['auto_power_off'] = True
+			settings['shutdown']['auto_power_off'] = True
 		else:
-			settings['globals']['auto_power_off'] = False
+			settings['shutdown']['auto_power_off'] = False
 		if _is_checked(response, 'smartstart_enable'):
-			settings['smartstart']['enabled'] = True
+			settings['startup']['smartstart']['enabled'] = True
 		else:
-			settings['smartstart']['enabled'] = False
+			settings['startup']['smartstart']['enabled'] = False
+		if _is_not_blank(response, 'smartstart_exit_temp'):
+			settings['startup']['smartstart']['exit_temp'] = int(response['smartstart_exit_temp'])
+		if _is_not_blank(response, 'startup_exit_temp'):
+			settings['startup']['startup_exit_temp'] = int(response['startup_exit_temp'])
+		if _is_not_blank(response, 'prime_on_startup'):
+			prime_amount = int(response['prime_on_startup'])
+			if prime_amount < 0 or prime_amount > 200:
+				prime_amount = 0  # Validate input, set to disabled if exceeding limits.  
+			settings['startup']['prime_on_startup'] = int(response['prime_on_startup'])
 
-		settings['start_to_mode']['after_startup_mode'] = response['after_startup_mode']
-		settings['start_to_mode']['primary_setpoint'] = int(response['startup_mode_setpoint'])
+		settings['startup']['start_to_mode']['after_startup_mode'] = response['after_startup_mode']
+		settings['startup']['start_to_mode']['primary_setpoint'] = int(response['startup_mode_setpoint'])
 		
 		event['type'] = 'updated'
 		event['text'] = 'Successfully updated startup/shutdown settings.'
@@ -1935,6 +2017,10 @@ def settings_page(action=None):
 			settings['safety']['reigniteretries'] = int(response['reigniteretries'])
 		if _is_not_blank(response, 'maxtemp'):
 			settings['safety']['maxtemp'] = int(response['maxtemp'])
+		if _is_checked(response, 'startup_check'):
+			settings['safety']['startup_check'] = True
+		else:
+			settings['safety']['startup_check'] = False
 
 		event['type'] = 'updated'
 		event['text'] = 'Successfully updated safety settings.'
@@ -2010,14 +2096,14 @@ def settings_page(action=None):
 	Smart Start Settings
 	'''
 	if request.method == 'GET' and action == 'smartstart':
-		temps = settings['smartstart']['temp_range_list']
-		profiles = settings['smartstart']['profiles']
+		temps = settings['startup']['smartstart']['temp_range_list']
+		profiles = settings['startup']['smartstart']['profiles']
 		return(jsonify({'temps_list' : temps, 'profiles' : profiles}))
 
 	if request.method == 'POST' and action == 'smartstart':
 		response = request.json 
-		settings['smartstart']['temp_range_list'] = response['temps_list']
-		settings['smartstart']['profiles'] = response['profiles']
+		settings['startup']['smartstart']['temp_range_list'] = response['temps_list']
+		settings['startup']['smartstart']['profiles'] = response['profiles']
 		write_settings(settings)
 		return(jsonify({'result' : 'success'}))
 
@@ -2051,7 +2137,10 @@ def admin_page(action=None):
 	global settings
 	control = read_control()
 	pelletdb = read_pellet_db()
-	notify = ''
+
+	errors = []
+	warnings = []
+	success = []
 
 	if not os.path.exists(BACKUP_PATH):
 		os.mkdir(BACKUP_PATH)
@@ -2063,18 +2152,16 @@ def admin_page(action=None):
 	if action == 'reboot':
 		event = "Admin: Reboot"
 		write_log(event)
-		if is_raspberry_pi():
-			os.system("sleep 3 && sudo reboot &")
 		server_status = 'rebooting'
+		reboot_system()
 		return render_template('shutdown.html', action=action, page_theme=settings['globals']['page_theme'],
 							   grill_name=settings['globals']['grill_name'])
 
 	elif action == 'shutdown':
 		event = "Admin: Shutdown"
 		write_log(event)
-		if is_raspberry_pi():
-			os.system("sleep 3 && sudo shutdown -h now &")
 		server_status = 'shutdown'
+		shutdown_system()
 		return render_template('shutdown.html', action=action, page_theme=settings['globals']['page_theme'],
 							   grill_name=settings['globals']['grill_name'])
 
@@ -2143,6 +2230,14 @@ def admin_page(action=None):
 			zip_file = _zip_files_logs('logs')
 			return send_file(zip_file, as_attachment=True, max_age=0)
 		
+		if 'download_settings' in response: 
+			return send_file('settings.json', as_attachment=True, max_age=0)
+
+		if 'download_control' in response:
+			filename = '/tmp/control_general.json'
+			write_generic_json(control, filename)
+			return send_file(filename, as_attachment=True, max_age=0)
+
 		if 'backupsettings' in response:
 			backup_file = backup_settings()
 			return send_file(backup_file, as_attachment=True, max_age=0)
@@ -2165,7 +2260,7 @@ def admin_page(action=None):
 				if remote_file and _allowed_file(remote_file.filename):
 					filename = secure_filename(remote_file.filename)
 					remote_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-					notify = "success"
+					success.append('Successfully restored settings.')
 					new_settings = read_settings(filename=BACKUP_PATH+filename)
 					write_settings(new_settings)
 					server_status = 'restarting'
@@ -2173,9 +2268,9 @@ def admin_page(action=None):
 					return render_template('shutdown.html', action='restart', page_theme=settings['globals']['page_theme'],
 									   		grill_name=settings['globals']['grill_name'])
 				else:
-					notify = "error"
+					errors.append('There was an error restoring settings.  File either is a disallowed type or was not found.')
 			else:
-				notify = "error"
+				errors.append('There was an error restoring settings.  Restore file wasn\'t specified or found')
 
 		if 'backuppelletdb' in response:
 			backup_file = backup_pellet_db(action='backup')
@@ -2189,20 +2284,20 @@ def admin_page(action=None):
 			if local_file != 'none':
 				pelletdb = read_pellet_db(filename=BACKUP_PATH+local_file)
 				write_pellet_db(pelletdb)
-				notify = "success"
+				success.append('Successfully restored pellet database.')
 			elif remote_file.filename != '':
 				# If the user does not select a file, the browser submits an
 				# empty file without a filename.
 				if remote_file and _allowed_file(remote_file.filename):
 					filename = secure_filename(remote_file.filename)
 					remote_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-					notify = "success"
+					success.append('Successfully restored pellet database.')
 					pelletdb = read_pellet_db(filename=BACKUP_PATH+filename)
 					write_pellet_db(pelletdb)
 				else:
-					notify = "error"
+					errors.append('There was an error restoring the pellet database.  File either is a disallowed type or was not found.')
 			else:
-				notify = "error"
+				errors.append('There was an error restoring pellet database.  Restore file wasn\'t specified or found')
 	
 	if request.method == 'POST' and action == 'boot':
 		response = request.form
@@ -2214,26 +2309,63 @@ def admin_page(action=None):
 		
 		write_settings(settings)
 
+	''' 
+		Get System Information 
+	'''
+
+	# TODO: Convert uptime, cpu_info, infconfig to system commands
 	uptime = os.popen('uptime').readline()
 
 	cpu_info = os.popen('cat /proc/cpuinfo').readlines()
 
 	ifconfig = os.popen('ifconfig').readlines()
 
-	if is_raspberry_pi():
-		temp = _check_cpu_temp()
-	else:
-		temp = '---'
+	supported_cmds = _get_supported_cmds()
+
+	if 'check_wifi_quality' in supported_cmds:
+		process_command(action='sys', arglist=['check_wifi_quality'], origin='admin')  # Request supported commands 
+		data = _get_system_command_output(requested='check_wifi_quality')
+		if data['result'] != 'OK':
+			event = data['message']
+			errors.append(event)
+		control['system']['wifi_quality_value'] = data['data'].get('wifi_quality_value', None)
+		control['system']['wifi_quality_max'] = data['data'].get('wifi_quality_max', None)
+		control['system']['wifi_quality_percentage'] = data['data'].get('wifi_quality_percentage', None)
+
+	if 'check_throttled' in supported_cmds:
+		process_command(action='sys', arglist=['check_throttled'], origin='admin')  # Request supported commands 
+		data = _get_system_command_output(requested='check_throttled')
+		if data['result'] != 'OK':
+			event = data['message']
+			errors.append(event)
+		control['system']['cpu_throttled'] = data['data'].get('cpu_throttled', None)
+		control['system']['cpu_under_voltage'] = data['data'].get('cpu_under_voltage', None)
+
+		if control['system']['cpu_throttled'] or control['system']['cpu_under_voltage']: 
+			event = "CPU Throttled / Undervoltage event has occurred.  Check your power supply for proper voltage."
+			errors.append(event)
+			print(event)
+
+	if 'check_cpu_temp' in supported_cmds:
+		process_command(action='sys', arglist=['check_cpu_temp'], origin='admin')  # Request supported commands 
+		data = _get_system_command_output(requested='check_cpu_temp')
+		if data['result'] != 'OK':
+			event = data['message']
+			errors.append(event)
+		control['system']['cpu_temp'] = data['data'].get('cpu_temp', None)
+
+	write_control(control)
 
 	debug_mode = settings['globals']['debug_mode']
 
 	url = request.url_root
 
-	return render_template('admin.html', settings=settings, notify=notify, uptime=uptime, cpuinfo=cpu_info, temp=temp,
+	return render_template('admin.html', settings=settings, uptime=uptime, cpuinfo=cpu_info,
 						   ifconfig=ifconfig, debug_mode=debug_mode, qr_content=url,
 						   control=control,
 						   page_theme=settings['globals']['page_theme'],
-						   grill_name=settings['globals']['grill_name'], files=files)
+						   grill_name=settings['globals']['grill_name'], 
+						   files=files, errors=errors, warnings=warnings, success=success)
 
 @app.route('/manual/<action>', methods=['POST','GET'])
 @app.route('/manual', methods=['POST','GET'])
@@ -2296,13 +2428,30 @@ def manual_page(action=None):
 						   	page_theme=settings['globals']['page_theme'],
 						   	grill_name=settings['globals']['grill_name'])
 
-@app.route('/api/<action>', methods=['POST','GET'])
 @app.route('/api', methods=['POST','GET'])
-def api_page(action=None):
+@app.route('/api/<action>', methods=['POST','GET'])
+@app.route('/api/<action>/<arg0>', methods=['POST','GET'])
+@app.route('/api/<action>/<arg0>/<arg1>', methods=['POST','GET'])
+@app.route('/api/<action>/<arg0>/<arg1>/<arg2>', methods=['POST','GET'])
+@app.route('/api/<action>/<arg0>/<arg1>/<arg2>/<arg3>', methods=['POST','GET'])
+def api_page(action=None, arg0=None, arg1=None, arg2=None, arg3=None):
 	global settings
 	global server_status
 
-	if request.method == 'GET':
+	if action in ['get', 'set', 'cmd', 'sys']:
+		#print(f'action={action}\narg0={arg0}\narg1={arg1}\narg2={arg2}\narg3={arg3}')
+		arglist = []
+		arglist.extend([arg0, arg1, arg2, arg3])
+
+		data = process_command(action=action, arglist=arglist, origin='api')
+
+		if action == 'sys':
+			''' If system command, wait for output from control '''
+			data = _get_system_command_output(requested=arg0)
+		
+		return jsonify(data), 201
+	
+	elif request.method == 'GET':
 		if action == 'settings':
 			return jsonify({'settings':settings}), 201
 		elif action == 'server':
@@ -2342,6 +2491,7 @@ def api_page(action=None):
 			status['lid_open_endtime'] = display['lid_open_endtime']
 			status['p_mode'] = display['p_mode']
 			status['outpins'] = display['outpins']
+			status['startup_timestamp'] = display['startup_timestamp']
 			status['ui_hash'] = create_ui_hash()
 			return jsonify({'current':current_temps, 'notify_data':notify_data, 'status':status}), 201
 		elif action == 'hopper':
@@ -2352,6 +2502,7 @@ def api_page(action=None):
 			return jsonify({'hopper_level': pelletlevel, 'hopper_pellets': pellets}) 
 		else:
 			return jsonify({'Error':'Received GET request, without valid action'}), 404
+	
 	elif request.method == 'POST':
 		if not request.json:
 			event = "Local API Call Failed"
@@ -2360,9 +2511,12 @@ def api_page(action=None):
 		else:
 			request_json = request.json
 			if(action == 'settings'):
+				settings = deep_update(settings, request.json)
+				'''
 				for key in settings.keys():
 					if key in request_json.keys():
 						settings[key].update(request_json.get(key, {}))
+				'''
 				write_settings(settings)
 				return jsonify({'settings':'success'}), 201
 			elif(action == 'control'):
@@ -2383,6 +2537,7 @@ Wizard Route for PiFire Setup
 @app.route('/wizard', methods=['GET', 'POST'])
 def wizard(action=None):
 	global settings
+	control = read_control()
 
 	wizardData = read_wizard()
 	errors = []
@@ -2403,7 +2558,6 @@ def wizard(action=None):
 			write_settings(settings)
 			return redirect('/')
 		if action=='finish':
-			control = read_control()
 			if control['mode'] == 'Stop':
 				wizardInstallInfo = prepare_wizard_data(r)
 				store_wizard_install_info(wizardInstallInfo)
@@ -2411,8 +2565,6 @@ def wizard(action=None):
 				os.system(f'{python_exec} wizard.py &')	# Kickoff Installation
 				return render_template('wizard-finish.html', page_theme=settings['globals']['page_theme'],
 									grill_name=settings['globals']['grill_name'], wizardData=wizardData)
-			else:
-				errors.append('PiFire configuration wizard cannot be run while the system is active.  Please stop the current cook before continuing.')
 
 		if action=='modulecard':
 			module = r['module']
@@ -2431,10 +2583,13 @@ def wizard(action=None):
 	else:
 		wizardInstallInfo = wizardInstallInfoExisting(wizardData, settings)
 
-	store_wizard_install_info(wizardInstallInfo) 
+	store_wizard_install_info(wizardInstallInfo)
+
+	if control['mode'] != 'Stop':
+		errors.append('PiFire configuration wizard cannot be run while the system is active.  Please stop the current cook before continuing.')
 
 	return render_template('wizard.html', settings=settings, page_theme=settings['globals']['page_theme'],
-						   grill_name=settings['globals']['grill_name'], wizardData=wizardData, wizardInstallInfo=wizardInstallInfo, errors=errors)
+						   grill_name=settings['globals']['grill_name'], wizardData=wizardData, wizardInstallInfo=wizardInstallInfo, control=control, errors=errors)
 
 def get_settings_dependencies_values(settings, moduleData):
 	moduleSettings = {}
@@ -2960,7 +3115,7 @@ def update_page(action=None):
 		update_data = get_update_data(settings)
 
 		if 'update_remote_branches' in r:
-			if is_raspberry_pi():
+			if is_real_hardware():
 				os.system(f'{python_exec} %s %s &' % ('updater.py', '-r'))	 # Update branches from remote 
 				time.sleep(5)  # Artificial delay to avoid race condition
 			return redirect('/update')
@@ -3058,8 +3213,12 @@ def _allowed_file(filename):
 		   filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def _check_cpu_temp():
-	temp = os.popen('vcgencmd measure_temp').readline()
-	return temp.replace("temp=","")
+	process_command(action='sys', arglist=['check_cpu_temp'], origin='admin')  # Request supported commands 
+	data = _get_system_command_output(requested='check_cpu_temp')
+	control = read_control()
+	control['system']['cpu_temp'] = data['data'].get('cpu_temp', None)
+	write_control(control)
+	return f"{control['system']['cpu_temp']}C"
 
 def create_ui_hash():
 	global settings 
@@ -3302,24 +3461,29 @@ def _calc_shh_coefficients(t1, t2, t3, r1, r2, r3, units='F'):
 
 	return(a, b, c)
 
-def _temp_to_tr(temp_f, a, b, c):
+def _temp_to_tr(temp, a, b, c, units='F'):
+	'''
+	# Not recommended for use, as it commonly produces a complex number
+	'''
+
 	try: 
-		temp_k = ((temp_f - 32) * (5 / 9)) + 273.15
+		if units == 'F':
+			temp_k = ((temp - 32) * (5 / 9)) + 273.15
+		else:
+			temp_k = temp + 273.15
 
 		# https://en.wikipedia.org/wiki/Steinhart%E2%80%93Hart_equation
 		# Inverse of the equation, to determine Tr = Resistance Value of the thermistor
 
-		# Not recommended for use, as it commonly produces a complex number
-
-		x = (1 / (2 * c)) * (a - (1 / temp_k))
-
-		y = math.sqrt(math.pow((b / (3 * c)), 3) + math.pow(x, 2))
-
-		Tr = math.exp(((y - x) ** (1 / 3)) - ((y + x) ** (1 / 3)))
+		x = (a - (1 / temp_k)) / c
+		y1 = math.pow((b/(3*c)), 3) 
+		y2 = ((x*x)/4)
+		y = math.sqrt(y1+y2)  # If the result of y1 + y2 is negative, this will throw an exception
+		Tr = math.exp(math.pow(y - (x/2), (1/3)) - math.pow(y + (x/2), (1/3)))
 	except: 
 		Tr = 0
 
-	return int(Tr) 
+	return int(Tr)
 
 def _tr_to_temp(tr, a, b, c, units='F'):
 	try:
@@ -3330,13 +3494,38 @@ def _tr_to_temp(tr, a, b, c, units='F'):
 		t1 = (b * ln_ohm) # b[ln(ohm)]
 		t2 = c * math.pow(ln_ohm, 3) # c[ln(ohm)]^3
 		temp_k = 1/(a + t1 + t2) # calculate temperature in Kelvin
-		result = temp_k - 273.15 # Kelvin to Celsius
-		if units=='F':
-			result = result * (9 / 5) + 32 # Celsius to Fahrenheit
+		temp_c = temp_k - 273.15 # Kelvin to Celsius
+		temp_f = temp_c * (9 / 5) + 32 # Celsius to Fahrenheit
 	except:
-		result = 0.0
+		temp_c = 0.0
+		temp_f = 0
+	if units == 'F': 
+		return int(temp_f) # Return Calculated Temperature and Thermistor Value in Ohms
+	else:
+		return temp_c
 
-	return int(result) # Return Calculated Temperature and Thermistor Value in Ohms
+def _calc_shh_chart(a, b, c, units='F', temp_range=220, tr_points=[]):
+	'''
+	Based on SHH Coefficients determined during tuning, show Temp (x) vs. Tr (y) chart
+	'''
+
+	labels = []
+
+	for label in range(0, temp_range, temp_range//20):
+		labels.append(label)
+
+	chart_data = []
+
+	for T in labels:
+		R = _temp_to_tr(T, a, b, c, units=units)
+		if R != 0:
+			chart_data.append({'x': int(T), 'y': int(R)})
+		else:
+			# Error/Exception occurred calculating the temperature, break and return
+			chart_data = []
+			break
+
+	return labels, chart_data
 
 def _str_td(td):
 	s = str(td).split(", ", 1)
@@ -3365,13 +3554,29 @@ def _zip_files_logs(dir_name):
 			archive.write(file_path, arcname=file_path.relative_to(directory))
 	return file_name
 
-def _deep_dict_update(orig_dict, new_dict):
-	for key, value in new_dict.items():
-		if isinstance(value, Mapping):
-			orig_dict[key] = _deep_dict_update(orig_dict.get(key, {}), value)
-		else:
-			orig_dict[key] = value
-	return orig_dict
+def _get_supported_cmds():
+	process_command(action='sys', arglist=['supported_commands'], origin='admin')  # Request supported commands 
+	data = _get_system_command_output(requested='supported_commands')
+	if data['result'] != 'ERROR':
+		return data['data']['supported_cmds']
+	else:
+		return data
+
+def _get_system_command_output(requested='supported_commands', timeout=1):
+	system_output = RedisQueue('control:systemo')
+	endtime = timeout + time.time()
+	while time.time() < endtime:
+		while system_output.length() > 0:
+			data = system_output.pop()
+			if data['command'][0] == requested:
+				return data
+
+	return {
+		'command' : [requested, None, None, None],
+		'result' : 'ERROR',
+		'message' : 'The requested command output could not be found.',
+		'data' : {'Response_Was' : 'To_Fast'}
+	}
 
 '''
 ==============================================================================
@@ -3409,25 +3614,9 @@ def emit_dash_data():
 	previous_data = ''
 
 	while (clients > 0):
-		settings = hack_read_settings()
-		control = hack_read_control()
+		control = read_control()
 		pelletdb = read_pellet_db()
-
-		probes_enabled = settings['probe_settings']['probes_enabled']
-		cur_probe_temps = hack_read_current()
-
-		current_temps = {
-			'grill_temp' : cur_probe_temps[0],
-			'probe1_temp' : cur_probe_temps[1],
-			'probe2_temp' : cur_probe_temps[2] }
-		enabled_probes = {
-			'grill' : bool(probes_enabled[0]),
-			'probe1' : bool(probes_enabled[1]),
-			'probe2' : bool(probes_enabled[2]) }
-		probe_titles = {
-			'grill_title' : control['probe_titles']['grill_title'],
-			'probe1_title' : control['probe_titles']['probe1_title'],
-			'probe2_title' : control['probe_titles']['probe2_title'] }
+		probe_info = read_current()
 
 		if control['timer']['end'] - time.time() > 0 or bool(control['timer']['paused']):
 			timer_info = {
@@ -3447,11 +3636,7 @@ def emit_dash_data():
 			}
 
 		current_data = {
-			'cur_probe_temps' : current_temps,
-			'probes_enabled' : enabled_probes,
-			'probe_titles' : probe_titles,
-			'set_points' : control['setpoints'],
-			'notify_req' : control['notify_req'],
+			'probe_info' : probe_info,
 			'notify_data' : control['notify_data'],
 			'timer_info' : timer_info,
 			'current_mode' : control['mode'],
@@ -3462,12 +3647,10 @@ def emit_dash_data():
 
 		if force_refresh:
 			socketio.emit('grill_control_data', current_data)
-			#socketio.emit('grill_control_data', current_data, broadcast=True)
 			force_refresh = False
 			socketio.sleep(2)
 		elif previous_data != current_data:
 			socketio.emit('grill_control_data', current_data)
-			#socketio.emit('grill_control_data', current_data, broadcast=True)
 			previous_data = current_data
 			socketio.sleep(2)
 		else:
@@ -3475,7 +3658,7 @@ def emit_dash_data():
 
 @socketio.on('get_app_data')
 def get_app_data(action=None, type=None):
-	settings = hack_read_settings()
+	global settings
 
 	if action == 'settings_data':
 		return settings
@@ -3489,23 +3672,6 @@ def get_app_data(action=None, type=None):
 		for x in range(min(num_events, 60)):
 			events_trim.append(event_list[x])
 		return { 'events_list' : events_trim }
-	
-	elif action == 'history_data':
-		num_items = settings['history_page']['minutes'] * 20
-		data_blob = hack_prepare_data(num_items, True, settings['history_page']['datapoints'])
-		# Converting time format from 'time from epoch' to H:M:S
-		# @weberbox:  Trying to keep the legacy format for the time labels so that I don't break the Android app
-		for index in range(0, len(data_blob['label_time_list'])): 
-			data_blob['label_time_list'][index] = datetime.datetime.fromtimestamp(
-				int(data_blob['label_time_list'][index]) / 1000).strftime('%H:%M:%S')
-
-		return { 'grill_temp_list' : data_blob['grill_temp_list'],
-				 'grill_settemp_list' : data_blob['grill_settemp_list'],
-				 'probe1_temp_list' : data_blob['probe1_temp_list'],
-				 'probe1_settemp_list' : data_blob['probe1_settemp_list'],
-				 'probe2_temp_list' : data_blob['probe2_temp_list'],
-				 'probe2_settemp_list' : data_blob['probe2_settemp_list'],
-				 'label_time_list' : data_blob['label_time_list'] }
 
 	elif action == 'info_data':
 		return {
@@ -3516,83 +3682,20 @@ def get_app_data(action=None, type=None):
 			'outpins' : settings['outpins'],
 			'inpins' : settings['inpins'],
 			'dev_pins' : settings['dev_pins'],
-			'server_version' : settings['versions']['server'] }
+			'server_version' : settings['versions']['server'],
+			'server_build' : settings['versions']['build'] }
 
 	elif action == 'manual_data':
-		control = hack_read_control()
+		control = read_control()
 		return {
 			'manual' : control['manual'],
 			'mode' : control['mode'] }
-
-	elif action == 'backup_list':
-		if not os.path.exists(BACKUP_PATH):
-			os.mkdir(BACKUP_PATH)
-		files = os.listdir(BACKUP_PATH)
-		for file in files[:]:
-			if not _allowed_file(file):
-				files.remove(file)
-
-		if type == 'settings':
-			for file in files[:]:
-				if not file.startswith('PiFire_'):
-					files.remove(file)
-			return json.dumps(files)
-
-		if type == 'pelletdb':
-			for file in files[:]:
-				if not file.startswith('PelletDB_'):
-					files.remove(file)
-		return json.dumps(files)
-
-	elif action == 'backup_data':
-		time_now = datetime.datetime.now()
-		time_str = time_now.strftime('%m-%d-%y_%H%M%S')
-
-		if type == 'settings':
-			backup_settings()
-			return settings
-
-		if type == 'pelletdb':
-			backup_file = BACKUP_PATH + 'PelletDB_' + time_str + '.json'
-			os.system(f'cp pelletdb.json {backup_file}')
-			return read_pellet_db()
-
-	elif action == 'updater_data':
-		avail_updates_struct = get_available_updates()
-
-		if avail_updates_struct['success']:
-			commits_behind = avail_updates_struct['commits_behind']
-		else:
-			message = avail_updates_struct['message']
-			write_log(message)
-			return {'response': {'result':'error', 'message':'Error: ' + message }}
-
-		if commits_behind > 0:
-			logs_result = get_log(commits_behind)
-		else:
-			logs_result = None
-
-		update_data = {}
-		update_data['branch_target'], error_msg = get_branch()
-		update_data['branches'], error_msg = get_available_branches()
-		update_data['remote_url'], error_msg = get_remote_url()
-		update_data['remote_version'], error_msg = get_remote_version()
-
-		return { 'check_success' : avail_updates_struct['success'],
-				 'version' : settings['versions']['server'],
-				 'branches' : update_data['branches'],
-				 'branch_target' : update_data['branch_target'],
-				 'remote_url' : update_data['remote_url'],
-				 'remote_version' : update_data['remote_version'],
-				 'commits_behind' : commits_behind,
-				 'logs_result' : logs_result,
-				 'error_message' : error_msg }
 	else:
 		return {'response': {'result':'error', 'message':'Error: Received request without valid action'}}
 
 @socketio.on('post_app_data')
 def post_app_data(action=None, type=None, json_data=None):
-	settings = hack_read_settings()
+	global settings
 
 	if json_data is not None:
 		request = json.loads(json_data)
@@ -3603,17 +3706,19 @@ def post_app_data(action=None, type=None, json_data=None):
 		if type == 'settings':
 			for key in request.keys():
 				if key in settings.keys():
-					settings = _deep_dict_update(settings, request)
-					hack_write_settings(settings)
+					settings = deep_update(settings, request)
+					write_settings(settings)
 					return {'response': {'result':'success'}}
 				else:
 					return {'response': {'result':'error', 'message':'Error: Key not found in settings'}}
 		elif type == 'control':
-			control = hack_read_control()
+			control = read_control()
 			for key in request.keys():
 				if key in control.keys():
-					control = _deep_dict_update(control, request)
-					hack_write_control(control, origin='app-socketio')
+					'''
+						Updating of control input data is now done in common.py > execute_commands() 
+					'''
+					write_control(request, origin='app-socketio')
 					return {'response': {'result':'success'}}
 				else:
 					return {'response': {'result':'error', 'message':'Error: Key not found in control'}}
@@ -3667,20 +3772,20 @@ def post_app_data(action=None, type=None, json_data=None):
 	elif action == 'units_action':
 		if type == 'f_units' and settings['globals']['units'] == 'C':
 			settings = convert_settings_units('F', settings)
-			hack_write_settings(settings)
-			control = hack_read_control()
+			write_settings(settings)
+			control = read_control()
 			control['updated'] = True
 			control['units_change'] = True
-			hack_write_control(control, origin='app-socketio')
+			write_control(control, origin='app-socketio')
 			write_log("Changed units to Fahrenheit")
 			return {'response': {'result':'success'}}
 		elif type == 'c_units' and settings['globals']['units'] == 'F':
 			settings = convert_settings_units('C', settings)
-			hack_write_settings(settings)
-			control = hack_read_control()
+			write_settings(settings)
+			control = read_control()
 			control['updated'] = True
 			control['units_change'] = True
-			hack_write_control(control, origin='app-socketio')
+			write_control(control, origin='app-socketio')
 			write_log("Changed units to Celsius")
 			return {'response': {'result':'success'}}
 		else:
@@ -3692,7 +3797,7 @@ def post_app_data(action=None, type=None, json_data=None):
 				device = request['onesignal_device']['onesignal_player_id']
 				if device in settings['onesignal']['devices']:
 					settings['onesignal']['devices'].pop(device)
-				hack_write_settings(settings)
+				write_settings(settings)
 				return {'response': {'result':'success'}}
 			else:
 				return {'response': {'result':'error', 'message':'Error: Device not specified'}}
@@ -3709,17 +3814,17 @@ def post_app_data(action=None, type=None, json_data=None):
 				pelletdb['current']['date_loaded'] = now
 				pelletdb['current']['est_usage'] = 0
 				pelletdb['log'][now] = request['pellets_action']['profile']
-				control = hack_read_control()
+				control = read_control()
 				control['hopper_check'] = True
-				hack_write_control(control, origin='app-socketio')
+				write_control(control, origin='app-socketio')
 				write_pellet_db(pelletdb)
 				return {'response': {'result':'success'}}
 			else:
 				return {'response': {'result':'error', 'message':'Error: Profile not included in request'}}
 		elif type == 'hopper_check':
-			control = hack_read_control()
+			control = read_control()
 			control['hopper_check'] = True
-			hack_write_control(control, origin='app-socketio')
+			write_control(control, origin='app-socketio')
 			return {'response': {'result':'success'}}
 		elif type == 'edit_brands':
 			if 'delete_brand' in request['pellets_action']:
@@ -3761,9 +3866,9 @@ def post_app_data(action=None, type=None, json_data=None):
 				'comments' : request['pellets_action']['comments'] }
 			if request['pellets_action']['add_and_load']:
 				pelletdb['current']['pelletid'] = profile_id
-				control = hack_read_control()
+				control = read_control()
 				control['hopper_check'] = True
-				hack_write_control(control, origin='app-socketio')
+				write_control(control, origin='app-socketio')
 				now = str(datetime.datetime.now())
 				now = now[0:19]
 				pelletdb['current']['date_loaded'] = now
@@ -3812,9 +3917,12 @@ def post_app_data(action=None, type=None, json_data=None):
 			return {'response': {'result':'error', 'message':'Error: Received request without valid type'}}
 
 	elif action == 'timer_action':
-		control = hack_read_control()
+		control = read_control()
+		for index, notify_obj in enumerate(control['notify_data']):
+			if notify_obj['type'] == 'timer':
+				break
 		if type == 'start_timer':
-			control['notify_req']['timer'] = True
+			control['notify_data'][index]['req'] = True
 			if control['timer']['paused'] == 0:
 				now = time.time()
 				control['timer']['start'] = now
@@ -3822,10 +3930,10 @@ def post_app_data(action=None, type=None, json_data=None):
 					seconds = request['timer_action']['hours_range'] * 60 * 60
 					seconds = seconds + request['timer_action']['minutes_range'] * 60
 					control['timer']['end'] = now + seconds
-					control['notify_data']['timer_shutdown'] = request['timer_action']['timer_shutdown']
-					control['notify_data']['timer_keep_warm'] = request['timer_action']['timer_keep_warm']
+					control['notify_data'][index]['shutdown'] = request['timer_action']['timer_shutdown']
+					control['notify_data'][index]['keep_warm'] = request['timer_action']['timer_keep_warm']
 					write_log('Timer started.  Ends at: ' + epoch_to_time(control['timer']['end']))
-					hack_write_control(control, origin='app-socketio')
+					write_control(control, origin='app-socketio')
 					return {'response': {'result':'success'}}
 				else:
 					return {'response': {'result':'error', 'message':'Error: Start time not specified'}}
@@ -3834,110 +3942,29 @@ def post_app_data(action=None, type=None, json_data=None):
 				control['timer']['end'] = (control['timer']['end'] - control['timer']['paused']) + now
 				control['timer']['paused'] = 0
 				write_log('Timer unpaused.  Ends at: ' + epoch_to_time(control['timer']['end']))
-				hack_write_control(control, origin='app-socketio')
+				write_control(control, origin='app-socketio')
 				return {'response': {'result':'success'}}
 		elif type == 'pause_timer':
-			control['notify_req']['timer'] = False
+			control['notify_data'][index]['req'] = False
 			now = time.time()
 			control['timer']['paused'] = now
 			write_log('Timer paused.')
-			hack_write_control(control, origin='app-socketio')
+			write_control(control, origin='app-socketio')
 			return {'response': {'result':'success'}}
 		elif type == 'stop_timer':
-			control['notify_req']['timer'] = False
+			control['notify_data'][index]['req'] = False
 			control['timer']['start'] = 0
 			control['timer']['end'] = 0
 			control['timer']['paused'] = 0
-			control['notify_data']['timer_shutdown'] = False
-			control['notify_data']['timer_keep_warm'] = False
+			control['notify_data'][index]['shutdown'] = False
+			control['notify_data'][index]['keep_warm'] = False
 			write_log('Timer stopped.')
-			hack_write_control(control, origin='app-socketio')
+			write_control(control, origin='app-socketio')
 			return {'response': {'result':'success'}}
 		else:
 			return {'response': {'result':'error', 'message':'Error: Received request without valid type'}}
 	else:
 		return {'response': {'result':'error', 'message':'Error: Received request without valid action'}}
-
-@socketio.on('post_updater_data')
-def updater_action(type='none', branch=None):
-	global settings
-
-	if settings['globals']['venv']:
-		python_exec = 'bin/python'
-	else:
-		python_exec = 'python'
-
-	if type == 'change_branch':
-		if branch is not None:
-			success, status, output = change_branch(branch)
-			message = f'Changing to {branch} branch \n'
-			if success:
-				dependencies = 'Installing any required dependencies \n'
-				message += dependencies
-				if install_dependencies() == 0:
-					message += output
-					restart_scripts()
-					return {'response': {'result':'success', 'message': message }}
-				else:
-					return {'response': {'result':'error', 'message':'Error: Dependencies were not installed properly'}}
-			else:
-				return {'response': {'result':'error', 'message':'Error: ' + output }}
-		else:
-			return {'response': {'result':'error', 'message':'Error: Branch not specified in request'}}
-
-	elif type == 'do_update':
-		if branch is not None:
-			success, status, output = install_update()
-			message = f'Attempting update on {branch} \n'
-			if success:
-				dependencies = 'Installing any required dependencies \n'
-				message += dependencies
-				if install_dependencies() == 0:
-					message += output
-					restart_scripts()
-					return {'response': {'result':'success', 'message': message }}
-				else:
-					return {'response': {'result':'error', 'message':'Error: Dependencies were not installed properly'}}
-			else:
-				return {'response': {'result':'error', 'message':'Error: ' + output }}
-		else:
-			return {'response': {'result':'error', 'message':'Error: Branch not specified in request'}}
-
-	elif type == 'update_remote_branches':
-		if is_raspberry_pi():
-			os.system(f'{python_exec} updater.py -r') # Update branches from remote
-			#time.sleep(2)
-			return {'response': {'result':'success', 'message': 'Branches successfully updated from remote' }}
-		else:
-			return {'response': {'result':'error', 'message': 'System is not a Raspberry Pi. Branches not updated.' }}
-	else:
-		return {'response': {'result':'error', 'message':'Error: Received request without valid action'}}
-
-@socketio.on('post_restore_data')
-def post_restore_data(type='none', filename='none', json_data=None):
-
-	if type == 'settings':
-		if filename != 'none':
-			read_settings(filename=BACKUP_PATH+filename)
-			restart_scripts()
-			return {'response': {'result':'success'}}
-		elif json_data is not None:
-			write_settings(json.loads(json_data))
-			return {'response': {'result':'success'}}
-		else:
-			return {'response': {'result':'error', 'message':'Error: Filename or JSON data not supplied'}}
-
-	elif type == 'pelletdb':
-		if filename != 'none':
-			read_pellet_db(filename=BACKUP_PATH+filename)
-			return {'response': {'result':'success'}}
-		elif json_data is not None:
-			write_pellet_db(json.loads(json_data))
-			return {'response': {'result':'success'}}
-		else:
-			return {'response': {'result':'error', 'message':'Error: Filename or JSON data not supplied'}}
-	else:
-		return {'response': {'result':'error', 'message':'Error: Received request without valid type'}}
 
 '''
 ==============================================================================
@@ -3947,7 +3974,7 @@ def post_restore_data(type='none', filename='none', json_data=None):
 settings = read_settings(init=True)
 
 if __name__ == '__main__':
-	if is_raspberry_pi():
+	if is_real_hardware():
 		socketio.run(app, host='0.0.0.0')
 	else:
 		socketio.run(app, host='0.0.0.0', debug=True)

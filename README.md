@@ -1,5 +1,5 @@
 # ![Dashboard](static/img/launcher-icon-1x.png) PiFire
-## Raspberry Pi Zero W based Smoker Grill Controller
+## Raspberry Pi based Smoker Grill Controller
 
 ***Note:*** *This project is continuously evolving, and thus this readme will likely be improved over time, as I find the inspiration to make adjustments.  That being said, I'm sure there will be many errors that I have overlooked or sections that I haven't updated. This project is something I've done for both fun and for self-education.  If you decide to implement this project for yourself, and run into issues/challenges, feel free to submit an issue here on GitHub.  However, I would highly encourage you to dig in and debug the issue as much as you can on your own for the sake of growing your own knowledge.  Also, I have a very demanding day job, a family, and lots of barbecue to make - so please have patience with me.*
 
@@ -26,26 +26,27 @@ Just as with the PiSmoker project, I had a few goals in mind.  I also wanted to 
 * Supports several different OLED and LCD screens
 	* SSD1306 OLED Display
 	* ST7789 TFT Display
-	* ILI9341 TFT Display (now with more rotation options)
+	* ILI9341 TFT Display (320x240 resolution only)
+	* DSI Touch Display (**Currently Experimental**) - Requires Raspberry Pi with DSI interface (non-Pi Zero) and is resource heavy, so Pi 3B+ or later recommended 
 * Physical Button Input / Control (depending on the display, three button inputs)
 * Encoder support for, so you can control your grill with a spinny knob.
 * One (1) Grill Probe and Many Food Probes
 	* Tunable probe inputs to allow for many different probe manufacturers
-	* Supports the ADS1115 ADC, ADS1015 ADC, and MAX31865 RTD devices for measuring probes
+	* Supports the ADS1115 ADC, ADS1015 ADC, and MAX31865 RTD devices for measuring probes (Experimental DS18B20 and MCP9600 support added)
 	* Probe tuning tool to help develop probe profiles
-	* **NEW!** - Any number of probe inputs, limited only by the number of devices that the Raspberry Pi can support
-	* **NEW!** - Virtual Probes to allow you to do things like averaging probes, finding highest and lowest values of certain probes, etc.
+	* Any number of probe inputs, limited only by the number of devices that the Raspberry Pi can support
+	* Virtual Probes to allow you to do things like averaging probes, finding highest and lowest values of certain probes, etc.
 * Cook Timer - Moved to the Top Bar for Easy Access
 * Notifications (Grill / Food Probes / Timer)
-	* Supports Apprise, IFTTT, Pushover, and Pushbullet Notification Services
+	* Supports Apprise, IFTTT, Pushover, and Pushbullet Notification Services and now MQTT!
 * Smoke Plus Feature to deliver more smoke during Smoke / Hold modes
 * Safety settings to prevent over-temp, startup failure, or firepot flameout (and overload)
 * Save temperature history for all probes / set points to a cook file that can be updated with images, notes, and even downloaded to your devices.
 * Wood Pellet Tracking Manager - Now includes estimates of pellet usage.
 * Pellet Level Sensor Support
-	* VL53L0X Time of Flight Sensor
+	* VL53L0X Time of Flight Sensor (recommended)
 	* HCSR04 Ultrasonic Sensor
-* Socket IO for Android Application Support _(GitHub User [@weberbox](https://github.com/weberbox) has made a Android client app under development here: [https://github.com/weberbox/PiFire-Android](https://github.com/weberbox/PiFire-Android))_ **(NOTE: Due to the large amount of architectural changes in v1.5.0, the Android App update is still in development.  The current version of PiFire has implemented a compatibility layer so that it doesn't break compatibility with the current Android App.  If you have a non-standard probe setup or more than two food probes, you may see issues.  There may still be bugs, so please do submit issues on GitHub if you experience any.)**
+* Socket IO for Android Application Support _(GitHub User [@weberbox](https://github.com/weberbox) has made a Android client app under development here: [https://github.com/weberbox/PiFire-Android](https://github.com/weberbox/PiFire-Android))_ 
 * Recipes / Recipe Mode - Integrated recipe creation and a new mode for developing a recipe 'program' that will control the grill for you and follow the recipe that was programmed.  
 * Lid open detection during hold mode to pause the controller and prevent overshoots.  
 * ...And much more!  
@@ -107,7 +108,8 @@ I've added a discord server [here](https://discord.gg/F9mbCrbrZS) which can be a
 * 7/2022 - Release v1.3.4 - Another monthly release with some bug fixes and some new features. The biggest new feature of this month was the addition of Annotations in the history graph. This gives you helpful tags on the graph (see below) with indicators of the mode changes. Of course you can turn this off in the history page if you don't like it.
 * 10/2022 - Release v1.3.5 - Bug fixes, feature refinements and brand new features galore in this latest release.  Added a new ADS1115 module (using Adafruits Circuit Python), due to some reports of issues with the existing ADS1115 module. These can be optionally selected in the configuration wizard.  PWM Fan Support and a boatload of code cleanup was introduced, thanks to contributor @weberbox.  Support for saving cook files was introduced in this version, so that you can go back to older cooks, edit some of the information and add images and comments.  Added a Prime Mode to allow you to prime the fire pot with pellets prior to a cook, and even prime & startup.  Added estimated pellet usage to the pellet manager, which will attempt to track just how many pellets you have used since your last load of pellets.  Added Apprise notification capability thanks to contributor @calonmerc.  320x200 displays have been update and added timers to specific modes. And even more!  
 * 6/2023 - Release v1.5.0 - Arguably one of the biggest overhauls to PiFire since it's inception.  The Probe system has been completely refactored to allow for multiple probe sensing devices (i.e. ADS1115, MAX31865, or even Virtual Probes to augment your inputs).  This extension of the probe system, allows for any number of probe inputs to be tracked in PiFire, allowing from notifications and tracking of history for each probe.  The sky is the limit!  With this change the the probe architecture, a number of other things needed to be modified/updated, including the notification system, the history/charting, the dashboards, cookfiles and recipe modes.  Note that if you are updating to this version, your settings will be upgraded in the process and you will not be able to roll back to a previous version (unless you restore from a backup of your settings).  
-* **11/2023** - Release v1.6.0 - In this month comes another huge update with lots of new features and bug fixes.  Many thanks to the users from discord that have been testing along the way (as well as submitting some bugs), what a great community we have!  Many of these features have been deployed on our development branch for some time, so they should be relatively stable.  Please do file issues on GitHub if you find any new bugs with the formal release.  With that, enjoy and happy grilling/smoking!
+* 11/2023 - Release v1.6.0 - In this month comes another huge update with lots of new features and bug fixes.  Many thanks to the users from discord that have been testing along the way (as well as submitting some bugs), what a great community we have!  Many of these features have been deployed on our development branch for some time, so they should be relatively stable.  Please do file issues on GitHub if you find any new bugs with the formal release.  With that, enjoy and happy grilling/smoking!
+* **5/2024** - Release v1.7.0 - Lot's of new updates in this release with the UI, new features (i.e. exit startup temp, etc.) and new device support.  Some improvements to the tuning tools (including an auto-tuning tool).  Under the covers improvements for stability and cleanup.  As usual, submit issues to GitHub if you run into anything.  Enjoy!
 
 
 ### Credits
@@ -149,7 +151,7 @@ This project is licensed under the MIT license.
 ```
 MIT License
 
-Copyright (c) 2020 - 2023 Ben Parmeter and Contributors
+Copyright (c) 2020 - 2024 Ben Parmeter and Contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

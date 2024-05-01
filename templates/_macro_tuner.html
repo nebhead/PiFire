@@ -1,0 +1,268 @@
+<!-- Manual Tuning Macros -->
+{% macro render_manual_instruction_card(settings, control) %}
+<div class="card shadow" id="manual_instruction_card">
+  <div class="card-header">
+    <strong>
+      <i class="fa-regular fa-pen-to-square"></i>&nbsp; Manual Tuner Instructions
+    </strong>
+  </div>
+  <div class="card-body">
+    <p>
+      Most food probes have a certain resistance at different temperatures. The chart of the temperature versus resistance is rarely 
+      linear, and generally follows a curve.  In order to utilize the probe in PiFire, we need to determine the best fit for that 
+      curve using the Steinhart-Hart (SHH) equation. 
+    </p> 
+    <p>
+      To determine the right coefficients to use with the SHH equation, we will need to manually measure the resistance of the probe 
+      at three different temperature points: 
+    </p>
+    <ul>
+      <li>
+        <strong>High Temperature:</strong> Start with a high temperature (ideally at the high end of what you would normally be measuring). For a 
+        food probe, approximately 200F (93C) is a good starting point. It's recommended to start by putting the food probe that you want 
+        to tune into a container (mug or glass) with very hot water (or hot oil), along with another reference food probe (maybe 
+        one with a digital display).  The temperature will likely start falling, but you can pause the tuning tool on at a specific 
+        point that is observed and record the temperature when you paused. 
+      </li>
+      <li>
+        <strong>Medium Temperature:</strong> Record the resistance at a medium temperature, midway through the range of temperatures you would 
+        normally measure. As the temperature falls, you can wait until approximately the mid-point of the temperature range that you 
+        are testing, and pause the mid-point value to enter that temperature.  The recommended mid-point temperature for a food probe
+        might be around 100-120F (38-48C).
+      </li>
+      <li>
+        <strong>Low Temperature:</strong> Record the resistance at a low temperature, as close to zero degrees (F or C) as possible. If using water, 
+        you can add some ice cubes to the container, to cool the water as much as possible.  Wait for the probes to bottom out at the coolest 
+        temperature possible, then pause that low resistance value and enter the temperature.
+      </li>
+    </ul>
+    <br>
+    Once all values have been entered, you can click finish and calculate the final set of coefficients that are recommended for
+    that probe.
+    <br><br>
+    <strong>Select a Probe Input to Tune:</strong> 
+    <select class="form-control" name="probe_select" id="probe_select" onchange="tunerEnableManualStart(this);">
+      <option value="none" selected>Select an Input to Tune</option>
+      {% for probe in settings['probe_settings']['probe_map']['probe_info'] %}
+      <option value="{{ probe['label'] }}">{{ probe['name'] }} Input</option>
+      {% endfor %}
+    </select>
+    <br>
+    <div class="alert alert-warning" role="alert">
+      <i><strong>Note:</strong> If you leave this page during the tuning process, the tuning data will be lost.</i>
+    </div>
+    Once a probe is selected and you are ready to begin with manual tuning, click the below start button. 
+  </div>
+  <div class="card-footer">
+    <button class="btn btn-success btn-block" id="tuner_manual_start_btn" onclick="tunerStartManualTool();" disabled>
+      Start Tuning
+    </button>
+  </div>
+</div>
+
+{% endmacro %}
+
+{% macro render_manual_tool(settings, control) %}
+<!-- Manual Tuner Tool High Temperature Configuration Card -->
+<div class="col col-12 col-sm-12 col-md-6 col-lg-4 col-xl-4">
+  {{ render_manual_tool_card(settings, control, 'High') }}
+</div>
+<br>
+<div class="col col-12 col-sm-12 col-md-6 col-lg-4 col-xl-4">
+  {{ render_manual_tool_card(settings, control, 'Medium') }}
+</div>
+<br>
+<div class="col col-12 col-sm-12 col-md-6 col-lg-4 col-xl-4">
+  {{ render_manual_tool_card(settings, control, 'Low') }}
+</div>
+{% endmacro %}
+
+{% macro render_manual_tool_card(settings, control, segment) %}
+<div class="card text-center shadow" id="tuner_manual_{{segment}}_config">
+  <div class="card-header bg-primary text-white">
+    <strong>
+      {% if segment == 'High' %}
+        <i class="fa-solid fa-temperature-arrow-up"></i>
+      {% elif segment == 'Low' %}
+        <i class="fa-solid fa-temperature-arrow-down"></i>
+      {% else %}
+        <i class="fa-solid fa-temperature-half"></i>
+      {% endif %}
+        &nbsp; {{segment}} Temp Values 
+    </strong>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="input-group mb-3" data-toggle="tooltip" data-placement="top" title="{{segment}} Temperature Resistance Value">
+        <input type="text" class="form-control" id="tuner_manual_input_{{segment}}_tr" type="number" 
+        min="1" step="1" aria-label="Probe Resistance" aria-describedby="tuner_manual_{{segment}}_input_tr_addon"
+        pattern="[0-9]*" inputmode="numeric">
+        <div class="input-group-append">
+          <span class="input-group-text" id="tuner_manual_{{segment}}_input_tr_addon">&#8486;</span>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="input-group mb-3" data-toggle="tooltip" data-placement="top" title="{{segment}} Temperature Value">
+        <input type="text" class="form-control" id="tuner_manual_input_{{segment}}_t" type="number" 
+        min="1" step="1" aria-label="Temperature Value" aria-describedby="tuner_manual_{{segment}}_input_t_addon"
+        pattern="[0-9]*" inputmode="numeric">
+        <div class="input-group-append">
+          <span class="input-group-text" id="tuner_manual_{{segment}}_input_t_addon">&deg;{{ settings['globals']['units'] }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <button class="btn btn-outline-info btn-block" id="tuner_manual_{{segment}}_pause_btn" onclick="tunerManualPause('{{segment}}');">
+      Pause
+    </button>
+  </div>
+</div>
+<br>
+{% endmacro %}
+
+{% macro render_manual_finish_btn(settings, control) %}
+
+<button class="btn btn-success btn-block shadow" id="tuner_manual_finish_btn" onclick="tunerManualFinish();" disabled>
+  Calculate Coefficients
+</button>
+
+{% endmacro %}
+
+<!-- Auto Tuning Macros -->
+{% macro render_auto_instruction_card(settings, control) %}
+<div class="card shadow" id="manual_instruction_card">
+  <div class="card-header">
+    <strong>
+      <i class="fa-regular fa-pen-to-square"></i>&nbsp; Auto Tuner Instructions
+    </strong>
+  </div>
+  <div class="card-body">
+    <p>
+      Most food probes have a certain resistance at different temperatures. The chart of the temperature versus resistance is rarely 
+      linear, and generally follows a curve.  In order to utilize the probe in PiFire, we need to determine the best fit for that 
+      curve using the Steinhart-Hart (SHH) equation. 
+    </p> 
+    <p>
+      The automated process is similar to the manual process, except a reference probe is used instead of manually entering 
+      the temperature values for different resistances.  The program will run and collect temperature vs. resistance data until the 
+      user stops the data capture. The High/Medium/Low temperature points will be determined to the best of ability of the program 
+      and then used to derive the SHH coefficients. 
+    </p>
+    <p>
+      To determine the right coefficients to use with the SHH equation, it's recommend to expose both the probe being tuned and the 
+      reference probe to a wide range of typical temperatures: 
+    </p>
+    <ul>
+      <li>
+        <strong>Start High:</strong> Start at a high temperature (ideally at the high end of what you would normally be measuring).
+        For a food probe, approximately 200F (93C) is a good starting point. It's recommended to start by putting the food probe 
+        that you want to tune into a container (mug or glass) with very hot water (or hot oil), along with the reference food probe.  
+        At this point you should start the auto-tuning tool to start capturing data. 
+      </li>
+      <li>
+        <strong>End Low:</strong> At a low temperature, as close to zero degrees (F or C) as possible, stop the auto-tuning process. 
+        If using water, you can add ice cubes to the container, to cool the water as much as possible.  Wait for the probes to bottom 
+        out at the coolest temperature possible. Once this is complete, you may stop the process. 
+      </li>
+    </ul>
+    <br>
+    <strong>Select a Probe Input to Tune:</strong> 
+    <select class="form-control" name="probe_select" id="tuner_auto_probe_select" onchange="tunerAutoSelectProbe(this);">
+      <option value="none" selected>Select an Input to Tune</option>
+      {% for probe in settings['probe_settings']['probe_map']['probe_info'] %}
+      <option value="{{ probe['label'] }}">{{ probe['name'] }} Input</option>
+      {% endfor %}
+    </select>
+    <br>
+    <strong>Select a Reference Probe Input:</strong> 
+    <select class="form-control" name="probe_select" id="tuner_auto_ref_select" onchange="tunerAutoSelectReference(this);">
+      <option value="none" selected>Select an Input to Reference</option>
+      {% for probe in settings['probe_settings']['probe_map']['probe_info'] %}
+      <option value="{{ probe['label'] }}">{{ probe['name'] }} Input</option>
+      {% endfor %}
+    </select>
+    <br>
+    <div class="alert alert-info" role="alert">
+      <i><strong>Info:</strong> The probe you are tuning may not be the same as the reference probe.</i>
+    </div>
+    <div class="alert alert-warning" role="alert">
+      <i><strong>Note:</strong> If you leave this page during the tuning process, the tuning data will be lost.</i>
+    </div>
+    Once both probes are selected and you are ready to begin with auto tuning, click the below start button. 
+  </div>
+  <div class="card-footer">
+    <button class="btn btn-success btn-block" id="tuner_auto_start_btn" onclick="tunerStartAutoTool();" disabled>
+      Start Auto-Tuning
+    </button>
+  </div>
+</div>
+
+{% endmacro %}
+
+{% macro render_auto_tool(settings, control) %}
+<div class="card shadow" style="width:100%;">
+  <div class="card-header bg-info text-white text-center">
+    <strong>
+      <i class="fa-solid fa-cog fa-spin" id="tunerAutoIcon"></i>&nbsp;
+      Auto-Tuning Status
+    </strong>
+  </div>
+  <div class="card-body justify-content-center">
+    <table class="table table-sm">
+      <thead>
+        <tr>
+          <th scope="col">Status</th>
+          <th scope="col">Temp</th>
+          <th scope="col">Tr</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="table-warning">
+          <td>Current</td>
+          <td>
+            <span id="tuner_auto_ref_temp"></span>{{ settings['globals']['units'] }}
+          </td>
+          <td>
+            <span id="tuner_auto_probe_tr"></span>
+          </td>
+        </tr>
+        <tr>
+          <td>High</td>
+          <td>
+            <span id="tuner_auto_high_temp"></span>{{ settings['globals']['units'] }}
+          </td>
+          <td>
+            <span id="tuner_auto_high_tr"></span>
+          </td>
+        </tr>
+        <tr>
+          <td>Medium</td>
+          <td>
+            <span id="tuner_auto_medium_temp"></span>{{ settings['globals']['units'] }}
+          </td>
+          <td>
+            <span id="tuner_auto_medium_tr"></span>
+          </td>
+        </tr>
+        <tr>
+          <td>Low</td>
+          <td>
+            <span id="tuner_auto_low_temp"></span>{{ settings['globals']['units'] }}
+          </td>
+          <td>
+            <span id="tuner_auto_low_tr"></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro render_auto_finish_btn(settings, control) %}
+<button class="btn btn-success btn-block shadow" id="tuner_auto_finish_btn" onclick="tunerAutoFinish();" disabled>
+  Finish & Calculate Coefficients
+</button>
+{% endmacro %}

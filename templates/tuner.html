@@ -1,0 +1,160 @@
+{% extends 'base.html' %} 
+
+{% block cssextend %}
+{% endblock %}
+
+{% block title %}Probe Tuning Tools{% endblock %} 
+
+{% block notify %}
+{% endblock %}
+
+{% block content %}
+<br>
+<div class="container">	
+	<!-- =========== Welcome Row =============== -->
+	<div class="row" id="tuner_welcome_row">
+		<div class="col-xs-12 col-sm-12 col-md-6">
+			<div class="card">
+				<div class="btn btn-outline-primary shadow" id="autotune_btn" onclick="tunerAutoInstructions();">
+					<h1><br><i class="fa-solid fa-wand-magic-sparkles"></i></h1>
+					<h5><br>Auto Tuner<br><br></h5>
+				</div>
+			</div>
+			<br>
+		</div> <!-- End of Column -->
+
+		<div class="col-xs-12 col-sm-12 col-md-6">
+			<div class="card">
+				<div class="btn btn-outline-primary shadow" id="manual_tune_btn" onclick="tunerManualInstructions();">
+					<h1><br><i class="fa-regular fa-pen-to-square"></i></h1>
+					<h5><br>Manual Tuner<br><br></h5>
+				</div>
+			</div>
+		</div> <!-- End of Column -->
+	</div> <!-- End of Row -->
+
+	<!-- =========== Back to Welcome Row =============== -->
+	<div class="row" id="tuner_back_to_welcome_row" style="display:none">
+		<button class="btn btn-outline-primary btn-block shadow" onclick="location='/tuner';">
+			<i class="fa-solid fa-circle-arrow-left"></i>&nbsp; Back to Tool Selection
+		</button>
+	</div>
+	<br>
+
+	<!-- =========== Tuner Tool =============== -->
+	<div class="row" id="tuner_instruction_row" style="display:none">
+	</div>
+
+	<!-- =========== Tuner Tool Manual Title Row =============== -->
+	<div class="row" id="tuner_tool_manual_title_row" style="display:none">
+		<div class="card bg-light text-center shadow" style="width: 100%;">
+			<div class="card-body">
+				<strong>Tuning Probe:</strong>&nbsp;<span id="tuner_manual_tool_title_probe_selected"></span>
+			</div>
+		</div>
+	</div>
+
+	<!-- =========== Tuner Tool Auto Title Row =============== -->
+	<div class="row" id="tuner_tool_auto_title_row" style="display:none">
+		<div class="card bg-light text-center shadow" style="width: 100%;">
+			<div class="card-body">
+				<strong>Tuning Probe:</strong>&nbsp;<span id="tuner_auto_tool_title_probe_selected"></span><br>
+				<strong>Ref Probe:</strong>&nbsp;<span id="tuner_auto_tool_title_probe_reference"></span>
+			</div>
+		</div>
+	</div>
+	<br>
+
+	<!-- =========== Tuner Tool Row =============== -->
+	<div class="row" id="tuner_tool_row" style="display:none">
+	</div>
+	<br>
+
+	<!-- =========== Finish Button Row =============== -->
+	<div class="row" id="tuner_finish_btn_row" style="display:none">
+	</div>
+
+	<!-- =========== Finish / Results =============== -->
+	<div class="row" id="tuner_finish_row" style="display:none">
+		<div class="card text-center shadow" style="width: 100%">
+			<div class="card-header bg-success text-white">
+				<strong><i class="fa-solid fa-clipboard-list"></i>&nbsp; Tuning Results	</strong>			
+			</div>
+			<div class="card-body">
+				<div class="table-responsive">
+					<!-- Status Chart -->
+					<div style="min-height: 400px;display:none;" id="tunerResultsChartWrapper">
+						<canvas id="tunerResultsChart" class="table"></canvas>
+					</div>
+				</div>
+				<div class="card text-center text-secondary bg-light" style="width: 100%;display:none;" id="tunerResultsChartFailed">
+					<H4>
+						<br>
+						<i class="fa-solid fa-chart-line fa-2xl"></i>
+						<br><br>
+						Unable to generate a chart for this probe.
+						<br><br>
+					</H4>
+				</div>
+				<br>
+
+				<form name="tunerAddProfile" action="/settings/addprofile" method="POST">
+					<div class="card">
+							<div class="card-body">
+
+								<div class="input-group mb-3">
+									<div class="input-group-prepend">
+										<span class="input-group-text" data-toggle="tooltip" title="Human readable name for profile."><i class="fas fa-user-circle"></i>&nbsp; Name</span>
+									</div>
+									<input id="tuner_profile_name" type="text" class="form-control" placeholder="Name" name="Name" required>
+								</div>
+
+								<div class="input-group mb-3">
+									<div class="input-group-prepend">
+										<span class="input-group-text" data-toggle="tooltip" title="Coefficient A in Steinhart Hart Calculation"><i class="fas fa-calculator"></i>&nbsp; CoEff A</span>
+									</div>
+									<input id="tuner_profile_A" type="text" class="form-control" name="A" required>
+								</div>
+
+								<div class="input-group mb-3">
+									<div class="input-group-prepend">
+										<span class="input-group-text" data-toggle="tooltip" title="Coefficient B in Steinhart Hart Calculation"><i class="fas fa-calculator"></i>&nbsp; CoEff B</span>
+									</div>
+									<input id="tuner_profile_B" type="text" class="form-control" name="B" required>
+								</div>
+
+								<div class="input-group mb-3">
+									<div class="input-group-prepend">
+										<span class="input-group-text" data-toggle="tooltip" title="Coefficient C in Steinhart Hart Calculation"><i class="fas fa-calculator"></i>&nbsp; CoEff C</span>
+									</div>
+									<input id="tuner_profile_C" type="text" class="form-control" name="C" required>
+								</div>
+
+							</div>
+							<div class="card-footer bg-light">
+									<button type="submit" class="btn btn-success" id="tunerSaveApplyBtn" name="apply_profile" value="none">Save & Apply</button>
+									<button type="submit" class="btn btn-outline-success">Save Only</button>
+							</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+</div> <!-- End Container -->
+<br>
+<br>
+<br>
+{% endblock %}
+
+{% block postcontainer %}
+{% endblock %}
+
+<!-- Remove Control Panel from this Page -->
+{% block controlpanel %}{% endblock %}
+{% block controlpanel_scripts %}{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/chart.js') }}"></script> <!-- 3.9.1 Latest 3.x -->
+<script src="{{ url_for('static', filename='js/tuner.js') }}"></script>
+{% endblock %}

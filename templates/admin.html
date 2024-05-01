@@ -1,46 +1,41 @@
 {% extends 'base.html' %} 
 
-{% block title %}Admin{% endblock %} 
+{% block body_class %}timer-offset{% endblock %}
 
-{% block notify %}
-<!-- Settings Success -->
-{% if (notify == "success") %}
-<br>
-<div class="alert alert-success alert-dismissible">
-	<button type="button" class="close" data-dismiss="alert">&times;</button>
-	<b> Changes Successfully Applied.</b>
-</div>
-{% elif notify == "error" %}
-<br>
-<div class="alert alert-danger alert-dismissible">
-	<button type="button" class="close" data-dismiss="alert">&times;</button>
-	<b> There was an error with the attempted action.</b>
-</div>
-{% endif %}
+{% block cssextend %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}" type="text/css" />
 {% endblock %}
+
+{% block title %}Admin{% endblock %} 
 
 {% block content %}
 <br>
+
 <div class="row">
-	{% if not request.MOBILE %}
-	<div class="col-3">
-		<!-- Side Navigation Row -->
-		<div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-			<a class="nav-link active" id="v-pills-updater-tab" data-toggle="pill" href="#v-pills-updater" role="tab" aria-controls="v-pills-updater" aria-selected="true">System Updates</a>
-			<a class="nav-link" id="v-pills-debug-tab" data-toggle="pill" href="#v-pills-debug" role="tab" aria-controls="v-pills-debug" aria-selected="false">Debug & Manual</a>
-			<a class="nav-link" id="v-pills-data-tab" data-toggle="pill" href="#v-pills-data" role="tab" aria-controls="v-pills-data" aria-selected="false">Data Management</a>
-			<a class="nav-link" id="v-pills-wizard-tab" data-toggle="pill" href="#v-pills-wizard" role="tab" aria-controls="v-pills-wizard" aria-selected="false">Config Wizard</a>
-			<a class="nav-link" id="v-pills-power-tab" data-toggle="pill" href="#v-pills-power" role="tab" aria-controls="v-pills-power" aria-selected="false">System Power</a>
-			<a class="nav-link" id="v-pills-boot-tab" data-toggle="pill" href="#v-pills-boot" role="tab" aria-controls="v-pills-boot" aria-selected="false">Boot Settings</a>
-			<a class="nav-link" id="v-pills-system-tab" data-toggle="pill" href="#v-pills-system" role="tab" aria-controls="v-pills-system" aria-selected="false">System Info</a>
-			<a class="nav-link" id="v-pills-gpio-tab" data-toggle="pill" href="#v-pills-gpio" role="tab" aria-controls="v-pills-gpio" aria-selected="false">GPIO Info</a>
-			<a class="nav-link" id="v-pills-modules-tab" data-toggle="pill" href="#v-pills-modules" role="tab" aria-controls="v-pills-modules" aria-selected="false">Module Info</a>
-			<a class="nav-link" id="v-pills-pifire-tab" data-toggle="pill" href="#v-pills-pifire" role="tab" aria-controls="v-pills-pifire" aria-selected="false">PiFire Info</a>
-			<a class="nav-link" id="v-pills-credits-tab" data-toggle="pill" href="#v-pills-credits" role="tab" aria-controls="v-pills-credits" aria-selected="false">Credits & Licenses</a>
-		</div>
+	<!-- Navigation -->
+	<div class="col-lg-3 nav-settings-fixed">
+		<nav class="navbar navbar-expand-lg navbar-dark flex-lg-column">
+			<a class="navbar d-lg-none dropdown-toggle btn btn-primary settings-button" href="#" id="navbarDropdown" role="button" data-toggle="collapse" data-target="#settingsNav" aria-haspopup="true" aria-expanded="false">
+				Admin
+			</a>
+			<div class="collapse navbar-collapse" id="settingsNav">
+				<div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+					<a class="nav-link active" id="v-pills-updater-tab" data-toggle="pill" href="#v-pills-updater" role="tab" aria-controls="v-pills-updater" aria-selected="true">System Updates</a>
+					<a class="nav-link" id="v-pills-debug-tab" data-toggle="pill" href="#v-pills-debug" role="tab" aria-controls="v-pills-debug" aria-selected="false">Debug & Manual</a>
+					<a class="nav-link" id="v-pills-data-tab" data-toggle="pill" href="#v-pills-data" role="tab" aria-controls="v-pills-data" aria-selected="false">Data Management</a>
+					<a class="nav-link" id="v-pills-wizard-tab" data-toggle="pill" href="#v-pills-wizard" role="tab" aria-controls="v-pills-wizard" aria-selected="false">Config Wizard</a>
+					<a class="nav-link" id="v-pills-power-tab" data-toggle="pill" href="#v-pills-power" role="tab" aria-controls="v-pills-power" aria-selected="false">System Power</a>
+					<a class="nav-link" id="v-pills-boot-tab" data-toggle="pill" href="#v-pills-boot" role="tab" aria-controls="v-pills-boot" aria-selected="false">Boot Settings</a>
+					<a class="nav-link" id="v-pills-system-tab" data-toggle="pill" href="#v-pills-system" role="tab" aria-controls="v-pills-system" aria-selected="false">System Info</a>
+					<a class="nav-link" id="v-pills-gpio-tab" data-toggle="pill" href="#v-pills-gpio" role="tab" aria-controls="v-pills-gpio" aria-selected="false">GPIO Info</a>
+					<a class="nav-link" id="v-pills-modules-tab" data-toggle="pill" href="#v-pills-modules" role="tab" aria-controls="v-pills-modules" aria-selected="false">Module Info</a>
+					<a class="nav-link" id="v-pills-pifire-tab" data-toggle="pill" href="#v-pills-pifire" role="tab" aria-controls="v-pills-pifire" aria-selected="false">PiFire Info</a>
+					<a class="nav-link" id="v-pills-credits-tab" data-toggle="pill" href="#v-pills-credits" role="tab" aria-controls="v-pills-credits" aria-selected="false">Credits & Licenses</a>
+				</div>
+			</div>
+		</nav>
 	</div>
-	{% endif %}
-	<div class="{% if request.MOBILE %}col-12{% else %}col-9{% endif %}">
+	<div class="col-lg-9 main-content">
 		<!-- ============================ System Updates =============================== -->
 		<div class="tab-content" id="v-pills-tabContent">
 			<div class="tab-pane fade show active" id="v-pills-updater" role="tabpanel" aria-labelledby="v-pills-updater-tab">
@@ -83,11 +78,10 @@
 						</div>
 					</div>
 				</div>
-				{% if not request.MOBILE %}<br><br><br>{% endif %}
+				<br><br><br>
 			</div><!-- End of Tab -->
 			
 			<!-- ============================ Debug and Manual Options ========================== -->
-			{% if request.MOBILE %}<br>{% endif %}
 			<div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-debug" role="tabpanel" aria-labelledby="v-pills-debug-tab">
 				<div class="card shadow">
 					<div class="card-header bg-secondary text-white">
@@ -148,12 +142,32 @@
 						</div>
 						<br>
 
+						<div class="card">
+							<div class="card-header bg-primary">
+								<i class="fa-regular fa-file-lines"></i>&nbsp; Download Debug Data  
+							</div>
+							<div class="card-body">
+								<form action="/admin/setting" method="POST">
+									<!-- Download settings.json -->
+									<button type="submit" class="btn btn-outline-primary btn-block shadow" name="download_settings" value="true">
+										<i class="fa-solid fa-download"></i>&nbsp; Download current settings ('settings.json')
+									</button>
+									<br>
+									<!-- Download control:general database -->
+									<button type="submit" class="btn btn-outline-primary btn-block shadow" name="download_control" value="true">
+										<i class="fa-solid fa-download"></i>&nbsp; Download control:general database (current)
+									</button>
+								</form>
+								<br>
+							</div>
+						</div>
+						<br>
+
 					</div>
 				</div>
-				{% if not request.MOBILE %}<br><br><br>{% endif %}
+				<br><br><br>
 			</div><!-- End of Tab -->
 			<!-- ============================ Data Management ========================== -->
-			{% if request.MOBILE %}<br>{% endif %}
 			<div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-data" role="tabpanel" aria-labelledby="v-pills-data-tab">
 				<div class="card shadow">
 					<div class="card-header bg-danger text-white">
@@ -321,7 +335,7 @@
 						</form>
 					</div>
 				</div>
-				{% if not request.MOBILE %}<br><br><br>{% endif %}
+				<br><br><br>
 			</div><!-- End of Tab -->
 			<!-- Restore Settings Modal -->
 			<form method="POST" action="/admin/setting" enctype="multipart/form-data">
@@ -465,7 +479,6 @@
 				</div>
 			</form>
 			<!-- ============================ Configuration Wizard ========================== -->
-			{% if request.MOBILE %}<br>{% endif %}
 			<div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-wizard" role="tabpanel" aria-labelledby="v-pills-wizard-tab">
 				<div class="card shadow">
 					<div class="card-header bg-primary text-white">
@@ -477,10 +490,10 @@
 						<a href="/wizard" class="btn btn-outline-primary btn-block shadow">Launch PiFire Configuration Wizard</a>
 					</div>
 				</div>
-				{% if not request.MOBILE %}<br><br><br>{% endif %}
+				<br><br><br>
 			</div><!-- End of Tab -->
 			<!-- ============================ System Power ========================== -->
-			{% if request.MOBILE %}<br>{% endif %}
+			
 			<div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-power" role="tabpanel" aria-labelledby="v-pills-power-tab">
 				<div class="card shadow">
 					<div class="card-header bg-danger text-white">
@@ -496,7 +509,7 @@
 								Restart Server (No Reboot)
 							</button>
 							<!-- Reboot Modal -->
-							<div class="modal fade" id="restartModal" tabindex="-1" role="dialog" aria-labelledby="restartModalLabel" aria-hidden="true">
+							<div class="modal fade power-modal" id="restartModal" tabindex="-1" role="dialog" aria-labelledby="restartModalLabel" aria-hidden="true" data-backdrop="false">
 								<div class="modal-dialog" role="document">
 									<div class="modal-content">
 										<div class="modal-header">
@@ -525,7 +538,7 @@
 								Reboot System
 							</button>
 							<!-- Reboot Modal -->
-							<div class="modal fade" id="rebootModal" tabindex="-1" role="dialog" aria-labelledby="rebootModalLabel" aria-hidden="true">
+							<div class="modal fade power-modal" id="rebootModal" tabindex="-1" role="dialog" aria-labelledby="rebootModalLabel" aria-hidden="true" data-backdrop="false">
 								<div class="modal-dialog" role="document">
 									<div class="modal-content">
 										<div class="modal-header">
@@ -554,7 +567,7 @@
 								Shutdown System
 							</button>
 							<!-- Shutdown Modal -->
-							<div class="modal fade" id="shutdownModal" tabindex="-1" role="dialog" aria-labelledby="shutdownModalLabel" aria-hidden="true">
+							<div class="modal fade power-modal" id="shutdownModal" tabindex="-1" role="dialog" aria-labelledby="shutdownModalLabel" aria-hidden="true" data-backdrop="false">
 								<div class="modal-dialog" role="document">
 									<div class="modal-content">
 										<div class="modal-header">
@@ -577,10 +590,10 @@
 						</form>
 					</div>
 				</div>
-				{% if not request.MOBILE %}<br><br><br>{% endif %}
+				<br><br><br>
 			</div><!-- End of Tab -->
 			<!-- ============================ Boot Settings ========================== -->
-			{% if request.MOBILE %}<br>{% endif %}
+			
 
 			<div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-boot" role="tabpanel" aria-labelledby="v-pills-boot-tab">
 				<form name="input" action="/admin/boot" method="POST">
@@ -600,12 +613,13 @@
 						<button type="submit" class="btn btn-primary">Save Boot Settings</button>
 					</div>
 				</div>
-				{% if not request.MOBILE %}<br><br><br>{% endif %}
+
 				</form>
+				<br><br><br>
 			</div><!-- End of Tab -->
 
 			<!-- ============================ System Info ========================== -->
-			{% if request.MOBILE %}<br>{% endif %}
+			
 			<div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-system" role="tabpanel" aria-labelledby="v-pills-system-tab">
 				<!-- Uptime Card -->
 				<div class="card shadow">
@@ -619,6 +633,63 @@
 					</div>
 				</div>
 				<br>
+				<!-- Wifi Card -->
+				{% if 'wifi_quality_percentage' in control['system'].keys() %}
+				<div class="card shadow">
+					<div class="card-header bg-secondary text-white">
+						<h5>
+							<i class="fa-solid fa-house-signal"></i>&nbsp; Wifi Quality
+						</h5>
+					</div>
+					<div class="card-body">
+						<b>Wifi Link Quality: </b>{{ control['system']['wifi_quality_value'] }} / {{ control['system']['wifi_quality_max'] }}<br>
+						<b>Wifi Quality Percentage: </b>
+						{% if control['system']['wifi_quality_percentage'] is not none %}
+						<span style="color:{% if control['system']['wifi_quality_percentage'] > 70 %}green{% elif control['system']['wifi_quality_percentage'] > 25 %}orange{% else %}red{% endif %}">
+						{{ control['system']['wifi_quality_percentage'] }}%<br>
+						</span>
+						{% else %}
+						--
+						{% endif %}
+					</div>
+				</div>
+				<br>
+				{% endif %}
+				<!-- CPU Card -->
+				{% if 'cpu_temp' in control['system'].keys() %}
+				<div class="card shadow">
+					<div class="card-header bg-secondary text-white">
+						<h5>
+							<i class="fa-solid fa-microchip"></i>&nbsp; CPU Status/Health
+						</h5>
+					</div>
+					<div class="card-body">
+						<b>CPU Temperature: </b>
+						<span style="color:{% if control['system']['cpu_temp'] < 50 %}green{% elif control['system']['cpu_temp'] < 80 %}orange{% else %}red{% endif %}">
+						{{ control['system']['cpu_temp'] }}&deg;C
+						</span><br>
+						{% if 'cpu_throttled' in control['system'].keys() %}
+						<b>CPU Throttled: </b>
+							{% if control['system']['cpu_throttled'] %}
+							<span style="color:red"><i class="fa-regular fa-hand"></i>&nbsp;CPU Throttling was detected!</span>
+							{% else %}
+							<span style="color:green"><i class="fa-solid fa-road-circle-check"></i>&nbsp;No throttling was detected.</span>
+							{% endif %}
+							<br>
+						{% endif %}
+						{% if 'cpu_under_voltage' in control['system'].keys() %}
+						<b>CPU Under-voltage Event: </b>
+							{% if control['system']['cpu_under_voltage'] %}
+							<span style="color:red"><i class="fa-solid fa-bolt"></i>&nbsp;CPU Under-voltage was detected! Check your power supply.</span> 
+							{% else %}
+							<span style="color:green"><i class="fa-solid fa-plug-circle-check"></i>&nbsp;No under-voltage events were detected.</span>
+							{% endif %}
+							<br>
+						{% endif %}
+					</div>
+				</div>
+				<br>
+				{% endif %}
 				<!-- System Info -->
 				<div class="card shadow">
 					<div class="card-header bg-secondary text-white">
@@ -627,23 +698,21 @@
 						</h5>
 					</div>
 					<div class="card-body">
-						<b>CPU Info</b><br>
+						<b>CPU Info:</b><br>
 						{% for line in cpuinfo %}
 							{{ line }}<br>
 						{% endfor %}
 						<br>
-						<p><b>CPU Temperature:</b> {{ temp }}</p>
-						<br>
-						<b>Network Info</b><br>
+						<b>Network Info:</b><br>
 						{% for lines in ifconfig %}
 							{{ lines }}<br>
 						{% endfor %}
 					</div>
 				</div>
-				{% if not request.MOBILE %}<br><br><br>{% endif %}
+				<br><br><br>
 			</div><!-- End of Tab -->
 			<!-- ============================ GPIO Info ========================== -->
-			{% if request.MOBILE %}<br>{% endif %}
+			
 			<div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-gpio" role="tabpanel" aria-labelledby="v-pills-gpio-tab">
 				<div class="card shadow">
 					<div class="card-header bg-secondary text-white">
@@ -722,10 +791,10 @@
 						</table>
 					</div>
 				</div>
-				{% if not request.MOBILE %}<br><br><br>{% endif %}
+				<br><br><br>
 			</div><!-- End of Tab -->
 			<!-- ============================ Modules Info ========================== -->
-			{% if request.MOBILE %}<br>{% endif %}
+			
 			<div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-modules" role="tabpanel" aria-labelledby="v-pills-modules-tab">
 				<div class="card shadow">
 					<div class="card-header bg-secondary text-white">
@@ -758,10 +827,10 @@
 						</table>
 					</div>
 				</div>
-				{% if not request.MOBILE %}<br><br><br>{% endif %}
+				<br><br><br>
 			</div><!-- End of Tab -->
 			<!-- ============================ PiFire Info ========================== -->
-			{% if request.MOBILE %}<br>{% endif %}
+			
 			<div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-pifire" role="tabpanel" aria-labelledby="v-pills-pifire-tab">
 				<div class="card shadow">
 					<div class="card-header bg-secondary text-white">
@@ -771,6 +840,7 @@
 					</div>
 					<div class="card-body">
 						<b>PiFire Version:</b> {{ settings['versions']['server'] }}<br>
+						<b>PiFire Build:</b> {{ settings['versions']['build'] }}<br>
 						<br><a href="https://nebhead.github.io/PiFire" target="_blank" class="btn btn-outline-primary btn-block shadow" role="button">Read the Latest Documentation &nbsp;<i class="fas fa-external-link-alt"></i></a>
 						<br><a href="https://github.com/nebhead/PiFire" target="_blank" class="btn btn-outline-primary btn-block shadow" role="button">Goto the GitHub Repo &nbsp;<i class="fas fa-external-link-alt"></i></i></a>
 						<br><a href="https://github.com/nebhead/PiFire/issues" target="_blank" class="btn btn-outline-primary btn-block shadow" role="button">Submit an Issue &nbsp;<i class="fas fa-external-link-alt"></i></i></a>
@@ -781,7 +851,7 @@
 							PiFire Address QR Code
 						</button>
 						<!-- QR Modal -->
-						<div class="modal" id="qrModal">
+						<div class="modal power-modal" id="qrModal" data-backdrop="false">
 							<div class="modal-dialog">
 								<div class="modal-content">
 									<!-- Modal Header -->
@@ -808,10 +878,10 @@
 						</div>
 					</div>
 				</div>
-				{% if not request.MOBILE %}<br><br><br>{% endif %}
+				<br><br><br>
 			</div><!-- End of Tab -->
 			<!-- ============================ Credits and Licenses ========================== -->
-			{% if request.MOBILE %}<br>{% endif %}
+			
 			<div class="tab-pane fade {% if request.MOBILE %} show active {% endif %}" id="v-pills-credits" role="tabpanel" aria-labelledby="v-pills-credits-tab">
 				<div class="card shadow">
 					<div class="card-header bg-secondary text-white">
@@ -835,7 +905,7 @@
             			</ul>
         			</div>
 				</div>
-				{% if not request.MOBILE %}<br><br><br>{% endif %}
+				<br><br><br>
 			</div><!-- End of Tab -->
 		</div><!-- End of Tab Content -->
 	</div><!-- End of Col -->
@@ -877,5 +947,13 @@
 			};
 		});
 	  });
+</script>
+<!-- Script to close Nav Bar after selection -->
+<script>
+    $(document).ready(function() {
+        $('#settingsNav .nav-link').on('click', function() {
+            $('#settingsNav').collapse('hide');
+        });
+    });
 </script>
 {% endblock %}

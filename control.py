@@ -23,12 +23,12 @@ import logging
 import importlib
 from common import *  # Common Module for WebUI and Control Program
 from common.process_mon import Process_Monitor
+from common.redis_queue import RedisQueue
 from notify.notifications import *
 from file_mgmt.recipes import convert_recipe_units
 from file_mgmt.cookfile import create_cookfile
 from file_mgmt.common import read_json_file_data
 from os.path import exists
-
 
 '''
 ==============================================================================
@@ -65,7 +65,7 @@ try:
 	GrillPlatModule = importlib.import_module(f'grillplat.{grill_platform}')
 
 except:
-	controlLogger.exception(f'Error occurred loading grillplatform module ({filename}). Trace dump: ')
+	controlLogger.exception(f'Error occurred loading grillplatform module ({settings["modules"]["grillplat"]}). Trace dump: ')
 	GrillPlatModule = importlib.import_module('grillplat.prototype')
 	error_event = f'An error occurred loading the [{settings["modules"]["grillplat"]}] platform module.  The ' \
 		f'prototype module has been loaded instead.  This sometimes means that the hardware is not connected ' \
@@ -94,7 +94,7 @@ try:
 	else:
 		grill_platform = GrillPlatModule.GrillPlatform(out_pins, in_pins, trigger_level)
 except:
-	controlLogger.exception(f'Error occurred configuring grillplatform module ({filename}). Trace dump: ')
+	controlLogger.exception(f'Error occurred configuring grillplatform module ({settings["modules"]["grillplat"]}). Trace dump: ')
 	from grillplat.prototype import GrillPlatform  # Simulated Library for controlling the grill platform
 	grill_platform = GrillPlatform(out_pins, in_pins, trigger_level)
 	error_event = f'An error occurred configuring the [{settings["modules"]["grillplat"]}] platform object.  The ' \
@@ -134,6 +134,8 @@ Set up Display Module
 try: 
 	display_name = settings['modules']['display']
 	DisplayModule = importlib.import_module(f'display.{display_name}')
+	display_config = settings['display']['config'][display_name]
+	display_config['probe_info'] = get_probe_info(settings['probe_settings']['probe_map']['probe_info'])
 
 except:
 	controlLogger.exception(f'Error occurred loading the display module ({display_name}). Trace dump: ')
@@ -150,11 +152,11 @@ except:
 
 try:
 	display_device = DisplayModule.Display(dev_pins=dev_pins, buttonslevel=buttons_level,
-										   rotation=disp_rotation, units=units)
+										   rotation=disp_rotation, units=units, config=display_config)
 except:
-	controlLogger.exception(f'Error occurred configuring the display module ({filename}). Trace dump: ')
+	controlLogger.exception(f'Error occurred configuring the display module ({settings["modules"]["display"]}). Trace dump: ')
 	from display.none import Display  # Simulated Library for controlling the grill platform
-	display_device = Display(dev_pins=dev_pins, buttonslevel=buttons_level, rotation=disp_rotation, units=units)
+	display_device = Display(dev_pins=dev_pins, buttonslevel=buttons_level, rotation=disp_rotation, units=units, config={})
 	error_event = f'An error occurred configuring the [{settings["modules"]["display"]}] display object.  The ' \
 		f'"display_none" module has been loaded instead.  This sometimes means that the hardware is ' \
 		f'not connected properly, or the module is not configured.  Please run the configuration wizard ' \
@@ -235,6 +237,31 @@ def _start_fan(settings, duty_cycle=None):
 	else:
 		grill_platform.fan_on()
 
+def _process_system_commands(grill_platform):
+	# Setup access to the system command queue 
+	system_commands = RedisQueue('control:systemq')
+	# Setup access to the system output queue
+	system_output = RedisQueue('control:systemo')
+	# Initialize variable for supported commands (only look for supported commands if we have something to process)
+	supported_cmds = []
+
+	while system_commands.length() > 0:
+		if supported_cmds == []:
+			# Get list of supported system commands 
+			supported_cmds = grill_platform.supported_commands(None)['data']['supported_cmds']
+		command = system_commands.pop()
+		if command[0] in supported_cmds:
+			command_method = getattr(grill_platform, command[0])
+			result = command_method(command)
+			result['command'] = command
+		else:
+			result = {
+				'command' : command,
+				'result' : 'ERROR',
+				'message' : f'ERROR: Command [{command[0]}] is not supported with the current platform.',
+				'data' : {}
+			}
+		system_output.push(result)
 
 def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device):
 	"""
@@ -302,8 +329,8 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	# Set DC fan frequency if it has changed since init
 	if dc_fan:
 		pwm_frequency = settings['pwm']['frequency']
-		status_data = grill_platform.get_output_status()
-		if not pwm_frequency == status_data['frequency']:
+		frequency_status = grill_platform.get_output_status()
+		if not pwm_frequency == frequency_status['frequency']:
 			grill_platform.set_pwm_frequency(pwm_frequency)
 
 	# Set Starting Configuration for Igniter, Fan , Auger
@@ -392,6 +419,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 
 	# Safety Controls
 	if mode in ('Startup', 'Reignite'):
+		raw_startup_temp = ptemp  # This value is needed for the case when the grill starts hot and exit temp has been exceeded
 		control['safety']['startuptemp'] = int(max((ptemp * 0.9), settings['safety']['minstartuptemp']))
 		control['safety']['startuptemp'] = int(
 			min(control['safety']['startuptemp'], settings['safety']['maxstartuptemp']))
@@ -418,39 +446,46 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 				send_notifications("Grill_Error_03", control, settings, pelletdb)
 
 	# Apply Smart Start Settings if Enabled 
-	startup_timer = settings['globals']['startup_timer']
-	if settings['smartstart']['enabled'] and mode in ('Startup', 'Reignite', 'Smoke'):
+	startup_timer = settings['startup']['duration']
+	if settings['startup']['smartstart']['enabled'] and mode in ('Startup', 'Reignite', 'Smoke'):
 		# If Startup, then save initial temperature & select the profile
 		if mode in ('Startup', 'Reignite'):
 			control['smartstart']['startuptemp'] = int(ptemp)
 			# Cycle through profiles, and set profile if startup temperature falls below the minimum temperature
-			for profile_selected in range(0, len(settings['smartstart']['temp_range_list'])):
-				if control['smartstart']['startuptemp'] < settings['smartstart']['temp_range_list'][profile_selected]:
+			for profile_selected in range(0, len(settings['startup']['smartstart']['temp_range_list'])):
+				if control['smartstart']['startuptemp'] < settings['startup']['smartstart']['temp_range_list'][profile_selected]:
 					control['smartstart']['profile_selected'] = profile_selected
 					write_control(control, direct_write=True, origin='control')
 					break  # Break out of the loop
-				if profile_selected == len(settings['smartstart']['temp_range_list']) - 1:
+				if profile_selected == len(settings['startup']['smartstart']['temp_range_list']) - 1:
 					control['smartstart']['profile_selected'] = profile_selected + 1
 					write_control(control, direct_write=True, origin='control')
 		# Apply the profile 
 		profile_selected = control['smartstart']['profile_selected']
-		OnTime = settings['smartstart']['profiles'][profile_selected]['augerontime']  # Auger On Time (Default 15s)
-		OffTime = settings['cycle_data']['SmokeOffCycleTime'] + (settings['smartstart']['profiles'][profile_selected]['p_mode'] * 10)  # Auger Off Time
+		OnTime = settings['startup']['smartstart']['profiles'][profile_selected]['augerontime']  # Auger On Time (Default 15s)
+		OffTime = settings['cycle_data']['SmokeOffCycleTime'] + (settings['startup']['smartstart']['profiles'][profile_selected]['p_mode'] * 10)  # Auger Off Time
 		CycleTime = OnTime + OffTime  # Total Cycle Time
 		CycleRatio = RawCycleRatio = OnTime / CycleTime  # Ratio of OnTime to CycleTime
-		startup_timer = settings['smartstart']['profiles'][profile_selected]['startuptime']
+		startup_timer = settings['startup']['smartstart']['profiles'][profile_selected]['startuptime']
 		# Write Metrics
 		metrics['smart_start_profile'] = profile_selected
 		metrics['startup_temp'] = control['smartstart']['startuptemp']
-		metrics['p_mode'] = settings['smartstart']['profiles'][profile_selected]['p_mode']
-		metrics['auger_cycle_time'] = settings['smartstart']['profiles'][profile_selected]['augerontime']
+		metrics['p_mode'] = settings['startup']['smartstart']['profiles'][profile_selected]['p_mode']
+		metrics['auger_cycle_time'] = settings['startup']['smartstart']['profiles'][profile_selected]['augerontime']
 		write_metrics(metrics)
 
 	# Set the start time
 	start_time = time.time()
 
+	if mode == 'Startup':
+		control['startup_timestamp'] = start_time 
+		write_control(control, direct_write=True, origin='control')
+
 	# Set time since toggle for temperature
 	temp_toggle_time = start_time
+
+	# Set time since toggle for checking ETA
+	eta_toggle_time = start_time
 
 	# Set time since toggle for auger
 	auger_toggle_time = start_time
@@ -473,12 +508,18 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	# Set Fan Ramping Boolean
 	pwm_fan_ramping = False
 
+	# Setup Display Data
+	status_data = {} 
+	in_data = {}
+
 	# ============ Main Work Cycle ============
 	while status == 'Active':
 		now = time.time()
 
-		execute_commands()
+		execute_control_writes()
 		control = read_control()
+
+		_process_system_commands(grill_platform)
 
 		# Check if new mode has been requested
 		if control['updated']:
@@ -489,6 +530,11 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			control['settings_update'] = False
 			write_control(control, direct_write=True, origin='control')
 			settings = read_settings()
+			# Change the log level if settings were updated
+			if settings['globals']['debug_mode']:
+				eventLogger.setLevel(logging.DEBUG)
+			else:
+				eventLogger.setLevel(logging.INFO)
 			if mode in ('Startup', 'Reignite', 'Smoke'):
 				OnTime = settings['cycle_data']['SmokeOnCycleTime']  # Auger On Time (Default 15s) 
 				OffTime = settings['cycle_data']['SmokeOffCycleTime'] + (settings['cycle_data']['PMode'] * 10)  # Auger Off Time
@@ -586,6 +632,12 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 					eventLogger.debug('On Time = ' + str(OnTime) + ', OffTime = ' + str(
 						OffTime) + ', CycleTime = ' + str(CycleTime) + ', CycleRatio = ' + str(CycleRatio))
 
+					#publish pid info to mqtt if enabled				
+					if settings['notify_services'].get('mqtt') != None and settings['notify_services']['mqtt']['enabled']:
+						pid_data = controllerCore.__dict__
+						pid_data['cycle_ratio'] = round(CycleRatio, 2)
+						check_notify(settings, control, pid_data=pid_data)
+
 			# If Auger is ON and time since toggle is greater than On Time
 			if current_output_status['auger'] and (now - auger_toggle_time) > (CycleTime * CycleRatio):
 				grill_platform.auger_off()
@@ -608,7 +660,6 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		sensor_data = probe_complex.read_probes()
 		ptemp = list(sensor_data['primary'].values())[0]  # Primary Temperature or the Pit Temperature
 
-		in_data = {}
 		in_data['probe_history'] = sensor_data 
 		in_data['primary_setpoint'] = control['primary_setpoint'] if mode == 'Hold' else 0
 		in_data['notify_targets'] = get_notify_targets(control['notify_data'])
@@ -626,12 +677,23 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		if control['tuning_mode']:
 			write_tr(in_data['probe_history']['tr'])
 
+		# Every 20 seconds, update ETA for any pending notifications
+		if (now - eta_toggle_time) > 20:
+			eta_toggle_time = time.time()
+			update_eta = True
+		else:
+			update_eta = False
 		# Check to see if there are any pending notifications (i.e. Timer / Temperature Settings)
-		control = check_notify(in_data, control, settings, pelletdb, grill_platform)
+		control = check_notify(settings, control, in_data=in_data, pelletdb=pelletdb, grill_platform=grill_platform, update_eta=update_eta)
+
+		# Publish the cycle ratio to mqtt.  Note if in HOLD mode it was already published.
+		if mode in ('Startup', 'Smoke') and 'CycleRatio' in locals():
+			pid_data = {}
+			pid_data['cycle_ratio'] = round(CycleRatio, 2)
+			check_notify(settings, control, pid_data=pid_data)
 
 		# Send Current Status / Temperature Data to Display Device every 0.5 second (Display Refresh)
 		if (now - display_toggle_time) > 0.5:
-			status_data = {} 
 			status_data['notify_data'] = control['notify_data']  # Get any flagged notifications
 			status_data['timer'] = control['timer']  # Get the timer information
 			status_data['s_plus'] = control['s_plus']
@@ -641,12 +703,13 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			status_data['recipe'] = True if control['mode'] == 'Recipe' else False
 			status_data['start_time'] = start_time
 			status_data['start_duration'] = startup_timer
-			status_data['shutdown_duration'] = settings['globals']['shutdown_timer']
+			status_data['shutdown_duration'] = settings['shutdown']['shutdown_duration']
 			status_data['prime_duration'] = prime_duration if mode == 'Prime' else 0  # Enable Timer for Prime Mode 
 			status_data['prime_amount'] = prime_amount if mode == 'Prime' else 0  # Enable Display of Prime Amount
 			status_data['lid_open_detected'] = LidOpenDetect if mode == 'Hold' else False
 			status_data['lid_open_endtime'] = LidOpenEventExpires if mode == 'Hold' else 0
 			status_data['p_mode'] = metrics.get('p_mode', None)
+			status_data['startup_timestamp'] = control['startup_timestamp']
 			if control['mode'] == 'Recipe':
 				status_data['recipe_paused'] = True if control['recipe']['step_data']['triggered'] and control['recipe']['step_data']['pause'] else False
 			else: 
@@ -789,18 +852,33 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			write_history(in_data, ext_data=ext_data)
 			monitor.heartbeat()  # Issue a heartbeat for the process monitor
 
-		# Check if startup time has elapsed since startup/reignite mode started
+		# Check if startup time has elapsed since startup/reignite mode started or if exit temperature has been achieved 
 		if mode in ('Startup', 'Reignite'):
-			if settings['smartstart']['enabled']:
+			if settings['startup']['smartstart']['enabled']:
 				profile_selected = control['smartstart']['profile_selected']
-				startup_timer = settings['smartstart']['profiles'][profile_selected]['startuptime']
+				startup_timer = settings['startup']['smartstart']['profiles'][profile_selected]['startuptime']
+				# Check case where the grill starts hot (perhaps due to previous failure)
+				if raw_startup_temp >= settings['startup']['smartstart']['exit_temp']:
+					exit_temp = 0  # Force ignite
+				else:
+					exit_temp = settings['startup']['smartstart']['exit_temp']
 			else: 
-				startup_timer = settings['globals']['startup_timer']
+				startup_timer = settings['startup']['duration']
+				exit_temp = settings['startup']['startup_exit_temp']
+				# Check case where the grill starts hot (perhaps due to previous failure)
+				if raw_startup_temp >= settings['startup']['startup_exit_temp']:
+					exit_temp = 0  # Force ignite
+				else:
+					exit_temp = settings['startup']['startup_exit_temp']
+			
 			if (now - start_time) > startup_timer:
 				break
 
+			if (exit_temp != 0) and (ptemp >= exit_temp):
+				break
+
 		# Check if shutdown time has elapsed since shutdown mode started
-		if mode == 'Shutdown' and (now - start_time) > settings['globals']['shutdown_timer']:
+		if mode == 'Shutdown' and (now - start_time) > settings['shutdown']['shutdown_duration']:
 			break
 
 		# Check if prime time has elapsed
@@ -868,10 +946,15 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	write_metrics(metrics)
 
 	monitor.stop_monitor()
+
+	if status_data != {}:
+		status_data['mode'] = control['mode']
+		display_device.display_status(in_data, status_data)
+
 	return ()
 
 def _next_mode(next_mode, setpoint=0):			
-	execute_commands()
+	execute_control_writes()
 	control = read_control()
 	# If no other request, then transition to next mode, otherwise exit
 	if not control['updated']:
@@ -940,7 +1023,7 @@ def _recipe_mode(grill_platform, probe_complex, display_device, dist_device, sta
 		_work_cycle(recipe['steps'][step_num]['mode'], grill_platform, probe_complex, display_device, dist_device)
 		
 		# 4c. If reignite is required, run a reignite cycle and retry current step
-		execute_commands()
+		execute_control_writes()
 		control = read_control()
 		if control['mode'] == 'Reignite' and control['updated']:
 			control['updated'] = False
@@ -974,7 +1057,6 @@ def _recipe_mode(grill_platform, probe_complex, display_device, dist_device, sta
 	write_control(control, direct_write=True, origin='control')
 
 	return()
-
 
 # *****************************************
 # Main Program Start / Init and Loop
@@ -1015,9 +1097,20 @@ while True:
 			continue
 	write_status(status)
 
-	# 1. Check control for commands
-	execute_commands()
+	# 1. Check control for changes 
+	execute_control_writes()
 	control = read_control()
+	# 2. Check for system commands
+	_process_system_commands(grill_platform)
+
+	# Check if there were updates to any of the settings that were flagged
+	if control['settings_update']:
+		control['settings_update'] = False
+		write_control(control, direct_write=True, origin='control')
+		settings = read_settings()
+
+	# Check if there are any notifications pending
+	check_notify(settings, control, pelletdb=pelletdb, grill_platform=grill_platform)
 
 	# Check if there is a timer running, see if it has expired, send notification and reset
 	for index, item in enumerate(control['notify_data']):
@@ -1098,13 +1191,15 @@ while True:
 			status['recipe_paused'] = False
 			status['start_time'] = 0
 			status['lid_open_detected'] = False 
-			status['lid_open_endtime'] = 0 
+			status['lid_open_endtime'] = 0
+			status['startup_timestamp'] = 0
 			write_status(status)
 
 			if control['status'] == 'monitor' and control['mode'] == 'Error':
 				grill_platform.power_on()
 			else:
 				grill_platform.power_off()
+			
 			if control['mode'] == 'Stop':
 				eventLogger.info('Stop Mode Started.')
 				display_device.clear_display()  # When in error mode, leave the display showing ERROR
@@ -1115,6 +1210,7 @@ while True:
 				control['tuning_mode'] = False  # Turn off Tuning Mode on Stop just in case it is on
 				control['next_mode'] = 'Stop'
 				control['safety']['reigniteretries'] = settings['safety']['reigniteretries']  # Reset retry counter to default
+				control['startup_timestamp'] = 0  # Reset the startup timestamp to 0
 				write_control(control, direct_write=True, origin='control')
 			else:
 				eventLogger.error('An error has occurred, Stop Mode enabled.')
@@ -1141,7 +1237,7 @@ while True:
 			_work_cycle('Prime', grill_platform, probe_complex, display_device, dist_device)
 			# Select Next Mode
 			settings = read_settings()
-			_next_mode(control['next_mode'], setpoint=settings['start_to_mode']['primary_setpoint'])			
+			_next_mode(control['next_mode'], setpoint=settings['startup']['start_to_mode']['primary_setpoint'])			
 
 		# Startup (startup sequence)
 		elif control['mode'] == 'Startup':
@@ -1151,14 +1247,27 @@ while True:
 			# Clear History (in the case it wasn't already cleared fromt he last run)
 			eventLogger.debug('Clearing History and Current Log on Startup Mode.')
 			read_history(0, flushhistory=True)  # Clear all history
-			# Setup Next Mode (after startup mode)
-			control['next_mode'] = settings['start_to_mode']['after_startup_mode']
-			write_control(control, direct_write=True, origin='control')
-			# Call Work Cycle for Startup Mode
-			_work_cycle('Startup', grill_platform, probe_complex, display_device, dist_device)
-			# Select Next Mode
-			settings = read_settings()
-			_next_mode(control['next_mode'], setpoint=settings['start_to_mode']['primary_setpoint'])			
+			# Check if Prime on Startup is selected
+			if settings['startup']['prime_on_startup'] > 0:
+				control['prime_amount'] = settings['startup']['prime_on_startup']
+				control['mode'] = 'Prime'
+				write_control(control, direct_write=True, origin='control')
+				# Call Work Cycle for Prime Mode
+				_work_cycle('Prime', grill_platform, probe_complex, display_device, dist_device)
+				control = read_control()  # Refresh control in case any changes were made during the cycle
+				if control['mode'] in ['Prime', 'Startup']:
+					control['updated'] = False 
+					control['mode'] = 'Startup'
+			# Check if there was a mode change during Priming
+			if control['mode'] == 'Startup':
+				# Setup Next Mode (after startup mode)
+				control['next_mode'] = settings['startup']['start_to_mode']['after_startup_mode']
+				write_control(control, direct_write=True, origin='control')
+				# Call Work Cycle for Startup Mode
+				_work_cycle('Startup', grill_platform, probe_complex, display_device, dist_device)
+				# Select Next Mode
+				settings = read_settings()
+				_next_mode(control['next_mode'], setpoint=settings['startup']['start_to_mode']['primary_setpoint'])
 
 		# Smoke (smoke cycle)
 		elif control['mode'] == 'Smoke':
@@ -1176,7 +1285,7 @@ while True:
 			write_control(control, direct_write=True, origin='control')
 			_work_cycle('Shutdown', grill_platform, probe_complex, display_device, dist_device)
 			_next_mode(control['next_mode'])			
-			if settings['globals']['auto_power_off']:
+			if settings['shutdown']['auto_power_off']:
 				eventLogger.info('Shutdown mode ended powering off grill')
 				os.system("sleep 3 && sudo shutdown -h now &")
 
@@ -1204,6 +1313,9 @@ while True:
 			write_control(control, direct_write=True, origin='control')
 			_work_cycle('Reignite', grill_platform, probe_complex, display_device, dist_device)
 			_next_mode(control['next_mode'], setpoint=setpoint)
+	
+	if settings['notify_services'].get('mqtt') != None and settings['notify_services']['mqtt']['enabled']:
+		check_notify(settings, control, pelletdb=pelletdb)
 
 	time.sleep(0.1)
 # ===================

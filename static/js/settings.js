@@ -638,6 +638,23 @@ $('#selectController').on('change', function() {
 	$('#controller_config').load("/settings/controller_card", {"selected" : this.value});
 });
 
+function sendTestNotification() {
+	$.ajax({
+		url: '/api/set/notify/Test/req/true',
+		type: 'GET',
+		contentType: "application/json; charset=utf-8",
+		traditional: true,
+		success: function(data) {
+			//console.log('Data: ' + data['result'] + data['message']);
+			if (data['result'] == 'OK') {
+				alert('Test notification sent.');
+			} else {
+				alert('Something went wrong. Try again.');
+			}
+		}
+	});
+};
+
 // On page load...
 $(document).ready(function() {
 	// Setup Color Picker for all elements whose id starts with 'clrpck_'
@@ -788,6 +805,36 @@ $(document).ready(function() {
 			$('#startup_hold_value_input').slideDown();
 		} else {
 			$('#startup_hold_value_input').slideUp();
+		};
+	});
+
+	// Enable / Disable the Startup Exit Temp feature 
+	var startup_exit_temp = document.getElementById('startup_exit_temp').value;
+	if (startup_exit_temp == 0) {
+		startup_exit_temp = 140; // Set to default of 140 if not already set
+	}
+	$('#startup_exit_temp_toggle').change(function() {
+		if(document.getElementById("startup_exit_temp_toggle").checked) {
+			$('#startup_exit_temp').val(startup_exit_temp); // Default value for exit temp
+			$('#startup_exit_temp_input').slideDown(100);
+		} else {
+			$('#startup_exit_temp_input').slideUp(100);
+			$('#startup_exit_temp').val(0); // Zero disables this feature 
+		};
+	});
+
+	// Enable / Disable the Prime on Startup Feature 
+	var prime_on_startup = document.getElementById('prime_on_startup').value;
+	if (prime_on_startup == 0) {
+		prime_on_startup = 10; // Set to default of 10g if not already set
+	}
+	$('#prime_on_startup_toggle').change(function() {
+		if(document.getElementById("prime_on_startup_toggle").checked) {
+			$('#prime_on_startup').val(prime_on_startup); // Default value for priming
+			$('#prime_on_startup_input').slideDown(100);
+		} else {
+			$('#prime_on_startup_input').slideUp(100);
+			$('#prime_on_startup').val(0); // Zero disables this feature 
 		};
 	});
 

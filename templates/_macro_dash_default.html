@@ -66,6 +66,18 @@
 					{% endif %}
 				{% endfor %}
 			</div>
+			{% for notify_info in control['notify_data'] %}
+				{% if notify_info['label'] == probe_data['label'] %} 
+					{% if notify_info['req'] %}
+					<button type="button" class="btn btn-sm btn-primary shadow" id="{{ probe_data['label'] }}_eta_btn" data-toggle="tooltip" title="Estimated time to reach target temperature">
+					{% else %}
+					<button type="button" class="btn btn-sm btn-primary shadow" id="{{ probe_data['label'] }}_eta_btn" data-toggle="tooltip" title="Estimated time to reach target temperature" style="display:none">
+					{% endif %}
+				{% endif %}
+			{% endfor %}
+						<i class="fa-solid fa-hourglass-half"></i>&nbsp;
+						<i class="fa-solid fa-spinner fa-spin-pulse"></i>
+					</button>
 		</div>
 	</div>
 </div>
@@ -82,18 +94,24 @@
 			<!-- Modal body -->
 			<div class="modal-body text-center">
 				Send a notification when this probe achieves the target temperature:
-				<h1><output name="{{ probe_data['label'] }}_tempOutput" id="{{ probe_data['label'] }}_tempOutputId">0</output>&deg;{% if settings['globals']['units'] == 'F' %}F{% else %}C{% endif %}</h1>
+				<div class="row d-flex justify-content-center">
+					<div class="input-group w-50">
+						<input class="form-control text-center temperature-input border-0" name="{{ probe_data['label'] }}_tempOutput" id="{{ probe_data['label'] }}_tempOutputId" type="text" min="0" value="0" pattern="[0-9]*" inputmode="numeric" 
+						oninput="{{ probe_data['label'] }}_tempInputId.value = {{ probe_data['label'] }}_tempOutputId.value"
+						onclick="this.select()">
+					</div>
+				</div>	
 				{% if probe_data['type'] == 'Primary' %}
 					{% if settings['globals']['units'] == 'F' %}
-					<input type="range" class="custom-range" min="0" max="600" value="0" id="{{ probe_data['label'] }}_tempInputId" name="{{ probe_data['label'] }}_tempInputRange" oninput="{{ probe_data['label'] }}_tempOutputId.value = {{ probe_data['label'] }}_tempInputId.value">
+					<input type="range" class="custom-range" min="0" max="600" value="0" id="{{ probe_data['label'] }}_tempInputId" name="{{ probe_data['label'] }}_tempInputRange" oninput="{{ probe_data['label'] }}_tempOutputId.value = {{ probe_data['label'] }}_tempInputId.value" onclick="this.select();">
 					{% else %}
-					<input type="range" class="custom-range" min="0" max="300" value="0" id="{{ probe_data['label'] }}_tempInputId" name="{{ probe_data['label'] }}_tempInputRange" oninput="{{ probe_data['label'] }}_tempOutputId.value = {{ probe_data['label'] }}_tempInputId.value">
+					<input type="range" class="custom-range" min="0" max="300" value="0" id="{{ probe_data['label'] }}_tempInputId" name="{{ probe_data['label'] }}_tempInputRange" oninput="{{ probe_data['label'] }}_tempOutputId.value = {{ probe_data['label'] }}_tempInputId.value" onclick="this.select();">
 					{% endif %}
 				{% else %}
 					{% if settings['globals']['units'] == 'F' %}
-					<input type="range" class="custom-range" min="0" max="300" value="0" id="{{ probe_data['label'] }}_tempInputId" name="{{ probe_data['label'] }}_tempInputRange" oninput="{{ probe_data['label'] }}_tempOutputId.value = {{ probe_data['label'] }}_tempInputId.value">
+					<input type="range" class="custom-range" min="0" max="300" value="0" id="{{ probe_data['label'] }}_tempInputId" name="{{ probe_data['label'] }}_tempInputRange" oninput="{{ probe_data['label'] }}_tempOutputId.value = {{ probe_data['label'] }}_tempInputId.value" onclick="this.select();">
 					{% else %}
-					<input type="range" class="custom-range" min="0" max="150" value="0" id="{{ probe_data['label'] }}_tempInputId" name="{{ probe_data['label'] }}_tempInputRange" oninput="{{ probe_data['label'] }}_tempOutputId.value = {{ probe_data['label'] }}_tempInputId.value">
+					<input type="range" class="custom-range" min="0" max="150" value="0" id="{{ probe_data['label'] }}_tempInputId" name="{{ probe_data['label'] }}_tempInputRange" oninput="{{ probe_data['label'] }}_tempOutputId.value = {{ probe_data['label'] }}_tempInputId.value" onclick="this.select();">
 					{% endif %}
 				{% endif %}
 				<br><br>
@@ -139,12 +157,11 @@
 {% endmacro %}
 
 {% macro render_hopper_card() %}
-<div class="card shadow">
-	<div class="card-header bg-primary text-white text-center">
-		<i class="fas fa-poll-h"></i>&nbsp; Current Pellet Level
-	</div>
+
+<div class="card">
 	<div class="card-body text-center">
-		<h5>Current: <span id="hopperPellets"></span></h5>
+		<b>Pellets:</b>  <span id="hopperPellets" class="text-truncate"></span>
+		<br><br>
 		<!-- Hopper Level Indicator-->
 		<div class="progress shadow" style="height:30px">
 			<div id="hopperLevel" class="progress-bar progress-bar-striped bg-success" style="width:100%;height:30px">100%</div>
@@ -155,47 +172,68 @@
 		<a href="/pellets" type="button" class="btn btn-outline-primary">Manager</a>
 	</div>
 </div>
+
 {% endmacro %}
 
-{% macro render_status_card() %}
+{% macro render_status_card(settings) %}
 <div class="card shadow">
 	<div class="card-header bg-primary text-white text-center">
 		<i class="fas fa-info-circle"></i>&nbsp; Status: <span id="mode_status" style="color:yellow"><b>Stop</b></span>
 	</div>
-	<div class="card-body text-center text-large">
-
-			<table class="table table-sm table-borderless">
-				<tbody>
-				  <tr>
-					<td>
-						<span id="fan_status"><i class="fas fa-fan fa-2x" data-toggle="tooltip" data-placement="top" title="Fan ON" style="color:rgb(150, 150, 150)"></i></span>&nbsp;
-					</td>
-					<td>
-						<span id="auger_status"><i class="fas fa-angle-double-right fa-2x" data-toggle="tooltip" data-placement="top" title="Auger ON" style="color:rgb(150, 150, 150)"></i></span>&nbsp;
-					</td>
-					<td>
-						<span id="igniter_status"><i class="fas fa-fire fa-2x" data-toggle="tooltip" data-placement="top" title="Igniter ON" style="color:rgb(150, 150, 150)"></i></span>&nbsp;
-					</td>
-					<td>
-						<span id="pmode_status" class="fa-stack" style="vertical-align: top;">
-							<i class="far fa-square fa-stack-2x" style="color:rgb(150, 150, 150)" data-toggle="tooltip" data-placement="top" title="P-Mode"></i>
-							<i class="fas fa-minus fa-stack-1x" style="color:rgb(150, 150, 150)"></i>
-						</span>
-					</td>
-				  </tr>
-				  <tr>
-					<td><span class="badge badge-secondary">Fan</span></td>
-					<td><span class="badge badge-secondary">Auger</span></td>
-					<td><span class="badge badge-secondary">Igniter</span></td>
-					<td><span class="badge badge-secondary">P-Mode</span></td>
-				  </tr>
-				</tbody>
-			  </table>
-
-	</div>
-	<div id="status_footer" class="card-footer text-center" style="display:none">
+	<div id="status_footer" class="text-center" style="display:none">
+		<br>
 		<b id="mode_timer_label" style="color:green;display:none">Time Left in Mode: <span id="mode_timer"></span>s</b>
 		<b id="lid_open_label" style="color:green;display:none"></b>
+	</div>
+	<div class="card-body text-center text-large">
+		<table class="table table-sm table-borderless">
+			<tbody>
+				<tr>
+				<td>
+					<span id="fan_status"><i class="fas fa-fan fa-2x" data-toggle="tooltip" data-placement="top" title="Fan ON" style="color:rgb(150, 150, 150)"></i></span>&nbsp;
+				</td>
+				<td>
+					<span id="auger_status"><i class="fas fa-angle-double-right fa-2x" data-toggle="tooltip" data-placement="top" title="Auger ON" style="color:rgb(150, 150, 150)"></i></span>&nbsp;
+				</td>
+				<td>
+					<span id="igniter_status"><i class="fas fa-fire fa-2x" data-toggle="tooltip" data-placement="top" title="Igniter ON" style="color:rgb(150, 150, 150)"></i></span>&nbsp;
+				</td>
+				<td>
+					<span id="pmode_status" class="fa-stack" style="vertical-align: top;">
+						<i class="far fa-square fa-stack-2x" style="color:rgb(150, 150, 150)" data-toggle="tooltip" data-placement="top" title="P-Mode"></i>
+						<i class="fas fa-minus fa-stack-1x" style="color:rgb(150, 150, 150)"></i>
+					</span>
+				</td>
+				</tr>
+				<tr>
+				<td><span class="badge badge-secondary">Fan</span></td>
+				<td><span class="badge badge-secondary">Auger</span></td>
+				<td><span class="badge badge-secondary">Igniter</span></td>
+				<td><span class="badge badge-secondary">P-Mode</span></td>
+				</tr>
+			</tbody>
+		</table>
+		<div {% if (settings['modules']['dist'] == 'none') %}
+			style="display:none"
+		{% endif %}>
+			{{ render_hopper_card() }}
+		</div>
+	</div>
+</div>
+{% endmacro %}
+
+{% macro render_time_elapsed_card() %}
+<div class="card shadow">
+	<div class="card-header bg-primary text-white text-center">
+		<i class="fa-regular fa-clock"></i>&nbsp; Time Elapsed Since Start
+	</div>
+	<div class="card-body text-center text-large">
+		<h1>
+			<b>
+				<span id="time_elapsed_string" class="text-secondary">--</span>
+			</b>
+		</h1>
+		<span class="badge badge-secondary">HH:MM:SS</span>
 	</div>
 </div>
 {% endmacro %}

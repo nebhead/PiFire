@@ -22,7 +22,9 @@ import requests
 import json
 import apprise
 import logging
-from common import write_settings, write_control, create_logger
+import math
+from common import write_settings, write_control, create_logger, read_history
+from scipy.interpolate import interp1d
 
 '''
 ==============================================================================
@@ -30,7 +32,8 @@ from common import write_settings, write_control, create_logger
 ==============================================================================
 '''
 
-def check_notify(in_data, control, settings, pelletdb, grill_platform):
+
+def check_notify(settings, control, in_data=None, pelletdb=None, grill_platform=None, pid_data=None, update_eta=False):
 	"""
 	Check for any pending notifications
 
@@ -40,20 +43,50 @@ def check_notify(in_data, control, settings, pelletdb, grill_platform):
 	:param pelletdb: Pellet DB
 	:param grill_platform: Grill Platform
 	"""
+
+	# If pelletdb or grill_platform is not populated, exit
+	if not pelletdb or not grill_platform:
+		return
+
+	# Forward to mqtt if enabled.
+	if settings['notify_services'].get('mqtt') != None and \
+	   settings['notify_services']['mqtt']['enabled'] == True:
+		_send_mqtt_notification(control, settings, pelletdb, in_data, grill_platform, pid_data)
+
 	if settings['notify_services']['influxdb']['url'] != '' and settings['notify_services']['influxdb']['enabled']:
 		_send_influxdb_notification('GRILL_STATE', control, settings, pelletdb, in_data, grill_platform)
 
 	''' Get simple list of temperatures key:value pairs '''
 	probe_temp_list = {}
-	for group in in_data['probe_history']:
-		if group != 'tr':
-			for probe in in_data['probe_history'][group]:
-				probe_temp_list[probe] = in_data['probe_history'][group][probe]
+	if in_data is not None:
+		for group in in_data['probe_history']:
+			if group != 'tr':
+				for probe in in_data['probe_history'][group]:
+					probe_temp_list[probe] = in_data['probe_history'][group][probe]
 
 	''' Process all registered notification items '''
 	for index, item in enumerate(control['notify_data']):
 		if item['req']: 
-			if item['type'] == 'probe':
+			if item['type'] == 'probe' and in_data is not None:
+				# Update the ETA, if requested for any active probe
+				if update_eta:
+					num_minutes = 20  # Number of minutes of history to grab
+					num_seconds = num_minutes * 60 
+					time_interval = 3  # 3-Second Time Intervals
+					# Get temperature history for this probe 
+					temperatures = []
+					history = read_history(num_items=(num_seconds // time_interval))
+					for datapoint in history:
+						if item['label'] in datapoint['F']:
+							temperatures.append(datapoint['F'][item['label']])
+						elif item['label'] in datapoint['P']:
+							temperatures.append(datapoint['P'][item['label']])
+					# Call extrapolate ETA
+					#print(f'DEBUG: ETA: Interpolating {item["name"]}')
+					eta_seconds = _estimate_eta(temperatures, item['target'], interval_seconds=time_interval, max_history_minutes=num_minutes)
+					# Write to control
+					control['notify_data'][index]['eta'] = eta_seconds
+				# If target temperature achieved, send notification and clear request/data 
 				if probe_temp_list[item['label']] >= in_data['notify_targets'][item['label']]:
 					send_notifications("Probe_Temp_Achieved", control, settings, pelletdb, label=item['label'], target=in_data['notify_targets'][item['label']])
 					if control['mode'] == 'Recipe':
@@ -61,6 +94,7 @@ def check_notify(in_data, control, settings, pelletdb, grill_platform):
 							control['recipe']['step_data']['triggered'] = True
 					control['notify_data'][index]['req'] = False
 					control['notify_data'][index]['target'] = 0 
+					control['notify_data'][index]['eta'] = None 
 
 			elif item['type'] == 'timer':
 				if time.time() >= control['timer']['end']:
@@ -79,6 +113,11 @@ def check_notify(in_data, control, settings, pelletdb, grill_platform):
 						send_notifications("Pellet_Level_Low", control, settings, pelletdb)
 						control['notify_data'][index]['last_check'] = time.time()
 			
+			elif item['type'] == 'test':
+				send_notifications("Test_Notify", control, settings, pelletdb)
+				control['notify_data'][index]['last_check'] = time.time()
+				control['notify_data'][index]['req'] = False
+
 			''' Do Shutdown or Keep Warm if Requested '''
 			if item['shutdown'] and control['mode'] in ('Reignite', 'Startup', 'Smoke', 'Hold') and not control['notify_data'][index]['req']:
 				control['mode'] = 'Shutdown'
@@ -170,6 +209,12 @@ def send_notifications(notify_event, control, settings, pelletdb, label='Probe',
 		channel = 'pifire_recipe_message'
 		query_args = {"value1": control['recipe']['step_data']['message']}
 		eventLogger.info(body_message)
+	elif "Test_Notify" in notify_event:
+		title_message = "Test Notification"
+		body_message = "This is a test notification from PiFire."
+		channel = 'pifire_test_message'
+		query_args = {"value1": "This is a test notification from PiFire."}
+		eventLogger.info(body_message)
 	else:
 		title_message = "PiFire: Unknown Notification issue"
 		body_message = "Whoops! PiFire had the following unhandled notify event: " + notify_event + " at " + str(now)
@@ -188,7 +233,8 @@ def send_notifications(notify_event, control, settings, pelletdb, label='Probe',
 		_send_pushover_notification(settings, title_message, body_message)
 	if settings['notify_services']['onesignal']['app_id'] != '' and settings['notify_services']['onesignal']['enabled']:
 		_send_onesignal_notification(settings, title_message, body_message, channel)
-
+	if settings['notify_services']['mqtt']['broker'] != '' and settings['notify_services']['mqtt']['enabled']:
+		_send_mqtt_notification(control, settings, notify_event=title_message)
 
 def _send_apprise_notifications(settings, title_message, body_message):
 	"""
@@ -222,28 +268,37 @@ def _send_pushover_notification(settings, title_message, body_message):
 	:param title_message: Message Title
 	:param body_message: Message Body
 	"""
-	log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
-	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
-	url = 'https://api.pushover.net/1/messages.json'
+	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s')
+	if settings['globals']['debug_mode']:
+		eventLogger.setLevel(logging.DEBUG)
+	else:
+		eventLogger.setLevel(logging.INFO)
+
+	appriseHandler = apprise.Apprise()
+
+	token = settings["notify_services"]["pushover"]["APIKey"]
+	public_url = settings["notify_services"]["pushover"]["PublicURL"]
+
 	for user in settings['notify_services']['pushover']['UserKeys'].split(','):
-		try:
-			response = requests.post(url, data={
-				"token": settings['notify_services']['pushover']['APIKey'],
-				"user": user.strip(),
-				"message": body_message,
-				"title": title_message,
-				"url": settings['notify_services']['pushover']['PublicURL']
-			})
+		user_id = user.strip()
+		apprise_url = f'pover://{user_id}@{token}?url={public_url}'
+		appriseHandler.add(apprise_url)
+		
+	try:
+		result = appriseHandler.notify(
+			title=title_message,
+			body=body_message,
+		)
 
-			if not response.status_code == 200:
-				eventLogger.warning("Pushover Notification Failed: " + title_message)
+		if result:
+			eventLogger.debug(f"Pushover Notification to {user} was a success!")
+		else:
+			eventLogger.warning(f"Pushover Notification to {user} failed!")
 
-			eventLogger.debug("Pushover Response: " + response.text)
-
-		except Exception as e:
-			eventLogger.warning("Pushover Notification to %s failed: %s" % (user, e))
-		except:
-			eventLogger.warning("Pushover Notification to %s failed for unknown reason." % (user))
+	except Exception as e:
+		eventLogger.warning(f"Pushover Notification to {user} failed: {e}")
+	except:
+		eventLogger.warning(f"Pushover Notification to {user} failed for unknown reason.")
 
 
 def _send_pushbullet_notification(settings, title_message, body_message):
@@ -255,27 +310,35 @@ def _send_pushbullet_notification(settings, title_message, body_message):
 	:param body_message: Message Body
 	:return:
 	"""
-	log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
-	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
+	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s')
+	if settings['globals']['debug_mode']:
+		eventLogger.setLevel(logging.DEBUG)
+	else:
+		eventLogger.setLevel(logging.INFO)
+
+	appriseHandler = apprise.Apprise()
+
 	api_key = settings['notify_services']['pushbullet']['APIKey']
-	pushbullet_link = settings['notify_services']['pushbullet']['PublicURL']
-	url = "https://api.pushbullet.com/v2/pushes"
+	public_url = settings['notify_services']['pushbullet']['PublicURL']
 
-	headers = {"content-type": "application/json", "Authorization": 'Bearer ' + api_key}
-	payload = {"type": "link", "title": title_message, "url": pushbullet_link, "body": body_message}
-
+	apprise_url = f'pbul://{api_key}@{api_key}?url={public_url}'
+	appriseHandler.add(apprise_url)
+		
 	try:
-		response = requests.post(url, headers=headers, data=json.dumps(payload))
+		result = appriseHandler.notify(
+			title=title_message,
+			body=body_message,
+		)
 
-		if not response.status_code == 200:
-			eventLogger.warning("PushBullet Notification Failed: " + title_message)
-
-		eventLogger.debug("PushBullet Response: " + response.text)
+		if result:
+			eventLogger.debug(f'Push Bullet Notification to {api_key} was a success!')
+		else:
+			eventLogger.warning(f'Push Bullet Notification to {api_key} failed!')
 
 	except Exception as e:
-		eventLogger.warning("PushBullet Notification failed: %s" % (e))
+		eventLogger.warning(f'Push Bullet Notification to {api_key} failed: {e}')
 	except:
-		eventLogger.warning("PushBullet Notification failed for unknown reason.")
+		eventLogger.warning(f'Push Bullet Notification to {api_key} failed for unknown reason.')
 
 
 def _send_onesignal_notification(settings, title_message, body_message, channel):
@@ -371,3 +434,135 @@ def _send_influxdb_notification(notify_event, control, settings, pelletdb, in_da
 		from notify.influxdb_handler import InfluxNotificationHandler
 		influx_handler = InfluxNotificationHandler(settings)
 	influx_handler.notify(notify_event, control, settings, pelletdb, in_data, grill_platform)
+
+def _estimate_eta(temperatures, target_temperature, interval_seconds=3, max_history_minutes=5, min_history_minutes=1):
+	"""
+	Estimates the ETA (Estimated Time of Arrival) for the food probe to reach a specific target temperature using 
+	Linear Interpolation from the SciPy library module.  
+
+	Args:
+		temperatures: A list of temperatures measured by the food probe over time.
+		target_temperature: The desired target temperature.  Value should be larger than the temperatures in the list.
+		interval: Time between temperature readings.  Value between 1 and 60. 
+		max_history_minutes:  Maximum minutes of history to use for calculating ETA 
+		min_history_minutes:  Minimum minutes of history to use for calculating ETA 
+
+	Returns:
+		The estimated time (in seconds) it will take for the food probe to reach the target temperature.
+		None if the target temperature is already reached or the probe data is insufficient.
+	"""
+	eventLogger = create_logger('events', filename='/tmp/events.log')
+
+	# Ensure target temperature is not already reached
+	if target_temperature <= max(temperatures):
+		#print('DEBUG: ETA: Target temperature already achieved.')
+		eventLogger.debug(f'ETA: Target temperature already achieved.')
+		return None
+
+	# Ensure that interval is between 1 and 60 seconds 
+	if interval_seconds > 60 or interval_seconds < 1:
+		#print('DEBUG: ETA: History data interval not between 1 and 60 seconds.')
+		eventLogger.debug(f'ETA: History data interval not between 1 and 60 seconds.')
+		return None
+	
+	# If there is more data than needed, shorten the list 
+	readings_per_minute = (60 // interval_seconds)
+	minutes_of_data = len(temperatures) // readings_per_minute
+	if minutes_of_data > max_history_minutes:
+		while len(temperatures) // readings_per_minute > max_history_minutes:
+			temperatures.pop(0)
+	# If there is less data than needed, return None
+	elif minutes_of_data < min_history_minutes:
+		#print('DEBUG: Not enough history data to make estimate.')
+		eventLogger.debug(f'ETA: Not enough history data to make estimate.')
+		return None
+
+	# Build times list
+	times = []
+	for index in range(0, len(temperatures) * interval_seconds, interval_seconds):
+		times.append(index)
+
+	#print(f'===========================================')
+	#print(f'DEBUG: ETA: times = {times}')
+	#print(f'DEBUG: ETA: temps = {temperatures}')
+	#print(f'===========================================')
+
+	try:
+		# Create an interpolation function from the temperature data
+		interpolator = interp1d(times, temperatures, axis=0, bounds_error=False, kind="linear", fill_value="extrapolate")
+
+		# Estimate the time to reach the target temperature
+		estimated_time = interpolator(target_temperature)
+		# If estimated time is over 24 hours or less than 0, it's likely to be a bad guess
+		if estimated_time > 86400 or estimated_time <= 0:
+			#print(f'DEBUG: ETA: Estimated time outside of bounds. [{estimated_time}]')
+			eventLogger.debug(f'ETA: Estimated time outside of bounds. [{estimated_time}]')
+			return None
+		eta = math.ceil(int(estimated_time) - times[-1])
+		if eta <= 0:
+			# Additional bounds testing
+			#print(f'DEBUG: ETA: Estimated time outside of bounds. [{eta}]')
+			eventLogger.debug(f'ETA: Estimated time outside of bounds. [{eta}]')
+			return None
+		#print(f'===========================================')
+		#print(f'DEBUG: ETA: {eta}s')
+		#print(f'===========================================')
+		eventLogger.debug(f'Calculated ETA: {eta}s')
+	
+	except:
+		# Something failed, return None
+		#print('DEBUG: ETA: An exception occurred.')
+		eventLogger.debug(f'ETA: An exception occurred.')
+		#raise
+		return None 
+
+	return eta
+
+mqtt = None
+def _send_mqtt_notification(control, settings, 
+			pelletdb=None, in_data=None, grill_platform=None, pid_data=None, notify_event=None):
+	"""
+	Send mqtt Notifications
+
+	:param notify_event: String Event
+	:param control: mode info
+	:param settings: Settings
+	:param pelletdb: Pellet level
+	:param in_data: In Data (Probe Temps)
+	:param grill_platform: Device status
+	"param pid_data: pid configuration, and actual values
+	"""
+	global mqtt
+	
+	if not mqtt:
+		from notify.mqtt_handler import MqttNotificationHandler
+		mqtt = MqttNotificationHandler(settings)
+
+	# Send a notify_event immidiately
+	if notify_event != None:
+		payload = {'msg': notify_event }
+		mqtt.notify("notify_event", payload)
+
+	# Write other data if we changed modes or we've exceeded the configured
+	# update rate
+
+	mode_changed = (control['mode'] != mqtt.last_mode)
+	current_time = time.time()
+
+	if pid_data and \
+		(mode_changed or current_time > mqtt.pub_times['pid'] + mqtt.pub_rate):
+		mqtt.pub_times['pid'] = current_time
+		mqtt.notify("pid", pid_data)
+
+	if pelletdb and \
+		(mode_changed or current_time > mqtt.pub_times['pellet'] + mqtt.pub_rate):
+		mqtt.pub_times['pellet'] = current_time
+		mqtt.notify("pellet", pelletdb['current'])
+
+	if mode_changed or \
+		current_time > mqtt.pub_times['base'] + mqtt.pub_rate:
+		mqtt.pub_times['base'] = current_time
+		mqtt.notify("control", control)
+		mqtt.notify("system", control)
+		if grill_platform: mqtt.notify("devices", grill_platform.current)
+		if in_data: mqtt.notify("probe_data", in_data['probe_history'])

@@ -1,0 +1,16 @@
+{	
+    "name" : "Basic",
+    "friendly_name" : "Basic Dashboard",
+    "description" : "The basic dashboard displays all food probes as values in cards. Includes a hopper card, and status card",
+    "author" : "Ben Parmeter", 
+    "html_name" : "dash_basic.html",
+    "metadata" : "basic.json",
+    "link" : "https://github.com/nebhead/pifire", 
+    "contributors" : ["Ben Parmeter"],
+    "attributions" : [],
+    "thumbnail" : "",
+    "custom" : {
+        "hidden_cards" : []
+    },
+    "config" : {}
+}

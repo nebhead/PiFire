@@ -15,7 +15,7 @@
 
 class Display:
 
-	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F'):
+	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F', config={}):
 		self.display_splash()
 
 	def display_status(self, in_data, status_data):

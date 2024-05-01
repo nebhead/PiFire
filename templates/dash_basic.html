@@ -3,6 +3,7 @@
 {% from '_macro_dash_basic.html' import render_probe_card, render_hopper_card, render_status_card %}
 
 {% block cssextend %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dash_basic.css') }}" type="text/css" />
 {% endblock %} 
 
 {% block title %}Dashboard{% endblock %} 
@@ -13,7 +14,10 @@
 <div class="row"> <!-- Probe Cards -->
 	{% for probe in settings['probe_settings']['probe_map']['probe_info'] %}
 		{% if probe['enabled'] and probe['type'] != 'Aux' %}
-		<div class="col-4">
+		<div id="card_{{ probe['label'] }}" class="col-lg-4 col-md-6 col-sm-12" 
+			{% if probe['label'] in dash_data['custom']['hidden_cards'] %}
+				style="display:none"
+			{% endif %}>
 			<br>
 			<!-- Card for Probe Data -->
 			{{ render_probe_card(probe, settings, control) }}
@@ -21,12 +25,18 @@
 		</div>
 		{% endif %}
 	{% endfor %}
-	<div class="col-lg-4 col-md-6 col-sm-12" {% if settings['modules']['dist'] == 'none' %}style="display:none"{% endif %}>
+	<div id="card_hopper" class="col-lg-4 col-md-6 col-sm-12" 
+			{% if (settings['modules']['dist'] == 'none') or ('hopper' in dash_data['custom']['hidden_cards']) %}
+				style="display:none"
+			{% endif %}>
 		<br>
 		{{ render_hopper_card() }}
 		<br>
 	</div>
-	<div class="col-lg-4 col-md-6 col-sm-12">
+	<div id="card_status" class="col-lg-4 col-md-6 col-sm-12" 
+			{% if 'status' in dash_data['custom']['hidden_cards'] %}
+				style="display:none"
+			{% endif %}>
 		<br>
 		{{ render_status_card() }}
 		<br>
@@ -68,6 +78,106 @@
 		<!-- Modal footer -->
 		<div class="modal-footer">
 		  <button type="button" class="btn btn-danger" id="reloadPage" data-dismiss="modal">Reload</button>
+		</div>
+  
+	  </div>
+	</div>
+</div> <!-- End Server Reload Modal -->
+
+<!-- Dash Gear Icon for Dash Settings -->
+<span class="gear-icon" onclick="dashSettings();">
+	<i class="fa-solid fa-gear"></i>
+</span>
+
+<!-- Dashboard Settings Modal -->
+<div class="modal" id="dashSettingsModal">
+	<div class="modal-dialog">
+	  <div class="modal-content">
+  
+		<!-- Modal Header -->
+		<div class="modal-header">
+		  <h4 class="modal-title">Dashboard Settings</h4>
+		  <button type="button" class="close" data-dismiss="modal">&times;</button>
+		</div>
+  
+		<!-- Modal body -->
+		<div class="modal-body">
+			<div class="card">
+				<div class="card-header">
+					Dashboard Configuration Settings
+				</div>
+				<div class="card-body">
+					<!-- Standard Dashboard Configuration Settings -->
+					<div id="dash_config">
+						There doesn't seem to be any config settings for this dashboard. <br>
+						<!-- p style="font-family: 'Courier New', Courier, monospace;">
+							{{ dash_data }}
+						</p-->
+					</div>
+				</div>
+
+			</div>
+			<br>
+			<!-- Custom Dashboard Configuration Settings -->
+			<div class="card">
+				<div class="card-header">
+					Dashboard Custom Configuration
+				</div>
+				<div class="card-body">
+					<strong>Visible Cards:</strong><br>
+					<i>Click the label below to toggle shown/hide each of the cards.</i>
+					<table class="table table-hover table-borderless">
+						<tbody>
+						{% for probe in settings['probe_settings']['probe_map']['probe_info'] %}
+						<tr onclick="dashToggleVisible('{{ probe['label'] }}');">
+							<td>
+								<span id="visibleStatus_{{ probe['label'] }}">
+								{% if probe['label'] not in dash_data['custom']['hidden_cards'] %}
+								<i class="fa-solid fa-eye text-success"></i>&nbsp;
+								{% else %}
+								<i class="fa-solid fa-eye-slash text-secondary"></i>&nbsp;
+								{% endif %}
+								</span>
+								{{ probe['name'] }} Card
+							</td>
+						</tr>
+						{% endfor %}
+						<tr onclick="dashToggleVisible('status');">
+							<td>
+								<span id="visibleStatus_status">
+								{% if 'status' not in dash_data['custom']['hidden_cards'] %}
+								<i class="fa-solid fa-eye text-success"></i>&nbsp;
+								{% else %}
+								<i class="fa-solid fa-eye-slash text-secondary"></i>&nbsp;
+								{% endif %}
+								</span>
+								Status Card
+							</td>
+						</tr>
+						{% if settings['modules']['dist'] != 'none' %}
+						<tr onclick="dashToggleVisible('hopper');">
+							<td>
+								<span id="visibleStatus_hopper">
+								{% if 'hopper' not in dash_data['custom']['hidden_cards'] %}
+								<i class="fa-solid fa-eye text-success"></i>&nbsp;
+								{% else %}
+								<i class="fa-solid fa-eye-slash text-secondary"></i>&nbsp;
+								{% endif %}
+								</span>
+								Hopper Card
+							</td>
+						</tr>
+						{% endif %}
+						</tbody>
+					</table>
+				</div>
+
+			</div>
+		</div>
+		<!-- Modal footer -->
+		<div class="modal-footer">
+			<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+			<button type="button" class="btn btn-danger" data-dismiss="modal">Save</button>
 		</div>
   
 	  </div>

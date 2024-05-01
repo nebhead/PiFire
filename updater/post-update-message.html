@@ -1,124 +1,175 @@
-<!-- Post Update Message for v1.6.0 -->
+<!-- Post Update Message for v1.7.0 -->
 <H1>
     <img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="50" height="50" class="d-inline-block align-top" alt="">
-    PiFire 1.6.5 Release - March 2024
+    PiFire 1.7.0 Release - May 2024
 </H1>
-
-<p>In this month comes another <i>huge</i> update with lots of new features and bug fixes.  Many thanks to the users from discord that have been testing along the way (as well as submitting some bugs), what a great community we have!  Many of these features have been deployed on our development branch for some time, so they should be relatively stable.  Please do file issues on GitHub if you find any new bugs with the formal release.  With that, enjoy and happy grilling/smoking!</p>
-
-<div class="card border-warning shadow">
-    <div class="card-header bg-warning">
-        <strong><i class="fa-solid fa-circle-exclamation"></i>&nbsp; Important!</strong>
-    </div>
-    <div class="card-body">
-        <strong>
-            Due to the addition of Vs (Voltage Source) and Rd (Resistor Divider) settings into the device settings of a specific device, it is important that users run the <a href="/wizard">Configuration Wizard</a> and setup these values in the ADS1115 device.  The values stored in the probe profiles will not longer be used, such that the probe profiles can be used with any of the devices regardless of the Vs and Rd values.  For example, in the probes device section of the configuration wizard, click on the edit icon for the ADS1115 device, edit the Vs and individual Rd settings.  Once you are finished, continue with the configuration wizard and install the changes.  
-        </strong>
-    </div>
-</div>
-<br>
-
-<p><i class="fa-regular fa-star"></i>&nbsp; <u>Here are just some of the <b>NEW</b> features that were added in this update:</u></p>
-
-<ul>
-    <li>
-        Added Pan/Zoom capabilities to the chart in the <a href="/history">History/Status</a> page
-    </li>
-    <li>
-        Moved Vs and Rd settings (per-probe) to the Device settings in the <a href="/wizard">Configuration Wizard</a> so that these do not need to be configured via the profiles.  <strong>WARNING: </strong> <i>For this reason, it is required to go through the <a href="/wizard">Configuration Wizard</a> for this version to ensure that your Vs and Rd settings are correct in the device settings.  So if you have an ADS1115 installed, please ensure that you are configuring it before you run the system. </i>
-    </li>
-    <li>
-        Added Auger Off Time control so that you can modify your P-Mode settings more precisely (<a href="/settings">Settings > Work Cycle</a>)
-    </li>
-    <li>
-        Added a boot-to-monitor mode (enabled in <a href="/admin">Admin > Boot Settings</a>) so that you can go straight into monitor mode after boot.  This can be helpful to debug your displays and ensure that PiFire is coming up properly. 
-    </li>
-    <li>
-        Added a status card to the <a href="/dash">default and classic dashboards</a>.  Shows the status of the fan, auger, igniter and P-mode (when in Smoke or Startup) with animated icons.  Also displays a countdown for Prime, Startup, Re-Ignite and Shutdown modes. 
-    </li>
-    <li>
-        Added P-Mode selection to the <a href="/dash">default and classic dashboards</a>.  Allows you to select a new P-Mode directly from the dashboard when in Startup/Reignite/Smoke modes.  
-    </li>
-    <li>
-        Start Igniter in Prime Mode (Thanks to @calonmerc for the suggestion) (<a href="/settings">Settings > Pellets</a>)
-    </li>
-    <li>
-        Enhancements to PWM Fan to utilize the Hardware PWM on the Raspberry Pi.  Many thanks to GitHub user @ghandye for submitting the code change.<br>
-        <br>
-        <div class="card border-warning shadow" style="max-width: 40rem;">
-            <div class="card-header bg-warning">
-                <strong><i class="fa-solid fa-circle-exclamation"></i>&nbsp; Important!</strong>
-            </div>
-            <div class="card-body">
-                <strong>Important Note:</strong> The user may need to make the following manual changes to enable hardware PWM support:
-                <ul>
-                    <li>
-                        Adding this line to the end of <span style="font-family:courier;">/boot/config.txt</span>, and rebooting: <br><br>
-                        <span style="font-family:courier;">dtoverlay=pwm,pin=13,func=4</span>
-                        <br>
-                    </li>
-                </ul>
-            </div>
+<div class="row justify-content-center">
+    <div class="card" style="width:80%">
+        <div class="card-body">
+            <p>
+                This release contains bug fixes and feature updates since the previous version. 
+             </p>
+             
+             <br>
+             
+             <p>
+                 <i class="fa-regular fa-star"></i>&nbsp; <u>Here are just some of the <b>NEW</b> features that were added in this update:</u>
+             </p>
+             
+             <ul>
+                 <li>
+                     Added experimental DSI based touch display, allowing for touch input from a DSI based display on the Raspberry Pi.  
+                     As of now, this is an experimental addition and should be expected to have bugs.  Performance is also a concern, as 
+                     this module utilizes PyGame for displaying graphics and getting input from the touch display.  This will be fairly 
+                     laggy on a Pi Zero 2W (or Pi 3 A+).   
+                 </li>
+                 <li>
+                     Exit Startup temperature (suggested by @EPGrillz), allows you to set a temperature/threshold where the grill will exit 
+                     startup and go into the next mode.  This can be configured in <a href="/settings">settings</a>.  If the grill starts hot and has already exceeded 
+                     this temperature, then the grill will continue with startup for the normal amount of time.  
+                 </li>
+                 <li>
+                     ILI9341 display menu and encoder improvements (submitted by @dogtreatfairy). Improves the display menu readability, adds 
+                     back button and improves the encoder responsiveness. 
+                 </li>
+                 <li>
+                     Added ETA feature for any probe with notification set.  This ETA is calculated using an interpolation function (currently linear)
+                     which is still very much experimental.  This feature will continue to be worked on and enhanced.  
+                 </li>
+                 <li>
+                     Default and Basic dashboards now have the ability to show/hide cards including the hopper and status cards.  Look for the gear 
+                     icon in the corner of the window.  
+                 </li>
+                 <li>
+                     Default, Basic dashboards and Control Panel now have the ability to take keyboard input for hold and notification values.  Just click 
+                     value and change it using the keyboard.  The sliders will still work as normal if you prefer this.    
+                 </li>
+                 <li>
+                     Added a warning to the Configuration Wizard, when the system is running/active so that you don't have to wait until the very end 
+                     of the configuration to realize that you cannot submit changes.  (feature suggested by Discord user @Richie)
+                 </li>
+                 <li>
+                     Added support for v2.1.0 Android Application.  Thank you to @weberbox for updating the app to work with the latest PiFire changes!
+                 </li>
+                 <li>
+                     Improved visibility of save buttons on the <a href="/settings">settings</a> page. (Suggested by @chrisusernamechanged)
+                 </li>
+                 <li>
+                     Added support for DS18B20 1-Wire Thermometer, mainly to be used for calibration of other probes as it does not have adequate temperature
+                     ranges for actual grill usages. This probe is currently experimental. 
+                 </li>
+                 <li>
+                     Complete overhaul of the <a href="/tuner">tuning tools</a>, including adding an auto-tuner. The tools are now more mobile friendly, meaning you can use your phone
+                     to go through the process of tuning your probes.  In addition, the auto-tuner allows you to tune any of your resistance based probes against
+                     any other probe in the system (for example utilizing the new DS18B20 probe).  
+                 </li>
+                 <li>
+                     New Elapsed Time card on the default dashboard which shows you the total elapsed time since startup.  (suggested by Discord user @bassmanadam) 
+                 </li>
+                 <li>
+                     Added safety feature to require a confirmation when pressing the startup button on the WebUI control panel.  This will help to prevent 
+                     false/accidental startup button presses. This can be disabled in <a href="/settings">settings</a> if desired.
+                 </li>
+                 <li>
+                     New API capabilities including a much simplified API interface for setting and getting data.  Details in the updated documentation. 
+                 </li>
+                 <li>
+                     Added 'Always Prime on Startup' feature which allows the user to have a default prime amount on startup.  Note that if the user selects startup
+                     again during priming that was initiated with this feature then priming will be cancelled and the grill will enter startup mode.  (feature initially 
+                     suggested by Discord user @TSJ) This can be enabled in <a href="/settings">settings</a>.
+                 </li>
+                 <li>
+                     Overhauled timer UI on the web interface to utilize the newly created API calls (Eventually may deprecate the /timer function) and improve the UX.  
+                     Timers also will automatically detect if they have started from another source and display in the web interface. 
+                 </li>
+                 <li>
+                     Attempted to address the issue on the mobile Web UI where a long Grill Name (on the NAV Bar) would push the navbar menu to the next line.
+                 </li>
+                 <li>
+                     Added wifi link quality to the <a href="/admin">admin page</a> system information. 
+                 </li>
+                 <li>
+                     Added throttling and undervoltage detection which is currently reported via the <a href="/admin">admin page</a> system information. 
+                 </li>
+                 <li>
+                     Added 'Send Test Notification' to the Notifications section of <a href="/settings">settings</a>.  Note that this will send notification to the services that have already been enabled and saved. 
+                 </li>
+                 <li>
+                     New debug items added in the <a href="/admin">admin page</a>.  You can now download the 'settings.json' and 'control:general' database files directly from the debug card.
+                 </li>
+                 <li>
+                     When the dashboard is loaded it will check if the control process is alive and flag an error if the control process does not respond.  This may be helpful in debugging issues as they arise. 
+                 </li>
+                 <li>
+                     Behind the scenes improvements including:  
+                     <ul>
+                         <li>
+                             Replace 'is_raspberry_pi' with 'is_real_hardware' functions planning for future platform support.  
+                         </li>
+                         <li>
+                             Add require_reboot flag to Wizard items (Added to PWM / DSI Touch Display devices) if a reboot is required
+                             when changing this configuration.
+                         </li>
+                         <li>
+                             Add general commands list to Wizard items (Added to PWM board so no manual edits are required). 
+                         </li>
+                         <li>
+                             Added configuration for dashboards that allow extending/saving features for different dashboards.
+                         </li>
+                         <li>
+                             Updated the ChartJS version to v3.9.1.
+                         </li>
+                         <li>
+                             Added common deep dictionary update function that allows dictionaries to be updated in a recursive way simplifying the logic of updating
+                             dictionaries.
+                         </li>
+                         <li>
+                             Adding system level capabilities so that future functionality can be added (i.e. wifi signal strength, undervolt detection). 
+                         </li>
+                         <li>
+                             Moved Push Bullet and Pushover notifications to utilize the Apprise module (no changes in how they are configured from the webUI).
+                         </li>
+                         <li>
+                             Moved most startup and shutdown settings to 'startup' and 'shutdown' respectively in the settings.json file for housekeeping purposes. 
+                             Heads up to anyone working on any forks or applications that might rely on these settings. 
+                         </li>
+                         <li>
+                             Added system functions/commands so that specific system commands can be customized per platform (i.e. in the future allow for other SBCs)
+                         </li>
+                     </ul>
+                 </li>
+             </ul>
+             
+             <p><i class="fa-solid fa-bug-slash"></i>&nbsp; <u>Here are some bug fixes in this update:</u></p>
+             
+             <ul>
+                 <li>
+                     Fixed bug with/getsize function deprecation in SSD1306 displays causing the display to crash. 
+                 </li>
+                 <li>
+                     Fixed install issue with Eventlet (pinned to earlier version for Python 3.9) causing the web front end to fail with Python version 3.9 on Raspberry Pi Bullseye. 
+                 </li>
+                 <li>
+                     Fixed settings upgrade logic issue. 
+                 </li>
+                 <li>
+                     Fixed bug(s) with history charts streaming including a long standing bug where hidden datasets would go back to being shown when zooming/panning.  
+                 </li>
+                 <li>
+                     Fixed bug (submitted by @ericpalmquist) where starting and stopping multiple times within a minute may cause a crash due to writing the same cookfile.  
+                 </li>
+                 <li>
+                     Fixed a bug where probe mapping in History Page may carry extra probe information from the defaults.  
+                 </li>
+                 <li>
+                     MQTT Bug Fixes contributed by @ericpalmquist
+                 </li>
+             </ul>
+             
         </div>
-        <br>
-    </li>
-    <li>
-        Add MCP9600 device support (note, this device requires a much slower I2C bus clock and may the user to manually change the bus clock frequency in /boot, however it should be noticed that it is still not stable) (<a href="/wizard">Configuration Wizard</a>)
-    </li>
-    <li>
-        Add 'Logs' page to display all of the various logs that are generated for debug (can be found via <a href="/admin">Admin > Debug</a> or on the <a href="/events">Events</a> page)
-    </li>
-    <li>
-        Improved update feature to exclude previously installed packages, which will hopefully speed-up updates
-    </li>
-    <li>
-        Added a pop-up dialog after update to show this message which is also available on the <a href="/update">update page</a>
-    </li>
+    </div>
+    
+</div>
 
-</ul>
-
-<p><i class="fa-solid fa-bug-slash"></i>&nbsp; <u>Here are some bug fixes in this update:</u></p>
-
-<ul>
-    <li>
-        Add more of a description on how to use keep warm in <a href="/settings">Settings > Work Cycle</a>  
-    </li>
-    <li>
-        Rate limit some error messages in the log to prevent the logs from being swamped
-    </li>
-    <li>
-        Change the color of PMode on Default/Classic Dashboard for dark mode (<a href="/dash">Dashboard</a>)
-    </li>
-    <li>
-        Fix bug where the 240x320 display expects 2 food probes and crashes if there are less than two. (Thanks @ChrisUsernameChanged)
-    </li>
-    <li>
-        Settings Restore Bug (apply settings and restart server) (<a href="/admin">Admin > Data Management</a>)
-    </li>
-    <li>
-        Default disable Smart Start feature.  This was causing some confusion with those who are using P-Mode to control their cooks, where Smart Start was automatically adjusting P-Mode for the initial startup, based on ambient temperature instead of using the manually set P-Mode. (<a href="/settings">Settings > Startup & Shutdown</a>)
-    </li>
-    <li>
-        Fixed default cycle settings for what is recommended in the PID settings (<a href="/settings">Settings > Work Cycle</a>)
-    </li>
-    <li>
-        Fixed divide by zero error in probes/base.py 
-    </li>
-    <li>
-        Fixed an issue where log-levels were being overridden.  
-    </li>
-    <li>
-        Improved VL530L0X resilience, where sometimes long distance reads can cause the control script heartbeat to fail and crash/restart.  Added this distance module to a separate thread so if there are delays in measurements, they do not cause the control script to crash. 
-    </li>
-    <li>
-        Fixed a bug where the wrong eventlet gets installed for Python v3.9 (Bullseye OS) or for Python v3.11 (Bookworm OS).  Installer now checks for v3.11 or greater otherwise installs eventlet v0.30.2.  
-    </li>
-    <li>
-        Fixed a bug where Apprise data structure was saved as an object and not as a list. 
-    </li>
-    <li>
-        Fixed bug with tuner where it was only tuning based on Fahrenheit. Should now work with Celsius.  
-    </li>
-</ul>
 <br>
 <br>

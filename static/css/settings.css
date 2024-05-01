@@ -4,3 +4,46 @@
 .input-group .input-group-text {
     width: 100%;
 }
+
+.power-modal{
+    margin-top:35px;
+    z-index:9999;
+}
+@media (max-width: 992px) { /* Adjust this value as needed */
+    .nav-settings-fixed {
+        position: relative; /* Changed from fixed to relative */
+        left: 0;
+        top: 0; /* Changed from 40px to 0 */
+        width: 100%; /* Changed from 20% to 100% */
+        z-index: 2;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+    }
+
+    .main-content {
+        position: relative;
+        top: 40px;
+        margin-left: 0; /* Changed from 20% to 0 */
+        width:100%;
+    }
+    .power-modal{
+        margin-top:90px;
+    }
+    .settings-button {
+        width: 100%; /* Make the button full width */
+        position: fixed; /* Fix the position of the button */
+        top: 50px; /* Position it at the top of the screen */
+        left: 0; /* Position it at the left of the screen */
+        z-index: 2; /* Ensure it's on top of other elements */
+    }
+    #settingsNav {
+        position: fixed;
+        top: 90px;
+        left: 50%; /* Added this line */
+        transform: translateX(-50%); /* Added this line */
+        width: auto; /* Changed from 100% to auto */
+        z-index: 3;
+    }
+
+}

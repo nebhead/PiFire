@@ -1,0 +1,16 @@
+{	
+    "name" : "Default",
+    "friendly_name" : "Default Dashboard",
+    "description" : "The default PiFire dashboard displays all food probes as gauges, includes a hopper card, status card and elapsed time card.",
+    "author" : "Ben Parmeter", 
+    "html_name" : "dash_default.html",
+    "metadata" : "default.json",
+    "link" : "https://github.com/nebhead/pifire", 
+    "contributors" : ["Ben Parmeter"],
+    "attributions" : [],
+    "thumbnail" : "",
+    "custom" : {
+        "hidden_cards" : []
+    },
+    "config" : {}
+}

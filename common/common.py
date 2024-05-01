@@ -24,7 +24,9 @@ import redis
 import uuid
 import random
 import logging
+from collections.abc import Mapping
 from ratelimitingfilter import RateLimitingFilter
+from common.redis_queue import RedisQueue
 
 # *****************************************
 # Constants and Globals 
@@ -93,9 +95,6 @@ def default_settings():
 		'triggerlevel' : 'LOW',
 		'buttonslevel' : 'HIGH',
 		'disp_rotation' : 0,
-		'shutdown_timer' : 60,
-		'startup_timer' : 240,
-		'auto_power_off' : False,
 		'dc_fan': False,
 		'standalone': True,
 		'units' : 'F',
@@ -106,7 +105,8 @@ def default_settings():
 		'boot_to_monitor' : False,  # Set to True to boot directly into monitor mode
 		'prime_ignition' : False,  # Set to True to enable the igniter in prime & startup mode
 		'updated_message' : False,   # Set to True to display a pop-up message after the system has been updated 
-		'venv' : False  # Set to True if running in virtual environment (needed for Raspberry Pi OS Bookworm)
+		'venv' : False,  # Set to True if running in virtual environment (needed for Raspberry Pi OS Bookworm)
+		'real_hw' : True  # Set to True if running on real hardware (i.e. Raspberry Pi), False if running in a test environment 
 	}
 
 	if os.path.exists('bin'):
@@ -153,10 +153,15 @@ def default_settings():
 	}
 
 	settings['controller'] = {
-		'selected' : 'pid',
+		'selected' : 'pid'
 	}
 
 	settings['controller']['config'] = _default_controller_config()
+
+	settings['display'] = {
+		'selected' : 'none'
+	}
+	settings['display']['config'] = _default_display_config()
 
 	settings['keep_warm'] = {
 		'temp' : 165,
@@ -203,7 +208,8 @@ def default_settings():
 		'minstartuptemp' : 75, 	# User Defined. Minimum temperature allowed for startup.
 		'maxstartuptemp' : 100, # User Defined. Take this value if the startup temp is higher than maxstartuptemp
 		'maxtemp' : 550, 		# User Defined. If temp exceeds value in any mode, shut off. (including monitor mode)
-		'reigniteretries' : 1 	# Number of tries to reignite grill if it has gone below the safe temp (0 to disable)
+		'reigniteretries' : 1, 	# Number of tries to reignite grill if it has gone below the safe temp (0 to disable)
+		'startup_check' : True	# True = Enabled
 	}
 
 	settings['pelletlevel'] = {
@@ -224,50 +230,70 @@ def default_settings():
 		'time' : math.trunc(time.time())
 	}
 
-	settings['smartstart'] = {
-		'enabled' : False,   # Disable Smart Start by default on new installations
-		'temp_range_list' : [60, 80, 90],  # Min Temps for Each Profile
-		'profiles' : [
-			{
-				'startuptime' : 360,  
-				'augerontime' : 15,
-				'p_mode' : 0
-			},
-			{
-				'startuptime' : 360,  
-				'augerontime' : 15,
-				'p_mode' : 1
-			},
-			{
-				'startuptime' : 240,  
-				'augerontime' : 15,
-				'p_mode' : 3
-			},
-			{
-				'startuptime' : 240,  
-				'augerontime' : 15,
-				'p_mode' : 5
-			}
-		]
+	settings['startup'] = {
+		'duration' : 240,  # Default startup time (seconds)
+		'prime_on_startup' : 0,  # Prime Amount (grams) [0 = disabled]
+		'startup_exit_temp' : 0,  # Exit startup at this temperature threshold. [0 = disabled]
+		'start_to_mode' : {
+			'after_startup_mode' : 'Smoke',  # Transition to this mode after startup completes
+			'primary_setpoint' : 165  # If Hold, set the setpoint
+		},
+		'smartstart' : {
+			'enabled' : False,   # Disable Smart Start by default on new installations
+			'exit_temp' : 120,  # Exit temperature - exits smart start if this temperature is achieved 
+			'temp_range_list' : [60, 80, 90],  # Min Temps for Each Profile
+			'profiles' : [
+				{
+					'startuptime' : 360,  
+					'augerontime' : 15,
+					'p_mode' : 0
+				},
+				{
+					'startuptime' : 360,  
+					'augerontime' : 15,
+					'p_mode' : 1
+				},
+				{
+					'startuptime' : 240,  
+					'augerontime' : 15,
+					'p_mode' : 3
+				},
+				{
+					'startuptime' : 240,  
+					'augerontime' : 15,
+					'p_mode' : 5
+				}
+			]
+		}
 	}
 
-	settings['start_to_mode'] = {
-		'after_startup_mode' : 'Smoke',
-		'primary_setpoint' : 165  # If Hold, set the setpoint
+	settings['shutdown'] = {
+		'shutdown_duration' : 240,  # Default Shutdown time (seconds)
+		'auto_power_off' : False  # Power off the system after shutdown (False = disabled)
 	}
 
 	settings['dashboard'] = {
 		'current' : 'Default', 
-		'dashboards' : [
-			{	'name' : 'Default',
+		'dashboards' : {
+			'Default' : {	
+				'name' : 'Default',
 				'friendly_name' : 'Default Dashboard', 
-				'html_name' : 'dash_default.html'
-			}, 
-			{	'name' : 'Basic',
+				'html_name' : 'dash_default.html',
+				'custom' : {
+					'hidden_cards' : []
+				},
+				'config' : {}
+			},
+			'Basic' : {	
+				'name' : 'Basic',
 				'friendly_name' : 'Basic Dashboard', 
-				'html_name' : 'dash_basic.html'
+				'html_name' : 'dash_basic.html',
+				'custom' : {
+					'hidden_cards' : []
+				},
+				'config' : {}
 			}
-		]
+		}
 	}
 
 	settings['notify_services'] = default_notify_services()
@@ -277,8 +303,9 @@ def default_settings():
 		'clearhistoryonstart' : True, 	# Clear history when StartUp Mode selected
 		'autorefresh' : 'on', 			# Sets history graph to auto refresh ('live' graph)
 		'datapoints' : 60, 				# Number of data points to show on the history chart
-		'probe_config' : default_probe_config(settings)
+		'probe_config' : {}				# Empty probe config
 	}
+	settings['history_page']['probe_config'] = default_probe_config(settings)
 
 	settings['recipe'] = {}
 	settings['recipe']['probe_map'] = _default_recipe_probe_map(settings)
@@ -292,6 +319,18 @@ def _default_controller_config():
 		config[controller] = {}
 		for option in controller_metadata['metadata'][controller]['config']:
 			config[controller][option['option_name']] = option['option_default']
+
+	return config
+
+def _default_display_config():
+	display_metadata = read_generic_json('./wizard/wizard_manifest.json')
+	display_metadata = display_metadata['modules']['display']
+
+	config = {}
+	for display in display_metadata:
+		config[display] = {}
+		for option in display_metadata[display]['config']:
+			config[display][option['option_name']] = option['default']
 
 	return config
 
@@ -315,21 +354,28 @@ def default_probe_config(settings):
 	for probe in settings['probe_settings']['probe_map']['probe_info']:
 		if probe['type'] in ['Primary', 'Food']:
 			label = probe['label']
-			probe_config[label] = {
-				'name' : probe['name'],
-				'type' : probe['type'],
-				'enabled' : probe['enabled'],
-				'line_color' : COLOR_LIST[color_index][0],
-				'line_color_target' : COLOR_LIST[color_index][1],
-				'dash_setpoint' : True,
-				'bg_color' : COLOR_LIST[color_index][0], 
-				'bg_color_target' : COLOR_LIST[color_index][1], 
-				'fill' : False
-			}
-			if probe['type'] == 'Primary':
-				probe_config[label]['bg_color_setpoint'] = COLOR_LIST[color_index][0]
-				probe_config[label]['line_color_setpoint'] = COLOR_LIST[color_index][0]
-			color_index += 1		
+			# Check if the label exists in settings already.  
+			if label in settings['history_page']['probe_config'].keys():
+				probe_config[label] = settings['history_page']['probe_config'][label]
+			else:
+				probe_config[label] = {
+					'name' : probe['name'],
+					'type' : probe['type'],
+					'enabled' : probe['enabled'],
+					'line_color' : COLOR_LIST[color_index][0],
+					'line_color_target' : COLOR_LIST[color_index][1],
+					'dash_setpoint' : True,
+					'bg_color' : COLOR_LIST[color_index][0], 
+					'bg_color_target' : COLOR_LIST[color_index][1], 
+					'fill' : False
+				}
+				if probe['type'] == 'Primary':
+					probe_config[label]['bg_color_setpoint'] = COLOR_LIST[color_index][0]
+					probe_config[label]['line_color_setpoint'] = COLOR_LIST[color_index][0]
+			color_index += 1
+			# If color index has gotten to the end of the COLOR_LIST, loop back to zero
+			if color_index >= len(COLOR_LIST):
+				color_index = 0
 	return probe_config
 
 def default_notify_services():
@@ -372,6 +418,17 @@ def default_notify_services():
 		'org': '',
 		'bucket': ''
 	}
+	
+	services['mqtt'] = {
+      "broker": "homeassistant.local",
+      "enabled": False,
+      "homeassistant_autodiscovery_topic": "homeassistant",
+      "id": "PiFire",
+      "password": "",
+      "port": "1883",
+      "update_sec": "30",
+      "username": ""
+    }
 
 	return services
 
@@ -449,6 +506,10 @@ def default_control():
 
 	control['prime_amount'] = 10  # Default Prime Amount in Grams
 
+	control['startup_timestamp'] = 0  # Timestamp of startup, used for cook time
+
+	control['system'] = {}
+
 	return(control)
 
 def default_notify(settings):
@@ -465,7 +526,8 @@ def default_notify(settings):
 			'name' : probe[1], 
 			'type' : 'probe', 
 			'req' : False, 
-			'target' : 0, 
+			'target' : 0,
+			'eta' : None,
 			'shutdown' : False,
 			'keep_warm' : False, 
 		}
@@ -489,6 +551,16 @@ def default_notify(settings):
 		'last_check' : 0, 
 		'shutdown' : False,
 		'keep_warm' : False, 
+	}
+	notify_data.append(notify_info)
+
+	''' Add TEST notification data to list '''
+	notify_info = {
+		'label' : 'Test',
+		'type' : 'test', 
+		'req' : False,
+		'shutdown' : False,
+		'keep_warm' : False,  
 	}
 	notify_data.append(notify_info)
 
@@ -698,6 +770,9 @@ def read_control(flush=False):
 			# Remove all control structures in Redis DB (not history or current)
 			cmdsts.delete('control:general')
 			cmdsts.delete('control:command')
+			cmdsts.delete('control:write')
+			cmdsts.delete('control:systemq')
+			cmdsts.delete('control:systemo')
 			# The following set's no persistence so that we don't get writes to the disk / SDCard 
 			cmdsts.config_set('appendonly', 'no')
 			cmdsts.config_set('save', '')
@@ -723,13 +798,13 @@ def write_control(control, direct_write=False, origin='unknown'):
 	if direct_write: 
 		cmdsts.set('control:general', json.dumps(control))
 	else: 
+		# Add changes to control write queue 
 		control['origin'] = origin 
-		cmdsts.rpush('control:command', json.dumps(control))
-		#print(f' -> Command Pushed to Queue by {origin}')
+		cmdsts.rpush('control:write', json.dumps(control))
 
-def execute_commands():
+def execute_control_writes():
 	"""
-	Execute Control Commands in Queue from Redis DB
+	Execute Control Writes in Queue from Redis DB
 
 	:param None
 
@@ -738,24 +813,12 @@ def execute_commands():
 	global cmdsts 
 
 	status = 'OK'
-	while cmdsts.llen('control:command') > 0:
+	while cmdsts.llen('control:write') > 0:
 		control = read_control()
-		command = json.loads(cmdsts.lpop('control:command'))
+		command = json.loads(cmdsts.lpop('control:write'))
 		command.pop('origin')
-		for key in control.keys():
-			if key in command.keys():
-				if key in ['safety', 'timer', 'manual', 'smart_start']:
-					control[key].update(command.get(key, {}))
-				elif key in ['recipe']:
-					for subkey in control[key].keys():
-						if subkey in command[key].keys():
-							if subkey in ['step_data']:
-								control[key][subkey].update(command[key].get(subkey, {}))
-							else:
-								control[key][subkey] = command[key][subkey]
-				else:
-					control[key] = command[key]
-		write_control(control, direct_write=True, origin='executor')
+		control = deep_update(control, command)
+		write_control(control, direct_write=True, origin='writer')
 	return status
 
 def read_errors(flush=False):
@@ -946,24 +1009,22 @@ def read_settings(filename='settings.json', init=False, retry_count=0):
 			''' Downgrade Path '''			
 			backup_settings()  # Backup Old Settings Before Performing Downgrade 
 			settings = downgrade_settings(settings, settings_default)
-			update_settings = True 
+			update_settings = True
+		elif (settings_default['versions']['server'] == settings['versions']['server']) and (settings['versions']['build'] < settings_default['versions']['build']):
+			''' Minor Upgrade Path '''
+			prev_ver = semantic_ver_to_list(settings['versions']['server'])
+			settings = upgrade_settings(prev_ver, settings, settings_default)
+			settings['versions'] = settings_default['versions']
+			update_settings = True
 
 		if settings['versions'].get('build', None) != settings_default['versions']['build']:
 			settings['versions']['build'] = settings_default['versions']['build']
 			update_settings = True 
 
 		# Overlay the original settings on top of the default settings
-		for key in settings_default.keys():
-			if key in settings.keys():
-				for subkey in settings_default[key].keys():
-					if subkey not in settings[key].keys():
-						update_settings = True
-				settings_default[key].update(settings.get(key, {}))
-			else:
-				update_settings = True
-
-		# Move all changes to the settings variable
-		settings = settings_default 
+		settings = deep_update(settings_default, settings)
+		update_settings = True
+		settings['history_page']['probe_config'] = default_probe_config(settings)  # Fix issue with probe_configs resetting to defaults
 
 		if update_settings or filename != 'settings.json': # If any of the keys were added, then write back the changes
 			write_settings(settings)
@@ -1034,7 +1095,7 @@ def upgrade_settings(prev_ver, settings, settings_default):
 	if prev_ver[0] <=1 and prev_ver[1] <= 4:
 		settings['versions'] = settings_default['versions']
 		settings['globals']['first_time_setup'] = True  # Force configuration for probes
-		settings['start_to_mode']['primary_setpoint'] = settings['start_to_mode']['grill1_setpoint']
+		settings['startup']['start_to_mode']['primary_setpoint'] = settings['start_to_mode']['grill1_setpoint']
 		settings['start_to_mode'].pop('grill1_setpoint')
 		settings['dashboard'] = settings_default['dashboard']
 		# Move Notification Settings
@@ -1055,6 +1116,27 @@ def upgrade_settings(prev_ver, settings, settings_default):
 		settings['cycle_data'].pop('SmokeCycleTime') # Remove old SmokeCycleTime
 		settings['cycle_data']['SmokeOnCycleTime'] = 15  # Name change for SmokeCycleTime variable 
 		settings['cycle_data']['SmokeOffCycleTime'] = 45  # Added SmokeOffCycleTime variable 
+	''' Check if upgrading from v1.6.x or v1.7.0 build 7 '''
+	if (prev_ver[0] <=1 and prev_ver[1] <= 6) or (prev_ver[0] ==1 and prev_ver[1] == 7 and settings['versions'].get('build', 0) <= 7):
+		settings['dashboard'] = settings_default['dashboard']
+	''' Check if upgrading from v1.7.0 build 45 '''
+	if (prev_ver[0] <=1 and prev_ver[1] <= 6) or (prev_ver[0] ==1 and prev_ver[1] == 7 and settings['versions'].get('build', 0) <= 45):
+		# Move startup defaults to new 'startup' section of settings 
+		settings['startup'] = settings_default['startup']
+		settings['startup']['duration'] = settings['globals'].get('startup_timer', settings_default['startup']['duration'])
+		settings['globals'].pop('startup_timer', None)
+		settings['startup']['startup_exit_temp'] = settings['globals'].get('startup_exit_temp', settings_default['startup']['startup_exit_temp'])
+		settings['globals'].pop('startup_exit_temp', None)
+		settings['startup']['start_to_mode'] = settings.get('start_to_mode', settings_default['startup']['start_to_mode'])
+		settings.pop('start_to_mode', None)
+		settings['startup']['smartstart'] = settings.get('smartstart', settings_default['startup']['smartstart'])
+		settings.pop('smartstart', None)
+		settings['shutdown'] = settings_default['shutdown']
+		settings['shutdown']['shutdown_duration'] = settings['globals'].get('shutdown_timer', settings_default['shutdown']['shutdown_duration'])
+		settings['globals'].pop('shutdown_timer', None)
+		settings['shutdown']['auto_power_off'] = settings['globals'].get('auto_power_off', settings_default['shutdown']['auto_power_off'])
+		settings['globals'].pop('auto_power_off', None)
+
 	''' Import any new probe profiles '''
 	for profile in list(settings_default['probe_settings']['probe_profiles'].keys()):
 		if profile not in list(settings['probe_settings']['probe_profiles'].keys()):
@@ -1365,8 +1447,10 @@ def write_current(in_data):
 	current = {}
 	current['P'] = in_data['probe_history']['primary']
 	current['F'] = in_data['probe_history']['food']
+	current['AUX'] = in_data['probe_history']['aux']
 	current['PSP'] = in_data['primary_setpoint']
 	current['NT'] = in_data['notify_targets']
+	current['TS'] = int(time.time() * 1000)  # Timestamp
 	cmdsts.set('control:current', json.dumps(current))
 
 def read_current(zero_out=False):
@@ -1385,7 +1469,8 @@ def read_current(zero_out=False):
 			'P' : {}, 
 			'F' : {},
 			'PSP' : 0,
-			'NT' : {}
+			'NT' : {},
+			'AUX' : {}
 		}
 
 		for probe in settings['probe_settings']['probe_map']['probe_info']:
@@ -1393,6 +1478,8 @@ def read_current(zero_out=False):
 				current['P'][probe['label']] = 0
 			if probe['type'] == 'Food':
 				current['F'][probe['label']] = 0
+			if probe['type'] == 'Aux':
+				current['AUX'][probe['label']] = 0
 			current['NT'][probe['label']] = 0
 
 		cmdsts.set('control:current', json.dumps(current))
@@ -1426,6 +1513,29 @@ def read_tr():
 		tr_data = json.loads(cmdsts.get('control:tuning'))
 
 	return(tr_data)
+
+def write_autotune(data):
+	global cmdsts 
+	# Push data string to the list in the last position
+	cmdsts.rpush('control:autotune', json.dumps(data))
+
+def read_autotune(flush=False, size_only=False):
+	global cmdsts 
+
+	output_data = []
+	# If a flushhistory is requested, then flush the control:history key (and data)
+	if flush:
+		if cmdsts.exists('control:autotune'):
+			cmdsts.delete('control:autotune')
+	elif size_only:
+		size = cmdsts.llen('control:autotune')
+		return size
+	elif cmdsts.exists('control:autotune'):
+		autotune_data = cmdsts.lrange('control:autotune', 0, -1)
+		for datapoint in autotune_data:
+			output_data.append(json.loads(datapoint))
+
+	return output_data
 
 def prepare_csv(data=[], filename=''):
 	# Create filename if no name specified
@@ -1514,42 +1624,50 @@ def convert_settings_units(units, settings):
 	:return: Updated Settings
 	"""
 	settings['globals']['units'] = units
+	settings['startup']['startup_exit_temp'] = convert_temp(units, settings['startup']['startup_exit_temp'])
 	settings['safety']['maxstartuptemp'] = convert_temp(units, settings['safety']['maxstartuptemp'])
 	settings['safety']['maxtemp'] = convert_temp(units, settings['safety']['maxtemp'])
 	settings['safety']['minstartuptemp'] = convert_temp(units, settings['safety']['minstartuptemp'])
 	settings['smoke_plus']['max_temp'] = convert_temp(units, settings['smoke_plus']['max_temp'])
 	settings['smoke_plus']['min_temp'] = convert_temp(units, settings['smoke_plus']['min_temp'])
 	settings['keep_warm']['temp'] = convert_temp(units, settings['keep_warm']['temp'])
-	for temp in range(0, len(settings['smartstart']['temp_range_list'])):
-		settings['smartstart']['temp_range_list'][temp] = convert_temp(
-			units, settings['smartstart']['temp_range_list'][temp])
+	for temp in range(0, len(settings['startup']['smartstart']['temp_range_list'])):
+		settings['startup']['smartstart']['temp_range_list'][temp] = convert_temp(
+			units, settings['startup']['smartstart']['temp_range_list'][temp])
+	settings['startup']['smartstart']['exit_temp'] = convert_temp(units, settings['startup']['smartstart']['exit_temp'])
 	return(settings)
 
-# **************************************
-# is_raspberrypi() function borrowed from user https://raspberrypi.stackexchange.com/users/126953/chris
-# in post: https://raspberrypi.stackexchange.com/questions/5100/detect-that-a-python-program-is-running-on-the-pi
-# **************************************
-def is_raspberry_pi():
+def is_real_hardware(settings=None):
 	"""
-	Check if device is a Raspberry Pi
+	Check if running on real hardware as opposed to a prototype/test environment.
 
-	:return: True if Raspberry Pi. False otherwise
+	:return: True if running on real hardware (i.e. Raspberry Pi), else False. 
 	"""
-	try:
-		with io.open('/sys/firmware/devicetree/base/model', 'r') as m:
-			if 'raspberry pi' in m.read().lower(): return True
-	except Exception:
-		pass
-	return False
+	if settings == None:
+		settings = read_settings()
+
+	return True if settings['globals']['real_hw'] else False 
 
 def restart_scripts():
 	"""
 	Restart the Control and WebApp Scripts
 	"""
-	print('[DEBUG MSG] Restarting Scripts... ')
-	command = "sleep 3 && sudo service supervisor restart &"
-	if is_raspberry_pi():
-		os.system(command)
+	if is_real_hardware():
+		os.system("sleep 3 && sudo service supervisor restart &")
+
+def reboot_system():
+	"""
+	Reboot the system
+	"""
+	if is_real_hardware():
+		os.system("sleep 3 && sudo reboot &")
+
+def shutdown_system():
+	"""
+	Shutdown the system
+	"""
+	if is_real_hardware():
+		os.system("sleep 3 && sudo shutdown -h now &")
 
 def read_wizard(filename='wizard/wizard_manifest.json'):
 	"""
@@ -1810,6 +1928,7 @@ def read_status(init=False):
 			"units": "F",
 			"mode": "Stop",
 			"recipe": False,
+			"startup_timestamp" : 0,
 			"start_time": 0,
 			"start_duration": 0,
 			"shutdown_duration": 0,
@@ -1830,4 +1949,626 @@ def read_status(init=False):
 	else:
 		status = json.loads(cmdsts.get('control:status'))
 
-	return status 
+	return status
+
+def get_probe_info(probe_info):
+	''' Create a structure with probe information for the display to use. '''
+	probe_structure = {
+		'primary' : {},
+		'food' : []
+	}
+	for probe in probe_info:
+		if probe['type'] == 'Primary':
+			probe_structure['primary']['name'] = probe['name']
+			probe_structure['primary']['label'] = probe['label']
+		elif probe['type'] == 'Food':
+			food_probe = {
+				'name' : probe['name'],
+				'label' : probe['label']
+			}
+			probe_structure['food'].append(food_probe)
+
+	return probe_structure 
+
+# Borrowed from: https://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
+# Attributed to Alex Martelli and Alex Telon 
+def deep_update(dictionary, updates):
+	for key, value in updates.items():
+		if isinstance(value, Mapping):
+			dictionary[key] = deep_update(dictionary.get(key, {}), value)
+		else:
+			dictionary[key] = value
+	return dictionary
+
+MODE_MAP = {
+	'startup' : 'Startup',
+	'smoke' : 'Smoke',
+	'shutdown' : 'Shutdown',
+	'stop' : 'Stop',
+	'reignite' : 'Reignite',
+	'monitor' : 'Monitor',
+	'error' : 'Error',
+	'prime' : 'Prime',
+	'hold' : 'Hold',
+	'manual' : 'Manual'
+}
+
+# Borrowed from: https://pythonhow.com/how/check-if-a-string-is-a-float/ 
+# Attributed to Python How
+# Slightly modified to check if string is None
+def is_float(string):
+	if string is not None:
+		if string.replace(".", "").isnumeric():
+			return True
+	return False
+
+def process_command(action=None, arglist=[], origin='unknown', direct_write=False):
+	'''
+	Process incoming command from API or elsewhere
+	'''
+	data = {} 
+	data['result'] = 'OK'
+	data['message'] = 'Command was accepted successfully.'
+	data['data'] = {}
+
+	control = read_control()
+	settings = read_settings() 
+	
+	''' Populate any empty args with None just in case '''
+	num_args = len(arglist)
+	max_args = 4  # Needs updating if API adds deeper number of arguments 
+
+	for _ in range(max_args - num_args):
+		arglist.append(None)
+
+	if action == 'get':
+		''' GET Commands '''
+
+		if arglist[0] == 'temp':
+			'''
+			Get Temperature 
+			/api/get/temp/{probe label}
+
+
+			Returns: 
+			{ 
+				'temp' : <probe temperature> 
+				'result' : 'OK'
+			}
+			'''
+			current_temps = read_current()
+
+			if arglist[1] in current_temps['P'].keys():
+				data['data']['temp'] = current_temps['P'][arglist[1]]
+			elif arglist[1] in current_temps['F'].keys():
+				data['data']['temp'] = current_temps['F'][arglist[1]]
+			elif arglist[1] in current_temps['AUX'].keys():
+				data['data']['temp'] = current_temps['AUX'][arglist[1]]
+			else:
+				data['result'] = 'ERROR'
+				data['message'] = f'Probe {arglist[1]} not found or not specified.'
+
+		elif arglist[0] == 'current':
+			'''
+			Get Current Temp Data Structure 
+			/api/get/current
+
+			Returns (Example): 
+			{
+				"AUX": {},
+				"F": {
+					"Probe1": 204,
+					"Probe2": 206
+				},
+				"NT": {
+					"Grill": 0,
+					"Probe1": 0,
+					"Probe2": 0
+				},
+				"P": {
+					"Grill": 518
+				},
+				"PSP": 0,
+				"TS": 1707345482984
+			}
+			'''
+			current_temps = read_current()
+
+			data['data'] = current_temps
+
+		elif arglist[0] == 'mode':
+			'''
+			Get Current Mode 
+			/api/get/mode
+
+			Returns: 
+			{ 
+				'mode' : <Current Mode> 
+			}
+			'''
+			data['data']['mode'] = control['mode']
+
+		elif arglist[0] == 'hopper':
+			'''
+			Get Hopper Level 
+			/api/get/hopper
+
+			Returns: 
+			{ 
+				'hopper' : <level> 
+			}
+			'''
+			control['hopper_check'] = True 
+			write_control(control, direct_write=direct_write, origin=origin)
+			time.sleep(3)
+			pelletdb = read_pellet_db()
+			data['data']['hopper'] = pelletdb['current']['hopper_level']
+		
+		elif arglist[0] == 'timer':
+			'''
+			Get Timer Data
+			/api/get/timer
+
+			Returns:
+			{ 
+				'start' : control['timer']['start'], 
+				'paused' : control['timer']['paused'],
+				'end' : control['timer']['end'], 
+				'shutdown' : control['notify_data'][]['shutdown'],
+				'keep_warm' : control['notify_data'][]['keep_warm'],
+			}
+			'''
+			data['data']['start'] = control['timer']['start']
+			data['data']['paused'] = control['timer']['paused']
+			data['data']['end'] = control['timer']['end']
+			''' Get index of timer object '''
+			for index, notify_obj in enumerate(control['notify_data']):
+				if notify_obj['type'] == 'timer':
+					break 
+			data['data']['shutdown'] = control['notify_data'][index]['shutdown']
+			data['data']['keep_warm'] = control['notify_data'][index]['keep_warm']
+
+		elif arglist[0] == 'notify':
+			'''
+			Get Notify Data
+			/api/get/notify
+
+			Returns:
+				[
+					{
+					"eta": null,
+					"keep_warm": false,
+					"label": "Grill",
+					"name": "GrillMain",
+					"req": false,
+					"shutdown": false,
+					"target": 0,
+					"type": "probe"
+					},
+					...
+					{
+					"keep_warm": false,
+					"label": "Hopper",
+					"last_check": 0,
+					"req": true,
+					"shutdown": false,
+					"type": "hopper"
+					}
+				]
+			'''
+			data['data'] = control['notify_data']
+
+		elif arglist[0] == 'status':
+			'''
+			Get Status Information for Key Items
+			/api/get/status
+
+			Returns (Example):
+			{
+				"display_mode": "Stop",
+				"lid_open_detected": false,
+				"lid_open_endtime": 0,
+				"mode": "Stop",
+				"name": "Development",
+				"outpins": {
+					"auger": false,
+					"fan": false,
+					"igniter": false,
+					"power": false
+				},
+				"p_mode": 0,
+				"prime_amount": 0,
+				"prime_duration": 0,
+				"s_plus": false,
+				"shutdown_duration": 10,
+				"start_duration": 30,
+				"start_time": 0,
+				"startup_timestamp": 0,
+				"status": "",
+				"ui_hash": 5734093427135650890,
+				"units": "F"
+			}
+			'''
+			status = read_status()
+
+			data['data']['mode'] = control['mode']
+			data['data']['display_mode'] = status['mode']
+			data['data']['status'] = control['status']
+			data['data']['s_plus'] = control['s_plus']
+			data['data']['units'] = settings['globals']['units']
+			data['data']['name'] = settings['globals']['grill_name']
+			data['data']['start_time'] = status['start_time']
+			data['data']['start_duration'] = status['start_duration']
+			data['data']['shutdown_duration'] = status['shutdown_duration']
+			data['data']['prime_duration'] = status['prime_duration']
+			data['data']['prime_amount'] = status['prime_amount']
+			data['data']['lid_open_detected'] = status['lid_open_detected']
+			data['data']['lid_open_endtime'] = status['lid_open_endtime']
+			data['data']['p_mode'] = status['p_mode']
+			data['data']['outpins'] = status['outpins']
+			data['data']['startup_timestamp'] = status['startup_timestamp']
+			data['data']['ui_hash'] = hash(json.dumps(settings['probe_settings']['probe_map']['probe_info']))
+
+		else:
+			data['result'] = 'ERROR'
+			data['message'] = f'Get API Argument: [{arglist[0]}] not recognized.'
+	
+	elif action == 'set':
+		''' SET Commands '''
+
+		if arglist[0] == 'psp':
+			'''
+			Primary Setpoint 
+			/api/set/psp/{integer/float temperature}
+			'''
+			if is_float(arglist[1]):
+				control['mode'] = 'Hold'
+				if settings['globals']['units'] == 'F':
+					control['primary_setpoint'] = int(float(arglist[1]))
+				else:
+					control['primary_setpoint'] = float(arglist[1])
+				control['updated'] = True
+				write_control(control, direct_write=direct_write, origin=origin)
+			else:
+				data['result'] = 'ERROR'
+				data['message'] = f'Primary set point should be an integer or float in degrees {settings["globals"]["units"]}'
+
+		elif arglist[0] == 'mode':
+			'''
+			Mode
+			/api/set/mode/{mode} where mode = 'startup', 'smoke', 'shutdown', 'stop', 'reignite', 'monitor', 'error'
+			/api/set/mode/prime/{prime amount in grams}[/{next mode}]
+			/api/set/mode/hold/{integer/float temperature}
+			'''
+			if arglist[1] in ['startup', 'smoke', 'shutdown', 'stop', 'reignite', 'monitor', 'error', 'manual']:
+				control['mode'] = MODE_MAP[arglist[1]]
+				control['updated'] = True
+				write_control(control, direct_write=direct_write, origin=origin)
+			elif arglist[1] == 'prime':
+				try:
+					if arglist[2] is not None: 
+						if arglist[2].isdigit():
+							control['mode'] = MODE_MAP[arglist[1]]
+							control['prime_amount'] = int(arglist[2])
+							control['updated'] = True
+							if arglist[3] in ['startup', 'monitor']:
+								control['next_mode'] = MODE_MAP[arglist[3]]
+							else:
+								control['next_mode'] = 'Stop'
+							write_control(control, direct_write=direct_write, origin=origin)
+						else:
+							data['result'] = 'ERROR'
+							data['message'] = f'Prime amount should be an integer in grams.'
+					else:
+						data['result'] = 'ERROR'
+						data['message'] = f'Prime amount not specified.'
+				except:
+					data['result'] = 'ERROR'
+					data['message'] = f'Set Mode {arglist[1]} with {arglist[2]} caused an exception.'
+			elif arglist[1] == 'hold':
+				if arglist[2] is not None: 
+					if is_float(arglist[2]):
+						control['mode'] = MODE_MAP[arglist[1]]
+						if settings['globals']['units'] == 'F':
+							control['primary_setpoint'] = int(float(arglist[2]))
+						else:
+							control['primary_setpoint'] = float(arglist[2])
+						control['updated'] = True
+						write_control(control, direct_write=direct_write, origin=origin)
+					else:
+						data['result'] = 'ERROR'
+						data['message'] = f'Set Mode {arglist[1]} with {arglist[2]} failed [not a number].'
+				else:
+					data['result'] = 'ERROR'
+					data['message'] = f'Set Mode {arglist[1]} with {arglist[2]} failed [no hold temp specified].'
+			else:
+				data['result'] = 'ERROR'
+				data['message'] = f'Get API Argument: {arglist[2]} not recognized.'
+		
+		elif arglist[0] == 'pmode':
+			'''
+			PMode
+			/api/set/pmode/{pmode value} where pmode value is between 0-9 
+			'''
+			if arglist[1] is not None: 
+				if arglist[1].isdigit():
+					if int(arglist[1]) >= 0 and int(arglist[1]) < 10:
+						settings['cycle_data']['PMode'] = int(arglist[1])
+						write_settings(settings)
+						control['settings_update'] = True 
+						write_control(control, direct_write=False, origin=origin)
+					else:
+						data['result'] = 'ERROR'
+						data['message'] = f'Set PMode out of range(0-9): {arglist[1]}'
+				else:
+					data['result'] = 'ERROR'
+					data['message'] = f'Set PMode invalid value.'
+			else:
+				data['result'] = 'ERROR'
+				data['message'] = f'Set PMode invalid arguments.'
+		
+		elif arglist[0] == 'splus':
+			'''
+			Smoke Plus 
+			/api/set/splus/{true/false}
+			'''
+			if arglist[1] == 'true':
+				control['s_plus'] = True
+			else:
+				control['s_plus'] = False 
+			write_control(control, direct_write=direct_write, origin=origin)
+		
+		elif arglist[0] == 'notify':
+			'''
+			Notify Settings
+			/api/set/notify/{object}/ where object = probe label, 'Timer', 'Hopper' 
+
+			/api/set/notify/{object}/req/{true/false} 
+			/api/set/notify/{object}/target/{value}  (not valid for Timer or Hopper)
+			/api/set/notify/{object}/shutdown/{true/false}
+			/api/set/notify/{object}/keep_warm/{true/false} 
+			'''
+
+			if arglist[1] is not None:
+				found = False
+				for index, object in enumerate(control['notify_data']):
+					if object['label'] == arglist[1]:
+						print('FOUND')
+						found = True
+						if arglist[2] in ['req', 'shutdown', 'keep_warm']:
+							if arglist[3] == 'true':
+								control['notify_data'][index][arglist[2]] = True
+							else: 
+								control['notify_data'][index][arglist[2]] = False
+						elif arglist[2] == 'target' and arglist[1] not in ['Timer', 'Hopper']:
+							if is_float(arglist[3]):
+								if settings['globals']['units'] == 'F':
+									control['notify_data'][index]['target'] = int(float(arglist[3]))
+								else:
+									control['primary_setpoint'] = float(arglist[3])
+							else:
+								data['result'] = 'ERROR'
+								data['message'] = f'Notify object target value invalid or missing.'
+						else:
+							data['result'] = 'ERROR'
+							data['message'] = f'Notify object update failed.'
+						break
+				if not found:
+					data['result'] = 'ERROR'
+					data['message'] = f'Notify object label {arglist[1]} was not found.'
+				else:
+					write_control(control, direct_write=False, origin=origin)
+			else:
+				data['result'] = 'ERROR'
+				data['message'] = f'Notify object label was not specified.'
+				
+		elif arglist[0] == 'pwm':
+			'''
+			PWM Control
+
+			/api/set/pwm/{true/false} 
+			'''
+			if arglist[1] == 'true':
+				control['pwm_control'] = True
+			else:
+				control['pwm_control'] = False 
+			write_control(control, direct_write=direct_write, origin=origin) 
+
+		elif arglist[0] == 'duty_cycle':
+			'''
+			Duty Cycle
+
+			/api/set/duty_cycle/{0-100 percent} 
+			'''
+			if is_float(arglist[1]):
+				duty_cycle = int(arglist[1])
+				if duty_cycle >= 0 and duty_cycle <= 100:
+					control['duty_cycle'] = duty_cycle
+					write_control(control, direct_write=False, origin=origin)
+				else:
+					data['result'] = 'ERROR'
+					data['message'] = f'Duty cycle must be an integer between 0-100.'
+			else:
+				data['result'] = 'ERROR'
+				data['message'] = f'Duty cycle must be specified as an integer between 0-100 percent.'
+
+		elif arglist[0] == 'tuning_mode':
+			'''
+			Tuning Mode Enable
+
+			/api/set/tuning_mode/{true/false} 
+			'''
+			if arglist[1] == 'true':
+				control['tuning_mode'] = True
+			else:
+				control['tuning_mode'] = False 
+			write_control(control, direct_write=direct_write, origin=origin)
+
+		elif arglist[0] == 'timer':
+			'''
+			Timer Control
+
+			/api/set/timer/start/{seconds} 
+			/api/set/timer/pause 
+			/api/set/timer/stop
+			/api/set/timer/shutdown/{true/false}
+			/api/set/timer/keep_warm/{true/false}
+			'''
+
+			''' Get index of timer object '''
+			for index, notify_obj in enumerate(control['notify_data']):
+				if notify_obj['type'] == 'timer':
+					break 
+			''' Get timestamp '''
+			now = time.time()
+
+			if arglist[1] == 'start':
+				control['notify_data'][index]['req'] = True
+				# If starting new timer
+				if control['timer']['paused'] == 0:
+					control['timer']['start'] = now
+					if is_float(arglist[2]):
+						seconds = int(float(arglist[2]))
+						control['timer']['end'] = now + seconds
+					else:
+						control['timer']['end'] = now + 60
+					write_log('Timer started.  Ends at: ' + epoch_to_time(control['timer']['end']))
+					write_control(control, direct_write=direct_write, origin='app')
+				else:	# If Timer was paused, restart with new end time.
+					control['timer']['end'] = (control['timer']['end'] - control['timer']['paused']) + now
+					control['timer']['paused'] = 0
+					write_log('Timer unpaused.  Ends at: ' + epoch_to_time(control['timer']['end']))
+					write_control(control, direct_write=direct_write, origin='app')
+			elif arglist[1] == 'pause':
+				if control['timer']['start'] != 0:
+					control['notify_data'][index]['req'] = False
+					control['timer']['paused'] = now
+					write_log('Timer paused.')
+					write_control(control, direct_write=direct_write, origin='app')
+				else:
+					control['notify_data'][index]['req'] = False
+					control['timer']['start'] = 0
+					control['timer']['end'] = 0
+					control['timer']['paused'] = 0
+					control['notify_data'][index]['shutdown'] = False
+					control['notify_data'][index]['keep_warm'] = False
+					write_log('Timer cleared.')
+					write_control(control, direct_write=direct_write, origin='app')
+			elif arglist[1] == 'stop':
+				control['notify_data'][index]['req'] = False
+				control['timer']['start'] = 0
+				control['timer']['end'] = 0
+				control['timer']['paused'] = 0
+				control['notify_data'][index]['shutdown'] = False
+				control['notify_data'][index]['keep_warm'] = False
+				write_log('Timer stopped.')
+				write_control(control, direct_write=direct_write, origin='app')
+			elif arglist[1] == 'shutdown':
+				if arglist[2] == 'true':
+					control['notify_data'][index]['shutdown'] = True
+				else:
+					control['notify_data'][index]['shutdown'] = False 
+				write_control(control, direct_write=direct_write, origin=origin)
+			elif arglist[1] == 'keep_warm':
+				if arglist[2] == 'true':
+					control['notify_data'][index]['keep_warm'] = True
+				else:
+					control['notify_data'][index]['keep_warm'] = False 
+				write_control(control, direct_write=direct_write, origin=origin)
+			else:
+				data['result'] = 'ERROR'
+				data['message'] = f'Timer command not recognized.'
+
+		elif arglist[0] == 'manual':
+			'''
+			Manual Control
+			Note: Must already be in Manual mode (see set/mode command)
+			/api/set/manual/power/{true/false}
+			/api/set/manual/igniter/{true/false}
+			/api/set/manual/fan/{true/false}
+			/api/set/manual/auger/{true/false}
+			/api/set/manual/pwm/{speed}
+			'''
+
+			if control['mode'] == 'Manual':
+				if arglist[1] == 'power':
+					control['manual']['change'] = True
+					if arglist[2] == 'true':
+						control['manual']['power'] = True
+					else:
+						control['manual']['power'] = False 
+				elif arglist[1] == 'igniter':
+					control['manual']['change'] = True
+					if arglist[2] == 'true':
+						control['manual']['igniter'] = True
+					else:
+						control['manual']['igniter'] = False 
+				elif arglist[1] == 'fan':
+					control['manual']['change'] = True
+					if arglist[2] == 'true':
+						control['manual']['fan'] = True
+					else:
+						control['manual']['fan'] = False 
+						control['manual']['pwm'] = 100
+				elif arglist[1] == 'auger':
+					control['manual']['change'] = True
+					if arglist[2] == 'true':
+						control['manual']['auger'] = True
+					else:
+						control['manual']['auger'] = False
+				elif arglist[1] == 'pwm' and is_float(arglist[2]):
+					control['manual']['change'] = True
+					control['manual']['pwm'] = int(float(arglist[2]))
+				else:
+					data['result'] = 'ERROR'
+					data['message'] = f'Manual command not recognized or contained an error.'
+				if control['manual']['change']:
+					write_control(control, direct_write=direct_write, origin=origin)
+
+			else:
+				data['result'] = 'ERROR'
+				data['message'] = f'Before changing manual outputs, system must be put into Manual mode.'
+
+		else:
+			data['result'] = 'ERROR'
+			data['message'] = f'Set API Argument: {arglist[0]} not recognized.'
+
+	elif action == 'cmd':
+		''' System CMD Commands '''
+
+		if arglist[0] == 'restart':
+			'''
+			Restart Scripts 
+			/api/cmd/restart
+			'''
+			restart_scripts()
+		
+		elif arglist[0] == 'reboot':
+			'''
+			Reboot System 
+			/api/cmd/reboot
+			'''
+			reboot_system()
+		
+		elif arglist[0] == 'shutdown':
+			'''
+			Shutdown System 
+			/api/cmd/shutdown
+			'''
+			shutdown_system()
+
+		else:
+			data['result'] = 'ERROR'
+			data['message'] = f'CMD API Argument: {arglist[0]} not recognized.'
+
+	elif action == 'sys':
+		''' System Control Commands '''
+		
+		system_command_queue = RedisQueue('control:systemq')
+		system_command_queue.push(arglist)
+
+	else:
+		data['result'] = 'ERROR'
+		data['message'] = f'Action [{action}] not valid/recognized.'
+
+	return data

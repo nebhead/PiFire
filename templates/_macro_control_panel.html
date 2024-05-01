@@ -18,14 +18,23 @@
     .glowbutton {
       animation: glowing 1000ms infinite;
     }
+
+    .temperature-input {
+    font-size: 64px;
+    }
+    @media (max-width: 992px) {
+        .navbar-bottom {
+            padding-bottom: 20px;
+        }
+    }
 </style>
 
 <!-- Control Panel -->
 <div class="container" id="cp_container">
-	{% if page_theme == 'dark' %}
-	<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #aaaaaa;">
+	{% if settings['globals']['page_theme'] == 'dark' %}
+	<nav class="navbar fixed-bottom navbar-light justify-content-center navbar-bottom" style="background-color: #aaaaaa;">
 	{% else %}
-	<nav class="navbar fixed-bottom navbar-light justify-content-center" style="background-color: #dddddd;">
+	<nav class="navbar fixed-bottom navbar-light justify-content-center navbar-bottom" style="background-color: #dddddd;">
 	{% endif %}
     <span class="navbar-text">
 
@@ -48,7 +57,7 @@
             </div>
         </div>
         <div id="inactive_core_group" class="btn-group mr-2 shadow" role="group">
-            <button type="button" data-toggle="tooltip" title="Startup" class="btn btn-outline-success border border-secondary" id="startup_btn" name="setmodestartup" value="true"><i class="fas fa-play"></i></button>
+            <button type="button" title="Startup" class="btn btn-outline-success border border-secondary" id="startup_btn" onclick="cpStartupCheck('{{settings['safety']['startup_check']}}');"><i class="fas fa-play"></i></button>
             <button type="button" data-toggle="tooltip" title="Monitor" class="btn btn-outline-secondary border border-secondary" id="monitor_btn" name="setmodemonitor" value="true"><i class="fas fa-glasses"></i></button>
             <button type="button" data-toggle="tooltip" title="Smoke Mode" class="btn btn-outline-secondary border border-secondary" id="smoke_inactive_btn" name="setmodesmoke" value="true"{% if control['mode'] not in ['Startup', 'Reignite'] %} style="display:none"{% endif %}><i class="fas fa-cloud"></i></button>
             <button type="button" data-toggle="modal" data-target="#setpointModal" class="btn btn-outline-secondary border border-secondary" id="hold_inactive_btn"{% if control['mode'] not in ['Startup', 'Reignite'] %} style="display:none"{% endif %}><i class="fas fa-crosshairs"></i></button>
@@ -113,22 +122,18 @@
                 </div>
                 <!-- Modal body -->
                 <div class="modal-body text-center">
+                    <div class="row d-flex justify-content-center">
+                        <div class="input-group w-50">
+                            <input class="form-control text-center temperature-input border-0" name="tempOutput" id="tempOutputId" type="text" min="0" value="{{ control['primary_setpoint'] }}" pattern="[0-9]*" inputmode="numeric" 
+                            oninput="tempInputId.value = tempOutputId.value"
+                            onclick="this.select()"
+                            onfocus="this.select()">
+                        </div>
+                    </div>
                     {% if settings['globals']['units'] == 'F' %}
-                        {% if control['primary_setpoint'] == 0 %}
-                        <h1><output name="tempOutput" id="tempOutputId">125</output>°{{ settings['globals']['units'] }}</h1>
-                        <input type="range" class="custom-range" min="125" max="600" step="5" value="125" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
-                        {% else %}
-                        <h1><output name="tempOutput" id="tempOutputId">{{ control['primary_setpoint'] }}</output>°{{ settings['globals']['units'] }}</h1>
-                        <input type="range" class="custom-range" min="125" max="600" step="5" value="{{ control['primary_setpoint'] }}" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
-                        {% endif %}
+                        <input type="range" class="custom-range" min="125" max="600" step="5" value="{{ control['primary_setpoint'] }}" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value" onclick="this.select();">
                     {% else %}
-                        {% if control['primary_setpoint'] == 0 %}
-                        <h1><output name="tempOutput" id="tempOutputId">50</output>°{{ settings['globals']['units'] }}</h1>
-                        <input type="range" class="custom-range" min="50" max="260" value="50" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
-                        {% else %}
-                        <h1><output name="tempOutput" id="tempOutputId">{{ control['primary_setpoint'] }}</output>°{{ settings['globals']['units'] }}</h1>
-                        <input type="range" class="custom-range" min="50" max="260" value="{{ control['primary_setpoint'] }}" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value">
-                        {% endif %}
+                        <input type="range" class="custom-range" min="50" max="260" value="{{ control['primary_setpoint'] }}" id="tempInputId" name="tempInputRange" oninput="tempOutputId.value = tempInputId.value" onclick="this.select();">
                     {% endif %}
                 </div>
                 <!-- Modal footer -->
@@ -139,7 +144,26 @@
             </div>
         </div>
     </div>
-
+<!-- Startup Modal -->
+    <div class="modal" id="startupModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title"><i class="fa-solid fa-triangle-exclamation"></i> Startup Check</h4>
+                    <button type="button" class="close" data-dismiss="modal">×</button>
+                </div>
+                <!-- Modal body -->
+                <div class="modal-body text-center">
+                    Confirm Startup Grill?<br><br>
+                    <button class="btn btn-primary" onclick="cpStartup()">Startup</button>
+                </div>
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div> <!-- End of Container --> 
-
 {% endmacro %}

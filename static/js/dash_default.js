@@ -26,6 +26,7 @@ var last_igniter_status = null;
 var last_pmode_status = null;
 var last_lid_open_status = false;
 var display_mode = null;
+var dashDataStruct = {};
 
 // Credits to https://github.com/naikus for SVG-Gauge (https://github.com/naikus/svg-gauge) MIT License Copyright (c) 2016 Aniket Naik
 var Gauge = window.Gauge;
@@ -120,12 +121,14 @@ function updateProbeCards() {
 							if ((current.notify_data[item].target != notify_data[item].target) || 
 								(current.notify_data[item].req != notify_data[item].req) ||
 								(current.notify_data[item].shutdown != notify_data[item].shutdown) ||
-								(current.notify_data[item].keep_warm != notify_data[item].keep_warm) ) {
+								(current.notify_data[item].keep_warm != notify_data[item].keep_warm) || 
+								(current.notify_data[item].eta != notify_data[item].eta)
+								) {
 								console.log('Notification data change detected.')
 								// Update Page
 								updateNotificationCard(current.notify_data[item], current.status.mode);
 								// Store Notify Data
-								notify_data = JSON.parse(JSON.stringify(current.notify_data)); // Copy data to notify_data variable
+								notify_data[item] = JSON.parse(JSON.stringify(current.notify_data[item])); // Copy data to notify_data variable
 							};
 						};
 					};
@@ -270,6 +273,20 @@ function updateProbeCards() {
 				$('#lid_open_label').html('Lid Open Detected: PID Paused ' + countdown + 's');
 			};
 			
+			// Update Elapsed Time 
+			if (current.status.startup_timestamp != 0) {
+				var time_now = new Date().getTime();
+				time_now = Math.floor(time_now / 1000);
+				//console.log('Time Now Adjusted: ' + time_now);
+				var time_elapsed = time_now - Math.floor(current.status.startup_timestamp);
+				var time_elapsed_string = formatDuration(time_elapsed);
+				$('#time_elapsed_string').html(time_elapsed_string);
+				document.getElementById('time_elapsed_string').className = 'text-primary';
+			} else {
+				$('#time_elapsed_string').html('--');
+				document.getElementById('time_elapsed_string').className = 'text-secondary';
+			};
+
 			//if (current.status.s_plus) {
 			//	document.getElementById('smokeplus_status').innerHTML = '<i class="fas fa-cloud fa-stack-2x" style="color:rgb(104, 0, 104)" data-toggle="tooltip" data-placement="top" title="Smoke Plus ON"></i><i class="fas fa-plus fa-stack-1x fa-inverse"></i>';
 			//} else {
@@ -298,6 +315,20 @@ function initTargets() {
 	};
 };
 
+function formatDuration(total_seconds) {
+	const hours = Math.floor(total_seconds / 3600);
+	const minutes = Math.floor((total_seconds % 3600) / 60);
+	const seconds = total_seconds % 60;
+  
+	if (hours) {
+	  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+	} else if (minutes) {
+	  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+	} else {
+	  return `${seconds.toString().padStart(2, '0')}s`;
+	}
+};
+
 // Update the notification information for the probe cards
 function updateNotificationCard(notify_info, mode) {
 	const label = notify_info.label;
@@ -305,17 +336,26 @@ function updateNotificationCard(notify_info, mode) {
 	const shutdown = notify_info.shutdown;
 	const keep_warm = notify_info.keep_warm;
 	const target = notify_info.target;
-	console.log('Updating: ' + label + ' Mode: ' + mode);
+	var eta = '<i class="fa-solid fa-spinner fa-spin-pulse"></i>';
+	if (notify_info.eta != null) {
+		eta = formatDuration(notify_info.eta);
+	};
+	console.log('Updating: ' + label + '  ETA: ' + eta);
 	// TODO: Update the page item with new data
 	const notify_btn_id = label + "_notify_btn";
+	const eta_btn_id = label + "_eta_btn";
+
 	if(req) {
-		console.log('Turning on this notification: ' + notify_btn_id);
-		document.getElementById(notify_btn_id).innerHTML = '<i class="far fa-bell"></i>&nbsp; ' + target + '&deg;' + units;
+		console.log('Updating this notification: ' + notify_btn_id);
+		document.getElementById(notify_btn_id).innerHTML = '<i class="far fa-bell"></i>&nbsp; ' + target + '&deg;' + units; 
+		document.getElementById(eta_btn_id).innerHTML = '<i class="fa-solid fa-hourglass-half"></i>&nbsp; ' + eta;
 		document.getElementById(notify_btn_id).className = 'btn btn-sm btn-primary';
+		$('#'+eta_btn_id).show();
 	} else {
 		console.log('Turning off this notification: ' + notify_btn_id);
 		document.getElementById(notify_btn_id).innerHTML = '<i class="far fa-bell-slash"></i>';
 		document.getElementById(notify_btn_id).className = 'btn btn-sm btn-outline-primary';
+		$('#'+eta_btn_id).hide();
 	};
 };
 
@@ -492,6 +532,75 @@ function setPmode(pmode) {
     });
 };
 
+// Show the Dashboard Settings Modal/Dialog when clicked
+function dashSettings() {
+	$("#dashSettingsModal").modal('show');
+	//dashData();
+};
+
+// Get dashboard data structure
+function dashGetData() {
+	req = $.ajax({
+		url : '/api/settings',
+		type : 'GET',
+		success : function(settings){
+			dashDataStruct = settings.settings.dashboard.dashboards.Default;
+			//console.log('dashData Hidden='+dashDataStruct.custom.hidden_cards);
+			//console.log('dashData Name='+dashDataStruct.name);
+		}
+	});
+};
+
+// Set dashboard data structure
+function dashSetData() {
+	var postdata = { 
+		'dashboard' : {
+			'dashboards' : {
+				'Default' : dashDataStruct
+			}
+		} 
+    };
+
+	$.ajax({
+        url : '/api/settings',
+        type : 'POST',
+        data : JSON.stringify(postdata),
+        contentType: "application/json; charset=utf-8",
+        traditional: true,
+        success: function (response) {
+            //console.log('dashSetData -> ' + response);
+        }
+    });
+};
+
+function dashToggleVisible(cardID) {
+	if ($('#card_'+cardID).is(":hidden")) {
+		// change card to visible
+		$('#card_'+cardID).show();
+		// update dash config icon
+		$('#visibleStatus_'+cardID).html('<i class="fa-solid fa-eye text-success"></i>&nbsp;');
+		// save to settings
+		var index = dashDataStruct.custom.hidden_cards.indexOf(cardID); // Index of cardID
+		if (index !== -1) {
+			dashDataStruct.custom.hidden_cards.splice(index, 1); // If found, remove
+		};
+		console.log('dashData Hidden='+dashDataStruct.custom.hidden_cards);
+		dashSetData();
+	} else {
+		// change card to hidden
+		$('#card_'+cardID).hide();
+		// update dash config icon
+		$('#visibleStatus_'+cardID).html('<i class="fa-solid fa-eye-slash text-secondary"></i>&nbsp;');
+		// save to settings
+		var index = dashDataStruct.custom.hidden_cards.indexOf(cardID); // Index of cardID
+		if (index == -1) {
+			dashDataStruct.custom.hidden_cards.push(cardID); // If not found, add
+		};
+		console.log('dashData Hidden='+dashDataStruct.custom.hidden_cards);
+		dashSetData();
+	};
+}
+
 // Main
 $(document).ready(function(){
 	// Setup Listeners 
@@ -499,6 +608,9 @@ $(document).ready(function(){
 		// Reload page when server side changes detected. 
 		location.reload(); 
 	});
+
+	// Initialize Dashboard Data
+	dashGetData();
 
 	// Initialize Probe Cards
 	initProbeCards();

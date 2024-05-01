@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg8"
+   sodipodi:docname="flame-flat.svg"
+   inkscape:version="1.3.2 (1:1.3.2+202311252150+091e20ef0f)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1" />
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.71624579"
+     inkscape:cx="396.51193"
+     inkscape:cy="561.25984"
+     inkscape:window-width="1920"
+     inkscape:window-height="1004"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg8" />
+  <path
+     style="fill: none; stroke: rgb(0, 0, 0);"
+     d="M 165.064 167.836 C 165.064 179.735 156.01 189.381 144.842 189.381 C 133.674 189.381 124.62 179.735 124.62 167.836 C 124.62 161.887 126.884 156.501 130.543 152.602 C 134.202 148.703 144.336 137.071 142.169 129.454 C 144.961 130.723 147.254 133.949 149.923 136.856 C 151.058 139.712 150.572 152.939 147.288 156.027 C 144.261 158.874 153.916 157.516 157.671 146.756 C 159.835 150.492 161.783 153.774 163.057 157.534 C 164.331 161.293 165.064 164.862 165.064 167.836 Z"
+     id="path10" />
+  <path
+     style="opacity:0.6;stroke:#000000;paint-order:fill;fill-rule:nonzero;fill:#000000"
+     d="M 130.358 175.073 C 130.358 182.727 136.839 188.931 144.833 188.931 C 152.828 188.931 159.309 182.727 159.309 175.073 C 159.309 171.247 157.688 167.782 155.069 165.275 C 152.449 162.767 145.195 155.285 146.746 150.385 C 144.748 151.202 143.107 153.277 141.196 155.146 C 140.384 156.984 140.731 165.491 143.082 167.478 C 145.249 169.309 138.337 168.435 135.65 161.514 C 134.101 163.918 132.706 166.028 131.794 168.447 C 130.882 170.865 130.358 173.16 130.358 175.073 Z"
+     id="path10-7" />
+  <ellipse
+     style="opacity: 0.644; stroke: rgb(255, 255, 255); fill: rgb(255, 255, 255);"
+     id="path4585"
+     cx="144.93"
+     cy="182.369"
+     rx="11.065"
+     ry="5.353" />
+</svg>
