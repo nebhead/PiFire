@@ -24,7 +24,7 @@ Description:
 	  Edit /boot/config.txt (or /boot/firmware/config.txt) to add: 
 	  	dtoverlay=w1-gpio,gpiopin=[pin_number]
 
-		(This is automatically added by the configuration wizard)
+		(This is automatically added by the configuration wizard / board configuration tool)
 
 	Ex Device Definition: 
 	
@@ -46,6 +46,7 @@ Description:
 '''
 import logging 
 import time
+import threading
 from w1thermsensor import W1ThermSensor, Unit, Sensor 
 from probes.base import ProbeInterface
 
@@ -61,11 +62,19 @@ class DS18B20_Device():
 		self.logger = logging.getLogger("control")
 		self.available = False
 		self.initialized = False
+		self.temperature_C = None
+
 		try:
 			self.init_device()
 		except:
 			''' Device is unavailable for some reason '''
 			self.logger.info('DS18B20 device wasn\'t initialized because it was not found.')
+		
+		# Setup & Start Sensor Loop Thread
+		self.sensor_thread_active = True 
+		self.sensor_thread_update = True  # Get initial temperature from sensor 
+		self.sensor_thread = threading.Thread(target=self._sensing_loop)
+		self.sensor_thread.start()
 
 	def init_device(self):	
 		try:
@@ -86,18 +95,25 @@ class DS18B20_Device():
 			self.available = False 
 		return self.available
 
+	def _sensing_loop(self):
+		while self.sensor_thread_active:
+			if self.sensor_thread_update:
+				try:
+					if not self.initialized:
+						self.init_device()
+					else:
+						self.temperature_C = self.sensor.get_temperature()
+				except:
+					self.temperature_C = None
+					self.available = False
+				
+				self.sensor_thread_update = False 
+			time.sleep(0.1)
+
 	@property
 	def temperature(self):
-		try:
-			if not self.initialized:
-				self.init_device()
-			if self.available:
-				temp_C = self.sensor.get_temperature()
-		except:
-			temp_C = None
-			self.available = False
-
-		return temp_C
+		self.sensor_thread_update = True
+		return self.temperature_C
 
 class ReadProbes(ProbeInterface):
 
@@ -111,16 +127,14 @@ class ReadProbes(ProbeInterface):
 		self.device = DS18B20_Device()
 
 	def read_all_ports(self, output_data):
-		''' Check availability '''
-		if self.device.check_availability():
-			''' Read temperature from device '''
-			tempC = round(self.device.temperature, 1)
+		''' Read temperature from device '''
+		tempC = self.device.temperature
+		if tempC is not None:
+			tempC = round(tempC, 1)
 			tempF = int(tempC * (9/5) + 32) # Celsius to Fahrenheit
-		else: 
-			''' Device not available '''
+		else:
 			tempC = None
 			tempF = None
-
 		port = self.device_info['ports'][0]
 
 		''' Read resistance from device '''

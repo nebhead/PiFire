@@ -36,7 +36,6 @@ class ProbeInterface:
 			self.transient = True
 		else:
 			self.transient = False
-		print(f'Device Name: {device_info["device"]} Transient: {self.transient}')
 		self.set_profiles(probe_info)
 		self._build_port_map(probe_info)
 		self._build_output_data(probe_info)
