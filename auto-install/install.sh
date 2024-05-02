@@ -146,12 +146,17 @@ echo "**                                                                     **"
 echo "*************************************************************************"
 
 # Enable SPI - Needed for some displays
-echo "dtparam=spi=on" | $SUDO tee -a /boot/config.txt > /dev/null
+$SUDO raspi-config nonint do_spi 0
+
 # Enable I2C - Needed for some displays, ADCs, distance sensors
-echo "dtparam=i2c_arm=on" | $SUDO tee -a /boot/config.txt > /dev/null
-echo "i2c-dev" | $SUDO tee -a /etc/modules > /dev/null
+$SUDO raspi-config nonint do_i2c 0
+
 # Enable Hardware PWM - Needed for hardware PWM support 
-echo "dtoverlay=pwm,pin=13,func=4" | $SUDO tee -a /boot/config.txt > /dev/null
+if test -f /boot/firmware/config.txt; then
+  echo "dtoverlay=pwm,gpiopin=13,func=4" | $SUDO tee -a /boot/firmware/config.txt > /dev/null
+else
+  echo "dtoverlay=pwm,gpiopin=13,func=4" | $SUDO tee -a /boot/config.txt > /dev/null
+fi
 
 # Setup backlight / power permissions if a DSI screen is installed  
 clear

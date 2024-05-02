@@ -1,8 +1,2 @@
-# This file will add the kernel support for 1-wire on pin 31 (GPIO 6)
-
-if grep -wq "dtoverlay=w1-gpio,gpiopin=6,pullup=\"y\"" /boot/config.txt; then 
-    echo "1-Wire enabling already exists in /boot/config.txt" 
-else 
-    echo "Adding 1-Wire support in /boot/config.txt" 
-    echo "dtoverlay=w1-gpio,gpiopin=6,pullup=\"y\"" | sudo tee -a /boot/config.txt > /dev/null
-fi
+# This file will add the kernel support for 1-wire on (GPIO 4)
+sudo raspi-config nonint do_onewire 0   # Enable 1-wire support

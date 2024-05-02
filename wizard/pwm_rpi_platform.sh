@@ -1,8 +1,14 @@
 # This file will add the PWM pin definition if it does not already exist in the file
+# Enable Hardware PWM - Needed for hardware PWM support 
+if test -f /boot/firmware/config.txt; then
+    CONFIG='/boot/firmware/config.txt'
+else
+    CONFIG='/boot/config.txt'
+fi
 
-if grep -wq "dtoverlay=pwm,pin=13,func=4" /boot/config.txt; then 
-    echo "PWM pin definition exists in /boot/config.txt" 
+if grep -wq "dtoverlay=pwm" $CONFIG; then 
+    echo "PWM pin definition exists in $CONFIG" 
 else 
-    echo "Adding PWM definition in /boot/config.txt" 
-    echo "dtoverlay=pwm,pin=13,func=4" | sudo tee -a /boot/config.txt > /dev/null
+    echo "Adding PWM definition in $CONFIG" 
+    echo "dtoverlay=pwm,gpiopin=13,func=4" | sudo tee -a $CONFIG > /dev/null
 fi
