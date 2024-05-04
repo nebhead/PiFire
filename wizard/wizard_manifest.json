@@ -829,21 +829,21 @@
 					"device_input_down_dt" : {
 						"friendly_name" : "Down Button / Encoder DT",
 						"description" : "GPIO Pin for Down Button / Encoder DT",
-						"options" : { "20" : "GPIO20" },
+						"options" : { "16" : "GPIO16" },
 						"settings" : ["platform", "devices", "input", "down_dt"],
 						"hidden" : true
 					},
 					"device_input_enter_sw" : {
 						"friendly_name" : "Enter Button / Encoder SW",
 						"description" : "GPIO Pin for Enter Button / Encoder SW",
-						"options" : { "21" : "GPIO21" },
+						"options" : { "15" : "GPIO15" },
 						"settings" : ["platform", "devices", "input", "enter_sw"],
 						"hidden" : true
 					},
 					"device_input_up_clk" : {
 						"friendly_name" : "Up Button / Encoder CLK",
 						"description" : "GPIO Pin for Up Button / Encoder CLK",
-						"options" : { "16" : "GPIO16" },
+						"options" : { "14" : "GPIO14" },
 						"settings" : ["platform", "devices", "input", "up_clk"],
 						"hidden" : true
 					},
