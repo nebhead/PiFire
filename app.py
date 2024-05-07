@@ -936,11 +936,21 @@ def tuner_page(action=None):
 
 			data = read_autotune()
 			if len(data) > 10:
+				# If more than 10 datapoints, then calculate high / low / medium
 				temp_list = []
 				tr_list = []
 				for datapoint in data:
-					temp_list.append(datapoint['ref_T'])
-					tr_list.append(datapoint['probe_Tr'])
+					'''
+					Check if the ref_T value is already in the list and overwrite if so.
+					This assumes that the last temperature is the most recent and is likely 
+					the most accurate resistance value to take.
+					'''
+					if datapoint['ref_T'] in temp_list:
+						index = temp_list.index(datapoint['ref_T'])
+						tr_list[index] = datapoint['probe_Tr']
+					else:
+						temp_list.append(datapoint['ref_T'])
+						tr_list.append(datapoint['probe_Tr'])
 
 				# Determine High Temp / Tr
 				status_data['high_temp'] = max(temp_list)
