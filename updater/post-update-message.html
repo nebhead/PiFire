@@ -47,6 +47,10 @@
                              Refined the auto-tuning tool to use the last sampled resistance at a given reference temperature to use for calculations.  This should 
                              help to improve the accuracy of the tuning data, especially with slower probes.
                          </li>
+                         <li>
+                             Changed the ETA function to use Linear Regression (SciKit) instead of the Interpolate module (SciPy).  This will hopefully improve the 
+                             reliability of the ETA function.
+                         </li>
                      </ul>
                  </li>
              </ul>
