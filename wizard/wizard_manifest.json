@@ -1679,21 +1679,14 @@
 				"py_dependencies" : ["luma.lcd", "pyky040==0.1.4", ">=9.2.0"], 
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
-				"settings_dependencies" : {
-					"disp_rotation" : {
-						"friendly_name" : "Display Rotation",
-						"description" : "Select the display rotation angle (Usually 0 degrees)",
-						"options" : {"0" : "0 degrees", "1": "90 degrees", "2": "180 degrees", "3": "270 degrees"},
-						"settings" : ["globals", "disp_rotation"]
-					}
-				},
+				"settings_dependencies" :{},
 				"config" : [
 					{
 						"option_name" : "rotation",
 						"option_friendly_name" : "Screen Rotation", 
 						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
 						"option_type" : "list",
-						"list_values" : [0, 900, 180, 270],
+						"list_values" : [0, 1, 2, 3],
 						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
 						"default" : 0,
 						"hidden" : false
@@ -1711,21 +1704,14 @@
 				"py_dependencies" : ["luma.lcd", "pyky040==0.1.4", "pillow>=9.2.0"], 
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
-				"settings_dependencies" : {
-					"disp_rotation" : {
-						"friendly_name" : "Display Rotation",
-						"description" : "Select the display rotation angle (Usually 0 degrees)",
-						"options" : {"0" : "0 degrees", "1": "90 degrees", "2": "180 degrees", "3": "270 degrees"},
-						"settings" : ["globals", "disp_rotation"]
-					}
-				},
+				"settings_dependencies" : {},
 				"config" : [
 					{
 						"option_name" : "rotation",
 						"option_friendly_name" : "Screen Rotation", 
 						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
 						"option_type" : "list",
-						"list_values" : [0, 900, 180, 270],
+						"list_values" : [0, 1, 2, 3],
 						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
 						"default" : 0,
 						"hidden" : false
@@ -1743,21 +1729,14 @@
 				"py_dependencies" : ["luma.lcd", "pillow>=9.2.0"], 
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
-				"settings_dependencies" : {
-					"disp_rotation" : {
-						"friendly_name" : "Display Rotation",
-						"description" : "Select the display rotation angle (Usually 0 degrees)",
-						"options" : {"0" : "0 degrees", "1": "90 degrees", "2": "180 degrees", "3": "270 degrees"},
-						"settings" : ["globals", "disp_rotation"]
-					}
-				},
+				"settings_dependencies" : {},
 				"config" : [
 					{
 						"option_name" : "rotation",
 						"option_friendly_name" : "Screen Rotation", 
 						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
 						"option_type" : "list",
-						"list_values" : [0, 900, 180, 270],
+						"list_values" : [0, 1, 2, 3],
 						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
 						"default" : 0,
 						"hidden" : false
@@ -1776,12 +1755,6 @@
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
 				"settings_dependencies" : {
-					"disp_rotation" : {
-						"friendly_name" : "Display Rotation",
-						"description" : "Select the display rotation angle (Usually 0 degrees)",
-						"options" : {"0" : "0 degrees", "1": "90 degrees", "2": "180 degrees", "3": "270 degrees"},
-						"settings" : ["globals", "disp_rotation"]
-					},
 					"buttonslevel" : {
 						"friendly_name" : "Button Level",
 						"description" : "Select how your button hardware is configured. (HIGH - Pullups, LOW - Pulldowns)",
@@ -1795,19 +1768,9 @@
 						"option_friendly_name" : "Screen Rotation", 
 						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
 						"option_type" : "list",
-						"list_values" : [0, 900, 180, 270],
+						"list_values" : [0, 1, 2, 3],
 						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
 						"default" : 0,
-						"hidden" : false
-					},
-					{
-						"option_name" : "buttonslevel",
-						"option_friendly_name" : "Button Signal Level", 
-						"option_description" : "Select whether the buttons are active high or active low.",
-						"option_type" : "list",
-						"list_values" : ["HIGH", "LOW"],
-						"list_labels" : ["Active High", "Active Low"],
-						"default" : "HIGH",
 						"hidden" : false
 					}
 				]
@@ -1824,12 +1787,6 @@
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
 				"settings_dependencies" : {
-					"disp_rotation" : {
-						"friendly_name" : "Display Rotation",
-						"description" : "Select the display rotation angle (Usually 0 degrees)",
-						"options" : {"0" : "0 degrees", "90": "90 degrees", "180": "180 degrees", "270": "270 degrees"},
-						"settings" : ["globals", "disp_rotation"]
-					},
 					"buttonslevel" : {
 						"friendly_name" : "Button Level",
 						"description" : "Select how your button hardware is configured. (HIGH - Pullups, LOW - Pulldowns)",
@@ -1843,19 +1800,9 @@
 						"option_friendly_name" : "Screen Rotation", 
 						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
 						"option_type" : "list",
-						"list_values" : [0, 900, 180, 270],
+						"list_values" : [0, 90, 180, 270],
 						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
 						"default" : 0,
-						"hidden" : false
-					},
-					{
-						"option_name" : "buttonslevel",
-						"option_friendly_name" : "Button Signal Level", 
-						"option_description" : "Select whether the buttons are active high or active low.",
-						"option_type" : "list",
-						"list_values" : ["HIGH", "LOW"],
-						"list_labels" : ["Active High", "Active Low"],
-						"default" : "HIGH",
 						"hidden" : false
 					}
 				]
@@ -1871,21 +1818,14 @@
 				"py_dependencies" : ["st7789", "pyky040==0.1.4", "pillow>=9.2.0", "numpy"],
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
-				"settings_dependencies" : {
-					"disp_rotation" : {
-						"friendly_name" : "Display Rotation",
-						"description" : "Select the display rotation angle (Usually 0 degrees)",
-						"options" : {"0" : "0 degrees", "90": "90 degrees", "180": "180 degrees", "270": "270 degrees"},
-						"settings" : ["globals", "disp_rotation"]
-					}
-				},
+				"settings_dependencies" : {},
 				"config" : [
 					{
 						"option_name" : "rotation",
 						"option_friendly_name" : "Screen Rotation", 
 						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
 						"option_type" : "list",
-						"list_values" : [0, 900, 180, 270],
+						"list_values" : [0, 90, 180, 270],
 						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
 						"default" : 0,
 						"hidden" : false
@@ -1903,21 +1843,14 @@
 				"py_dependencies" : ["st7789", "pillow>=9.2.0", "numpy"],
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
-				"settings_dependencies" : {
-					"disp_rotation" : {
-						"friendly_name" : "Display Rotation",
-						"description" : "Select the display rotation angle (Usually 0 degrees)",
-						"options" : {"0" : "0 degrees", "90": "90 degrees", "180": "180 degrees", "270": "270 degrees"},
-						"settings" : ["globals", "disp_rotation"]
-					}
-				},
+				"settings_dependencies" : {},
 				"config" : [
 					{
 						"option_name" : "rotation",
 						"option_friendly_name" : "Screen Rotation", 
 						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
 						"option_type" : "list",
-						"list_values" : [0, 900, 180, 270],
+						"list_values" : [0, 90, 180, 270],
 						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
 						"default" : 0,
 						"hidden" : false
@@ -1973,21 +1906,14 @@
 				"py_dependencies" : ["pygame", "pillow>=9.2.0"], 
 				"apt_dependencies" : [],
 				"command_list" : [],
-				"settings_dependencies" : {
-					"disp_rotation" : {
-						"friendly_name" : "Display Rotation",
-						"description" : "Select the display rotation angle (Usually 0 degrees)",
-						"options" : {"0" : "0 degrees", "90": "90 degrees", "180": "180 degrees", "270": "270 degrees"},
-						"settings" : ["globals", "disp_rotation"]
-					}
-				},
+				"settings_dependencies" : {},
 				"config" : [
 					{
 						"option_name" : "rotation",
 						"option_friendly_name" : "Screen Rotation", 
 						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
 						"option_type" : "list",
-						"list_values" : [0, 900, 180, 270],
+						"list_values" : [0, 90, 180, 270],
 						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
 						"default" : 0,
 						"hidden" : false
@@ -2004,21 +1930,14 @@
 				"py_dependencies" : ["pygame", "pillow>=9.2.0"], 
 				"apt_dependencies" : [],
 				"command_list" : [],
-				"settings_dependencies" : {
-					"disp_rotation" : {
-						"friendly_name" : "Display Rotation",
-						"description" : "Select the display rotation angle (Usually 0 degrees)",
-						"options" : {"0" : "0 degrees", "90": "90 degrees", "180": "180 degrees", "270": "270 degrees"},
-						"settings" : ["globals", "disp_rotation"]
-					}
-				},
+				"settings_dependencies" : {},
 				"config" : [
 					{
 						"option_name" : "rotation",
 						"option_friendly_name" : "Screen Rotation", 
 						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
 						"option_type" : "list",
-						"list_values" : [0, 900, 180, 270],
+						"list_values" : [0, 90, 180, 270],
 						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
 						"default" : 0,
 						"hidden" : false
@@ -2056,18 +1975,7 @@
 						"settings" : ["platform", "buttonslevel"]
 					}
 				},
-				"config" : [
-					{
-						"option_name" : "buttonslevel",
-						"option_friendly_name" : "Button Signal Level", 
-						"option_description" : "Select whether the buttons are active high or active low.",
-						"option_type" : "list",
-						"list_values" : ["HIGH", "LOW"],
-						"list_labels" : ["Active High", "Active Low"],
-						"default" : "HIGH",
-						"hidden" : false
-					}
-				]
+				"config" : []
 			},
 			"st7789p" : {
 				"friendly_name" : "ST7789p IPS Display 240x240px",
@@ -2080,32 +1988,25 @@
 				"py_dependencies" : ["st7789"], 
 				"apt_dependencies" : ["python3-rpi.gpio", "python3-spidev", "python3-pil", "python3-numpy"],
 				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
-				"settings_dependencies" : {
-					"disp_rotation" : {
-						"friendly_name" : "Display Rotation",
-						"description" : "Select the display rotation angle (Usually 0 degrees)",
-						"options" : {"0" : "0 degrees", "180": "180 degrees"},
-						"settings" : ["globals", "disp_rotation"]
-					}
-				},
+				"settings_dependencies" : {},
 				"config" : [
 					{
 						"option_name" : "rotation",
 						"option_friendly_name" : "Screen Rotation", 
 						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
 						"option_type" : "list",
-						"list_values" : [0, 900, 180, 270],
-						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
+						"list_values" : [0, 180],
+						"list_labels" : ["0 Degrees", "180 Degrees"],
 						"default" : 0,
 						"hidden" : false
 					}
 				]
 			},
 			"dsi_800x480t" : {
-				"friendly_name" : "DSI Connected Display 800x480 w/Touch",
+				"friendly_name" : "Raspberry Pi DSI Connected Display 800x480 w/Touch",
 				"filename" : "dsi_800x480t",
-				"description" : "DSI Connected Display (such as the 7\" Raspberry Pi Touch Screen display. Several clones exist which should work perfectly well.",
-				"notes" : "This module may a very long time to install due to the OS dependencies that are required.  Please be aware that this may take more than 10 minutes to install.",
+				"description" : "Raspberry Pi DSI Connected Display such as the 7\" Raspberry Pi Touch Screen display. Several clones exist which should work perfectly well.",
+				"notes" : "This module may take a very long time to install due to the OS dependencies that are required.  Please be aware that this may take more than 10 minutes to install depending on your system and internet connection.",
 				"default" : false,
 				"image" : "dsi_touch.png",
 				"reboot_required" : true,
@@ -2113,11 +2014,11 @@
 				"apt_dependencies" : ["lightdm", "libsdl2-2.0-0"],
 				"command_list" : [["sudo", "python", "board-config.py", "-bl"]],
 				"settings_dependencies" : {
-					"disp_rotation" : {
-						"friendly_name" : "Display Rotation",
-						"description" : "Select the display rotation angle (Usually 0 degrees)",
-						"options" : {"0" : "0 degrees", "1": "90 degrees", "2": "180 degrees", "3": "270 degrees"},
-						"settings" : ["globals", "disp_rotation"]
+					"buttonslevel" : {
+						"friendly_name" : "Button Level",
+						"description" : "Select how your button hardware is configured if equipped. This will be ignored if buttons are not selected as an input type. (HIGH - Pullups, LOW - Pulldowns)",
+						"options" : {"HIGH" : "Pullups", "LOW": "Pulldowns"},
+						"settings" : ["platform", "buttonslevel"]
 					}
 				},
 				"config" : [
@@ -2126,7 +2027,7 @@
 						"option_friendly_name" : "Screen Rotation", 
 						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
 						"option_type" : "list",
-						"list_values" : [0, 900, 180, 270],
+						"list_values" : [0, 90, 180, 270],
 						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
 						"default" : 0,
 						"hidden" : false
@@ -2137,10 +2038,66 @@
 						"option_description" : "JSON file with all of the display data and information.",
 						"option_type" : "string",
 						"default" : "./display/dsi_800x480t.json",
-						"hidden" : true
+						"hidden" : false
+					},
+					{
+						"option_name" : "input_types_supported",
+						"option_friendly_name" : "Input Types Supported", 
+						"option_description" : "List of input types supported.  Separate multiple types with a comma.",
+						"option_type" : "list",
+						"list_values" : [["button"], ["encoder"], ["touch"], ["button", "touch"], ["encoder", "touch"], ["none"]],
+						"list_labels" : ["Button", "Encoder", "Touch", "Touch + Button", "Touch + Encoder", "No Input"],
+						"default" : ["button", "touch"],
+						"hidden" : false
+					}
+				]
+			},
+			"protoflex" : {
+				"friendly_name" : "Prototype Flex w/Input",
+				"filename" : "protoflex",
+				"description" : "Prototype (Test) Flex Module for a with various input methods.",
+				"notes" : "",
+				"default" : false,
+				"image" : "ili9341b.png",
+				"reboot_required" : true,
+				"py_dependencies" : ["pillow>=10.0.0", "pygame>=2.5.0"], 
+				"apt_dependencies" : [],
+				"command_list" : [],
+				"settings_dependencies" : {},
+				"config" : [
+					{
+						"option_name" : "rotation",
+						"option_friendly_name" : "Screen Rotation", 
+						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
+						"option_type" : "list",
+						"list_values" : [0, 90, 180, 270],
+						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
+						"default" : 0,
+						"hidden" : false
+					},
+					{
+						"option_name" : "display_data_filename",
+						"option_friendly_name" : "Display Data Filename", 
+						"option_description" : "Choose the screen resolution desired to select the corresponding JSON configuration file.",
+						"option_type" : "list",
+						"list_values" : ["./display/protoflex_320x240.json", "./display/protoflex_800x480.json"],
+						"list_labels" : ["320x240", "800x480"],
+						"default" : "./display/protoflex_320x240.json",
+						"hidden" : false
+					},
+					{
+						"option_name" : "input_types_supported",
+						"option_friendly_name" : "Input Types Supported", 
+						"option_description" : "List of input types supported.  Separate multiple types with a comma.",
+						"option_type" : "list",
+						"list_values" : [["button"], ["encoder"], ["touch"], ["button", "encoder", "touch"], ["none"]],
+						"list_labels" : ["Button", "Encoder", "Touch", "Button/Encoder/Touch", "No Input"],
+						"default" : ["button", "encoder", "touch"],
+						"hidden" : false
 					}
 				]
 			}
+
 		}, 
 		"distance" : {
 			"hcsr04" : {

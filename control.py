@@ -59,7 +59,6 @@ eventLogger.info('Flushing Redis DB and creating new control structure')
 
 platform_config = settings['platform']
 platform_config['frequency'] = settings['pwm']['frequency']
-disp_rotation = settings['globals']['disp_rotation']
 units = settings['globals']['units']
 
 '''
@@ -127,6 +126,7 @@ try:
 	DisplayModule = importlib.import_module(f'display.{display_name}')
 	display_config = settings['display']['config'][display_name]
 	display_config['probe_info'] = get_probe_info(settings['probe_settings']['probe_map']['probe_info'])
+	disp_rotation = display_config.get('rotation', 0)
 
 except:
 	controlLogger.exception(f'Error occurred loading the display module ({display_name}). Trace dump: ')

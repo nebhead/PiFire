@@ -17,14 +17,16 @@ class FlexObject:
                 'animation_start' : False
             }
         self.background = background
-        self._init_surface()
         self._init_background()
         self.update_object_data(objectData) 
     
     def _init_background(self):
-        ''' saves the slice of background image in PIL to be used for background '''
-        crop_region = (self.objectData['position'][0], self.objectData['position'][1], self.objectData['position'][0] + self.objectData['size'][0], self.objectData['position'][1] + self.objectData['size'][0])
-        self.objectBG = self.background.crop(crop_region)
+        if self.background is not None:
+            ''' saves the slice of background image in PIL to be used for background '''
+            crop_region = (self.objectData['position'][0], self.objectData['position'][1], self.objectData['position'][0] + self.objectData['size'][0], self.objectData['position'][1] + self.objectData['size'][0])
+            self.objectBG = self.background.crop(crop_region)
+        else:
+            self.objectBG = Image.new("RGBA", self.objectData['size'])
 
     def update_object_data(self, updated_objectData=None):
         if updated_objectData is not None:
@@ -41,9 +43,7 @@ class FlexObject:
             if self.objectState['animation_active']:
                 self.objectCanvas = self._animate_gauge()
             else:
-                self.objectCanvas = self._draw_gauge(self.objectData['size'], self.objectData['fg_color'], self.objectData['bg_color'], 
-                                                 self.objectData['temps'], self.objectData['label'], units=self.objectData['units'], 
-                                                 max_temp=self.objectData['max_temp'])
+                self.objectCanvas = self._draw_gauge()
             self._define_generic_touch_area()
 
         if self.objectType == 'gauge_compact':
@@ -51,10 +51,10 @@ class FlexObject:
             self._define_generic_touch_area()
 
         if self.objectType == 'mode_bar': 
-            self.objectCanvas = self._draw_mode_bar(self.objectData['size'], self.objectData['text'])
+            self.objectCanvas = self._draw_mode_bar()
         
         if self.objectType == 'control_panel':
-            self.objectCanvas = self._draw_control_panel(self.objectData['size'], self.objectData['button_list'], active=self.objectData['button_active'])
+            self.objectCanvas = self._draw_control_panel()
             self._define_control_panel_touch_areas()
 
         if self.objectType == 'status_icon':
@@ -64,7 +64,7 @@ class FlexObject:
                 self.objectCanvas = self._draw_status_icon()
 
         if self.objectType == 'menu_icon':
-            self.objectCanvas = self._draw_menu_icon(self.objectData['size'])
+            self.objectCanvas = self._draw_menu_icon()
             self._define_generic_touch_area()
 
         if self.objectType == 'menu':
@@ -82,6 +82,14 @@ class FlexObject:
             else:
                 self.objectCanvas = self._draw_input_number()
         
+        if self.objectType == 'input_number_simple':
+            self._process_number_input()
+
+            if self.objectState['animation_active']:
+                self.objectCanvas = self._animate_input_number(simple=True)
+            else:
+                self.objectCanvas = self._draw_input_number_simple()
+
         if self.objectType == 'timer':
             self.objectCanvas = self._draw_timer()
 
@@ -151,32 +159,14 @@ class FlexObject:
                 self.objectState['animation_label_position'] = 0
         '''
                 
-        return self._draw_gauge(self.objectData['size'], self.objectData['fg_color'], self.objectData['bg_color'], 
-                                self.objectState['animation_temps'], self.objectData['label'], units=self.objectData['units'], 
-                                max_temp=self.objectData['max_temp'])
+        return self._draw_gauge()
 
-    def _draw_gauge(self, size, fg_color, bg_color, temps, label, set_point_color=(0, 200, 255, 255), notify_point_color=(255, 255, 0, 255), units='F', max_temp=600):
+    def _draw_gauge(self):
         '''
         Draw a gauge and return an Image canvas with that gauge. 
-
-        :param size: The size of the gauge to produce in (width, height) format. 
-        :type size: tuple(int, int)
-        :param fg_color: The foreground color of the gauge in (r,g,b,a) format.
-        :type fg_color: tuple(int, int, int, int)
-        :param bg_color: The background color of the gauge in (r,g,b,a) format.
-        :type bg_color: tuple(int, int, int, int)
-        :param temps: The list of temperatures to display. [current, notify_point, set_point]
-        :type temps: list[float, float, float]
-        :param set_point_color: The set point color of the gauge in (r,g,b,a) format.  This is used mainly for the primary gauge.
-        :type set_point_color: tuple(int, int, int, int)
-        :param notify_point_color: The notify point color of the gauge in (r,g,b,a) format.
-        :type notify_point_color: tuple(int, int, int, int)
-        :param str units: Either 'F' for fahrenheit or 'C' for celcius. 
-        :param int max_temp: Maximum temperature to display on the gauge arc. 
-        :return: Image object. 
         '''
 
-        output_size = size 
+        output_size = self.objectData['size'] 
 
         size = (400,400)
 
@@ -191,22 +181,22 @@ class FlexObject:
         start_rad = 135
 
         # Determine the radian (0-270) for the current temperature   
-        temp_rad = 270 * min(temps[0]/max_temp, 1)
+        temp_rad = 270 * min(self.objectData['temps'][0]/self.objectData['max_temp'], 1)
         end_rad = start_rad + temp_rad
         
         # Draw Temperature Arc
-        draw.arc(coords, start=start_rad, end=end_rad, fill=fg_color, width=30)
+        draw.arc(coords, start=start_rad, end=end_rad, fill=self.objectData['fg_color'], width=30)
         
         # Draw Background Arc 
-        draw.arc(coords, start=end_rad, end=45, fill=bg_color, width=30)
+        draw.arc(coords, start=end_rad, end=45, fill=self.objectData['bg_color'], width=30)
         
         # Current Temperature (Large Centered)
-        cur_temp = str(temps[0])[:5]
+        cur_temp = str(self.objectData['temps'][0])[:5]
         if len(cur_temp) < 5:
             font_point_size = round(size[1] * 0.3)  # Font size as a ratio of the object size
         else:
             font_point_size = round(size[1] * 0.25)  # Font size as a ratio of the object size
-        font = ImageFont.truetype("trebuc.ttf", font_point_size)
+        font = ImageFont.truetype(self.objectData['font'], font_point_size)
         font_bbox = font.getbbox(cur_temp)  # Grab the width of the text
         font_width = font_bbox[2] - font_bbox[0]
         font_height = font_bbox[3] - font_bbox[1]
@@ -214,30 +204,30 @@ class FlexObject:
         label_y = (size[1] // 2) - (font_height // 1.1)
         label_origin = (label_x, label_y)
 
-        draw.text(label_origin, cur_temp, font=font, fill=fg_color)
+        draw.text(label_origin, cur_temp, font=font, fill=self.objectData['fg_color'])
 
         # Units Label (Small Centered)
-        unit_label = f'{units}°'
+        unit_label = f'{self.objectData["units"]}°'
         font_point_size = font_point_size = round((size[1] * 0.35) / 4)  # Font size as a ratio of the object size
-        font = ImageFont.truetype("trebuc.ttf", font_point_size)
-        font_bbox = font.getbbox(units)  # Grab the width of the text
+        font = ImageFont.truetype(self.objectData['font'], font_point_size)
+        font_bbox = font.getbbox(self.objectData['units'])  # Grab the width of the text
         font_width = font_bbox[2] - font_bbox[0]
         font_height = font_bbox[3] - font_bbox[1]
 
         label_x = (size[0] // 2) - (font_width // 2)
         label_y = round((size[1] * 0.60)) 
         label_origin = (label_x, label_y)
-        draw.text(label_origin, unit_label, font=font, fill=(255, 255, 255))
+        draw.text(label_origin, unit_label, font=font, fill=self.objectData['fg_color'])
 
         # Gauge Label
 
         # Gauge Label Text
-        if len(label) > 7:
-            label_displayed = label[0:7]
+        if len(self.objectData['label']) > 7:
+            label_displayed = self.objectData['label'][0:7]
         else:
-            label_displayed = label 
+            label_displayed = self.objectData['label']
         font_point_size = round((size[1] * 0.55) / 4)  # Font size as a ratio of the object size
-        font = ImageFont.truetype("trebuc.ttf", font_point_size)
+        font = ImageFont.truetype(self.objectData['font'], font_point_size)
         font_bbox = font.getbbox(label_displayed)  # Grab the width of the text
         font_width = font_bbox[2] - font_bbox[0]
         font_height = font_bbox[3] - font_bbox[1]
@@ -246,24 +236,23 @@ class FlexObject:
         label_x = (size[0] // 2) - (font_width // 2)
         label_y = round((size[1] * 0.75)) 
         label_origin = (label_x, label_y)
-        draw.text(label_origin, label_displayed, font=font, fill=(255, 255, 255))
+        draw.text(label_origin, label_displayed, font=font, fill=self.objectData['fg_color'])
         # Gauge Label Rectangle
         # rounded_rectangle = (label_x-6, label_y+4, label_x + font_width + 8, label_y + font_height + 16)
         rounded_rectangle = (label_x-8, label_y+(font_bbox[1] - 8), label_x + font_width + 8, label_y + font_bbox[1] + font_height + 8)
-        draw.rounded_rectangle(rounded_rectangle, radius=8, outline=(255,255,255), width=3)
-
+        draw.rounded_rectangle(rounded_rectangle, radius=8, outline=self.objectData['fg_color'], width=3)
 
         # Set Points Labels 
-        if temps[1] > 0 and temps[2] > 0:
+        if self.objectData['temps'][1] > 0 and self.objectData['temps'][2] > 0:
             dual_label = 1
         else:
             dual_label = 0
 
         # Notify Point Label 
-        if temps[1] > 0:
-            notify_point_label = f'{temps[1]}'
+        if self.objectData['temps'][1] > 0:
+            notify_point_label = f'{self.objectData["temps"][1]}'
             font_point_size = round((size[1] * (0.5 - (dual_label * 0.15))) / 4)  # Font size as a ratio of the object size
-            font = ImageFont.truetype("trebuc.ttf", font_point_size)
+            font = ImageFont.truetype(self.objectData['font'], font_point_size)
             font_bbox = font.getbbox(notify_point_label)  # Grab the width of the text
             font_width = font_bbox[2] - font_bbox[0]
             font_height = font_bbox[3] - font_bbox[1]
@@ -271,22 +260,22 @@ class FlexObject:
             label_x = (size[0] // 2) - (font_width // 2) - (dual_label * ((font_width // 2) + 10))
             label_y = round((size[1] * (0.20 + (dual_label * 0.05)))) 
             label_origin = (label_x, label_y)
-            draw.text(label_origin, notify_point_label, font=font, fill=notify_point_color)
+            draw.text(label_origin, notify_point_label, font=font, fill=self.objectData['np_color'])
             # Notify Point Label Rectangle
             rounded_rectangle = (label_x-8, label_y+(font_bbox[1] - 8), label_x + font_width + 8, label_y + font_bbox[1] + font_height + 8)
             # (label_x-6, label_y+2, label_x + font_width + 6, label_y + font_height + 4)
-            draw.rounded_rectangle(rounded_rectangle, radius=8, outline=notify_point_color, width=3)
+            draw.rounded_rectangle(rounded_rectangle, radius=8, outline=self.objectData['np_color'], width=3)
 
             # Draw Tic for notify point
-            setpoint = 270 * min(temps[1]/max_temp, 1)
+            setpoint = 270 * min(self.objectData['temps'][1]/self.objectData['max_temp'], 1)
             setpoint += start_rad 
-            draw.arc(coords, start=setpoint - 1, end=setpoint + 1, fill=notify_point_color, width=30)
+            draw.arc(coords, start=setpoint - 1, end=setpoint + 1, fill=self.objectData['np_color'], width=30)
 
         # Set Point Label 
-        if temps[2] > 0:
-            set_point_label = f'{temps[2]}'
+        if self.objectData['temps'][2] > 0:
+            set_point_label = f'{self.objectData["temps"][2]}'
             font_point_size = round((size[1] * (0.5 - (dual_label * 0.15))) / 4)  # Font size as a ratio of the object size
-            font = ImageFont.truetype("trebuc.ttf", font_point_size)
+            font = ImageFont.truetype(self.objectData['font'], font_point_size)
             font_bbox = font.getbbox(set_point_label)  # Grab the width of the text
             font_width = font_bbox[2] - font_bbox[0]
             font_height = font_bbox[3] - font_bbox[1]
@@ -294,15 +283,15 @@ class FlexObject:
             label_x = (size[0] // 2) - (font_width // 2) + (dual_label * ((font_width // 2) + 10))
             label_y = round((size[1] * (0.20 + (dual_label * 0.05)))) 
             label_origin = (label_x, label_y)
-            draw.text(label_origin, set_point_label, font=font, fill=set_point_color)
+            draw.text(label_origin, set_point_label, font=font, fill=self.objectData['sp_color'])
             # Set Point Label Rectangle 
             rounded_rectangle = (label_x-8, label_y+(font_bbox[1] - 8), label_x + font_width + 8, label_y + font_bbox[1] + font_height + 8)
-            draw.rounded_rectangle(rounded_rectangle, radius=8, outline=set_point_color, width=3)
+            draw.rounded_rectangle(rounded_rectangle, radius=8, outline=self.objectData['sp_color'], width=3)
 
             # Draw Tic for set point
-            setpoint = 270 * min(temps[2]/max_temp, 1)
+            setpoint = 270 * min(self.objectData['temps'][2]/self.objectData['max_temp'], 1)
             setpoint += start_rad 
-            draw.arc(coords, start=setpoint - 1, end=setpoint + 1, fill=set_point_color, width=30)
+            draw.arc(coords, start=setpoint - 1, end=setpoint + 1, fill=self.objectData['sp_color'], width=30)
 
         # Create drawing object
         canvas = Image.new("RGBA", (output_size[0], output_size[1]))
@@ -328,11 +317,11 @@ class FlexObject:
         else:
             label_displayed = self.objectData['label']
 
-        gauge_label = self._draw_text(label_displayed, 'trebuc.ttf', 50, (255,255,255))
+        gauge_label = self._draw_text(label_displayed, self.objectData['font'], 50, self.objectData['fg_color'])
         gauge.paste(gauge_label, (40,30), gauge_label)
 
         # Draw Temperature Value
-        current_temp = self._draw_text(self.objectData['temps'][0], 'trebuc.ttf', 100, (255,255,255))
+        current_temp = self._draw_text(self.objectData['temps'][0], self.objectData['font'], 100, self.objectData['fg_color'])
         gauge.paste(current_temp, (40, 75), current_temp)
 
         # Determine if Displaying Notify Point AND Set Point 
@@ -348,19 +337,19 @@ class FlexObject:
 
         # Draw Notify Point Value
         if self.objectData['temps'][1]:
-            notify_point_temp = self._draw_text(self.objectData['temps'][1], 'trebuc.ttf', font_size, (255, 255, 0), rect=True)
+            notify_point_temp = self._draw_text(self.objectData['temps'][1], self.objectData['font'], font_size, self.objectData['np_color'], rect=True)
             gauge.paste(notify_point_temp, (215, 75 + y_position_offset), notify_point_temp)
 
         # Draw Set Point Value
         if self.objectData['temps'][2]:
-            set_point_temp = self._draw_text(self.objectData['temps'][2], 'trebuc.ttf', font_size, (0, 255, 255), rect=True)
+            set_point_temp = self._draw_text(self.objectData['temps'][2], self.objectData['font'], font_size, self.objectData['sp_color'], rect=True)
             if dual_temp: 
                 y_position_offset = notify_point_temp.size[1] + 2
             gauge.paste(set_point_temp, (215, 75 + y_position_offset), set_point_temp)
 
         # Draw Units
         text = f'{self.objectData["units"]}°'
-        units_label = self._draw_text(text, 'Trebuchet_MS_Bold.ttf', 50, (255,255,255))
+        units_label = self._draw_text(text, 'Trebuchet_MS_Bold.ttf', 50, self.objectData['fg_color'])
         #units_label_size = units_label.size() 
         units_label_position = (330, (size[1] // 2))
         gauge.paste(units_label, units_label_position, units_label)
@@ -373,7 +362,7 @@ class FlexObject:
             current_temp_adjusted = 360
         current_temp_bar = (40, 160, current_temp_adjusted, 170)
         draw.rounded_rectangle(temp_bar, radius=10, fill=(0,0,0,200))
-        draw.rounded_rectangle(current_temp_bar, radius=10, fill=(255,255,255,255))
+        draw.rounded_rectangle(current_temp_bar, radius=10, fill=self.objectData['fg_color'])
 
         # Draw Notify Point Polygon 
         if self.objectData['temps'][1]:
@@ -381,7 +370,7 @@ class FlexObject:
             if notify_temp_adjusted > 360:
                 notify_temp_adjusted = 360
             triangle_coords = [(notify_temp_adjusted, 168), (notify_temp_adjusted + 10, 150), (notify_temp_adjusted - 10, 150)]
-            draw.polygon(triangle_coords, fill=(255,255,0,255))
+            draw.polygon(triangle_coords, fill=self.objectData['np_color'])
 
         # Draw Set Point Polygon 
         if self.objectData['temps'][2]:
@@ -389,7 +378,7 @@ class FlexObject:
             if set_temp_adjusted > 360:
                 set_temp_adjusted = 360
             triangle_coords = [(set_temp_adjusted, 168), (set_temp_adjusted + 10, 150), (set_temp_adjusted - 10, 150)]
-            draw.polygon(triangle_coords, fill=(0,255,255,255))
+            draw.polygon(triangle_coords, fill=self.objectData['sp_color'])
 
         # Create drawing object
         canvas = Image.new("RGBA", (output_size[0], output_size[1]))
@@ -424,8 +413,8 @@ class FlexObject:
         else:
             return font_canvas
 
-    def _draw_mode_bar(self, size, text):
-        output_size = size 
+    def _draw_mode_bar(self):
+        output_size = self.objectData['size'] 
 
         size = (400,60)
 
@@ -434,15 +423,15 @@ class FlexObject:
         draw = ImageDraw.Draw(mode_bar)
 
         # Text Rectangle from top
-        draw.rounded_rectangle((10, -20, size[0]-10, size[1]-10), radius=8, outline=(255,255,255,255), width=2, fill=(0, 0, 0, 100))
+        draw.rounded_rectangle((10, -20, size[0]-10, size[1]-10), radius=8, outline=self.objectData['fg_color'], width=2, fill=(0, 0, 0, 100))
 
         # Mode Text
-        if len(text) > 16:
-            label_displayed = text[0:16]
+        if len(self.objectData['text']) > 16:
+            label_displayed = self.objectData['text'][0:16]
         else:
-            label_displayed = text 
+            label_displayed = self.objectData['text']
         font_point_size = round(size[1] * 0.80)  # Font size as a ratio of the object size
-        font = ImageFont.truetype("trebuc.ttf", font_point_size)
+        font = ImageFont.truetype(self.objectData['font'], font_point_size)
         font_bbox = font.getbbox(label_displayed)  # Grab the width of the text
         font_width = font_bbox[2] - font_bbox[0]
         font_height = font_bbox[3] - font_bbox[1]
@@ -450,7 +439,7 @@ class FlexObject:
         label_x = (size[0] // 2) - (font_width // 2)
         label_y = (size[1] // 2) - (font_height // 2) - 18
         label_origin = (label_x, label_y)
-        draw.text(label_origin, label_displayed, font=font, fill=(255, 255, 255))
+        draw.text(label_origin, label_displayed, font=font, fill=self.objectData['fg_color'])
 
         # Create drawing object
         canvas = Image.new("RGBA", (output_size[0], output_size[1]))
@@ -477,7 +466,7 @@ class FlexObject:
         icon_canvas = icon_canvas.crop(icon_canvas.getbbox())
         return icon_canvas
 
-    def _draw_control_panel(self, size, button_type, active='Stop'):
+    def _draw_control_panel(self):
         output_size = self.objectData['size'] 
         button_type = self.objectData['button_type']
         active = self.objectData['button_active']
@@ -635,9 +624,9 @@ class FlexObject:
         return self._draw_status_icon(rotation=self.objectState['animation_rotation'], breath_step=self.objectState['animation_breathe'])
 
 
-    def _draw_menu_icon(self, size):
+    def _draw_menu_icon(self):
         # Save output size 
-        output_size = size 
+        output_size = self.objectData['size']
 
         # Working Size
         size = (40,40)
@@ -695,9 +684,15 @@ class FlexObject:
         canvas = Image.new("RGBA", size)  # Create canvas output object
         draw = ImageDraw.Draw(canvas)  # Create drawing object 
         fg_color = self.objectData['color']
+        bg_color = (0,0,0,255)
 
         # Clear any touch areas that might have been defined before 
         self.objectData['touch_areas'] = []  
+
+        selected = self.objectData['data'].get('button_selected', None)
+        if selected == None and len(self.objectData['button_list']) > 1:
+            self.objectData['data']['button_selected'] = 1
+            selected = 1
 
         # Rounded rectangle that fills the canvas size
         menu_padding = 10  # Define padding around outside of the menu rectangle 
@@ -712,7 +707,7 @@ class FlexObject:
 
         number_of_buttons = len(self.objectData['button_list'])
 
-        two_column_mode = True if number_of_buttons > 5 else False 
+        two_column_mode = True if number_of_buttons > 6 else False 
 
         if two_column_mode:
             button_height = 50
@@ -739,10 +734,10 @@ class FlexObject:
                 close_icon = self._create_icon('\uf00d', 34, (255,255,255))
                 close_position = (size[0] - (menu_padding * 4), (menu_padding * 2))
                 canvas.paste(close_icon, close_position, close_icon)
-                close_touch_area = (close_position[0]+self.objectData['position'][0], close_position[1]+self.objectData['position'][1], close_icon.width, close_icon.height)
-                close_touch_area = self._scale_touch_area(close_touch_area, size, self.objectData['size'])
+                close_touch_area = (close_position[0], close_position[1], close_icon.width, close_icon.height)
                 scaled_touch_area = self._scale_touch_area(close_touch_area, size, self.objectData['size'])
-                self.objectData['touch_areas'].append(Rect(scaled_touch_area))
+                transformed_touch_area = self._transform_touch_area(scaled_touch_area, self.objectData['position'])
+                self.objectData['touch_areas'].append(Rect(transformed_touch_area))
             else:
                 if button_count > 10:
                     break   # Stop if at 11 items
@@ -758,16 +753,22 @@ class FlexObject:
 
                 rect_size = (button_width, button_height)
                 rect_coords = (rect_position[0], rect_position[1], rect_position[0] + rect_size[0], rect_position[1] + rect_size[1])
-
-                draw.rounded_rectangle(rect_coords, radius=8, outline=(255,255,255,255), fill=(0, 0, 0, 250))
+                if selected == index:
+                    # Reverse colors if selected
+                    draw.rounded_rectangle(rect_coords, radius=8, outline=(255,255,255,255), fill=fg_color)
+                else:
+                    draw.rounded_rectangle(rect_coords, radius=8, outline=(255,255,255,255), fill=bg_color)
 
                 # Put button text inside rectangle  
                 if len(self.objectData['button_text'][index]) > 25:
                     label_displayed = self.objectData['button_text'][index][0:25]
                 else:
                     label_displayed = self.objectData['button_text'][index]
-
-                label = self._draw_text(label_displayed, self.objectData['font'], 35, fg_color)
+                if selected == index:
+                    # Reverse colors if selected
+                    label = self._draw_text(label_displayed, self.objectData['font'], 35, bg_color)
+                else:
+                    label = self._draw_text(label_displayed, self.objectData['font'], 35, fg_color)
                 label_x = rect_position[0] + (rect_size[0] // 2) - (label.width // 2)
                 label_y = rect_position[1] + (rect_size[1] // 2) - (label.height // 2)
                 label_position = (label_x, label_y)
@@ -814,6 +815,7 @@ class FlexObject:
         img_qr = img_qr.resize((300,300))
         position = (150, 60)
         canvas.paste(img_qr, position)
+        canvas = canvas.resize(self.objectData['size'])
 
         return canvas 
 
@@ -833,10 +835,10 @@ class FlexObject:
         close_icon = self._create_icon('\uf00d', 34, (255,255,255))
         close_position = (size[0] - (menu_padding * 4), (menu_padding * 2))
         canvas.paste(close_icon, close_position, close_icon)
-        close_touch_area = (close_position[0]+self.objectData['position'][0], close_position[1]+self.objectData['position'][1], close_icon.width, close_icon.height)
-        close_touch_area = self._scale_touch_area(close_touch_area, size, self.objectData['size'])
+        close_touch_area = (close_position[0], close_position[1], close_icon.width, close_icon.height)
         scaled_touch_area = self._scale_touch_area(close_touch_area, size, self.objectData['size'])
-        self.objectData['touch_areas'].append(Rect(scaled_touch_area))
+        transformed_touch_area = self._transform_touch_area(scaled_touch_area, self.objectData['position'])
+        self.objectData['touch_areas'].append(Rect(transformed_touch_area))
         self.objectData['button_list'].append('menu_close')
 
         # Menu Title
@@ -944,9 +946,111 @@ class FlexObject:
                 self.objectData['touch_areas'].append(Rect(scaled_touch_area))
                 self.objectData['button_list'].append(f'button_{col}')
         
+        # Resize for output
+        canvas = canvas.resize(self.objectData['size'])
         return canvas 
 
-    def _animate_input_number(self):
+    def _draw_input_number_simple(self):
+        size = (600, 400)  # Define working size
+        canvas = Image.new("RGBA", size)  # Create canvas output object
+        draw = ImageDraw.Draw(canvas)  # Create drawing object 
+        button_pushed = self.objectState.get('animation_input', '')
+        self.objectData['touch_areas'] = []
+        self.objectData['button_list'] = []
+        
+        # Rounded rectangle that fills the canvas size
+        menu_padding = 10  # Define padding around outside of the menu rectangle 
+        draw.rounded_rectangle((menu_padding, menu_padding, size[0]-menu_padding, size[1]-menu_padding), radius=8, outline=(0,0,0,225), fill=(0, 0, 0, 250))
+
+        # Close Icon Upper Right
+        close_icon = self._create_icon('\uf00d', 34, (255,255,255))
+        close_position = (size[0] - (menu_padding * 4), (menu_padding * 2))
+        canvas.paste(close_icon, close_position, close_icon)
+        close_touch_area = (close_position[0], close_position[1], close_icon.width, close_icon.height)
+        scaled_touch_area = self._scale_touch_area(close_touch_area, size, self.objectData['size'])
+        transformed_touch_area = self._transform_touch_area(scaled_touch_area, self.objectData['position'])
+        self.objectData['touch_areas'].append(Rect(transformed_touch_area))
+        self.objectData['button_list'].append('menu_close')
+
+        # Menu Title
+        title = self._draw_text(self.objectData['title_text'], self.objectData['font'], 35, self.objectData['color'], rect=False, bg_fill=(0,0,0,250))
+        title_x = (size[0] // 2) - (title.width // 2)
+        title_y = 15
+        canvas.paste(title, (title_x, title_y))
+
+        # Number Display 
+        number_entry_position = (40, 80)
+        number_entry_size = (340, 200)
+        number_entry_coords = number_entry_position + (number_entry_position[0] + number_entry_size[0], number_entry_position[1] + number_entry_size[1])
+        number_entry_bg_color = (50,50,50)
+        draw.rounded_rectangle(number_entry_coords, radius=8, fill=number_entry_bg_color)
+        number_digits = self._draw_text(self.objectData['data']['value'], self.objectData['font'], 160, self.objectData['color'], bg_fill=number_entry_bg_color)
+        number_digits_position = (number_entry_position[0] + ((number_entry_size[0] // 2) - (number_digits.width // 2)), number_entry_position[1] + (number_entry_size[1] // 2) - (number_digits.height // 2)) 
+        canvas.paste(number_digits, number_digits_position)
+
+        # Up Arrow
+        if button_pushed == 'up':
+            bg_fill = (255,255,255,255)
+            fg_fill = (0,0,0,255)
+        else:
+            bg_fill = (0,0,0,255)
+            fg_fill = self.objectData['color']
+        button_position = (420, 80)
+        button_size = (140, 80)
+        button_coords = button_position + (button_position[0] + button_size[0], button_position[1] + button_size[1])
+        draw.rounded_rectangle(button_coords, radius=8, outline=fg_fill, fill=bg_fill, width=3)
+        button_icon = self._create_icon('\uf077', 35, fg_fill, bg_fill=bg_fill)
+        button_icon_position = (button_position[0] + ((button_size[0] // 2) - (button_icon.width // 2)), button_position[1] + (button_size[1] // 2) - (button_icon.height // 2))
+        canvas.paste(button_icon, button_icon_position)
+        # Scale and Store Touch Area
+        button_touch_area = button_position + button_size
+        scaled_touch_area = self._scale_touch_area(button_touch_area, size, self.objectData['size'])
+        transform_touch_area = self._transform_touch_area(scaled_touch_area, self.objectData['position'])
+        self.objectData['touch_areas'].append(Rect(transform_touch_area))
+        self.objectData['button_list'].append('button_up')
+
+        # Down Arrow
+        if button_pushed == 'down':
+            bg_fill = (255,255,255,255)
+            fg_fill = (0,0,0,255)
+        else:
+            bg_fill = (0,0,0,255)
+            fg_fill = self.objectData['color']
+        button_position = (420, 200)
+        button_size = (140, 80)
+        button_coords = button_position + (button_position[0] + button_size[0], button_position[1] + button_size[1])
+        draw.rounded_rectangle(button_coords, radius=8, outline=fg_fill, fill=bg_fill, width=3)
+        button_icon = self._create_icon('\uf078', 35, fg_fill, bg_fill=bg_fill)
+        button_icon_position = (button_position[0] + ((button_size[0] // 2) - (button_icon.width // 2)), button_position[1] + (button_size[1] // 2) - (button_icon.height // 2))
+        canvas.paste(button_icon, button_icon_position)
+        # Scale and Store Touch Area
+        button_touch_area = button_position + button_size
+        scaled_touch_area = self._scale_touch_area(button_touch_area, size, self.objectData['size'])
+        transform_touch_area = self._transform_touch_area(scaled_touch_area, self.objectData['position'])
+        self.objectData['touch_areas'].append(Rect(transform_touch_area))
+        self.objectData['button_list'].append('button_down')
+
+        # Enter Button
+        button_position = (180, 300)
+        button_size = (240, 80)
+        button_coords = button_position + (button_position[0] + button_size[0], button_position[1] + button_size[1])
+        draw.rounded_rectangle(button_coords, radius=8, outline=self.objectData['color'], width=3)
+        button_text = self._draw_text('ENTER', self.objectData['font'], 60, self.objectData['color'], bg_fill=(0,0,0))
+        button_text_position = (button_position[0] + ((button_size[0] // 2) - (button_text.width // 2)), button_position[1] + (button_size[1] // 2) - (button_text.height // 2))
+        canvas.paste(button_text, button_text_position)
+        # Scale and Store Touch Area
+        button_touch_area = button_position + button_size
+        scaled_touch_area = self._scale_touch_area(button_touch_area, size, self.objectData['size'])
+        transform_touch_area = self._transform_touch_area(scaled_touch_area, self.objectData['position'])
+        self.objectData['touch_areas'].append(Rect(transform_touch_area))
+        self.objectData['button_list'].append(self.objectData['command'])
+
+        # Resize for output
+        canvas = canvas.resize(self.objectData['size'])
+        return canvas 
+
+
+    def _animate_input_number(self, simple=False):
         if self.objectState['animation_start']:
             self.objectState['animation_start'] = False  # Run animation start only once
             self.objectState['animation_counter'] = 0  # Setup a counter for number of frames to produce
@@ -957,12 +1061,15 @@ class FlexObject:
             self.objectState['animation_active'] = False  # Disable animation after one frame
             self.objectState['animation_input'] = ''
 
-        canvas = self._draw_input_number()
+        if simple:
+            canvas = self._draw_input_number_simple()
+        else:
+            canvas = self._draw_input_number()
 
         self.objectState['animation_counter'] += 1  # Increment the frame counter 
 
         return canvas 
-
+    
     def _process_number_input(self):
         
         if self.objectData['data']['input'] != '':

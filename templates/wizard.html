@@ -80,7 +80,7 @@
 					        <div id="grillplatformCard">
 								{% for module in wizardData['modules']['grillplatform'] %}
 									{% if wizardInstallInfo['modules']['grillplatform']['profile_selected'][0] == module %}
-										{{ render_wizard_card(wizardData['modules']['grillplatform'][module], 'grillplatform', wizardInstallInfo['modules']['grillplatform']['settings']) }}
+										{{ render_wizard_card(wizardData['modules']['grillplatform'][module], 'grillplatform', wizardInstallInfo['modules']['grillplatform']) }}
 									{% endif %}
 								{% endfor %}
 							</div>
@@ -162,7 +162,8 @@
 				        </div>
 				        <div class="card-body">
 					        <strong>Select a Display Module for PiFire.</strong><br><br>
-					        A display is not required by PiFire, but is extremely useful.  The default display is the ILI9341 Color Display with button input.  The prototype display should only be selected for testing/debug purposes. <br><br>
+					        A display is not required by PiFire, but is extremely useful.  The default display is the ILI9341 Color Display with button input.  
+							Select None for no display.  The prototype display should only be selected for testing/debug purposes. <br><br>
 					        <!-- Select Drop Down -->
 					        <div class="form-group">
 						        <select class="form-control" id="displaySelect" name="displaySelect">
@@ -177,7 +178,7 @@
 					        <div id="displayCard">
 								{% for module in wizardData['modules']['display'] %}
 									{% if wizardInstallInfo['modules']['display']['profile_selected'][0] == module %}
-										{{ render_wizard_card(wizardData['modules']['display'][module], 'display',  wizardInstallInfo['modules']['display']['settings']) }}
+										{{ render_wizard_card(wizardData['modules']['display'][module], 'display',  wizardInstallInfo['modules']['display']) }}
 									{% endif %}
 								{% endfor %}
 							</div>
@@ -217,7 +218,7 @@
 					        <div id="distanceCard">
 								{% for module in wizardData['modules']['distance'] %}
 									{% if wizardInstallInfo['modules']['distance']['profile_selected'][0] == module %}
-										{{ render_wizard_card(wizardData['modules']['distance'][module], 'distance',  wizardInstallInfo['modules']['distance']['settings']) }}
+										{{ render_wizard_card(wizardData['modules']['distance'][module], 'distance',  wizardInstallInfo['modules']['distance']) }}
 									{% endif %}
 								{% endfor %}
 							</div>
