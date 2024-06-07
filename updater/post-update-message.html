@@ -51,6 +51,11 @@
                              Changed the ETA function to use Linear Regression (SciKit) instead of the Interpolate module (SciPy).  This will hopefully improve the 
                              reliability of the ETA function.
                          </li>
+                         <li>
+                             Added ProtoFlex module for testing new display output system.  This will be used to test the new display system and allow for additional 
+                             screen sizes to be added for existing displays like ILI9341, etc.  Also refactored the FlexObject and BaseFlex system to be more modular 
+                             and hopefully more performant.  Updated the configuration wizard so that configuration of displays is easier.  Other minor bug fixes.
+                         </li>
                      </ul>
                  </li>
              </ul>
@@ -59,7 +64,7 @@
              
              <ul>
                  <li>
-                     TBD 
+                     Fixed a bug where changing units from F to C would (during upgrade) would cause the control script to crash.
                  </li>
              </ul>
              

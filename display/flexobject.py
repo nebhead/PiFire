@@ -400,18 +400,25 @@ class GaugeCompact(FlexObject):
             font_size = 50 
             y_position_offset = 15
 
+        if self.objectData["units"] == 'F':
+            x_position = 215
+            y_position = 75
+        else:
+            ''' Since Celcius can be a larger number, we need to adjust the positioning of the text '''
+            x_position = 250
+            y_position = 5
 
         # Draw Notify Point Value
         if self.objectData['temps'][1]:
             notify_point_temp = self._draw_text(self.objectData['temps'][1], self.objectData['font'], font_size, self.objectData['np_color'], rect=True)
-            gauge.paste(notify_point_temp, (215, 75 + y_position_offset), notify_point_temp)
+            gauge.paste(notify_point_temp, (x_position, y_position + y_position_offset), notify_point_temp)
 
         # Draw Set Point Value
         if self.objectData['temps'][2]:
             set_point_temp = self._draw_text(self.objectData['temps'][2], self.objectData['font'], font_size, self.objectData['sp_color'], rect=True)
             if dual_temp: 
                 y_position_offset = notify_point_temp.size[1] + 2
-            gauge.paste(set_point_temp, (215, 75 + y_position_offset), set_point_temp)
+            gauge.paste(set_point_temp, (x_position, y_position + y_position_offset), set_point_temp)
 
         # Draw Units
         text = f'{self.objectData["units"]}°'
