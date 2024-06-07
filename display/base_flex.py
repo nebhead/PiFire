@@ -126,6 +126,9 @@ class DisplayBase:
                     for item in self.display_data[self.display_profile]['dash'][index][key]:
                         color_level_list.append(tuple(item))
                     self.display_data[self.display_profile]['dash'][index][key] = color_level_list
+                if key in ['units']:
+                    ''' Ensure we start with the right units displayed '''
+                    self.display_data[self.display_profile]['dash'][index][key] = self.units
         for menu, object in self.display_data[self.display_profile]['menus'].items():
             for key in list(object.keys()):
                 if key in ['position', 'size', 'fg_color', 'bg_color', 'color', 'active_color', 'inactive_color', 'sp_color', 'np_color']:

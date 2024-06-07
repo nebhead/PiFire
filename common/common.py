@@ -1974,10 +1974,12 @@ def read_status(init=False):
 	global cmdsts
 
 	if init:
+		settings = read_settings()
+		pellet_db = read_pellet_db()
 		status = {
 		  	"s_plus": False,
-  			"hopper_level": 100,
-			"units": "F",
+  			"hopper_level": pellet_db['current']['hopper_level'],
+			"units": settings['globals']['units'],
 			"mode": "Stop",
 			"recipe": False,
 			"startup_timestamp" : 0,
