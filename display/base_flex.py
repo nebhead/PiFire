@@ -19,9 +19,9 @@ import time
 import logging
 import socket
 import os
+from display.flexobject import *
 from PIL import Image
 from common import read_control, write_control, is_real_hardware, read_generic_json, read_settings, write_settings, read_status, read_current
-from display.flexobject import FlexObject
 
 '''
 ==================================================================================
@@ -280,7 +280,7 @@ class DisplayBase:
         '''
         pass 
 
-    def _build_objects(self, background):
+    def _build_objects(self, background=None):
         ''' 
         Inheriting classes may override this function to ensure the right object type is loaded
         '''
@@ -297,7 +297,9 @@ class DisplayBase:
             return 
             
         for object_data in section_data:
-            self.display_object_list.append(FlexObject(object_data['type'], object_data, background))
+            FlexObject_ClassName = FlexObject_TypeMap[object_data["type"]]
+            FlexObject_Constructor = globals()[FlexObject_ClassName]
+            self.display_object_list.append(FlexObject_Constructor(object_data['type'], object_data, background))
 
     def _configure_dash(self):
         ''' Build Food Probe Map '''
@@ -533,15 +535,6 @@ class DisplayBase:
             self.last_in_data = self.in_data.copy() 
             self.last_status_data = self.status_data.copy()
 
-    def _update_input_objects(self):
-        '''
-        for index, object in enumerate(self.display_object_list):
-            objectData = object.get_object_data()
-            if objectData['data']['input'] != '':
-                self.display_object_list[index].update_object_data(objectData)
-        '''
-        pass 
-
     def _draw_objects(self):
         for object in self.display_object_list: 
             objectData = object.get_object_data()
@@ -550,10 +543,14 @@ class DisplayBase:
             if objectData['animation_enabled'] and objectState['animation_active']:
                 object_image = object.update_object_data()
                 self.display_updated = True 
-                self.display_canvas.paste(object_image, objectData['position'], object_image)
             else:
                 object_image = object.get_object_canvas()
-                self.display_canvas.paste(object_image, objectData['position'], object_image)
+
+            if objectData['glow']:
+                object_image_glow = object_image.copy()
+                object_image_glow = object_image_glow.filter(ImageFilter.GaussianBlur(radius=3))
+                self.display_canvas.paste(object_image, objectData['position'], object_image_glow)
+            self.display_canvas.paste(object_image, objectData['position'], object_image)
 
     '''
         ====================== Input/Event Handling ========================

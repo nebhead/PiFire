@@ -167,7 +167,7 @@ class Display(DisplayBase):
 				if self.display_active == 'home':
 					if self.display_init:
 						''' Initialize Home Screen '''
-						self._build_objects(self.background)
+						self._build_objects()
 						self.display_init = False
 						self.display_updated = True
 
@@ -257,7 +257,7 @@ class Display(DisplayBase):
 	def _init_dash(self):
 		self._init_framework()
 		self._configure_dash()
-		self._build_objects(None)
+		self._build_objects()
 		self._build_dash_map()
 		self._store_dash_objects()
 	
