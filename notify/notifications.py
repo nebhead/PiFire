@@ -43,15 +43,14 @@ def check_notify(settings, control, in_data=None, pelletdb=None, grill_platform=
 	:param pelletdb: Pellet DB
 	:param grill_platform: Grill Platform
 	"""
-
-	# If pelletdb or grill_platform is not populated, exit
-	if not pelletdb or not grill_platform:
-		return
-
 	# Forward to mqtt if enabled.
 	if settings['notify_services'].get('mqtt') != None and \
 	   settings['notify_services']['mqtt']['enabled'] == True:
 		_send_mqtt_notification(control, settings, pelletdb, in_data, grill_platform, pid_data)
+
+	# If pelletdb or grill_platform is not populated, exit
+	if not pelletdb or not grill_platform:
+		return
 
 	if settings['notify_services']['influxdb']['url'] != '' and settings['notify_services']['influxdb']['enabled']:
 		_send_influxdb_notification('GRILL_STATE', control, settings, pelletdb, in_data, grill_platform)
