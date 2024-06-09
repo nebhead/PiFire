@@ -12,23 +12,33 @@ var probes = []; // List of probe keys
 var primary = ''; // Primary key 
 var probeGauges = {}; // List of probe gauges 
 var probesReady = false; // Pre-initialized state
-// Set max temperatures for units specified 
-if (units == 'F') {
-	var maxTempPrimary = 600; 
-	var maxTempFood = 300;
-	var minTemp = 0;
-} else {
-	var maxTempPrimary = 300; 
-	var maxTempFood = 225;
-	var minTemp = -20;
-}
+
 var last_fan_status = null;
 var last_auger_status = null;
 var last_igniter_status = null;
 var last_pmode_status = null;
 var last_lid_open_status = false;
 var display_mode = null;
-var dashDataStruct = {};
+if (typeof dashDataStruct == 'undefined') {
+    var dashDataStruct = {};
+	console.log('DEBUG: dashDataStruct undefined');
+	// Set max temperatures for units specified 
+	if (units == 'F') {
+		var maxTempPrimary = 600; 
+		var maxTempFood = 300;
+	} else {
+		var maxTempPrimary = 300; 
+		var maxTempFood = 150;
+	};
+} else {
+	if (units == 'F') {
+		var maxTempPrimary = dashDataStruct.config.max_primary_temp_F; 
+		var maxTempFood = dashDataStruct.config.max_food_temp_F;
+	} else {
+		var maxTempPrimary = dashDataStruct.config.max_primary_temp_C; 
+		var maxTempFood = dashDataStruct.config.max_food_temp_C;
+	};
+};
 
 // Credits to https://github.com/naikus for SVG-Gauge (https://github.com/naikus/svg-gauge) MIT License Copyright (c) 2016 Aniket Naik
 var Gauge = window.Gauge;
@@ -72,10 +82,10 @@ function initProbeGauge(key) {
 		value: 0,
 		// Custom dial colors (Optional)
 		color: function(value) {
-			if(value <= (maxTemp * 0.9)) {
+			if(value <= maxTemp * 0.90) {
 				return "#3498db"; // default color
-			} else {
-				return "#ef4655"; // if exceeds max value, RED 
+			}else {
+				return "#ef4655"; // if is temperature is greater than 10% of max value, RED 
 			};
 		}
 	});
@@ -546,8 +556,12 @@ function setPmode(pmode) {
 
 // Show the Dashboard Settings Modal/Dialog when clicked
 function dashSettings() {
+	dashLoadConfig();
 	$("#dashSettingsModal").modal('show');
-	//dashData();
+};
+
+function dashLoadConfig() {
+	$("#dash_config_card").load("/dashconfig");
 };
 
 // Get dashboard data structure

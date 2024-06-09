@@ -1,0 +1,27 @@
+{% macro config_input_float_int(classname, id_prefix, label, default, min, max, step) %}
+<input type="number" class="form-control {{ classname }}"  
+    value="{{ default }}" 
+    min="{{ min }}" 
+    max="{{ max }}" 
+    step="{{ step }}"
+    id="{{ id_prefix }}_{{ label }}" 
+    name="{{ id_prefix }}_{{ label }}"/>
+{% endmacro %}
+
+{% macro config_input_list(classname, id_prefix, label, default, list_values, list_labels) %}
+<select class="form-control {{ classname }}"
+    id="{{ id_prefix }}_{{ label }}" 
+    name="{{ id_prefix }}_{{ label }}">
+    {% for item in list_values %}
+    <option value="{{ item }}"{% if default == item %} selected{% endif %}>{{ list_labels[loop.index0] }}</option>
+    {% endfor %}
+</select>
+{% endmacro %}
+
+{% macro config_input_string(classname, id_prefix, label, default) %}
+<input type="text" class="form-control {{ classname }}" 
+    value="{{ default }}" 
+    id="{{ id_prefix }}_{{ label }}" 
+    name="{{ id_prefix }}_{{ label }}"/>
+{% endmacro %}
+

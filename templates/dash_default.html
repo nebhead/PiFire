@@ -90,7 +90,7 @@
 
 <!-- Dashboard Settings Modal -->
 <div class="modal" id="dashSettingsModal">
-	<div class="modal-dialog">
+	<div class="modal-dialog modal-xl">
 	  <div class="modal-content">
   
 		<!-- Modal Header -->
@@ -101,21 +101,20 @@
   
 		<!-- Modal body -->
 		<div class="modal-body">
-			<div class="card">
-				<div class="card-header">
-					Dashboard Configuration Settings
-				</div>
-				<div class="card-body">
-					<!-- Standard Dashboard Configuration Settings -->
-					<div id="dash_config">
-						There doesn't seem to be any config settings for this dashboard. <br>
-						<!-- p style="font-family: 'Courier New', Courier, monospace;">
-							{{ dash_data }}
-						</p-->
+			<div id="dash_config_card">
+				<div class="card">
+					<div class="card-header">
+						Dashboard Configuration Settings
+					</div>
+					<div class="card-body">
+							There doesn't seem to be any config settings for this dashboard. <br>
+					</div>
+					<div class="card-footer">
+						<button type="button" class="btn btn-secondary" onclick="dashLoadConfig();">Refresh</button>
 					</div>
 				</div>
-
 			</div>
+
 			<br>
 			<!-- Custom Dashboard Configuration Settings -->
 			<div class="card">
@@ -173,8 +172,7 @@
 		</div>
 		<!-- Modal footer -->
 		<div class="modal-footer">
-			<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-			<button type="button" class="btn btn-danger" data-dismiss="modal">Save</button>
+			<button type="button" class="btn btn-secondary" data-dismiss="modal">Dismiss</button>
 		</div>
   
 	  </div>
@@ -196,7 +194,9 @@
 
 {% block scripts %}
 	<script> 
-	var units = "{{ settings['globals']['units'] }}";
+		var units = "{{ settings['globals']['units'] }}";
+		var dashDataStruct = {{ dash_data|tojson }};
+		//console.log(dashDataStruct);
 	</script>
 	<script src="{{ url_for('static', filename='js/dash_default.js') }}"></script>
 	<script src="{{ url_for('static', filename='js/gauge.js') }}"></script>

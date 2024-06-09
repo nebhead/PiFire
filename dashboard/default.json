@@ -12,5 +12,50 @@
     "custom" : {
         "hidden_cards" : []
     },
-    "config" : {}
+    "config" : [
+        {
+            "name": "max_primary_temp_F",
+            "friendly_name": "Max Primary Probe Display Temp F",
+            "description": "This is the maximum primary probe (grill probe) display temperature (F). The primary gauge will max out at this temperature.",
+            "hidden": false,
+            "type": "float",
+            "min": 0,
+            "max": 10000,
+            "step": 1,
+            "default": 600
+        },
+        {
+            "name": "max_food_temp_F",
+            "friendly_name": "Max Food Probe Display Temp F",
+            "description": "This is the maximum food probe display temperature (F). The food gauges will max out at this temperature.",
+            "hidden": false,
+            "type": "float",
+            "min": 0,
+            "max": 10000,
+            "step": 1,
+            "default": 300
+        },
+        {
+            "name": "max_primary_temp_C",
+            "friendly_name": "Max Primary Probe Display Temp C",
+            "description": "This is the maximum primary probe (grill probe) display temperature (C). The primary gauge will max out at this temperature.",
+            "hidden": false,
+            "type": "float",
+            "min": 0,
+            "max": 10000,
+            "step": 1,
+            "default": 300
+        },
+        {
+            "name": "max_food_temp_C",
+            "friendly_name": "Max Food Probe Display Temp C",
+            "description": "This is the maximum food probe display temperature (C). The food gauges will max out at this temperature.",
+            "hidden": false,
+            "type": "float",
+            "min": 0,
+            "max": 10000,
+            "step": 1,
+            "default": 150
+        }
+    ]
 }
