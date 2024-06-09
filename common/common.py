@@ -272,29 +272,7 @@ def default_settings():
 		'auto_power_off' : False  # Power off the system after shutdown (False = disabled)
 	}
 
-	settings['dashboard'] = {
-		'current' : 'Default', 
-		'dashboards' : {
-			'Default' : {	
-				'name' : 'Default',
-				'friendly_name' : 'Default Dashboard', 
-				'html_name' : 'dash_default.html',
-				'custom' : {
-					'hidden_cards' : []
-				},
-				'config' : {}
-			},
-			'Basic' : {	
-				'name' : 'Basic',
-				'friendly_name' : 'Basic Dashboard', 
-				'html_name' : 'dash_basic.html',
-				'custom' : {
-					'hidden_cards' : []
-				},
-				'config' : {}
-			}
-		}
-	}
+	settings['dashboard'] = _default_dashboard()
 
 	settings['notify_services'] = default_notify_services()
 
@@ -311,6 +289,36 @@ def default_settings():
 	settings['recipe']['probe_map'] = _default_recipe_probe_map(settings)
 
 	return settings
+
+def _default_dashboard():
+	''' 
+	Generate default dashboard settings by getting metadata from each json file in the /dashboard folder
+	'''
+	dash_data = {
+		'current' : 'Default', 
+		'dashboards' : {}
+	}
+	# Define the folder path
+	folder_path = './dashboard'
+
+	# Loop through files in the folder
+	for filename in os.listdir(folder_path):
+		# Check if the file is a JSON file
+		if filename.endswith('.json'):
+			dash_metadata = read_generic_json(os.path.join(folder_path, filename))
+			dash_data['dashboards'][dash_metadata['name']] = {
+				'name' : dash_metadata['name'],
+				'friendly_name' : dash_metadata['friendly_name'],
+				'html_name' : dash_metadata['html_name'],
+				'metadata' : filename,
+				'custom' : dash_metadata['custom'],
+				'config' : {}
+			}
+			for item in dash_metadata['config']:
+				dash_data['dashboards'][dash_metadata['name']]['config'][item['name']] = item['default']
+
+	return dash_data
+
 
 def _default_controller_config():
 	controller_metadata = read_generic_json('./controller/controllers.json')

@@ -237,3 +237,47 @@
 	</div>
 </div>
 {% endmacro %}
+
+{% macro render_config_card(dash_metadata, dash_data) %}
+{% from '_macro_generic_config.html' import config_input_float_int, config_input_list, config_input_string%}
+<form method="POST" action="/dashconfig"> 
+	<div class="card">
+		<div class="card-header">
+			Default Dashboard Configuration Settings
+		</div>
+		<div class="card-body">
+			<!-- Table for Config -->
+			<table class="table table-sm table-hover">
+				<thead class="thead-light">
+					<tr>
+					<th scope="col">Setting</th>
+					<th scope="col">Options</th>
+					<th scope="col">Description</th>
+					</tr>
+				</thead>
+				<tbody>
+				{% for item in dash_metadata['config'] %}
+					<tr {% if item['hidden'] %}hidden{% endif %}>
+						<td>{{ item['friendly_name'] }}</td>
+						<td>
+							{% if item['type'] == 'float' or item['type'] == 'int' %}
+								{{ config_input_float_int('dashConfigItem', 'dashConfig', item['name'], dash_data['config'][item['name']], item['min'], item['max'], item['step']) }}
+							{% elif item['type'] == 'list' %}
+								{{ config_input_list('dashConfigItem', 'dashConfig', item['name'], dash_data['config'][item['name']], item['list_values'], item['list_labels']) }}
+							{% elif item['type'] == 'string' %}
+								{{ config_input_string('dashConfigItem', 'dashConfig', item['name'], dash_data['config'][item['name']]) }}
+							{% endif %}
+						</td>
+						<td>{{ item.description }}</td>
+					</tr>
+				{% endfor %}
+				</tbody>
+			</table>
+		</div>
+		<div class="card-footer">
+			<button type="button" class="btn btn-secondary" onclick="dashLoadConfig();">Refresh</button>
+			<button type="submit" class="btn btn-danger">Save & Reload</button>
+		</div>
+	</div>
+</form>
+{% endmacro %}

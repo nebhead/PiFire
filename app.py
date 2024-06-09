@@ -98,6 +98,28 @@ def dash():
 						   page_theme=settings['globals']['page_theme'],
 						   grill_name=settings['globals']['grill_name'])
 
+@app.route('/dashconfig', methods=['POST','GET'])
+def dash_config():
+	global settings
+	current = settings['dashboard']['current']
+	dash_data = settings['dashboard']['dashboards'].get(current, {})
+	meta_data_filename = dash_data.get('metadata', None)
+	dash_metadata = read_generic_json(f'./dashboard/{meta_data_filename}')
+
+	if request.method == 'GET':
+		render_string = "{% from '_macro_dash_default.html' import render_config_card %}{{ render_config_card(dash_metadata, dash_data) }}"
+		return render_template_string(render_string, dash_metadata=dash_metadata, dash_data=dash_data)
+	elif request.method == 'POST':
+		dash_config_request = request.form
+		for key, value in dash_config_request.items():
+			if 'dashConfig_' in key:
+				dash_data['config'][key.replace('dashConfig_','')] = value
+		settings['dashboard']['dashboards'][current]['config'] = dash_data['config']
+		write_settings(settings)
+		return redirect('/dash')
+	
+	return 'Bad Request'
+
 @app.route('/hopperlevel')
 def hopper_level():
 	pelletdb = read_pellet_db()
