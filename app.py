@@ -855,19 +855,19 @@ def tuner_page(action=None):
 				write_control(control, origin='app')
 			
 			tunerManualHighTemp = requestjson.get('tunerManualHighTemp', 0.1)
-			tunerManualHighTemp = 0 if tunerManualHighTemp == '' else int(tunerManualHighTemp)
+			tunerManualHighTemp = 0 if tunerManualHighTemp == '' else float(tunerManualHighTemp)
 			tunerManualHighTr = requestjson.get('tunerManualHighTr', 0.1)
-			tunerManualHighTr = 0 if tunerManualHighTr == '' else int(tunerManualHighTr)
+			tunerManualHighTr = 0 if tunerManualHighTr == '' else int(float(tunerManualHighTr))
 
 			tunerManualMediumTemp = requestjson.get('tunerManualMediumTemp', 0.1)
-			tunerManualMediumTemp = 0 if tunerManualMediumTemp == '' else int(tunerManualMediumTemp)
+			tunerManualMediumTemp = 0 if tunerManualMediumTemp == '' else float(tunerManualMediumTemp)
 			tunerManualMediumTr = requestjson.get('tunerManualMediumTr', 0.1)
-			tunerManualMediumTr = 0 if tunerManualMediumTr == '' else int(tunerManualMediumTr)
+			tunerManualMediumTr = 0 if tunerManualMediumTr == '' else int(float(tunerManualMediumTr))
 
 			tunerManualLowTemp = requestjson.get('tunerManualLowTemp', 0.1)
-			tunerManualLowTemp = 0 if tunerManualLowTemp == '' else int(tunerManualLowTemp)
+			tunerManualLowTemp = 0 if tunerManualLowTemp == '' else float(tunerManualLowTemp)
 			tunerManualLowTr = requestjson.get('tunerManualLowTr', 0.1)
-			tunerManualLowTr = 0 if tunerManualLowTr == '' else int(tunerManualLowTr)
+			tunerManualLowTr = 0 if tunerManualLowTr == '' else int(float(tunerManualLowTr))
 
 			a, b, c = _calc_shh_coefficients(tunerManualLowTemp, tunerManualMediumTemp,
 											tunerManualHighTemp, tunerManualLowTr,
@@ -3485,10 +3485,11 @@ def _calc_shh_coefficients(t1, t2, t3, r1, r2, r3, units='F'):
 		# Step 6: A = Y1 - (B + L1^2*C) * L1
 		a = y1 - ((b + (math.pow(l1, 2) * c)) * l1)
 	except:
+		event = 'ERROR: Failed to calculate Steinhart-Hart coefficients.'
+		write_log(event)
 		a = 0
 		b = 0
 		c = 0
-
 	return(a, b, c)
 
 def _temp_to_tr(temp, a, b, c, units='F'):
