@@ -85,5 +85,13 @@ class ProbesMain:
 			device.set_profiles(probe_info)
 
 	def update_units(self, units):
+		"""
+		Update the units of all probe devices in the probe device list.
+
+		:param units: The units to update the probe devices to.
+		:type units: Any
+
+		:return: None
+		"""
 		for device in self.probe_device_list:
 			device.update_units(units)
