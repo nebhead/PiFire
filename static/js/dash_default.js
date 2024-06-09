@@ -26,17 +26,21 @@ if (typeof dashDataStruct == 'undefined') {
 	if (units == 'F') {
 		var maxTempPrimary = 600; 
 		var maxTempFood = 300;
+		var minTemp = 0;
 	} else {
 		var maxTempPrimary = 300; 
 		var maxTempFood = 150;
+		var minTemp = -20;
 	};
 } else {
 	if (units == 'F') {
 		var maxTempPrimary = dashDataStruct.config.max_primary_temp_F; 
 		var maxTempFood = dashDataStruct.config.max_food_temp_F;
+		var minTemp = 0;
 	} else {
 		var maxTempPrimary = dashDataStruct.config.max_primary_temp_C; 
 		var maxTempFood = dashDataStruct.config.max_food_temp_C;
+		var minTemp = -20;
 	};
 };
 
