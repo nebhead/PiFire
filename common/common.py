@@ -1196,6 +1196,7 @@ def upgrade_settings(prev_ver, settings, settings_default):
 			settings['platform']['system_type'] = 'prototype'
 		else: 
 			settings['platform']['system_type'] = 'raspberry_pi_all'
+			settings['modules']['grillplat'] == 'raspberry_pi_all'
 
 	''' Import any new probe profiles '''
 	for profile in list(settings_default['probe_settings']['probe_profiles'].keys()):
