@@ -149,7 +149,7 @@ class GrillPlatform:
 		self.power.off()
 
 	def get_input_status(self):
-		if self.in_pins['selector'] is not None or self.standalone == False:
+		if self.in_pins['selector'] is not None and self.standalone == False:
 			return self.selector.is_active
 		return False
 
