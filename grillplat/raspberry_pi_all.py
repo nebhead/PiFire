@@ -203,6 +203,15 @@ class GrillPlatform:
 			if self._ramp_thread.stopping.wait(delay):
 				break
 
+	def cleanup(self):
+		self.power.close()
+		self.igniter.close()
+		self.auger.close()
+		self.fan.close()
+		self.pwm.stop()
+		if self.selector is not None:
+			self.selector.close()
+
 	# MARK: System / Platform Commands
 	"""
 	==============================

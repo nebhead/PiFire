@@ -21,6 +21,7 @@ Description: This script will start at boot, initialize the relays and
 '''
 import logging
 import importlib
+import atexit
 from common import *  # Common Module for WebUI and Control Program
 from common.process_mon import Process_Monitor
 from common.redis_queue import RedisQueue
@@ -35,9 +36,8 @@ from os.path import exists
  Read and initialize Settings, Control, History, Metrics, and Error Data
 ==============================================================================
 '''
-# Read Settings & Wizard Manifest to Get Modules Configuration 
+# Read Settings to get Modules Configuration 
 settings = read_settings(init=True)
-wizard_data = read_wizard()
 
 # Setup logging
 log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.ERROR
@@ -45,6 +45,9 @@ controlLogger = create_logger('control', filename='./logs/control.log', messagef
 
 log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
 eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
+
+eventLogger.info('Control Script Starting Up.')
+controlLogger.info('Control Script Starting Up.')
 
 # Flush Redis DB and create JSON structure
 control = read_control(flush=True)
@@ -1049,11 +1052,32 @@ def _recipe_mode(grill_platform, probe_complex, display_device, dist_device, sta
 
 	return()
 
+def exit_handler():
+	"""
+	Exit handler function that logs a message and performs cleanup operations before exiting the control script.
+
+	This function is called when the control script is about to exit. It logs a message indicating that the script is exiting using the `eventLogger.info()` function. It also logs a formatted message using the `controlLogger.info()` function to provide additional information about the exit.
+
+	After logging the messages, the function calls the `grill_platform.cleanup()` function to perform any necessary cleanup operations related to the grill platform.
+
+	This function does not take any parameters and does not return any values.
+
+	Example usage:
+	```python
+	exit_handler()
+	```
+	"""
+	eventLogger.info('Control Script Exiting.')
+	controlLogger.info('Control Script Exiting.')
+	grill_platform.cleanup()
+	return
+
+# Register the exit handler
+atexit.register(exit_handler)
+
 # *****************************************
 # Main Program Start / Init and Loop
 # *****************************************
-eventLogger.info('Control Script Starting Up.')
-controlLogger.info(f'Control Script Starting Up.')
 
 last = grill_platform.get_input_status()
 

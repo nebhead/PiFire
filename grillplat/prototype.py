@@ -142,6 +142,12 @@ class GrillPlatform:
 			if self._ramp_thread.stopping.wait(delay):
 				break
 	
+	def cleanup(self):
+		self.power_off()
+		self.igniter_off()
+		self.auger_off()
+		self.fan_off()
+
 	# MARK: System Platform Commands
 	"""
 	==============================
