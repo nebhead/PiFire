@@ -107,7 +107,7 @@ def dash_config():
 	dash_metadata = read_generic_json(f'./dashboard/{meta_data_filename}')
 
 	if request.method == 'GET':
-		render_string = "{% from '_macro_dash_default.html' import render_config_card %}{{ render_config_card(dash_metadata, dash_data) }}"
+		render_string = "{% from '_macro_generic_config.html' import render_dash_config_card %}{{ render_dash_config_card(dash_metadata, dash_data) }}"
 		return render_template_string(render_string, dash_metadata=dash_metadata, dash_data=dash_data)
 	elif request.method == 'POST':
 		dash_config_request = request.form

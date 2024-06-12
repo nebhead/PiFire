@@ -83,6 +83,31 @@
 	</div>
 </div> <!-- End Server Reload Modal -->
 
+<!-- Server Offline Modal -->
+<div class="modal" id="serverOfflineModal">
+	<div class="modal-dialog">
+	  <div class="modal-content">
+  
+		<!-- Modal Header -->
+		<div class="modal-header">
+		  <h4 class="modal-title">Server is Unresponsive / Offline</h4>
+		  <button type="button" class="close" data-dismiss="modal">&times;</button>
+		</div>
+  
+		<!-- Modal body -->
+		<div class="modal-body">
+		  The server is unresponsive/offline and hasn't responded to recent requests. Check that your system is on and connected to the network.<br>
+		</div>
+  
+		<!-- Modal footer -->
+		<div class="modal-footer">
+		  <button type="button" class="btn btn-danger" id="serverOffline" data-dismiss="modal" onclick="dashClearErrorCounter();">Wait Longer</button>
+		</div>
+  
+	  </div>
+	</div>
+</div> <!-- End Server Offline Modal -->
+
 <!-- Dash Gear Icon for Dash Settings -->
 <span class="gear-icon" onclick="dashSettings();">
 	<i class="fa-solid fa-gear"></i>
