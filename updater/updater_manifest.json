@@ -4,7 +4,7 @@
       "server" : "1.8.0",
       "cookfile" : "1.5.0",
       "recipe" : "1.0.0",
-      "build" : 18
+      "build" : 19
     },
     "update_notes" : "",
     "update_warnings" : ""
@@ -103,13 +103,13 @@
     },
     {
       "version" : "1.8.0",
-      "build" : 0,
-      "reboot_required" : false,
+      "build" : 18,
+      "reboot_required" : true,
       "dependencies" : {
         "app": {
           "py_dependencies": [],
           "apt_dependencies": [],
-          "command_list" : []
+          "command_list" : [["sudo", "cp", "./auto-install/supervisor/*.conf", "/etc/supervisor/conf.d"]]
         },
         "control": {
           "py_dependencies": [],
