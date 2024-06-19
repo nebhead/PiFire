@@ -45,9 +45,9 @@ def set_pwm_gpio():
 		return result 
 	
 	try:
-		if system_type == 'raspberry_pi_all':
+		if system_type == 'raspberry_pi_all' or system_type == 'prototype':
 			# "dtoverlay=pwm,pin=13,func=4"
-			result += rpi_config_write('dtoverlay', 'pwm', add_config={'func' : '4'}, pin=int(pin))
+			result += rpi_config_write('dtoverlay', 'pwm', add_config={'func' : '4'}, pin=int(pin), pin_type='pin')
 		else:
 			result += 'NA - No system defined'
 	except:
@@ -66,9 +66,9 @@ def set_onewire_gpio():
 		return result 
 	
 	try:
-		if system_type == 'raspberry_pi_all':
+		if system_type == 'raspberry_pi_all' or system_type == 'prototype':
 			# "dtoverlay=w1-gpio,pin=6"
-			result += rpi_config_write('dtoverlay', 'w1-gpio', pin=int(pin))
+			result += rpi_config_write('dtoverlay', 'w1-gpio', pin=int(pin), pin_type='gpio_pin')
 		else:
 			result += 'NA - No system defined'
 	except:
@@ -86,7 +86,7 @@ def set_backlight():
 		return result 
 	
 	try:
-		if settings['platform']['system_type'] == 'raspberry_pi_all':
+		if system_type == 'raspberry_pi_all':
 			lines = [ 'SUBSYSTEM=="backlight",RUN+="/bin/chmod 666 /sys/class/backlight/%k/brightness /sys/class/backlight/%k/bl_power"\n' ] 
 			file = '/etc/udev/rules.d/backlight-permissions.rules'
 			result += create_file(file, lines)
@@ -105,7 +105,7 @@ def enable_spi():
 		return result 
 	
 	try:
-		if system_type == 'raspberry_pi_all':
+		if system_type == 'raspberry_pi_all' or system_type == 'prototype':
 			# "dtparam=spi=on"
 			result += rpi_config_write('dtparam', 'spi')
 		else:
@@ -149,7 +149,7 @@ def set_i2c_speed(baud=100000):
 		return result 
 	
 	try:
-		if system_type == 'raspberry_pi_all':
+		if system_type == 'raspberry_pi_all' or system_type == 'prototype':
 			# dtparam=i2c_arm_baudrate=100000
 			result += rpi_config_write('dtparam', 'i2c_arm_baudrate', param=baud)
 		else:
@@ -171,13 +171,13 @@ def enable_gpio_shutdown():
 		return result 
 	
 	try:
-		if system_type == 'raspberry_pi_all':
+		if system_type == 'raspberry_pi_all' or system_type == 'prototype':
    			# dtoverlay=gpio-shutdown,gpio_pin=17,active_low=1,gpio_pull=up
 			add_config = {
 				'active_low' : '1',
 				'gpio_pull' : 'up'
 			}
-			result += rpi_config_write('dtoverlay', 'gpio-shutdown', add_config=add_config, pin=int(pin))
+			result += rpi_config_write('dtoverlay', 'gpio-shutdown', add_config=add_config, pin=int(pin), pin_type='gpio_pin')
 		else:
 			result += 'NA - No system defined'
 	except:
@@ -190,7 +190,7 @@ def enable_gpio_shutdown():
 ==============================================================================
 '''
 
-def rpi_config_write(config_type, feature, add_config={}, pin=0, param=''):
+def rpi_config_write(config_type, feature, add_config={}, pin=0, param='', pin_type='gpio_pin'):
 	result = 'SUCCESS'
 	''' Check OS version, so we can get the correct location of config.txt '''
 	version = os_version()
@@ -234,10 +234,10 @@ def rpi_config_write(config_type, feature, add_config={}, pin=0, param=''):
 				elif config_type == 'dtoverlay':
 				# Modify pin number
 					if pin > 0:
-						# TODO (look for gpio-pin, gpiopin, pin, etc. )
 						for noun in ['gpio-pin', 'gpiopin', 'gpio_pin', 'pin']:
 							if noun in config_dict[feature].keys():
-								config_dict[feature][noun] = str(pin) 
+								config_dict[feature].pop(noun, None)
+								config_dict[feature][pin_type] = str(pin)
 
 					# If function, add function number
 					if add_config != {}:
@@ -252,7 +252,7 @@ def rpi_config_write(config_type, feature, add_config={}, pin=0, param=''):
 			config_dict = {}
 			if config_type == 'dtoverlay':
 				config_dict[feature] = {}
-				config_dict[feature]['gpio_pin'] = pin
+				config_dict[feature][pin_type] = pin
 				if add_config != {}:
 					for key, value in add_config.items():
 						config_dict[feature][key] = value 
