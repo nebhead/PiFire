@@ -671,5 +671,5 @@ $(document).ready(function(){
 	updateHopperStatus();
 	
 	// Current hopper information loop
-	setInterval(updateHopperStatus, 150000);  // Update every 150000ms 
+	setInterval(updateHopperStatus, 30000);  // Update every 30000ms (30 seconds) 
 });

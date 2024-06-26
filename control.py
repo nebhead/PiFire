@@ -280,6 +280,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	control = read_control()
 	pelletdb = read_pellet_db()
 	control['hopper_check'] = True
+	write_control(control, direct_write=True, origin='control')
 
 	eventLogger.info(f'{mode} Mode started.')
 
