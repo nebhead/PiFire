@@ -181,9 +181,13 @@ class Display:
 
 			if self.display_command == 'network':
 				self.display_active = True
-				s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-				s.connect(("8.8.8.8", 80))
-				network_ip = s.getsockname()[0]
+				try:
+					s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+					s.settimeout(4)
+					s.connect(("8.8.8.8", 80))
+					network_ip = s.getsockname()[0]
+				except:
+					network_ip = ''					
 				if network_ip != '':
 					self._display_network(network_ip)
 					self.display_timeout = time.time() + 30

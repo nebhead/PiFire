@@ -74,9 +74,9 @@ class DisplayBase:
             self.display_profile = self.config.get('default_profile', 'profile_1')
 
         ''' Get Local IP Address '''
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.settimeout(0)
         try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.settimeout(1)
             # doesn't even have to be reachable
             s.connect(('10.254.254.254', 1))
             self.ip_address = s.getsockname()[0]
