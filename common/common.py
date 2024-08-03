@@ -518,8 +518,6 @@ def default_control():
 		'pwm' : 100
 	}
 
-	control['errors'] = []
-
 	control['smartstart'] = {
 		'startuptemp' : 0,
 		'profile_selected' : 0
@@ -530,6 +528,8 @@ def default_control():
 	control['startup_timestamp'] = 0  # Timestamp of startup, used for cook time
 
 	control['system'] = {}
+
+	control['critical_error'] = False
 
 	return(control)
 
@@ -2667,3 +2667,24 @@ def set_nested_key_value(data, key_list, value):
 		data[current_key] = set_nested_key_value(data[current_key], key_list[1:], value)
 
 	return data
+
+def read_generic_key(key):
+	"""
+	Read generic data from Redis DB
+	:param key: key name
+	"""
+	global cmdsts
+
+	value = json.loads(cmdsts.get(key))
+
+	return value
+
+def write_generic_key(key, value):
+	"""
+	Write generic data to Redis DB
+	:param key: key name
+	:parma value: value to write
+	"""
+	global cmdsts
+
+	cmdsts.set(key, json.dumps(value))

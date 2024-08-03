@@ -237,6 +237,9 @@ class ProbeInterface:
 	def get_port_map(self):
 		return self.port_map
 
+	def get_device_info(self):
+		return self.device_info
+
 class FakeDevice:
 
 	def __init__(self, port_map, primary_port, units):

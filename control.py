@@ -72,21 +72,26 @@ try:
 	GrillPlatModule = importlib.import_module(f'grillplat.{grill_platform}')
 
 except:
-	controlLogger.exception(f'Error occurred loading grillplatform module ({settings["modules"]["grillplat"]}). Trace dump: ')
+	control['critical_error'] = True
+	write_control(control, direct_write=True, origin='control')
+	controlLogger.exception(f'Error occurred importing grillplatform module ({settings["modules"]["grillplat"]}). Trace dump: ')
 	GrillPlatModule = importlib.import_module('grillplat.prototype')
-	error_event = f'An error occurred loading the [{settings["modules"]["grillplat"]}] platform module.  The ' \
-		f'prototype module has been loaded instead.  This sometimes means that the hardware is not connected ' \
-		f'properly, or the module is not configured.  Please run the configuration wizard again from the admin ' \
+	error_event = f'An error occurred importing the [{settings["modules"]["grillplat"]}] platform module.  The ' \
+		f'prototype module has been imported instead.  This sometimes means that the module does not exist or is not ' \
+		f'properly named.  Please run the configuration wizard again from the admin ' \
 		f'panel to fix this issue.'
 	errors.append(error_event)
 	write_errors(errors)
 	eventLogger.error(error_event)
+	controlLogger.error(error_event)
 	if settings['globals']['debug_mode']:
 		raise
 
 try:
 	grill_platform = GrillPlatModule.GrillPlatform(platform_config)
 except:
+	control['critical_error'] = True
+	write_control(control, direct_write=True, origin='control')
 	controlLogger.exception(f'Error occurred configuring grillplatform module ({settings["modules"]["grillplat"]}). Trace dump: ')
 	from grillplat.prototype import GrillPlatform  # Simulated Library for controlling the grill platform
 	grill_platform = GrillPlatform(platform_config)
@@ -97,6 +102,7 @@ except:
 	errors.append(error_event)
 	write_errors(errors)
 	eventLogger.error(error_event)
+	controlLogger.error(error_event)
 	if settings['globals']['debug_mode']:
 		raise
 
@@ -104,22 +110,34 @@ except:
 Set up Probes Input Module
 '''
 try: 
-	from probes.main import ProbesMain  # Probe device libary: loads probe devices and maps them to ports
+	from probes.main import ProbesMain  # Probe device library: loads probe devices and maps them to ports
 	probe_complex = ProbesMain(settings["probe_settings"]["probe_map"], settings['globals']['units'])
 
 except:
 	controlLogger.exception(f'Error occurred loading probes modules. Trace dump: ')
-	settings['probe_settings']['probe_map'] = default_probe_map(settings["probe_settings"]['probe_profiles'])
-	probe_complex = ProbesMain(settings["probe_settings"]["probe_map"], settings['globals']['units'])
-	error_event = f'An error occurred loading the probes module(s).  The prototype ' \
-		f'module has been loaded instead.  This sometimes means that the hardware is not connected ' \
-		f'properly, or the module is not configured.  Please run the configuration wizard again from ' \
-		f'the admin panel to fix this issue.'
+	#settings['probe_settings']['probe_map'] = default_probe_map(settings["probe_settings"]['probe_profiles'])
+	probe_complex = ProbesMain(settings["probe_settings"]["probe_map"], settings['globals']['units'], disable=True)
+	error_event = f'An error occurred loading the probes module(s).  All probes & probe devices have been disabled. ' \
+		f'This sometimes means that the hardware is not connected properly, or the module is not configured correctly. ' \
+		f'Please run the configuration wizard again from the admin panel to fix this issue. ' 
 	errors.append(error_event)
 	write_errors(errors)
 	eventLogger.error(error_event)
+	controlLogger.error(error_event)
 	if settings['globals']['debug_mode']:
 		raise
+
+# Get probe initialization errors and pass along to the frontend
+probe_errors = probe_complex.get_errors()
+if len(probe_errors) > 0:
+	for error in probe_errors:
+		eventLogger.error(error)
+		errors.append(error)
+		write_errors(errors)
+
+# Get probe device info for frontend
+probe_device_info = probe_complex.get_device_info()
+write_generic_key('probe_device_info', probe_device_info)
 
 '''
 Set up Display Module
@@ -141,6 +159,7 @@ except:
 	errors.append(error_event)
 	write_errors(errors)
 	eventLogger.error(error_event)
+	controlLogger.error(error_event)
 	if settings['globals']['debug_mode']:
 		raise
 
@@ -158,6 +177,7 @@ except:
 	errors.append(error_event)
 	write_errors(errors)
 	eventLogger.error(error_event)
+	controlLogger.error(error_event)
 	if settings['globals']['debug_mode']:
 		raise
 
@@ -178,6 +198,7 @@ except:
 	errors.append(error_event)
 	write_errors(errors)
 	eventLogger.error(error_event)
+	controlLogger.error(error_event)
 
 try:
 	if settings['modules']['grillplat'] == 'prototype' and settings['modules']['dist'] == 'prototype':
@@ -202,6 +223,7 @@ except:
 	errors.append(error_event)
 	write_errors(errors)
 	eventLogger.error(error_event)
+	controlLogger.error(error_event)
 
 # Get current hopper level and save it to the current pellet information
 pelletdb = read_pellet_db()
@@ -1094,7 +1116,6 @@ if settings['globals']['boot_to_monitor']:
 status = read_status(init=True)
 
 while True:
-
 	# Check the On/Off switch for changes
 	if not settings['platform']['standalone'] and last != grill_platform.get_input_status():
 		last = grill_platform.get_input_status()
@@ -1114,10 +1135,11 @@ while True:
 			continue
 	write_status(status)
 
-	# 1. Check control for changes 
+	# Check control for changes 
 	execute_control_writes()
 	control = read_control()
-	# 2. Check for system commands
+
+	# Check for system commands
 	_process_system_commands(grill_platform)
 
 	# Check if there were updates to any of the settings that were flagged
@@ -1168,7 +1190,7 @@ while True:
 		probe_complex.update_probe_profiles(settings['probe_settings']['probe_map']['probe_info'])
 		eventLogger.info('Active probe profiles updated in control script.')
 
-	if control['updated']:
+	if control['updated'] and not control['critical_error']:
 		eventLogger.debug(f'Control Settings Updated.  Mode: {control["mode"]}, Units Change: {control["units_change"]} ')
 		# Clear control flag
 		control['updated'] = False  # Reset Control Updated to False
