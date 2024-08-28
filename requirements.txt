@@ -1,0 +1,18 @@
+flask==2.3.3
+flask-mobility
+flask-qrcode
+flask-socketio
+eventlet==0.30.2; python_version < '3.11'
+eventlet; python_version >= '3.11'
+gunicorn
+gpiozero
+redis
+uuid
+influxdb-client[ciso]
+apprise
+scikit-fuzzy
+scikit-learn==1.4.2
+ratelimitingfilter
+pillow>=9.2.0
+paho-mqtt
+psutil
