@@ -1857,6 +1857,31 @@
 					}
 				]
 			},
+			"st7789v_240x320" : {
+				"friendly_name" : "ST7789V IPS Display 240x320px (Experimental)",
+				"filename" : "st7789v_240x320",
+				"description" : "The ST7789V (V-Variant) is an LCD IPS Screen with a resolution of 240x320px and is an affordable spi display with color. This module supports the 240x320 version and provides the advanced color interface (similar to the ILI9341). This variant uses a forked library and should be considered experimental.",
+				"notes" : "Pinout:  DIN = MOSI(Pin19), CLK=SCLK(Pin23), CS=CE0(Pin24), DC=GPIO24, RST=GPIO25, BL=GPIO05",
+				"default" : false,
+				"image" : "st7789p.png",
+				"reboot_required" : false,
+				"py_dependencies" : ["git+https://github.com/mander1000/st7789-python", "pillow>=9.2.0", "numpy"],
+				"apt_dependencies" : [],
+				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
+				"settings_dependencies" : {},
+				"config" : [
+					{
+						"option_name" : "rotation",
+						"option_friendly_name" : "Screen Rotation", 
+						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
+						"option_type" : "list",
+						"list_values" : [0, 90, 180, 270],
+						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
+						"default" : 0,
+						"hidden" : false
+					}
+				]
+			},
 			"none" : {
 				"friendly_name" : "None",
 				"filename" : "none",

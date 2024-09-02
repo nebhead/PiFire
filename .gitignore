@@ -49,3 +49,13 @@ backups/
 
 bin/
 settings-v1.8.0.json
+
+include/
+
+lib/
+
+share/
+
+lib64
+
+pyvenv.cfg

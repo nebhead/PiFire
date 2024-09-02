@@ -34,6 +34,10 @@
                      Default and Basic dashboards will notify the user if connection to the server is lost (i.e. when the server is not responding to requests).
                  </li>
                  <li>
+                     Added ST7789V (Newer V-variant of the display) display which is currently experimental because of the use of an experimental library.  
+                     This will likely change in a future release if the V variant gets added to the original library.  
+                 </li>
+                 <li>
                      Behind the scenes improvements including:  
                      <ul>
                          <li>
@@ -61,6 +65,14 @@
                              Added ProtoFlex module for testing new display output system.  This will be used to test the new display system and allow for additional 
                              screen sizes to be added for existing displays like ILI9341, etc.  Also refactored the FlexObject and BaseFlex system to be more modular 
                              and hopefully more performant.  Updated the configuration wizard so that configuration of displays is easier.  Other minor bug fixes.
+                         </li>
+                         <li>
+                             Improved resilience of the control script, especially when loading probe devices.  If a probe device fails to load, the probes that are 
+                             associated with that device will be disabled.
+                         </li>
+                         <li>
+                             Added a critical error flag to the control script.  This will be used to detect when a critical error is encountered, which may prevent
+                             further control of the system (i.e. changing modes, etc.)
                          </li>
                      </ul>
                  </li>
