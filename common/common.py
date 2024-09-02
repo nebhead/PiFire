@@ -1159,6 +1159,8 @@ def upgrade_settings(prev_ver, settings, settings_default):
 		settings['globals'].pop('auto_power_off', None)
 	''' Check if upgrading from v1.7.x '''
 	if (prev_ver[0] <=1 and prev_ver[1] <= 7):
+		''' Force running the configuration wizard again '''
+		settings['globals']['first_time_setup'] = True
 		''' Create platform section in settings with defaults '''
 		settings['platform'] = settings_default['platform']
 		''' Move platform global variables to platform section '''
