@@ -2718,6 +2718,15 @@ def wizardInstallInfoExisting(wizardData, settings):
 	''' Populate Modules Info with current Settings '''
 	for module in ['grillplatform', 'display', 'distance']:
 		selected = wizardInstallInfo['modules'][module]['profile_selected'][0]
+		''' Error condition if the item in settings doesn't match the wizard manifest '''
+		if selected not in wizardData['modules'][module].keys():
+			if module == 'grillplatform':
+				selected = 'custom'
+				settings['platform']['current'] = selected
+			else:
+				selected = 'none'
+			wizardInstallInfo['modules'][module]['profile_selected'] = selected
+
 		for setting in wizardData['modules'][module][selected]['settings_dependencies']:
 			settingsLocation = wizardData['modules'][module][selected]['settings_dependencies'][setting]['settings']
 			settingsValue = settings.copy() 

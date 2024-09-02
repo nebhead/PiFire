@@ -692,12 +692,12 @@
 					}					
 				}
 			},
-			"pcb_4.0.1" : {
-				"friendly_name" : "PiFire PCB 4.0.1 Modular PCB",
+			"pcb_4.x.x" : {
+				"friendly_name" : "PiFire PCB 4.x.x Modular PCB",
 				"filename" : "raspberry_pi_all",
-				"description" : "Default settings/configuration for the PiFire PCB v4.0.1 modular PCB.  This PCB aims to provide modular options to the user for probe inputs and relay outputs.",
+				"description" : "Default settings/configuration for the PiFire PCB v4.x.x modular PCB.  This PCB aims to provide modular options to the user for probe inputs and relay outputs.",
 				"default" : false,
-				"image" : "pcb_4.0.1.png",
+				"image" : "pcb_4.x.x.png",
 				"reboot_required" : true,
 				"py_dependencies" : ["rpi_hardware_pwm"], 
 				"apt_dependencies" : [],
@@ -706,7 +706,7 @@
 					"current" : {
 						"friendly_name" : "Platform Selected",
 						"description" : "Selects the current platform.",
-						"options" : { "pcb_4.0.1" : "PiFire PCB v4.0.1" },
+						"options" : { "pcb_4.x.x" : "PiFire PCB v4.x.x" },
 						"settings" : ["platform", "current"],
 						"hidden" : true
 					},
@@ -2455,10 +2455,10 @@
 				]
 			}
 		},
-		"pcb_4.0.1" : {
-			"name" : "PiFire v4.0.1",  
-			"id" : "pcb_4.0.1",
-			"description" : "PiFire PCB v4.0.1 with module design allowing for multiple types of probe devices to be attached.",
+		"pcb_4.x.x" : {
+			"name" : "PiFire v4.x.x",  
+			"id" : "pcb_4.x.x",
+			"description" : "PiFire PCB v4.x.x with module design allowing for multiple types of probe devices to be attached.",
 			"probe_map": {
 				"probe_devices": [
 				  {
