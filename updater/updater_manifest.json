@@ -4,7 +4,7 @@
       "server" : "1.8.0",
       "cookfile" : "1.5.0",
       "recipe" : "1.0.0",
-      "build" : 27
+      "build" : 28
     },
     "update_notes" : "",
     "update_warnings" : ""
@@ -112,7 +112,7 @@
           "command_list" : [["sudo", "cp", "./auto-install/supervisor/*.conf", "/etc/supervisor/conf.d"]]
         },
         "control": {
-          "py_dependencies": [],
+          "py_dependencies": ["rpi_hardware_pwm"],
           "apt_dependencies": [],
           "command_list" : []
         }
