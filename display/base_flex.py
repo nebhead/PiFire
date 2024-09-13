@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 '''
 *****************************************
 PiFire Flexible Display Interface Library
@@ -20,9 +19,9 @@ import time
 import logging
 import socket
 import os
+from display.flexobject import *
 from PIL import Image
 from common import read_control, write_control, is_real_hardware, read_generic_json, read_settings, write_settings, read_status, read_current
-from display.flexobject_pil import FlexObject as FlexObjPIL
 
 '''
 ==================================================================================
@@ -44,13 +43,16 @@ class DisplayBase:
         self.last_status_data = {}
 
         self.input_enabled = False
-
+        self.input_origin = None
+        self.input_button = True if 'button' in self.config.get('input_types_supported', []) else False
+        self.input_encoder = True if 'encoder' in self.config.get('input_types_supported', []) else False
+        self.input_touch = True if 'touch' in self.config.get('input_types_supported', []) else False 
+        
         self.display_active = None 
         self.display_timeout = None
         self.TIMEOUT = 10
         self.command = 'splash'
         self.command_data = None
-        self.input_origin = None
 
         self.real_hardware = True if is_real_hardware() else False
         # Attempt to set the log level of PIL so that it does not pollute the logs
@@ -61,24 +63,20 @@ class DisplayBase:
         # Init Display Device, Input Device, Assets
         self._init_globals()
         self._init_framework()
+        self._init_display_canvas()
         self._init_input()
         self._init_display_device()
 
     def _init_globals(self):
         # Init constants and variables
-        '''
-        0 = Zero Degrees Rotation
-        90, 1 = 90 Degrees Rotation (Pimoroni Libraries, Luma.LCD Libraries)
-        180, 2 = 180 Degrees Rotation (Pimoroni Libraries, Luma.LCD Libraries)
-        270, 3 = 270 Degrees Rotation (Pimoroni Libraries, Luma.LCD Libraries)
-        '''
-        self.rotation = self.config.get('rotation', 0)
         self.buttonslevel = self.config.get('buttonslevel', 'HIGH')
-        
+        if self.display_profile == None:
+            self.display_profile = self.config.get('default_profile', 'profile_1')
+
         ''' Get Local IP Address '''
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.settimeout(0)
         try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.settimeout(1)
             # doesn't even have to be reachable
             s.connect(('10.254.254.254', 1))
             self.ip_address = s.getsockname()[0]
@@ -93,47 +91,53 @@ class DisplayBase:
         Initialize the dash/home/menu framework 
         '''
         self.display_data = read_generic_json(self.config['display_data_filename'])
-        self.WIDTH = self.display_data['metadata'].get('screen_width', 800)
-        self.HEIGHT = self.display_data['metadata'].get('screen_height', 480)
+        if self.config.get('rotation', 0) in [0, 180]:
+            self.WIDTH = self.display_data['metadata'].get('screen_width', 800)
+            self.HEIGHT = self.display_data['metadata'].get('screen_height', 480)
+        else:
+            self.WIDTH = self.display_data['metadata'].get('screen_height', 480)
+            self.HEIGHT = self.display_data['metadata'].get('screen_width', 800)
         self.SPLASH_DELAY = self.display_data['metadata'].get('splash_delay', 1000)
         self.FRAMERATE = self.display_data['metadata'].get('framerate', 30)
-        if self.display_data.get('home', []) == []:
+        if self.display_data[self.display_profile].get('home', []) == []:
             self.HOME_ENABLED = False
         else:
             self.HOME_ENABLED = True
-
-        self.display_data['menus']['qrcode']['ip_address'] = self.ip_address
+        self.display_data[self.display_profile]['menus']['qrcode']['ip_address'] = self.ip_address
 
         self._fixup_display_data()
 
         self._init_assets()
 
     def _fixup_display_data(self):
-        for index, object in enumerate(self.display_data['home']):
+        for index, object in enumerate(self.display_data[self.display_profile]['home']):
             for key in list(object.keys()):
-                if key in ['position', 'size', 'fg_color', 'bg_color', 'color', 'active_color', 'inactive_color']:
-                    self.display_data['home'][index][key] = tuple(object[key])
-        for index, object in enumerate(self.display_data['dash']):
+                if key in ['position', 'size', 'fg_color', 'bg_color', 'color', 'active_color', 'inactive_color', 'sp_color', 'np_color']:
+                   self.display_data[self.display_profile]['home'][index][key] = tuple(object[key])
+        for index, object in enumerate(self.display_data[self.display_profile]['dash']):
             #print(f'Object Name: {object["name"]}')
             for key in list(object.keys()):
-                if key in ['position', 'size', 'fg_color', 'bg_color', 'color', 'active_color', 'inactive_color']:
+                if key in ['position', 'size', 'fg_color', 'bg_color', 'color', 'active_color', 'inactive_color', 'sp_color', 'np_color']:
                     #print(f'[{key}] = {object[key]}')
-                    self.display_data['dash'][index][key] = tuple(object[key])
+                   self.display_data[self.display_profile]['dash'][index][key] = tuple(object[key])
                     #print(f'converted = {tuple(object[key])}')
                 if key in ['color_levels']:
                     color_level_list = []
-                    for item in self.display_data['dash'][index][key]:
+                    for item in self.display_data[self.display_profile]['dash'][index][key]:
                         color_level_list.append(tuple(item))
-                    self.display_data['dash'][index][key] = color_level_list
-        for menu, object in self.display_data['menus'].items():
+                    self.display_data[self.display_profile]['dash'][index][key] = color_level_list
+                if key in ['units']:
+                    ''' Ensure we start with the right units displayed '''
+                    self.display_data[self.display_profile]['dash'][index][key] = self.units
+        for menu, object in self.display_data[self.display_profile]['menus'].items():
             for key in list(object.keys()):
-                if key in ['position', 'size', 'fg_color', 'bg_color', 'color', 'active_color', 'inactive_color']:
-                    self.display_data['menus'][menu][key] = tuple(object[key])
-        for input, object in self.display_data['input'].items():
+                if key in ['position', 'size', 'fg_color', 'bg_color', 'color', 'active_color', 'inactive_color', 'sp_color', 'np_color']:
+                    self.display_data[self.display_profile]['menus'][menu][key] = tuple(object[key])
+        for input, object in self.display_data[self.display_profile]['input'].items():
             for key in list(object.keys()):
-                if key in ['position', 'size', 'fg_color', 'bg_color', 'color', 'active_color', 'inactive_color']:
-                    self.display_data['input'][input][key] = tuple(object[key])
-        #print(f'Fixed Up: \n{self.display_data["menus"]}')
+                if key in ['position', 'size', 'fg_color', 'bg_color', 'color', 'active_color', 'inactive_color', 'sp_color', 'np_color']:
+                    self.display_data[self.display_profile]['input'][input][key] = tuple(object[key])
+        #print(f'Fixed Up: \n{self.display_data[self.display_profile]["menus"]}')
 
 
     def _init_display_device(self):
@@ -141,6 +145,12 @@ class DisplayBase:
         Inheriting classes will override this function to init the display device and start the display thread.
         '''
         pass
+
+    def _init_display_canvas(self):
+        '''
+        Setup display canvas to be used by PIL to display objects
+        '''
+        self.display_canvas = Image.new('RGBA', (self.WIDTH, self.HEIGHT))
 
     def _init_input(self):
         '''
@@ -222,7 +232,18 @@ class DisplayBase:
     def _init_splash(self):
         splash_image_path = self.display_data['metadata']['splash_image']
         self.splash = Image.open(splash_image_path)
-        self.splash = self.splash.resize((self.WIDTH, self.HEIGHT))
+        width, height = self.splash.size 
+        if width > self.WIDTH or height > self.HEIGHT:
+            # Scale the splash image to fit the display
+            # Calculate the scaling factor based on aspect ratio
+            ratio_w = self.WIDTH / float(width)
+            ratio_h = self.HEIGHT / float(height)
+            ratio = min(ratio_w, ratio_h)
+
+            # Apply the scaling factor
+            new_width = int(width * ratio)
+            new_height = int(height * ratio)
+            self.splash = self.splash.resize((new_width, new_height))            
     
     def _wake_display(self):
         '''
@@ -237,10 +258,7 @@ class DisplayBase:
         pass
     
     def _display_clear(self):
-        '''
-        Inheriting classes will override this function to clear the display device.
-        '''
-        pass
+        self.display_canvas.paste((0, 0, 0, 255), (0,0, self.WIDTH, self.HEIGHT))
 
     def _display_canvas(self, canvas):
         '''
@@ -249,10 +267,9 @@ class DisplayBase:
         pass
 
     def _display_splash(self):
-        '''
-        Inheriting classes will override this function to display the splash screen.
-        '''
-        pass
+        width, height = self.splash.size
+        self.display_canvas.paste(self.splash, ((self.WIDTH // 2) - (width // 2), (self.HEIGHT // 2) - (height // 2)))
+        self._display_canvas() 
 
     def _display_background(self):
         '''
@@ -266,24 +283,29 @@ class DisplayBase:
         '''
         pass 
 
-    def _build_objects(self, background):
+    def _build_objects(self, background=None):
         ''' 
         Inheriting classes may override this function to ensure the right object type is loaded
         '''
         self.display_object_list = []
 
         if self.display_active in ['home', 'dash']:
-            section_data = self.display_data[self.display_active] 
+            section_data = self.display_data[self.display_profile][self.display_active] 
         elif 'menu_' in self.display_active:
-            section_data = [self.display_data['menus'][self.display_active.replace('menu_', '')]]
+            section_data = [self.display_data[self.display_profile]['menus'][self.display_active.replace('menu_', '')]]
         elif 'input_' in self.display_active:
-            section_data = [self.display_data['input'][self.display_active.replace('input_', '')]]
+            section_data = [self.display_data[self.display_profile]['input'][self.display_active.replace('input_', '')]]
             section_data[0]['data']['origin'] = self.input_origin
         else:
             return 
             
         for object_data in section_data:
-            self.display_object_list.append(FlexObjPIL(object_data['type'], object_data, background))
+            ''' Add the object to the display object list '''
+            if self.status_data.get('hopper_level', None) != None and object_data["type"] == 'hopper_status':
+                object_data['data']['level'] = self.status_data['hopper_level']  # Add the current hopper level to the object
+            FlexObject_ClassName = FlexObject_TypeMap[object_data["type"]]
+            FlexObject_Constructor = globals()[FlexObject_ClassName]
+            self.display_object_list.append(FlexObject_Constructor(object_data['type'], object_data, background))
 
     def _configure_dash(self):
         ''' Build Food Probe Map '''
@@ -296,7 +318,7 @@ class DisplayBase:
 
         ''' Remove Unused Food Probes & Rename Used Food Probes'''
         display_data_dash_list = []
-        for object in self.display_data['dash']:
+        for object in self.display_data[self.display_profile]['dash']:
             if 'food_probe_gauge_' in object['name'] and object['name'] not in list(self.food_probe_label_map.keys()):
                 pass
             else: 
@@ -311,7 +333,7 @@ class DisplayBase:
                 
                 display_data_dash_list.append(object)
 
-        self.display_data['dash'] = display_data_dash_list 
+        self.display_data[self.display_profile]['dash'] = display_data_dash_list 
 
     def _build_dash_map(self):
         ''' Setup dash object mapping '''
@@ -389,7 +411,7 @@ class DisplayBase:
                     
                     ''' Update the Primary Gauge '''
                     object_data = self.display_object_list[self.dash_map['primary_gauge']].get_object_data()
-                    object_data['temps'][0] = self.in_data['P'][primary_key]
+                    object_data['temps'][0] = self.in_data['P'][primary_key] if self.in_data['P'][primary_key] is not None else 0
                     object_data['temps'][1] = self.in_data['NT'][primary_key]
                     object_data['temps'][2] = self.in_data['PSP']
                     object_data['units'] = self.units 
@@ -407,7 +429,7 @@ class DisplayBase:
                         
                         ''' Update this food gauge '''
                         object_data = self.display_object_list[self.dash_map[gauge]].get_object_data()
-                        object_data['temps'][0] = self.in_data['F'][key]
+                        object_data['temps'][0] = self.in_data['F'][key] if self.in_data['F'][key] is not None else 0
                         object_data['temps'][1] = self.in_data['NT'][key]
                         object_data['temps'][2] = 0  # There is no set temp for food probes 
                         object_data['units'] = self.units
@@ -519,16 +541,7 @@ class DisplayBase:
             self.last_in_data = self.in_data.copy() 
             self.last_status_data = self.status_data.copy()
 
-    def _update_input_objects(self):
-        '''
-        for index, object in enumerate(self.display_object_list):
-            objectData = object.get_object_data()
-            if objectData['data']['input'] != '':
-                self.display_object_list[index].update_object_data(objectData)
-        '''
-        pass 
-
-    def _animate_objects(self):
+    def _draw_objects(self):
         for object in self.display_object_list: 
             objectData = object.get_object_data()
             objectState = object.get_object_state()
@@ -536,11 +549,14 @@ class DisplayBase:
             if objectData['animation_enabled'] and objectState['animation_active']:
                 object_image = object.update_object_data()
                 self.display_updated = True 
-                self.display_surface.blit(object_image, objectData['position'])
             else:
-                object_image = object.get_object_surface()
-                self.display_surface.blit(object_image, objectData['position'])
+                object_image = object.get_object_canvas()
 
+            if objectData['glow']:
+                object_image_glow = object_image.copy()
+                object_image_glow = object_image_glow.filter(ImageFilter.GaussianBlur(radius=3))
+                self.display_canvas.paste(object_image, objectData['position'], object_image_glow)
+            self.display_canvas.paste(object_image, objectData['position'], object_image)
 
     '''
         ====================== Input/Event Handling ========================
@@ -585,6 +601,8 @@ class DisplayBase:
             }
             write_control(data, origin='display')
             #print('Sent Monitor Mode Command!')
+            self.display_active = 'dash'
+            self.display_init = True
         
         if 'startup' in self.command:
             data = {
@@ -602,6 +620,8 @@ class DisplayBase:
                 'mode' : 'Smoke'
             }
             write_control(data, origin='display')
+            self.display_active = 'dash'
+            self.display_init = True
         
         if 'hold' in self.command:
             ''' Set hold target for primary probe '''
@@ -619,8 +639,8 @@ class DisplayBase:
                     'primary_setpoint' : primary_setpoint    
                 }
                 write_control(data, origin='display')
-                self.display_active = 'dash'
-                self.display_init = True
+            self.display_active = 'dash'
+            self.display_init = True
 
         if 'notify' in self.command:
             ''' Set notification targets for probes/grill '''
@@ -653,6 +673,8 @@ class DisplayBase:
                 'mode' : 'Shutdown',
             }
             write_control(data, origin='display')
+            self.display_active = 'dash'
+            self.display_init = True
 
         if 'stop' in self.command:
             data = {
@@ -668,11 +690,13 @@ class DisplayBase:
             self.display_timeout = time.time() + self.TIMEOUT
 
         if 'splus' in self.command:
-            enable = True if self.command_data == "on" else False 
+            toggle = False if self.last_status_data.get('s_plus', False) else True
             data = {
-                's_plus' : enable,
+                's_plus' : toggle,
             }
             write_control(data, origin='display')
+            self.display_active = 'dash'
+            self.display_init = True
 
         if 'primestartup' in self.command:
             data = {
@@ -725,6 +749,8 @@ class DisplayBase:
                 # User is forcing next step
                 data['updated'] = True
                 write_control(data, origin='display')
+            self.display_active = 'dash'
+            self.display_init = True
 
         if 'reboot' in self.command:
             data = {
@@ -773,6 +799,8 @@ class DisplayBase:
                 'hopper_check' : True
             }
             write_control(data, origin='display')
+            self.display_active = 'dash'
+            self.display_init = True
 
         if 'none' in self.command:
             pass 

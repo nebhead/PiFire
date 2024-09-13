@@ -24,7 +24,7 @@ import apprise
 import logging
 import math
 from common import write_settings, write_control, create_logger, read_history
-from scipy.interpolate import interp1d
+from sklearn.linear_model import LinearRegression
 
 '''
 ==============================================================================
@@ -463,59 +463,40 @@ def _estimate_eta(temperatures, target_temperature, interval_seconds=3, max_hist
 		#print('DEBUG: ETA: History data interval not between 1 and 60 seconds.')
 		eventLogger.debug(f'ETA: History data interval not between 1 and 60 seconds.')
 		return None
-	
-	# If there is more data than needed, shorten the list 
-	readings_per_minute = (60 // interval_seconds)
-	minutes_of_data = len(temperatures) // readings_per_minute
-	if minutes_of_data > max_history_minutes:
-		while len(temperatures) // readings_per_minute > max_history_minutes:
-			temperatures.pop(0)
-	# If there is less data than needed, return None
-	elif minutes_of_data < min_history_minutes:
-		#print('DEBUG: Not enough history data to make estimate.')
+
+    # Convert minutes to seconds
+	max_data_points = int(max_history_minutes * 60 / interval_seconds)
+	min_data_points = int(min_history_minutes * 60 / interval_seconds)
+
+	# Check if enough data points provided
+	if len(temperatures) < min_data_points:
 		eventLogger.debug(f'ETA: Not enough history data to make estimate.')
 		return None
 
-	# Build times list
-	times = []
-	for index in range(0, len(temperatures) * interval_seconds, interval_seconds):
-		times.append(index)
+	# Truncate data to fit within limits
+	temperatures = temperatures[-max_data_points:]
 
-	#print(f'===========================================')
-	#print(f'DEBUG: ETA: times = {times}')
-	#print(f'DEBUG: ETA: temps = {temperatures}')
-	#print(f'===========================================')
+	# Prepare data for linear regression
+	X = [[i] for i in range(len(temperatures))]  # Time steps as features
+	y = temperatures  # Temperature values as target
 
 	try:
-		# Create an interpolation function from the temperature data
-		interpolator = interp1d(times, temperatures, axis=0, bounds_error=False, kind="linear", fill_value="extrapolate")
+		# Fit the linear regression model
+		model = LinearRegression()
+		model.fit(X, y)
 
-		# Estimate the time to reach the target temperature
-		estimated_time = interpolator(target_temperature)
-		# If estimated time is over 24 hours or less than 0, it's likely to be a bad guess
-		if estimated_time > 86400 or estimated_time <= 0:
-			#print(f'DEBUG: ETA: Estimated time outside of bounds. [{estimated_time}]')
-			eventLogger.debug(f'ETA: Estimated time outside of bounds. [{estimated_time}]')
+		# Predict time to reach target temperature (assuming linear trend)
+		predicted_time = (target_temperature - y[-1]) / model.coef_[0] * interval_seconds
+		
+		# Ensure positive prediction
+		if predicted_time < 0:
+			eventLogger.debug(f'ETA: Estimated time is negative. [{predicted_time}]')
 			return None
-		eta = math.ceil(int(estimated_time) - times[-1])
-		if eta <= 0:
-			# Additional bounds testing
-			#print(f'DEBUG: ETA: Estimated time outside of bounds. [{eta}]')
-			eventLogger.debug(f'ETA: Estimated time outside of bounds. [{eta}]')
-			return None
-		#print(f'===========================================')
-		#print(f'DEBUG: ETA: {eta}s')
-		#print(f'===========================================')
-		eventLogger.debug(f'Calculated ETA: {eta}s')
-	
 	except:
-		# Something failed, return None
-		#print('DEBUG: ETA: An exception occurred.')
-		eventLogger.debug(f'ETA: An exception occurred.')
-		#raise
-		return None 
-
-	return eta
+		eventLogger.debug(f'ETA: Error calculating ETA.')
+		return None
+			
+	return int(predicted_time)
 
 mqtt = None
 def _send_mqtt_notification(control, settings, 

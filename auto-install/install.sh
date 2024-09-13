@@ -81,10 +81,17 @@ echo "**      Cloning PiFire from GitHub...                                  **"
 echo "**                                                                     **"
 echo "*************************************************************************"
 cd /usr/local/bin
-# Use a shallow clone to reduce download size
-$SUDO git clone --depth 1 https://github.com/nebhead/pifire
-# Replace the below command to fetch development branch
-#$SUDO git clone --depth 1 --branch development https://github.com/nebhead/pifire
+
+# Check if -dev option is used
+if [ "$1" = "-dev" ]; then
+    echo "Cloning development branch..."
+    # Replace the below command to fetch development branch
+    $SUDO git clone --depth 1 --branch development https://github.com/nebhead/pifire
+else
+    echo "Cloning main branch..."
+    # Use a shallow clone to reduce download size
+    $SUDO git clone --depth 1 https://github.com/nebhead/pifire
+fi
 
 # Setup Python VENV & Install Python dependencies
 clear
@@ -113,10 +120,6 @@ source bin/activate
 
 echo " - Installing module dependencies... "
 # Install module dependencies 
-python -m pip install "flask==2.3.3" 
-python -m pip install flask-mobility
-python -m pip install flask-qrcode
-python -m pip install flask-socketio
 if ! python -c "import sys; assert sys.version_info[:2] >= (3,11)" > /dev/null; then
     echo "System is running a python version lower than 3.11, installing eventlet==0.30.2";
     python -m pip install "eventlet==0.30.2"
@@ -124,48 +127,7 @@ else
     echo "System is running a python version 3.11 or greater, installing latest eventlet"
     python -m pip install eventlet
 fi      
-python -m pip install gunicorn
-python -m pip install gpiozero
-python -m pip install redis
-python -m pip install uuid
-python -m pip install influxdb-client[ciso]
-python -m pip install apprise
-python -m pip install scikit-fuzzy
-python -m pip install "scikit-learn==1.4.2"
-python -m pip install ratelimitingfilter
-python -m pip install "pillow>=9.2.0"
-python -m pip install paho-mqtt
-python -m pip install psutil
-
-# Setup config.txt to enable busses 
-clear
-echo "*************************************************************************"
-echo "**                                                                     **"
-echo "**      Configuring config.txt                                         **"
-echo "**                                                                     **"
-echo "*************************************************************************"
-
-# Enable SPI - Needed for some displays
-$SUDO raspi-config nonint do_spi 0
-
-# Enable I2C - Needed for some displays, ADCs, distance sensors
-$SUDO raspi-config nonint do_i2c 0
-
-# Enable Hardware PWM - Needed for hardware PWM support 
-if test -f /boot/firmware/config.txt; then
-  echo "dtoverlay=pwm,gpiopin=13,func=4" | $SUDO tee -a /boot/firmware/config.txt > /dev/null
-else
-  echo "dtoverlay=pwm,gpiopin=13,func=4" | $SUDO tee -a /boot/config.txt > /dev/null
-fi
-
-# Setup backlight / power permissions if a DSI screen is installed  
-clear
-echo "*************************************************************************"
-echo "**                                                                     **"
-echo "**      Configuring Backlight UDEV Rules                               **"
-echo "**                                                                     **"
-echo "*************************************************************************"
-echo 'SUBSYSTEM=="backlight",RUN+="/bin/chmod 666 /sys/class/backlight/%k/brightness /sys/class/backlight/%k/bl_power"' | $SUDO tee -a /etc/udev/rules.d/backlight-permissions.rules > /dev/null
+python -m pip install -r /usr/local/bin/pifire/auto-install/requirements.txt
 
 ### Setup nginx to proxy to gunicorn
 clear

@@ -10,7 +10,7 @@ Description:
 	
 	Ex Device Definition: 
 	
-	device = {
+	device_info = {
 			'device' : 'your_device_name',	# Unique name for the device
 			'module' : 'prototype',  			# Must be populated for this module to load properly
 			'ports' : ['ADC0', 'ADC1', 'ADC2', 'ADC3'], # This should be defined by the user with the number of ports desired
@@ -20,7 +20,8 @@ Description:
             	'ADC2_rd': '10000',
             	'ADC3_rd': '10000',
             	'i2c_bus_addr': '0x48',
-            	'voltage_ref': '3.28'
+            	'voltage_ref': '3.28',
+				'transient' : False
 			} 
 		}
 
@@ -47,7 +48,8 @@ from probes.base import ProbeInterface
 
 class ProtoDevice():
 	''' Create a test devices that returns values for testing '''
-	def __init__(self, port_map, primary_port, units):
+	def __init__(self, port_map, primary_port, units, transient=False):
+		self.transient = transient
 		self.port_value = {}
 		self.primary_port = primary_port
 		self.units = units 
@@ -76,6 +78,11 @@ class ProtoDevice():
 			elif seed < 1 and self.port_value[port] > self.minPrimaryVoltage:
 				self.port_value[port] -= self.primaryChangeFactor
 		else:
+			if self.transient:
+				''' If transient, then return None-type approximately 80% of the time. '''
+				if random.randint(0,100) < 80:
+					return None 
+
 			if seed > 7 and self.port_value[port] > self.maxFoodVoltage:
 				self.port_value[port] -= self.otherChangeFactor
 			elif seed < 1 and self.port_value[port] < self.minFoodVoltage:
@@ -90,4 +97,4 @@ class ReadProbes(ProbeInterface):
 
 	def _init_device(self):
 		self.time_delay = 0
-		self.device = ProtoDevice(self.port_map, self.primary_port, self.units)
+		self.device = ProtoDevice(self.port_map, self.primary_port, self.units, transient=self.transient)

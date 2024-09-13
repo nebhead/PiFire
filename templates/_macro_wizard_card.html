@@ -2,7 +2,7 @@
 <!-- Form for Selected Module -->
 <div class="card">
 	<div class="media">
-		<img src="{{ url_for('static', filename='img/wizard/' + moduleData['image']) }}">
+		<img src="{{ url_for('static', filename='img/wizard/' + moduleData['image']) }}" class="p-2 rounded">
 		<div class="media-body">
 			<h5 class="mt-0">{{ moduleData['friendly_name'] }}</h5>
 			<br>
@@ -17,31 +17,64 @@
 			{% endif %}
 		</div>
 	</div>
-	{% if moduleData['settings_dependencies'] != {} %}
-	<table class="table">
-		<thead class="thead-light">
-			<tr>
-			<th scope="col">Setting</th>
-			<th scope="col">Options</th>
-			<th scope="col">Description</th>
-			</tr>
-		</thead>
-		<tbody>
-			{% for setting in moduleData['settings_dependencies'] %}
-			<tr {% if moduleData['settings_dependencies'][setting]['hidden'] %} hidden {% endif %}>
-				<td>{{ moduleData['settings_dependencies'][setting]['friendly_name'] }}</td>
-				<td>
-					<select class="form-control" id="{{ moduleSection }}_{{ setting }}" name="{{ moduleSection }}_{{ setting }}">
-					{% for option in moduleData['settings_dependencies'][setting]['options'] %}
-						<option value="{{ option }}"{% if moduleSettings[setting] == option %} selected{% endif %}>{{ moduleData['settings_dependencies'][setting]['options'][option] }}</option>
-					{% endfor %}
-					</select>
-				</td>
-				<td>{{ moduleData['settings_dependencies'][setting]['description'] }}</td>
+	{% if moduleData['settings_dependencies'] != {} or (moduleData['config'] is defined and moduleData['config'] != []) %}
+		<table class="table">
+			<thead class="thead-light">
+				<tr>
+				<th scope="col">Setting</th>
+				<th scope="col">Options</th>
+				<th scope="col">Description</th>
 				</tr>
-			{% endfor %}
-		</tbody>
-	</table>
+			</thead>
+			<tbody>
+				{% for setting in moduleData['settings_dependencies'] %}
+				<tr {% if moduleData['settings_dependencies'][setting]['hidden'] %} hidden {% endif %}>
+					<td>{{ moduleData['settings_dependencies'][setting]['friendly_name'] }}</td>
+					<td>
+						<select class="form-control" id="{{ moduleSection }}_{{ setting }}" name="{{ moduleSection }}_{{ setting }}">
+						{% for option in moduleData['settings_dependencies'][setting]['options'] %}
+							<option value="{{ option }}"{% if moduleSettings['settings'][setting]|string == option %} selected{% endif %}>{{ moduleData['settings_dependencies'][setting]['options'][option] }}</option>
+						{% endfor %}
+						</select>
+					</td>
+					<td>{{ moduleData['settings_dependencies'][setting]['description'] }}</td>
+					</tr>
+				{% endfor %}
+				{% if moduleData['config'] is defined %}
+				{% for config_item in moduleData['config'] %}
+				<tr{% if config_item['hidden'] %} hidden {% endif %}>
+					<td>{{ config_item['option_friendly_name'] }}</td>
+					<td>
+						{% if config_item['option_type'] == 'list' %}
+						{{ render_option_list(moduleSection, config_item['option_name'], moduleSettings['config'][config_item['option_name']], config_item['list_values'], config_item['list_labels']) }}
+						{% elif config_item['option_type'] == 'string' %}
+						{{ render_option_string(moduleSection, config_item['option_name'], config_item['default']) }}
+						{% endif %}
+					</td>
+					<td>{{ config_item['option_description'] }}</td>
+				</tr>
+				{% endfor %}
+				{% endif %}
+			</tbody>
+		</table>
 	{% endif %}
 </div>
+{% endmacro %}
+
+{% macro render_option_list(section, label, default, list_values, list_labels) %}
+<select class="form-control {{ section }}Config"
+    id="{{ section }}_config_{{ label }}" 
+    name="{{ section }}_config_{{ label }}">
+    {% for item in list_values %}
+    <option value="{{ item }}"{% if default|string == item|string %} selected{% endif %}>{{ list_labels[loop.index0] }}</option>
+    {% endfor %}
+</select>
+{% endmacro %}
+
+{% macro render_option_string(section, label, default) %}
+<input type="text" class="form-control {{ section }}Config" 
+    value="{{ default }}" aria-label="{{ label }}" 
+    aria-describedby="{{name}}_addon" 
+    id="{{ section }}_config_{{ label }}" 
+    name="{{ section }}_config_{{ label }}"/>
 {% endmacro %}

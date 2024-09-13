@@ -17,6 +17,49 @@
 from common import * # Common Library for writing settings
 import subprocess
 
+
+def _convert_value(value):
+	"""
+	Converts a given value to an appropriate data type based on its string representation.
+
+	Parameters:
+	- value (str): The string representation of the value to be converted.
+
+	Returns:
+	- int or float or bool or list or str or None: The converted value in the appropriate data type.
+
+	The function checks if the value is a string representation of a number and converts it to an integer or float if possible. 
+	If the value is the string representation of a boolean, it is converted to a boolean value. 
+	If the value is the string representation of None, it is converted to None. 
+	If the value is a string representation of a list, it is converted to a list. 
+	Otherwise, the original value is returned.
+
+	Note:
+	- The function assumes that the value parameter is a string.
+	- The function does not perform any validation on the input value.
+	"""
+	if value.isdigit():
+		return int(value)
+	
+	if value.isdecimal():
+		return float(value)
+
+	# Convert Boolean String to Standard Boolean
+	if value == 'True' or value == 'False':
+		return value == 'True'
+	
+	# Convert 'None' to None 
+	if value == 'None':
+		return None 
+	
+	# Covert String List to List
+	if type(value) == str:
+		if value.startswith('[') and value.endswith(']'):
+			value = value.replace('\'', '').replace('\"', '').replace(' ', '')
+			return value[1:-1].split(',')
+
+	return value 	
+
 '''
 ==============================================================================
  Main Program
@@ -37,10 +80,11 @@ output = ' - Adding selected modules to the settings.json file. '
 set_wizard_install_status(percent, status, output)
 time.sleep(2)
 
-settings['modules']['grillplat'] = WizardInstallInfo['modules']['grillplatform']['module_selected'][0]
-#settings['modules']['adc'] = WizardInstallInfo['modules']['probes']['module_selected']		
-settings['modules']['display'] = WizardInstallInfo['modules']['display']['module_selected'][0]
-settings['modules']['dist'] = WizardInstallInfo['modules']['distance']['module_selected'][0]		
+display_selected = WizardInstallInfo['modules']['display']['profile_selected'][0]
+settings['modules']['display'] = WizardData['modules']['display'][display_selected]['filename']
+settings['display']['selected'] = display_selected
+distance_selected = WizardInstallInfo['modules']['distance']['profile_selected'][0]
+settings['modules']['dist'] = WizardData['modules']['distance'][distance_selected]['filename']
 
 ''' Configuring Probes Data '''
 settings['probe_settings']['probe_map'] = WizardInstallInfo['probe_map']
@@ -56,20 +100,13 @@ time.sleep(2)
 
 for module in WizardInstallInfo['modules']:
 	for setting in WizardInstallInfo['modules'][module]['settings']:
-		selected = WizardInstallInfo['modules'][module]['module_selected'][0]
+		selected = WizardInstallInfo['modules'][module]['profile_selected'][0]
 		settingsLocation = WizardData['modules'][module][selected]['settings_dependencies'][setting]['settings']
 		selected_setting = WizardInstallInfo['modules'][module]['settings'][setting]
 
-		# Convert Number Strings to Int or Float
-		if selected_setting.isdigit():
-			selected_setting = int(selected_setting)
-		elif selected_setting.isdecimal():
-			selected_setting = float(selected_setting)
+		# Convert Strings to the correct type 
+		selected_setting = _convert_value(selected_setting)
 
-		# Convert Boolean String to Standard Boolean
-		if selected_setting == 'True' or selected_setting == 'False':
-			selected_setting = selected_setting == 'True'
-		
 		# Special Handling for Units
 		if setting == 'units':
 			units = WizardInstallInfo['modules'][module]['settings'][setting]
@@ -77,15 +114,27 @@ for module in WizardInstallInfo['modules']:
 				settings = convert_settings_units('C', settings)
 			elif(units == 'F') and (settings['globals']['units'] == 'C'):
 				settings = convert_settings_units('F', settings)
-		elif len(settingsLocation) == 1:
-			settings[settingsLocation[0]] = selected_setting
-		elif len(settingsLocation) == 2:
-			settings[settingsLocation[0]][settingsLocation[1]] = selected_setting
-		elif len(settingsLocation) == 3:
-			settings[settingsLocation[0]][settingsLocation[1]][settingsLocation[2]] = selected_setting
-
+		else:
+			settings = set_nested_key_value(settings, settingsLocation, selected_setting)
 		output = f'   + Set {setting} in settings.json'
 		set_wizard_install_status(percent, status, output)
+	if module == 'display':
+		selected = WizardInstallInfo['modules'][module]['profile_selected'][0]
+		settings['display']['config'][selected] = WizardInstallInfo['modules']['display']['config']
+		for key in settings['display']['config'][selected]:
+			# Convert Strings to the correct type
+			settings['display']['config'][selected][key] = _convert_value(settings['display']['config'][selected][key])
+
+percent = 15
+status = 'Installing Dependencies...'
+output = ' - Installing Dependencies'
+set_wizard_install_status(percent, status, output)
+time.sleep(2)
+
+''' Set the grillplatform module per the system_type '''
+settings['modules']['grillplat'] = 'prototype'
+if settings['platform']['system_type'] == 'raspberry_pi_all':
+	settings['modules']['grillplat'] = 'raspberry_pi_all'
 
 # Commit Settings to JSON
 write_settings(settings)
@@ -102,7 +151,9 @@ command_list = []
 reboot_required = False 
 
 for module in WizardInstallInfo['modules']:
-	for selected in WizardInstallInfo['modules'][module]['module_selected']:
+	for selected in WizardInstallInfo['modules'][module]['profile_selected']:
+		if module == 'grillplatform':
+			selected = WizardInstallInfo['modules'][module]['settings']['current']
 		for py_dependency in WizardData['modules'][module][selected]['py_dependencies']:
 			py_dependencies.append(py_dependency)
 		for apt_dependency in WizardData['modules'][module][selected]['apt_dependencies']:

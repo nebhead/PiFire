@@ -6,23 +6,40 @@
 #
 # Description: This library simulates
 # 	controlling the Grill outputs via
-# 	GPIOs, to a 4-channel relay
+# 	GPIOs, to a 4-channel relay and/or DC Fan
 #
 # *****************************************
 
+"""
+	==============================
+	  Imported Libraries
+	==============================
+"""
+
 from gpiozero.threads import GPIOThread
-from common import is_float
+from common import is_float, create_logger
+
+"""
+	==============================
+	  Class Definition
+	==============================
+"""
 
 class GrillPlatform:
 
-	def __init__(self, out_pins, in_pins, trigger_level='LOW', dc_fan=False, frequency=100):
-		self.out_pins = out_pins # { 'power' : 4, 'auger' : 14, 'fan' : 15, 'dc_fan' : 26, 'igniter' : 18, 'pwm' : 13 }
-		self.in_pins = in_pins # { 'selector' : 17 }
-		self.dc_fan = dc_fan
-		self.frequency = frequency
-		self.current = {}
+	def __init__(self, config):
+		self.logger = create_logger('control')
+		try:
+			self.out_pins = config.get('outputs', None)  # Pins to control the PiFire outputs 
+			self.in_pins = config.get('inputs', None)  # Pins for input 
+			self.dc_fan = config.get('dc_fan', False)  # Save state for DC Fan
+			self.frequency = config.get('frequency', 100)  # Save configured fan frequency 
+			self.standalone = config.get('standalone', True)  # Save configured state for Standalone
+			self.current = {}
+		except:
+			self.logger.error('Error parsing platform configuration.  Check your settings.json file.')
 
-		if dc_fan:
+		if self.dc_fan:
 			self._ramp_thread = None
 			self.out_pins['pwm'] = 100
 
@@ -125,6 +142,13 @@ class GrillPlatform:
 			if self._ramp_thread.stopping.wait(delay):
 				break
 	
+	def cleanup(self):
+		self.power_off()
+		self.igniter_off()
+		self.auger_off()
+		self.fan_off()
+
+	# MARK: System Platform Commands
 	"""
 	==============================
 	  System / Platform Commands 

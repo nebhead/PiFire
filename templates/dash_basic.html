@@ -84,6 +84,31 @@
 	</div>
 </div> <!-- End Server Reload Modal -->
 
+<!-- Server Offline Modal -->
+<div class="modal" id="serverOfflineModal">
+	<div class="modal-dialog">
+	  <div class="modal-content">
+  
+		<!-- Modal Header -->
+		<div class="modal-header">
+		  <h4 class="modal-title">Server is Unresponsive / Offline</h4>
+		  <button type="button" class="close" data-dismiss="modal">&times;</button>
+		</div>
+  
+		<!-- Modal body -->
+		<div class="modal-body">
+		  The server is unresponsive/offline and hasn't responded to recent requests. Check that your system is on and connected to the network.<br>
+		</div>
+  
+		<!-- Modal footer -->
+		<div class="modal-footer">
+		  <button type="button" class="btn btn-danger" id="serverOffline" data-dismiss="modal" onclick="dashClearErrorCounter();">Wait Longer</button>
+		</div>
+  
+	  </div>
+	</div>
+</div> <!-- End Server Offline Modal -->
+
 <!-- Dash Gear Icon for Dash Settings -->
 <span class="gear-icon" onclick="dashSettings();">
 	<i class="fa-solid fa-gear"></i>
@@ -102,21 +127,20 @@
   
 		<!-- Modal body -->
 		<div class="modal-body">
-			<div class="card">
-				<div class="card-header">
-					Dashboard Configuration Settings
-				</div>
-				<div class="card-body">
-					<!-- Standard Dashboard Configuration Settings -->
-					<div id="dash_config">
-						There doesn't seem to be any config settings for this dashboard. <br>
-						<!-- p style="font-family: 'Courier New', Courier, monospace;">
-							{{ dash_data }}
-						</p-->
+			<div id="dash_config_card">
+				<div class="card">
+					<div class="card-header">
+						Dashboard Configuration Settings
+					</div>
+					<div class="card-body">
+							There doesn't seem to be any config settings for this dashboard. <br>
+					</div>
+					<div class="card-footer">
+						<button type="button" class="btn btn-secondary" onclick="dashLoadConfig();">Refresh</button>
 					</div>
 				</div>
-
 			</div>
+			
 			<br>
 			<!-- Custom Dashboard Configuration Settings -->
 			<div class="card">

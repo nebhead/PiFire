@@ -62,25 +62,25 @@
                 <div class="tab-pane fade" id="v-pills-platform" role="tabpanel" aria-labelledby="v-pills-platform-tab">
 			        <div class="card shadow">
 				        <div class="card-header bg-primary text-white">
-				        <strong>Platform Module</strong>
+				        <strong>Platform Configuration</strong>
 				        </div>
 				        <div class="card-body">
-					        <strong>Select a Platform Module for PiFire.</strong><br><br>
-					        By default, this project runs on a Raspberry Pi Zero W and the default platform is PiFire.  The prototype platform should only be selected for testing/debug purposes. <br>
+					        <strong>Select a Platform Configuration for PiFire.</strong><br><br>
+					        Select the PCB being used and modify the configuration to suit your specific build.  Select 'Custom' if you are using a custom build.  The prototype platform should only be selected for testing/debug purposes. <br>
 					        <br>
 					        <!-- Select Drop Down -->
 					        <div class="form-group">
 						        <select class="form-control" id="grillplatformSelect" name="grillplatformSelect">
 							        {% for module in wizardData['modules']['grillplatform'] %}
-								        <option value="{{ module }}"{% if wizardInstallInfo['modules']['grillplatform']['module_selected'][0] == module %} selected {% endif %}>{{ wizardData['modules']['grillplatform'][module]['friendly_name'] }}</option>
+								        <option value="{{ module }}"{% if wizardInstallInfo['modules']['grillplatform']['profile_selected'][0] == module %} selected {% endif %}>{{ wizardData['modules']['grillplatform'][module]['friendly_name'] }}</option>
 							        {% endfor %}
 						        </select>
 					        </div>
 					        <!-- Module Card -->
 					        <div id="grillplatformCard">
 								{% for module in wizardData['modules']['grillplatform'] %}
-									{% if wizardInstallInfo['modules']['grillplatform']['module_selected'][0] == module %}
-										{{ render_wizard_card(wizardData['modules']['grillplatform'][module], 'grillplatform', wizardInstallInfo['modules']['grillplatform']['settings']) }}
+									{% if wizardInstallInfo['modules']['grillplatform']['profile_selected'][0] == module %}
+										{{ render_wizard_card(wizardData['modules']['grillplatform'][module], 'grillplatform', wizardInstallInfo['modules']['grillplatform']) }}
 									{% endif %}
 								{% endfor %}
 							</div>
@@ -162,12 +162,13 @@
 				        </div>
 				        <div class="card-body">
 					        <strong>Select a Display Module for PiFire.</strong><br><br>
-					        A display is not required by PiFire, but is extremely useful.  The default display is the ILI9341 Color Display with button input.  The prototype display should only be selected for testing/debug purposes. <br><br>
+					        A display is not required by PiFire, but is extremely useful.  The default display is the ILI9341 Color Display with button input.  
+							Select None for no display.  The prototype display should only be selected for testing/debug purposes. <br><br>
 					        <!-- Select Drop Down -->
 					        <div class="form-group">
 						        <select class="form-control" id="displaySelect" name="displaySelect">
 							        {% for module in wizardData['modules']['display'] %}
-                                    <option value="{{ module }}"{% if wizardInstallInfo['modules']['display']['module_selected'][0] == module %} selected {% endif %}>
+                                    <option value="{{ module }}"{% if wizardInstallInfo['modules']['display']['profile_selected'][0] == module %} selected {% endif %}>
                                     {{ wizardData['modules']['display'][module]['friendly_name'] }}
                                     </option>
 							        {% endfor %}
@@ -176,8 +177,8 @@
 					        <!-- Module Card -->
 					        <div id="displayCard">
 								{% for module in wizardData['modules']['display'] %}
-									{% if wizardInstallInfo['modules']['display']['module_selected'][0] == module %}
-										{{ render_wizard_card(wizardData['modules']['display'][module], 'display',  wizardInstallInfo['modules']['display']['settings']) }}
+									{% if wizardInstallInfo['modules']['display']['profile_selected'][0] == module %}
+										{{ render_wizard_card(wizardData['modules']['display'][module], 'display',  wizardInstallInfo['modules']['display']) }}
 									{% endif %}
 								{% endfor %}
 							</div>
@@ -207,7 +208,7 @@
 					        <div class="form-group">
 						        <select class="form-control" id="distanceSelect" name="distanceSelect">
 							        {% for module in wizardData['modules']['distance'] %}
-								        <option value="{{ module }}"{% if wizardInstallInfo['modules']['distance']['module_selected'][0] == module %} selected {% endif %}>
+								        <option value="{{ module }}"{% if wizardInstallInfo['modules']['distance']['profile_selected'][0] == module %} selected {% endif %}>
 									        {{ wizardData['modules']['distance'][module]['friendly_name'] }}
 								        </option>
 							        {% endfor %}
@@ -216,8 +217,8 @@
 					        <!-- Module Card -->
 					        <div id="distanceCard">
 								{% for module in wizardData['modules']['distance'] %}
-									{% if wizardInstallInfo['modules']['distance']['module_selected'][0] == module %}
-										{{ render_wizard_card(wizardData['modules']['distance'][module], 'distance',  wizardInstallInfo['modules']['distance']['settings']) }}
+									{% if wizardInstallInfo['modules']['distance']['profile_selected'][0] == module %}
+										{{ render_wizard_card(wizardData['modules']['distance'][module], 'distance',  wizardInstallInfo['modules']['distance']) }}
 									{% endif %}
 								{% endfor %}
 							</div>

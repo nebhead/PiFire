@@ -32,6 +32,8 @@ class HopperLevel:
 		self.debug = debug
 		self.distance_read = 100
 
+		self.event = threading.Event()
+
 		if self.empty <= self.full:
 			event = 'ERROR: Invalid Hopper Level Configuration Empty Level <= Full Level (forcing defaults)'
 			self.logger.error(event)
@@ -107,8 +109,9 @@ class HopperLevel:
 					self.__start_sensor()  # Attempt re-init of sensor
 					event = 'Warning: The TOF sensor took longer than normal to get a reading.  Re-initializing the sensor.'
 					self.logger.info(event)
-
-				self.sensor_thread_override = False
+				if self.sensor_thread_override:
+					self.event.set()
+					self.sensor_thread_override = False
 				sample_time = time.time()
 			time.sleep(1)
 
@@ -130,5 +133,6 @@ class HopperLevel:
 		''' If override selected, force the sensor thread to update '''
 		if override:
 			self.sensor_thread_override = True
-			time.sleep(3)
+			self.event.wait(3)	# Wait 3 seconds for sensor to update
+			self.event.clear()  # Clear event flag
 		return self.distance_read 

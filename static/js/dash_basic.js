@@ -1,6 +1,8 @@
 // Dashboard JS
 
 // Global Variables 
+var errorCounter = 0;
+var maxErrorCount = 30;
 var hopper_level = 100;
 var hopper_pellets = '';
 var ui_hash = '';
@@ -23,6 +25,12 @@ function updateProbeCards() {
 		url : '/api/current',
 		type : 'GET',
 		success : function(current){
+			// Clear error counter
+			if (errorCounter > 0) {
+				errorCounter = 0;
+				$("#serverOfflineModal").modal('hide');
+			};
+
 			// Local Variables:
 			var probes = [];
 			
@@ -218,6 +226,13 @@ function updateProbeCards() {
 			//	document.getElementById('smokeplus_status').innerHTML = '<i class="fas fa-cloud fa-stack-2x" style="color:rgb(150, 150, 150)" data-toggle="tooltip" data-placement="top" title="Smoke Plus OFF"></i><i class="fas fa-plus fa-stack-1x fa-inverse"></i>';
 			//};
 
+		},
+		error: function() {
+			console.log('Error: Failed to get current status from server.  Try: ' + errorCounter);
+			errorCounter += 1;
+			if (errorCounter > maxErrorCount) {
+				$("#serverOfflineModal").modal('show');
+			};
 		}
 	});
 };
@@ -460,8 +475,12 @@ function setPmode(pmode) {
 
 // Show the Dashboard Settings Modal/Dialog when clicked
 function dashSettings() {
+	dashLoadConfig();
 	$("#dashSettingsModal").modal('show');
-	//dashData();
+};
+
+function dashLoadConfig() {
+	$("#dash_config_card").load("/dashconfig");
 };
 
 // Get dashboard data structure
@@ -527,6 +546,10 @@ function dashToggleVisible(cardID) {
 	};
 }
 
+function dashClearErrorCounter() {
+	errorCounter = 0;
+};
+
 // Main
 $(document).ready(function(){
 	// Setup Listeners 
@@ -545,5 +568,5 @@ $(document).ready(function(){
 	updateHopperStatus();
 	
 	// Current hopper information loop
-	setInterval(updateHopperStatus, 150000);  // Update every 150000ms 
+	setInterval(updateHopperStatus, 30000);  // Update every 30000ms (30 seconds) 
 });

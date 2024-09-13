@@ -729,10 +729,10 @@
 								</tr>
 							</thead>
 							<tbody>
-								{% for index, data in settings['outpins'].items()|sort %}
+								{% for index, data in settings['platform']['outputs'].items()|sort %}
 								<tr>
 									<td>{{ index }}</td>
-									<td>{{ settings['outpins'][index] }}</td>
+									<td>{{ settings['platform']['outputs'][index] }}</td>
 								</tr>
 								{% endfor %}
 							</tbody>
@@ -746,10 +746,10 @@
 								</tr>
 							</thead>
 							<tbody>
-								{% for index, data in settings['inpins'].items()|sort %}
+								{% for index, data in settings['platform']['inputs'].items()|sort %}
 								<tr>
 									<td>{{ index }}</td>
-									<td>{{ settings['inpins'][index] }}</td>
+									<td>{{ settings['platform']['inputs'][index] }}</td>
 								</tr>
 								{% endfor %}
 							</tbody>
@@ -773,17 +773,17 @@
 							</tr>
 							</thead>
 							<tbody>
-							{% for device in settings['dev_pins'] %}
+							{% for device in settings['platform']['devices'] %}
 								<tr>
 									<td>{{ device.capitalize() }}</td>
 									<td></td>
 									<td></td>
 								</tr>
-								{% for index, data in settings['dev_pins'][device].items()|sort %}
+								{% for index, data in settings['platform']['devices'][device].items()|sort %}
 								<tr>
 									<td></td>
 									<td>{{ index }}</td>
-									<td>{{ settings['dev_pins'][device][index] }}</td>
+									<td>{{ settings['platform']['devices'][device][index] }}</td>
 								</tr>
 								{% endfor %}
 							{% endfor %}

@@ -107,7 +107,7 @@ def dash_config():
 	dash_metadata = read_generic_json(f'./dashboard/{meta_data_filename}')
 
 	if request.method == 'GET':
-		render_string = "{% from '_macro_dash_default.html' import render_config_card %}{{ render_config_card(dash_metadata, dash_data) }}"
+		render_string = "{% from '_macro_generic_config.html' import render_dash_config_card %}{{ render_dash_config_card(dash_metadata, dash_data) }}"
 		return render_template_string(render_string, dash_metadata=dash_metadata, dash_data=dash_data)
 	elif request.method == 'POST':
 		dash_config_request = request.form
@@ -958,11 +958,21 @@ def tuner_page(action=None):
 
 			data = read_autotune()
 			if len(data) > 10:
+				# If more than 10 datapoints, then calculate high / low / medium
 				temp_list = []
 				tr_list = []
 				for datapoint in data:
-					temp_list.append(datapoint['ref_T'])
-					tr_list.append(datapoint['probe_Tr'])
+					'''
+					Check if the ref_T value is already in the list and overwrite if so.
+					This assumes that the last temperature is the most recent and is likely 
+					the most accurate resistance value to take.
+					'''
+					if datapoint['ref_T'] in temp_list:
+						index = temp_list.index(datapoint['ref_T'])
+						tr_list[index] = datapoint['probe_Tr']
+					else:
+						temp_list.append(datapoint['ref_T'])
+						tr_list.append(datapoint['probe_Tr'])
 
 				# Determine High Temp / Tr
 				status_data['high_temp'] = max(temp_list)
@@ -1782,7 +1792,6 @@ def settings_page(action=None):
 					'name' : response['Name'], 
 					'id' : UniqueID
 				}
-				print(f'Response: {response}')
 				if response.get('apply_profile', False):
 					probe_selected = response['apply_profile']
 					for index, probe in enumerate(settings['probe_settings']['probe_map']['probe_info']):
@@ -2366,7 +2375,6 @@ def admin_page(action=None):
 		if control['system']['cpu_throttled'] or control['system']['cpu_under_voltage']: 
 			event = "CPU Throttled / Undervoltage event has occurred.  Check your power supply for proper voltage."
 			errors.append(event)
-			print(event)
 
 	if 'check_cpu_temp' in supported_cmds:
 		process_command(action='sys', arglist=['check_cpu_temp'], origin='admin')  # Request supported commands 
@@ -2593,7 +2601,9 @@ def wizard(action=None):
 			section = r['section']
 			if section in ['grillplatform', 'display', 'distance']:
 				moduleData = wizardData['modules'][section][module]
-				moduleSettings = get_settings_dependencies_values(settings, moduleData)
+				moduleSettings = {}
+				moduleSettings['settings'] = get_settings_dependencies_values(settings, moduleData)
+				moduleSettings['config'] = {} if section != 'display' else settings['display']['config'][module]
 				render_string = "{% from '_macro_wizard_card.html' import render_wizard_card %}{{ render_wizard_card(moduleData, moduleSection, moduleSettings) }}"
 				return render_template_string(render_string, moduleData=moduleData, moduleSection=section, moduleSettings=moduleSettings)
 			else:
@@ -2601,7 +2611,7 @@ def wizard(action=None):
 	
 	''' Create Temporary Probe Device/Port Structure for Setup, Use Existing unless First Time Setup '''
 	if settings['globals']['first_time_setup']: 
-		wizardInstallInfo = wizardInstallInfoDefaults(wizardData)
+		wizardInstallInfo = wizardInstallInfoDefaults(wizardData, settings)
 	else:
 		wizardInstallInfo = wizardInstallInfoExisting(wizardData, settings)
 
@@ -2621,47 +2631,55 @@ def get_settings_dependencies_values(settings, moduleData):
 		for setting_name in setting_location:
 			setting_value = setting_value[setting_name]
 		moduleSettings[setting] = setting_value 
-	print(moduleSettings)
 	return moduleSettings 
 
-def wizardInstallInfoDefaults(wizardData):
+def wizardInstallInfoDefaults(wizardData, settings):
 	
 	wizardInstallInfo = {
 		'modules' : {
 			'grillplatform' : {
-				'module_selected' : [],
-				'settings' : {}
+				'profile_selected' : [],  # Reference the profile in wizardData > wizard_manifest.json
+				'settings' : {},
+				'config' : {}
 			}, 
 			'display' : {
-				'module_selected' : [],
-				'settings' : {}
+				'profile_selected' : [],
+				'settings' : {},
+				'config' : {}
 			}, 
 			'distance' : {
-				'module_selected' : [],
-				'settings' : {}
+				'profile_selected' : [],
+				'settings' : {},
+				'config' : {}
 			}, 
 			'probes' : {
-				'module_selected' : [],
+				'profile_selected' : [],
 				'settings' : {
 					'units' : 'F'
-				}
+				},
+				'config' : {}
 			}
 		},
-		'probe_map' : wizardData['boards']['PiFirev2x']['probe_map']
+		'probe_map' : {}
 	}
 	''' Populate Modules Info with Defaults from Wizard Data including Settings '''
 	for component in ['grillplatform', 'display', 'distance']:
 		for module in wizardData['modules'][component]:
 			if wizardData['modules'][component][module]['default']:
 				''' Populate Module Filename'''
-				wizardInstallInfo['modules'][component]['module_selected'].append(wizardData['modules'][component][module]['filename'])
+				wizardInstallInfo['modules'][component]['profile_selected'].append(module) #TODO: Change wizard.py to reference the module filename instead, or in grill_platform use platform>system_type
 				for setting in wizardData['modules'][component][module]['settings_dependencies']: 
 					''' Populate all settings with default value '''
 					wizardInstallInfo['modules'][component]['settings'][setting] = list(wizardData['modules'][component][module]['settings_dependencies'][setting]['options'].keys())[0]
+				if module == 'display':
+					wizardInstallInfo['modules'][component]['config'] = settings['display']['config'][module]
+
+	''' Populate the default probe device / probe map from the default PCB Board '''
+	wizardInstallInfo['probe_map'] = wizardData['boards'][wizardInstallInfo['modules']['grillplatform']['profile_selected'][0]]['probe_map']
 
 	''' Populate Probes Module List with all configured probe devices '''
 	for device in wizardInstallInfo['probe_map']['probe_devices']:
-		wizardInstallInfo['modules']['probes']['module_selected'].append(device['module'])
+		wizardInstallInfo['modules']['probes']['profile_selected'].append(device['module'])
 
 	return wizardInstallInfo
 
@@ -2669,40 +2687,54 @@ def wizardInstallInfoExisting(wizardData, settings):
 	wizardInstallInfo = {
 		'modules' : {
 			'grillplatform' : {
-				'module_selected' : [settings['modules']['grillplat']],
-				'settings' : {}
+				'profile_selected' : [settings['platform']['current']],
+				'settings' : {},
+				'config' : {}
 			}, 
 			'display' : {
-				'module_selected' : [settings['modules']['display']],
-				'settings' : {}
+				'profile_selected' : [settings['modules']['display']],
+				'settings' : {},
+				'config' : {}
 			}, 
 			'distance' : {
-				'module_selected' : [settings['modules']['dist']],
-				'settings' : {}
+				'profile_selected' : [settings['modules']['dist']],
+				'settings' : {},
+				'config' : {}
 			}, 
 			'probes' : {
-				'module_selected' : [],
+				'profile_selected' : [],
 				'settings' : {
 					'units' : settings['globals']['units']
-				}
+				},
+				'config' : {}
 			}
 		}, 
 		'probe_map' : settings['probe_settings']['probe_map']
 	} 
 	''' Populate Probes Module List with all configured probe devices '''
 	for device in wizardInstallInfo['probe_map']['probe_devices']:
-		wizardInstallInfo['modules']['probes']['module_selected'].append(device['module'])
+		wizardInstallInfo['modules']['probes']['profile_selected'].append(device['module'])
 	
 	''' Populate Modules Info with current Settings '''
 	for module in ['grillplatform', 'display', 'distance']:
-		selected = wizardInstallInfo['modules'][module]['module_selected'][0]
+		selected = wizardInstallInfo['modules'][module]['profile_selected'][0]
+		''' Error condition if the item in settings doesn't match the wizard manifest '''
+		if selected not in wizardData['modules'][module].keys():
+			if module == 'grillplatform':
+				selected = 'custom'
+				settings['platform']['current'] = selected
+			else:
+				selected = 'none'
+			wizardInstallInfo['modules'][module]['profile_selected'] = selected
+
 		for setting in wizardData['modules'][module][selected]['settings_dependencies']:
 			settingsLocation = wizardData['modules'][module][selected]['settings_dependencies'][setting]['settings']
 			settingsValue = settings.copy() 
 			for index in range(0, len(settingsLocation)):
 				settingsValue = settingsValue[settingsLocation[index]]
 			wizardInstallInfo['modules'][module]['settings'][setting] = str(settingsValue)
-
+		if module == 'display':
+			wizardInstallInfo['modules'][module]['config'] = settings['display']['config'][settings['modules']['display']]
 	return wizardInstallInfo
 
 def prepare_wizard_data(form_data):
@@ -2712,27 +2744,31 @@ def prepare_wizard_data(form_data):
 
 	wizardInstallInfo['modules'] = {
 		'grillplatform' : {
-			'module_selected' : [form_data['grillplatformSelect']],
-			'settings' : {}
+			'profile_selected' : [form_data['grillplatformSelect']],
+			'settings' : {},
+			'config' : {}
 		}, 
 		'display' : {
-			'module_selected' : [form_data['displaySelect']],
-			'settings' : {}
+			'profile_selected' : [form_data['displaySelect']],
+			'settings' : {},
+			'config' : {}
 		}, 
 		'distance' : {
-			'module_selected' : [form_data['distanceSelect']],
-			'settings' : {}
+			'profile_selected' : [form_data['distanceSelect']],
+			'settings' : {},
+			'config' : {}
 		}, 
 		'probes' : {
-			'module_selected' : [],
+			'profile_selected' : [],
 			'settings' : {
 				'units' : form_data['probes_units']
-			}
+			},
+			'config' : {}
 		}
 	}
 
 	for device in wizardInstallInfo['probe_map']['probe_devices']:
-		wizardInstallInfo['modules']['probes']['module_selected'].append(device['module'])
+		wizardInstallInfo['modules']['probes']['profile_selected'].append(device['module'])
 
 	for module in ['grillplatform', 'display', 'distance']:
 		module_ = module + '_'
@@ -2742,6 +2778,9 @@ def prepare_wizard_data(form_data):
 			settingName = module_ + setting
 			if(settingName in form_data):
 				wizardInstallInfo['modules'][module]['settings'][setting] = form_data[settingName]
+		for config, value in form_data.items():
+			if config.startswith(module_ + 'config_'):
+				wizardInstallInfo['modules'][module]['config'][config.replace(module_ + 'config_', '')] = value
 
 	return(wizardInstallInfo)
 
@@ -3702,9 +3741,9 @@ def get_app_data(action=None, type=None):
 			'cpuinfo' : os.popen('cat /proc/cpuinfo').readlines(),
 			'ifconfig' : os.popen('ifconfig').readlines(),
 			'temp' : _check_cpu_temp(),
-			'outpins' : settings['outpins'],
-			'inpins' : settings['inpins'],
-			'dev_pins' : settings['dev_pins'],
+			'outpins' : settings['platform']['outputs'],
+			'inpins' : settings['platform']['inputs'],
+			'dev_pins' : settings['platform']['devices'],
 			'server_version' : settings['versions']['server'],
 			'server_build' : settings['versions']['build'] }
 

@@ -88,7 +88,7 @@
             {% endif %}
             id="splus_btn" name="setmodesmokeplus" value="true"><i class="fas fa-fan"></i></button>
         </div>
-        <div id="dc_fan_group" class="btn-group mr-2 shadow" role="group"{% if not settings['globals']['dc_fan'] %} style="display:none"{% endif %}>
+        <div id="dc_fan_group" class="btn-group mr-2 shadow" role="group"{% if not settings['platform']['dc_fan'] %} style="display:none"{% endif %}>
             <!-- Temp Fan Control -->
             <button type="button" data-toggle="tooltip" title="Temp Fan Control" class="btn btn-outline-primary border border-secondary text-secondary" id="pwm_control_btn" name="pwm_control" value="true"><i class="fas fa-tachometer-alt"></i></button>
         </div>

@@ -1,6 +1,8 @@
 // Dashboard Default JS
 
 // Global Variables 
+var errorCounter = 0;
+var maxErrorCount = 30;
 var hopper_level = 100;
 var hopper_pellets = '';
 var ui_hash = '';
@@ -26,17 +28,21 @@ if (typeof dashDataStruct == 'undefined') {
 	if (units == 'F') {
 		var maxTempPrimary = 600; 
 		var maxTempFood = 300;
+		var minTemp = 0;
 	} else {
 		var maxTempPrimary = 300; 
 		var maxTempFood = 150;
+		var minTemp = -20;
 	};
 } else {
 	if (units == 'F') {
 		var maxTempPrimary = dashDataStruct.config.max_primary_temp_F; 
 		var maxTempFood = dashDataStruct.config.max_food_temp_F;
+		var minTemp = 0;
 	} else {
 		var maxTempPrimary = dashDataStruct.config.max_primary_temp_C; 
 		var maxTempFood = dashDataStruct.config.max_food_temp_C;
+		var minTemp = -20;
 	};
 };
 
@@ -74,9 +80,10 @@ function initProbeGauge(key) {
 	};
 	var probeGauge = Gauge(document.getElementById(key+"_gauge"), {
 		max: maxTemp,
+		min: minTemp,
 		// custom label renderer
 		label: function(value) {
-		return Math.round(value);
+				return Math.round(value);
 		},
 		value: 0,
 		// Custom dial colors (Optional)
@@ -98,6 +105,12 @@ function updateProbeCards() {
 		url : '/api/current',
 		type : 'GET',
 		success : function(current){
+			// Clear error counter
+			if (errorCounter > 0) {
+				errorCounter = 0;
+				$("#serverOfflineModal").modal('hide');
+			};
+
 			// Local Variables:
 			
 			// Check for server side changes and reload if needed
@@ -305,12 +318,28 @@ function updateProbeCards() {
 			//	document.getElementById('smokeplus_status').innerHTML = '<i class="fas fa-cloud fa-stack-2x" style="color:rgb(150, 150, 150)" data-toggle="tooltip" data-placement="top" title="Smoke Plus OFF"></i><i class="fas fa-plus fa-stack-1x fa-inverse"></i>';
 			//};
 
+		},
+		error: function() {
+			console.log('Error: Failed to get current status from server.  Try: ' + errorCounter);
+			errorCounter += 1;
+			if (errorCounter > maxErrorCount) {
+				$("#serverOfflineModal").modal('show');
+			};
 		}
 	});
 };
 
 // Update the temperature for a specific probe/card 
 function updateTempCard(key, temp) {
+	//console.log('Update Temp Card: ' + key + ' temp: ' + temp);
+	var index = dashDataStruct.custom.hidden_cards.indexOf(key); // Index of cardID
+	if (index == -1) {
+		if ((temp != null) && $('#card_'+key).is(":hidden")) {
+			$('#card_'+key).show();
+		} else if (temp == null) {
+			$('#card_'+key).hide();
+		};
+	};
 	probeGauges[key].setValueAnimated(temp, 0.25); // (value, animation duration in seconds)
 };
 
@@ -600,7 +629,7 @@ function dashToggleVisible(cardID) {
 		if (index !== -1) {
 			dashDataStruct.custom.hidden_cards.splice(index, 1); // If found, remove
 		};
-		console.log('dashData Hidden='+dashDataStruct.custom.hidden_cards);
+		//console.log('dashData Hidden='+dashDataStruct.custom.hidden_cards);
 		dashSetData();
 	} else {
 		// change card to hidden
@@ -612,10 +641,14 @@ function dashToggleVisible(cardID) {
 		if (index == -1) {
 			dashDataStruct.custom.hidden_cards.push(cardID); // If not found, add
 		};
-		console.log('dashData Hidden='+dashDataStruct.custom.hidden_cards);
+		//console.log('dashData Hidden='+dashDataStruct.custom.hidden_cards);
 		dashSetData();
 	};
 }
+
+function dashClearErrorCounter() {
+	errorCounter = 0;
+};
 
 // Main
 $(document).ready(function(){
@@ -638,5 +671,5 @@ $(document).ready(function(){
 	updateHopperStatus();
 	
 	// Current hopper information loop
-	setInterval(updateHopperStatus, 150000);  // Update every 150000ms 
+	setInterval(updateHopperStatus, 30000);  // Update every 30000ms (30 seconds) 
 });

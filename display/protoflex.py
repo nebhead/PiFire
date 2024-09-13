@@ -3,12 +3,14 @@
 PiFire Display Interface Library
 *****************************************
 
- Description: This library supports using pygame 
- with a DSI attached touch display on the Raspberry Pi 
- like the official Raspberry Pi 7 inch DSI attached display.    
+ Description: This is a prototype library for the display device using the flex 
+  configuration.  This library will take in a flex configuration file and configure
+  the display accordingly.  
 
- This version supports mouse for development.
-
+ This version supports mouse for development, touch, and keyboard input.
+ 
+ All display output is done through the Pygame library.  
+ 
 *****************************************
 '''
 
@@ -165,7 +167,7 @@ class Display(DisplayBase):
 				if self.display_active == 'home':
 					if self.display_init:
 						''' Initialize Home Screen '''
-						self._build_objects(self.background)
+						self._build_objects()
 						self.display_init = False
 						self.display_updated = True
 
@@ -255,7 +257,7 @@ class Display(DisplayBase):
 	def _init_dash(self):
 		self._init_framework()
 		self._configure_dash()
-		self._build_objects(None)
+		self._build_objects()
 		self._build_dash_map()
 		self._store_dash_objects()
 	

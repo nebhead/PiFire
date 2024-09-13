@@ -92,11 +92,7 @@ def default_settings():
 		'grill_name' : '',
 		'debug_mode' : False,
 		'page_theme' : 'light',
-		'triggerlevel' : 'LOW',
-		'buttonslevel' : 'HIGH',
 		'disp_rotation' : 0,
-		'dc_fan': False,
-		'standalone': True,
 		'units' : 'F',
 		'augerrate' : 0.3,  		# (grams per second) default auger load rate is 10 grams / 30 seconds
 		'first_time_setup' : True,  # Set to True on first setup, to run wizard on load 
@@ -106,38 +102,55 @@ def default_settings():
 		'prime_ignition' : False,  # Set to True to enable the igniter in prime & startup mode
 		'updated_message' : False,   # Set to True to display a pop-up message after the system has been updated 
 		'venv' : False,  # Set to True if running in virtual environment (needed for Raspberry Pi OS Bookworm)
-		'real_hw' : True  # Set to True if running on real hardware (i.e. Raspberry Pi), False if running in a test environment 
 	}
 
 	if os.path.exists('bin'):
 		settings['globals']['venv'] = True 
 
-	settings['outpins'] = {
-		'power' : 4,
-		'auger' : 14,
-		'fan' : 15,
-		'igniter' : 18,
-		'dc_fan' : 26,
-		'pwm' : 13
-	}
-
-	settings['inpins'] = { 'selector' : 17 }
-
-	settings['dev_pins'] = {	# Device Pin Assignment
-		'input': {
-			'up_clk': 16,		# Up Button or CLK for encoder
-			'enter_sw' : 21,	# Enter Button or SW for encoder
-			'down_dt' : 20		# Down Button or DT for encoder
+	""" The following are platform related settings, such as pin assignments, etc. """
+	settings['platform'] = {
+		"devices": {
+			"display": {
+				"dc": 24,  # SPI Display (ex. ILI9341) 
+				"led": 5,  # SPI Display (ex. ILI9341) 
+				"rst": 25  # SPI Display (ex. ILI9341) 
+			},
+			"distance": {
+				"echo": 27,  # HCSR04 Distance Sensor 
+				"trig": 23	 # HCSR04 Distance Sensor 
+			},
+			"input": {
+				"down_dt": 20,  # Button (DOWN) or Encoder (DT)
+				"enter_sw": 21, # Button (ENTER) or Encoder (SW)
+				"up_clk": 16    # Button (UP) or Encoder (CLK)
+			}
 		},
-		'display': {
-			'led' : 5,			# ILI9341: LED	- ST7789: BL
-			'dc' : 24,			# ILI9341: DC	- ST7789: DC
-			'rst' : 25			# ILI9341: RST	- ST7789: RST
+		"inputs": {
+			"selector": 17,  # Selector input to select between the OEM Controller or PiFire Controller
+			"shutdown" : 17  # Shutdown GPIO Pin if implemented 
 		},
-		'distance': {
-			'trig': 23,			# For hcsr04
-			'echo' : 27			# For hcsr04
+		"outputs": { 
+			"auger": 14,
+			"dc_fan": 26,
+			"fan": 15,
+			"igniter": 18,
+			"power": 4,
+			"pwm": 13
 		},
+		"system" : {
+			"SPI0" : {
+				"CE0" : 8,  # In case a non-standard CE/CS is utilized
+				"CE1" : 7,  # In case a non-standard CE/CS is utilized
+			},
+			"1WIRE" : 6  # 1WIRE is used for probe devices specifically the DS18B20 
+		},
+		"current" : "custom",
+		"dc_fan": False,  # True if system has a DC Fan (Does not indicate PWM)
+		"triggerlevel": "LOW",  # Active LOW / Active HIGH for the Relay Outputs 
+		"buttonslevel": "HIGH",  # Active LOW / Active HIGH for the button inputs 
+		"standalone": True,  # Standalone (without OEM controller present)
+		"real_hw" : True,  # Set to True if running on real hardware (i.e. Raspberry Pi), False if running in a test environment 
+		"system_type" : "prototype",  # System type / core  (i.e. Raspberry Pi Zero W, Zero 2W, 3A, 3B, 3B+, 4, 5) 
 	}
 
 	settings['cycle_data'] = {
@@ -505,8 +518,6 @@ def default_control():
 		'pwm' : 100
 	}
 
-	control['errors'] = []
-
 	control['smartstart'] = {
 		'startuptemp' : 0,
 		'profile_selected' : 0
@@ -517,6 +528,8 @@ def default_control():
 	control['startup_timestamp'] = 0  # Timestamp of startup, used for cook time
 
 	control['system'] = {}
+
+	control['critical_error'] = False
 
 	return(control)
 
@@ -1144,6 +1157,48 @@ def upgrade_settings(prev_ver, settings, settings_default):
 		settings['globals'].pop('shutdown_timer', None)
 		settings['shutdown']['auto_power_off'] = settings['globals'].get('auto_power_off', settings_default['shutdown']['auto_power_off'])
 		settings['globals'].pop('auto_power_off', None)
+	''' Check if upgrading from v1.7.x '''
+	if (prev_ver[0] <=1 and prev_ver[1] <= 7):
+		''' Force running the configuration wizard again '''
+		settings['globals']['first_time_setup'] = True
+		''' Create platform section in settings with defaults '''
+		settings['platform'] = settings_default['platform']
+		''' Move platform global variables to platform section '''
+		if settings['globals'].get('buttonslevel', None) is not None:
+			settings['platform']['buttonslevel'] = settings['globals'].get('buttonslevel', 'HIGH')
+			settings['globals'].pop('buttonslevel')
+		if settings['globals'].get('dc_fan', None) is not None:
+			settings['platform']['dc_fan'] = settings['globals'].get('dc_fan', False)
+			settings['globals'].pop('dc_fan')
+		if settings['globals'].get('real_hw', None) is not None:
+			settings['platform']['real_hw'] = settings['globals'].get('real_hw', True)
+			settings['globals'].pop('real_hw')
+		if settings['globals'].get('standalone', None) is not None:
+			settings['platform']['standalone'] = settings['globals'].get('standalone', True)
+			settings['globals'].pop('standalone')
+		if settings['globals'].get('triggerlevel', None) is not None:
+			settings['platform']['triggerlevel'] = settings['globals'].get('triggerlevel', 'LOW')
+			settings['globals'].pop('triggerlevel')
+		''' Move pin definitions to platform section'''
+		if settings.get('dev_pins', None) is not None:
+			updated_dict = deep_update(settings['platform']['devices'], settings['dev_pins'])
+			settings['platform']['devices'] = updated_dict
+			settings.pop('dev_pins')
+		if settings.get('inpins', None) is not None:
+			updated_dict = deep_update(settings['platform']['inputs'], settings['inpins'])
+			settings['platform']['inputs'] = updated_dict
+			settings.pop('inpins')
+		if settings.get('outpins', None) is not None:
+			updated_dict = deep_update(settings['platform']['outputs'], settings['outpins'])
+			settings['platform']['outputs'] = updated_dict
+			settings.pop('outpins')
+		''' Migrate module settings for the appropriate module support '''
+		settings['platform']['current'] = 'custom'  # Since we do not know what PCB / System is installed on upgrade, set to custom 
+		if settings['modules']['grillplat'] == 'prototype':
+			settings['platform']['system_type'] = 'prototype'
+		else: 
+			settings['platform']['system_type'] = 'raspberry_pi_all'
+			settings['modules']['grillplat'] == 'raspberry_pi_all'
 
 	''' Import any new probe profiles '''
 	for profile in list(settings_default['probe_settings']['probe_profiles'].keys()):
@@ -1654,7 +1709,7 @@ def is_real_hardware(settings=None):
 	if settings == None:
 		settings = read_settings()
 
-	return True if settings['globals']['real_hw'] else False 
+	return True if settings['platform']['real_hw'] else False 
 
 def restart_scripts():
 	"""
@@ -1930,10 +1985,12 @@ def read_status(init=False):
 	global cmdsts
 
 	if init:
+		settings = read_settings()
+		pellet_db = read_pellet_db()
 		status = {
 		  	"s_plus": False,
-  			"hopper_level": 100,
-			"units": "F",
+  			"hopper_level": pellet_db['current']['hopper_level'],
+			"units": settings['globals']['units'],
 			"mode": "Stop",
 			"recipe": False,
 			"startup_timestamp" : 0,
@@ -2580,3 +2637,56 @@ def process_command(action=None, arglist=[], origin='unknown', direct_write=Fals
 		data['message'] = f'Action [{action}] not valid/recognized.'
 
 	return data
+
+def set_nested_key_value(data, key_list, value):
+	"""
+	Sets the value of a key in a nested dictionary and returns the modified dictionary.
+
+	Args:
+		data: The dictionary to modify.
+		key_list: A list of keys representing the path to the nested key.
+		value: The value to assign to the nested key.
+
+	Returns:
+		The modified dictionary.
+
+	Raises:
+		KeyError: If any key in the path is not found in the dictionary.
+	"""
+	if not key_list:
+		return data  # Reached the end of the key list, return the data
+
+	current_key = key_list[0]
+	# Check if the key exists and is a dictionary (except for the last key)
+	if current_key not in data or (len(key_list) > 1 and not isinstance(data[current_key], dict)):
+		raise KeyError(f"Key '{current_key}' not found or not a dictionary")
+
+	# Check if we reached the bottom level (last key in the list)
+	if len(key_list) == 1:
+		data[current_key] = value
+	else:
+		# Recursive call for nested dictionaries
+		data[current_key] = set_nested_key_value(data[current_key], key_list[1:], value)
+
+	return data
+
+def read_generic_key(key):
+	"""
+	Read generic data from Redis DB
+	:param key: key name
+	"""
+	global cmdsts
+
+	value = json.loads(cmdsts.get(key))
+
+	return value
+
+def write_generic_key(key, value):
+	"""
+	Write generic data to Redis DB
+	:param key: key name
+	:parma value: value to write
+	"""
+	global cmdsts
+
+	cmdsts.set(key, json.dumps(value))

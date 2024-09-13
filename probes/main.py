@@ -21,11 +21,14 @@ import logging
 
 class ProbesMain:
 
-	def __init__(self, probe_map, units):
+	def __init__(self, probe_map, units, disable=False):
+		self.errors = []
 		self.logger = logging.getLogger("control")
-		self.units = units 
+		self.units = units
+		self.disable = disable 
 		self.probe_devices = probe_map['probe_devices']
 		self.probe_info = probe_map['probe_info']
+		self.device_info_list = []
 		self._setup_probe_devices(self.probe_devices)
 	
 	def _setup_probe_devices(self, probe_devices):
@@ -33,28 +36,32 @@ class ProbesMain:
 		self.probe_device_list = []
 		for device in probe_devices:
 			try: 
-				modulename = device['module']
+				if not self.disable:
+					modulename = device['module']
+				else: 
+					modulename = 'disabled'
+				devicename = device['device']
 				newmodule = importlib.import_module(f'probes.{modulename}')
 			except:
-				newmodule = importlib.import_module('probes.prototype')
-				error_event = f'An error occurred loading the [{modulename}] probe module.  The ' \
-					f'prototype module has been loaded instead.  This sometimes means that the hardware is not connected ' \
-					f'properly, or the module is not configured.  Please run the configuration wizard again from the admin ' \
-					f'panel to fix this issue.'
-				self.logger.exception(error_event)
-				break 
+				newmodule = importlib.import_module('probes.disabled')
+				device['module'] = 'disabled'
+				error_event = f'An error occurred loading the [{modulename}] probe module for [{devicename}]. '\
+					f'PiFire will not display probe data for this device ({devicename}). ' \
+					f'This sometimes means that the hardware is not connected properly, or the module is not configured. ' \
+					f'Please run the configuration wizard again from the admin panel to fix this issue. ' 
+				self.errors.append(error_event)
+				self.logger.error(error_event)
 			
 			'''
 			Send the probe information and the device information to the device module 
 			'''
 			instance = newmodule.ReadProbes(self.probe_info, device, self.units)
+			self.device_info_list.append(device)  # Build list of device information
 
 			'''
 			Append the probe device to the devices list
 			'''
 			self.probe_device_list.append(instance)
-
-		return error_event
 
 	def read_probes(self):
 		'''
@@ -95,3 +102,9 @@ class ProbesMain:
 		"""
 		for device in self.probe_device_list:
 			device.update_units(units)
+	
+	def get_errors(self):
+		return self.errors
+	
+	def get_device_info(self):
+		return self.device_info_list

@@ -1,10 +1,10 @@
 {
   "metadata" : {
     "versions" : {
-      "server" : "1.7.3",
+      "server" : "1.8.0",
       "cookfile" : "1.5.0",
       "recipe" : "1.0.0",
-      "build" : 60
+      "build" : 28
     },
     "update_notes" : "",
     "update_warnings" : ""
@@ -98,6 +98,23 @@
           "command_list" : [
             ["sudo", "bash", "updater/bl_udev_170.sh"]
           ]
+        }
+      }
+    },
+    {
+      "version" : "1.8.0",
+      "build" : 18,
+      "reboot_required" : true,
+      "dependencies" : {
+        "app": {
+          "py_dependencies": [],
+          "apt_dependencies": [],
+          "command_list" : [["sudo", "cp", "./auto-install/supervisor/*.conf", "/etc/supervisor/conf.d"]]
+        },
+        "control": {
+          "py_dependencies": ["rpi_hardware_pwm"],
+          "apt_dependencies": [],
+          "command_list" : []
         }
       }
     }
