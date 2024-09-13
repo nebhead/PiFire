@@ -139,6 +139,12 @@
 						"options" : { "16" : "GPIO16", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
 						"settings" : ["platform", "devices", "input", "up_clk"]
 					},
+					"system_1wire" : {
+						"friendly_name" : "1Wire GPIO Pin",
+						"description" : "GPIO Pin for 1Wire bus/interface.  Used for DS18B20 sensors.",
+						"options" : { "None" : "None", "6" : "GPIO6", "12" : "GPIO12", "13" : "GPIO13", "16": "GPIO16", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "system", "1WIRE"]
+					},
 					"real_hw" : {
 						"friendly_name" : "Real Hardware",
 						"description" : "Select Yes if running on real hardware (Default).  Select No if running in a test environment.",

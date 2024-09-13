@@ -47,7 +47,8 @@ def set_pwm_gpio():
 	try:
 		if system_type == 'raspberry_pi_all' or system_type == 'prototype':
 			# "dtoverlay=pwm,pin=13,func=4"
-			result += rpi_config_write('dtoverlay', 'pwm', add_config={'func' : '4'}, pin=int(pin), pin_type='pin')
+			pin = int(pin) if pin != None else None
+			result += rpi_config_write('dtoverlay', 'pwm', add_config={'func' : '4'}, pin=pin, pin_type='pin')
 		else:
 			result += 'NA - No system defined'
 	except:
@@ -68,7 +69,8 @@ def set_onewire_gpio():
 	try:
 		if system_type == 'raspberry_pi_all' or system_type == 'prototype':
 			# "dtoverlay=w1-gpio,pin=6"
-			result += rpi_config_write('dtoverlay', 'w1-gpio', pin=int(pin), pin_type='gpio_pin')
+			pin = int(pin) if pin != None else None
+			result += rpi_config_write('dtoverlay', 'w1-gpio', pin=pin, pin_type='gpio_pin')
 		else:
 			result += 'NA - No system defined'
 	except:
@@ -177,7 +179,8 @@ def enable_gpio_shutdown():
 				'active_low' : '1',
 				'gpio_pull' : 'up'
 			}
-			result += rpi_config_write('dtoverlay', 'gpio-shutdown', add_config=add_config, pin=int(pin), pin_type='gpio_pin')
+			pin = int(pin) if pin != None else None
+			result += rpi_config_write('dtoverlay', 'gpio-shutdown', add_config=add_config, pin=pin, pin_type='gpio_pin')
 		else:
 			result += 'NA - No system defined'
 	except:
@@ -217,38 +220,42 @@ def rpi_config_write(config_type, feature, add_config={}, pin=0, param='', pin_t
 				# Check for leading hashtag and remove 
 				config_line = remove_hashtag(config_data[index])
 
-				# Remove the preceding configuration type
-				config_line = config_line.replace(f'{config_type}=', '')
+				# If the pin is marked as disabled / None, then comment out the line
+				if pin == None:
+					config_data[index] = f'#{config_line}'
+				else:
+					# Remove the preceding configuration type
+					config_line = config_line.replace(f'{config_type}=', '')
 
-				# Get dictionary of the components 
-				config_dict = parse_config_line(config_line)
+					# Get dictionary of the components 
+					config_dict = parse_config_line(config_line)
 
-				# For dtparams, turn on feature
-				if config_type == 'dtparam':
-					if param == '':
-						config_dict[feature] = 'on'
-					else:
-						config_dict[feature] = param
+					# For dtparams, turn on feature
+					if config_type == 'dtparam':
+						if param == '':
+							config_dict[feature] = 'on'
+						else:
+							config_dict[feature] = param
 
-				# For dtoverlay, edit gpio-pin and additional features 
-				elif config_type == 'dtoverlay':
-				# Modify pin number
-					if pin > 0:
-						for noun in ['gpio-pin', 'gpiopin', 'gpio_pin', 'pin']:
-							if noun in config_dict[feature].keys():
-								config_dict[feature].pop(noun, None)
-								config_dict[feature][pin_type] = str(pin)
+					# For dtoverlay, edit gpio-pin and additional features 
+					elif config_type == 'dtoverlay':
+					# Modify pin number
+						if pin > 0:
+							for noun in ['gpio-pin', 'gpiopin', 'gpio_pin', 'pin']:
+								if noun in config_dict[feature].keys():
+									config_dict[feature].pop(noun, None)
+									config_dict[feature][pin_type] = str(pin)
 
-					# If function, add function number
-					if add_config != {}:
-						for key, value in add_config.items():
-							config_dict[feature][key] = value
+						# If function, add function number
+						if add_config != {}:
+							for key, value in add_config.items():
+								config_dict[feature][key] = value
 
-				''' Create the modified configuration line '''
-				config_data[index] = build_config_line(config_type, config_dict)
-				break 
+					''' Create the modified configuration line '''
+					config_data[index] = build_config_line(config_type, config_dict)
+					break 
 		
-		if not found:
+		if not found and pin is not None:
 			config_dict = {}
 			if config_type == 'dtoverlay':
 				config_dict[feature] = {}
