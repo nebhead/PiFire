@@ -65,7 +65,7 @@ class GrillPlatform:
 		else:
 			self.selector = None
 
-		active_high = True if config.get('trigger_level', 'HIGH') == 'HIGH' else False 
+		active_high = True if config.get('triggerlevel', 'HIGH') == 'HIGH' else False 
 
 		if self.dc_fan:
 			self.current_fan_speed_percent = 100 # Hardware PWM library does not have a mechanism to retrieve the current duty cycle - initialize a variable to track this
