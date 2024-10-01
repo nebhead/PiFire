@@ -1,8 +1,12 @@
-{% macro render_probe_card(probe_data, settings, control) %}
+{% macro render_probe_card(probe_data, settings, control, enabled) %}
 
 <!-- Probe Card -->
 <div class="card shadow"> 
+	{% if enabled %}
 	<div class="card-header bg-primary text-white text-center">
+	{% else %}
+	<div class="card-header bg-secondary text-white-50 text-center">
+	{% endif %}
 		<strong>
 			{% if probe_data['type'] == 'Primary' %}
 			<i class="fas fa-tachometer-alt"></i>&nbsp;

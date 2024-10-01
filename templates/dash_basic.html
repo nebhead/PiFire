@@ -13,14 +13,20 @@
 <!-- Card Section -->
 <div class="row"> <!-- Probe Cards -->
 	{% for probe in settings['probe_settings']['probe_map']['probe_info'] %}
-		{% if probe['enabled'] and probe['type'] != 'Aux' %}
+		{% if probe['type'] != 'Aux' %}
 		<div id="card_{{ probe['label'] }}" class="col-lg-4 col-md-6 col-sm-12" 
-			{% if probe['label'] in dash_data['custom']['hidden_cards'] %}
+			{% if probe['label'] in dash_data['custom']['hidden_cards'] or not probe['enabled'] %}
 				style="display:none"
-			{% endif %}>
+			{% endif %}
+			{% if probe['enabled'] %}
+				data-enabled="true"
+			{% else %}
+				data-enabled="false"
+			{% endif %}
+			>
 			<br>
 			<!-- Card for Probe Data -->
-			{{ render_probe_card(probe, settings, control) }}
+			{{ render_probe_card(probe, settings, control, probe['enabled']) }}
 			<br>
 		</div>
 		{% endif %}
@@ -153,6 +159,7 @@
 					<table class="table table-hover table-borderless">
 						<tbody>
 						{% for probe in settings['probe_settings']['probe_map']['probe_info'] %}
+							{% if probe['enabled'] %}
 						<tr onclick="dashToggleVisible('{{ probe['label'] }}');">
 							<td>
 								<span id="visibleStatus_{{ probe['label'] }}">
@@ -165,6 +172,7 @@
 								{{ probe['name'] }} Card
 							</td>
 						</tr>
+							{% endif %}
 						{% endfor %}
 						<tr onclick="dashToggleVisible('status');">
 							<td>

@@ -72,6 +72,7 @@ function initProbeCards() {
 };
 
 function initProbeGauge(key) {
+	console.log('Init Probe Gauge: ' + key);
 	// Create a new Gauge
 	if (key == primary) {
 		var maxTemp = maxTempPrimary;
@@ -334,7 +335,9 @@ function updateTempCard(key, temp) {
 	//console.log('Update Temp Card: ' + key + ' temp: ' + temp);
 	var index = dashDataStruct.custom.hidden_cards.indexOf(key); // Index of cardID
 	if (index == -1) {
-		if ((temp != null) && $('#card_'+key).is(":hidden")) {
+		const card = document.getElementById('card_'+key);
+        const card_enabled = card.getAttribute('data-enabled') === 'true'
+		if ((temp != null) && $('#card_'+key).is(":hidden") && card_enabled) {
 			$('#card_'+key).show();
 		} else if (temp == null) {
 			$('#card_'+key).hide();
