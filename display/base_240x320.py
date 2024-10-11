@@ -16,6 +16,7 @@ PiFire Display Interface Library
 '''
  Imported Libraries
 '''
+import os
 import time
 import socket
 import qrcode
@@ -1153,12 +1154,29 @@ class DisplayBase:
 					self.menu['current']['mode'] = 'power_menu'
 					self.menu['current']['option'] = 0
 				elif 'Power_' in selected:
+					self.clear_display()
 					control = read_control()
+					control['updated'] = True
+					control['mode'] = 'Stop'
+					write_control(control, origin='display')
+
 					if 'Off' in selected:
-						os.system('sudo shutdown -h now &')
-					elif 'Restart' in selected:
-						os.system('sudo reboot &')
-				
+						self.display_text('Shutting Down...')
+						os.system('sleep 3 && sudo shutdown -h now &')
+					#elif 'Restart' in selected:
+					else:
+						self.display_text('Restarting...')
+						os.system('sleep 3 && sudo reboot &')
+
+					self.display_command = None
+					self.menu['current']['mode'] = 'none'
+					self.menu['current']['option'] = 0
+					self.menu_active = False
+					self.menu_time = 0
+
+					self._display_text()
+					time.sleep(30)
+
 				# Master Menu Back Function
 				elif 'Menu_Back' in selected:
 					self.menu['current']['mode'] = 'inactive'
