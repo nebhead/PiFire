@@ -74,6 +74,11 @@
                              Added a critical error flag to the control script.  This will be used to detect when a critical error is encountered, which may prevent
                              further control of the system (i.e. changing modes, etc.)
                          </li>
+                         <li>
+                            Improved the ADC voltage reference out of range message to list the device and port where the voltage was observed.  Also, suggest the user 
+                            modify the voltage reference in the configuration wizard for this device to avoid this error in the future and improve accuracy of 
+                            temperature calculations.  Changed this message errorlevel from 'error' to 'debug'.  
+                         </li>
                      </ul>
                  </li>
              </ul>

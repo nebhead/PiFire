@@ -126,7 +126,7 @@ class ProbeInterface:
 
 		return Tr 
 
-	def _voltage_to_temp(self, voltage, probe_profile):
+	def _voltage_to_temp(self, voltage, probe_profile, port=None):
 		if voltage == None:
 			''' Transient probe detected. '''
 			return None, 0
@@ -180,9 +180,11 @@ class ProbeInterface:
 			tempF = 0.0
 			tempC = 0.0
 			Tr = 0
-			error_event = f'An error occurred reading the voltage from one of the ports. The voltage read ({voltage}mV) ' \
-				f'was outside the expected range of 0mV to {probe_profile["Vs"] * 1000}mV'	
-			self.logger.error(error_event)
+			error_event = f'An error occurred reading the voltage from device: {self.device_info['device']}, port: {port}. The voltage read {(voltage / 1000):,.2f}V ({voltage}mV) ' \
+				f'was outside the expected range of 0mV to {probe_profile["Vs"]}V.  This usually means that ' \
+				f'the voltage reference is set too low in the probe device configuration.  To fix this issue, ' \
+				f'please set the voltage reference to a value greater than {(voltage / 1000):,.2f}V in the configuration wizard.'	
+			self.logger.debug(error_event)
 
 		if self.units == 'F':
 			return tempF, round(Tr)  # Return Calculated Temperature and Thermistor Value in Ohms
@@ -197,7 +199,7 @@ class ProbeInterface:
 			port_values[port] = self.device.read_voltage(port)
 
 			''' Convert Voltage to Temperature and Tr '''
-			port_values[port], self.output_data['tr'][self.port_map[port]] = self._voltage_to_temp(port_values[port], self.probe_profiles[port])
+			port_values[port], self.output_data['tr'][self.port_map[port]] = self._voltage_to_temp(port_values[port], self.probe_profiles[port], port=port)
 
 			''' Enqueue the Temperature Readings to Port Queues '''
 			if port_values[port] == None:
