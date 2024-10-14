@@ -1087,9 +1087,8 @@ def exit_handler():
 	This function does not take any parameters and does not return any values.
 
 	Example usage:
-	```python
-	exit_handler()
-	```
+		python
+		exit_handler()
 	"""
 	eventLogger.info('Control Script Exiting.')
 	controlLogger.info('Control Script Exiting.')
