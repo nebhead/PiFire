@@ -1,10 +1,10 @@
 {
   "metadata" : {
     "versions" : {
-      "server" : "1.8.4",
+      "server" : "1.9.0",
       "cookfile" : "1.5.0",
       "recipe" : "1.0.0",
-      "build" : 32
+      "build" : 0
     },
     "update_notes" : "",
     "update_warnings" : ""
@@ -12,24 +12,14 @@
   "dependencies": {
     "app": {
       "py_dependencies": [
-        "flask_mobility",
-        "flask_socketio",
-        "flask_qrcode"
       ],
       "apt_dependencies": [
-        "python3-scipy"
       ]
     },
     "control": {
       "py_dependencies": [
-        "apprise",
-        "scikit-fuzzy",
-        "scikit-learn==1.4.2",
-        "ratelimitingfilter"
       ],
       "apt_dependencies": [
-        "libatlas-base-dev",
-        "pillow>=10.0.0"
       ]
     }
   },
@@ -113,6 +103,23 @@
         },
         "control": {
           "py_dependencies": ["rpi_hardware_pwm", "scikit-learn==1.4.2"],
+          "apt_dependencies": [],
+          "command_list" : []
+        }
+      }
+    },
+    {
+      "version" : "1.9.0",
+      "build" : 0,
+      "reboot_required" : false,
+      "dependencies" : {
+        "app": {
+          "py_dependencies": [],
+          "apt_dependencies": [],
+          "command_list" : []
+        },
+        "control": {
+          "py_dependencies": [],
           "apt_dependencies": [],
           "command_list" : []
         }

@@ -1,7 +1,7 @@
 <!-- Post Update Message for v1.8.0 -->
 <H1>
     <img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="50" height="50" class="d-inline-block align-top" alt="">
-    PiFire 1.8.4 Release - October / 2024
+    PiFire 1.9.0 Release - TBD / 2024
 </H1>
 <div class="row justify-content-center">
     <div class="card" style="width:80%">
@@ -18,66 +18,19 @@
              
              <ul>
                  <li>
-                     Changed the <a href="/wizard">Configuration Wizard</a> to improve platform selection.  Now you can select your PCB Board type (or Custom)
-                     and configure the available settings.  The wizard will automatically assign the right GPIO pins as configured for that particular version
-                     of the board.  This also removes any extraneous configuration options. 
+                    Change 00
                  </li>
                  <li>
-                     Added transient probe configuration types so that probes can be marked as transient(not always available).  This means that if probes/probe 
-                     ports are not fixed (like in the case of the DS18B20 device), then the control script can return None type for the temperature.  This allows 
-                     the dashboard to do things like hide the card in the case where this probe isn't present.  
-                 </li>
-                 <li>
-                     Default Dashboard gets the ability to set maximum temperature to display for the primary probe and food probes.  This can be configured via the gear icon settings. 
-                 </li>
-                 <li>
-                     Default and Basic dashboards will notify the user if connection to the server is lost (i.e. when the server is not responding to requests).
-                 </li>
-                 <li>
-                     Added ST7789V (Newer V-variant of the display) display which is currently experimental because of the use of an experimental library.  
-                     This will likely change in a future release if the V variant gets added to the original library.  
+                    Change 01
                  </li>
                  <li>
                      Behind the scenes improvements including:  
                      <ul>
                          <li>
-                             Moved all platform/board/system settings into 'platform' in the settings.json.  This neatly group all of these settings in a single
-                             place so that they are not spread out across the settings configuration.  
+                             Change 02
                          </li>
                          <li>
-                             Combined the pifire.py and pifire_pwm.py modules into a raspberry_pi_all.py module, which supports both AC and DC Fan configurations 
-                             with most flavors of the Raspberry Pi single board computer.  
-                         </li>
-                         <li>
-                             Created a board configuration utility that will make specific system configurations easier to perform on different single board 
-                             computers.  The installation, wizard and update utilities can use this tool to do board configuration as needed for enabling different
-                             features of the platform. 
-                         </li>
-                         <li>
-                             Refined the auto-tuning tool to use the last sampled resistance at a given reference temperature to use for calculations.  This should 
-                             help to improve the accuracy of the tuning data, especially with slower probes.
-                         </li>
-                         <li>
-                             Changed the ETA function to use Linear Regression (SciKit) instead of the Interpolate module (SciPy).  This will hopefully improve the 
-                             reliability of the ETA function.
-                         </li>
-                         <li>
-                             Added ProtoFlex module for testing new display output system.  This will be used to test the new display system and allow for additional 
-                             screen sizes to be added for existing displays like ILI9341, etc.  Also refactored the FlexObject and BaseFlex system to be more modular 
-                             and hopefully more performant.  Updated the configuration wizard so that configuration of displays is easier.  Other minor bug fixes.
-                         </li>
-                         <li>
-                             Improved resilience of the control script, especially when loading probe devices.  If a probe device fails to load, the probes that are 
-                             associated with that device will be disabled.
-                         </li>
-                         <li>
-                             Added a critical error flag to the control script.  This will be used to detect when a critical error is encountered, which may prevent
-                             further control of the system (i.e. changing modes, etc.)
-                         </li>
-                         <li>
-                            Improved the ADC voltage reference out of range message to list the device and port where the voltage was observed.  Also, suggest the user 
-                            modify the voltage reference in the configuration wizard for this device to avoid this error in the future and improve accuracy of 
-                            temperature calculations.  Changed this message errorlevel from 'error' to 'debug'.  
+                             Change 03
                          </li>
                      </ul>
                  </li>
@@ -87,26 +40,10 @@
              
              <ul>
                  <li>
-                     Fixed a bug where changing units from F to C would (during upgrade) would cause the control script to crash.
+                    Bug Fix 00
                  </li>
                  <li>
-                     Fixed a bug where the hopper level was not correctly displayed on startup for the flex displays. Reduced the hopper level check to once every 60
-                     seconds during a work cycle. 
-                 </li>
-                 <li>
-                     Fixed a bug on 240x320 and 64x128 displays where if pifire is not connected to the network, an IP QR Code will hang the display.  
-                 </li>
-                 <li>
-                     Fixed a bug where trigger_level for relays was being ignored and set to HIGH by default. 
-                 </li>
-                 <li>
-                     Fixed a bug with default and basic dashboards when a food probe is disabled, causing the dashboard to crash.
-                 </li>
-                 <li>
-                     Fixed a bug with 240x320 displays where shutdown/restart commands in the power-menu were would hang the display and wouldn't complete the command.  
-                 </li>
-                 <li>
-                     Fixed a bug when upgrading from previous versions of PiFire, Scikit Learn v1.4.2 should be installed.  
+                    Bug Fix 01
                  </li>
              </ul>
              
