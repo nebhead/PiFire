@@ -180,7 +180,8 @@ class ProbeInterface:
 			tempF = 0.0
 			tempC = 0.0
 			Tr = 0
-			error_event = f'An error occurred reading the voltage from device: {self.device_info['device']}, port: {port}. The voltage read {(voltage / 1000):,.2f}V ({voltage}mV) ' \
+			error_event = f'An error occurred reading the voltage from device: {self.device_info["device"]}, ' \
+				f'port: {port}. The voltage read {(voltage / 1000):,.2f}V ({voltage}mV) ' \
 				f'was outside the expected range of 0mV to {probe_profile["Vs"]}V.  This usually means that ' \
 				f'the voltage reference is set too low in the probe device configuration.  To fix this issue, ' \
 				f'please set the voltage reference to a value greater than {(voltage / 1000):,.2f}V in the configuration wizard.'	
