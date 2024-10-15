@@ -2548,28 +2548,46 @@ def process_command(action=None, arglist=[], origin='unknown', direct_write=Fals
 			'''
 			Manual Control
 			Note: Must already be in Manual mode (see set/mode command)
-			/api/set/manual/power/{true/false}
-			/api/set/manual/igniter/{true/false}
-			/api/set/manual/fan/{true/false}
-			/api/set/manual/auger/{true/false}
+			/api/set/manual/power/{true/false/toggle}
+			/api/set/manual/igniter/{true/false/toggle}
+			/api/set/manual/fan/{true/false/toggle}
+			/api/set/manual/auger/{true/false/toggle}
 			/api/set/manual/pwm/{speed}
 			'''
 
 			if control['mode'] == 'Manual':
 				if arglist[1] == 'power':
 					control['manual']['change'] = True
+					if arglist[2] == 'toggle':
+						status = read_status()
+						if status['outpins']['power']:
+							arglist[2] = 'false'
+						else:
+							arglist[2] = 'true'
 					if arglist[2] == 'true':
 						control['manual']['power'] = True
 					else:
 						control['manual']['power'] = False 
 				elif arglist[1] == 'igniter':
 					control['manual']['change'] = True
+					if arglist[2] == 'toggle':
+						status = read_status()
+						if status['outpins']['igniter']:
+							arglist[2] = 'false'
+						else:
+							arglist[2] = 'true'
 					if arglist[2] == 'true':
 						control['manual']['igniter'] = True
 					else:
 						control['manual']['igniter'] = False 
 				elif arglist[1] == 'fan':
 					control['manual']['change'] = True
+					if arglist[2] == 'toggle':
+						status = read_status()
+						if status['outpins']['fan']:
+							arglist[2] = 'false'
+						else:
+							arglist[2] = 'true'
 					if arglist[2] == 'true':
 						control['manual']['fan'] = True
 					else:
@@ -2577,6 +2595,12 @@ def process_command(action=None, arglist=[], origin='unknown', direct_write=Fals
 						control['manual']['pwm'] = 100
 				elif arglist[1] == 'auger':
 					control['manual']['change'] = True
+					if arglist[2] == 'toggle':
+						status = read_status()
+						if status['outpins']['auger']:
+							arglist[2] = 'false'
+						else:
+							arglist[2] = 'true'
 					if arglist[2] == 'true':
 						control['manual']['auger'] = True
 					else:

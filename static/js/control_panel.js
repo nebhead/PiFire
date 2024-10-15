@@ -5,8 +5,8 @@ var cpMode = "Init";
 var cpLastMode = "Init";
 var splus_state = true;
 var last_splus_state = false; 
-var pwm_control = false;
-var last_pwm_control = false;
+var cpPWMControl = false;
+var last_cpPWMControl = false;
 var cp_primary_setpoint = 0;
 var last_primary_setpoint = -1;
 var cp_units = 'F';
@@ -18,6 +18,9 @@ var cpLastRecipePause = false;
 var cpRecipeTriggered = false;
 var cpLastRecipeTriggered = false;
 var cpRecipeStepData = {};
+var cpManualModeInterval = null;
+var cpOutpins = {};
+var cpOutpinsLast = {};
 
 // API Calls
 function api_post(postdata) {
@@ -29,6 +32,18 @@ function api_post(postdata) {
         traditional: true,
         success: function (data) {
             console.log('API Post Call: ' + data.control);
+        }
+    });
+};
+
+function api_set(command) {
+    $.ajax({
+        url : '/api/set/' + command,
+        type : 'POST',
+        contentType: "application/json; charset=utf-8",
+        traditional: true,
+        success: function (data) {
+            console.log('API Set [' + command + ']: ' + data.message);
         }
     });
 };
@@ -57,14 +72,31 @@ function update_mode() {
         $("#smoke_inactive_btn").show();
         $("#hold_inactive_btn").show();
         $("#inactive_group").show();
+        $("#manual_group").hide();
+        $("#manual_pwm_group").hide();
     } else if (cpMode == 'Monitor') {
         $("#prime_group").hide();
         $("#active_group").hide();
         $("#inactive_group").show();
+        $("#manual_group").hide();
+        $("#manual_pwm_group").hide();
     } else if ((cpMode == 'Smoke') || (cpMode == 'Hold') || (cpMode == 'Shutdown')) {
         // Select Active Group
         $("#inactive_group").hide(); 
         $("#active_group").show();
+        $("#manual_group").hide();
+        $("#manual_pwm_group").hide();
+    } else if (cpMode == 'Manual') {
+        $("#active_group").hide();
+        $("#smoke_inactive_btn").hide();
+        $("#hold_inactive_btn").hide();
+        $("#monitor_btn").hide();
+        $("#prime_group").hide();
+        $("#inactive_group").hide();
+        $("#manual_group").show();
+        if (cpPWMControl == true) {
+            $("#manual_pwm_group").show();
+        };
     } else {
         // Select Inactive Group w/Prime & Monitor Buttons
         $("#active_group").hide();
@@ -73,6 +105,8 @@ function update_mode() {
         $("#monitor_btn").show();
         $("#prime_group").show();
         $("#inactive_group").show();
+        $("#manual_group").hide();
+        $("#manual_pwm_group").hide();
     };
 
     // Highlight Active Mode Button 
@@ -117,6 +151,13 @@ function update_mode() {
 
     // Reset cpLastMode to current_mode
     cpLastMode = cpMode;
+
+    // Setup Manual Mode Interval
+    if (cpMode == 'Manual') {
+        cpManualModeInterval = setInterval(check_current, 500);
+    } else {
+        clearInterval(cpManualModeInterval);
+    };
 };
 
 function update_recipe_mode() {
@@ -192,11 +233,11 @@ function update_setpoint() {
 };
 
 function update_pwm() {
-    // Update PWM button if pwm_control changed
+    // Update PWM button if cpPWMControl changed
     console.log('Detected PWM change.')
 
     if (cpMode == 'Hold') {
-        if (pwm_control == true) {
+        if (cpPWMControl == true) {
             $("#pwm_control_btn").show();
             document.getElementById("pwm_control_btn").className = "btn btn-success border border-secondary";
         } else {
@@ -206,8 +247,53 @@ function update_pwm() {
     } else {
         $("#pwm_control_btn").hide();
     };
-    last_pwm_control = pwm_control;
+    last_cpPWMControl = cpPWMControl;
 };
+
+function update_manual_mode() {
+    if (areObjectsDifferent(cpOutpins, cpOutpinsLast) == true) {
+        cpOutpinsLast = cpOutpins;
+        if (cpOutpins['power'] == true) {
+            console.log('power = true');
+            document.getElementById("cp_manual_mode_power_btn").className = "btn btn-primary";
+        } else {
+            console.log('power = false');
+            document.getElementById("cp_manual_mode_power_btn").className = "btn btn-outline-primary";
+        };
+        if (cpOutpins['igniter'] == true) {
+            document.getElementById("cp_manual_mode_igniter_btn").className = "btn btn-primary";
+        } else {
+            document.getElementById("cp_manual_mode_igniter_btn").className = "btn btn-outline-primary";
+        };
+        if (cpOutpins['auger'] == true) {
+            document.getElementById("cp_manual_mode_auger_btn").className = "btn btn-primary";
+        } else {
+            document.getElementById("cp_manual_mode_auger_btn").className = "btn btn-outline-primary";
+        };
+        if (cpOutpins['fan'] == true) {
+            document.getElementById("cp_manual_mode_fan_btn").className = "btn btn-primary";
+        } else {
+            document.getElementById("cp_manual_mode_fan_btn").className = "btn btn-outline-primary";
+        };
+    };
+};
+
+function areObjectsDifferent(obj1, obj2) {
+    const keys1 = Object.keys(obj1);
+    const keys2 = Object.keys(obj2);
+  
+    if (keys1.length !== keys2.length) {
+      return true;
+    }
+  
+    for (let key of keys1) {
+      if (obj1[key] !== obj2[key]) {
+        return true;
+      }
+    }
+  
+    return false;
+  };
 
 function check_state() {
     // Get control data and update control panel if needed
@@ -235,7 +321,7 @@ function check_state() {
             };
             
             splus_state = control.control.s_plus;
-            pwm_control = control.control.pwm_control;
+            cpPWMControl = control.control.pwm_control;
             cp_primary_setpoint = control.control.primary_setpoint;
 
             if((cpRecipeMode) && (cpRecipeStep != cpRecipeLastStep)) {
@@ -247,7 +333,7 @@ function check_state() {
             if(splus_state != last_splus_state) {
                 update_splus();
             };
-            if(pwm_control != last_pwm_control) {
+            if(cpPWMControl != last_cpPWMControl) {
                 update_pwm();
             };
             if(cp_primary_setpoint != last_primary_setpoint) {
@@ -269,6 +355,10 @@ function check_current() {
             // Relevant data returned from call:
             //  data.status.units
             cp_units = current.status.units;
+            cpOutpins = current.status.outpins;
+            if (cpMode == 'Manual') {
+                update_manual_mode();
+            };
         }
     });
 };
@@ -302,6 +392,11 @@ function cpStartup() {
     };
     console.log('Requesting Startup.');
     api_post(postdata);
+};
+
+function cpUpdatePWM(dutyCycle) {
+        api_set('manual/pwm/'+dutyCycle);
+        console.log('Requesting manual pwm duty cycle: ' + dutyCycle);
 };
 
 // Main Loop
@@ -367,7 +462,7 @@ $(document).ready(function(){
 
     $("#pwm_control_btn").click(function(){
         // Toggle based on current value of this button
-        if(pwm_control == true) {
+        if(cpPWMControl == true) {
             var postdata = { 'pwm_control' : false };
             console.log('pwm_control_state = ' + pwm_control + ' Requesting false.');
         } else {
@@ -403,6 +498,36 @@ $(document).ready(function(){
             };
             api_post(postdata);
         };
+    });
+
+    // Manual Mode Listeners
+    $("#cp_manual_stop_btn").click(function(){
+        var postdata = { 
+            'updated' : true,
+            'mode' : 'Stop'	
+        };
+        console.log('Requesting Manual Mode Stop.');
+        api_post(postdata);
+    });
+
+    $("#cp_manual_mode_power_btn").click(function(){
+        api_set('manual/power/toggle');
+        console.log('Requesting manual power toggle.');
+    });
+
+    $("#cp_manual_mode_igniter_btn").click(function(){
+        api_set('manual/igniter/toggle');
+        console.log('Requesting manual igniter toggle.');
+    });
+
+    $("#cp_manual_mode_auger_btn").click(function(){
+        api_set('manual/auger/toggle');
+        console.log('Requesting manual auger toggle.');
+    });
+
+    $("#cp_manual_mode_fan_btn").click(function(){
+        api_set('manual/fan/toggle');
+        console.log('Requesting manual fan toggle.');
     });
 
     // Control Panel Loop

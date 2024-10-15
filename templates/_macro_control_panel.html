@@ -27,6 +27,54 @@
             padding-bottom: 20px;
         }
     }
+    .slider-container {
+        width: 300px;
+        position: relative;
+        padding: 20px 0;
+    }
+    .slider {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 5px;
+        background: white;
+        outline: none;
+        opacity: 0.7;
+        transition: opacity .2s;
+    }
+    .slider:hover {
+        opacity: 1;
+    }
+    .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        cursor: pointer;
+    }
+    .slider::-moz-range-thumb {
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        cursor: pointer;
+        border: none;
+    }
+    .slider-value {
+        width: 40px;
+        height: 40px;
+        background: #007bff; /* Bootstrap primary blue */
+        color: white;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 40px;
+        position: absolute;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        font-family: Arial, sans-serif;
+        font-size: 13px; /* Slightly smaller to accommodate '%' */
+        pointer-events: none;
+        user-select: none;
+    }
 </style>
 
 <!-- Control Panel -->
@@ -108,6 +156,57 @@
             <button type="button" data-toggle="tooltip" title="Shutdown" class="btn btn-outline-info outline-secondary text-secondary" id="cp_recipe_shutdown_btn"><i class="fas fa-flag-checkered"></i></button>
         </div>
     </div>
+
+    <!-- Manual Toolbar -->
+    <div class="btn-toolbar justify-content-center" role="toolbar" id="manual_group"{% if control['mode'] != 'Manual'  %} style="display:none"{% endif %}>
+        <!-- Manual Mode Stop Group -->
+        <div id="cp_manual_stop_group" class="btn-group mr-2 dropup shadow" role="group" data-toggle="tooltip" data-placement="top" title="Prime the Firepot">
+            <button type="button" data-toggle="tooltip" title="Stop" class="btn btn-outline-primary" id="cp_manual_stop_btn"><i class="fas fa-stop"></i></button>
+        </div>
+        <!-- Manual Group -->
+        <div id="cp_manual_group" class="btn-group mr-2 dropup shadow" role="group" data-toggle="tooltip" data-placement="top" title="Manual Control">     
+            <button type="button" data-toggle="tooltip" title="Power" class="btn btn-outline-primary" id="cp_manual_mode_power_btn"><i class="fas fa-power-off"></i></button>
+            <button type="button" data-toggle="tooltip" title="Igniter" class="btn btn-outline-primary" id="cp_manual_mode_igniter_btn"><i class="fas fa-fire"></i></button>
+            <button type="button" data-toggle="tooltip" title="Auger" class="btn btn-outline-primary" id="cp_manual_mode_auger_btn"><i class="fas fa-angle-double-right"></i></button>
+            <button type="button" data-toggle="tooltip" title="Fan" class="btn btn-outline-primary" id="cp_manual_mode_fan_btn"><i class="fas fa-fan"></i></button>
+        </div>
+    </div>
+
+    <!-- Manual PWM Toolbar -->
+    <div class="btn-toolbar justify-content-center" role="toolbar" id="manual_pwm_group"{% if control['mode'] != 'Manual' or settings['platform']['dc_fan'] != True %} style="display:none"{% endif %}>
+        <!--
+        <h1><output name="duty_cycle_output" id="duty_cycle_output_id">
+            {{ control['manual']['pwm'] }}</output>%</h1>
+        <input type="range" class="custom-range" min="0" max="100"
+               value="{{ control['manual']['pwm'] }}" id="duty_cycle_id" name="duty_cycle_range"
+               oninput="duty_cycle_output_id.value = duty_cycle_id.value" onchange="alert('duty cycle changed');">
+        -->
+        <div class="slider-container">
+            <input type="range" min="0" max="100" value="{{ control['manual']['pwm'] }}" class="slider" id="duty_cycle_range"
+            onchange="cpUpdatePWM(this.value)">
+            <div class="slider-value" id="sliderValue">{{ control['manual']['pwm'] }}%</div>
+        </div>
+        <script>
+            const slider = document.getElementById("duty_cycle_range");
+            const output = document.getElementById("sliderValue");
+            const sliderContainer = document.querySelector(".slider-container");
+    
+            function updateSliderValue() {
+                const value = slider.value;
+                output.textContent = value + '%';
+                const percent = (value - slider.min) / (slider.max - slider.min);
+                const thumbWidth = 40;
+                const offset = thumbWidth / 2;
+                const pos = percent * (slider.offsetWidth - thumbWidth) + offset;
+                output.style.left = pos + "px";
+            }
+    
+            slider.oninput = updateSliderValue;
+            window.addEventListener("load", updateSliderValue);
+            window.addEventListener("resize", updateSliderValue);
+        </script>
+    </div>
+   
     </span>
     </nav>
 
