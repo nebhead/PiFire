@@ -1806,8 +1806,8 @@
 						"option_friendly_name" : "Screen Rotation", 
 						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
 						"option_type" : "list",
-						"list_values" : [0, 90, 180, 270],
-						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
+						"list_values" : [0, 180],
+						"list_labels" : ["0 Degrees", "180 Degrees"],
 						"default" : 0,
 						"hidden" : false
 					}
@@ -1831,8 +1831,8 @@
 						"option_friendly_name" : "Screen Rotation", 
 						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
 						"option_type" : "list",
-						"list_values" : [0, 90, 180, 270],
-						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
+						"list_values" : [0, 180],
+						"list_labels" : ["0 Degrees", "180 Degrees"],
 						"default" : 0,
 						"hidden" : false
 					}
@@ -1856,8 +1856,8 @@
 						"option_friendly_name" : "Screen Rotation", 
 						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
 						"option_type" : "list",
-						"list_values" : [0, 90, 180, 270],
-						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
+						"list_values" : [0, 180],
+						"list_labels" : ["0 Degrees", "180 Degrees"],
 						"default" : 0,
 						"hidden" : false
 					}
@@ -1881,8 +1881,8 @@
 						"option_friendly_name" : "Screen Rotation", 
 						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
 						"option_type" : "list",
-						"list_values" : [0, 90, 180, 270],
-						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
+						"list_values" : [0, 180],
+						"list_labels" : ["0 Degrees", "180 Degrees"],
 						"default" : 0,
 						"hidden" : false
 					}
