@@ -96,6 +96,8 @@ function update_mode() {
         $("#manual_group").show();
         if (cpPWMControl == true) {
             $("#manual_pwm_group").show();
+        } else {
+            $("#manual_pwm_group").hide();
         };
     } else {
         // Select Inactive Group w/Prime & Monitor Buttons
@@ -244,8 +246,11 @@ function update_pwm() {
             $("#pwm_control_btn").show();
             document.getElementById("pwm_control_btn").className = "btn btn-outline-primary border border-secondary text-secondary";
         };
+    } else if (cpMode == 'Manual') {
+        $("#manual_pwm_group").show();
     } else {
         $("#pwm_control_btn").hide();
+        $("#manual_pwm_group").hide();
     };
     last_cpPWMControl = cpPWMControl;
 };
@@ -254,10 +259,8 @@ function update_manual_mode() {
     if (areObjectsDifferent(cpOutpins, cpOutpinsLast) == true) {
         cpOutpinsLast = cpOutpins;
         if (cpOutpins['power'] == true) {
-            console.log('power = true');
             document.getElementById("cp_manual_mode_power_btn").className = "btn btn-primary";
         } else {
-            console.log('power = false');
             document.getElementById("cp_manual_mode_power_btn").className = "btn btn-outline-primary";
         };
         if (cpOutpins['igniter'] == true) {
@@ -464,10 +467,10 @@ $(document).ready(function(){
         // Toggle based on current value of this button
         if(cpPWMControl == true) {
             var postdata = { 'pwm_control' : false };
-            console.log('pwm_control_state = ' + pwm_control + ' Requesting false.');
+            console.log('pwm_control_state = ' + cpPWMControl + ' Requesting false.');
         } else {
             var postdata = { 'pwm_control' : true };
-            console.log('pwm_control_state = ' + pwm_control + ' Requesting true.');
+            console.log('pwm_control_state = ' + cpPWMControl + ' Requesting true.');
         };
         api_post(postdata);
     });

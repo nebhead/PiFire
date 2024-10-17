@@ -2397,62 +2397,11 @@ def admin_page(action=None):
 						   grill_name=settings['globals']['grill_name'], 
 						   files=files, errors=errors, warnings=warnings, success=success)
 
-@app.route('/manual/<action>', methods=['POST','GET'])
 @app.route('/manual', methods=['POST','GET'])
 def manual_page(action=None):
 
 	global settings
 	control = read_control()
-
-	if request.method == 'POST':
-		response = request.form
-
-		if 'setmode' in response:
-			if response['setmode'] == 'manual':
-				control['updated'] = True
-				control['mode'] = 'Manual'
-			else:
-				control['updated'] = True
-				control['mode'] = 'Stop'
-
-		if 'change_output_fan' in response:
-			if response['change_output_fan'] == 'on':
-				control['manual']['change'] = True
-				control['manual']['fan'] = True
-			elif response['change_output_fan'] == 'off':
-				control['manual']['change'] = True
-				control['manual']['fan'] = False
-				control['manual']['pwm'] = 100
-		elif 'change_output_auger' in response:
-			if response['change_output_auger'] == 'on':
-				control['manual']['change'] = True
-				control['manual']['auger'] = True
-			elif response['change_output_auger'] == 'off':
-				control['manual']['change'] = True
-				control['manual']['auger'] = False
-		elif 'change_output_igniter' in response:
-			if response['change_output_igniter'] == 'on':
-				control['manual']['change'] = True
-				control['manual']['igniter'] = True
-			elif response['change_output_igniter'] == 'off':
-				control['manual']['change'] = True
-				control['manual']['igniter'] = False
-		elif 'change_output_power' in response:
-			if response['change_output_power'] == 'on':
-				control['manual']['change'] = True
-				control['manual']['power'] = True
-			elif response['change_output_power'] == 'off':
-				control['manual']['change'] = True
-				control['manual']['power'] = False
-		elif 'duty_cycle_range' in response:
-			speed = int(response['duty_cycle_range'])
-			control['manual']['change'] = True
-			control['manual']['pwm'] = speed
-
-		write_control(control, origin='app')
-
-		time.sleep(1)
-		control = read_control()
 
 	return render_template('manual.html', settings=settings, control=control,
 						   	page_theme=settings['globals']['page_theme'],
