@@ -132,6 +132,16 @@
   
 		<!-- Modal body -->
 		<div class="modal-body">
+			<!-- Warning Message if Manual Override/Changes are Active-->
+			{% if settings['safety']['allow_manual_changes'] %}
+				<div class="alert alert-warning" role="alert">
+					<h4><i class="fa-solid fa-triangle-exclamation"></i>&nbsp; Warning!</h4>
+					<p>This dashboard is currently allowing manual changes to the outputs (fan/auger/igniter) by clicking on the icons in the status card.
+					If you would like to disable this feature, click <a href="settings">here</a> to go to settings > safety and <b>deselect</b> 
+					"Allow Manual Changes/Overrides to Outputs During Operation".
+					</p>
+				</div>
+			{% endif %}
 			<div id="dash_config_card">
 				<div class="card">
 					<div class="card-header">
@@ -200,9 +210,9 @@
 						</tr>
 					</table>
 				</div>
-
 			</div>
 		</div>
+
 		<!-- Modal footer -->
 		<div class="modal-footer">
 			<button type="button" class="btn btn-secondary" data-dismiss="modal">Dismiss</button>
