@@ -667,9 +667,6 @@ class StatusIcon(FlexObject):
 
         return self._draw_object(rotation=self.objectState['animation_rotation'], breath_step=self.objectState['animation_breathe'])
 
-    def _define_touch_areas(self):
-        pass
-
 class MenuIcon(FlexObject):
     def __init__(self, objectType, objectData, background):
         super().__init__(objectType, objectData, background)

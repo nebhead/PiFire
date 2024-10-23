@@ -104,6 +104,8 @@
                 "inactive_color" : [128,128,128,128],
                 "active_color" : [255,255,255,255],
                 "rotation" : 0,
+                "button_list" : ["cmd_fan_toggle"],
+                "button_value" : [],
                 "data" : {},
                 "touch_areas" : []
             },
@@ -120,6 +122,8 @@
                 "inactive_color" : [128,128,128,128],
                 "active_color" : [255,255,255,255],
                 "rotation" : 0,
+                "button_list" : ["cmd_auger_toggle"],
+                "button_value" : [],
                 "data" : {},
                 "touch_areas" : []
             },
@@ -136,6 +140,8 @@
                 "inactive_color" : [128,128,128,128],
                 "active_color" : [255,255,255,255],
                 "rotation" : 0,
+                "button_list" : ["cmd_igniter_toggle"],
+                "button_value" : [],
                 "data" : {},
                 "touch_areas" : []
             },
@@ -605,6 +611,8 @@
                 "inactive_color" : [128,128,128,128],
                 "active_color" : [255,255,255,255],
                 "rotation" : 0,
+                "button_list" : ["cmd_fan_toggle"],
+                "button_value" : [],
                 "data" : {},
                 "touch_areas" : []
             },
@@ -621,6 +629,8 @@
                 "inactive_color" : [128,128,128,128],
                 "active_color" : [255,255,255,255],
                 "rotation" : 0,
+                "button_list" : ["cmd_auger_toggle"],
+                "button_value" : [],
                 "data" : {},
                 "touch_areas" : []
             },
@@ -637,6 +647,8 @@
                 "inactive_color" : [128,128,128,128],
                 "active_color" : [255,255,255,255],
                 "rotation" : 0,
+                "button_list" : ["cmd_igniter_toggle"],
+                "button_value" : [],
                 "data" : {},
                 "touch_areas" : []
             },

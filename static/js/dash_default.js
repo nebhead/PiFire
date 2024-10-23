@@ -653,12 +653,36 @@ function dashClearErrorCounter() {
 	errorCounter = 0;
 };
 
+function dash_api_set(command) {
+    $.ajax({
+        url : '/api/set/' + command,
+        type : 'POST',
+        contentType: "application/json; charset=utf-8",
+        traditional: true,
+        success: function (data) {
+            console.log('API Set [' + command + ']: ' + data.message);
+        }
+    });
+};
+
 // Main
 $(document).ready(function(){
 	// Setup Listeners 
 	$('#reloadPage').click(function() {
 		// Reload page when server side changes detected. 
 		location.reload(); 
+	});
+
+	$('#igniter_status').click(function() {
+		dash_api_set('manual/igniter/toggle');
+	});
+
+	$('#auger_status').click(function() {
+		dash_api_set('manual/auger/toggle');
+	});
+
+	$('#fan_status').click(function() {
+		dash_api_set('manual/fan/toggle');
 	});
 
 	// Initialize Dashboard Data

@@ -530,6 +530,15 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	status_data = {} 
 	in_data = {}
 
+	# Clear Manual Overrides
+	manual_override = {
+		'igniter' : 0,
+		'auger' : 0,
+		'fan' : 0,
+		'power' : 0,
+		'pwm' : 0
+	}
+
 	# ============ Main Work Cycle ============
 	while status == 'Active':
 		now = time.time()
@@ -598,73 +607,96 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 
 		current_output_status = grill_platform.get_output_status()
 
-		if mode == 'Manual':
-			if control['manual']['change']:
-				if control['manual']['fan'] and not current_output_status['fan']:
-					grill_platform.fan_on()
-					eventLogger.debug('Fan ON')
-				elif not control['manual']['fan'] and current_output_status['fan']:
-					grill_platform.fan_off()
-					eventLogger.debug('Fan OFF')
-				if control['manual']['auger'] and not current_output_status['auger']:
-					grill_platform.auger_on()
-					eventLogger.debug('Auger ON')
-				elif not control['manual']['auger'] and current_output_status['auger']:
-					grill_platform.auger_off()
-					eventLogger.debug('Auger OFF')
-				if control['manual']['igniter'] and not current_output_status['igniter']:
-					grill_platform.igniter_on()
-					eventLogger.debug('Igniter ON')
-				elif not control['manual']['igniter'] and current_output_status['igniter']:
-					grill_platform.igniter_off()
-					eventLogger.debug('Igniter OFF')
-				if control['manual']['power'] and not current_output_status['power']:
-					grill_platform.power_on()
-					eventLogger.debug('Power ON')
-				elif not control['manual']['power'] and current_output_status['power']:
-					grill_platform.power_off()
-					eventLogger.debug('Power OFF')
-				if settings['platform']['dc_fan'] and control['manual']['fan'] and current_output_status['fan'] and \
+		if mode == 'Manual' or settings['safety']['allow_manual_changes']:
+			if control['manual']['change'] in ['power', 'igniter', 'fan', 'auger', 'pwm']:
+				if mode != 'Manual':
+					override_time = now + settings['safety']['manual_override_time']  # Set override time when not in manual mode
+				else:
+					override_time = 0  # If in manual mode, always set override time to 0
+				
+				if control['manual']['change'] == 'fan': 
+					if control['manual']['output'] and not current_output_status['fan']:
+						grill_platform.fan_on()
+						eventLogger.debug('Fan ON')
+					elif not control['manual']['output'] and current_output_status['fan']:
+						grill_platform.fan_off()
+						eventLogger.debug('Fan OFF')
+					manual_override['fan'] = override_time  # Set override time
+					
+				if control['manual']['change'] == 'auger':
+					if control['manual']['output'] and not current_output_status['auger']:
+						grill_platform.auger_on()
+						eventLogger.debug('Auger ON')
+					elif not control['manual']['output'] and current_output_status['auger']:
+						grill_platform.auger_off()
+						eventLogger.debug('Auger OFF')
+					manual_override['auger'] = override_time  # Set override time
+				
+				if control['manual']['change'] == 'igniter':
+					if control['manual']['output'] and not current_output_status['igniter']:
+						grill_platform.igniter_on()
+						eventLogger.debug('Igniter ON')
+					elif not control['manual']['output'] and current_output_status['igniter']:
+						grill_platform.igniter_off()
+						eventLogger.debug('Igniter OFF')
+					manual_override['igniter'] = override_time  # Set override time
+
+				if control['manual']['change'] == 'power':
+					if control['manual']['output'] and not current_output_status['power']:
+						grill_platform.power_on()
+						eventLogger.debug('Power ON')
+					elif not control['manual']['output'] and current_output_status['power']:
+						grill_platform.power_off()
+						eventLogger.debug('Power OFF')
+					manual_override['power'] = override_time  # Set override time
+
+				if settings['platform']['dc_fan'] and control['manual']['change'] == 'pwm' and current_output_status['fan'] and \
 					not control['manual']['pwm'] == current_output_status['pwm']:
 					speed = control['manual']['pwm']
 					eventLogger.debug('PWM Speed: ' + str(speed) + '%')
 					grill_platform.set_duty_cycle(speed)
-				control['manual']['change'] = False
+					manual_override['pwm'] = override_time
+					control['manual']['pwm'] = 100  # Reset PWM
+
+				control['manual']['change'] = None
+				control['manual']['output'] = None
 				write_control(control, direct_write=True, origin='control')
 
 		# Change Auger State based on Cycle Time
 		if mode in ('Startup', 'Reignite', 'Smoke', 'Hold', 'Prime'):
-			# If Auger is OFF and time since toggle is greater than Off Time
-			if not current_output_status['auger'] and (now - auger_toggle_time) > (CycleTime * (1 - CycleRatio)):
-				grill_platform.auger_on()
-				auger_toggle_time = now
-				eventLogger.debug('Cycle Event: Auger On')
-				# Reset Cycle Time for HOLD Mode
-				if mode == 'Hold':
-					CycleRatio = RawCycleRatio = settings['cycle_data']['u_min'] if LidOpenDetect else controllerCore.update(ptemp)
-					CycleRatio = max(CycleRatio, settings['cycle_data']['u_min'])
-					CycleRatio = min(CycleRatio, settings['cycle_data']['u_max'])
-					OnTime = settings['cycle_data']['HoldCycleTime'] * CycleRatio
-					OffTime = settings['cycle_data']['HoldCycleTime'] * (1 - CycleRatio)
-					CycleTime = OnTime + OffTime
-					eventLogger.debug('On Time = ' + str(OnTime) + ', OffTime = ' + str(
-						OffTime) + ', CycleTime = ' + str(CycleTime) + ', CycleRatio = ' + str(CycleRatio))
+			if manual_override['auger'] < now:
+				manual_override['auger'] = 0
+				# If Auger is OFF and time since toggle is greater than Off Time
+				if not current_output_status['auger'] and (now - auger_toggle_time) > (CycleTime * (1 - CycleRatio)):
+					grill_platform.auger_on()
+					auger_toggle_time = now
+					eventLogger.debug('Cycle Event: Auger On')
+					# Reset Cycle Time for HOLD Mode
+					if mode == 'Hold':
+						CycleRatio = RawCycleRatio = settings['cycle_data']['u_min'] if LidOpenDetect else controllerCore.update(ptemp)
+						CycleRatio = max(CycleRatio, settings['cycle_data']['u_min'])
+						CycleRatio = min(CycleRatio, settings['cycle_data']['u_max'])
+						OnTime = settings['cycle_data']['HoldCycleTime'] * CycleRatio
+						OffTime = settings['cycle_data']['HoldCycleTime'] * (1 - CycleRatio)
+						CycleTime = OnTime + OffTime
+						eventLogger.debug('On Time = ' + str(OnTime) + ', OffTime = ' + str(
+							OffTime) + ', CycleTime = ' + str(CycleTime) + ', CycleRatio = ' + str(CycleRatio))
 
-					#publish pid info to mqtt if enabled				
-					if settings['notify_services'].get('mqtt') != None and settings['notify_services']['mqtt']['enabled']:
-						pid_data = controllerCore.__dict__
-						pid_data['cycle_ratio'] = round(CycleRatio, 2)
-						check_notify(settings, control, pid_data=pid_data)
+						#publish pid info to mqtt if enabled				
+						if settings['notify_services'].get('mqtt') != None and settings['notify_services']['mqtt']['enabled']:
+							pid_data = controllerCore.__dict__
+							pid_data['cycle_ratio'] = round(CycleRatio, 2)
+							check_notify(settings, control, pid_data=pid_data)
 
-			# If Auger is ON and time since toggle is greater than On Time
-			if current_output_status['auger'] and (now - auger_toggle_time) > (CycleTime * CycleRatio):
-				grill_platform.auger_off()
-				# Add auger ON time to the metrics
-				metrics['augerontime'] += now - auger_toggle_time
-				write_metrics(metrics)
-				# Set current last toggle time to now
-				auger_toggle_time = now
-				eventLogger.debug('Cycle Event: Auger Off')
+				# If Auger is ON and time since toggle is greater than On Time
+				if current_output_status['auger'] and (now - auger_toggle_time) > (CycleTime * CycleRatio):
+					grill_platform.auger_off()
+					# Add auger ON time to the metrics
+					metrics['augerontime'] += now - auger_toggle_time
+					write_metrics(metrics)
+					# Set current last toggle time to now
+					auger_toggle_time = now
+					eventLogger.debug('Cycle Event: Auger Off')
 
 		# Grab current probe profiles if they have changed since the last loop.
 		if control['probe_profile_update']:
@@ -814,16 +846,18 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 				# If Temperature is > settings['smoke_plus']['max_temp']
 				# or Temperature is < settings['smoke_plus']['min_temp'] then turn on fan
 				if (ptemp > settings['smoke_plus']['max_temp'] or
-						ptemp < settings['smoke_plus']['min_temp']):
+						ptemp < settings['smoke_plus']['min_temp']) and manual_override['fan'] < now:
 					if not current_output_status['fan']:
 						_start_fan(settings, control['duty_cycle'])
 						eventLogger.debug('Smoke Plus: Over or Under Temp Fan ON')
 				elif (now - sp_cycle_toggle_time) > settings['smoke_plus']['on_time'] and current_output_status['fan']:
-					grill_platform.fan_off()
-					sp_cycle_toggle_time = now
-					eventLogger.debug('Smoke Plus: Fan OFF')
+					if manual_override['fan'] < now:
+						manual_override['fan'] = 0
+						grill_platform.fan_off()
+						sp_cycle_toggle_time = now
+						eventLogger.debug('Smoke Plus: Fan OFF')
 				elif ((now - sp_cycle_toggle_time) > settings['smoke_plus']['off_time'] and
-					  not current_output_status['fan']):
+					  not current_output_status['fan']) and manual_override['fan'] < now:
 					sp_cycle_toggle_time = now
 					if (settings['platform']['dc_fan'] and (mode == 'Smoke' or (mode == 'Hold' and not control['pwm_control'])) and
 							settings['smoke_plus']['fan_ramp']):
@@ -839,25 +873,25 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 						eventLogger.debug('Smoke Plus: Fan ON')
 
 			# If Smoke Plus was disabled when fan is OFF return fan to ON
-			elif not current_output_status['fan'] and not control['s_plus']:
+			elif not current_output_status['fan'] and not control['s_plus'] and manual_override['fan'] < now:
 				_start_fan(settings, control['duty_cycle'])
 				eventLogger.debug('Smoke Plus: Fan Returned to On')
 
 			# If Smoke Plus was disabled while fan was ramping return it to the correct duty cycle
 			elif (settings['platform']['dc_fan'] and current_output_status['pwm'] != control['duty_cycle'] and not
-					control['s_plus'] and pwm_fan_ramping):
+					control['s_plus'] and pwm_fan_ramping and manual_override['fan'] < now):
 				pwm_fan_ramping = False
 				grill_platform.set_duty_cycle(control['duty_cycle'])
 				eventLogger.debug('Smoke Plus: Fan Returned to ' + str(control['duty_cycle']) + '% duty cycle')
 
 			# Set Fan Duty Cycle based on Average Grill Temp Using Profile
-			elif settings['platform']['dc_fan'] and control['pwm_control'] and current_output_status['pwm'] != control['duty_cycle']:
+			elif settings['platform']['dc_fan'] and control['pwm_control'] and current_output_status['pwm'] != control['duty_cycle'] and manual_override['fan'] < now:
 				grill_platform.set_duty_cycle(control['duty_cycle'])
 				eventLogger.debug('Temp Fan Control: Fan Set to ' + str(control['duty_cycle']) + '% duty cycle')
 
 			# If PWM Fan Control is turned off check current Duty Cycle and set back to max_duty_cycle if required
 			elif (settings['platform']['dc_fan'] and not control['pwm_control'] and current_output_status['pwm'] !=
-				  	settings['pwm']['max_duty_cycle']):
+				  	settings['pwm']['max_duty_cycle'] and manual_override['fan'] < now):
 				control['duty_cycle'] = settings['pwm']['max_duty_cycle']
 				write_control(control, direct_write=True, origin='control')
 				grill_platform.set_duty_cycle(control['duty_cycle'])

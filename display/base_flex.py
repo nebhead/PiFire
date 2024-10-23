@@ -19,6 +19,7 @@ import time
 import logging
 import socket
 import os
+import requests
 from display.flexobject import *
 from PIL import Image
 from common import read_control, write_control, is_real_hardware, read_generic_json, read_settings, write_settings, read_status, read_current
@@ -801,6 +802,24 @@ class DisplayBase:
             write_control(data, origin='display')
             self.display_active = 'dash'
             self.display_init = True
+
+        if 'igniter_toggle' in self.command:
+            try: 
+                requests.get('http://127.0.0.1:5000/api/set/manual/igniter/toggle')
+            except:
+                self.eventLogger.debug('Igniter Toggle Failed.')
+
+        if 'auger_toggle' in self.command:
+            try:
+                requests.get('http://127.0.0.1:5000/api/set/manual/auger/toggle')
+            except:
+                self.eventLogger.debug('Auger Toggle Failed.')
+
+        if 'fan_toggle' in self.command:
+            try:
+                requests.get('http://127.0.0.1:5000/api/set/manual/fan/toggle')
+            except:
+                self.eventLogger.debug('Fan Toggle Failed.')
 
         if 'none' in self.command:
             pass 

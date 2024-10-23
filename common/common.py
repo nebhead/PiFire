@@ -222,7 +222,9 @@ def default_settings():
 		'maxstartuptemp' : 100, # User Defined. Take this value if the startup temp is higher than maxstartuptemp
 		'maxtemp' : 550, 		# User Defined. If temp exceeds value in any mode, shut off. (including monitor mode)
 		'reigniteretries' : 1, 	# Number of tries to reignite grill if it has gone below the safe temp (0 to disable)
-		'startup_check' : True	# True = Enabled
+		'startup_check' : True,	# True = Enabled
+		'allow_manual_changes' : False,  # Allow the user to change outputs manually while grill is running
+		'manual_override_time' : 30  # Number of seconds to override the controller with manual changes
 	}
 
 	settings['pelletlevel'] = {
@@ -2555,9 +2557,9 @@ def process_command(action=None, arglist=[], origin='unknown', direct_write=Fals
 			/api/set/manual/pwm/{speed}
 			'''
 
-			if control['mode'] == 'Manual':
+			if control['mode'] == 'Manual' or settings['safety']['allow_manual_changes']:
 				if arglist[1] == 'power':
-					control['manual']['change'] = True
+					control['manual']['change'] = 'power'
 					if arglist[2] == 'toggle':
 						status = read_status()
 						if status['outpins']['power']:
@@ -2565,11 +2567,11 @@ def process_command(action=None, arglist=[], origin='unknown', direct_write=Fals
 						else:
 							arglist[2] = 'true'
 					if arglist[2] == 'true':
-						control['manual']['power'] = True
+						control['manual']['output'] = True
 					else:
-						control['manual']['power'] = False 
+						control['manual']['output'] = False 
 				elif arglist[1] == 'igniter':
-					control['manual']['change'] = True
+					control['manual']['change'] = 'igniter'
 					if arglist[2] == 'toggle':
 						status = read_status()
 						if status['outpins']['igniter']:
@@ -2577,11 +2579,11 @@ def process_command(action=None, arglist=[], origin='unknown', direct_write=Fals
 						else:
 							arglist[2] = 'true'
 					if arglist[2] == 'true':
-						control['manual']['igniter'] = True
+						control['manual']['output'] = True
 					else:
-						control['manual']['igniter'] = False 
+						control['manual']['output'] = False 
 				elif arglist[1] == 'fan':
-					control['manual']['change'] = True
+					control['manual']['change'] = 'fan'
 					if arglist[2] == 'toggle':
 						status = read_status()
 						if status['outpins']['fan']:
@@ -2589,12 +2591,12 @@ def process_command(action=None, arglist=[], origin='unknown', direct_write=Fals
 						else:
 							arglist[2] = 'true'
 					if arglist[2] == 'true':
-						control['manual']['fan'] = True
+						control['manual']['output'] = True
 					else:
-						control['manual']['fan'] = False 
+						control['manual']['output'] = False 
 						control['manual']['pwm'] = 100
 				elif arglist[1] == 'auger':
-					control['manual']['change'] = True
+					control['manual']['change'] = 'auger'
 					if arglist[2] == 'toggle':
 						status = read_status()
 						if status['outpins']['auger']:
@@ -2602,16 +2604,17 @@ def process_command(action=None, arglist=[], origin='unknown', direct_write=Fals
 						else:
 							arglist[2] = 'true'
 					if arglist[2] == 'true':
-						control['manual']['auger'] = True
+						control['manual']['output'] = True
 					else:
-						control['manual']['auger'] = False
+						control['manual']['output'] = False
 				elif arglist[1] == 'pwm' and is_float(arglist[2]):
-					control['manual']['change'] = True
+					control['manual']['change'] = 'pwm'
+					control['manual']['output'] = True
 					control['manual']['pwm'] = int(float(arglist[2]))
 				else:
 					data['result'] = 'ERROR'
 					data['message'] = f'Manual command not recognized or contained an error.'
-				if control['manual']['change']:
+				if control['manual']['change'] in ['power', 'igniter', 'fan', 'auger', 'pwm']:
 					write_control(control, direct_write=direct_write, origin=origin)
 
 			else:

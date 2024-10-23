@@ -1211,17 +1211,39 @@
                             </h5>
                         </div>
                         <div class="card-body">
+                            <span class="badge badge-danger">WARNING:</span>
+                            <i class="small"> Safety features are not infallible and may not prevent safety issues with your grill in all cases. As with any grill, it is the operator's responsibility to monitor their equipment to ensure proper operational safety.</i>
+                            <hr>
                             <div class="custom-control custom-switch">
                                 <input type="checkbox" class="custom-control-input" id="startup_check" name="startup_check" {% if settings['safety']['startup_check'] %}checked{% endif %}>
                                 <label class="custom-control-label" for="startup_check" data-toggle="tooltip" title="Enables an additional check after clicking startup, to prevent accidental startup.">Enable Startup Check</label>
                             </div>
                             <span class="badge badge-warning">NOTE:</span>
                             <i class="small"> Enables an additional check after clicking startup, to prevent accidental startup.</i>
-                            <br><br>
+                            <br>
+                            <hr>
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="allow_manual_changes" name="allow_manual_changes" {% if settings['safety']['allow_manual_changes'] %}checked{% endif %}>
+                                <label class="custom-control-label" for="allow_manual_changes" data-toggle="tooltip" title="Select to allow manual changes to outputs (igniter, fan, auger, power, etc) during operation.">Allow Manual Changes/Overrides to Outputs During Operation</label>
+                            </div>
+                            <span class="badge badge-warning">NOTE:</span>
+                            <i class="small"> Allow the ability to manually control outputs like the igniter, fan, auger, power, etc. during normal operation.  Keep in mind that during normal operation the igniter, fan and auger may (or may not) be controlled by the controller and user changes may be overridden.  Use the below override time to block the controller from making changes for a period of seconds.</i>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Number of seconds to override any controller changes to the outputs.">
+                                        <i class="fas fa-stopwatch"></i>&nbsp; Override Time (s)
+                                    </span>
+                                </div>
+                                <input id="manual_override_time" type="number" inputmode="numeric" min="0" class="form-control" placeholder="{{ settings['safety']['manual_override_time'] }}" value="{{ settings['safety']['manual_override_time'] }}" name="manual_override_time" style="min-width: 4ch;">
+                            </div>
+                            <hr>
+                            <i class="fas fa-temperature-quarter"></i>&nbsp; <i>Operating Temperature Settings</i>
+                            <br>
+                            <br>
                             <div class="input-group mb-3">
                                 <div class="input-group-prepend">
                                     <span class="input-group-text" data-toggle="tooltip" title="Lowest temperature after startup allowed.  Shut down grill to prevent firepot overload.">
-                                        <i class="fas fa-temperature-high"></i>&nbsp; Min Startup Temp ({{settings['globals']['units']}})
+                                        <i class="fas fa-temperature-low"></i>&nbsp; Min Startup Temp ({{settings['globals']['units']}})
                                     </span>
                                 </div>
                                 <input id="minstartuptemp" type="number" inputmode="numeric" min="1" class="form-control" placeholder="{{ settings['safety']['minstartuptemp'] }}" value="{{ settings['safety']['minstartuptemp'] }}" name="minstartuptemp" style="min-width: 4ch;">
@@ -1229,16 +1251,9 @@
                             <div class="input-group mb-3">
                                 <div class="input-group-prepend">
                                     <span class="input-group-text" data-toggle="tooltip" title="Lowest allowed operational temperature, after startup has completed. Shut down grill to prevent firepot overload.">
-                                        <i class="fas fa-temperature-high"></i>&nbsp; Max Startup Temp ({{settings['globals']['units']}})</span>
+                                        <i class="fas fa-temperature-low"></i>&nbsp; Max Startup Temp ({{settings['globals']['units']}})</span>
                                 </div>
                                 <input id="maxstartuptemp" type="number" inputmode="numeric" min="1" class="form-control" placeholder="{{ settings['safety']['maxstartuptemp'] }}" value="{{ settings['safety']['maxstartuptemp'] }}" name="maxstartuptemp" style="min-width: 4ch;">
-                            </div>
-                            <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text" data-toggle="tooltip" title="Number of retries to attempt re-ignite after the grill temperature goes too low. Set to zero to disable. [default=1]">
-                                        <i class="fas fa-redo-alt"></i>&nbsp; Reignite Retries</span>
-                                </div>
-                                <input id="reigniteretries" type="number" inputmode="numeric" min="0" max="10" class="form-control" placeholder="{{ settings['safety']['reigniteretries'] }}" value="{{ settings['safety']['reigniteretries'] }}" name="reigniteretries" style="min-width: 4ch;">
                             </div>
                             <div class="input-group mb-3">
                                 <div class="input-group-prepend">
@@ -1248,11 +1263,16 @@
                                 <input id="maxtemp" type="number" inputmode="numeric" min="1" class="form-control" placeholder="{{ settings['safety']['maxtemp'] }}" value="{{ settings['safety']['maxtemp'] }}" name="maxtemp" style="min-width: 4ch;">
                             </div>
                             <span class="badge badge-warning">NOTE:</span>
-                            <i class="small"> In an error condition (temp too low, temp too high) the grill will immediately shutdown and log the error in the events log. Notifications of an error will be sent if enabled. The Max Temp safety setting is also enabled in Monitor mode.</i>
+                            <i class="small"> In an error condition (temp too low, temp too high) the grill will immediately shutdown and log the error in the events log. Notifications of an error will be sent if enabled. The Max Temp safety setting is also enabled in Monitor mode. If the temperature is too low, the grill can attempt a re-ignite a certain number of times specified below.</i>
+                            <hr>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Number of retries to attempt re-ignite after the grill temperature goes too low. Set to zero to disable. [default=1]">
+                                        <i class="fas fa-redo-alt"></i>&nbsp; Reignite Retries</span>
+                                </div>
+                                <input id="reigniteretries" type="number" inputmode="numeric" min="0" max="10" class="form-control" placeholder="{{ settings['safety']['reigniteretries'] }}" value="{{ settings['safety']['reigniteretries'] }}" name="reigniteretries" style="min-width: 4ch;">
+                            </div>
                             <br>
-                            <br>
-                            <span class="badge badge-danger">WARNING:</span>
-                            <i class="small"> Safety features are not infallible and may not prevent safety issues with your grill in all cases. As with any grill, it is the operator's responsibility to monitor their equipment to ensure proper operational safety.</i>
                         </div><!-- End of card body -->
                         <div class="card-footer bg-light">
                             <button type="submit" class="btn btn-outline-danger">Save</button>

@@ -2052,6 +2052,12 @@ def settings_page(action=None):
 			settings['safety']['startup_check'] = True
 		else:
 			settings['safety']['startup_check'] = False
+		if _is_checked(response, 'allow_manual_changes'):
+			settings['safety']['allow_manual_changes'] = True
+		else:
+			settings['safety']['allow_manual_changes'] = False
+		if _is_not_blank(response, 'manual_override_time'):
+			settings['safety']['manual_override_time'] = int(response['manual_override_time'])
 
 		event['type'] = 'updated'
 		event['text'] = 'Successfully updated safety settings.'
