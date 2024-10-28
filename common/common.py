@@ -142,7 +142,7 @@ def default_settings():
 				"CE0" : 8,  # In case a non-standard CE/CS is utilized
 				"CE1" : 7,  # In case a non-standard CE/CS is utilized
 			},
-			"1WIRE" : 6  # 1WIRE is used for probe devices specifically the DS18B20 
+			"1WIRE" : None  # 1WIRE is used for probe devices specifically the DS18B20 
 		},
 		"current" : "custom",
 		"dc_fan": False,  # True if system has a DC Fan (Does not indicate PWM)
