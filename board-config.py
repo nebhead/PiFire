@@ -70,7 +70,7 @@ def set_onewire_gpio():
 		if system_type == 'raspberry_pi_all' or system_type == 'prototype':
 			# "dtoverlay=w1-gpio,pin=6"
 			pin = int(pin) if pin != None else None
-			result += rpi_config_write('dtoverlay', 'w1-gpio', pin=pin, pin_type='gpio_pin')
+			result += rpi_config_write('dtoverlay', 'w1-gpio', pin=pin, pin_type='gpiopin')
 		else:
 			result += 'NA - No system defined'
 	except:

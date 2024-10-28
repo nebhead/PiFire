@@ -1,7 +1,7 @@
 <!-- Post Update Message for v1.8.0 -->
 <H1>
     <img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="50" height="50" class="d-inline-block align-top" alt="">
-    PiFire 1.8.6 Release - October / 2024
+    PiFire 1.8.7 Release - October / 2024
 </H1>
 <div class="row justify-content-center">
     <div class="card" style="width:80%">
@@ -107,6 +107,10 @@
                  </li>
                  <li>
                      Fixed a bug when upgrading from previous versions of PiFire, Scikit Learn v1.4.2 should be installed.  
+                 </li>
+                 <li>
+                     Upon upgrade, the system assigns 1Wire to GPIO 6 in the configuration file, which seems to fail.  Changing this assignment to 'None' and also changing
+                     the pin configuration type to 'gpiopin' instead of 'gpio_pin' which hopefully will resolve this issue.  
                  </li>
              </ul>
              
