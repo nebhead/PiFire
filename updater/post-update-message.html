@@ -27,6 +27,12 @@
                     as this can potentially leave the igniter on for extended periods of time.
                  </li>
                  <li>
+                    Added high and low limit temperature notifications for each probe.  This allows you to to set limits for the high and low temperatures
+                    and be notified when they exceed those limits during operation.  These limits do not expire, but will only trigger once they are exceeded.
+                    They will reset when the temperature falls below/above the high/low limit.  This feature also allows you to take some actions such as to 
+                    reignite the grill if the temperature goes too low or to shutdown if it goes too high.  
+                 </li>
+                 <li>
                      Behind the scenes improvements including:  
                      <ul>
                          <li>

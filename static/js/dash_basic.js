@@ -10,6 +10,7 @@ var primary_setpoint = -1;
 var mode = '';
 var probe_loop; // variable for the interval function
 var notify_data = []; // store all notify data
+var notify_status = {}; // store all notify statuses 
 
 var last_fan_status = null;
 var last_auger_status = null;
@@ -18,6 +19,40 @@ var last_pmode_status = null;
 var last_lid_open_status = false;
 var display_mode = null;
 var dashDataStruct = {};
+function initNotifyStatus() {
+	// This function creates the notify_status object that indicates the current activated/requested notifications
+	for (notify_item in notify_data) {
+		if (notify_data[notify_item]['type'] == 'probe') {
+			notify_status[notify_data[notify_item]['label']] = {};
+			//console.log('Creating notify_status struct for: ' + notify_data[notify_item]['label']);
+			if (notify_data[notify_item]['req']) {
+				notify_status[notify_data[notify_item]['label']]['probe'] = true;
+			} else {
+				notify_status[notify_data[notify_item]['label']]['probe'] = false;
+			};	
+		} else if (notify_data[notify_item]['type'] == 'probe_limit_high') {
+			if (notify_data[notify_item]['req']) {
+				notify_status[notify_data[notify_item]['label']]['probe_limit_high'] = true;
+			} else {
+				notify_status[notify_data[notify_item]['label']]['probe_limit_high'] = false;
+			};
+		} else if (notify_data[notify_item]['type'] == 'probe_limit_low') {
+			if (notify_data[notify_item]['req']) {
+				notify_status[notify_data[notify_item]['label']]['probe_limit_low'] = true;
+			} else {
+				notify_status[notify_data[notify_item]['label']]['probe_limit_low'] = false;
+			};
+		};
+	};
+};
+
+function initNotifyIndicators(probes) {
+	for(item in notify_data) {
+		if (probes.includes(notify_data[item].label)) {
+			updateNotificationCard(notify_data[item]);
+		};
+	};
+};
 
 // Update temperatures on probe status cards
 function updateProbeCards() {
@@ -58,25 +93,50 @@ function updateProbeCards() {
 			if (notify_data.length == 0) {
 				console.log('Initializing notify_data.')
 				notify_data = JSON.parse(JSON.stringify(current.notify_data)); // Copy data to notify_data variable
-				initTargets();
+				initAllTargets();
+				initNotifyStatus();
+				initNotifyIndicators(probes);
 			} else {
 				//console.log(probes);
+					// First update notify statuses 
+					for(item in current.notify_data) {
+						// Update Notify Status
+						if (probes.includes(current.notify_data[item].label)) {
+							if (current.notify_data[item]['req']) {
+								notify_status[current.notify_data[item]['label']][current.notify_data[item]['type']] = true;
+								//console.log('Notification Requested: ' + current.notify_data[item]['label'] + ' - ' + current.notify_data[item]['type']);
+							} else {
+								notify_status[current.notify_data[item]['label']][current.notify_data[item]['type']] = false;
+								//console.log('Notification Cancelled: ' + current.notify_data[item]['label'] + ' - ' + current.notify_data[item]['type']);
+							};
+						};
+					};
+					// Check for changes in notify data structures 
 				for(item in current.notify_data) {
 					if (probes.includes(current.notify_data[item].label)) {
 						//console.log('Found! ' + current.notify_data[item].label);
 						//console.log('Data: ' + notify_data[item].label);
 						//console.log('current: ' + current.notify_data[item].target + ' last: ' + notify_data[item].target);
+						// Check for changes to triggered state
+						var triggered = false;
+						if (('triggered' in current.notify_data[item]) && ('triggered' in notify_data[item])) {
+							if (current.notify_data[item].triggered != notify_data[item].triggered) {
+								var triggered = true;
+							};
+						};
 						if ((current.notify_data[item].target != notify_data[item].target) || 
 							(current.notify_data[item].req != notify_data[item].req) ||
 							(current.notify_data[item].shutdown != notify_data[item].shutdown) ||
 							(current.notify_data[item].keep_warm != notify_data[item].keep_warm) || 
-								(current.notify_data[item].eta != notify_data[item].eta)
-								) {
+							(current.notify_data[item].eta != notify_data[item].eta) ||
+							(triggered)
+							) {
 							console.log('Notification data change detected.')
-							// Update Page
-							updateNotificationCard(current.notify_data[item], current.status.mode);
 							// Store Notify Data
 							notify_data[item] = JSON.parse(JSON.stringify(current.notify_data[item])); // Copy data to notify_data variable
+								// Update Page
+								updateNotificationCard(notify_data[item]);
+								initTarget(notify_data[item]);
 						};
 					};
 				};
@@ -244,16 +304,46 @@ function updateTempCard(label, temp) {
 };
 
 // Initialize the notification target sliders for the notification modal
-function initTargets() {
+function initAllTargets() {
+	// This function will initialize the target sliders for all notification modals so that they reflect the right current values
 	for (item in notify_data) {
-		if (notify_data[item].type == 'probe') {
-			outputTargetId = notify_data[item].label + '_tempOutputId';
-			inputTargetId = '#' + notify_data[item].label + '_tempInputId';
-			targetValue = notify_data[item].target;
-			document.getElementById(outputTargetId).innerHTML = targetValue;
-			$(inputTargetId).val(targetValue);
-		};
+
+		initTarget(notify_data[item]);
 	};
+};
+
+function initTarget(notify_item) {
+	// This function will initialize the target sliders for an individual notification modal so that they reflect the right current values	
+	//console.log('Init Target: ' + notify_item.label);
+	var prefix = '';
+	var postfix = '';
+	if (notify_item.type == 'probe') {
+		prefix = '';
+		postfix = '_notify_temp';
+	} else if (notify_data[item].type == 'probe_limit_high') {
+		prefix = '_high_limit';
+		postfix = '_limit_high_temp';
+	} else if (notify_data[item].type == 'probe_limit_low') {
+		prefix = '_low_limit';
+		postfix = '_limit_low_temp';
+	} else {
+		return;
+	};
+	
+	var outputTargetId = notify_item.label + prefix + '_tempOutputId';
+	var inputTargetId = notify_item.label + prefix + '_tempInputId';
+	var checkboxTargetId = notify_item.label + postfix;
+	var targetValue = notify_item.target;
+	var checkboxValue = notify_item.req;
+
+	const rangeInput = document.getElementById(inputTargetId); 
+	rangeInput.value = targetValue; 
+
+	const textInput = document.getElementById(outputTargetId); 
+	textInput.value = targetValue; 
+
+	const checkboxInput = document.getElementById(checkboxTargetId);
+	checkboxInput.checked = checkboxValue;
 };
 
 function formatDuration(total_seconds) {
@@ -271,62 +361,183 @@ function formatDuration(total_seconds) {
 };
 
 // Update the notification information for the probe cards
-function updateNotificationCard(notify_info, mode) {
+function updateNotificationCard(notify_info) {
 	const label = notify_info.label;
 	const req = notify_info.req;
 	const shutdown = notify_info.shutdown;
 	const keep_warm = notify_info.keep_warm;
 	const target = notify_info.target;
+	const type = notify_info.type; 
+	const notify_btn_id = label + "_notify_btn";
+	const eta_btn_id = label + "_eta_btn";
+	var triggered = false;
+	if ('triggered' in notify_info) {
+		triggered = notify_info.triggered;
+	};
+
+	if ((type == 'probe') && (notify_status[label]['probe']))  {
+		// Probe Notification Selected
+		// Show the Notification Bell, Target Temp and the ETA 
 	var eta = '<i class="fa-solid fa-spinner fa-spin-pulse"></i>';
 	if (notify_info.eta != null) {
 		eta = formatDuration(notify_info.eta);
 	};
-	console.log('Updating: ' + label + '  ETA: ' + eta);
-	// TODO: Update the page item with new data
-	const notify_btn_id = label + "_notify_btn";
-    const eta_btn_id = label + "_eta_btn";
-
-	if(req) {
-		console.log('Updating this notification: ' + notify_btn_id);
 		document.getElementById(notify_btn_id).innerHTML = '<i class="far fa-bell"></i>&nbsp; ' + target + '&deg;' + units;
         document.getElementById(eta_btn_id).innerHTML = '<i class="fa-solid fa-hourglass-half"></i>&nbsp; ' + eta;
 		document.getElementById(notify_btn_id).className = 'btn btn-sm btn-primary';
         $('#'+eta_btn_id).show();
+	} else if ((!notify_status[label]['probe']) && ((notify_status[label]['probe_limit_high']) || (notify_status[label]['probe_limit_low']))) {
+		// Other Notification Selected
+		// Show the Notification Bell (Limit High / Low) Hide ETA
+		document.getElementById(notify_btn_id).innerHTML = '<i class="far fa-bell"></i>'; 
+		document.getElementById(notify_btn_id).className = 'btn btn-sm btn-primary';
+		$('#'+eta_btn_id).hide();
+	} else if ((type != 'probe') && (notify_status[label]['probe'])) {
+		// Other Notification Cancelled (Probe Notification Selected)
+		// Leave the Notification Bell, Target Temp and ETA shown
+		document.getElementById(notify_btn_id).className = 'btn btn-sm btn-primary';
+		$('#'+eta_btn_id).show();
 	} else {
-		console.log('Turning off this notification: ' + notify_btn_id);
+		// All Notifications Cancelled
+		// Turn off the Notification Bell
 		document.getElementById(notify_btn_id).innerHTML = '<i class="far fa-bell-slash"></i>';
 		document.getElementById(notify_btn_id).className = 'btn btn-sm btn-outline-primary';
         $('#'+eta_btn_id).hide();
 	};
+
+	if (((notify_status[label]['probe_limit_high']) || (notify_status[label]['probe_limit_low'])) && (triggered)) {
+		document.getElementById(notify_btn_id).className = 'btn btn-sm btn-danger';
+	};
 };
 
 // Set Notification Request and Send to the Server
-function setNotify(probe_label, target) {
-	// Get checkboxes (shutdown / keep warm)
+function setNotify(probe_label) {
+	//console.log('Updating Notify Settings...')
+	// Reset Action Settings 
 	var shutdown = false;
 	var keepWarm = false;
-	if ($("#"+probe_label +"_shutdown").is(':checked')){
-		shutdown = true;
-	};
-	if ($("#"+probe_label +"_keepWarm").is(':checked')){
-		keepWarm = true;
-	};
+	var reignite = false;
 
-	// Send to server
+	// Put current notify data into a new variable to update
 	var updated_notify_data = JSON.parse(JSON.stringify(notify_data)); // Copy notify_data into a new variable
 
-	for (item in updated_notify_data) {
-		if (updated_notify_data[item].label == probe_label) {
-			updated_notify_data[item].target = parseInt(target);
+	// If simple notify on temperature is set, get the data and update the notification structure
+	if ($("#"+probe_label +"_notify_temp").is(':checked')) {
+		var target_temp = $("#"+probe_label+"_tempInputId").val();
+		for (item in updated_notify_data) {
+			if ((updated_notify_data[item].type == 'probe') && (updated_notify_data[item].label == probe_label)) {
+			if ($("#"+probe_label +"_shutdown").is(':checked')){
+				shutdown = true;
+			};
+			if ($("#"+probe_label +"_keepWarm").is(':checked')){
+				keepWarm = true;
+			};
+			updated_notify_data[item].target = parseInt(target_temp);
 			updated_notify_data[item].shutdown = shutdown;
 			updated_notify_data[item].keep_warm = keepWarm;
 			updated_notify_data[item].req = true;
+			//console.log('Updated Simple Notify Temp Settings:');
+			//console.log(updated_notify_data[item]);
+			break;
+			};
+		};
+	} else {
+		// If simple notify is unchecked, then remove notification request. 
+		for (item in updated_notify_data) {
+			if ((updated_notify_data[item].type == 'probe') && (updated_notify_data[item].label == probe_label)) {
+				updated_notify_data[item].req = false;
+				break;
+			};
+		};
+	};
+
+	// Reset action variables
+	shutdown = false;
+	keepWarm = false;
+	reignite = false;
+
+	// If HIGH limit notify on temperature is set, get the data and update the notification structure
+	if ($("#"+probe_label +"_limit_high_temp").is(':checked')) {
+		var target_temp = $("#"+probe_label+"_high_limit_tempInputId").val();
+		var current_temp = document.getElementById(probe_label+"_temp").innerHTML;
+		for (item in updated_notify_data) {
+			if ((updated_notify_data[item].type == 'probe_limit_high') && (updated_notify_data[item].label == probe_label)) {
+				if ($("#"+probe_label +"_high_limit_shutdown").is(':checked')){
+					shutdown = true;
+				};
+				updated_notify_data[item].target = parseInt(target_temp);
+				updated_notify_data[item].shutdown = shutdown;
+				updated_notify_data[item].req = true;
+				// Mark as already triggered if the target value is greater than the current value
+				if (parseInt(current_temp) > parseInt(target_temp)) {
+					updated_notify_data[item].triggered = true;
+				} else {
+					updated_notify_data[item].triggered = false;
+				};
+				//console.log(probeGauges[probe_label].getValue());
+				//console.log('Updated High Limit Notify Temp Settings:');
+				//console.log(updated_notify_data[item]);
+				break;
+			};
+		};
+	} else {
+		// If HIGH limit notify is unchecked, then remove notification request. 
+		for (item in updated_notify_data) {
+			if ((updated_notify_data[item].type == 'probe_limit_high') && (updated_notify_data[item].label == probe_label)) {
+				updated_notify_data[item].req = false;
+				break;
+			};
+		};
+	};
+
+	// Reset action variables
+	shutdown = false;
+	keepWarm = false;
+	reignite = false;
+
+	// If LOW limit notify on temperature is set, get the data and update the notification structure
+	if ($("#"+probe_label +"_limit_low_temp").is(':checked')) {
+		var target_temp = $("#"+probe_label+"_low_limit_tempInputId").val();
+		var current_temp = document.getElementById(probe_label+"_temp").innerHTML;
+		for (item in updated_notify_data) {
+			if ((updated_notify_data[item].type == 'probe_limit_low') && (updated_notify_data[item].label == probe_label)) {
+				if ($("#"+probe_label +"_low_limit_shutdown").is(':checked')){
+					shutdown = true;
+				};
+				if ($("#"+probe_label +"_low_limit_shutdown").is(':checked')){
+					reignite = true;
+				};
+				updated_notify_data[item].target = parseInt(target_temp);
+				updated_notify_data[item].shutdown = shutdown;
+				updated_notify_data[item].reignite = reignite;
+				updated_notify_data[item].req = true;
+				// Mark as already triggered if the target value is less than the current value
+				if (parseInt(current_temp) < parseInt(target_temp)) {
+					updated_notify_data[item].triggered = true;
+				} else {
+					updated_notify_data[item].triggered = false;
+				};
+				//console.log(probeGauges[probe_label].getValue());
+				//console.log('Updated Low Limit Notify Temp Settings:');
+				//console.log(updated_notify_data[item]);
+				break;
+			};
+		};
+	} else {
+		// If LOW limit notify is unchecked, then remove notification request. 
+		for (item in updated_notify_data) {
+			if ((updated_notify_data[item].type == 'probe_limit_low') && (updated_notify_data[item].label == probe_label)) {
+				updated_notify_data[item].req = false;
+				break;
+			};
 		};
 	};
 
     var postdata = { 
         'notify_data' : updated_notify_data
     };
+
+	//console.log(updated_notify_data);
 
 	$.ajax({
         url : '/api/control',

@@ -543,18 +543,33 @@ def default_notify(settings):
 
 	''' Build list of probe notification data '''
 
-	for probe in probe_list:
-		notify_info = {
-			'label' : probe[0],
-			'name' : probe[1], 
-			'type' : 'probe', 
-			'req' : False, 
-			'target' : 0,
-			'eta' : None,
-			'shutdown' : False,
-			'keep_warm' : False, 
-		}
-		notify_data.append(notify_info)
+	for probe in settings['probe_settings']['probe_map']['probe_info']:
+		if probe['type'] != 'Aux':
+			notify_info = {
+				'label' : probe['label'],
+				'name' : probe['name'], 
+				'type' : 'probe', 
+				'req' : False, 
+				'target' : 0,
+				'eta' : None,
+				'shutdown' : False,
+				'keep_warm' : False,
+				'reignite' : False,
+				'condition' : 'equal_above'
+			}
+			notify_data.append(notify_info)
+
+			limit_high = notify_info.copy()  # Copy notify_info object into a new object
+			limit_high['type'] = 'probe_limit_high'
+			limit_high['condition'] = 'equal_above'
+			limit_high['triggered'] = False
+			notify_data.append(limit_high)
+
+			limit_low = notify_info.copy()
+			limit_low['type'] = 'probe_limit_low'
+			limit_low['condition'] = 'equal_below'
+			limit_low['triggered'] = False
+			notify_data.append(limit_low)
 
 	''' Add Timer notification data to list '''
 	notify_info = {
@@ -2385,10 +2400,10 @@ def process_command(action=None, arglist=[], origin='unknown', direct_write=Fals
 				control['s_plus'] = False 
 			write_control(control, direct_write=direct_write, origin=origin)
 		
-		elif arglist[0] == 'notify':
+		elif arglist[0] in ['notify', 'limit_high', 'limit_low']:
 			'''
 			Notify Settings
-			/api/set/notify/{object}/ where object = probe label, 'Timer', 'Hopper' 
+			/api/set/[notify:limit_high:limit_low]/{object}/ where object = probe label, 'Timer', 'Hopper' 
 
 			/api/set/notify/{object}/req/{true/false} 
 			/api/set/notify/{object}/target/{value}  (not valid for Timer or Hopper)
@@ -2397,33 +2412,45 @@ def process_command(action=None, arglist=[], origin='unknown', direct_write=Fals
 			'''
 
 			if arglist[1] is not None:
+				if arglist[0] == 'limit_high':
+					limit = 'probe_limit_high'
+				elif arglist[0] == 'limit_low':
+					limit = 'probe_limit_low'
+				else:
+					limit = None
 				found = False
 				for index, object in enumerate(control['notify_data']):
 					if object['label'] == arglist[1]:
-						print('FOUND')
-						found = True
-						if arglist[2] in ['req', 'shutdown', 'keep_warm']:
-							if arglist[3] == 'true':
-								control['notify_data'][index][arglist[2]] = True
-							else: 
-								control['notify_data'][index][arglist[2]] = False
-						elif arglist[2] == 'target' and arglist[1] not in ['Timer', 'Hopper']:
-							if is_float(arglist[3]):
-								if settings['globals']['units'] == 'F':
-									control['notify_data'][index]['target'] = int(float(arglist[3]))
-								else:
-									control['primary_setpoint'] = float(arglist[3])
-							else:
-								data['result'] = 'ERROR'
-								data['message'] = f'Notify object target value invalid or missing.'
+						if limit is not None:
+							if object['type'] == limit:
+								found = True
+								break
 						else:
-							data['result'] = 'ERROR'
-							data['message'] = f'Notify object update failed.'
-						break
+							found = True
+							break
+			
 				if not found:
 					data['result'] = 'ERROR'
 					data['message'] = f'Notify object label {arglist[1]} was not found.'
 				else:
+					print(f'{object["label"]} FOUND')
+					if arglist[2] in ['req', 'shutdown', 'keep_warm', 'reignite']:
+						if arglist[3] == 'true':
+							control['notify_data'][index][arglist[2]] = True
+						else: 
+							control['notify_data'][index][arglist[2]] = False
+					elif arglist[2] == 'target' and arglist[1] not in ['Timer', 'Hopper']:
+						if is_float(arglist[3]):
+							if settings['globals']['units'] == 'F':
+								control['notify_data'][index]['target'] = int(float(arglist[3]))
+							else:
+								control['primary_setpoint'] = float(arglist[3])
+						else:
+							data['result'] = 'ERROR'
+							data['message'] = f'Notify object target value invalid or missing.'
+					else:
+						data['result'] = 'ERROR'
+						data['message'] = f'Notify object update failed.'
 					write_control(control, direct_write=False, origin=origin)
 			else:
 				data['result'] = 'ERROR'

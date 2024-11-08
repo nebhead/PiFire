@@ -66,9 +66,9 @@ def check_notify(settings, control, in_data=None, pelletdb=None, grill_platform=
 	''' Process all registered notification items '''
 	for index, item in enumerate(control['notify_data']):
 		if item['req']: 
-			if item['type'] == 'probe' and in_data is not None:
+			if item['type'] in ['probe', 'probe_limit_low', 'probe_limit_high'] and in_data is not None:
 				# Update the ETA, if requested for any active probe
-				if update_eta:
+				if item['type'] == 'probe' and update_eta:
 					num_minutes = 20  # Number of minutes of history to grab
 					num_seconds = num_minutes * 60 
 					time_interval = 3  # 3-Second Time Intervals
@@ -85,15 +85,22 @@ def check_notify(settings, control, in_data=None, pelletdb=None, grill_platform=
 					eta_seconds = _estimate_eta(temperatures, item['target'], interval_seconds=time_interval, max_history_minutes=num_minutes)
 					# Write to control
 					control['notify_data'][index]['eta'] = eta_seconds
-				# If target temperature achieved, send notification and clear request/data 
-				if probe_temp_list[item['label']] >= in_data['notify_targets'][item['label']]:
-					send_notifications("Probe_Temp_Achieved", control, settings, pelletdb, label=item['label'], target=in_data['notify_targets'][item['label']])
-					if control['mode'] == 'Recipe':
-						if control['recipe']['step_data']['trigger_temps'][item['label']] > 0:
-							control['recipe']['step_data']['triggered'] = True
-					control['notify_data'][index]['req'] = False
-					control['notify_data'][index]['target'] = 0 
-					control['notify_data'][index]['eta'] = None 
+				# If target temperature meets the condition, send notification and clear request/data
+				if _check_condition(item['condition'], probe_temp_list[item['label']], item['target']):
+					if item['type'] == 'probe':
+						send_notifications("Probe_Temp_Achieved", control, settings, pelletdb, label=item['label'], target=in_data['notify_targets'][item['label']])
+						if control['mode'] == 'Recipe':
+							if control['recipe']['step_data']['trigger_temps'][item['label']] > 0:
+								control['recipe']['step_data']['triggered'] = True
+						control['notify_data'][index]['req'] = False
+						control['notify_data'][index]['target'] = 0 
+						control['notify_data'][index]['eta'] = None 
+					if item['type'] in ['probe_limit_high', 'probe_limit_low'] and not item['triggered']:
+						send_notifications("Probe_Temp_Limit_Alarm", control, settings, pelletdb, label=item['label'], target=item['target'])
+						control['notify_data'][index]['triggered'] = True
+				elif item['type'] in ['probe_limit_high', 'probe_limit_low'] and item['triggered']:
+					# If the temperature goes back into the right range, reset the 'triggered' flag
+					control['notify_data'][index]['triggered'] = False
 
 			elif item['type'] == 'timer':
 				if time.time() >= control['timer']['end']:
@@ -127,7 +134,11 @@ def check_notify(settings, control, in_data=None, pelletdb=None, grill_platform=
 				control['primary_setpoint'] = settings['keep_warm']['temp']
 				control['s_plus'] = settings['keep_warm']['s_plus']
 				control['updated'] = True
-				control['notify_data'][index]['keep_warm'] = False 
+				control['notify_data'][index]['keep_warm'] = False
+			elif item.get('reignite', False) and item.get('triggered', False) and control['mode'] in ('Smoke', 'Hold'):
+				control['safety']['reignitelaststate'] = control['mode']
+				control['mode'] = 'Reignite'
+				control['updated'] = True
 
 			write_control(control, direct_write=True, origin='notifications')
 
@@ -153,7 +164,13 @@ def send_notifications(notify_event, control, settings, pelletdb, label='Probe',
 
 	if "Probe_Temp_Achieved" in notify_event:
 		title_message = f"{label} Target Achieved"
-		body_message = f"{label} target of {target} {unit} achieved at {time} on {day}"
+		body_message = f"{label} target of {target}{unit} achieved at {time} on {day}"
+		channel = 'pifire_temp_alerts'
+		query_args = {"value1": True}
+		eventLogger.info(body_message)
+	elif "Probe_Temp_Limit_Alarm" in notify_event:
+		title_message = f"{label} Limit Reached"
+		body_message = f"{label} limit of {target}{unit} exceeded at {time} on {day}"
 		channel = 'pifire_temp_alerts'
 		query_args = {"value1": True}
 		eventLogger.info(body_message)
@@ -546,3 +563,24 @@ def _send_mqtt_notification(control, settings,
 		mqtt.notify("system", control)
 		if grill_platform: mqtt.notify("devices", grill_platform.current)
 		if in_data: mqtt.notify("probe_data", in_data['probe_history'])
+
+def _check_condition(condition, current, target):
+	"""
+	 Check if condition is met based on current and target values
+
+	:param condition: Condition
+	:param current: Current
+	:param target: Target
+	"""
+	if condition == 'equal':
+		return current == target
+	elif condition == 'above':
+		return current > target
+	elif condition == 'below':
+		return current < target
+	elif condition == 'equal_above':
+		return current >= target
+	elif condition == 'equal_below':
+		return current <= target
+	else:
+		return False
