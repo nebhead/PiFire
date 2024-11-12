@@ -170,6 +170,37 @@ if items_remaining == 0:
 else:
 	increment = 80 / items_remaining 
 
+# Install Apt dependencies
+launch_apt = ['sudo', 'apt', 'install']
+status = 'Installing Package Dependencies...'
+output = ' - Installing APT Package Dependencies'
+set_wizard_install_status(percent, status, output)
+
+for apt_item in apt_dependencies:
+	command = []
+	command.extend(launch_apt)
+	command.append(apt_item)
+	command.append('-y')
+	
+	if is_real_hardware():
+		process = subprocess.Popen(command, stdout=subprocess.PIPE, encoding='utf-8')
+		while True:
+			output = process.stdout.readline()
+			if process.poll() is not None:
+				break
+			if output:
+				set_wizard_install_status(percent, status, output.strip())
+				print(output.strip())
+		return_code = process.poll()
+		print(f'Return Code: {return_code}')
+	else:
+		# This path is for development/testing
+		time.sleep(2)
+	
+	percent += increment
+	output = f' - Completed Install of {apt_item}'
+	set_wizard_install_status(percent, status, output)
+
 # Install Py dependencies
 if settings['globals']['venv']:
 	python_exec = 'bin/python'
@@ -203,37 +234,6 @@ for py_item in py_dependencies:
 
 	percent += increment
 	output = f' - Completed Install of {py_item}'
-	set_wizard_install_status(percent, status, output)
-
-# Install Apt dependencies
-launch_apt = ['sudo', 'apt', 'install']
-status = 'Installing Package Dependencies...'
-output = ' - Installing APT Package Dependencies'
-set_wizard_install_status(percent, status, output)
-
-for apt_item in apt_dependencies:
-	command = []
-	command.extend(launch_apt)
-	command.append(apt_item)
-	command.append('-y')
-	
-	if is_real_hardware():
-		process = subprocess.Popen(command, stdout=subprocess.PIPE, encoding='utf-8')
-		while True:
-			output = process.stdout.readline()
-			if process.poll() is not None:
-				break
-			if output:
-				set_wizard_install_status(percent, status, output.strip())
-				print(output.strip())
-		return_code = process.poll()
-		print(f'Return Code: {return_code}')
-	else:
-		# This path is for development/testing
-		time.sleep(2)
-	
-	percent += increment
-	output = f' - Completed Install of {apt_item}'
 	set_wizard_install_status(percent, status, output)
 
 # Run system commands dependencies

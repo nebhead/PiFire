@@ -1276,6 +1276,40 @@
 					]
 				}
 			},
+			"bt_ibbq" : {
+				"friendly_name" : "Bluetooth - iBBQ / Inkbird BT",
+				"filename" : "bt_ibbq",
+				"description" : "This device module supports Bluetooth LE iBBQ devices such as the Inkbird IBT-4XS four probe thermometer.  Note that the device can take up to a minute to be discovered and to start streaming data once turned on.  This has only been tested with the Inkbird IBT-4XS, but it may also work with other iBBQ models.  This module is still experimental, so feedback is welcome.",
+				"default" : false,
+				"image" : "bt_ibbq.png",
+				"reboot_required" : false,
+				"py_dependencies" : ["bluepy"], 
+				"apt_dependencies" : ["libglib2.0-dev"],
+				"command_list" : [["sudo", "setcap", "cap_net_raw,cap_net_admin+eip", "/usr/local/bin/pifire/lib/python3.*/site-packages/bluepy/bluepy-helper"]],
+				"settings_dependencies" : {
+					"units" : {
+						"friendly_name" : "Temp Units",
+						"description" : "Select the temperature units to use for PiFire globally.  (This can be modified in settings later)",
+						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
+						"settings" : ["globals", "units"]
+					}
+				},
+				"device_specific" : {
+					"ports" : ["BT0", "BT1", "BT2", "BT3"],
+					"config" : [
+						{
+							"label" : "transient", 
+							"friendly_name" : "Transient",
+							"description" : "Select whether this device is fixed/always attached (default) or if it is transient/sometimes detached.",
+							"type" : "list", 
+							"list_values" : ["True", "False"],
+							"list_labels" : ["Transient (sometimes detached)", "Fixed (always attached)"],
+							"default" : "True",
+							"hidden" : true
+						}
+					]
+				}			
+			},
 			"prototype" : {
 				"friendly_name" : "Prototype",
 				"filename" : "prototype",

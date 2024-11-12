@@ -243,6 +243,18 @@ class ProbeInterface:
 	def get_device_info(self):
 		return self.device_info
 
+	def _to_celsius(self, fahrenheit):
+		if fahrenheit is not None:
+			return (fahrenheit - 32) * 5 / 9
+		else:
+			return None
+	
+	def _to_fahrenheit(self, celsius):
+		if celsius is not None:
+			return int(celsius * 9 / 5 + 32)
+		else:
+			return None
+
 class FakeDevice:
 
 	def __init__(self, port_map, primary_port, units):
