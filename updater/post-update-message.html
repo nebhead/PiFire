@@ -33,10 +33,15 @@
                     reignite the grill if the temperature goes too low or to shutdown if it goes too high.  
                  </li>
                  <li>
+                    Added iBBQ Bluetooth probe support.  Tested with Inkbird BT-4XS.  The device may take some time to be detected and setup before data is 
+                    is streamed out to the dashboard.  
+                 </li>
+                 <li>
                      Behind the scenes improvements including:  
                      <ul>
                          <li>
-                             Change 02
+                             Changed order of component installations when installing modules from the wizard.  The wizard will now install apt packages before 
+                             installing python modules to match dependencies for items like bluepy.    
                          </li>
                          <li>
                              Change 03
