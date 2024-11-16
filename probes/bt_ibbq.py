@@ -101,7 +101,9 @@ class DataDelegate(DefaultDelegate):
 			header, current_voltage, max_voltage,pad = struct.unpack("<BHHB", data)
 			if max_voltage == 0: max_voltage = 6580 # XXX check this
 			self.batt_percent = 100 * current_voltage / max_voltage
-			#self.logger.debug(f'Battery Percent: {batt_percent}') # (batt_percent)
+			logger_msg = f'Battery Percent: {self.batt_percent}'
+			#self.logger.debug(logger_msg) # (batt_percent)
+			#ic(logger_msg)
 
 		else:
 			self.logger.debug(f'Unknown data received from handle {cHandle}: {data}')
