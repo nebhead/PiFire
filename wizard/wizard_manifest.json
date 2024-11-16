@@ -8,7 +8,7 @@
 				"default" : false,
 				"image" : "custom.png",
 				"reboot_required" : true,
-				"py_dependencies" : ["rpi_hardware_pwm"], 
+				"py_dependencies" : ["rpi-hardware-pwm"], 
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-pwm", "-ow", "-bl", "-s", "-i"]],
 				"settings_dependencies" : {
@@ -142,7 +142,7 @@
 					"system_1wire" : {
 						"friendly_name" : "1Wire GPIO Pin",
 						"description" : "GPIO Pin for 1Wire bus/interface.  Used for DS18B20 sensors.",
-						"options" : { "None" : "None", "6" : "GPIO6", "12" : "GPIO12", "13" : "GPIO13", "16": "GPIO16", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "26" : "GPIO26", "27" : "GPIO27" },
+						"options" : { "None" : "None", "4" : "GPIO4", "6" : "GPIO6", "12" : "GPIO12", "13" : "GPIO13", "16": "GPIO16", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "26" : "GPIO26", "27" : "GPIO27" },
 						"settings" : ["platform", "system", "1WIRE"]
 					},
 					"real_hw" : {
@@ -160,7 +160,7 @@
 				"default" : false,
 				"image" : "pcb_2.00a.png",
 				"reboot_required" : true,
-				"py_dependencies" : [], 
+				"py_dependencies" : ["rpi-hardware-pwm"], 
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-ow", "-s", "-i"]],
 				"settings_dependencies" : {
@@ -337,7 +337,7 @@
 				"default" : true,
 				"image" : "pcb_3.01a.png",
 				"reboot_required" : true,
-				"py_dependencies" : [], 
+				"py_dependencies" : ["rpi-hardware-pwm"], 
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-ow", "-s", "-i"]],
 				"settings_dependencies" : {
@@ -520,7 +520,7 @@
 				"default" : false,
 				"image" : "pcb_pwm.png",
 				"reboot_required" : true,
-				"py_dependencies" : ["rpi_hardware_pwm"], 
+				"py_dependencies" : ["rpi-hardware-pwm"], 
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-pwm", "-s", "-i"]],
 				"settings_dependencies" : {
@@ -705,7 +705,7 @@
 				"default" : false,
 				"image" : "pcb_4.x.x.png",
 				"reboot_required" : true,
-				"py_dependencies" : ["rpi_hardware_pwm"], 
+				"py_dependencies" : ["rpi-hardware-pwm"], 
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-pwm", "-ow", "-bl", "-s", "-i", "-gs"]],
 				"settings_dependencies" : {
