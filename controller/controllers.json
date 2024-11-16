@@ -1,6 +1,6 @@
 {
     "metadata" : {
-        "pid" : {
+		"pid" : {
             "friendly_name" : "PID Standard",
             "module_name" : "pid",
             "image" : "pid.png",
@@ -20,7 +20,7 @@
                 {
                     "option_name" : "PB",
                     "option_friendly_name" : "Proportional Band(PB)", 
-                    "option_description" : "This is the temperature band centered around the set point, that the controller is active.  If the error is greater than PB/2, the command is 0.  If the error is less than PB/2, the command is 1.0. [Default=60.0]",
+                    "option_description" : "This is the temperature band centered around the set point, that the controller is active.  If the error is less than PB/2, the command is 1.0. Higher PB's decrease controller response to error. [Default=60.0]",
                     "option_type" : "float",
                     "option_default" : 60.0,
                     "option_min" : null,
@@ -31,7 +31,7 @@
                 {
                     "option_name" : "Td",
                     "option_friendly_name" : "Derivative Time (Td)", 
-                    "option_description" : "Time (in seconds) to predict the future value. [Default=45.0]",
+                    "option_description" : "Time (in seconds) to predict the future value. Higher Td makes the controller more responsive to the Error Rate of Change. [Default=45.0]",
                     "option_type" : "float",
                     "option_default" : 45.0,
                     "option_min" : null,
@@ -42,7 +42,7 @@
                 {
                     "option_name" : "Ti",
                     "option_friendly_name" : "Integral Time (Ti)", 
-                    "option_description" : "Time (in seconds) to eliminate the integral error. [Default=180.0]",
+                    "option_description" : "Time (in seconds) to eliminate the integral error. Higher Ti makes the controller less responsive to accumulated error over time. [Default=180.0]",
                     "option_type" : "float",
                     "option_default" : 180.0,
                     "option_min" : null,
@@ -53,13 +53,183 @@
                 {
                     "option_name" : "center",
                     "option_friendly_name" : "Center Ratio", 
-                    "option_description" : "Center of Cycle Ratio, which is specific to the way this PID will behave. [Default=0.5]",
+                    "option_description" : "Center of Cycle Ratio, which is specific to the way this PID will behave. Higher Centers increase system response at high set points. Lower Centers increase system stability at low set points but may keep the system from reaching high set points.  [Default=0.5]",
                     "option_type" : "float",
                     "option_default" : 0.5,
                     "option_min" : null,
                     "option_max" : null, 
                     "option_step" : 0.01, 
                     "hidden" : false
+                }
+            ]
+        },
+		"pid_ac" : {
+            "friendly_name" : "PID Auto Center",
+            "module_name" : "pid_ac",
+            "image" : "pid.png",
+            "description" : "The standard PID controller for PiFire, modified to include Auto Center calculations and Overshoot reduction code. This software was originally developed by GitHub user DBorello as part of his excellent PiSmoker project.  Slightly modified by @weberbox and @dogtreatfairy and adapted for PiFire. ",
+            "author" : "Dan Borello",
+            "link" : "https://github.com/DBorello/PiSmoker", 
+            "contributors" : ["Ben Parmeter", "James Weber", "Ryan Steel"],
+            "attributions" : [],
+            "recommendations" : {
+                "cycle" : { 
+                    "cycle_time" : 15,
+                    "cycle_ratio_min" : 0.05,
+                    "cycle_ratio_max" : 0.9
+                }   
+            },
+            "config" : [
+                {
+                    "option_name" : "PB",
+                    "option_friendly_name" : "Proportional Band(PB)", 
+                    "option_description" : "This is the temperature band centered around the set point, that the controller is active.  If the error is less than PB/2, the command is 1.0. Higher PB's decrease controller response to error. [Default=60.0]",
+                    "option_type" : "float",
+                    "option_default" : 60.0,
+                    "option_min" : null,
+                    "option_max" : null, 
+                    "option_step" : 0.1,
+                    "hidden" : false
+                },
+                {
+                    "option_name" : "Td",
+                    "option_friendly_name" : "Derivative Time (Td)", 
+                    "option_description" : "Time (in seconds) to predict the future value. Higher Td makes the controller more responsive to the Error Rate of Change. [Default=45.0]",
+                    "option_type" : "float",
+                    "option_default" : 45.0,
+                    "option_min" : null,
+                    "option_max" : null,
+                    "option_step" : 0.1,  
+                    "hidden" : false
+                },
+                {
+                    "option_name" : "Ti",
+                    "option_friendly_name" : "Integral Time (Ti)", 
+                    "option_description" : "Time (in seconds) to eliminate the integral error. Higher Ti makes the controller less responsive to accumulated error over time. [Default=180.0]",
+                    "option_type" : "float",
+                    "option_default" : 180.0,
+                    "option_min" : null,
+                    "option_max" : null, 
+                    "option_step" : 0.1,
+                    "hidden" : false
+                },
+				{
+                    "option_name" : "stable_window",
+                    "option_friendly_name" : "Stable Window (Degrees)", 
+                    "option_description" : "Window +/- from Set Point for triggering Overshoot condition. When in Overshoot, Output is set to min. [Default=12]",
+                    "option_type" : "float",
+                    "option_default" : 12,
+                    "option_min" : null,
+                    "option_max" : null, 
+                    "option_step" : 1,
+                    "hidden" : false
+                },
+				{
+                    "option_name" : "center_factor",
+                    "option_friendly_name" : "Center Factor", 
+                    "option_description" : "Center Factor multiplied by Set Point. Higher Center Factors increase system response at high set points. Lower Center Factors increase system stability at low set points but may keep the system from reaching high set points. EX: At 225F center is 225 * 0.0012 = 0.27. [Default=0.0010]",
+                    "option_type" : "float",
+                    "option_default" : 0.0010,
+                    "option_min" : null,
+                    "option_max" : null, 
+                    "option_step" : 0.0001,
+                    "hidden" : false
+                }
+            ]
+        },
+		"pid_sp" : {
+            "friendly_name" : "PID Smith Predictor",
+            "module_name" : "pid_sp",
+            "image" : "pid_sp.png",
+            "description" : "The Auto Center PID controller for PiFire, modified to include a Smith Predictor. This software was originally developed by GitHub user DBorello as part of his excellent PiSmoker project.  Slightly modified by @weberbox and @dogtreatfairy and adapted for PiFire. ",
+            "author" : "Dan Borello",
+            "link" : "https://github.com/DBorello/PiSmoker", 
+            "contributors" : ["Ben Parmeter", "James Weber", "Ryan Steel"],
+            "attributions" : [],
+            "recommendations" : {
+                "cycle" : { 
+                    "cycle_time" : 15,
+                    "cycle_ratio_min" : 0.05,
+                    "cycle_ratio_max" : 0.9
+                }   
+            },
+            "config" : [
+                {
+                    "option_name" : "PB",
+                    "option_friendly_name" : "Proportional Band(PB)", 
+                    "option_description" : "This is the temperature band centered around the set point, that the controller is active.  If the error is less than PB/2, the command is 1.0. Higher PB's decrease controller response to error. [Default=60.0]",
+                    "option_type" : "float",
+                    "option_default" : 60.0,
+                    "option_min" : null,
+                    "option_max" : null, 
+                    "option_step" : 0.1,
+                    "hidden" : false
+                },
+                {
+                    "option_name" : "Td",
+                    "option_friendly_name" : "Derivative Time (Td)", 
+                    "option_description" : "Time (in seconds) to predict the future value. Higher Td makes the controller more responsive to the Error Rate of Change. [Default=45.0]",
+                    "option_type" : "float",
+                    "option_default" : 45.0,
+                    "option_min" : null,
+                    "option_max" : null,
+                    "option_step" : 0.1,  
+                    "hidden" : false
+                },
+                {
+                    "option_name" : "Ti",
+                    "option_friendly_name" : "Integral Time (Ti)", 
+                    "option_description" : "Time (in seconds) to eliminate the integral error. Higher Ti makes the controller less responsive to accumulated error over time. [Default=180.0]",
+                    "option_type" : "float",
+                    "option_default" : 180.0,
+                    "option_min" : null,
+                    "option_max" : null, 
+                    "option_step" : 0.1,
+                    "hidden" : false
+                },
+				{
+                    "option_name" : "stable_window",
+                    "option_friendly_name" : "Stable Window (Degrees)", 
+                    "option_description" : "Window +/- from Set Point for triggering Overshoot condition. When in Overshoot, Output is set to min. [Default=12]",
+                    "option_type" : "float",
+                    "option_default" : 12,
+                    "option_min" : null,
+                    "option_max" : null, 
+                    "option_step" : 1,
+                    "hidden" : false
+                },
+				{
+                    "option_name" : "center_factor",
+                    "option_friendly_name" : "Center Factor", 
+                    "option_description" : "Center Factor multiplied by Set Point. Higher Center Factors increase system response at high set points. Lower Center Factors increase system stability at low set points but may keep the system from reaching high set points. EX: At 225F center is 225 * 0.0012 = 0.27. [Default=0.0010]",
+                    "option_type" : "float",
+                    "option_default" : 0.0010,
+                    "option_min" : null,
+                    "option_max" : null, 
+                    "option_step" : 0.0001,
+                    "hidden" : false
+                },
+				{
+                    "option_name" : "tau",
+                    "option_friendly_name" : "Tau (s)", 
+					"option_description" : "Time constant for the Smith Predictor. This is the time it takes the system to reach 2/3 of it's final value after a Set Point change. Higher Tau decreases system sensitivity to model mismatch. [Default=125]",
+                    "option_type" : "float",
+                    "option_default" : 125,
+                    "option_min" : null,
+                    "option_max" : null, 
+                    "option_step" : 1,
+                    "hidden" : false
+                },
+				{
+					"option_name": "theta",
+					"option_friendly_name" : "Theta (s)", 
+					"option_description" : "Time delay in the system. Theta is measured after a Set Point change as the time to reach [2/3 Set Point - 1/3 Set Point]. Higher Theta makes the system more sensitive to delays in the system. [Default=65]",
+ 					"option_type" : "float",
+  					"option_default" : 65,
+   					"option_min" : null,
+    				"option_max" : null, 
+     				"option_step" : 1,
+      				"hidden" : false
                 }
             ]
         },
