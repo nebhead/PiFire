@@ -1,10 +1,10 @@
 {
   "metadata" : {
     "versions" : {
-      "server" : "1.8.7",
+      "server" : "1.8.8",
       "cookfile" : "1.5.0",
       "recipe" : "1.0.0",
-      "build" : 35
+      "build" : 36
     },
     "update_notes" : "",
     "update_warnings" : ""
@@ -112,7 +112,7 @@
           "command_list" : [["sudo", "cp", "./auto-install/supervisor/*.conf", "/etc/supervisor/conf.d"]]
         },
         "control": {
-          "py_dependencies": ["rpi_hardware_pwm", "scikit-learn==1.4.2"],
+          "py_dependencies": ["rpi-hardware-pwm", "scikit-learn==1.4.2"],
           "apt_dependencies": [],
           "command_list" : []
         }

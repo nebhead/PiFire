@@ -59,3 +59,9 @@ share/
 lib64
 
 pyvenv.cfg
+
+root-control.sh
+
+venv-desktop.sh
+
+venv-laptop.sh
