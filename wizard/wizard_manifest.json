@@ -1310,6 +1310,40 @@
 					]
 				}			
 			},
+			"bt_meater" : {
+				"friendly_name" : "Bluetooth - Meater",
+				"filename" : "bt_meater",
+				"description" : "This device module supports Bluetooth LE Meater probe thermometer devices (does not currently support Meater 'Pro' devices). This module is still experimental, so feedback is welcome.",
+				"default" : false,
+				"image" : "bt_meater.png",
+				"reboot_required" : false,
+				"py_dependencies" : ["simplepyble", "icecream"], 
+				"apt_dependencies" : [],
+				"command_list" : [],
+				"settings_dependencies" : {
+					"units" : {
+						"friendly_name" : "Temp Units",
+						"description" : "Select the temperature units to use for PiFire globally.  (This can be modified in settings later)",
+						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
+						"settings" : ["globals", "units"]
+					}
+				},
+				"device_specific" : {
+					"ports" : ["BT0"],
+					"config" : [
+						{
+							"label" : "transient", 
+							"friendly_name" : "Transient",
+							"description" : "Select whether this device is fixed/always attached (default) or if it is transient/sometimes detached.",
+							"type" : "list", 
+							"list_values" : ["True", "False"],
+							"list_labels" : ["Transient (sometimes detached)", "Fixed (always attached)"],
+							"default" : "True",
+							"hidden" : true
+						}
+					]
+				}			
+			},
 			"prototype" : {
 				"friendly_name" : "Prototype",
 				"filename" : "prototype",
