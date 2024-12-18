@@ -1313,7 +1313,7 @@
 			"bt_meater" : {
 				"friendly_name" : "Bluetooth - Meater",
 				"filename" : "bt_meater",
-				"description" : "This device module supports Bluetooth LE Meater probe thermometer devices (does not currently support Meater 'Pro' devices). This module is still experimental, so feedback is welcome.",
+				"description" : "This device module supports Bluetooth LE Meater probe thermometer devices (includes Meater Pro). This module is still experimental, so feedback is welcome.",
 				"default" : false,
 				"image" : "bt_meater.png",
 				"reboot_required" : false,

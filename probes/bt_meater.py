@@ -10,8 +10,8 @@ Description:
 	
 	device_info = {
 			'device' : 'your_device_name',	# Unique name for the device
-			'module' : 'bt_meater',  			# Must be populated for this module to load properly
-			'ports' : ['BT0', 'BT1', 'BT2', 'BT3'], # This should be defined by the user with the number of ports desired
+			'module' : 'bt_meater',  		# Must be populated for this module to load properly
+			'ports' : ['BT0'],  			# Currently only tip temperature from one probe is supported.   
 			'config' : {
 				'transient' : True
 			} 
@@ -20,10 +20,13 @@ Description:
 	''
 
 Credits:
-    Original code derived from:
-
+    Contributors:
+        - Nathan Faber
+        - Eric Thomas
+        - Tim O'Brien
 
 Requirements:
+	The simplepyble python module.
     A compatible Meater thermometer. 
 '''
 
@@ -36,6 +39,7 @@ import simplepyble
 import threading
 import time
 import logging
+import struct
 
 from probes.base import ProbeInterface
 from icecream import ic  # For debugging
@@ -219,6 +223,215 @@ class Meater:
 			#ic(f"Notify Attempt failed: {e}")
 			self.logger.debug(f"Notify Attempt failed: {e}")
 
+class Meater_Pro:
+	def __init__(self, peripheral, scan_time=5000):
+		"""
+		Initialize the Meater class.
+
+		Parameters
+		----------
+		scan_time : int, optional
+			Time in milliseconds to scan for the Meater probe. Defaults to 5000.
+		"""
+		self.logger = logging.getLogger("control")
+		self.is_connected = False
+		self.scan_time = scan_time
+		self.peripheral = peripheral
+		self.internal_temps = None
+		self.ambient_temp = None
+		self.data = None
+
+	def toCelsius(self, value):
+		"""
+			Converts a given value to Celsius.
+
+			Parameters
+			----------
+			value : numeric
+				The value to be converted to Celsius.
+
+			Returns
+			-------
+			float
+				The converted temperature in Celsius.
+		"""
+		if value > 0:
+			return (value + 8) / 32
+
+		if value < 0:
+			return (value - 8) / 32
+
+		return 0
+
+	def toFahrenheitInternals(self, temps):
+		"""
+			Converts an array of temperatures to Fahrenheit.
+
+			Parameters
+			----------
+			temps : array-like
+				An array of temperatures to be converted to Fahrenheit.
+
+			Returns
+			-------
+			array-like
+				The array of temperatures converted to Fahrenheit.
+		"""
+		for i in range(len(temps)):
+			temps[i] = temps[i] * 9 / 5 + 32
+		return temps
+
+	def toFahrenheitAmbient(self, temp):
+		"""
+			Converts a temperature in Celsius to Fahrenheit.
+
+			Parameters
+			----------
+			temp : numeric
+				The temperature to be converted to Fahrenheit.
+
+			Returns
+			-------
+			float
+				The converted temperature in Fahrenheit.
+		"""
+		return temp * 9 / 5 + 32
+
+	def get_short(self, data, offset):
+		"""
+		Extracts a short integer from a byte array at the specified offset.
+
+		Parameters
+		----------
+		data : bytes
+			The byte array from which to extract the short integer.
+		offset : int
+			The offset within the byte array to start extraction.
+
+		Returns
+		-------
+		int
+			The extracted short integer.
+		"""
+		return struct.unpack_from("<h", data, offset)[0]
+
+	def ambient_correction(self, ambient_temp, internal_temp):
+		"""
+		Applies a correction to the internal temperature reading based on the ambient temperature.
+
+		Parameters
+		----------
+		ambient_temp : int
+			The ambient temperature reading.
+		internal_temp : int
+			The internal temperature reading to be corrected.
+
+		Returns
+		-------
+		int
+			The corrected internal temperature reading.
+		"""
+		return (int)(internal_temp + ((ambient_temp - internal_temp) * 1.2))
+
+	def convert_to_temperatures(self, data):
+		"""
+		Converts a byte array of temperatures from the Meater probe into a list of Celsius temperatures.
+
+		Parameters
+		----------
+		data : bytes
+			The byte array of temperatures to be converted.
+
+		Notes
+		-----
+		The byte array is assumed to contain 5 short integers representing the internal temperatures of the Meater probe, followed by a short integer representing the ambient temperature of the probe.
+
+		The internal temperatures are corrected for the ambient temperature before being converted to Celsius.
+		"""
+		self.internal_temps = [
+			self.toCelsius(self.get_short(data, 0)),
+			self.toCelsius(self.get_short(data, 2)),
+			self.toCelsius(self.get_short(data, 4)),
+			self.toCelsius(self.get_short(data, 6)),
+			self.toCelsius(self.get_short(data, 8)),
+		]
+
+		self.ambient_temp = self.toCelsius(self.get_short(data, 10))
+		self.ambient_correction(self.ambient_temp, self.internal_temps[4])
+
+	def getAmbient(self):
+		"""
+			Returns the ambient temperature in Fahrenheit.
+		"""
+		return self.toFahrenheitAmbient(self.ambient_temp)
+
+	def getTips(self):
+		"""
+			Returns the tip temperatures(1-5) in Fahrenheit.
+		"""
+		return self.toFahrenheitInternals(self.internal_temps)
+
+	def getTip(self):
+		"""
+			Returns the tip temperature (smallest value from tip sensors 1-5) in Fahrenheit.
+		"""
+		internal_temps = self.toFahrenheitInternals(self.internal_temps)
+		# Return the smallest value in list internal_temps
+		return min(internal_temps)
+
+	def printTemps(self):
+		"""
+			Prints the ambient and tip temperatures.
+		"""
+		logger_msg = f'Ambient: {self.getAmbient()} \N{DEGREE SIGN}F Tip Sensors(1-5): {self.getTips()}'
+		self.logger.debug(logger_msg)	
+		#ic(logger_msg)
+
+	def disconnect(self):
+		"""
+			Disconnects from the Meater probe.
+		"""
+		self.peripheral.disconnect()
+		self.is_connected = False
+
+	def notification_handler(self, data):
+		"""
+			This is a callback function that is called whenever a notification is received from the Meater probe.
+			It is responsible for storing the received data and printing it to the console.
+		"""
+
+		self.data = data
+		self.convert_to_temperatures(self.data)
+		#self.printTemps()
+
+	def subscribe_to_temps(self):
+		"""
+		Subscribes to notifications from the Meater probe to receive temperature data.
+
+		This method registers a callback function to handle temperature data notifications
+		from the Meater probe. It listens to specific characteristic UUIDs for temperature 
+		data updates. If there is an error during the subscription process, an error message 
+		is printed.
+
+		char uuids:
+			c9e2746c-59f1-4e54-a0dd-e1e54555cf8b,
+			7edda774-045e-4bbf-909b-45d1991a2876
+
+		Note:
+			Ensure that the peripheral is connected before calling this method.
+		"""
+
+		try:
+			contents = self.peripheral.notify(
+				"c9e2746c-59f1-4e54-a0dd-e1e54555cf8b",
+				"7edda774-045e-4bbf-909b-45d1991a2876",
+				lambda data: self.notification_handler(data),
+			)
+		except Exception as e:
+			logger_msg = f"Notify Attempt failed: {e}"
+			self.logger.debug(logger_msg)
+			#ic(f"Notify Attempt failed: {e}")
+
 
 class MeaterProbeHandler():
 	def __init__(self):
@@ -277,7 +490,9 @@ class MeaterProbeHandler():
 		#ic(logger_msg)
 		services = self.peripheral.services()
 		
-		if 'a75cc7fc-c956-488f-ac2a-2dbc08b63a04' in [s.uuid() for s in services]:
+		if 'c9e2746c-59f1-4e54-a0dd-e1e54555cf8b' in [s.uuid() for s in services]:
+			return Meater_Pro(self.peripheral)
+		elif 'a75cc7fc-c956-488f-ac2a-2dbc08b63a04' in [s.uuid() for s in services]:
 			return Meater(self.peripheral)
 		else:
 			return None
@@ -399,7 +614,7 @@ class ReadProbes(ProbeInterface):
 		if len(probe_values_F) >= len(self.port_map):
 			for index, port in enumerate(self.port_map):
 				''' Read Ports from Device '''
-				port_values[port] = probe_values_F[index] if self.units == 'F' else self._to_celsius(probe_values_F[index]) 
+				port_values[port] = int(probe_values_F[index]) if self.units == 'F' else self._to_celsius(probe_values_F[index]) 
 				output_value = port_values[port]
 
 				''' Output Tr '''
