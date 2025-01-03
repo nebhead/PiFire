@@ -65,3 +65,7 @@ root-control.sh
 venv-desktop.sh
 
 venv-laptop.sh
+
+dt.sh
+
+lt.sh
