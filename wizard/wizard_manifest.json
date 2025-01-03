@@ -1964,7 +1964,7 @@
 				"default" : false,
 				"image" : "st7789e.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["git+https://github.com/mander1000/st7789-python", "pillow>=9.2.0", "numpy==1.24.2"],
+				"py_dependencies" : ["git+https://github.com/mander1000/st7789-python", "pillow>=9.2.0", "numpy==1.24.2", "pyky040==0.1.4"],
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
 				"settings_dependencies" : {},
