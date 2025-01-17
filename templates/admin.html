@@ -132,6 +132,38 @@
 									<button type="submit" class="btn btn-outline-primary btn-block shadow" name="download_logs" value="true">
 										<i class="fa-solid fa-download"></i>&nbsp; Download Server Logs (zipped)
 									</button>
+									<br>
+									<!-- Delete Logs button trigger modal -->
+									<button type="button" class="btn btn-outline-danger btn-block shadow" data-toggle="modal" data-target="#deleteLogsModal">
+										<i class="fa-regular fa-trash-can"></i>
+										&nbsp;Delete All Debug Logs
+									</button>
+									
+									<!-- Delete LogsModal -->
+									<div class="modal fade" id="deleteLogsModal" tabindex="-1" aria-labelledby="deleteLogsModalLabel" aria-hidden="true">
+										<div class="modal-dialog">
+										<div class="modal-content">
+											<div class="modal-header">
+											<h5 class="modal-title" id="deleteLogsModalLabel">Delete Logs Confirmation</h5>
+											<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+												<span aria-hidden="true">&times;</span>
+											</button>
+											</div>
+											<div class="modal-body">
+											Really delete all debug logs? 
+											<br> <br>
+											<i>This cannot be undone.</i>
+											<br>
+											<i>'/tmp/events.log' will <b>not</b> be deleted.</i>
+											</div>
+											<div class="modal-footer">
+											<button type="button" class="btn btn-secondary" data-dismiss="modal">Nevermind</button>
+											<button type="submit" class="btn btn-danger" id="delete_logs" name="delete_logs" value="true">Yes, I'm sure.</button>
+											</div>
+										</div>
+										</div>
+									</div>
+  
 								</form>
 								<br>
 								<a href="/logs" class="btn btn-outline-primary btn-block shadow" role="button">

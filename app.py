@@ -2267,6 +2267,14 @@ def admin_page(action=None):
 			zip_file = _zip_files_logs('logs')
 			return send_file(zip_file, as_attachment=True, max_age=0)
 		
+		if 'delete_logs' in response:
+			# Delete *.log files in logs/
+			try:
+				os.system('rm logs/*.log')
+				success.append('Log files deleted.')
+			except:
+				errors.append('There was an error restoring pellet database.  Restore file wasn\'t specified or found')
+
 		if 'download_settings' in response: 
 			return send_file('settings.json', as_attachment=True, max_age=0)
 
@@ -3567,7 +3575,7 @@ def _zip_files_logs(dir_name):
 	file_name = f'/tmp/PiFire_Logs_{time_str}.zip'
 	directory = pathlib.Path(f'{dir_name}')
 	with zipfile.ZipFile(file_name, "w", zipfile.ZIP_DEFLATED) as archive:
-		for file_path in directory.rglob("*"):
+		for file_path in directory.rglob("*.log"):
 			archive.write(file_path, arcname=file_path.relative_to(directory))
 	return file_name
 
