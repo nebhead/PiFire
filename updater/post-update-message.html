@@ -1,7 +1,7 @@
 <!-- Post Update Message for v1.8.0 -->
 <H1>
     <img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="50" height="50" class="d-inline-block align-top" alt="">
-    PiFire 1.9.0 Release - TBD / 2024
+    PiFire 1.9.0 Release - TBD / 2025
 </H1>
 <div class="row justify-content-center">
     <div class="card" style="width:80%">
@@ -69,7 +69,8 @@
                     Removed certain unsupported rotations from the ST7789 320x240 display configurations.  (90/270 degrees are not supported by the ST7789 driver module)
                  </li>
                  <li>
-                    Bug Fix 01
+                    Fixed a missing voltage bounds check for ADC probes using Celsius units.  This should prevent the probes from reporting invalid temperatures when probes 
+                    are not connected.
                  </li>
              </ul>
              
