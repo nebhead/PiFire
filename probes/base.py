@@ -175,6 +175,7 @@ class ProbeInterface:
 			''' Check bounds for realistic temperature values (0-600F), else report 0F '''
 			if (tempF < 0) or (tempF > 600):
 				tempF = 0
+				tempC = 0
 
 		else:
 			tempF = 0.0
