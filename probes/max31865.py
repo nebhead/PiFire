@@ -61,6 +61,8 @@ class RTDDevice():
 		self.rtd_nominal = rtd_nominal
 		self.ref_resistor = ref_resistor
 
+		self.status = {}
+
 		# Setup SPI
 		self.spi = spidev.SpiDev()
 		self.spi.open(0, self.cs)
@@ -183,6 +185,9 @@ class RTDDevice():
 
 	def close(self):
 		self.spi.close()
+
+	def get_status(self):
+		return self.status
 
 class ReadProbes(ProbeInterface):
 

@@ -71,7 +71,7 @@ class DataDelegate(DefaultDelegate):
 		self.logger = logging.getLogger("control")
 		self.probe_temps = []
 		self.data_initialized = False
-		self.batt_percent = 0
+		self.batt_percent = None
 
 	def handleNotification(self, cHandle, data):
 		if cHandle == 48:
@@ -102,7 +102,7 @@ class DataDelegate(DefaultDelegate):
 			if max_voltage == 0: max_voltage = 6580 # XXX check this
 			self.batt_percent = 100 * current_voltage / max_voltage
 			logger_msg = f'Battery Percent: {self.batt_percent}'
-			#self.logger.debug(logger_msg) # (batt_percent)
+			self.logger.debug(logger_msg) # (batt_percent)
 			#ic(logger_msg)
 
 		else:
@@ -110,22 +110,35 @@ class DataDelegate(DefaultDelegate):
 
 	def get_probe_temps(self):
 		return self.probe_temps
-		
+
+	def get_batt_percent(self):
+		return self.batt_percent
+
 class iBBQ_Device():
 	def __init__(self, port_map, primary_port, units, transient=True):
 		self.logger = logging.getLogger("control")
 		self.transient = transient
 		self.port_map = port_map
 		self.primary_port = primary_port
-		self.probe_values_C = []
+		self.battery_percentage = None
+
 		self.units = units 
 		self.debug = True
 		self.device_ready = False
+		self.device_setup = False
 
 		self.port_values = []
-	
+		self.probe_values_C = []
+		
 		self.hardware_id = None
-		self.device_setup = False
+
+		self.status = {
+			'battery_percentage' : self.battery_percentage,
+			'battery_charging' : True if self.battery_percentage == 0 else False,
+			'connected' : self.device_setup,
+			'hardware_id' : self.hardware_id
+		}
+
 		self.sensor_thread_active = False
 
 		self.device_thread = threading.Thread(target=self._setup_device)
@@ -250,6 +263,7 @@ class iBBQ_Device():
 					while self.sensor_thread_active:
 						if self.ibbq_device.waitForNotifications(1):
 							self.probe_values_C = self.ibbq_delegate.get_probe_temps()
+							self.battery_percentage = self.ibbq_delegate.get_batt_percent()
 
 				except BTLEDisconnectError:
 					logger_msg = f'iBBQ device has gone away...'
@@ -270,6 +284,34 @@ class iBBQ_Device():
 
 		return self.probe_values_C
 
+	def get_status(self):
+		"""
+		Return the current status of the iBBQ device
+
+		Returns
+		-------
+		status : dict
+			A dictionary containing the current status of the iBBQ device.
+			Contains the following keys:
+				- battery_percentage : int
+					The current battery percentage of the iBBQ device
+				- battery_charging : boolean
+					True if the iBBQ device is currently charging, False otherwise
+				- connected : boolean
+					True if the iBBQ device is currently connected, False otherwise
+				- hardware_id : string
+					The hardware_id of the iBBQ device
+		"""
+		if self.battery_percentage is not None:
+			self.status['battery_percentage'] = self.battery_percentage if (self.battery_percentage > 0 and self.device_setup) else None
+			self.status['battery_charging'] = True if (self.battery_percentage == 0 and self.device_setup) else False # Reads zero when charging
+		else:
+			self.status['battery_percentage'] = self.battery_percentage
+			self.status['battery_charging'] = False
+		self.status['connected'] = self.device_setup
+		self.status['hardware_id'] = self.hardware_id
+		return self.status
+	
 class ReadProbes(ProbeInterface):
 	def __init__(self, probe_info, device_info, units):
 		super().__init__(probe_info, device_info, units)

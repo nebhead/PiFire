@@ -11,10 +11,9 @@
 {% block content %}
 <!-- Card Section -->
 <div class="row"> <!-- Probe Cards -->
-	{% for probe in settings['probe_settings']['probe_map']['probe_info'] %}
-		{% if probe['type'] != 'Aux' %}
+	{% for key, probe in probe_status['P'].items() %}
 		<div id="card_{{ probe['label'] }}" class="col-lg-4 col-md-6 col-sm-12" 
-			{% if probe['label'] in dash_data['custom']['hidden_cards'] or not probe['enabled'] %}
+			{% if key in dash_data['custom']['hidden_cards'] or not probe['enabled'] %}
 				style="display:none" 
 			{% endif %}
 			{% if probe['enabled'] %}
@@ -28,7 +27,23 @@
 			{{ render_probe_card(probe, settings, control, probe['enabled']) }}
 			<br>
 		</div>
+	{% endfor %}
+	{% for key, probe in probe_status['F'].items() %}
+	<div id="card_{{ probe['label'] }}" class="col-lg-4 col-md-6 col-sm-12" 
+		{% if key in dash_data['custom']['hidden_cards'] or not probe['enabled'] %}
+			style="display:none" 
 		{% endif %}
+		{% if probe['enabled'] %}
+			data-enabled="true"
+		{% else %}
+			data-enabled="false"
+		{% endif %}
+		>
+		<br>
+		<!-- Card for Probe Data -->
+		{{ render_probe_card(probe, settings, control, probe['enabled']) }}
+		<br>
+	</div>
 	{% endfor %}
 		<div id="card_status" class="col-lg-4 col-md-6 col-sm-12" 
 		{% if 'status' in dash_data['custom']['hidden_cards'] %}

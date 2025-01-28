@@ -76,6 +76,8 @@ class RTDDevice():
 		self.rtd_nominal = rtd_nominal
 		self.ref_resistor = ref_resistor
 
+		self.status = {}
+
 		self.spi = board.SPI()
 		self.cs = digitalio.DigitalInOut(LOOKUP_TABLE[cs])  # Chip select of the MAX31865 board.
 		self.sensor = adafruit_max31865.MAX31865(self.spi, self.cs, rtd_nominal=self.rtd_nominal, ref_resistor=self.ref_resistor, wires=self.wires)
@@ -87,6 +89,9 @@ class RTDDevice():
 	@property
 	def resistance(self): 
 		return self.sensor.resistance
+
+	def get_status(self):
+		return self.status
 
 class ReadProbes(ProbeInterface):
 

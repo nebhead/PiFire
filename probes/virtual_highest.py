@@ -64,3 +64,6 @@ class ReadProbes(ProbeInterface):
 
 		return self.output_data
 
+	def get_device_info(self):
+		self.device_info['status'] = {}
+		return self.device_info

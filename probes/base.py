@@ -242,6 +242,7 @@ class ProbeInterface:
 		return self.port_map
 
 	def get_device_info(self):
+		self.device_info['status'] = self.device.get_status()
 		return self.device_info
 
 	def _to_celsius(self, fahrenheit):

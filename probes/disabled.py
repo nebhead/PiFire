@@ -53,3 +53,10 @@ class ReadProbes(ProbeInterface):
 				self.output_data['aux'][self.port_map[port]] = 0
 		
 		return self.output_data
+
+	def get_device_info(self):
+		self.device_info['status'] = {
+			'connected' : False,
+			'disabled' : True
+		}
+		return self.device_info

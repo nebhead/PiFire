@@ -136,8 +136,7 @@ if len(probe_errors) > 0:
 		write_errors(errors)
 
 # Get probe device info for frontend
-probe_device_info = probe_complex.get_device_info()
-write_generic_key('probe_device_info', probe_device_info)
+write_generic_key('probe_device_info', probe_complex.get_device_info())
 
 '''
 Set up Display Module
@@ -706,6 +705,9 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			# Add new probe profiles to probe complex object
 			probe_complex.update_probe_profiles(settings['probe_settings']['probe_map']['probe_info'])
 
+		# Get probe device info for frontend
+		write_generic_key('probe_device_info', probe_complex.get_device_info())
+
 		# Get temperatures from all probes
 		sensor_data = probe_complex.read_probes()
 		ptemp = list(sensor_data['primary'].values())[0]  # Primary Temperature or the Pit Temperature
@@ -1160,6 +1162,10 @@ while True:
 			write_control(control, direct_write=True, origin='control')
 
 	status = read_status()
+	
+	# Get probe device info for frontend
+	write_generic_key('probe_device_info', probe_complex.get_device_info())
+
 	current = grill_platform.get_output_status()  # Get current pin settings
 	for item in settings['platform']['outputs']:
 		try:

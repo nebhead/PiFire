@@ -42,7 +42,7 @@ import logging
 import struct
 
 from probes.base import ProbeInterface
-from icecream import ic  # For debugging
+#from icecream import ic  # For debugging
 
 '''
 *****************************************
@@ -171,7 +171,7 @@ class Meater:
 			Prints the ambient and tip temperatures.
 		"""
 		event = f"Ambient: {self.getAmbient()} \N{DEGREE SIGN}F Tip: {self.getTip()} \N{DEGREE SIGN}F"
-		ic(event)
+		#ic(event)
 		self.logger.debug(event)
 
 	def disconnect(self):
@@ -512,6 +512,13 @@ class Meater_Device():
 	
 		self.address = None
 		self.device_setup = False
+
+		self.status = {
+			#'battery_percentage' : None,
+			'connected' : self.device_setup,
+			'hardware_id' : self.address
+		}
+
 		self.sensor_thread_active = False
 
 		self.device_thread = threading.Thread(target=self._setup_device)
@@ -588,7 +595,13 @@ class Meater_Device():
 			return self.probe_values_F
 		else:
 			return None
-			
+	
+	def get_status(self):
+		#self.status['battery_percentage'] = None  # Not currently implemented
+		self.status['connected'] = self.device_setup
+		self.status['hardware_id'] = self.address
+		return self.status
+	
 class ReadProbes(ProbeInterface):
 	def __init__(self, probe_info, device_info, units):
 		super().__init__(probe_info, device_info, units)
@@ -614,8 +627,11 @@ class ReadProbes(ProbeInterface):
 		if len(probe_values_F) >= len(self.port_map):
 			for index, port in enumerate(self.port_map):
 				''' Read Ports from Device '''
-				port_values[port] = int(probe_values_F[index]) if self.units == 'F' else self._to_celsius(probe_values_F[index]) 
-				output_value = port_values[port]
+				if probe_values_F[index] is not None:
+					port_values[port] = int(probe_values_F[index]) if self.units == 'F' else self._to_celsius(probe_values_F[index]) 
+					output_value = port_values[port]
+				else:
+					output_value = None
 
 				''' Output Tr '''
 				self.output_data['tr'][self.port_map[port]] = 0  # resistance NA

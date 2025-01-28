@@ -53,6 +53,7 @@ class ADSDevice():
 	def __init__(self, i2c_bus_addr=0x48):
 		self.logger = logging.getLogger("control")
 		self.ads = ADS1115.ADS1115(address=i2c_bus_addr)
+		self.status = {}
 
 	def read_voltage(self, port):
 		adc_ports = {
@@ -67,6 +68,9 @@ class ADSDevice():
 			self.logger.exception(f'Exception occurred while reading probe port {port}.  Trace dump: ')
 			voltage = 0
 		return voltage
+
+	def get_status(self):
+		return self.status
 
 class ReadProbes(ProbeInterface):
 

@@ -56,7 +56,6 @@ class ProbesMain:
 			Send the probe information and the device information to the device module 
 			'''
 			instance = newmodule.ReadProbes(self.probe_info, device, self.units)
-			self.device_info_list.append(device)  # Build list of device information
 
 			'''
 			Append the probe device to the devices list
@@ -107,4 +106,8 @@ class ProbesMain:
 		return self.errors
 	
 	def get_device_info(self):
+		''' for each device in the self.probe_device_list, get the device info '''
+		self.device_info_list = []
+		for device in self.probe_device_list:
+			self.device_info_list.append(device.get_device_info())
 		return self.device_info_list

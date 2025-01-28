@@ -82,7 +82,8 @@ def dash():
 	current = settings['dashboard']['current']
 	dash_template = settings['dashboard']['dashboards'][current].get('html_name', 'dash_default.html')
 	dash_data = settings['dashboard']['dashboards'].get(current, {})
-
+	probe_status = read_probe_status(settings['probe_settings']['probe_map']['probe_info'])
+	
 	''' Check if control process is up and running. '''
 	process_command(action='sys', arglist=['check_alive'], origin='dash')  # Request supported commands 
 	data = _get_system_command_output(requested='check_alive')
@@ -93,6 +94,7 @@ def dash():
 						   settings=settings,
 						   control=control,
 						   dash_data=dash_data,
+						   probe_status=probe_status,
 						   errors=errors,
 						   warnings=warnings,
 						   page_theme=settings['globals']['page_theme'],
@@ -2454,9 +2456,10 @@ def api_page(action=None, arg0=None, arg1=None, arg2=None, arg3=None):
 			return jsonify({'control':control}), 201
 		elif action == 'current':
 			''' Only fetch data from RedisDB or locally available, to improve performance '''
-			current_temps = read_current()
-			control = read_control()
+			current_temps = read_current()  # Get current temperatures
+			control = read_control()  # Get status of control
 			display = read_status()  # Get status of display items
+			probe_status = read_probe_status(settings['probe_settings']['probe_map']['probe_info'])
 
 			''' Create string of probes that can be hashed to ensure UI integrity '''
 			probe_string = ''
@@ -2486,6 +2489,7 @@ def api_page(action=None, arg0=None, arg1=None, arg2=None, arg3=None):
 			status['outpins'] = display['outpins']
 			status['startup_timestamp'] = display['startup_timestamp']
 			status['ui_hash'] = create_ui_hash()
+			status['probe_status'] = probe_status
 			return jsonify({'current':current_temps, 'notify_data':notify_data, 'status':status}), 201
 		elif action == 'hopper':
 			pelletdb = read_pellet_db()

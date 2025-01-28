@@ -3,18 +3,68 @@
 <!-- Probe Card -->
 <div class="card shadow"> 
 	{% if enabled %}
-	<div class="card-header bg-primary text-white text-center">
+	<div class="card-header bg-primary text-white text-center d-flex justify-content-between align-items-center">
 	{% else %}
-	<div class="card-header bg-secondary text-white-50 text-center">
+	<div class="card-header bg-secondary text-white-50 text-center d-flex justify-content-between align-items-center">
 	{% endif %}
-		<strong>
-			{% if probe_data['type'] == 'Primary' %}
-			<i class="fas fa-tachometer-alt"></i>&nbsp;
+		<div class="flex-grow-1">  <!-- This div will take up remaining space and center its content -->
+			<strong>
+				{% if probe_data['type'] == 'Primary' %}
+				<i class="fas fa-tachometer-alt"></i>&nbsp;
+				{% else %}
+				<i class="fas fa-thermometer"></i>&nbsp;
+				{% endif %} 
+				{{ probe_data['name'] }}
+			</strong>
+		</div>
+		{% if probe_data['status']['connected'] is defined %}		
+			
+			<span id="conn_status_{{ probe_data['label'] }}" class="badge badge-pill 
+			{% if probe_data['status']['connected'] %}
+			badge-success
 			{% else %}
-			<i class="fas fa-thermometer"></i>&nbsp;
-			{% endif %} 
-			{{ probe_data['name'] }}
-		</strong>
+			badge-light
+			{% endif %}
+			">
+				<span class="fa-stack" style="vertical-align: top;" data-toggle="tooltip" data-placement="top" 
+					  title="{% if probe_data['status']['connected'] %}Connected{% else %}Disconnected{% endif %}">
+					<i class="fas fa-wifi fa-stack-1x fa-shake" style="--fa-animation-iteration-count: 1;"></i>
+					{% if probe_data['status']['connected'] == False %}
+					<i class="fas fa-slash fa-stack-1x"></i>
+					{% endif %}
+				</span>
+			</span>
+			&nbsp;
+		{% endif %}
+		{% if probe_data['status']['battery_percentage'] is defined %}
+			<span id="bat_status_{{ probe_data['label'] }}" class="badge badge-pill 
+			{% if probe_data['status']['battery_percentage'] == None %}
+			badge-light
+			{% elif probe_data['status']['battery_percentage'] < 10 %}
+			badge-danger
+			{% elif probe_data['status']['battery_percentage'] < 40 %}
+			badge-warning
+			{% else %}
+			badge-success
+			{% endif %}
+			">
+				<span class="fa-stack" style="vertical-align: top;" data-toggle="tooltip" data-placement="top" 
+					  title="{% if probe_data['status']['battery_percentage'] == None %}Unknown{% else %}{{ probe_data['status']['battery_percentage']|int }}%{% endif %}">
+					{% if probe_data['status']['battery_percentage'] == None %}
+					<i class="fas fa-battery-empty fa-stack-1x text-secondary"></i>
+					<i class="fa-solid fa-question fa-stack-1x text-danger"></i>
+					{% elif probe_data['status']['battery_percentage'] < 10 %}
+					<i class="fas fa-battery-empty fa-stack-1x"></i>
+					{% elif probe_data['status']['battery_percentage'] < 40 %}
+					<i class="fas fa-battery-half fa-stack-1x"></i>
+					{% elif probe_data['status']['battery_percentage'] < 90 %}
+					<i class="fa-solid fa-battery-three-quarters fa-stack-1x"></i>
+					{% else %}
+					<i class="fas fa-battery-full fa-stack-1x"></i>
+					{% endif %}
+				</span>
+			</span>
+		{% endif %}
 	</div>
 	<div class="card-body text-center justify-content-center">
 		<div class="row">

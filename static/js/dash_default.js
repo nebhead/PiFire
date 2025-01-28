@@ -21,6 +21,7 @@ var last_auger_status = null;
 var last_igniter_status = null;
 var last_pmode_status = null;
 var last_lid_open_status = false;
+var last_probe_status = {};
 var display_mode = null;
 
 if (typeof dashDataStruct == 'undefined') {
@@ -68,6 +69,8 @@ function initProbeCards() {
 				probeGauges[key] = initProbeGauge(key);
 				probeGauges[key].setValue(0);
 			};
+			last_probe_status = current.status.probe_status;
+			//console.log(last_probe_status);
 			probesReady = true;
 		}
 	});
@@ -381,6 +384,47 @@ function updateProbeCards() {
 			//	document.getElementById('smokeplus_status').innerHTML = '<i class="fas fa-cloud fa-stack-2x" style="color:rgb(150, 150, 150)" data-toggle="tooltip" data-placement="top" title="Smoke Plus OFF"></i><i class="fas fa-plus fa-stack-1x fa-inverse"></i>';
 			//};
 
+			// Check for connection status changes
+			for (key in current.status.probe_status.P) {
+				const currentConnected = current.status.probe_status.P[key].status.connected || false;
+				const lastConnected = last_probe_status.P[key].status.connected || false;
+				
+				if (currentConnected !== lastConnected) {
+					updateProbeCardConnStatus(key, currentConnected);
+					last_probe_status.P[key].status.connected = currentConnected;
+				}
+			}
+
+			for (key in current.status.probe_status.F) {
+				const currentConnected = current.status.probe_status.F[key].status.connected || false;
+				const lastConnected = last_probe_status.F[key].status.connected || false;
+				
+				if (currentConnected !== lastConnected) {
+					updateProbeCardConnStatus(key, currentConnected);
+					last_probe_status.F[key].status.connected = currentConnected;
+				}
+			}
+
+			// Check for battery status changes
+			for (key in current.status.probe_status.P) {
+				const currentBattery = current.status.probe_status.P[key].status.battery_percentage || null;
+				const lastBattery = last_probe_status.P[key].status.battery_percentage || null;
+				
+				if (currentBattery !== lastBattery) {
+					updateProbeCardBatStatus(key, currentBattery);
+					last_probe_status.P[key].status.battery_percentage = currentBattery;
+				}
+			}
+
+			for (key in current.status.probe_status.F) {
+				const currentBattery = current.status.probe_status.F[key].status.battery_percentage || null;
+				const lastBattery = last_probe_status.F[key].status.battery_percentage || null;
+				
+				if (currentBattery !== lastBattery) {
+					updateProbeCardBatStatus(key, currentBattery);
+					last_probe_status.F[key].status.battery_percentage = currentBattery;
+				}
+			}
 		},
 		error: function() {
 			console.log('Error: Failed to get current status from server.  Try: ' + errorCounter);
@@ -390,6 +434,74 @@ function updateProbeCards() {
 			};
 		}
 	});
+};
+
+function updateProbeCardConnStatus(key, connected) {
+	const conn_status_id = 'conn_status_' + key;
+	const conn_status_element = document.getElementById(conn_status_id);
+	const connected_html = '\
+					<span class="fa-stack" style="vertical-align: top;" data-toggle="tooltip" data-placement="top" \
+					title="Connected"> \
+					<i class="fas fa-wifi fa-stack-1x fa-shake" style="--fa-animation-iteration-count: 1;"></i> \
+					</span>'
+	const disconnected_html = '\
+					<span class="fa-stack" style="vertical-align: top;" data-toggle="tooltip" data-placement="top" \
+					  title="Disconnected"> \
+					<i class="fas fa-wifi fa-stack-1x fa-shake" style="--fa-animation-iteration-count: 1;"></i> \
+					<i class="fas fa-slash fa-stack-1x"></i> \
+					</span>';
+	conn_status_element.className = 'badge badge-pill ' + (connected ? 'badge-success' : 'badge-light');
+	// Update the contents of the pill with either the wifi icon or the wifi with slash icon
+	conn_status_element.innerHTML = (connected ? connected_html : disconnected_html);
+	//console.log('Update Probe Card Connection Status: ' + key + ' connected: ' + connected);
+};
+
+function updateProbeCardBatStatus(key, battery_percentage) {
+	const bat_status_id = 'bat_status_' + key;
+	const bat_status_element = document.getElementById(bat_status_id);
+	
+	// If battery_percentage is not null convert battery_percentage to an integer between 0 and 100
+	if (battery_percentage !== null) {
+		battery_percentage = Math.round(battery_percentage); 
+		if (battery_percentage < 0) {
+			battery_percentage = 0;
+		} else if (battery_percentage > 100) {
+			battery_percentage = 100;
+		}
+	}
+	
+	let badgeClass = 'badge-light';
+	if (battery_percentage !== null) {
+		if (battery_percentage < 10) {
+			badgeClass = 'badge-danger';
+		} else if (battery_percentage < 40) {
+			badgeClass = 'badge-warning';
+		} else {
+			badgeClass = 'badge-success';
+		}
+	}
+
+	let batteryIcon;
+	if (battery_percentage === null) {
+		batteryIcon = '<i class="fas fa-battery-empty fa-stack-1x text-secondary"></i>' +
+					 '<i class="fa-solid fa-question fa-stack-1x text-danger"></i>';
+	} else if (battery_percentage < 10) {
+		batteryIcon = '<i class="fas fa-battery-empty fa-stack-1x"></i>';
+	} else if (battery_percentage < 40) {
+		batteryIcon = '<i class="fas fa-battery-half fa-stack-1x"></i>';
+	} else if (battery_percentage < 90) {
+		batteryIcon = '<i class="fa-solid fa-battery-three-quarters fa-stack-1x"></i>';
+	} else {
+		batteryIcon = '<i class="fas fa-battery-full fa-stack-1x"></i>';
+	}
+
+	const battery_html = `<span class="fa-stack" style="vertical-align: top;" data-toggle="tooltip" data-placement="top"
+							   title="${battery_percentage === null ? 'Unknown' : battery_percentage + '%'}"> 
+							${batteryIcon} </span>`;
+
+	bat_status_element.className = 'badge badge-pill ' + badgeClass;
+	bat_status_element.innerHTML = battery_html;
+	//console.log('Update Probe Card Battery Status: ' + key + ' battery_percentage: ' + battery_percentage);
 };
 
 // Update the temperature for a specific probe/card 

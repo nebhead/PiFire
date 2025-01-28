@@ -67,6 +67,13 @@ class ProtoDevice():
 		self.minFoodVoltage = 3200
 		self.primaryChangeFactor = 2
 		self.otherChangeFactor = 10
+		self.status = {
+			#'battery_percentage' : random.randint(0,100),
+			#'battery_voltage' : 3.3,
+			#'battery_charging' : False,
+			#'connected' : True,
+			'error' : None
+		}
 
 	def read_voltage(self, port):
 		seed = random.randint(0,9)
@@ -87,6 +94,9 @@ class ProtoDevice():
 				self.port_value[port] += self.otherChangeFactor
 
 		return self.port_value[port]
+
+	def get_status(self):
+		return self.status
 
 class ReadProbes(ProbeInterface):
 

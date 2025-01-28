@@ -59,7 +59,8 @@ class KTTDevice():
 	''' MCP9600 Device Based on the Adafruit Module '''
 	def __init__(self, i2c_bus_addr=0x67):
 		self.logger = logging.getLogger("control")
-
+		self.status = {}
+		
 		# Create the I2C bus
 		self.i2c = busio.I2C(board.SCL, board.SDA)
 
@@ -68,6 +69,9 @@ class KTTDevice():
 	@property
 	def temperature(self):
 		return self.sensor.temperature
+
+	def get_status(self):
+		return self.status
 
 class ReadProbes(ProbeInterface):
 

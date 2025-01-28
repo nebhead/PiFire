@@ -48,6 +48,17 @@
                  <li>
                     Added option to delete all debug log files.  This can help with debugging issues, so that we have a clean log file to work with.
                  </li>
+                 <li></li>
+                    Added support for Meater Bluetooth probes (Meater and Pro models only).  This is a work in progress and may not be fully functional.  
+                    The probe must be configured in the Wizard before it can be used.  The probe will automatically connect to the PiFire device when the device is 
+                    powered on.  The probe will also automatically disconnect when the PiFire device is powered off.  The probe will also automatically reconnect if 
+                    the PiFire device is rebooted.  
+                 </li>
+                 <li>
+                    Added device status structure that can be retrieved from the /api/current route.  This includes the current state of the device, the current 
+                    configuration, and the current status of the probes.  This allows the dashboard to display connection status and/or battery status for bluetooth 
+                    probes.
+                 </li>
                  <li>
                      Behind the scenes improvements including:  
                      <ul>

@@ -63,6 +63,7 @@ class DS18B20_Device():
 		self.available = False
 		self.initialized = False
 		self.temperature_C = None
+		self.status = {}
 
 		try:
 			self.init_device()
@@ -114,6 +115,11 @@ class DS18B20_Device():
 	def temperature(self):
 		self.sensor_thread_update = True
 		return self.temperature_C
+
+	def get_status(self):
+		self.status['connected'] = self.available
+		self.status['ready'] = self.initialized
+		return self.status
 
 class ReadProbes(ProbeInterface):
 
