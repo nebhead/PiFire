@@ -1,9 +1,9 @@
 {
     "metadata" : {
-        "name" : "protoflex_320x240",
+        "name" : "ili9341f_320x240",
         "screen_width" : 320,
         "screen_height" : 240,
-        "framerate" : 20,
+        "framerate" : 30,
         "dash_background" : "./static/img/display/background.png",
         "splash_image" : "./static/img/display/splash_800x480.png",
         "splash_delay" : 500,

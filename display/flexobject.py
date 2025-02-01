@@ -3,8 +3,7 @@
 '''
 import qrcode 
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
-from pygame import Rect  # Needed for touch support 
-
+from display.flexrect import Rect
 '''
 The following is a map of the FlexObject types to their respective classes.
 '''
@@ -136,7 +135,7 @@ class FlexObject:
         Defines the touch area for the object.  This object may be
         overridden by subclasses.
         """
-        touch_area = Rect((self.objectData['position'], self.objectData['size']))
+        touch_area = Rect(self.objectData['position'], self.objectData['size'])
         # Create button rectangle / touch area and append to list
         self.objectData['touch_areas'] = [touch_area] 
 
@@ -666,6 +665,9 @@ class StatusIcon(FlexObject):
             self.objectState['animation_breathe'] += 1
 
         return self._draw_object(rotation=self.objectState['animation_rotation'], breath_step=self.objectState['animation_breathe'])
+
+    def _define_touch_areas(self):
+        pass
 
 class MenuIcon(FlexObject):
     def __init__(self, objectType, objectData, background):
