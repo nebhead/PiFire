@@ -1317,8 +1317,8 @@
 				"default" : false,
 				"image" : "bt_meater.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["simplepyble", "icecream"], 
-				"apt_dependencies" : [],
+				"py_dependencies" : ["simplepyble==0.7.3", "icecream"], 
+				"apt_dependencies" : ["libdbus-1-dev"],
 				"command_list" : [],
 				"settings_dependencies" : {
 					"units" : {
