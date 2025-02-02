@@ -61,7 +61,7 @@ class ScanDelegate(DefaultDelegate):
 		self.logger = logging.getLogger("control")
 	def handleDiscovery(self, dev, isNewDev, isNewData):
 		if isNewDev:
-			logger_msg = f'Discovered device {dev.addr}'
+			logger_msg = f'(ibbq) Discovered device {dev.addr}'
 			#self.logger.debug(logger_msg)
 			#ic(logger_msg)
 
@@ -84,7 +84,7 @@ class DataDelegate(DefaultDelegate):
 				self.data_initialized = True
 
 			# Note: "0xFF" or 65526 means the probe is not connected and so should be ignored.
-			#self.logger.debug(f'Temps(C) [BT0, BT1, BT2, BT3]: {temps}')
+			#self.logger.debug(f'(ibbq) Temps(C) [BT0, BT1, BT2, BT3]: {temps}')
 			for idx, item in enumerate(temps):
 				if item != 65526: # This is what gets reported when the probe isn't plugged in.
 					item = item / 10 # Value in Celsius
@@ -101,12 +101,12 @@ class DataDelegate(DefaultDelegate):
 			header, current_voltage, max_voltage,pad = struct.unpack("<BHHB", data)
 			if max_voltage == 0: max_voltage = 6580 # XXX check this
 			self.batt_percent = 100 * current_voltage / max_voltage
-			logger_msg = f'Battery Percent: {self.batt_percent}'
+			logger_msg = f'(ibbq) Battery Percent: {self.batt_percent}'
 			self.logger.debug(logger_msg) # (batt_percent)
 			#ic(logger_msg)
 
 		else:
-			self.logger.debug(f'Unknown data received from handle {cHandle}: {data}')
+			self.logger.debug(f'(ibbq) Unknown data received from handle {cHandle}: {data}')
 
 	def get_probe_temps(self):
 		return self.probe_temps
@@ -169,30 +169,37 @@ class iBBQ_Device():
 		OFF                  = bytearray.fromhex("00 00")
 		
 		while True:
-			if self.hardware_id == None:
-				bbqs={}
-				scanner = Scanner().withDelegate(ScanDelegate())
-				devices = scanner.scan(10.0)
+			try:
+				if self.hardware_id == None:
+					bbqs={}
+					scanner = Scanner().withDelegate(ScanDelegate())
+					devices = scanner.scan(10.0)
 
 				for dev in devices:
-					#self.logger.info(f'Device {dev.addr}, RSSI={dev.rssi}dB')
+					#self.logger.info(f'(ibbq) Device {dev.addr}, RSSI={dev.rssi}dB')
 					for (adtype, desc, value) in dev.getScanData():
 						if desc == 'Complete Local Name' and value == 'iBBQ':
 							bbqs[dev.rssi] = dev
-							logger_msg = f'Found iBBQ device {value} at address {dev.addr}. RSSI {dev.rssi}'
+							logger_msg = f'(ibbq) Found iBBQ device {value} at address {dev.addr}. RSSI {dev.rssi}'
 							self.logger.info(logger_msg)
 
 				# We should now have a dict of bbq devices, let's sort by rssi and choose the one with the best connection
 				if len(bbqs) > 0:
 					bbq = bbqs[sorted(bbqs.keys(), reverse=True)[0]].addr
-					logger_msg = f'Using iBBQ device {bbq}'
+					logger_msg = f'(ibbq) Using iBBQ device {bbq}'
 					self.logger.debug(logger_msg)
 					#ic(logger_msg)
 					self.hardware_id = bbq
 				else:
-					logger_msg = f'No iBBQ devices found'
+					logger_msg = f'(ibbq) No iBBQ devices found'
 					#self.logger.debug(logger_msg)
 					#ic(logger_msg)
+			except Exception as e:
+				logger_msg = f'(ibbq) Error scanning for iBBQ devices: {e}. Might be related to bluetooth permissions.'
+				self.logger.debug(logger_msg)
+				#ic(logger_msg)
+				time.sleep(10)
+				continue
 
 			if self.hardware_id != None and self.device_setup == False:
 				#ic("Setting up iBBQ device thread active")
@@ -241,17 +248,17 @@ class iBBQ_Device():
 					settingsresults_cccd.write(ON)
 					time.sleep(1)
 					self.device_setup = True
-					logger_msg = f'iBBQ device setup complete.'
+					logger_msg = f'(ibbq) iBBQ device setup complete.'
 					self.logger.debug(logger_msg)
 					#ic(logger_msg)
 				except:
-					logger_msg = f'Failed to setup iBBQ device.'
+					logger_msg = f'(ibbq) Failed to setup iBBQ device.'
 					self.logger.debug(logger_msg)
 					#ic(logger_msg)
 					self.device_setup = False
 					self.hardware_id = None
 
-			time.sleep(10)
+				time.sleep(10)
 
 	def _sensing_loop(self):
 		#ic('Starting iBBQ sensor loop')
@@ -266,7 +273,7 @@ class iBBQ_Device():
 							self.battery_percentage = self.ibbq_delegate.get_batt_percent()
 
 				except BTLEDisconnectError:
-					logger_msg = f'iBBQ device has gone away...'
+					logger_msg = f'(ibbq) iBBQ device has gone away...'
 					self.logger.debug(logger_msg)
 					#ic(logger_msg)
 					# Clean up

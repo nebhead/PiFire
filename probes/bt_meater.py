@@ -170,7 +170,7 @@ class Meater:
 		"""
 			Prints the ambient and tip temperatures.
 		"""
-		event = f"Ambient: {self.getAmbient()} \N{DEGREE SIGN}F Tip: {self.getTip()} \N{DEGREE SIGN}F"
+		event = f"(Meater) Ambient: {self.getAmbient()} \N{DEGREE SIGN}F Tip: {self.getTip()} \N{DEGREE SIGN}F"
 		#ic(event)
 		self.logger.debug(event)
 
@@ -221,7 +221,7 @@ class Meater:
 			
 		except Exception as e:
 			#ic(f"Notify Attempt failed: {e}")
-			self.logger.debug(f"Notify Attempt failed: {e}")
+			self.logger.debug(f"(Meater) Notify Attempt failed: {e}")
 
 class Meater_Pro:
 	def __init__(self, peripheral, scan_time=5000):
@@ -383,7 +383,7 @@ class Meater_Pro:
 		"""
 			Prints the ambient and tip temperatures.
 		"""
-		logger_msg = f'Ambient: {self.getAmbient()} \N{DEGREE SIGN}F Tip Sensors(1-5): {self.getTips()}'
+		logger_msg = f'(Meater) Ambient: {self.getAmbient()} \N{DEGREE SIGN}F Tip Sensors(1-5): {self.getTips()}'
 		self.logger.debug(logger_msg)	
 		#ic(logger_msg)
 
@@ -428,7 +428,7 @@ class Meater_Pro:
 				lambda data: self.notification_handler(data),
 			)
 		except Exception as e:
-			logger_msg = f"Notify Attempt failed: {e}"
+			logger_msg = f"(Meater) Notify Attempt failed: {e}"
 			self.logger.debug(logger_msg)
 			#ic(f"Notify Attempt failed: {e}")
 
@@ -453,12 +453,12 @@ class MeaterProbeHandler():
 		# If there are no adapters found then exit
 		if len(adapters) == 0:
 			#ic("No BTLE adapters found")
-			self.logger.debug("No BTLE adapters found")
+			self.logger.debug("(Meater) No BTLE adapters found")
 			return -1
 
 		adapter = adapters[0]
-		adapter.set_callback_on_scan_start(lambda: self.logger.debug("Scan started."))
-		adapter.set_callback_on_scan_stop(lambda: self.logger.debug("Scan complete."))
+		adapter.set_callback_on_scan_start(lambda: self.logger.debug("(Meater) Scan started."))
+		adapter.set_callback_on_scan_stop(lambda: self.logger.debug("(Meater) Scan complete."))
 
 		# Scan for 5 seconds
 		adapter.scan_for(5000)
@@ -470,22 +470,22 @@ class MeaterProbeHandler():
 				if "meater" in self.peripheral.identifier().lower() and self.peripheral.address() not in connectedAddresses:
 					self.peripheral.connect()
 					#ic("Connected to peripheral " + self.peripheral.identifier())
-					logger_msg = f"Connected to peripheral {self.peripheral.identifier()}"
+					logger_msg = f"(Meater) Connected to peripheral {self.peripheral.identifier()}"
 					self.logger.debug(logger_msg)
 					self.is_connected = True
 					return self.peripheral.address()
 
 			except:
 				#ic("Failed to connect to probe ")
-				logger_msg = f"Failed to connect to probe {self.peripheral.identifier()}"
+				logger_msg = f"(Meater) Failed to connect to probe {self.peripheral.identifier()}"
 				self.logger.debug(logger_msg)
 				pass
-		logger_msg = "Meater probe not found"
+		logger_msg = "(Meater) Meater probe not found"
 		self.logger.debug(logger_msg)
 		#ic(logger_msg)
         
 	def checkProperties(self):
-		logger_msg = "Successfully connected to " + self.peripheral.identifier()
+		logger_msg = "(Meater) Successfully connected to " + self.peripheral.identifier()
 		self.logger.debug(logger_msg)
 		#ic(logger_msg)
 		services = self.peripheral.services()
@@ -537,7 +537,7 @@ class Meater_Device():
 					connectedAddresses.append(self.address)
 				except:
 					self.address = None
-					logger_msg = f'Failed to connect to Meater probe.'
+					logger_msg = f'(Meater) Failed to connect to Meater probe.'
 					self.logger.debug(logger_msg)
 					#ic(logger_msg)
 
@@ -548,11 +548,11 @@ class Meater_Device():
 					self.probe = self.probeHandler.checkProperties()
 					self.probe.subscribe_to_temps()
 					self.device_setup = True
-					logger_msg = f'Meater device setup complete.'
+					logger_msg = f'(Meater) Meater device setup complete.'
 					self.logger.debug(logger_msg)
 					#ic(logger_msg)
 				except:
-					logger_msg = f'Failed to setup Meater device.'
+					logger_msg = f'(Meater) Failed to setup Meater device.'
 					self.logger.debug(logger_msg)
 					#ic(logger_msg)
 					self.device_setup = False
@@ -579,7 +579,7 @@ class Meater_Device():
 						#ic(logger_msg)
 
 				except:
-					logger_msg = f'Meater device has gone away...'
+					logger_msg = f'(Meater) Meater device has gone away...'
 					self.logger.debug(logger_msg)
 					#ic(logger_msg)
 					# Clean up
