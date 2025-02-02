@@ -258,7 +258,7 @@ class iBBQ_Device():
 					self.device_setup = False
 					self.hardware_id = None
 
-				time.sleep(10)
+			time.sleep(10)
 
 	def _sensing_loop(self):
 		#ic('Starting iBBQ sensor loop')
@@ -271,12 +271,25 @@ class iBBQ_Device():
 						if self.ibbq_device.waitForNotifications(1):
 							self.probe_values_C = self.ibbq_delegate.get_probe_temps()
 							self.battery_percentage = self.ibbq_delegate.get_batt_percent()
+					
+					logger_msg = f'(ibbq) Sensor thread inactive.'
+					self.logger.debug(logger_msg)
+					self.sensor_thread_active = False
+					#self.device_setup = False
+					#self.hardware_id = None
 
 				except BTLEDisconnectError:
 					logger_msg = f'(ibbq) iBBQ device has gone away...'
 					self.logger.debug(logger_msg)
 					#ic(logger_msg)
 					# Clean up
+					self.sensor_thread_active = False
+					self.device_setup = False
+					self.hardware_id = None
+				except Exception as e:
+					logger_msg = f'(ibbq) Error in sensor loop: {e}'
+					self.logger.debug(logger_msg)
+					#ic(logger_msg)
 					self.sensor_thread_active = False
 					self.device_setup = False
 					self.hardware_id = None
