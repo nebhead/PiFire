@@ -175,26 +175,28 @@ class iBBQ_Device():
 					scanner = Scanner().withDelegate(ScanDelegate())
 					devices = scanner.scan(10.0)
 
-				for dev in devices:
-					#self.logger.info(f'(ibbq) Device {dev.addr}, RSSI={dev.rssi}dB')
-					for (adtype, desc, value) in dev.getScanData():
-						if desc == 'Complete Local Name' and value == 'iBBQ':
-							bbqs[dev.rssi] = dev
-							logger_msg = f'(ibbq) Found iBBQ device {value} at address {dev.addr}. RSSI {dev.rssi}'
-							self.logger.info(logger_msg)
+					for dev in devices:
+						#self.logger.info(f'(ibbq) Device {dev.addr}, RSSI={dev.rssi}dB')
+						for (adtype, desc, value) in dev.getScanData():
+							if desc == 'Complete Local Name' and value == 'iBBQ':
+								bbqs[dev.rssi] = dev
+								logger_msg = f'(ibbq) Found iBBQ device {value} at address {dev.addr}. RSSI {dev.rssi}'
+								self.logger.info(logger_msg)
 
-				# We should now have a dict of bbq devices, let's sort by rssi and choose the one with the best connection
-				if len(bbqs) > 0:
-					bbq = bbqs[sorted(bbqs.keys(), reverse=True)[0]].addr
-					logger_msg = f'(ibbq) Using iBBQ device {bbq}'
-					self.logger.debug(logger_msg)
-					#ic(logger_msg)
-					self.hardware_id = bbq
-				else:
-					logger_msg = f'(ibbq) No iBBQ devices found'
-					#self.logger.debug(logger_msg)
-					#ic(logger_msg)
+					# We should now have a dict of bbq devices, let's sort by rssi and choose the one with the best connection
+					if len(bbqs) > 0:
+						bbq = bbqs[sorted(bbqs.keys(), reverse=True)[0]].addr
+						logger_msg = f'(ibbq) Using iBBQ device {bbq}'
+						self.logger.debug(logger_msg)
+						#ic(logger_msg)
+						self.hardware_id = bbq
+					else:
+						logger_msg = f'(ibbq) No iBBQ devices found'
+						#self.logger.debug(logger_msg)
+						#ic(logger_msg)
 			except Exception as e:
+				self.device_setup = False
+				self.hardware_id = None
 				logger_msg = f'(ibbq) Error scanning for iBBQ devices: {e}. Might be related to bluetooth permissions.'
 				self.logger.debug(logger_msg)
 				#ic(logger_msg)
@@ -346,7 +348,7 @@ class ReadProbes(ProbeInterface):
 		port_values = {}
 
 		probe_values_C = self.device.get_port_values()
-		#ic(probe_values_C) # Debugging only	
+		##ic(probe_values_C) # Debugging only	
 
 		if len(probe_values_C) >= len(self.port_map):
 			for index, port in enumerate(self.port_map):
