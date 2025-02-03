@@ -1285,7 +1285,7 @@
 				"reboot_required" : false,
 				"py_dependencies" : ["bluepy"], 
 				"apt_dependencies" : ["libglib2.0-dev"],
-				"command_list" : [["sudo", "setcap", "cap_net_raw,cap_net_admin+eip", "/usr/local/bin/pifire/lib/python3.*/site-packages/bluepy/bluepy-helper"]],
+				"command_list" : [["sudo", "bash", "/usr/local/bin/pifire/wizard/bluepy.sh"]],
 				"settings_dependencies" : {
 					"units" : {
 						"friendly_name" : "Temp Units",
