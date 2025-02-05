@@ -1344,6 +1344,40 @@
 					]
 				}			
 			},
+			"bt_meater_alt" : {
+				"friendly_name" : "Bluetooth - Meater (Alternative)",
+				"filename" : "bt_meater_alt",
+				"description" : "This device module supports Bluetooth Meater probe thermometer devices (includes Meater Pro). This module is still experimental, so feedback is welcome.  This version of the module uses bluepy to connect to the device, similar to the ibbq module.  Note that this version currently prints a lot of debug data to the log for testing. ",
+				"default" : false,
+				"image" : "bt_meater.png",
+				"reboot_required" : false,
+				"py_dependencies" : ["bluepy"], 
+				"apt_dependencies" : ["libglib2.0-dev"],
+				"command_list" : [["sudo", "bash", "/usr/local/bin/pifire/wizard/bluepy.sh"]],
+				"settings_dependencies" : {
+					"units" : {
+						"friendly_name" : "Temp Units",
+						"description" : "Select the temperature units to use for PiFire globally.  (This can be modified in settings later)",
+						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
+						"settings" : ["globals", "units"]
+					}
+				},
+				"device_specific" : {
+					"ports" : ["BT_Tip", "BT_Ambient"],
+					"config" : [
+						{
+							"label" : "transient", 
+							"friendly_name" : "Transient",
+							"description" : "Select whether this device is fixed/always attached (default) or if it is transient/sometimes detached.",
+							"type" : "list", 
+							"list_values" : ["True", "False"],
+							"list_labels" : ["Transient (sometimes detached)", "Fixed (always attached)"],
+							"default" : "True",
+							"hidden" : true
+						}
+					]
+				}			
+			},
 			"prototype" : {
 				"friendly_name" : "Prototype",
 				"filename" : "prototype",
