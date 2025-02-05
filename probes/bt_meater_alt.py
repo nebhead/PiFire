@@ -35,6 +35,7 @@ Credits:
 Requirements:
 	bluepy - 
 		https://github.com/IanHarvey/bluepy
+		https://ianharvey.github.io/bluepy-doc/
 		** sudo apt install libglib2.0-dev ** prior to installing bluepy
 		.. venv/lib/python3.12/site-packages/bluepy$ sudo setcap 'cap_net_raw,cap_net_admin+eip' bluepy-helper
 	A compatible BTLE Meater thermometer. 
@@ -432,7 +433,7 @@ class Meater_Device():
 							self.meater_type = None
 							self.meater = None
 							self.device_setup = False
-							break
+							#break
 				except Exception as e:
 					logger_msg = f'(Meater) Error determining meater type: {e}'
 					self.logger.debug(logger_msg)
