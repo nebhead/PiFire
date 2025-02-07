@@ -59,9 +59,9 @@ from icecream import ic  # For debugging
 
 class BaseMeater:
 	# Handle addresses for Meater Original
-	HANDLE_TEMP = 0x24
-	HANDLE_BATTERY = 0x28
-	HANDLE_FIRMWARE = 0x22
+	HANDLE_TEMP = 31
+	HANDLE_BATTERY = 35
+	HANDLE_FIRMWARE = 22
 
 	def __init__(self,  peripheral, characteristic_uuid):
 		self.logger = logging.getLogger("control")
@@ -91,7 +91,7 @@ class BaseMeater:
 					self.logger.debug(logger_msg)
 					ic(logger_msg)
 					return characteristic.getHandle()
-		return None
+		return self.HANDLE_TEMP
 
 	def bytesToInt(self, byte0, byte1):
 		return (byte1 * 256) + byte0
@@ -113,8 +113,17 @@ class BaseMeater:
 
 	def _read_temperature(self):
 		tempBytes = self.readCharacteristic(self.discovered_handle_temp)
+		logger_msg = f'(Meater) Temperature bytes: {tempBytes}'
+		self.logger.debug(logger_msg)
+		ic(logger_msg)
 		self.__tip = self.bytesToInt(tempBytes[0], tempBytes[1])
+		logger_msg = f'(Meater) Tip: {self.__tip}'
+		self.logger.debug(logger_msg)
+		ic(logger_msg)
 		self.__ambient = self.convertAmbient(tempBytes)
+		logger_msg = f'(Meater) Ambient: {self.__ambient}'
+		self.logger.debug(logger_msg)
+		ic(logger_msg)
 
 	def _read_battery(self):
 		batteryBytes = self.readCharacteristic(self.HANDLE_BATTERY)
@@ -163,9 +172,6 @@ class BaseMeater:
 
 	def battery(self):
 		return self.battery_percentage
-
-	def address(self):
-		return self.device_addr
 
 	def id(self):
 		return self.probe_id
@@ -462,6 +468,7 @@ class Meater_Device():
 					self.device_setup = False
 					self.hardware_id = None
 					self.device = None
+					self.logger.exception(e)
 			time.sleep(1)
 
 	def update(self):
