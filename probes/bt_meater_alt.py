@@ -55,7 +55,7 @@ import struct
 
 from probes.base import ProbeInterface
 from bluepy import btle
-from icecream import ic  # For debugging
+#from icecream import ic  # For debugging
 
 class BaseMeater:
 	# Handle addresses for Meater Original
@@ -78,7 +78,7 @@ class BaseMeater:
 			self.discovered_handle_temp = self.HANDLE_TEMP
 			logger_msg = f'(Meater) No handle found for characteristic: {self.characteristic_uuid}, using default handle: {self.discovered_handle_temp}'
 			self.logger.debug(logger_msg)
-			ic(logger_msg)
+			#ic(logger_msg)
 
 	def getHandle(self, uuid):
 		''' Get the handle for a given characteristic UUID '''
@@ -89,7 +89,7 @@ class BaseMeater:
 				if characteristic.uuid == uuid:
 					logger_msg = f'(Meater) Found characteristic: {characteristic.uuid} with handle: {characteristic.getHandle()}'
 					self.logger.debug(logger_msg)
-					ic(logger_msg)
+					#ic(logger_msg)
 					return characteristic.getHandle()
 		return self.HANDLE_TEMP
 
@@ -115,15 +115,15 @@ class BaseMeater:
 		tempBytes = self.readCharacteristic(self.discovered_handle_temp)
 		logger_msg = f'(Meater) Temperature bytes: {tempBytes}'
 		self.logger.debug(logger_msg)
-		ic(logger_msg)
+		#ic(logger_msg)
 		self.__tip = self.bytesToInt(tempBytes[0], tempBytes[1])
 		logger_msg = f'(Meater) Tip: {self.__tip}'
 		self.logger.debug(logger_msg)
-		ic(logger_msg)
+		#ic(logger_msg)
 		self.__ambient = self.convertAmbient(tempBytes)
 		logger_msg = f'(Meater) Ambient: {self.__ambient}'
 		self.logger.debug(logger_msg)
-		ic(logger_msg)
+		#ic(logger_msg)
 
 	def _read_battery(self):
 		batteryBytes = self.readCharacteristic(self.HANDLE_BATTERY)
@@ -145,7 +145,7 @@ class BaseMeater:
 	def probe_values_C(self):
 		tip = self.getTipC()
 		ambient = self.getAmbientC()
-		ic(tip, ambient)
+		#ic(tip, ambient)
 		return [tip, ambient]
 
 	def toCelsius(self, value):
@@ -266,7 +266,7 @@ class MeaterPro(BaseMeater):
 		int
 			The corrected internal temperature reading.
 		"""
-		return (int)(internal_temp + ((ambient_temp - internal_temp) * 1.2))
+		return int(internal_temp + ((ambient_temp - internal_temp) * 1.2))
 
 	def convert_to_temperatures(self, data):
 		"""
@@ -380,7 +380,7 @@ class Meater_Device():
 						name = entry.getValueText(9)
 						logger_msg = f'(Meater) Scanned Peripheral: {name} at address {entry.addr}'
 						self.logger.debug(logger_msg)
-						ic(logger_msg)
+						#ic(logger_msg)
 
 						if(name is not None and 'meater+' in name.lower()):
 							continue # Skip Meater+ devices as those are the base station devices and should be turned off
@@ -388,13 +388,13 @@ class Meater_Device():
 							self.hardware_id = entry.addr
 							logger_msg = f'(Meater) Found a Meater Probe at address {entry.addr}'
 							self.logger.debug(logger_msg)
-							ic(logger_msg)
+							#ic(logger_msg)
 							break
 
 				except Exception as e:
 					logger_msg = f'Error setting up device: {e}'
 					self.logger.error(logger_msg)
-					ic(logger_msg)
+					#ic(logger_msg)
 					time.sleep(10)
 
 			''' If we found the Hardware ID and it hasn't been setup, then setup the Meater Probe '''
@@ -404,12 +404,12 @@ class Meater_Device():
 					self.device = btle.Peripheral(self.hardware_id)
 					logger_msg = f'(Meater) Connected to device: {self.hardware_id}'
 					self.logger.debug(logger_msg)
-					ic(logger_msg)
+					#ic(logger_msg)
 
 				except Exception as e:
 					logger_msg = f'(Meater) Error connecting to device: {e}'
 					self.logger.debug(logger_msg)
-					ic(logger_msg)
+					#ic(logger_msg)
 					self.device_setup = False
 					self.device = None
 					#raise e
@@ -425,7 +425,7 @@ class Meater_Device():
 							self.device_setup = True
 							logger_msg = f'(Meater) Meater Pro setup complete'
 							self.logger.debug(logger_msg)
-							ic(logger_msg)
+							#ic(logger_msg)
 							break
 						elif service.uuid == 'a75cc7fc-c956-488f-ac2a-2dbc08b63a04':
 							self.meater_type = 'MEATER_ORIGINAL'
@@ -433,7 +433,7 @@ class Meater_Device():
 							self.device_setup = True
 							logger_msg = f'(Meater) Meater Original setup complete'
 							self.logger.debug(logger_msg)
-							ic(logger_msg)
+							#ic(logger_msg)
 							break
 						else:
 							self.meater_type = None
@@ -443,7 +443,7 @@ class Meater_Device():
 				except Exception as e:
 					logger_msg = f'(Meater) Error determining meater type: {e}'
 					self.logger.debug(logger_msg)
-					ic(logger_msg)
+					#ic(logger_msg)
 			
 			time.sleep(10)
 
@@ -454,7 +454,7 @@ class Meater_Device():
 				self.sensor_thread_active = True
 				logger_msg = f'(Meater) Sensor thread active.'
 				self.logger.debug(logger_msg)
-				ic(logger_msg)
+				#ic(logger_msg)
 
 				try:
 					while self.sensor_thread_active:
@@ -463,7 +463,7 @@ class Meater_Device():
 				except Exception as e:
 					logger_msg = f'(Meater) Error in sensing loop: {e}'
 					self.logger.error(logger_msg)
-					ic(logger_msg)
+					#ic(logger_msg)
 					self.sensor_thread_active = False
 					self.device_setup = False
 					self.hardware_id = None
@@ -475,9 +475,9 @@ class Meater_Device():
 		if self.meater:
 			self.meater.update()
 			self.probe_values_C = self.meater.probe_values_C
-			self.battery_percentage = self.meater.battery_percentage()
-			self.firmware_id = self.meater.firmware_id()
-			self.probe_id = self.meater.probe_id()
+			self.battery_percentage = self.meater.battery()
+			self.firmware_id = self.meater.firmware()
+			self.probe_id = self.meater.id()
 
 	def get_port_values(self):
 		return self.probe_values_C
@@ -498,8 +498,8 @@ class Meater_Device():
 class ReadProbes(ProbeInterface):
 	def __init__(self, probe_info, device_info, units):
 		super().__init__(probe_info, device_info, units)
-		ic(self.port_map)
-		ic(self.output_data)
+		#ic(self.port_map)
+		#ic(self.output_data)
 
 	def _init_device(self): 
 		self.time_delay = 0
@@ -509,19 +509,19 @@ class ReadProbes(ProbeInterface):
 		port_values = {}
 
 		probe_values_C = self.device.get_port_values()
-		ic(probe_values_C) # Debugging only	
+		#ic(probe_values_C) # Debugging only	
 
 		if len(probe_values_C) >= len(self.port_map):
 			for index, port in enumerate(self.port_map):
-				''' Read Ports from Device '''
+                		# Read Ports from Device
 				port_values[port] = probe_values_C[index] if self.units == 'C' else self._to_fahrenheit(probe_values_C[index])
 				#output_value = port_values[port] if port_values[port] != None else 0 # If the read value is None, pass that to the output
 				output_value = port_values[port]
 
-				''' Output Tr '''
+                		# Output Tr
 				self.output_data['tr'][self.port_map[port]] = 0  # resistance NA
 
-				''' Get average temperature from the queue and store it in the output data structure'''
+                		# Get average temperature from the queue and store it in the output data structure
 				if port == self.primary_port:
 					self.output_data['primary'][self.port_map[port]] = output_value
 				elif port in self.food_ports:
