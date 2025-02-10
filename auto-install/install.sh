@@ -71,7 +71,7 @@ echo "**                                                                     **"
 echo "**      Installing Dependencies... (This could take several minutes)   **"
 echo "**                                                                     **"
 echo "*************************************************************************"
-$SUDO apt install python3-dev python3-pip python3-venv python3-rpi.gpio python3-scipy nginx git supervisor ttf-mscorefonts-installer redis-server gfortran libatlas-base-dev libopenblas-dev liblapack-dev libopenjp2-7 -y
+$SUDO apt install python3-dev python3-pip python3-venv python3-rpi.gpio python3-scipy nginx git supervisor ttf-mscorefonts-installer redis-server gfortran libatlas-base-dev libopenblas-dev liblapack-dev libopenjp2-7 libglib2.0-dev -y
 
 # Grab project files
 clear
@@ -128,6 +128,9 @@ else
     python -m pip install eventlet
 fi      
 python -m pip install -r /usr/local/bin/pifire/auto-install/requirements.txt
+
+# Set permissions for bluepy helper
+$SUDO setcap "cap_net_raw,cap_net_admin+eip" /usr/local/bin/pifire/lib/python3.*/site-packages/bluepy/bluepy-helper
 
 ### Setup nginx to proxy to gunicorn
 clear

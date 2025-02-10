@@ -4,7 +4,7 @@
       "server" : "1.9.0",
       "cookfile" : "1.5.0",
       "recipe" : "1.0.0",
-      "build" : 23
+      "build" : 24
     },
     "update_notes" : "",
     "update_warnings" : ""
@@ -110,13 +110,13 @@
     },
     {
       "version" : "1.9.0",
-      "build" : 0,
+      "build" : 23,
       "reboot_required" : false,
       "dependencies" : {
         "app": {
-          "py_dependencies": [],
-          "apt_dependencies": [],
-          "command_list" : []
+          "py_dependencies": ["bluepy"],
+          "apt_dependencies": ["libglib2.0-dev"],
+          "command_list" : [["sudo", "bash", "/usr/local/bin/pifire/wizard/bluepy.sh"]]
         },
         "control": {
           "py_dependencies": ["numpy==1.24.2"],
