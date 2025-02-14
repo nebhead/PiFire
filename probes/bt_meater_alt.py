@@ -103,6 +103,17 @@ class BaseMeater:
 		return int(tip+(max(0,((((ra-min(48,oa))*16)*589))/1487)))
 
 	def readCharacteristic(self, c):
+		try:
+			return bytearray(self.peripheral.readCharacteristic(c))
+		except btle.BTLEDisconnectError as e:
+			logger_msg = f'(Meater) Device disconnected: {e}'
+			self.logger.debug(logger_msg)
+			#ic(logger_msg)
+			raise
+		except Exception as e:
+			logger_msg = f'(Meater) Read Attempt failed: {e}'
+			self.logger.debug(logger_msg)
+			#ic(logger_msg)
 		return bytearray(self.peripheral.readCharacteristic(c))
 
 	def update(self):
@@ -197,19 +208,6 @@ class MeaterPro(BaseMeater):
 		return 0
 
 	def toFahrenheitInternals(self, temps):
-		"""
-			Converts an array of temperatures to Fahrenheit.
-
-			Parameters
-			----------
-			temps : array-like
-				An array of temperatures to be converted to Fahrenheit.
-
-			Returns
-			-------
-			array-like
-				The array of temperatures converted to Fahrenheit.
-		"""
 		if temps is None:
 			return None
 		for i in range(len(temps)):
@@ -217,72 +215,15 @@ class MeaterPro(BaseMeater):
 		return temps
 
 	def toFahrenheitAmbient(self, temp):
-		"""
-			Converts a temperature in Celsius to Fahrenheit.
-
-			Parameters
-			----------
-			temp : numeric
-				The temperature to be converted to Fahrenheit.
-
-			Returns
-			-------
-			float
-				The converted temperature in Fahrenheit.
-		"""
 		return temp * 9 / 5 + 32
 
 	def get_short(self, data, offset):
-		"""
-		Extracts a short integer from a byte array at the specified offset.
-
-		Parameters
-		----------
-		data : bytes
-			The byte array from which to extract the short integer.
-		offset : int
-			The offset within the byte array to start extraction.
-
-		Returns
-		-------
-		int
-			The extracted short integer.
-		"""
 		return struct.unpack_from("<h", data, offset)[0]	
 
 	def ambient_correction(self, ambient_temp, internal_temp):
-		"""
-		Applies a correction to the internal temperature reading based on the ambient temperature.
-
-		Parameters
-		----------
-		ambient_temp : int
-			The ambient temperature reading.
-		internal_temp : int
-			The internal temperature reading to be corrected.
-
-		Returns
-		-------
-		int
-			The corrected internal temperature reading.
-		"""
 		return int(internal_temp + ((ambient_temp - internal_temp) * 1.2))
 
 	def convert_to_temperatures(self, data):
-		"""
-		Converts a byte array of temperatures from the Meater probe into a list of Celsius temperatures.
-
-		Parameters
-		----------
-		data : bytes
-			The byte array of temperatures to be converted.
-
-		Notes
-		-----
-		The byte array is assumed to contain 5 short integers representing the internal temperatures of the Meater probe, followed by a short integer representing the ambient temperature of the probe.
-
-		The internal temperatures are corrected for the ambient temperature before being converted to Celsius.
-		"""
 		self.internal_temps = [
 			self.toCelsius(self.get_short(data, 0)),
 			self.toCelsius(self.get_short(data, 2)),
@@ -295,35 +236,20 @@ class MeaterPro(BaseMeater):
 		self.ambient_correction(self.ambient_temp, self.internal_temps[4])
 
 	def getAmbient(self):
-		"""
-			Returns the ambient temperature in Fahrenheit.
-		"""
 		return self.toFahrenheitAmbient(self.ambient_temp)
 	
 	def getAmbientC(self):
-		"""
-			Returns the ambient temperature in Celsius.
-		"""
 		return self.ambient_temp
 
 	def getTips(self):
-		"""
-			Returns the tip temperatures(1-5) in Fahrenheit.
-		"""
 		return self.toFahrenheitInternals(self.internal_temps)
 
 	def getTip(self):
-		"""
-			Returns the tip temperature (smallest value from tip sensors 1-5) in Fahrenheit.
-		"""
 		internal_temps = self.toFahrenheitInternals(self.internal_temps)
 		# Return the smallest value in list internal_temps
 		return min(internal_temps)
 
 	def getTipC(self):
-		"""
-			Returns the tip temperature (smallest value from tip sensors 1-5) in Celsius.
-		"""
 		return min(self.internal_temps)
 
 	def _read_temperature(self):
@@ -332,7 +258,7 @@ class MeaterPro(BaseMeater):
 
 
 class Meater_Device():
-	def __init__(self, port_map, primary_port, units, transient=True):
+	def __init__(self, port_map, primary_port, units, transient=True, hardware_id=None):
 		self.logger = logging.getLogger("control")
 		self.transient = transient
 		self.port_map = port_map
@@ -345,7 +271,7 @@ class Meater_Device():
 
 		self.probe_values_C = []
 		self.battery_percentage = None  # Battery percentage remaining on the probe
-		self.hardware_id = None  # The address of the Meater Probe
+		self.hardware_id = hardware_id  # The address of the Meater Probe
 		self.firmware_id = None  # The firmware version of the Meater Probe
 		self.probe_id = None  # The probe ID of the Meater Probe, which should be etched on the probe (1-4)?
 
@@ -376,10 +302,14 @@ class Meater_Device():
 				try:
 					scanner = btle.Scanner()
 
+					logger_msg = f'(Meater) Starting scan...'
+					self.logger.debug(logger_msg)
+					#ic(logger_msg)
+
 					for entry in scanner.scan(5):
 						name = entry.getValueText(9)
-						logger_msg = f'(Meater) Scanned Peripheral: {name} at address {entry.addr}'
-						self.logger.debug(logger_msg)
+						#logger_msg = f'(Meater) Scanned Peripheral: {name} at address {entry.addr}'
+						#self.logger.debug(logger_msg)
 						#ic(logger_msg)
 
 						if(name is not None and 'meater+' in name.lower()):
@@ -390,9 +320,10 @@ class Meater_Device():
 							self.logger.debug(logger_msg)
 							#ic(logger_msg)
 							break
-
+					logger_msg = f'(Meater) Stopping scan.'
+				
 				except Exception as e:
-					logger_msg = f'Error setting up device: {e}'
+					logger_msg = f'(Meater) Error scanning for device: {e}'
 					self.logger.error(logger_msg)
 					#ic(logger_msg)
 					time.sleep(10)
@@ -402,6 +333,7 @@ class Meater_Device():
 				# Connect to the Meater Probe 
 				try:
 					self.device = btle.Peripheral(self.hardware_id)
+					self.device.setMTU(512)
 					logger_msg = f'(Meater) Connected to device: {self.hardware_id}'
 					self.logger.debug(logger_msg)
 					#ic(logger_msg)
@@ -412,38 +344,40 @@ class Meater_Device():
 					#ic(logger_msg)
 					self.device_setup = False
 					self.device = None
+					#self.hardware_id = None
 					#raise e
 
-				try:
-					# We can determine if this is a Meater Original or Meater Pro (AKA Meater 2 Plus) by the service UUID
-					temp_handle = '7edda774-045e-4bbf-909b-45d1991a2876'
-					services =self.device.getServices()
-					for service in services:
-						if service.uuid == 'c9e2746c-59f1-4e54-a0dd-e1e54555cf8b':
-							self.meater_type = 'MEATER_PRO'
-							self.meater = MeaterPro(self.device, temp_handle)
-							self.device_setup = True
-							logger_msg = f'(Meater) Meater Pro setup complete'
-							self.logger.debug(logger_msg)
-							#ic(logger_msg)
-							break
-						elif service.uuid == 'a75cc7fc-c956-488f-ac2a-2dbc08b63a04':
-							self.meater_type = 'MEATER_ORIGINAL'
-							self.meater = MeaterOriginal(self.device, temp_handle)
-							self.device_setup = True
-							logger_msg = f'(Meater) Meater Original setup complete'
-							self.logger.debug(logger_msg)
-							#ic(logger_msg)
-							break
-						else:
-							self.meater_type = None
-							self.meater = None
-							self.device_setup = False
-							#break
-				except Exception as e:
-					logger_msg = f'(Meater) Error determining meater type: {e}'
-					self.logger.debug(logger_msg)
-					#ic(logger_msg)
+				if self.device is not None:
+					try:
+						# We can determine if this is a Meater Original or Meater Pro (AKA Meater 2 Plus) by the service UUID
+						temp_handle = '7edda774-045e-4bbf-909b-45d1991a2876'
+						services =self.device.getServices()
+						for service in services:
+							if service.uuid == 'c9e2746c-59f1-4e54-a0dd-e1e54555cf8b':
+								self.meater_type = 'MEATER_PRO'
+								self.meater = MeaterPro(self.device, temp_handle)
+								self.device_setup = True
+								logger_msg = f'(Meater) Meater Pro setup complete'
+								self.logger.debug(logger_msg)
+								#ic(logger_msg)
+								break
+							elif service.uuid == 'a75cc7fc-c956-488f-ac2a-2dbc08b63a04':
+								self.meater_type = 'MEATER_ORIGINAL'
+								self.meater = MeaterOriginal(self.device, temp_handle)
+								self.device_setup = True
+								logger_msg = f'(Meater) Meater Original setup complete'
+								self.logger.debug(logger_msg)
+								#ic(logger_msg)
+								break
+							else:
+								self.meater_type = None
+								self.meater = None
+								self.device_setup = False
+								#break
+					except Exception as e:
+						logger_msg = f'(Meater) Error determining meater type: {e}'
+						self.logger.debug(logger_msg)
+						#ic(logger_msg)
 			
 			time.sleep(10)
 
@@ -460,15 +394,23 @@ class Meater_Device():
 					while self.sensor_thread_active:
 						self.update()
 						time.sleep(1)
+				except btle.BTLEDisconnectError as e:
+					logger_msg = f'(Meater) Device disconnected: {e}'
+					self.logger.error(logger_msg)
+					#ic(logger_msg)
+					self.sensor_thread_active = False
+					self.device_setup = False
+					#self.hardware_id = None
+					self.device = None
 				except Exception as e:
 					logger_msg = f'(Meater) Error in sensing loop: {e}'
 					self.logger.error(logger_msg)
 					#ic(logger_msg)
 					self.sensor_thread_active = False
 					self.device_setup = False
-					self.hardware_id = None
+					#self.hardware_id = None
 					self.device = None
-					self.logger.exception(e)
+
 			time.sleep(1)
 
 	def update(self):
@@ -497,13 +439,17 @@ class Meater_Device():
 
 class ReadProbes(ProbeInterface):
 	def __init__(self, probe_info, device_info, units):
+		self.hardware_id = device_info['config'].get('hardware_id', None)
+		if self.hardware_id == '':
+			self.hardware_id = None
 		super().__init__(probe_info, device_info, units)
 		#ic(self.port_map)
 		#ic(self.output_data)
+		#ic(device_info)
 
 	def _init_device(self): 
 		self.time_delay = 0
-		self.device = Meater_Device(self.port_map, self.primary_port, self.units, transient=self.transient)
+		self.device = Meater_Device(self.port_map, self.primary_port, self.units, transient=self.transient, hardware_id=self.hardware_id)
 
 	def read_all_ports(self, output_data):
 		port_values = {}

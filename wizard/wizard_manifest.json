@@ -902,6 +902,7 @@
 				},
 				"device_specific" : {
 					"ports" : ["ADC0", "ADC1", "ADC2", "ADC3"],
+					"type" : "adc",
 					"config" : [
 						{
 							"label" : "i2c_bus_addr", 
@@ -1001,6 +1002,7 @@
 				},
 				"device_specific" : {
 					"ports" : ["ADC0", "ADC1", "ADC2", "ADC3"],
+					"type" : "adc",
 					"config" : [
 						{
 							"label" : "i2c_bus_addr", 
@@ -1100,6 +1102,7 @@
 				},
 				"device_specific" : {
 					"ports" : ["RTD0"],
+					"type" : "rtd",
 					"config" : [
 						{
 							"label" : "cs", 
@@ -1176,6 +1179,7 @@
 				},
 				"device_specific" : {
 					"ports" : ["RTD0"],
+					"type" : "rtd",
 					"config" : [
 						{
 							"label" : "cs", 
@@ -1252,6 +1256,7 @@
 				},
 				"device_specific" : {
 					"ports" : ["KTT0"],
+					"type" : "thermocouple",
 					"config" : [
 						{
 							"label" : "i2c_bus_addr", 
@@ -1296,7 +1301,16 @@
 				},
 				"device_specific" : {
 					"ports" : ["BT0", "BT1", "BT2", "BT3"],
+					"type" : "bluetooth",
 					"config" : [
+						{
+							"label" : "hardware_id", 
+							"friendly_name" : "Hardware ID",
+							"description" : "This is the unique Hardware ID or Address of the peripheral (format: xx:xx:xx:xx:xx:xx).  This should be discovered during scanning.",
+							"type" : "string", 
+							"default" : "",
+							"hidden" : false
+						},
 						{
 							"label" : "transient", 
 							"friendly_name" : "Transient",
@@ -1330,7 +1344,16 @@
 				},
 				"device_specific" : {
 					"ports" : ["BT0"],
+					"type" : "bluetooth",
 					"config" : [
+						{
+							"label" : "hardware_id", 
+							"friendly_name" : "Hardware ID",
+							"description" : "This is the unique Hardware ID or Address of the peripheral (format: xx:xx:xx:xx:xx:xx).  This should be discovered during scanning.",
+							"type" : "string", 
+							"default" : "",
+							"hidden" : false
+						},
 						{
 							"label" : "transient", 
 							"friendly_name" : "Transient",
@@ -1364,7 +1387,16 @@
 				},
 				"device_specific" : {
 					"ports" : ["BT_Tip", "BT_Ambient"],
+					"type" : "bluetooth",
 					"config" : [
+						{
+							"label" : "hardware_id", 
+							"friendly_name" : "Hardware ID",
+							"description" : "This is the unique Hardware ID or Address of the peripheral (format: xx:xx:xx:xx:xx:xx).  This should be discovered during scanning.",
+							"type" : "string", 
+							"default" : "",
+							"hidden" : false
+						},
 						{
 							"label" : "transient", 
 							"friendly_name" : "Transient",
@@ -1398,6 +1430,7 @@
 				},
 				"device_specific" : {
 					"ports" : ["ADC0", "ADC1", "ADC2", "ADC3"],
+					"type" : "adc",
 					"config" : [
 						{
 							"label" : "i2c_bus_addr", 
@@ -1497,6 +1530,7 @@
 				},
 				"device_specific" : {
 					"ports" : ["ADC0", "ADC1", "ADC2", "ADC3"],
+					"type" : "adc",
 					"config" : [
 						{
 							"label" : "i2c_bus_addr", 
@@ -1596,6 +1630,7 @@
 				},
 				"device_specific" : {
 					"ports" : ["DS0"],
+					"type" : "1wire",
 					"config" : [
 						{
 							"label" : "transient", 
@@ -1630,6 +1665,7 @@
 				},
 				"device_specific" : {
 					"ports" : ["VIRT0"],
+					"type" : "virtual",
 					"config" : [
 						{
 							"label" : "probes_list", 
@@ -1671,6 +1707,7 @@
 				},
 				"device_specific" : {
 					"ports" : ["VIRT0"],
+					"type" : "virtual",
 					"config" : [
 						{
 							"label" : "probes_list", 
@@ -1712,6 +1749,7 @@
 				},
 				"device_specific" : {
 					"ports" : ["VIRT0"],
+					"type" : "virtual",
 					"config" : [
 						{
 							"label" : "probes_list", 
@@ -1753,6 +1791,7 @@
 				},
 				"device_specific" : {
 					"ports" : ["VIRT0"],
+					"type" : "virtual",
 					"config" : [
 						{
 							"label" : "probes_list", 

@@ -115,7 +115,7 @@ class DataDelegate(DefaultDelegate):
 		return self.batt_percent
 
 class iBBQ_Device():
-	def __init__(self, port_map, primary_port, units, transient=True):
+	def __init__(self, port_map, primary_port, units, transient=True, hardware_id=None):
 		self.logger = logging.getLogger("control")
 		self.transient = transient
 		self.port_map = port_map
@@ -130,7 +130,7 @@ class iBBQ_Device():
 		self.port_values = []
 		self.probe_values_C = []
 		
-		self.hardware_id = None
+		self.hardware_id = hardware_id
 
 		self.status = {
 			'battery_percentage' : self.battery_percentage,
@@ -258,7 +258,7 @@ class iBBQ_Device():
 					self.logger.debug(logger_msg)
 					#ic(logger_msg)
 					self.device_setup = False
-					self.hardware_id = None
+					#self.hardware_id = None
 
 			time.sleep(10)
 
@@ -287,14 +287,14 @@ class iBBQ_Device():
 					# Clean up
 					self.sensor_thread_active = False
 					self.device_setup = False
-					self.hardware_id = None
+					#self.hardware_id = None
 				except Exception as e:
 					logger_msg = f'(ibbq) Error in sensor loop: {e}'
 					self.logger.debug(logger_msg)
 					#ic(logger_msg)
 					self.sensor_thread_active = False
 					self.device_setup = False
-					self.hardware_id = None
+					#self.hardware_id = None
 			else:
 				time.sleep(1)
 
@@ -336,13 +336,16 @@ class iBBQ_Device():
 	
 class ReadProbes(ProbeInterface):
 	def __init__(self, probe_info, device_info, units):
+		self.hardware_id = device_info['config'].get('hardware_id', None)
+		if self.hardware_id == '':
+			self.hardware_id = None
 		super().__init__(probe_info, device_info, units)
 		#ic(self.port_map)
 		#ic(self.output_data)
 
 	def _init_device(self):
 		self.time_delay = 0
-		self.device = iBBQ_Device(self.port_map, self.primary_port, self.units, transient=self.transient)
+		self.device = iBBQ_Device(self.port_map, self.primary_port, self.units, transient=self.transient, hardware_id=self.hardware_id)
 
 	def read_all_ports(self, output_data):
 		port_values = {}

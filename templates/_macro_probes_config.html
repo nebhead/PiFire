@@ -179,7 +179,8 @@
 		<tbody>
             <!-- Device Specifc Configuration Items-->
             {% for setting in moduleData['device_specific']['config'] %}
-			<tr>
+			<!-- hide row if setting['hidden'] is true -->
+            <tr{% if setting['hidden'] %} style="display:none;" {% endif %}>
 				<td>
                     {{ setting['friendly_name'] }}
                 </td>
