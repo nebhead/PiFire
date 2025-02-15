@@ -48,8 +48,8 @@
                  <li>
                     Added option to delete all debug log files.  This can help with debugging issues, so that we have a clean log file to work with.
                  </li>
-                 <li></li>
-                    Added support for Meater Bluetooth probes (Meater and Pro models only - Plus, SE, not currently supported).  This is a work in progress and may not be fully functional.  
+                 <li>
+                    Added support for Meater Bluetooth probes (Meater Pro is still under development).  This is a work in progress and may not be fully functional.  
                     The probe must be configured in the Wizard before it can be used.  The probe will automatically connect to the PiFire device when the device is 
                     powered on.  The probe will also automatically disconnect when the PiFire device is powered off.  The probe will also automatically reconnect if 
                     the PiFire device is rebooted.  
@@ -64,6 +64,10 @@
                     will allow for the ILI9341 display to be customized, as well as allow for the use of different resolutions.  (note 480x320 is not currently implemented)
                  </li>
                  <li>
+                    Added bluetooth scanning in the configuration wizard so that you can select the hardware ID of a bluetooth device that you want to use.  It will
+                    flag hardware ids that are already in use, but it won't prevent you from setting them. 
+                 </li>
+                 <li>
                      Behind the scenes improvements including:  
                      <ul>
                          <li>
@@ -71,7 +75,7 @@
                              installing python modules to match dependencies for items like bluepy.    
                          </li>
                          <li>
-                             Change 03
+                             -
                          </li>
                      </ul>
                  </li>

@@ -2554,6 +2554,7 @@ def wizard(action=None):
 			settings['globals']['first_time_setup'] = False
 			write_settings(settings)
 			return redirect('/')
+
 		if action=='finish':
 			if control['mode'] == 'Stop':
 				wizardInstallInfo = prepare_wizard_data(r)
@@ -2575,7 +2576,29 @@ def wizard(action=None):
 				return render_template_string(render_string, moduleData=moduleData, moduleSection=section, moduleSettings=moduleSettings)
 			else:
 				return '<strong color="red">No Data</strong>'
-	
+
+		if action=='bt_scan':
+			itemID=r['itemID']
+			bt_data = []
+			error = None
+
+			try: 
+				from bluepy import btle
+				#print('[DEBUG] Imported bluepy...')
+				scanner = btle.Scanner()
+				#print('[DEBUG] Created scanner object...')
+
+				for entry in scanner.scan(5):
+					bt_data.append(parse_bt_device_info(entry))
+					#print(f'[DEBUG] Found device: {name} ({hw_id})')
+
+			except Exception as e: 
+				error = f'Something bad happened: {e}'
+				#print(f'[DEBUG] {error}')
+
+			render_string = "{% from '_macro_probes_config.html' import render_bt_scan_table %}{{ render_bt_scan_table(itemID, bt_data, error) }}"
+			return render_template_string(render_string, itemID=itemID, bt_data=bt_data, error=error)
+
 	''' Create Temporary Probe Device/Port Structure for Setup, Use Existing unless First Time Setup '''
 	if settings['globals']['first_time_setup']: 
 		wizardInstallInfo = wizardInstallInfoDefaults(wizardData, settings)
@@ -2589,6 +2612,22 @@ def wizard(action=None):
 
 	return render_template('wizard.html', settings=settings, page_theme=settings['globals']['page_theme'],
 						   grill_name=settings['globals']['grill_name'], wizardData=wizardData, wizardInstallInfo=wizardInstallInfo, control=control, errors=errors)
+
+def parse_bt_device_info(entry):
+	info = ''
+	global settings 
+	name = entry.getValueText(9)
+	if name is None:
+		name = 'Unknown'
+	hw_id = entry.addr
+	# Check if this hardware id is already in use
+	for device in settings['probe_settings']['probe_map']['probe_devices']:
+		#print(f'[DEBUG] Comparing {device["name"]} ({device["config"].get('hardware_id', None)}) to {name} ({hw_id})')
+		if device['config'].get('hardware_id', None) == hw_id:
+			info += f'This hardware ID is already in use by {device["device"]}'
+			break 
+
+	return {'name':name, 'hw_id':hw_id, 'info':info}
 
 def get_settings_dependencies_values(settings, moduleData):
 	moduleSettings = {}

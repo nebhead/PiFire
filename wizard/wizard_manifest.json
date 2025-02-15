@@ -1307,7 +1307,7 @@
 							"label" : "hardware_id", 
 							"friendly_name" : "Hardware ID",
 							"description" : "This is the unique Hardware ID or Address of the peripheral (format: xx:xx:xx:xx:xx:xx).  This should be discovered during scanning.",
-							"type" : "string", 
+							"type" : "bt_address", 
 							"default" : "",
 							"hidden" : false
 						},
@@ -1350,7 +1350,7 @@
 							"label" : "hardware_id", 
 							"friendly_name" : "Hardware ID",
 							"description" : "This is the unique Hardware ID or Address of the peripheral (format: xx:xx:xx:xx:xx:xx).  This should be discovered during scanning.",
-							"type" : "string", 
+							"type" : "bt_address", 
 							"default" : "",
 							"hidden" : false
 						},
@@ -1393,7 +1393,7 @@
 							"label" : "hardware_id", 
 							"friendly_name" : "Hardware ID",
 							"description" : "This is the unique Hardware ID or Address of the peripheral (format: xx:xx:xx:xx:xx:xx).  This should be discovered during scanning.",
-							"type" : "string", 
+							"type" : "bt_address", 
 							"default" : "",
 							"hidden" : false
 						},
