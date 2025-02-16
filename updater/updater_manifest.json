@@ -4,7 +4,7 @@
       "server" : "1.9.0",
       "cookfile" : "1.5.0",
       "recipe" : "1.0.0",
-      "build" : 26
+      "build" : 27
     },
     "update_notes" : "",
     "update_warnings" : ""

@@ -2583,14 +2583,20 @@ def wizard(action=None):
 			error = None
 
 			try: 
-				from bluepy import btle
-				#print('[DEBUG] Imported bluepy...')
-				scanner = btle.Scanner()
-				#print('[DEBUG] Created scanner object...')
+				supported_cmds = _get_supported_cmds()
 
-				for entry in scanner.scan(5):
-					bt_data.append(parse_bt_device_info(entry))
-					#print(f'[DEBUG] Found device: {name} ({hw_id})')
+				if 'scan_bluetooth' in supported_cmds:
+					process_command(action='sys', arglist=['scan_bluetooth'], origin='admin')  # Request supported commands 
+					data = _get_system_command_output(requested='scan_bluetooth', timeout=6)
+					#print('[DEBUG] BT Scan Data:', data)
+					if data['result'] != 'OK':
+						error = data['message']
+					else:
+						bt_data = parse_bt_device_info(data['data']['bt_devices'])
+						if bt_data == []:
+							error = 'No bluetooth devices found.'
+				else:
+					error = 'No support for bluetooth scan command.'
 
 			except Exception as e: 
 				error = f'Something bad happened: {e}'
@@ -2613,19 +2619,16 @@ def wizard(action=None):
 	return render_template('wizard.html', settings=settings, page_theme=settings['globals']['page_theme'],
 						   grill_name=settings['globals']['grill_name'], wizardData=wizardData, wizardInstallInfo=wizardInstallInfo, control=control, errors=errors)
 
-def parse_bt_device_info(entry):
-	info = ''
+def parse_bt_device_info(bt_devices):
 	global settings 
-	name = entry.getValueText(9)
-	if name is None:
-		name = 'Unknown'
-	hw_id = entry.addr
 	# Check if this hardware id is already in use
-	for device in settings['probe_settings']['probe_map']['probe_devices']:
-		#print(f'[DEBUG] Comparing {device["name"]} ({device["config"].get('hardware_id', None)}) to {name} ({hw_id})')
-		if device['config'].get('hardware_id', None) == hw_id:
-			info += f'This hardware ID is already in use by {device["device"]}'
-			break 
+	for index, peripheral in enumerate(bt_devices):
+		for device in settings['probe_settings']['probe_map']['probe_devices']:
+			#print(f'[DEBUG] Comparing {device["name"]} ({device["config"].get('hardware_id', None)}) to {name} ({hw_id})')
+			if device['config'].get('hardware_id', None) == peripheral['hw_id']:
+				bt_devices[index]['info'] += f'This hardware ID is already in use by {device["device"]}'
+				return bt_devices
+	return bt_devices
 
 	return {'name':name, 'hw_id':hw_id, 'info':info}
 

@@ -228,7 +228,8 @@ class GrillPlatform:
 			'check_wifi_quality',
 			'check_cpu_temp',
 			'supported_commands',
-			'check_alive'
+			'check_alive',
+			'scan_bluetooth'
 		]
 
 		data = {
@@ -339,5 +340,33 @@ class GrillPlatform:
 			'result' : 'OK',
 			'message' : 'The control script is running.',
 			'data' : {}
+		}
+		return data
+	
+	def scan_bluetooth(self, arglist):
+		'''
+		 Scan for bluetooth device addresses
+		'''
+		from bluepy import btle
+		#print('[DEBUG] Imported bluepy...')
+		scanner = btle.Scanner()
+		#print('[DEBUG] Created scanner object...')
+		bt_devices = []
+
+		for entry in scanner.scan(5):
+			name = entry.getValueText(9)
+			if name is None:
+				name = 'Unknown'
+			hw_id = entry.addr
+			info = ''
+			bt_devices.append({'name':name, 'hw_id':hw_id, 'info':info})
+			#print(f'[DEBUG] Found device: {name} ({hw_id})')
+		
+		data = {
+			'result' : 'OK',
+			'message' : 'The control script is running.',
+			'data' : {
+				'bt_devices' : bt_devices
+			}
 		}
 		return data
