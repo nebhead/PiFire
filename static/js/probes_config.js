@@ -5,6 +5,33 @@ var deviceNameSelected = '';
 var deviceModuleSelected = '';
 var probeNameSelected = '';
 
+// 
+// Bluetooth Scanning Functions
+//
+function scanBluetooth(itemID) {
+	const modal = '#bt_' + itemID + '_Modal';
+	const modalContent = '#bt_' + itemID + '_Select';
+	$(modal).modal('show');
+	// Show scanning text while scanning
+	$(modalContent).html('<br> \
+                <h4>Scanning...</h4> \
+                <br> \
+                <div class="fa-3x"> \
+                    <i class="fa-solid fa-magnifying-glass fa-bounce"></i> \
+                </div> \
+                <br></br>');
+	// Load the bluetooth scan page
+	$(modalContent).load("/wizard/bt_scan", {"itemID" : itemID});
+}
+
+function selectBluetoothDevice(hw_id, itemID) {
+	const modal = '#bt_' + itemID + '_Modal';
+	const item = '#' + itemID;
+	$(item).val(hw_id);
+	// Hide the modal
+	$(modal).modal('hide');
+}
+
 //
 // Device Functions
 //
