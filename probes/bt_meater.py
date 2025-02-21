@@ -438,15 +438,7 @@ class MeaterProbeHandler():
 		self.peripheral = None
 		self.logger = logging.getLogger("control")
 
-	def connect(self, connectedAddresses):
-		"""
-		Connects to the Meater probe.
-
-		Returns
-		-------
-		int
-			peripheral address on success, -1 on failure.
-		"""
+	def scan(self, connectedAddresses):
 		# Get a list of adapters
 		adapters = simplepyble.Adapter.get_adapters()
 
@@ -482,6 +474,29 @@ class MeaterProbeHandler():
 				pass
 		logger_msg = "(Meater) Meater probe not found"
 		self.logger.debug(logger_msg)
+	
+	def connect(self, hardware_id):
+		"""
+		Connects to the the Meater probe identified by the hardware_id (i.e. the peripheral address).
+		Sets up a self.peripheral object to be used by the Meater class.
+
+		Returns
+		-------
+		int
+			peripheral address on success, -1 on failure.
+		"""
+		try:
+			self.peripheral.connect(hardware_id)
+			#ic("Connected to peripheral " + self.peripheral.identifier())
+			logger_msg = f"(Meater) Connected to peripheral {self.peripheral.identifier()}"
+			self.logger.debug(logger_msg)
+			return self.peripheral.address()
+		except:
+			#ic("Failed to connect to probe ")
+			logger_msg = f"(Meater) Failed to connect to probe {self.peripheral.identifier()}"
+			self.logger.debug(logger_msg)
+			return -1
+
 		#ic(logger_msg)
         
 	def checkProperties(self):
@@ -498,7 +513,7 @@ class MeaterProbeHandler():
 			return None
 		
 class Meater_Device():
-	def __init__(self, port_map, primary_port, units, transient=True):
+	def __init__(self, port_map, primary_port, units, transient=True, hardware_id=None):
 		self.logger = logging.getLogger("control")
 		self.transient = transient
 		self.port_map = port_map
@@ -510,7 +525,7 @@ class Meater_Device():
 
 		self.port_values = []
 	
-		self.address = None
+		self.address = hardware_id
 		self.device_setup = False
 
 		self.status = {
@@ -528,12 +543,12 @@ class Meater_Device():
 		self.sensor_thread.start()
 	
 	def _setup_device(self):
+		self.probeHandler = MeaterProbeHandler()
 		while True:
 			connectedAddresses = []
 			if self.address == None:
 				try:
-					self.probeHandler = MeaterProbeHandler()
-					self.address = self.probeHandler.connect(connectedAddresses)
+					self.address = self.probeHandler.scan(connectedAddresses)
 					connectedAddresses.append(self.address)
 				except:
 					self.address = None
@@ -545,6 +560,7 @@ class Meater_Device():
 				#ic("Setting up Meater device thread active")
 				try:
 					''' Setup Meater Device Here '''
+					self.probeHandler.connect(self.address)
 					self.probe = self.probeHandler.checkProperties()
 					self.probe.subscribe_to_temps()
 					self.device_setup = True
@@ -556,7 +572,7 @@ class Meater_Device():
 					self.logger.debug(logger_msg)
 					#ic(logger_msg)
 					self.device_setup = False
-					self.address = None
+					self.address = None  # Technically shouldn't be reset to None, but keeping to avoid issues for existing users
 
 			time.sleep(10)
 
@@ -604,13 +620,17 @@ class Meater_Device():
 	
 class ReadProbes(ProbeInterface):
 	def __init__(self, probe_info, device_info, units):
+		self.hardware_id = device_info['config'].get('hardware_id', None)
+		if self.hardware_id == '':
+			self.hardware_id = None
+
 		super().__init__(probe_info, device_info, units)
 		#ic(self.port_map)
 		#ic(self.output_data)
 
 	def _init_device(self):
 		self.time_delay = 0
-		self.device = Meater_Device(self.port_map, self.primary_port, self.units, transient=self.transient)
+		self.device = Meater_Device(self.port_map, self.primary_port, self.units, transient=self.transient, hardware_id=self.hardware_id)
 
 	def read_all_ports(self, output_data):
 		port_values = {}
