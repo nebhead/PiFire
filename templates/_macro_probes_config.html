@@ -408,35 +408,41 @@
     <thead class="thead-light">
         <tr>
         <th scope="col">Setting</th>
-        <th scope="col">Options</th>
+        <th scope="col" style="min-width: 200px;">Options</th>
         <th scope="col">Description</th>
         </tr>
     </thead>
     <tbody>
         <!-- Configuration Items-->
         {% for setting in configOptions %}
-        <tr>
+        <tr id="probe_config_row_{{ setting }}">
             <td>
                 {{ configOptions[setting]['display_name'] }}
             </td>
             <td>
                 {% if setting == 'name' %} 
-                <input type="text" class="form-control probeConfig" value="{{ defaultConfig[setting] }}" id="probe_config_{{ setting }}" required>
-                {% else %}
-                <select class="form-control probeConfig" id="probe_config_{{ setting }}" name="probe_config_{{ setting }}">
-                {% for option in configOptions[setting]['options'] %}
-                    <option value="{{ option }}" {% if option == defaultConfig[setting] %}selected{% endif %}>{{ configOptions[setting]['options'][option] }}</option>
-                {% endfor %}
-                </select>
+                    <input type="text" class="form-control probeConfig" value="{{ defaultConfig[setting] }}" id="probe_config_{{ setting }}" required>
+                {% else %} 
+                    <select class="form-control probeConfig" id="probe_config_{{ setting }}" name="probe_config_{{ setting }}" onchange="probe_showHideProfile(this.value)">
+                    {% for option in configOptions[setting]['options'] %}
+                        <option value="{{ option }}" {% if option == defaultConfig[setting] %}selected{% endif %}>{{ configOptions[setting]['options'][option] }}</option>
+                    {% endfor %}
+                    </select>
                 {% endif %}
             </td>
             <td>
                 {{ configOptions[setting]['description'] | safe }}
             </td>
-            </tr>
+        </tr>
         {% endfor %}
     </tbody>
 </table>
+
+<script>
+    $(document).ready(function() {
+        probe_showHideProfile($("#probe_config_device_port").val());
+    });
+</script>
 
 {% endmacro %}
 

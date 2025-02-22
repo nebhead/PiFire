@@ -190,3 +190,12 @@ function probe_submitProbeConfig(request) {
 	}, 500);
 };
 
+function probe_showHideProfile(val) {
+	// Show/Hide the profile ID field depending if port is an ADC port
+	if (val.includes("ADC")) {
+		$("#probe_config_row_profile_id").show();
+	} else {
+		$("#probe_config_row_profile_id").hide();
+	}
+}
+
