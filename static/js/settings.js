@@ -655,6 +655,20 @@ function sendTestNotification() {
 	});
 };
 
+function settings_toast_error(message) {
+	$('#toastTitle').text('Error');
+	$('#toastMessage').text(message);
+	$('#notifyToast').removeClass('bg-success text-white').addClass('bg-danger text-white');
+	$('#notifyToast').toast('show');
+};
+
+function settings_toast_success(message) {
+	$('#toastTitle').text('Success');
+	$('#toastMessage').text(message);
+	$('#notifyToast').removeClass('bg-danger text-white').addClass('bg-success text-white');
+	$('#notifyToast').toast('show');
+};
+
 // On page load...
 $(document).ready(function() {
 	// Setup Color Picker for all elements whose id starts with 'clrpck_'

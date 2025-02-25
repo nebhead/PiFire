@@ -236,6 +236,30 @@
 	  </div>
 	</div>
 </div> <!-- End Server Reload Modal -->
+
+<!-- Modal for Probe Config -->
+<div class="modal fade" id="probeConfigModal" tabindex="-1" role="dialog" aria-labelledby="probeConfigModalLabel" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="probeConfigModalLabel">Probe Configuration</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<div id="probe_config_card">
+					<!-- Probe Config Card -->
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">Dismiss</button>
+				<button type="button" class="btn btn-outline-danger" onclick="dashProbeConfigSave();">Save</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 {% endblock %}
 
 {% block controlpanel %}

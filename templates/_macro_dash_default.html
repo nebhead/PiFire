@@ -78,7 +78,7 @@
 	<div class="card-footer justify-content-center">
 		<div class="btn-toolbar justify-content-center" role="toolbar">
 			<div class="btn-group mr-2 shadow" role="group">
-				<button class="btn btn-sm btn-outline-primary" role="button" data-toggle="tooltip" title="Settings for this probe." onclick="window.location.href = '/settings';">
+				<button class="btn btn-sm btn-outline-primary" role="button" data-toggle="tooltip" title="Settings for this probe." onclick="dashProbeConfig('{{ probe_data['label'] }}')">
 					<i class="fas fa-cog"></i>
 				</button>
 				{% if probe_data['type'] == 'Primary' %}

@@ -423,7 +423,7 @@
                 {% if setting == 'name' %} 
                     <input type="text" class="form-control probeConfig" value="{{ defaultConfig[setting] }}" id="probe_config_{{ setting }}" required>
                 {% else %} 
-                    <select class="form-control probeConfig" id="probe_config_{{ setting }}" name="probe_config_{{ setting }}" onchange="probe_showHideProfile(this.value)">
+                    <select class="form-control probeConfig" id="probe_config_{{ setting }}" name="probe_config_{{ setting }}" onchange="probe_showHideFields(this.value, this.id)">
                     {% for option in configOptions[setting]['options'] %}
                         <option value="{{ option }}" {% if option == defaultConfig[setting] %}selected{% endif %}>{{ configOptions[setting]['options'][option] }}</option>
                     {% endfor %}
@@ -440,8 +440,9 @@
 
 <script>
     $(document).ready(function() {
-        probe_showHideProfile($("#probe_config_device_port").val());
-    });
+        probe_showHideFields($("#probe_config_device_port").val(), "probe_config_device_port");
+        probe_showHideFields($("#probe_config_type").val(), "probe_config_type");
+});
 </script>
 
 {% endmacro %}

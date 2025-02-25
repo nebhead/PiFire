@@ -988,6 +988,66 @@ function dash_api_set(command) {
     });
 };
 
+function dashProbeConfig(selected) {
+	var post_data = {
+		'selected': selected
+	};
+	$("#probe_config_card").load("/settings/probe_config", post_data);
+	$("#probeConfigModal").modal('show');
+}
+
+function dashProbeConfigSave() {
+	// Create an empty object to store our probe configuration
+	let probe_config = {};
+
+	// Gather data by class
+	$(".probe_config").each(function() {
+		const fieldName = $(this).data("field");
+		const fieldValue = $(this).val();
+		probe_config[fieldName] = fieldValue;
+	});
+
+	// Send the data to the Flask server using AJAX
+	$.ajax({
+		url: "/settings/probe_config_save",
+		type: "POST",
+		contentType: "application/json",
+		data: JSON.stringify(probe_config),
+		success: function(response) {
+			console.log("Success:", response);
+			// Handle successful response
+			if (response['status'] == 'label_not_found') {
+				dash_toast_error("Probe label not found.");
+			} else {
+				dash_toast_success("Probe configuration successfully saved.");
+				// Delay for 0.5 seconds before reloading page
+				setTimeout(function() {
+					location.reload();	
+				}, 500);
+			};
+		},
+		error: function(error) {
+			console.error("Error:", error);
+			let errorMsg = "An error occurred while saving settings.";
+			dash_toast_error(errorMsg);
+		}
+	});
+};
+
+function dash_toast_error(message) {
+	$('#toastTitle').text('Error');
+	$('#toastMessage').text(message);
+	$('#notifyToast').removeClass('bg-success text-white').addClass('bg-danger text-white');
+	$('#notifyToast').toast('show');
+};
+
+function dash_toast_success(message) {
+	$('#toastTitle').text('Success');
+	$('#toastMessage').text(message);
+	$('#notifyToast').removeClass('bg-danger text-white').addClass('bg-success text-white');
+	$('#notifyToast').toast('show');
+};
+
 // Main
 $(document).ready(function(){
 	// Setup Listeners 

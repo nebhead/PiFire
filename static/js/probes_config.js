@@ -190,12 +190,20 @@ function probe_submitProbeConfig(request) {
 	}, 500);
 };
 
-function probe_showHideProfile(val) {
+function probe_showHideFields(val, id) {
 	// Show/Hide the profile ID field depending if port is an ADC port
-	if (val.includes("ADC")) {
-		$("#probe_config_row_profile_id").show();
-	} else {
-		$("#probe_config_row_profile_id").hide();
+	if (id == 'probe_config_device_port') {
+		if (val.includes("ADC")) {
+			$("#probe_config_row_profile_id").show();
+		} else {
+			$("#probe_config_row_profile_id").hide();
+		}
+	} else if (id == 'probe_config_type') {
+		if (val.includes("Aux")) {
+			$("#probe_config_row_enabled").hide();
+		} else {
+			$("#probe_config_row_enabled").show();
+		}
 	}
 }
 

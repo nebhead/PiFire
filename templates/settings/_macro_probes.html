@@ -1,0 +1,194 @@
+{% macro render_probe_select(selected, probe_info, settings) %}
+    <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <span class="input-group-text">
+                <b>Select a Probe:</b>
+            </span>
+        </div>
+        <select class="form-control" id="settings_probe_select" onchange="settings_select_probe(this.value)">
+            {% for probe in probe_info %}
+                <option value="{{ probe['label'] }}" {% if probe['label'] == selected %} selected>{{ probe['name'] }}</option>
+                {% else %}
+                <option value="{{ probe['label'] }}">{{ probe['name'] }}</option>
+                {% endif %} 
+            {% endfor %}
+        </select>
+    </div>
+    <form name="probe_config" action="/settings/probe_config_edit" method="POST">
+        <div class="card shadow">
+            <div class="card-body">
+                <div id="settings_probe_config">
+                    <!-- Probe Config Placeholder -->
+                    {% if selected == '' %}
+                        {{ render_probe_config(probe_info[0], settings) }}
+                    {% else %}
+                        {% for probe in probe_info %}
+                            {% if probe['label'] == selected %}
+                                {{ render_probe_config(probe, settings) }}
+                            {% endif %}    
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-footer">
+                <button type="button" class="btn btn-outline-danger" onclick="settings_save_probe_config();">Save</button>
+            </div>
+        </div>
+    </form>
+    <script>
+        function settings_select_probe(selected) {
+            var post_data = {
+                'selected': selected
+            };
+            $("#settings_probe_config").load("/settings/probe_config", post_data);
+        }
+
+        function settings_save_probe_config() {
+            // Create an empty object to store our probe configuration
+            let probe_config = {};
+            
+            // Gather data by class
+            $(".probe_config").each(function() {
+                const fieldName = $(this).data("field");
+                const fieldValue = $(this).val();
+                probe_config[fieldName] = fieldValue;
+            });
+
+            // Send the data to the Flask server using AJAX
+            $.ajax({
+                url: "/settings/probe_config_save",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(probe_config),
+                success: function(response) {
+                    console.log("Success:", response);
+                    // Handle successful response
+                    if (response['status'] == 'label_not_found') {
+                        settings_toast_error("Probe label not found.");
+                    } else {
+                        settings_toast_success("Probe configuration successfully saved.");
+                    };
+                    post_data = {
+                        'selected': probe_config['label']
+                    };
+                    $("#settings_probe_select").load("/settings/probe_select", post_data);
+                },
+                error: function(error) {
+                    console.error("Error:", error);
+                    let errorMsg = "An error occurred while saving settings.";
+                    settings_toast_error(errorMsg);
+                }
+            });
+        }
+    </script>
+{% endmacro %}
+
+{% macro render_probe_config(probe_info, settings) %}
+
+<!-- Probe Label-->
+<input type="hidden" class="probe_config" value="{{ probe_info['label'] }}" data-field="label">
+
+<table class="table">
+    <tr>
+        <!-- Probe Display Name-->
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text" data-toggle="tooltip" title="Probe name displayed by PiFire on the Dashboard and Graphs">
+                    <i class="fa-solid fa-file-signature"></i>&nbsp; Probe Display Name: 
+                </span>
+            </div>
+            <input data-field="name" type="text" inputmode="text" class="form-control probe_config" value="{{ probe_info['name'] }}" inputmode="text" style="min-width: 11ch;">
+        </div>
+    </tr>
+    <tr>
+        <!-- Probe Type (Disabled) -->
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text" data-toggle="tooltip" title="Probe type (Primary, Food, Aux), can only be changed in the configuration wizard.">
+                    <i class="fa-solid fa-burger"></i>&nbsp; Probe Type:
+                </span>
+            </div>
+            <select class="form-control probe_config" data-field="type" disabled>
+                {% for type in ['Primary', 'Food', 'Aux'] %}
+                <option value="{{ type }}" {% if type == probe_info['type'] %}selected{% endif %}>
+                    {% if type == 'Primary' %}
+                    Primary Probe (Used for Grill/Smoker Control)
+                    {% elif type == 'Food' %}
+                    Food Probe (Shown in UI)
+                    {% elif type == 'Aux' %}
+                    Aux Probe (Used for Virtual Probes)
+                    {% else %}
+                    Unknown
+                    {% endif %}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </tr>
+    <tr>
+        <!-- Probe Device (Disabled)-->
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text" data-toggle="tooltip" title="Probe is connected to this device. (This can only be changed in the configuration wizard)">
+                    <i class="fa-solid fa-microchip"></i>&nbsp; Probe Device: 
+                </span>
+            </div>
+            <input data-field="device" type="text" inputmode="text" class="form-control probe_config" value="{{ probe_info['device'] }}" inputmode="text" style="min-width: 11ch;" disabled>
+        </div>
+    </tr>
+    <tr>
+        <!-- Probe Device Port (Disabled)-->
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text" data-toggle="tooltip" title="Probe is connected to this device port. (This can only be changed in the configuration wizard)">
+                    <i class="fa-solid fa-thermometer"></i>&nbsp; Probe Device Port: 
+                </span>
+            </div>
+            <input data-field="port" type="text" inputmode="text" class="form-control probe_config" value="{{ probe_info['port'] }}" inputmode="text" style="min-width: 11ch;" disabled>
+        </div>
+    </tr>
+    <tr>
+        <!-- Probe Enabled (Visible/Hidden) -->
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text" data-toggle="tooltip" title="Probe is visible or hidden in the UI.">
+                    <i class="fa-solid fa-eye"></i>&nbsp; Probe Visibility:
+                </span>
+            </div>
+            <select class="form-control probe_config" data-field="enabled">
+                <option value="true" {% if probe_info['enabled'] %}selected{% endif %}>
+                    Visible in UI
+                </option>
+                <option value="false" {% if not probe_info['enabled'] %}selected{% endif %}>
+                    Hidden in UI
+                </option>
+            </select>
+        </div>
+    </tr>
+    {% if 'ADC' in probe_info['port'] %}
+    <tr>
+        <!-- Probe Profile (Available for ADC Devices) -->
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text" data-toggle="tooltip" title="Probe Profile for ADC based probes / devices.">
+                    <i class="fa-solid fa-file-lines"></i>&nbsp; Probe Profile:
+                </span>
+            </div>
+            <select class="form-control probe_config" data-field="profile_id">
+                {% for profile_id, profile_data in settings['probe_settings']['probe_profiles'].items() %}
+                <option value="{{ profile_id }}" {%if profile_id == probe_info['profile']['id'] %} selected{% endif %}>
+                    {{ profile_data['name'] }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <span class="badge badge-secondary">Info</span> &nbsp;
+        <i>
+            Profiles can be created and edited in the 
+            <span class="badge badge-primary">Settings</span> > 
+            <span class="badge badge-primary">Probes Profiles</span> tab.
+        </i>
+    </tr>
+    {% endif %}
+</table>
+{% endmacro %}

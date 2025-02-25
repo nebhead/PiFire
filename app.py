@@ -1602,30 +1602,70 @@ def settings_page(action=None):
 		'text' : ''
 	}
 
-	if request.method == 'POST' and action == 'probes':
+	if request.method == 'POST' and action == 'probe_select':
 		response = request.form
 
-		for item in response.items():
-			if 'profile_select_' in item[0]:
-				probe_label = item[0].replace('profile_select_', '')
-				for index, probe in enumerate(settings['probe_settings']['probe_map']['probe_info']):
-					if probe['label'] == probe_label:
-						settings['probe_settings']['probe_map']['probe_info'][index]['profile'] = settings['probe_settings']['probe_profiles'][item[1]]
-			if 'probe_name_' in item[0]:
-				probe_label = item[0].replace('probe_name_', '')
-				for index, probe in enumerate(settings['probe_settings']['probe_map']['probe_info']):
-					if probe['label'] == probe_label:
-						settings['probe_settings']['probe_map']['probe_info'][index]['name'] = item[1]
-						settings['history_page']['probe_config'][probe_label]['name'] = item[1]
+		if response['selected'] == '':
+			selected = settings['probe_settings']['probe_map']['probe_info'][0]['label']
+			probe_info = settings['probe_settings']['probe_map']['probe_info']
+		else:
+			selected = response['selected']
+			probe_info = settings['probe_settings']['probe_map']['probe_info']
 
-		event['type'] = 'updated'
-		event['text'] = 'Successfully updated probe settings.'
+		render_string = "{% from '/settings/_macro_probes.html' import render_probe_select %}{{ render_probe_select(selected, probe_info, settings) }}"
+		return render_template_string(render_string, selected=selected, probe_info=probe_info, settings=settings)
 
-		control['probe_profile_update'] = True
+	if request.method == 'POST' and action == 'probe_config':
+		response = request.form
+		probe_info = None
 
-		# Take all settings and write them
-		write_settings(settings)
-		write_control(control, origin='app')
+		if request.form['selected'] == '':
+			selected = settings['probe_settings']['probe_map']['probe_info'][0]['label']
+			probe_info = settings['probe_settings']['probe_map']['probe_info'][0]
+		else:
+			selected = request.form['selected']
+			for probe in settings['probe_settings']['probe_map']['probe_info']:
+				if probe['label'] == selected:
+					probe_info = probe
+					break 
+
+		if probe_info == None:
+			probe_info = settings['probe_settings']['probe_map']['probe_info'][0]
+
+		render_string = "{% from '/settings/_macro_probes.html' import render_probe_config %}{{ render_probe_config(probe_info, settings) }}"
+		return render_template_string(render_string, probe_info=probe_info, settings=settings)
+
+	if request.method == 'POST' and action == 'probe_config_save':
+		probe_config = request.json
+		label = probe_config.get('label', '')
+		probe_edited = {}
+
+		for index, probe in enumerate(settings['probe_settings']['probe_map']['probe_info']):
+			if probe['label'] == label:
+				probe_edited['label'] = probe['label']
+				probe_edited['name'] = probe_config.get('name', settings['probe_settings']['probe_map']['probe_info'][index]['name'])
+				probe_edited['type'] = probe_config.get('type', settings['probe_settings']['probe_map']['probe_info'][index]['type'])
+				probe_edited['port'] = probe_config.get('port', settings['probe_settings']['probe_map']['probe_info'][index]['port'])
+				probe_edited['device'] = probe_config.get('device', settings['probe_settings']['probe_map']['probe_info'][index]['device'])
+				probe_edited['enabled'] = True if probe_config.get('enabled', False) == 'true' else False
+				profile_id = probe_config.get('profile_id', settings['probe_settings']['probe_map']['probe_info'][index]['profile']['id'])
+				if profile_id != probe['profile']['id']:
+					probe_edited['profile'] = settings['probe_settings']['probe_profiles'].get(profile_id, settings['probe_settings']['probe_map']['probe_info'][index]['profile'])
+				else:
+					probe_edited['profile'] = settings['probe_settings']['probe_map']['probe_info'][index]['profile']
+				break
+
+		if probe_edited:
+			settings['probe_settings']['probe_map']['probe_info'][index] = probe_edited
+			settings['history_page']['probe_config'][label]['name'] = probe_edited['name']
+			control['probe_profile_update'] = True
+			# Take all settings and write them
+			write_settings(settings)
+			write_control(control, origin='app')
+
+			return jsonify({'result' : 'success'})
+		else:
+			return jsonify({'result' : 'label_not_found'})
 
 	if request.method == 'POST' and action == 'notify':
 		response = request.form

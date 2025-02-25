@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% from '_macro_settings.html' import render_controller_config %}
+{% from 'settings/_macro_probes.html' import render_probe_select %}
 
 {% block body_class %}timer-offset{% endblock %}
 
@@ -84,60 +85,10 @@
                             </h5>
                         </div>
                     <div class="card-body">
-                        <div class="card shadow">
-                            <div class="card-header">
-                                <h5>
-                                    <i class="fa fa-tools"></i>&nbsp; Probe Types
-                                </h5>
-                            </div>
-                            <div class="card-body">
-                                <!-- Probe Settings Form Start -->
-                                <form name="probe_type_input" id="probe_form" action="/settings/probes" method="POST">
-                                    {% for probe in settings['probe_settings']['probe_map']['probe_info'] %}
-                                    <div class="input-group mb-3">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text">{{ probe['name'] }} Profile Selection</span>
-                                        </div>
-                                        <select class="form-control" name="profile_select_{{ probe['label'] }}" id="profile_select_{{ probe['label'] }}" onchange="this.form.submit()">
-                                            {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %}
-                                            {% if data['id'] == probe['profile']['id'] %}
-                                            <option value="{{ index }}" selected>{{ data['name'] }}</option>
-                                            {% else %}
-                                            <option value="{{ index }}">{{ data['name'] }}</option>
-                                            {% endif %} {% endfor %}
-                                        </select>
-                                    </div>
-                                    {% endfor %}
-                                </form>
-                            </div><!-- End of card body -->
-                        </div><!-- End of Probe Types Card -->
-                        <br>
-                        <div class="card shadow">
-                            <form name="probe_name_input" id="probe_form" action="/settings/probes" method="POST">
-                                <div class="card-header">
-                                    <h5>
-                                        <i class="fa fa-tools"></i>&nbsp; Probe Display Names 
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <!-- Probe Settings Form Start -->
-
-                                        {% for probe in settings['probe_settings']['probe_map']['probe_info'] %}
-                                        <div class="input-group mb-3">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text" data-toggle="tooltip" title="Probe name displayed by PiFire on the Dashboard and Graphs">
-                                                {{ probe['name'] }} &nbsp;<i class="fas fa-arrow-right"></i></span>
-                                            </div>
-                                            <input id="probe_name_{{ probe['label'] }}" type="text" inputmode="text" class="form-control" name="probe_name_{{ probe['label'] }}" value="{{ probe['name'] }}" inputmode="text" style="min-width: 11ch;">
-                                        </div>
-                                        {% endfor %}
-                                    
-                                </div> <!-- -->
-                                <div class="card-footer bg-light">
-                                    <button type="submit" class="btn btn-outline-danger">Save</button>
-                                </div>
-                            </form>
-                        </div> <!-- End of card for Probe Display Names -->
+                        <div id="settings_probe_select"> 
+                            <!-- Probe Selection -->
+                            {{ render_probe_select('', settings['probe_settings']['probe_map']['probe_info'], settings) }}
+                        </div>
                     </div><!-- End of Probe Settings Card body -->
                 </div><!-- End of Probe Settings Card -->
                 <br><br><br>
