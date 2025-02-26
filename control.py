@@ -749,6 +749,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			status_data['notify_data'] = control['notify_data']  # Get any flagged notifications
 			status_data['timer'] = control['timer']  # Get the timer information
 			status_data['s_plus'] = control['s_plus']
+			status_data['hopper_level_enabled'] = False if settings['modules']['dist'] == 'none' else True
 			status_data['hopper_level'] = pelletdb['current']['hopper_level']
 			status_data['units'] = settings['globals']['units']
 			status_data['mode'] = mode

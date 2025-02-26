@@ -2004,8 +2004,10 @@ def read_status(init=False):
 	if init:
 		settings = read_settings()
 		pellet_db = read_pellet_db()
+		hopper_level_enabled = False if settings['modules']['dist'] == 'none' else True
 		status = {
 		  	"s_plus": False,
+			"hopper_level_enabled": hopper_level_enabled,
   			"hopper_level": pellet_db['current']['hopper_level'],
 			"units": settings['globals']['units'],
 			"mode": "Stop",

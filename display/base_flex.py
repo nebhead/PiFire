@@ -302,6 +302,10 @@ class DisplayBase:
             
         for object_data in section_data:
             ''' Add the object to the display object list '''
+            
+            if self.status_data.get('hopper_level_enabled', False) == False and object_data["type"] == 'hopper_status':
+                # Hopper Status is not enabled
+                continue
             if self.status_data.get('hopper_level', None) != None and object_data["type"] == 'hopper_status':
                 object_data['data']['level'] = self.status_data['hopper_level']  # Add the current hopper level to the object
             FlexObject_ClassName = FlexObject_TypeMap[object_data["type"]]
