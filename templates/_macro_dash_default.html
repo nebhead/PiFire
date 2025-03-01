@@ -377,27 +377,39 @@
 		<table class="table table-sm table-borderless">
 			<tbody>
 				<tr>
-				<td>
-					<span id="fan_status"><i class="fas fa-fan fa-2x" data-toggle="tooltip" data-placement="top" title="Fan ON" style="color:rgb(150, 150, 150)"></i></span>&nbsp;
-				</td>
-				<td>
-					<span id="auger_status"><i class="fas fa-angle-double-right fa-2x" data-toggle="tooltip" data-placement="top" title="Auger ON" style="color:rgb(150, 150, 150)"></i></span>&nbsp;
-				</td>
-				<td>
-					<span id="igniter_status"><i class="fas fa-fire fa-2x" data-toggle="tooltip" data-placement="top" title="Igniter ON" style="color:rgb(150, 150, 150)"></i></span>&nbsp;
-				</td>
-				<td>
-					<span id="pmode_status" class="fa-stack" style="vertical-align: top;">
-						<i class="far fa-square fa-stack-2x" style="color:rgb(150, 150, 150)" data-toggle="tooltip" data-placement="top" title="P-Mode"></i>
-						<i class="fas fa-minus fa-stack-1x" style="color:rgb(150, 150, 150)"></i>
-					</span>
-				</td>
+					<td>
+						<span id="fan_status"><i class="fas fa-fan fa-2x" data-toggle="tooltip" data-placement="top" title="Fan ON" style="color:rgb(150, 150, 150)"></i></span>&nbsp;
+					</td>
+					<td>
+						<span id="auger_status"><i class="fas fa-angle-double-right fa-2x" data-toggle="tooltip" data-placement="top" title="Auger ON" style="color:rgb(150, 150, 150)"></i></span>&nbsp;
+					</td>
+					<td>
+						<span id="igniter_status"><i class="fas fa-fire fa-2x" data-toggle="tooltip" data-placement="top" title="Igniter ON" style="color:rgb(150, 150, 150)"></i></span>&nbsp;
+					</td>
+					<td id="pmode_icon">
+						<span id="pmode_status" class="fa-stack" style="vertical-align: top;">
+							<i class="far fa-square fa-stack-2x" style="color:rgb(150, 150, 150)" data-toggle="tooltip" data-placement="top" title="P-Mode"></i>
+							<i class="fas fa-minus fa-stack-1x" style="color:rgb(150, 150, 150)"></i>
+						</span>
+					</td>
+					{% if settings['cycle_data']['LidOpenDetectEnabled'] %}
+					<td id="lid_open_icon" style="display:none">
+						<span id="lid_status"><i class="fa-solid fa-door-closed fa-2x" data-toggle="tooltip" data-placement="top" title="Lid Closed" style="color:rgb(150, 150, 150)"></i></span>&nbsp;
+					</td>
+					{% endif %}
 				</tr>
 				<tr>
-				<td><span class="badge badge-secondary">Fan</span></td>
-				<td><span class="badge badge-secondary">Auger</span></td>
-				<td><span class="badge badge-secondary">Igniter</span></td>
-				<td><span class="badge badge-secondary">P-Mode</span></td>
+					<td><span class="badge badge-secondary">Fan</span></td>
+					<td><span class="badge badge-secondary">Auger</span></td>
+					<td><span class="badge badge-secondary">Igniter</span></td>
+					<td id="pmode_badge">
+						<span class="badge badge-secondary">P-Mode</span>
+					</td>
+					{% if settings['cycle_data']['LidOpenDetectEnabled'] %}
+					<td id="lid_open_badge" style="display:none">
+						<span class="badge badge-secondary">Lid/Door</span>
+					</td>
+					{% endif %}
 				</tr>
 			</tbody>
 		</table>

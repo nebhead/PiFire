@@ -406,7 +406,15 @@ class DisplayBase:
                         object_data['button_type'] = ['Prime', 'Startup', 'Monitor', 'Stop']
                     
                     self.display_object_list[self.dash_map['control_panel']].update_object_data(object_data)
-            
+                ''' Lid Open Button Update '''
+                if 'lid_open_button' in self.dash_map.keys() and self.status_data['mode'] == 'Hold':
+                    object_data = self.display_object_list[self.dash_map['lid_open_button']].get_object_data()
+                    if self.status_data.get('lid_open_detected', False):
+                        object_data['active'] = True
+                    else:
+                        object_data['active'] = False
+                    self.display_object_list[self.dash_map['lid_open_button']].update_object_data(object_data)
+
             if self.last_in_data != {}:
                 ''' Update Primary Gauge Values '''
                 primary_key = list(self.in_data['P'].keys())[0]  # Get the key for the primary gauge 
@@ -508,6 +516,16 @@ class DisplayBase:
                 else:
                     object_data['active'] = False
                 self.display_object_list[self.dash_map['lid_indicator']].update_object_data(object_data)
+
+            ''' In Hold Mode, Show Lid Indicator Button (when lid_open_detected is False)'''
+            if self.status_data['mode'] in ['Hold'] and self.last_status_data['lid_open_detected'] != self.status_data['lid_open_detected'] \
+                and 'lid_open_button' in self.dash_map.keys():
+                object_data = self.display_object_list[self.dash_map['lid_open_button']].get_object_data()
+                if self.status_data['lid_open_detected']:
+                    object_data['active'] = True
+                else:
+                    object_data['active'] = False
+                self.display_object_list[self.dash_map['lid_open_button']].update_object_data(object_data)
 
             ''' Update PMode '''
             if self.status_data['mode'] in ['Startup', 'Reignite', 'Smoke'] and	\
@@ -824,6 +842,15 @@ class DisplayBase:
                 requests.get('http://127.0.0.1:5000/api/set/manual/fan/toggle')
             except:
                 self.eventLogger.debug('Fan Toggle Failed.')
+
+        if 'lid_open' in self.command:
+            try:
+                requests.get('http://127.0.0.1:5000/api/set/lid_open/toggle')
+            except:
+                self.eventLogger.debug('Lid Open Failed.')
+            # Go back to Dash
+            self.display_active = 'dash'
+            self.display_init = True
 
         if 'none' in self.command:
             pass 

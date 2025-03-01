@@ -270,8 +270,8 @@
                 "title_text" : "Main Menu", 
                 "color" : [255,255,255,255],
                 "data" : {},
-                "button_list" : ["menu_close", "input_hold", "cmd_shutdown", "cmd_stop", "cmd_smoke", "cmd_splus", "menu_pmode", "menu_system", "menu_close"],
-                "button_text" : ["Close Menu", "Hold", "Shutdown", "Stop", "Smoke", "Smoke+", "PMode", "System", "Close"], 
+                "button_list" : ["menu_close", "cmd_lid_open", "input_hold", "cmd_shutdown", "cmd_stop", "cmd_smoke", "cmd_splus", "menu_pmode", "menu_system", "menu_close"],
+                "button_text" : ["Close Menu", "Lid Open", "Hold", "Shutdown", "Stop", "Smoke", "Smoke+", "PMode", "System", "Close"], 
                 "button_value" : [null, null, null, null, null, "on", null, null, null],
                 "touch_areas" : []
             },
@@ -778,8 +778,8 @@
                 "title_text" : "Main Menu", 
                 "color" : [255,255,255,255],
                 "data" : {},
-                "button_list" : ["menu_close", "input_hold", "cmd_shutdown", "cmd_stop", "cmd_smoke", "cmd_splus", "menu_pmode", "menu_system", "menu_close"],
-                "button_text" : ["Close Menu", "Hold", "Shutdown", "Stop", "Smoke", "Smoke+", "PMode", "System", "Close"], 
+                "button_list" : ["menu_close", "cmd_lid_open", "input_hold", "cmd_shutdown", "cmd_stop", "cmd_smoke", "cmd_splus", "menu_pmode", "menu_system", "menu_close"],
+                "button_text" : ["Close Menu", "Lid Open", "Hold", "Shutdown", "Stop", "Smoke", "Smoke+", "PMode", "System", "Close"], 
                 "button_value" : [null, null, null, null, null, "on", null, null, null],
                 "touch_areas" : []
             },

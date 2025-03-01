@@ -276,6 +276,31 @@
                 "touch_areas" : []
             },
             {
+                "name" : "lid_open_button",
+                "type" : "button",
+                "position" : [600, 0],
+                "animation_enabled" : false, 
+                "size" : [60, 60],
+                "glow" : false,
+                "label" : "Lid Open Toggle",
+                "active" : false, 
+                "active_color" : [0,200,0,255],
+                "inactive_color" : [255, 255, 255, 200],
+                "font" : "trebuc.ttf",
+                "data" : {
+                    "text" : [
+                        "Lid Open",
+                        "Pause"
+                    ],
+                    "active_icon" : "\uf52b",
+                    "inactive_icon" : "\uf52a",
+                    "image" : ""
+                },
+                "button_list" : ["cmd_lid_open"],
+                "button_value" : [],
+                "touch_areas" : []
+            },
+            {
                 "name" : "p_mode",
                 "type" : "p_mode_control",
                 "position" : [600, 380],
@@ -296,7 +321,7 @@
             {
                 "name" : "smoke_plus",
                 "type" : "splus_control",
-                "position" : [650, 0],
+                "position" : [670, 0],
                 "animation_enabled" : false, 
                 "size" : [60, 60],
                 "glow" : false,
@@ -362,8 +387,8 @@
                 "title_text" : "Main Menu", 
                 "color" : [255,255,255,255],
                 "data" : {},
-                "button_list" : ["menu_close", "input_hold", "cmd_shutdown", "cmd_stop", "cmd_smoke", "cmd_splus", "menu_pmode", "menu_system", "menu_close"],
-                "button_text" : ["Close Menu", "Hold", "Shutdown", "Stop", "Smoke", "Smoke+", "PMode", "System", "Close"], 
+                "button_list" : ["menu_close", "cmd_lid_open", "input_hold", "cmd_shutdown", "cmd_stop", "cmd_smoke", "cmd_splus", "menu_pmode", "menu_system", "menu_close"],
+                "button_text" : ["Close Menu", "Lid Open", "Hold", "Shutdown", "Stop", "Smoke", "Smoke+", "PMode", "System", "Close"], 
                 "button_value" : [],
                 "touch_areas" : []
             },
@@ -756,6 +781,7 @@
                 "animation_enabled" : false, 
                 "size" : [350, 60],
                 "fg_color" : [255, 255, 255, 255],
+                "bg_color" : [0,0,0,100],
                 "glow" : false,
                 "font" : "trebuc.ttf",
                 "label" : "mode_bar", 
@@ -818,6 +844,31 @@
                 "touch_areas" : []
             },
             {
+                "name" : "lid_open_button",
+                "type" : "button",
+                "position" : [0, 240],
+                "animation_enabled" : false, 
+                "size" : [50, 50],
+                "glow" : false,
+                "label" : "Lid Open Toggle",
+                "active" : false, 
+                "active_color" : [0,200,0,255],
+                "inactive_color" : [255, 255, 255, 200],
+                "font" : "trebuc.ttf",
+                "data" : {
+                    "text" : [
+                        "Lid Open",
+                        "Pause"
+                    ],
+                    "active_icon" : "\uf52b",
+                    "inactive_icon" : "\uf52a",
+                    "image" : ""
+                },
+                "button_list" : ["cmd_lid_open"],
+                "button_value" : [],
+                "touch_areas" : []
+            },
+            {
                 "name" : "smoke_plus",
                 "type" : "splus_control",
                 "position" : [0, 180],
@@ -826,7 +877,8 @@
                 "glow" : false,
                 "label" : "P-Mode",
                 "active" : false, 
-                "color" : [200,0,200,225],
+                "active_color" : [200,0,200,225],
+                "inactive_color" : [255,255,255,100],
                 "data" : {},
                 "button_list" : ["cmd_splus"],
                 "touch_areas" : [],
@@ -855,32 +907,13 @@
                 "size" : [220, 110],
                 "glow" : false,
                 "label" : "Timer", 
-                "color" : [255,255,255,255],
+                "fg_color" : [255,255,255,255],
+                "bg_color" : [0,0,0,100],
                 "button_list" : [],
                 "button_value" : [],
                 "data" : {
                     "seconds" : 0
                 },
-                "touch_areas" : []
-            },
-            {
-                "name" : "lid_indicator",
-                "type" : "alert",
-                "position" : [260, 600],
-                "animation_enabled" : false, 
-                "size" : [220, 110],
-                "glow" : false,
-                "label" : "Lid Open Detected",
-                "active" : false, 
-                "color" : [0,200,0,255],
-                "data" : {
-                    "text" : [
-                        "Lid Open",
-                        "Detected"
-                    ]
-                },
-                "button_list" : [],
-                "button_value" : [],
                 "touch_areas" : []
             },
             {
@@ -892,7 +925,8 @@
                 "glow" : false,
                 "label" : "P-Mode",
                 "active" : false, 
-                "color" : [255,255,255,255],
+                "fg_color" : [255,255,255,255],
+                "bg_color" : [0,0,0,0],
                 "data" : {
                     "pmode" : 0
                 },
@@ -953,8 +987,8 @@
                 "title_text" : "Main Menu", 
                 "color" : [255,255,255,255],
                 "data" : {},
-                "button_list" : ["menu_close", "input_hold", "cmd_shutdown", "cmd_stop", "cmd_smoke", "cmd_splus", "menu_pmode", "menu_system", "menu_close"],
-                "button_text" : ["Close Menu", "Hold", "Shutdown", "Stop", "Smoke", "Smoke+", "PMode", "System", "Close"], 
+                "button_list" : ["menu_close", "cmd_lid_open", "input_hold", "cmd_shutdown", "cmd_stop", "cmd_smoke", "cmd_splus", "menu_pmode", "menu_system", "menu_close"],
+                "button_text" : ["Close Menu", "Lid Open", "Hold", "Shutdown", "Stop", "Smoke", "Smoke+", "PMode", "System", "Close"], 
                 "button_value" : [],
                 "touch_areas" : []
             },

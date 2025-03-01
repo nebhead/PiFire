@@ -481,6 +481,8 @@ def default_control():
 		'step_data' : {}
 	}
 
+	control['lid_open_toggle'] = False  # Request to set lid_open so that the controller will pause 
+
 	control['status'] = ''
 
 	control['probe_profile_update'] = False
@@ -2482,6 +2484,18 @@ def process_command(action=None, arglist=[], origin='unknown', direct_write=Fals
 				control['s_plus'] = False 
 			write_control(control, direct_write=direct_write, origin=origin)
 		
+		elif arglist[0] == 'lid_open':
+			'''
+			Lid Open Toggle
+			/api/set/lid_open/toggle
+			'''
+			if arglist[1] == 'toggle':
+				control['lid_open_toggle'] = True
+			else:
+				control['lid_open_toggle'] = True 
+
+			write_control(control, direct_write=direct_write, origin=origin)
+
 		elif arglist[0] in ['notify', 'limit_high', 'limit_low']:
 			'''
 			Notify Settings

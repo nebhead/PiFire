@@ -21,6 +21,7 @@ FlexObject_TypeMap = {
     'input_number_simple' : 'InputNumberSimple',
     'timer' : 'TimerStatus',
     'alert' : 'AlertMessage',
+    'button' : 'FlexButton',
     'splus_control' : 'SPlusStatus',
     'p_mode_control' : 'PModeStatus',
     'hopper_status' : 'HopperStatus'
@@ -1324,6 +1325,37 @@ class AlertMessage(FlexObject):
 
     def _define_touch_areas(self):
         pass
+
+class FlexButton(FlexObject):
+    def __init__(self, objectType, objectData, background):
+        super().__init__(objectType, objectData, background)
+
+    def _draw_object(self):
+        output_size = self.objectData['size']
+        size = (200,200)  # Working Canvas Size 
+        
+        # Create canvas & drawing object
+        canvas = Image.new("RGBA", size)
+        draw = ImageDraw.Draw(canvas)
+        
+        color = self.objectData['active_color'] if self.objectData['active'] else self.objectData['inactive_color']
+        
+        # Draw Rectangle
+        padding = 25
+        draw.rounded_rectangle((padding, padding, size[0]-padding, size[1]-padding), radius=20, outline=color, width=6)
+        
+        # Draw Icon
+        icon_code = self.objectData['data'].get('active_icon', '\uf071') if self.objectData['active'] else self.objectData['data'].get('inactive_icon', '\uf071')
+        icon = self._create_icon(icon_code, 85, color)
+        icon_pos = ((size[0] // 2) - (icon.width // 2), (size[1] // 2) - (icon.height // 2))
+        canvas.paste(icon, icon_pos, icon)
+
+        # Resize and Prepare Output 
+        resized = canvas.resize(output_size)
+        canvas = Image.new("RGBA", (output_size[0], output_size[1]))
+        canvas.paste(resized, (0, 0), resized)
+
+        return canvas 
 
 class PModeStatus(FlexObject):
     def __init__(self, objectType, objectData, background):

@@ -238,27 +238,47 @@ function updateProbeCards() {
 						$('#status_footer').slideDown();
 						$('#mode_timer_label').show();
 						$('#lid_open_label').hide();
-						$('#pmode_group').hide();
+						$('#lid_open_icon').hide();
+						$('#lid_open_badge').hide();
+						$('#pmode_group').show();
+						$('#pmode_icon').show();
+						$('#pmode_badge').show();
 					} else if (['Startup', 'Reignite'].includes(mode)) {
 						$('#status_footer').slideDown();
 						$('#mode_timer_label').show();
 						$('#lid_open_label').hide();
+						$('#lid_open_icon').hide();
+						$('#lid_open_badge').hide();
 						$('#pmode_group').show();
+						$('#pmode_icon').show();
+						$('#pmode_badge').show();
 					} else if (mode == 'Hold') {
 						$('#status_footer').slideUp();
 						$('#mode_timer_label').hide();
 						$('#lid_open_label').show();
+						$('#lid_open_icon').show();
+						$('#lid_open_badge').show();
 						$('#pmode_group').hide();
+						$('#pmode_icon').hide();
+						$('#pmode_badge').hide();
 					} else if (mode == 'Smoke') {
 						$('#status_footer').slideUp();
 						$('#mode_timer_label').hide();
 						$('#lid_open_label').hide();
+						$('#lid_open_icon').hide();
+						$('#lid_open_badge').hide();
 						$('#pmode_group').show();
+						$('#pmode_icon').show();
+						$('#pmode_badge').show();
 					} else {
 						$('#status_footer').slideUp();
 						$('#mode_timer_label').hide();
 						$('#lid_open_label').hide();
+						$('#lid_open_icon').hide();
+						$('#lid_open_badge').hide();
 						$('#pmode_group').hide();
+						$('#pmode_icon').show();
+						$('#pmode_badge').show();
 					};
 					$('#mode_status').html('<b>' + mode +'</b>');
 				};
@@ -342,11 +362,13 @@ function updateProbeCards() {
 				if (last_lid_open_status) {
 					$('#status_footer').slideDown();
 					$('#mode_timer_label').hide();
+					document.getElementById('lid_status').innerHTML = '<i class="fa-solid fa-door-open fa-beat-fade fa-2x" data-toggle="tooltip" data-placement="top" title="Lid Open Detected" style="color:rgb(0, 140, 255)"></i></span>&nbsp;';
 					$('#lid_open_label').show();
 				} else {
 					$('#status_footer').slideUp();
 					$('#mode_timer_label').hide();
-					$('#lid_open_label').show();
+					$('#lid_open_label').hide();
+					document.getElementById('lid_status').innerHTML = '<i class="fa-solid fa-door-closed fa-2x" data-toggle="tooltip" data-placement="top" title="Lid Closed" style="color:rgb(150, 150, 150)"></i></span>&nbsp;';
 				};
 			}; 
 
@@ -1066,6 +1088,10 @@ $(document).ready(function(){
 
 	$('#fan_status').click(function() {
 		dash_api_set('manual/fan/toggle');
+	});
+
+	$('#lid_status').click(function() {
+		dash_api_set('lid_open/toggle');
 	});
 
 	// Initialize Dashboard Data
