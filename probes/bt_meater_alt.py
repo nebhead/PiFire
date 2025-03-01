@@ -154,8 +154,8 @@ class BaseMeater:
 
 	@property
 	def probe_values_C(self):
-		tip = self.getTipC()
-		ambient = self.getAmbientC()
+		tip = round(self.getTipC(), 1)
+		ambient = round(self.getAmbientC(), 1)
 		#ic(tip, ambient)
 		return [tip, ambient]
 
