@@ -1220,7 +1220,7 @@ def upgrade_settings(prev_ver, settings, settings_default):
 			settings['modules']['grillplat'] == 'raspberry_pi_all'
 
 	''' Check if upgrading from v1.9.0 build 32 '''
-	if (prev_ver[0] <=1 and prev_ver[1] <= 9) or (prev_ver[0] ==1 and prev_ver[1] == 9 and settings['versions'].get('build', 0) <= 32):
+	if (prev_ver[0] ==1 and prev_ver[1] == 9 and settings['versions'].get('build', 0) <= 32):
 		for index, device in enumerate(settings['probe_settings']['probe_map']['probe_devices']):
 			if device['module'] == 'bt_meater_alt':
 				settings['probe_settings']['probe_map']['probe_devices'][index]['module'] = 'bt_meater'
