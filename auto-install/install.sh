@@ -167,6 +167,9 @@ $SUDO cp pifire.nginx /etc/nginx/sites-available/pifire
 # Create link in sites-enabled
 $SUDO ln -s /etc/nginx/sites-available/pifire /etc/nginx/sites-enabled
 
+# Copy server_error.html to /usr/share/nginx/html
+$SUDO cp server_error.html /usr/share/nginx/html
+
 # Restart nginx
 $SUDO service nginx restart
 
