@@ -1324,10 +1324,10 @@
 					]
 				}			
 			},
-			"bt_meater" : {
-				"friendly_name" : "Bluetooth - Meater",
-				"filename" : "bt_meater",
-				"description" : "This device module supports Bluetooth LE Meater probe thermometer devices (includes Meater Pro). This module is still experimental, so feedback is welcome.",
+			"bt_meater_exp" : {
+				"friendly_name" : "BT - Meater Experimental",
+				"filename" : "bt_meater_exp",
+				"description" : "This device module supports Bluetooth LE Meater probe thermometer devices and is experimental. Not that this module relies on the simplepyble module and will not co-exist with other bluetooth modules based on bluepy.  This is not recommended for production use.",
 				"default" : false,
 				"image" : "bt_meater.png",
 				"reboot_required" : false,
@@ -1367,10 +1367,10 @@
 					]
 				}			
 			},
-			"bt_meater_alt" : {
-				"friendly_name" : "Bluetooth - Meater (Alternative)",
-				"filename" : "bt_meater_alt",
-				"description" : "This device module supports Bluetooth Meater probe thermometer devices (includes Meater Pro). This module is still experimental, so feedback is welcome.  This version of the module uses bluepy to connect to the device, similar to the ibbq module.  Note that this version currently prints a lot of debug data to the log for testing. ",
+			"bt_meater" : {
+				"friendly_name" : "Bluetooth - Meater",
+				"filename" : "bt_meater",
+				"description" : "This device module supports Bluetooth LE Meater probe thermometer devices (Original Meater and Meater Plus supported).  At this time the Meater Pro (Meater 2 Plus) devices are not supported. ",
 				"default" : false,
 				"image" : "bt_meater.png",
 				"reboot_required" : false,
