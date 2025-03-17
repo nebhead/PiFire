@@ -67,7 +67,10 @@
 <br>
 
 <!-- Navigation Button Row -->
-<div class="row">
+<div class="row" id="card_history_button" 
+	{% if 'history_button' in dash_data['custom']['hidden_cards'] %}
+	style="display:none"
+	{% endif %}>
 	<div class="col">
 		<a href="/history" class="btn btn-outline-primary btn-block shadow" role="button"><i class="fas fa-chart-line"></i> Status & History Graphs</a>
 	</div> <!-- End of Column -->
@@ -210,7 +213,7 @@
 								Status Card
 							</td>
 						</tr>
-						</tbody>
+
 						<tr onclick="dashToggleVisible('time_elapsed');">
 							<td>
 								<span id="visibleStatus_time_elapsed">
@@ -223,6 +226,20 @@
 								Time Elapsed Card
 							</td>
 						</tr>
+
+						<tr onclick="dashToggleVisible('history_button');">
+							<td>
+								<span id="visibleStatus_history_button">
+								{% if 'history_button' not in dash_data['custom']['hidden_cards'] %}
+								<i class="fa-solid fa-eye text-success"></i>&nbsp;
+								{% else %}
+								<i class="fa-solid fa-eye-slash text-secondary"></i>&nbsp;
+								{% endif %}
+								</span>
+								Status & History Graphs Button
+							</td>
+						</tr>
+					</tbody>
 					</table>
 				</div>
 			</div>
