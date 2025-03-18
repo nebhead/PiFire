@@ -44,7 +44,7 @@ class Display(DisplayBase):
 			backlight=bl_pin,
 			rst=rst_pin,
 			rotation=self.rotation,
-			width=320,
+			width=240,
 			height=240,
 			spi_speed_hz=60 * 1000 * 1000
 		)

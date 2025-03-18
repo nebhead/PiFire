@@ -5,10 +5,10 @@ PiFire Display Interface Library
 *****************************************
 
  Description: 
-   This library supports using 
- the ILI9341 display with 240Hx320W resolution.
- This module utilizes Luma.LCD to interface 
- this display. 
+   This library supports using
+ the ST7789 display with resolution.
+ This module utilizes the Pimoroni libraries
+ to interface this display.
 
 *****************************************
 '''
@@ -16,11 +16,11 @@ PiFire Display Interface Library
 '''
  Imported Libraries
 '''
-import time
 import threading
-from luma.core.interface.serial import spi
-from luma.lcd.device import st7789 
+import time
+import ST7789 as ST7789
 from display.base_240x320 import DisplayBase
+from PIL import Image
 from pyky040 import pyky040
 
 '''
@@ -28,22 +28,30 @@ Display class definition
 '''
 class Display(DisplayBase):
 
-	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=1, units='F', config={}):
+	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F', config={}):
 		super().__init__(dev_pins, buttonslevel, rotation, units, config)
-		self.last_direction = None
 
 	def _init_display_device(self):
 		# Init Device
 		dc_pin = self.dev_pins['display']['dc']
-		led_pin = self.dev_pins['display']['led']
+		bl_pin = self.dev_pins['display']['led']
 		rst_pin = self.dev_pins['display']['rst']
 
-		self.serial = spi(port=0, device=0, gpio_DC=dc_pin, gpio_RST=rst_pin, bus_speed_hz=32000000,
-						  reset_hold_time=0.2, reset_release_time=0.2)
-		self.device = st7789(self.serial, active_low=False, width=240, height=240, gpio_LIGHT=led_pin,
-							  rotate=self.rotation)
+		self.device = ST7789.ST7789(
+			port=0,
+			cs=0,
+			dc=dc_pin,
+			backlight=bl_pin,
+			rst=rst_pin,
+			rotation=self.rotation,
+			width=320,
+			height=240,
+			spi_speed_hz=60 * 1000 * 1000
+		)
+		self.WIDTH = self.device.width
+		self.HEIGHT = self.device.height
 
-		# Setup & Start Display Loop Thread 
+		# Setup & Start Display Loop Thread
 		display_thread = threading.Thread(target=self._display_loop)
 		display_thread.start()
 
@@ -55,9 +63,6 @@ class Display(DisplayBase):
 		sw_pin = self.dev_pins['input']['enter_sw'] 	# Switch - GPIO21
 		self.input_event = None
 		self.input_counter = 0
-		self.last_direction = None
-		self.last_movement_time = 0
-		self.enter_received = False
 
 		# Init Menu Structures
 		self._init_menu()
@@ -74,50 +79,33 @@ class Display(DisplayBase):
 	'''
 	============== Input Callbacks ============= 
 	'''
+	
 	def _click_callback(self):
-		self.input_event = 'ENTER'
-		self.enter_received = True
+		self.input_event='ENTER'
 
 	def _inc_callback(self, v):
-		current_time = time.time()
-		if self.last_direction is None or self.last_direction == 'UP' or current_time - self.last_movement_time > 0.5:
-			if not self.enter_received:
-				self.input_event = 'UP'
-				self.input_counter += 1
-			self.last_direction = 'UP'
-			self.last_movement_time = current_time
-			if time.time() - self.last_movement_time < 0.3:
-				if self.enter_received:
-					self.enter_received = False
-					return  # if enter command is received during this time, execute the enter command and not the up
+		self.input_event='UP'
+		self.input_counter += 1
 
 	def _dec_callback(self, v):
-		current_time = time.time()
-		if self.last_direction is None or self.last_direction == 'DOWN' or current_time - self.last_movement_time > 0.5:
-			if not self.enter_received:
-				self.input_event = 'DOWN'
-				self.input_counter += 1
-			self.last_direction = 'DOWN'
-			self.last_movement_time = current_time
-			if time.time() - self.last_movement_time < 0.3:
-				if self.enter_received:
-					self.enter_received = False
-					return  # if enter command is received during this time, execute the enter command and not the down
-
+		self.input_event='DOWN'
+		self.input_counter += 1
 
 	'''
 	============== Graphics / Display / Draw Methods ============= 
 	'''
 
 	def _display_clear(self):
-		self.device.clear()
-		self.device.backlight(False)
-		self.device.hide()
+		# Create blank canvas
+		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
+		self.device.display(img)
+		# Kill the backlight to the display
+		self.device.set_backlight(0)
 
 	def _display_canvas(self, canvas):
-		# Display Image
-		self.device.backlight(True)
-		self.device.show()
+		# Display canvas to screen for ST7789
+		# Turn on Backlight (just in case it was off)
+		self.device.set_backlight(1)
 		self.device.display(canvas.convert(mode="RGB"))
 
 	'''
