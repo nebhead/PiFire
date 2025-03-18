@@ -3,7 +3,16 @@
 {% from '_macro_dash_default.html' import render_probe_card, render_status_card, render_time_elapsed_card %}
 
 {% block cssextend %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/dash_default.css') }}" type="text/css" />
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/dash_default.css') }}" type="text/css" />
+	<!-- Apply visual changes for Touch Screen Mode Enabled -->
+	{% if settings['dashboard']['dashboards']['Default']['config']['touch_screen_mode'] == 'On' %}
+	<style>
+		.btn {
+			font-size: 1.05em;
+			padding: 1.05em 2em; 
+		}
+	</style>
+	{% endif %}
 {% endblock %} 
 
 {% block title %}Dashboard{% endblock %} 

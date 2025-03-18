@@ -56,6 +56,16 @@
             "max": 10000,
             "step": 1,
             "default": 150
+        },
+        {
+            "name": "touch_screen_mode",
+            "friendly_name": "Touch Screen Mode",
+            "description": "Changes some visual elements to be more compatible with a touch screen display.",
+            "hidden": false,
+            "type": "list",
+            "list_values": ["Off", "On"],
+            "list_labels": ["Off", "On"],
+            "default": "Off"
         }
     ]
 }
