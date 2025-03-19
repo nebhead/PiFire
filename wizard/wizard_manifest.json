@@ -2009,7 +2009,7 @@
 				"config" : []
 			},
 			"st7789e" : {
-			    "friendly_name" : "ST7789 IPS Display 240x240 (using luma.lcd libraries) with Rotary Encoder Input (standard).",
+			        "friendly_name" : "ST7789 IPS Display 240x240 (using luma.lcd libraries) with Rotary Encoder Input (standard).",
 				"filename" : "st7789e",
 				"description" : "The ST7789 is a 1.3inch LCD IPS Screen with a resolution of 240x240px and is an affordable SPI display. This version of the module supports input based on the KY-040 rotary encoder.",
 				"notes" : "Pinout: Display - MISO = MISO(Pin 21), LED = GPIO05, SCK = SCLK(Pin 23), MOSI = MOSI(Pin 19), DC = GPIO24, RST = GPIO25, CS = CE0(Pin 24).  Encoder - CLK = GPIO16, DT = GPIO20, SW = GPIO21, GND = GND, VCC/+ = 3.3V",
@@ -2031,7 +2031,7 @@
 						"default" : 0,
 						"hidden" : false
 					}
-				]
+			        ]	
 			},
 			"st7789p" : {
 				"friendly_name" : "ST7789p IPS Display 240x240px",
