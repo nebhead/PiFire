@@ -62,9 +62,9 @@ class DisplayBase:
 		'''
 		if self.rotation in [90, 270, 1, 3]:
 			self.WIDTH = 240
-			self.HEIGHT = 240
+			self.HEIGHT = 320
 		else:
-			self.WIDTH = 240
+			self.WIDTH = 320
 			self.HEIGHT = 240
 
 		self.inc_pulse_color = True 

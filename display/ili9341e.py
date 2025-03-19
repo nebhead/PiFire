@@ -19,7 +19,7 @@ PiFire Display Interface Library
 import time
 import threading
 from luma.core.interface.serial import spi
-from luma.lcd.device import st7789 
+from luma.lcd.device import ili9341
 from display.base_240x320 import DisplayBase
 from pyky040 import pyky040
 
@@ -28,7 +28,7 @@ Display class definition
 '''
 class Display(DisplayBase):
 
-	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=1, units='F', config={}):
+	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F', config={}):
 		super().__init__(dev_pins, buttonslevel, rotation, units, config)
 		self.last_direction = None
 
@@ -40,7 +40,7 @@ class Display(DisplayBase):
 
 		self.serial = spi(port=0, device=0, gpio_DC=dc_pin, gpio_RST=rst_pin, bus_speed_hz=32000000,
 						  reset_hold_time=0.2, reset_release_time=0.2)
-		self.device = st7789(self.serial, active_low=False, width=240, height=240, gpio_LIGHT=led_pin,
+		self.device = ili9341(self.serial, active_low=False, width=320, height=240, gpio_LIGHT=led_pin,
 							  rotate=self.rotation)
 
 		# Setup & Start Display Loop Thread 

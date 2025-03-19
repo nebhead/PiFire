@@ -59,7 +59,7 @@ class Display:
 			backlight=bl_pin,
 			rst=rst_pin,
 			rotation=self.rotation,
-			spi_speed_hz=1 * 1000 * 1000
+			spi_speed_hz=80 * 1000 * 1000
 		)
 		self.WIDTH = self.device.width
 		self.HEIGHT = self.device.height
