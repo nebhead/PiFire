@@ -2255,7 +2255,7 @@
 				"friendly_name" : "ST7789p IPS Display 240x240px",
 				"filename" : "st7789p",
 				"description" : "The ST7789 is a 1.3inch LCD IPS Screen with a resolution of 240x240px and is an affordable SPI display.  This one can be complicated to find the right compatible display, so your mileage may vary.  This module supports the 240x240 version and provides a simple color interface (similar to the SSD1306 OLED).  Try display module using luma.lcd libraries if this module results in a black screen.",
-				"notes" : "See documentation for pinout. (https://nebhead.github.io/PiFire-Pages/hardware)",			    
+			        "notes" : "See documentation for pinout. (https://nebhead.github.io/PiFire-Pages/hardware)",
 				"default" : false,
 				"image" : "st7789p.png",
 				"reboot_required" : false,
