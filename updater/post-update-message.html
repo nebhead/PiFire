@@ -121,6 +121,10 @@
                     Fixed a missing voltage bounds check for ADC probes using Celsius units.  This should prevent the probes from reporting invalid temperatures when probes 
                     are not connected.
                  </li>
+                 <li>
+                     Upon upgrade, the system assigns 1Wire to GPIO 6 in the configuration file, which seems to fail.  Changing this assignment to 'None' and also changing
+                     the pin configuration type to 'gpiopin' instead of 'gpio_pin' which hopefully will resolve this issue.  
+                 </li>
              </ul>
              
         </div>
