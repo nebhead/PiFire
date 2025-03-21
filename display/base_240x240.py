@@ -6,7 +6,7 @@ PiFire Display Interface Library
 
  Description: 
    This is a base class for displays using 
- a 240Hx240W resolution.  Other display 
+ a 240Hx320W resolution.  Other display 
  libraries will inherit this base class 
  and add device specific features.
 
@@ -945,21 +945,22 @@ class DisplayBase:
 				self._draw_splus_icon(img, (self.WIDTH - 52, 60))
 
 		# Grill Hopper Level (Lower Center)
-		text = "Hopper:" + str(status_data['hopper_level']) + "%"
-		if status_data['hopper_level'] > 70:
-			hopper_color = (0, 255, 0)
-		elif status_data['hopper_level'] > 30:
-			hopper_color = (255, 150, 0)
-		else:
-			hopper_color = (255, 0, 0)
+		if status_data['hopper_level_enabled']:
+			text = "Hopper:" + str(status_data['hopper_level']) + "%"
+			if status_data['hopper_level'] > 70:
+				hopper_color = (0, 255, 0)
+			elif status_data['hopper_level'] > 30:
+				hopper_color = (255, 150, 0)
+			else:
+				hopper_color = (255, 0, 0)
 
-		label_canvas = self._draw_text(text, self.primary_font, 15, hopper_color, rect=True, outline_color=hopper_color, fill_color=(0,0,0))
-		if self.WIDTH == 240:
-			coords = self.WIDTH // 2 - (label_canvas.width // 2), self.HEIGHT - 28
-		else:
-			coords = self.WIDTH // 2 - (label_canvas.width // 2), (self.HEIGHT // 2) + 50
+			label_canvas = self._draw_text(text, self.primary_font, 15, hopper_color, rect=True, outline_color=hopper_color, fill_color=(0,0,0))
+			if self.WIDTH == 240:
+				coords = self.WIDTH // 2 - (label_canvas.width // 2), self.HEIGHT - 28
+			else:
+				coords = self.WIDTH // 2 - (label_canvas.width // 2), (self.HEIGHT // 2) + 50
 
-		img.paste(label_canvas, coords, label_canvas)
+			img.paste(label_canvas, coords, label_canvas)
 
 		# Current Mode (Bottom Center)
 		text = status_data['mode']  # + ' Mode'
