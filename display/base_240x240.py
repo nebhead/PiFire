@@ -915,20 +915,14 @@ class DisplayBase:
 				self._draw_recipe_icon(img, (self.WIDTH - 52, 10))
 
 		elif show_notify_indicator:
-			if self.WIDTH == 240:
-				self._draw_notify_icon(img, (self.WIDTH - 52, 50))
-			else: 
-				self._draw_notify_icon(img, (self.WIDTH - 52, 10))
+			self._draw_notify_icon(img, (self.WIDTH - 52, 10))
 
 			if notify_count > 1:
 				self._text_circle(draw, (self.WIDTH - 24, 40), (22, 22), str(notify_count), fg_color=(255, 255, 255), bg_color=(200, 0, 0))
 
 		# Smoke Plus Indicator
 		if status_data['s_plus'] and (status_data['mode'] == 'Smoke' or status_data['mode'] == 'Hold'):
-			if self.WIDTH == 240:
-				self._draw_splus_icon(img, (self.WIDTH - 52, 170))
-			else:
-				self._draw_splus_icon(img, (self.WIDTH - 52, 60))
+			self._draw_splus_icon(img, (self.WIDTH - 52, 60))
 
 		# Grill Hopper Level (Lower Center)
 		if status_data['hopper_level_enabled']:
@@ -941,20 +935,14 @@ class DisplayBase:
 				hopper_color = (255, 0, 0)
 
 			label_canvas = self._draw_text(text, self.primary_font, 15, hopper_color, rect=True, outline_color=hopper_color, fill_color=(0,0,0))
-			if self.WIDTH == 240:
-				coords = self.WIDTH // 2 - (label_canvas.width // 2), self.HEIGHT - 28
-			else:
-				coords = self.WIDTH // 2 - (label_canvas.width // 2), (self.HEIGHT // 2) + 50
+			coords = self.WIDTH // 2 - (label_canvas.width // 2), self.HEIGHT - 28
 
 			img.paste(label_canvas, coords, label_canvas)
 
 		# Current Mode (Bottom Center)
 		text = status_data['mode']  # + ' Mode'
 		label_canvas = self._draw_text(text, self.primary_font, 32, (0,0,0), rect=True, outline_color=(3, 161, 252), fill_color=(255,255,255))
-		if self.WIDTH == 240:
-			coords = (self.WIDTH // 2 - (label_canvas.width // 2), 0)
-		else:
-			coords = (self.WIDTH // 2 - (label_canvas.width // 2), self.HEIGHT - 44)
+		coords = (self.WIDTH // 2 - (label_canvas.width // 2), self.HEIGHT - 44)
 		img.paste(label_canvas, coords, label_canvas)
 
 		# Draw Units Circle
@@ -969,16 +957,10 @@ class DisplayBase:
 			text_color = (0, 250, 0)
 
 			label_canvas = self._draw_text(text, self.primary_font, 15, text_color, rect=True, outline_color=text_color, fill_color=(0,0,0))
-			if self.WIDTH == 240:
-				if status_data['mode'] == 'Smoke':
-					coords = self.WIDTH // 2 - (label_canvas.width // 2), 60
-				else: 
-					coords = self.WIDTH // 2 - (label_canvas.width // 2), 210
-			else:
-				if status_data['mode'] == 'Smoke':
-					coords = self.WIDTH // 2 - (label_canvas.width // 2), 26
-				else: 
-					coords = self.WIDTH - label_canvas.width - 10, 10
+			if status_data['mode'] == 'Smoke':
+				coords = self.WIDTH // 2 - (label_canvas.width // 2), 26
+			else: 
+				coords = self.WIDTH - label_canvas.width - 10, 10
 
 			img.paste(label_canvas, coords, label_canvas)
 
@@ -1269,7 +1251,7 @@ class DisplayBase:
 
 		if self.menu['current']['mode'] == 'grill_hold_value':
 			# Grill Temperature (Large Centered)
-			font_point_size = 80 if self.WIDTH == 240 else 120 
+			font_point_size = 80
 			label_canvas = self._draw_text(str(self.menu['current']['option']), self.primary_font, font_point_size, (255,255,255))
 			label_origin = (int(self.WIDTH // 2 - label_canvas.width // 2), int(self.HEIGHT // 3 - label_canvas.height // 2)) if self.WIDTH == 240 else (int(self.WIDTH // 2 - label_canvas.width // 2 - 20), int(self.HEIGHT // 2.5 - label_canvas.height // 2))
 			img.paste(label_canvas, label_origin, label_canvas)
@@ -1297,7 +1279,7 @@ class DisplayBase:
 					selected = item
 					break
 				index += 1
-			font_point_size = 80 if self.WIDTH == 240 else 120 
+			font_point_size = 80
 			icon_color = self.menu[self.menu['current']['mode']][selected].get('iconcolor', (255,255,255))  # Get color from menu item, default to white if not defined
 			text = self.menu[self.menu['current']['mode']][selected]['icon']
 			label_canvas = self._draw_text(text, 'static/font/FA-Free-Solid.otf', font_point_size, icon_color)
@@ -1306,7 +1288,7 @@ class DisplayBase:
 
 			# Draw a Plus Icon over the top of the Smoke Icon
 			if selected == 'SmokePlus':
-				font_point_size = 60 if self.WIDTH == 240 else 80
+				font_point_size = 60
 				text = '\uf067'
 				label_canvas = self._draw_text(text, 'static/font/FA-Free-Solid.otf', font_point_size, (0,0,0))
 				label_origin = (int(self.WIDTH // 2 - label_canvas.width // 2), int(self.HEIGHT // 2.5 - label_canvas.height // 2))
@@ -1335,7 +1317,7 @@ class DisplayBase:
 			down_color = (255, 255, 0)
 
 		# Up / Down Arrows (Middle Right)
-		font_point_size = 80 if self.WIDTH == 240 else 60 
+		font_point_size = 80
 		text = '\uf0de'  # FontAwesome Icon Sort (Up Arrow)
 		label_canvas = self._draw_text(text, 'static/font/FA-Free-Solid.otf', font_point_size, up_color)
 		label_origin = ((self.WIDTH - int((label_canvas.width // 2) ** 1.3)), int((self.HEIGHT // 2.5) - (label_canvas.height // 2) - 5))
