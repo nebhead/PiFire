@@ -60,13 +60,9 @@ class DisplayBase:
 		180, 2 = 180 Degrees Rotation (Pimoroni Libraries, Luma.LCD Libraries)
 		270, 3 = 270 Degrees Rotation (Pimoroni Libraries, Luma.LCD Libraries)
 		'''
-		if self.rotation in [90, 270, 1, 3]:
-			self.WIDTH = 240
-			self.HEIGHT = 240
-		else:
-			self.WIDTH = 240
-			self.HEIGHT = 240
-
+		self.WIDTH = 240
+		self.HEIGHT = 240
+		
 		self.inc_pulse_color = True 
 		self.icon_color = 100
 		self.fan_rotation = 0
@@ -889,24 +885,14 @@ class DisplayBase:
 
 		if status_data['outpins']['fan']:
 			# F = Fan (Upper Left), position (10,10)
-			if self.WIDTH == 240:
-				self._draw_fan_icon(img, (10, 50))
-			else:
-				self._draw_fan_icon(img, (10, 10))
+			self._draw_fan_icon(img, (10, 10))
 
 		if status_data['outpins']['igniter']:
 			# I = Igniter(Center Right)
-			if self.WIDTH == 240:
-				self._draw_ignitor_icon(img, (self.WIDTH - 52, 170))
-			else:
-				self._draw_ignitor_icon(img, (self.WIDTH - 52, 60))
+			self._draw_ignitor_icon(img, (self.WIDTH - 52, 60))
 		
 		if status_data['outpins']['auger']:
-			# A = Auger (Center Left)
-			if self.WIDTH == 240:
-				self._draw_auger_icon(img, (10, 170))
-			else:
-				self._draw_auger_icon(img, (10, 60))
+			self._draw_auger_icon(img, (10, 60))
 
 		# Notification Indicator (Right)
 		show_notify_indicator = False
