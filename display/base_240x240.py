@@ -937,7 +937,7 @@ class DisplayBase:
 		text = status_data['mode']  # + ' Mode'
 		label_canvas = self._draw_text(text, self.primary_font, 28, (0,0,0), rect=True, outline_color=(3, 161, 252), fill_color=(255,255,255))
 
-		coords = (self.WIDTH // 2 - (label_canvas.width // 2), self.HEIGHT - 46)
+		coords = (self.WIDTH // 2 - (label_canvas.width // 2), self.HEIGHT - 48)
 		img.paste(label_canvas, coords, label_canvas)
 
 		# Draw Units Circle
@@ -971,7 +971,7 @@ class DisplayBase:
 			countdown = int(duration - (time.time() - status_data['start_time'])) if int(duration - (time.time() - status_data['start_time'])) > 0 else 0
 			text = f'{countdown}s'
 			label_canvas = self._draw_text(text, self.primary_font, 26, (0,200,0), rect=True, outline_color=(0, 200, 0), fill_color=(0,0,0))
-			coords = (int((self.WIDTH // 2 )- (label_canvas.width // 2)), int((self.HEIGHT // 2) - 120))
+			coords = (int((self.WIDTH // 2 )- (label_canvas.width // 2)), 5)
 			img.paste(label_canvas, coords, label_canvas)
 
 		# Lid open detection timer display
@@ -980,7 +980,7 @@ class DisplayBase:
 				duration = int(status_data['lid_open_endtime'] - time.time()) if int(status_data['lid_open_endtime'] - time.time()) > 0 else 0
 				text = f'Lid Pause {duration}s'
 				label_canvas = self._draw_text(text, self.primary_font, 18, (0,200,0), rect=True, outline_color=(0, 200, 0), fill_color=(0,0,0))
-				coords = (int((self.WIDTH // 2 )- (label_canvas.width // 2)), int((self.HEIGHT // 2) - 120))
+				coords = (int((self.WIDTH // 2 )- (label_canvas.width // 2)), 5)
 				img.paste(label_canvas, coords, label_canvas)
 
 		# Display Final Screen
