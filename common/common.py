@@ -835,12 +835,15 @@ def write_control(control, direct_write=False, origin='unknown'):
 	"""
 	global cmdsts
 
-	if direct_write: 
-		cmdsts.set('control:general', json.dumps(control))
-	else: 
-		# Add changes to control write queue 
-		control['origin'] = origin 
-		cmdsts.rpush('control:write', json.dumps(control))
+	""" Blocking writes from app to test display crash """
+	if not 'app' in origin:
+
+		if direct_write:
+			cmdsts.set('control:general', json.dumps(control))
+		else: 
+			# Add changes to control write queue 
+			control['origin'] = origin 
+			cmdsts.rpush('control:write', json.dumps(control))
 
 def execute_control_writes():
 	"""
