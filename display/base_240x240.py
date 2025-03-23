@@ -903,16 +903,10 @@ class DisplayBase:
 				notify_count += 1
 
 		if status_data['recipe_paused']:
-			if self.WIDTH == 240:
-				self._draw_pause_icon(img, (self.WIDTH - 52, 50))
-			else: 
-				self._draw_pause_icon(img, (self.WIDTH - 52, 10))
+			self._draw_pause_icon(img, (self.WIDTH - 52, 10))
 
 		elif status_data['recipe']:
-			if self.WIDTH == 240:
-				self._draw_recipe_icon(img, (self.WIDTH - 52, 50))
-			else: 
-				self._draw_recipe_icon(img, (self.WIDTH - 52, 10))
+			self._draw_recipe_icon(img, (self.WIDTH - 52, 10))
 
 		elif show_notify_indicator:
 			self._draw_notify_icon(img, (self.WIDTH - 52, 10))
@@ -941,8 +935,9 @@ class DisplayBase:
 
 		# Current Mode (Bottom Center)
 		text = status_data['mode']  # + ' Mode'
-		label_canvas = self._draw_text(text, self.primary_font, 32, (0,0,0), rect=True, outline_color=(3, 161, 252), fill_color=(255,255,255))
-		coords = (self.WIDTH // 2 - (label_canvas.width // 2), self.HEIGHT - 44)
+		label_canvas = self._draw_text(text, self.primary_font, 28, (0,0,0), rect=True, outline_color=(3, 161, 252), fill_color=(255,255,255))
+
+		coords = (self.WIDTH // 2 - (label_canvas.width // 2), self.HEIGHT - 46)
 		img.paste(label_canvas, coords, label_canvas)
 
 		# Draw Units Circle
@@ -1253,7 +1248,7 @@ class DisplayBase:
 			# Grill Temperature (Large Centered)
 			font_point_size = 80
 			label_canvas = self._draw_text(str(self.menu['current']['option']), self.primary_font, font_point_size, (255,255,255))
-			label_origin = (int(self.WIDTH // 2 - label_canvas.width // 2), int(self.HEIGHT // 3 - label_canvas.height // 2)) if self.WIDTH == 240 else (int(self.WIDTH // 2 - label_canvas.width // 2 - 20), int(self.HEIGHT // 2.5 - label_canvas.height // 2))
+			label_origin = (int(self.WIDTH // 2 - label_canvas.width // 2), int(self.HEIGHT // 3 - label_canvas.height // 2))
 			img.paste(label_canvas, label_origin, label_canvas)
 
 			# Current Mode (Bottom Center)
