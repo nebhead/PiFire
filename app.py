@@ -2440,7 +2440,7 @@ def admin_page(action=None):
 			errors.append(event)
 		control['system']['cpu_temp'] = data['data'].get('cpu_temp', None)
 
-	write_control(control, origin='app')
+	write_control(control)
 
 	debug_mode = settings['globals']['debug_mode']
 
@@ -3327,7 +3327,7 @@ def _check_cpu_temp():
 	data = _get_system_command_output(requested='check_cpu_temp')
 	control = read_control()
 	control['system']['cpu_temp'] = data['data'].get('cpu_temp', None)
-	write_control(control, origin='app')
+	write_control(control)
 	return f"{control['system']['cpu_temp']}C"
 
 def create_ui_hash():
