@@ -112,14 +112,14 @@ class Display(DisplayBase):
 		#img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
 		self.device.clear()
 		self.device.backlight(False)
-		self.device.hide()
+		#self.device.hide()
 		#self.device.display(img)
 
 
 	def _display_canvas(self, canvas):
 		# Display Image
 		self.device.backlight(True)
-		self.device.show()
+		#self.device.show()
 		if self.rotation != 0:
 			canvas = canvas.rotate(270)
 		self.device.display(canvas.convert(mode="RGB"))
