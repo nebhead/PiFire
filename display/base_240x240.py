@@ -6,7 +6,7 @@ PiFire Display Interface Library
 
  Description: 
    This is a base class for displays using 
- a 240Hx320W resolution.  Other display 
+ a 240Hx240W resolution.  Other display 
  libraries will inherit this base class 
  and add device specific features.
 
@@ -22,7 +22,6 @@ import socket
 import qrcode
 import logging
 from PIL import Image, ImageDraw, ImageFont
-from common import *  # Common Module for WebUI and Control Program
 from common import read_control, write_control
 
 '''
@@ -47,8 +46,7 @@ class DisplayBase:
 		#self.primary_font = 'DejaVuSans.ttf'  # May need to switch to a default font in Raspberry Pi OS Lite due to MSTCorefonts Package Deprecation 
 		# Attempt to set the log level of PIL so that it does not pollute the logs
 		logging.getLogger('PIL').setLevel(logging.CRITICAL + 1)
-		log_level = logging.INFO
-		self.eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
+	
 		# Init Display Device, Input Device, Assets
 		self._init_globals()
 		self._init_assets() 
@@ -63,8 +61,7 @@ class DisplayBase:
 		180, 2 = 180 Degrees Rotation (Pimoroni Libraries, Luma.LCD Libraries)
 		270, 3 = 270 Degrees Rotation (Pimoroni Libraries, Luma.LCD Libraries)
 		'''
-		self.WIDTH = 240
-		self.HEIGHT = 240
+		self.WIDTH = self.HEIGHT = 240
 		
 		self.inc_pulse_color = True 
 		self.icon_color = 100
@@ -255,7 +252,6 @@ class DisplayBase:
 			if self.input_enabled:
 				self._event_detect()
 				time.sleep(0.1)
-				self.eventLogger.info(f'In input_enabled') 
 			if self.display_timeout:
 				if time.time() > self.display_timeout:
 					self.display_timeout = None
@@ -267,21 +263,18 @@ class DisplayBase:
 				self.display_command = None
 				self._display_clear()
 				time.sleep(0.1)
-				self.eventLogger.info(f'In display clear') 
 				continue
 			if self.display_command == 'splash':
 				self._display_splash()
 				self.display_timeout = time.time() + 3
 				self.display_command = 'clear'
 				time.sleep(3) # Hold splash screen for 3 seconds
-				self.eventLogger.info(f'In splash') 
 				continue
 			if self.display_command == 'text':
 				self._display_text()
 				self.display_command = None
 				self.display_timeout = time.time() + 10
 				time.sleep(0.1)
-				self.eventLogger.info(f'In text') 
 				continue
 			if self.display_command == 'network':
 				try:
@@ -298,12 +291,8 @@ class DisplayBase:
 					self.display_command = None
 				else:
 					self.display_text("No IP Found")
-				self.eventLogger.info(f'In network') 
 				time.sleep(0.1)
 				continue
-
-			self.eventLogger.info(f'Display command: {self.display_command}. Display timeout: {self.display_timeout}. Display Active: {self.display_active}')
-			self.eventLogger.info(f'Self in data: {self.in_data} Self status data: {self.status_data}')
 
 			if self.input_enabled:
 				if self.menu_active and not self.display_timeout:
@@ -354,14 +343,9 @@ class DisplayBase:
 	def _init_assets(self): 
 		self._init_background()
 		self._init_splash()
-		self._init_blackscreen()
 
 	def _init_background(self):
-		self.background = Image.open('static/img/display/background_square_240.jpg')
-		#self.background = self.background.resize((self.WIDTH, self.HEIGHT))
-	
-	def _init_blackscreen(self):
-		self.blackscreen = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
+		self.background = self.background.resize((self.WIDTH, self.HEIGHT))
 
 	def _init_splash(self):
 		self.splash = Image.open('static/img/display/color-boot-splash.png')

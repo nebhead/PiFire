@@ -276,7 +276,7 @@ def _process_system_commands(grill_platform):
 				'message' : f'ERROR: Command [{command[0]}] is not supported with the current platform.',
 				'data' : {}
 			}
-		### system_output.push(result)
+		system_output.push(result)
 
 def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device):
 	"""
