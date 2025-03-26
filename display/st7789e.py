@@ -148,5 +148,6 @@ class Display(DisplayBase):
 				self.input_event=None
 				self.menu_active = True
 				self.menu_time = time.time()
+				self.monitor_display = False
 				self._menu_display(command)
 				self.input_counter = 0

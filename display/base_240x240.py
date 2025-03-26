@@ -43,7 +43,10 @@ class DisplayBase:
 		self.input_counter = 0
 		self.input_enabled = False
 		self.primary_font = 'trebuc.ttf'
-		self.loop_delay = 1
+		self.loop_delay = 0.1
+		self.clear_delay = 1
+		self.monitor_display = False
+
 		#self.primary_font = 'DejaVuSans.ttf'  # May need to switch to a default font in Raspberry Pi OS Lite due to MSTCorefonts Package Deprecation 
 		# Attempt to set the log level of PIL so that it does not pollute the logs
 		logging.getLogger('PIL').setLevel(logging.CRITICAL + 1)
@@ -262,18 +265,21 @@ class DisplayBase:
 				self.display_active = False
 				self.display_timeout = None
 				self.display_command = None
+				self.monitor_display = False
 				self._display_clear()
-				time.sleep(self.loop_delay)
+				time.sleep(self.clear_delay)
 				continue
 			if self.display_command == 'splash':
 				self._display_splash()
 				self.display_timeout = time.time() + 3
 				self.display_command = 'clear'
+				self.monitor_display = False
 				time.sleep(3) # Hold splash screen for 3 seconds
 				continue
 			if self.display_command == 'text':
 				self._display_text()
 				self.display_command = None
+				self.monitor_display = False
 				self.display_timeout = time.time() + 10
 				time.sleep(self.loop_delay)
 				continue
@@ -292,6 +298,7 @@ class DisplayBase:
 					self.display_command = None
 				else:
 					self.display_text("No IP Found")
+				self.monitor_display = False
 				time.sleep(self.loop_delay)
 				continue
 
@@ -306,14 +313,28 @@ class DisplayBase:
 				elif not self.display_timeout and self.display_active:
 					if self.in_data is not None and self.status_data is not None:
 						self._display_current(self.in_data, self.status_data)
+						self.in_data = None
+						self.status_data = None
+						if self.monitor_display:
+							time.sleep(self.loop_delay)
+							continue
+						else:
+							self.monitor_display = True
+							time.sleep(self.clear_delay)
+							continue
 			elif not self.display_timeout and self.display_active:
 				if self.in_data is not None and self.status_data is not None:
 					self._display_current(self.in_data, self.status_data)
-
-			self.in_data = None
-			self.status_data = None
-
-			time.sleep(0.2)
+					self.in_data = None
+					self.status_data = None
+					if self.monitor_display:
+						time.sleep(self.loop_delay)
+						continue
+					else:
+						self.monitor_display = True
+						time.sleep(self.clear_delay)
+						continue
+			time.sleep(self.loop_delay)
 
 	'''
 	============== Input Callbacks ============= 
