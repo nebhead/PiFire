@@ -345,6 +345,7 @@ class DisplayBase:
 		self._init_splash()
 
 	def _init_background(self):
+		self.background = Image.open('static/img/display/background.jpg')
 		self.background = self.background.resize((self.WIDTH, self.HEIGHT))
 
 	def _init_splash(self):
