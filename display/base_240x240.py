@@ -693,7 +693,7 @@ class DisplayBase:
 
 	def _display_clear(self):
 		'''
-		Inheriting classes will override this function to clear display device.
+		Inheriting classes will override this function to clear the display device.
 		'''
 		pass
 
