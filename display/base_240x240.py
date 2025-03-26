@@ -340,7 +340,7 @@ class DisplayBase:
 	'''
 	============== Graphics / Display / Draw Methods ============= 
 	'''
-	def _init_assets(self): 
+	def _init_assets(self):
 		self._init_background()
 		self._init_splash()
 
@@ -693,7 +693,7 @@ class DisplayBase:
 
 	def _display_clear(self):
 		'''
-		Inheriting classes will override this function to show the canvas on the display device.
+		Inheriting classes will override this function to clear display device.
 		'''
 		pass
 
