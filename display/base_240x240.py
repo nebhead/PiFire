@@ -22,6 +22,7 @@ import socket
 import qrcode
 import logging
 from PIL import Image, ImageDraw, ImageFont
+from common import *  # Common Module for WebUI and Control Program
 from common import read_control, write_control
 
 '''
@@ -46,6 +47,8 @@ class DisplayBase:
 		#self.primary_font = 'DejaVuSans.ttf'  # May need to switch to a default font in Raspberry Pi OS Lite due to MSTCorefonts Package Deprecation 
 		# Attempt to set the log level of PIL so that it does not pollute the logs
 		logging.getLogger('PIL').setLevel(logging.CRITICAL + 1)
+		log_level = logging.INFO
+		self.eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 		# Init Display Device, Input Device, Assets
 		self._init_globals()
 		self._init_assets() 
@@ -251,30 +254,35 @@ class DisplayBase:
 		while True:
 			if self.input_enabled:
 				self._event_detect()
-
+				time.sleep(0.1)
+				self.eventLogger.info(f'In input_enabled') 
 			if self.display_timeout:
 				if time.time() > self.display_timeout:
 					self.display_timeout = None
 					if not self.display_active:
 						self.display_command = 'clear'
-
 			if self.display_command == 'clear':
 				self.display_active = False
 				self.display_timeout = None
 				self.display_command = None
 				self._display_clear()
-
+				time.sleep(0.1)
+				self.eventLogger.info(f'In display clear') 
+				continue
 			if self.display_command == 'splash':
 				self._display_splash()
 				self.display_timeout = time.time() + 3
 				self.display_command = 'clear'
 				time.sleep(3) # Hold splash screen for 3 seconds
-
+				self.eventLogger.info(f'In splash') 
+				continue
 			if self.display_command == 'text':
 				self._display_text()
 				self.display_command = None
 				self.display_timeout = time.time() + 10
-
+				time.sleep(0.1)
+				self.eventLogger.info(f'In text') 
+				continue
 			if self.display_command == 'network':
 				try:
 					s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -290,7 +298,13 @@ class DisplayBase:
 					self.display_command = None
 				else:
 					self.display_text("No IP Found")
-			
+				self.eventLogger.info(f'In network') 
+				time.sleep(0.1)
+				continue
+
+			self.eventLogger.info(f'Display command: {self.display_command}. Display timeout: {self.display_timeout}. Display Active: {self.display_active}')
+			self.eventLogger.info(f'Self in data: {self.in_data} Self status data: {self.status_data}')
+
 			if self.input_enabled:
 				if self.menu_active and not self.display_timeout:
 					if time.time() - self.menu_time > 5:
@@ -302,11 +316,12 @@ class DisplayBase:
 				elif not self.display_timeout and self.display_active:
 					if self.in_data is not None and self.status_data is not None:
 						self._display_current(self.in_data, self.status_data)
-
 			elif not self.display_timeout and self.display_active:
 				if self.in_data is not None and self.status_data is not None:
 					self._display_current(self.in_data, self.status_data)
 
+			self.in_data = None
+			self.status_data = None
 
 			time.sleep(0.1)
 
@@ -339,11 +354,15 @@ class DisplayBase:
 	def _init_assets(self): 
 		self._init_background()
 		self._init_splash()
+		self._init_blackscreen()
 
 	def _init_background(self):
-		self.background = Image.open('static/img/display/background.jpg')
-		self.background = self.background.resize((self.WIDTH, self.HEIGHT))
+		self.background = Image.open('static/img/display/background_square_240.jpg')
+		#self.background = self.background.resize((self.WIDTH, self.HEIGHT))
 	
+	def _init_blackscreen(self):
+		self.blackscreen = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
+
 	def _init_splash(self):
 		self.splash = Image.open('static/img/display/color-boot-splash.png')
 		(self.splash_width, self.splash_height) = self.splash.size
@@ -689,10 +708,9 @@ class DisplayBase:
 
 	def _display_clear(self):
 		'''
-		Inheriting classes will override this function to clear the display device.
+				Inheriting classes will override this function to show the canvas on the display device.
 		'''
 		pass
-
 
 	def _display_canvas(self, canvas):
 		'''
@@ -737,6 +755,7 @@ class DisplayBase:
 		self._display_canvas(img)
 
 	def _display_current(self, in_data, status_data):
+		self.eventLogger.info(f'In display current.')
 		# Create canvas
 		img = Image.new('RGBA', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
 

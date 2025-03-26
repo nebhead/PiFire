@@ -21,6 +21,7 @@ import threading
 from luma.core.interface.serial import spi
 from luma.lcd.device import st7789 
 from display.base_240x240 import DisplayBase
+from PIL import Image
 from pyky040 import pyky040
 
 '''
@@ -37,11 +38,10 @@ class Display(DisplayBase):
 		dc_pin = self.dev_pins['display']['dc']
 		led_pin = self.dev_pins['display']['led']
 		rst_pin = self.dev_pins['display']['rst']
-
-		self.serial = spi(port=0, device=0, gpio_DC=dc_pin, gpio_RST=rst_pin, bus_speed_hz=32000000,
-						  reset_hold_time=0.2, reset_release_time=0.2)
+		
+		self.serial = spi(gpio_DC=dc_pin, gpio_RST=rst_pin)
 		self.device = st7789(self.serial, active_low=False, width=240, height=240, gpio_LIGHT=led_pin,
-							  rotate=self.rotation)
+							  rotate=0)
 
 		# Setup & Start Display Loop Thread 
 		display_thread = threading.Thread(target=self._display_loop)
@@ -108,16 +108,17 @@ class Display(DisplayBase):
 	'''
 	============== Graphics / Display / Draw Methods ============= 
 	'''
-
 	def _display_clear(self):
-		self.device.clear()
+		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
 		self.device.backlight(False)
-		self.device.hide()
+		self.device.display(img)
 
 	def _display_canvas(self, canvas):
 		# Display Image
 		self.device.backlight(True)
 		self.device.show()
+		if self.rotation != 0:
+			canvas = canvas.rotate(270)
 		self.device.display(canvas.convert(mode="RGB"))
 
 	'''
@@ -137,6 +138,8 @@ class Display(DisplayBase):
 				if command not in ['UP', 'DOWN', 'ENTER']:
 					return
 
+				self.in_data = None
+				self.status_data = None
 				self.display_command = None
 				self.display_data = None
 				self.input_event=None
