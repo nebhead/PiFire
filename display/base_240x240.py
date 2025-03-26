@@ -251,7 +251,7 @@ class DisplayBase:
 		while True:
 			if self.input_enabled:
 				self._event_detect()
-				time.sleep(0.1)
+				time.sleep(0.2)
 			if self.display_timeout:
 				if time.time() > self.display_timeout:
 					self.display_timeout = None
@@ -262,7 +262,7 @@ class DisplayBase:
 				self.display_timeout = None
 				self.display_command = None
 				self._display_clear()
-				time.sleep(0.1)
+				time.sleep(0.2)
 				continue
 			if self.display_command == 'splash':
 				self._display_splash()
@@ -274,7 +274,7 @@ class DisplayBase:
 				self._display_text()
 				self.display_command = None
 				self.display_timeout = time.time() + 10
-				time.sleep(0.1)
+				time.sleep(0.2)
 				continue
 			if self.display_command == 'network':
 				try:
@@ -291,7 +291,7 @@ class DisplayBase:
 					self.display_command = None
 				else:
 					self.display_text("No IP Found")
-				time.sleep(0.1)
+				time.sleep(0.2)
 				continue
 
 			if self.input_enabled:
@@ -312,7 +312,7 @@ class DisplayBase:
 			self.in_data = None
 			self.status_data = None
 
-			time.sleep(0.1)
+			time.sleep(0.2)
 
 	'''
 	============== Input Callbacks ============= 
