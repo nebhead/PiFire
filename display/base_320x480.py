@@ -16,6 +16,7 @@ PiFire Display Interface Library
 '''
  Imported Libraries
 '''
+import os
 import time
 import socket
 import qrcode
@@ -279,9 +280,14 @@ class DisplayBase:
 				self.display_timeout = time.time() + 10
 
 			if self.display_command == 'network':
-				s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-				s.connect(("8.8.8.8", 80))
-				network_ip = s.getsockname()[0]
+				try:
+					s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+					s.settimeout(4)
+					s.connect(("8.8.8.8", 80))
+					network_ip = s.getsockname()[0]
+				except:
+					network_ip = ''
+					
 				if network_ip != '':
 					self._display_network(network_ip)
 					self.display_timeout = time.time() + 30
@@ -758,7 +764,9 @@ class DisplayBase:
 		percents = [0,0,0]
 
 		temps[0] = in_data['probe_history']['primary'][label]
-		if temps[0] <= 0:
+		if temps[0] == None:
+			temps[0] = 0
+		if temps[0] == None or temps[0] <= 0:
 			percents[0] = 0
 		elif self.units == 'F':
 			percents[0] = round((temps[0] / 600) * 100)  # F Temp Range [0 - 600F] for Grill
@@ -799,7 +807,9 @@ class DisplayBase:
 			percents = [0,0,0]
 
 			temps[0] = in_data['probe_history']['food'][label]
-			if temps[0] <= 0:
+			if temps[0] == None:
+				temps[0] = 0
+			if temps[0] == None or temps[0] <= 0:
 				percents[0] = 0
 			elif self.units == 'F':
 				percents[0] = round((temps[0] / 300) * 100)  # F Temp Range [0 - 300F] for probe
@@ -836,7 +846,9 @@ class DisplayBase:
 			percents = [0,0,0]
 
 			temps[0] = in_data['probe_history']['food'][label]
-			if temps[0] <= 0:
+			if temps[0] == None:
+				temps[0] = 0
+			if temps[0] == None or temps[0] <= 0:
 				percents[0] = 0
 			elif self.units == 'F':
 				percents[0] = round((temps[0] / 300) * 100)  # F Temp Range [0 - 300F] for probe
@@ -1142,12 +1154,29 @@ class DisplayBase:
 					self.menu['current']['mode'] = 'power_menu'
 					self.menu['current']['option'] = 0
 				elif 'Power_' in selected:
+					self.clear_display()
 					control = read_control()
+					control['updated'] = True
+					control['mode'] = 'Stop'
+					write_control(control, origin='display')
+
 					if 'Off' in selected:
-						os.system('sudo shutdown -h now &')
-					elif 'Restart' in selected:
-						os.system('sudo reboot &')
-				
+						self.display_text('Shutting Down...')
+						os.system('sleep 3 && sudo shutdown -h now &')
+					#elif 'Restart' in selected:
+					else:
+						self.display_text('Restarting...')
+						os.system('sleep 3 && sudo reboot &')
+
+					self.display_command = None
+					self.menu['current']['mode'] = 'none'
+					self.menu['current']['option'] = 0
+					self.menu_active = False
+					self.menu_time = 0
+
+					self._display_text()
+					time.sleep(30)
+
 				# Master Menu Back Function
 				elif 'Menu_Back' in selected:
 					self.menu['current']['mode'] = 'inactive'
