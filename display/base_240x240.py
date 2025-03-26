@@ -43,6 +43,7 @@ class DisplayBase:
 		self.input_counter = 0
 		self.input_enabled = False
 		self.primary_font = 'trebuc.ttf'
+		self.loop_delay = 0.5
 		#self.primary_font = 'DejaVuSans.ttf'  # May need to switch to a default font in Raspberry Pi OS Lite due to MSTCorefonts Package Deprecation 
 		# Attempt to set the log level of PIL so that it does not pollute the logs
 		logging.getLogger('PIL').setLevel(logging.CRITICAL + 1)
@@ -251,7 +252,7 @@ class DisplayBase:
 		while True:
 			if self.input_enabled:
 				self._event_detect()
-				time.sleep(0.2)
+				time.sleep(self.loop_delay)
 			if self.display_timeout:
 				if time.time() > self.display_timeout:
 					self.display_timeout = None
@@ -262,7 +263,7 @@ class DisplayBase:
 				self.display_timeout = None
 				self.display_command = None
 				self._display_clear()
-				time.sleep(0.2)
+				time.sleep(self.loop_delay)
 				continue
 			if self.display_command == 'splash':
 				self._display_splash()
@@ -274,7 +275,7 @@ class DisplayBase:
 				self._display_text()
 				self.display_command = None
 				self.display_timeout = time.time() + 10
-				time.sleep(0.2)
+				time.sleep(self.loop_delay)
 				continue
 			if self.display_command == 'network':
 				try:
@@ -291,7 +292,7 @@ class DisplayBase:
 					self.display_command = None
 				else:
 					self.display_text("No IP Found")
-				time.sleep(0.2)
+				time.sleep(self.loop_delay)
 				continue
 
 			if self.input_enabled:
