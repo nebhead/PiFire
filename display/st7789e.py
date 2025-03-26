@@ -41,7 +41,7 @@ class Display(DisplayBase):
 		
 		self.serial = spi(gpio_DC=dc_pin, gpio_RST=rst_pin)
 		self.device = st7789(self.serial, active_low=False, width=240, height=240, gpio_LIGHT=led_pin,
-							  rotate=0)
+							  rotate=self.rotation)
 
 		# Setup & Start Display Loop Thread 
 		display_thread = threading.Thread(target=self._display_loop)
@@ -120,8 +120,8 @@ class Display(DisplayBase):
 		# Display Image
 		self.device.backlight(True)
 		#self.device.show()
-		if self.rotation != 0:
-			canvas = canvas.rotate(270)
+		#if self.rotation != 0:
+		#	canvas = canvas.rotate(270)
 		self.device.display(canvas.convert(mode="RGB"))
 
 	'''
