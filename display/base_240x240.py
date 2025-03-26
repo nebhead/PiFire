@@ -692,7 +692,7 @@ class DisplayBase:
 
 	def _display_clear(self):
 		'''
-				Inheriting classes will override this function to show the canvas on the display device.
+		Inheriting classes will override this function to show the canvas on the display device.
 		'''
 		pass
 
@@ -739,7 +739,6 @@ class DisplayBase:
 		self._display_canvas(img)
 
 	def _display_current(self, in_data, status_data):
-		self.eventLogger.info(f'In display current.')
 		# Create canvas
 		img = Image.new('RGBA', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
 
