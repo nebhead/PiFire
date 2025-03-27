@@ -117,6 +117,7 @@ class Display(DisplayBase):
 		#self.device.display(img)
 
 	def _display_reset(self):
+		'''software reset of display'''
 		self.device.command(0x01)
 
 	def _display_canvas(self, canvas):
