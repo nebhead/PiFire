@@ -119,13 +119,14 @@ class Display(DisplayBase):
 		# Display Image
 		self.device.backlight(True)
 		#self.device.show()
+		'''Luma.lcd's rotation settings are counter clockwise'''
 		if self.rotation == 1:
 			canvas = canvas.rotate(270)
 		elif self.rotation == 2:
 			canvas = canvas.rotate(180)
 		elif self.rotation == 3:
 			canvas = canvas.rotate(90)
-			
+
 		self.device.display(canvas.convert(mode="RGB"))
 
 	'''
