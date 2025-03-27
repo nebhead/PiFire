@@ -1017,7 +1017,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		eventLogger.info(f'Display active with status_data.')
 		status_data['mode'] = control['mode']
 		display_device.display_status(in_data, status_data)
-
+	eventLogger.info(f'Leaving work cycle.')
 	return ()
 
 def _next_mode(next_mode, setpoint=0):			
