@@ -288,7 +288,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	:param display_device: Display Device
 	:param dist_device: Distance Device
 	"""
-
+	eventLogger.info(f'In Work Cycle.')
 	# Setup Process Monitor and Start 
 	monitor = Process_Monitor('control', ['supervisorctl', 'restart', 'control'], timeout=30)
 	monitor.start_monitor()
@@ -1164,6 +1164,7 @@ if settings['globals']['boot_to_monitor']:
 status = read_status(init=True)
 
 while True:
+	eventLogger.info(f'In Main Cycle ----------------------.')
 	# Check the On/Off switch for changes
 	if not settings['platform']['standalone'] and last != grill_platform.get_input_status():
 		last = grill_platform.get_input_status()
