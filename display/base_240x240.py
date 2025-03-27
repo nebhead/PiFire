@@ -43,7 +43,7 @@ class DisplayBase:
 		self.input_counter = 0
 		self.input_enabled = False
 		self.primary_font = 'trebuc.ttf'
-		self.loop_delay = 0.2
+		self.loop_delay = 0.1
 		self.clear_delay = 1
 		self.monitor_display = False
 
