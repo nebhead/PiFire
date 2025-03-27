@@ -112,9 +112,12 @@ class Display(DisplayBase):
 		#img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
 		self.device.clear()
 		self.device.backlight(False)
+		self.device._display_reset()
 		#self.device.hide()
 		#self.device.display(img)
 
+	def _display_reset(self):
+		self.device.command(0x01)
 
 	def _display_canvas(self, canvas):
 		# Display Image
