@@ -1014,6 +1014,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	monitor.stop_monitor()
 
 	if status_data != {}:
+		eventLogger.info(f'{control['mode']} active with status_data.')
 		status_data['mode'] = control['mode']
 		display_device.display_status(in_data, status_data)
 
