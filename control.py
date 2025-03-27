@@ -1012,11 +1012,12 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	write_metrics(metrics)
 
 	monitor.stop_monitor()
-
+	'''  We just did a diplay update before leaving the loop. No need for another one now. 
 	if status_data != {}:
 		eventLogger.info(f'Display active with status_data.')
 		status_data['mode'] = control['mode']
 		display_device.display_status(in_data, status_data)
+	'''
 	eventLogger.info(f'Leaving work cycle. Status = {status}')
 	return ()
 
