@@ -109,16 +109,12 @@ class Display(DisplayBase):
 	============== Graphics / Display / Draw Methods ============= 
 	'''
 	def _display_clear(self):
-		#img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
-		self.device.clear()
+		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
+		#self.device.clear()
 		self.device.backlight(False)
-		self._display_reset()
 		#self.device.hide()
-		#self.device.display(img)
+		self.device.display(img)
 
-	def _display_reset(self):
-		'''software reset of display'''
-		self.device.command(0x01)
 
 	def _display_canvas(self, canvas):
 		# Display Image
