@@ -43,6 +43,7 @@ class Display(DisplayBase):
 		self.device = st7789(self.serial, active_low=False, width=240, height=240, gpio_LIGHT=led_pin)
 
 		# Setup & Start Display Loop Thread 
+		self.device.backlight(True)
 		display_thread = threading.Thread(target=self._display_loop)
 		display_thread.start()
 
@@ -66,7 +67,7 @@ class Display(DisplayBase):
 		self.encoder.setup(scale_min=0, scale_max=100, step=1, inc_callback=self._inc_callback,
 						   dec_callback=self._dec_callback, sw_callback=self._click_callback, polling_interval=200)
 
-		# Setup & Start Input Thread 
+		# Setup & Start Input Thread self.device.backlight(True)self.device.backlight(True)vv
 		encoder_thread = threading.Thread(target=self.encoder.watch)
 		encoder_thread.start()
 		
@@ -110,14 +111,14 @@ class Display(DisplayBase):
 	def _display_clear(self):
 		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
 		#self.device.clear()
-		self.device.backlight(False)
+		#self.device.backlight(False)
 		#self.device.hide()
 		self.device.display(img)
 
 
 	def _display_canvas(self, canvas):
 		# Display Image
-		self.device.backlight(True)
+		#self.device.backlight(True)
 		#self.device.show()
 		'''Luma.lcd's rotation settings are counter clockwise'''
 		if self.rotation == 1:
