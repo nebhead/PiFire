@@ -43,7 +43,7 @@ class DisplayBase:
 		self.input_counter = 0
 		self.input_enabled = False
 		self.primary_font = 'trebuc.ttf'
-		self.loop_delay = 0.1
+		self.loop_delay = 0.2
 		self.clear_delay = 1
 		self.monitor_display = False
 
@@ -301,7 +301,6 @@ class DisplayBase:
 				self.monitor_display = False
 				time.sleep(self.loop_delay)
 				continue
-
 			if self.input_enabled:
 				if self.menu_active and not self.display_timeout:
 					if time.time() - self.menu_time > 5:
@@ -310,11 +309,14 @@ class DisplayBase:
 						self.menu['current']['option'] = 0
 						if not self.display_active:
 							self.display_command = 'clear'
+							time.sleep(self.loop_delay)
+							continue
 				elif not self.display_timeout and self.display_active:
 					if self.in_data is not None and self.status_data is not None:
 						self._display_current(self.in_data, self.status_data)
 						self.in_data = None
 						self.status_data = None
+						'''If we are sending the full monitor display for the first time increase loop delay to give display time to handle data.'''
 						if self.monitor_display:
 							time.sleep(self.loop_delay)
 							continue
@@ -327,6 +329,7 @@ class DisplayBase:
 					self._display_current(self.in_data, self.status_data)
 					self.in_data = None
 					self.status_data = None
+					'''If we are sending the full monitor display for the first time increase loop delay to give display time to handle data.'''
 					if self.monitor_display:
 						time.sleep(self.loop_delay)
 						continue
