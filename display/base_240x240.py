@@ -1122,6 +1122,7 @@ class DisplayBase:
 					control['updated'] = True
 					control['mode'] = 'Startup'
 					write_control(control, origin='display')
+					return
 				elif selected == 'Monitor':
 					self.display_active = True
 					self.menu['current']['mode'] = 'none'
@@ -1132,6 +1133,7 @@ class DisplayBase:
 					control['updated'] = True
 					control['mode'] = 'Monitor'
 					write_control(control, origin='display')
+					return
 				elif selected == 'Stop':
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
@@ -1142,6 +1144,7 @@ class DisplayBase:
 					control['updated'] = True
 					control['mode'] = 'Stop'
 					write_control(control, origin='display')
+					return
 				elif selected == 'Power':
 					self.menu['current']['mode'] = 'power_menu'
 					self.menu['current']['option'] = 0
@@ -1153,7 +1156,7 @@ class DisplayBase:
 					write_control(control, origin='display')
 
 					if 'Off' in selected:
-						self.display_text('Shutting Down...')
+						self.display_text('Shutting\nDown...')
 						os.system('sleep 3 && sudo shutdown -h now &')
 					#elif 'Restart' in selected:
 					else:
@@ -1195,6 +1198,7 @@ class DisplayBase:
 							self.menu['current']['option'] = 100  # start at 100 for C
 					else:
 						self.menu['current']['option'] = self.in_data['primary_setpoint']
+					return
 				elif selected == 'Smoke':
 					self.display_active = True
 					self.menu['current']['mode'] = 'none'
@@ -1205,6 +1209,7 @@ class DisplayBase:
 					control['updated'] = True
 					control['mode'] = 'Smoke'
 					write_control(control, origin='display')
+					return
 				elif selected == 'SmokePlus':
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
@@ -1216,6 +1221,7 @@ class DisplayBase:
 					else:
 						control['s_plus'] = True
 					write_control(control, origin='display')
+					return
 				elif selected == 'Network':
 					self.display_network()
 				elif selected == 'Prime':
