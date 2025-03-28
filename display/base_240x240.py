@@ -1137,7 +1137,7 @@ class DisplayBase:
 					self.menu['current']['option'] = 0
 					self.menu_active = False
 					self.menu_time = 0
-					self.clear_display()
+					#self.clear_display()
 					control = read_control()
 					control['updated'] = True
 					control['mode'] = 'Stop'
@@ -1146,7 +1146,7 @@ class DisplayBase:
 					self.menu['current']['mode'] = 'power_menu'
 					self.menu['current']['option'] = 0
 				elif 'Power_' in selected:
-					self.clear_display()
+					#self.clear_display()
 					control = read_control()
 					control['updated'] = True
 					control['mode'] = 'Stop'
