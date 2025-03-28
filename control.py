@@ -254,6 +254,7 @@ def _start_fan(settings, duty_cycle=None):
 		grill_platform.fan_on()
 
 def _process_system_commands(grill_platform):
+	global processed_sys_command
 	# Setup access to the system command queue 
 	system_commands = RedisQueue('control:systemq')
 	# Setup access to the system output queue
@@ -290,6 +291,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	:param display_device: Display Device
 	:param dist_device: Distance Device
 	"""
+	global processed_sys_command
 	# Setup Process Monitor and Start 
 	monitor = Process_Monitor('control', ['supervisorctl', 'restart', 'control'], timeout=30)
 	monitor.start_monitor()
