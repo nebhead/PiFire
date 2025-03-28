@@ -38,6 +38,7 @@ from os.path import exists
 '''
 # Read Settings to get Modules Configuration 
 settings = read_settings(init=True)
+processed_sys_command = False
 
 # Setup logging
 log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.ERROR
@@ -277,6 +278,7 @@ def _process_system_commands(grill_platform):
 				'data' : {}
 			}
 		system_output.push(result)
+		processed_sys_command = True
 
 def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device):
 	"""
@@ -545,6 +547,10 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		control = read_control()
 
 		_process_system_commands(grill_platform)
+		if processed_sys_command:
+			time.sleep(0.05)
+			processed_sys_command = False
+			continue
 
 		# Check if new mode has been requested
 		if control['updated']:
