@@ -1139,6 +1139,8 @@ class DisplayBase:
 					self.menu['current']['option'] = 0
 					self.menu_active = False
 					self.menu_time = 0
+					self.in_data = None 
+					self.status_data = None
 					#self.clear_display()
 					control = read_control()
 					control['updated'] = True
