@@ -68,7 +68,7 @@ class Display(DisplayBase):
 						   dec_callback=self._dec_callback, sw_callback=self._click_callback, polling_interval=200)
 
 		# Setup & Start Input Thread 
-		self.device.backlight(True)
+
 		encoder_thread = threading.Thread(target=self.encoder.watch)
 		encoder_thread.start()
 		
