@@ -548,7 +548,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 
 		_process_system_commands(grill_platform)
 		if processed_sys_command:
-			time.sleep(0.1)
+			time.sleep(0.05)
 			processed_sys_command = False
 			continue
 
