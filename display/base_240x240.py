@@ -255,7 +255,6 @@ class DisplayBase:
 		while True:
 			if self.input_enabled:
 				self._event_detect()
-				time.sleep(self.loop_delay)
 			if self.display_timeout:
 				if time.time() > self.display_timeout:
 					self.display_timeout = None
