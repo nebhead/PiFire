@@ -18,11 +18,16 @@ PiFire Display Interface Library
 '''
 import time
 import threading
+import logging
 from luma.core.interface.serial import spi
 from luma.lcd.device import st7789 
 from display.base_240x240 import DisplayBase
+from common import create_logger
 from PIL import Image
 from pyky040 import pyky040
+
+log_level = logging.INFO
+eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 
 '''
 Display class definition
@@ -110,6 +115,7 @@ class Display(DisplayBase):
 	============== Graphics / Display / Draw Methods ============= 
 	'''
 	def _display_clear(self):
+		eventLogger(f'In display_clear')
 		img = Image.new('RGB', (self.WIDTH, self.HEIGHT), color=(0, 0, 0))
 		#self.device.clear()
 		#self.device.backlight(False)
@@ -118,6 +124,7 @@ class Display(DisplayBase):
 
 
 	def _display_canvas(self, canvas):
+		eventLogger(f'In display_canvas')
 		# Display Image
 		#self.device.backlight(True)
 		#self.device.show()

@@ -51,6 +51,8 @@ class DisplayBase:
 		# Attempt to set the log level of PIL so that it does not pollute the logs
 		logging.getLogger('PIL').setLevel(logging.CRITICAL + 1)
 	
+		log_level = logging.INFO
+		eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 		# Init Display Device, Input Device, Assets
 		self._init_globals()
 		self._init_assets() 
