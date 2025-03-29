@@ -257,7 +257,6 @@ class DisplayBase:
 				self._event_detect()
 				if self.menu_active:
 					time.sleep(self.loop_delay)
-					continue
 			if self.display_timeout:
 				if time.time() > self.display_timeout:
 					self.display_timeout = None
