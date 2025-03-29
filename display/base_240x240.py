@@ -22,7 +22,7 @@ import socket
 import qrcode
 import logging
 from PIL import Image, ImageDraw, ImageFont
-from common import read_control, write_control
+from common import read_control, write_control, create_logger
 
 '''
 Display base class definition
