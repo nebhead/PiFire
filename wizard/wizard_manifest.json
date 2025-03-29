@@ -1781,6 +1781,113 @@
 					}
 				]
 			},
+			"ili9488e" : {
+				"friendly_name" : "ILI9488 TFT with Rotary Encoder Input",
+				"filename" : "ili9488e",
+				"description" : "The ILI9488 TFT Display Module LCD Screen is an affordable, popular display with a 480x320 resolution and color.  It comes in 2 different physical sizes, 3.5\" and 4.0\" with and without touch. This version of the module supports input based on the KY-040 rotary encoder.",
+				"notes" : "Pinout: Display - MISO = MISO(Pin 21), LED = GPIO05, SCK = SCLK(Pin 23), MOSI = MOSI(Pin 19), DC = GPIO24, RST = GPIO25, CS = CE0(Pin 24).  Encoder - CLK = GPIO16, DT = GPIO20, SW = GPIO21, GND = GND, VCC/+ = 3.3V",
+				"default" : false,
+				"image" : "ili9341-ky040.png",
+				"reboot_required" : false,
+				"py_dependencies" : ["luma.lcd", "pyky040==0.1.4", ">=9.2.0"], 
+				"apt_dependencies" : [],
+				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
+				"settings_dependencies" :{},
+				"config" : [
+					{
+						"option_name" : "rotation",
+						"option_friendly_name" : "Screen Rotation", 
+						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
+						"option_type" : "list",
+						"list_values" : [0, 1, 2, 3],
+						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
+						"default" : 0,
+						"hidden" : false
+					}
+				]
+			},
+			"ili9488em" : {
+				"friendly_name" : "ILI9488 TFT with Rotary Encoder Input (max31865 version)",
+				"filename" : "ili9488em",
+				"description" : "NOTE: This version should be used if also using the max31865, due to SPI conflicts with the standard implementation.  The ILI9488 TFT Display Module LCD Screen is an affordable, popular display with a 480x320 resolution and color.  It comes in 2 different physical sizes, 3.5\" and 4.0\" with and without touch. This version of the module supports input based on the KY-040 rotary encoder.",
+				"notes" : "Pinout: Display - MISO = MISO(Pin 21), LED = GPIO12, SCK = SCLK(Pin 23), MOSI = MOSI(Pin 19), DC = GPIO16, RST = GPIO20, CS = CE0(Pin 24). Encoder - CLK = GPIO25, DT = GPIO24, SW = GPIO23, GND = GND, VCC/+ = 3.3V",
+				"default" : false,
+				"image" : "ili9341-ky040.png",
+				"reboot_required" : false,
+				"py_dependencies" : ["luma.lcd", "pyky040==0.1.4", "pillow>=9.2.0"], 
+				"apt_dependencies" : [],
+				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
+				"settings_dependencies" : {},
+				"config" : [
+					{
+						"option_name" : "rotation",
+						"option_friendly_name" : "Screen Rotation", 
+						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
+						"option_type" : "list",
+						"list_values" : [0, 1, 2, 3],
+						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
+						"default" : 0,
+						"hidden" : false
+					}
+				]
+			},
+			"ili9488" : {
+				"friendly_name" : "ILI9488 TFT",
+				"filename" : "ili9488",
+				"description" : "The ILI9488 TFT Display Module LCD Screen is an affordable, popular display with a 480x320 resolution and color.  It comes in 2 different physical sizes, 3.5\" and 4.0\" with and without touch.",
+				"notes" : "Pinout: MISO = MISO(Pin 21), LED = GPIO05, SCK = SCLK(Pin 23), MOSI = MOSI(Pin 19), DC = GPIO24, RST = GPIO25, CS = CE0(Pin 24)",
+				"default" : false,
+				"image" : "ili9341.png",
+				"reboot_required" : false,
+				"py_dependencies" : ["luma.lcd", "pillow>=9.2.0"], 
+				"apt_dependencies" : [],
+				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
+				"settings_dependencies" : {},
+				"config" : [
+					{
+						"option_name" : "rotation",
+						"option_friendly_name" : "Screen Rotation", 
+						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
+						"option_type" : "list",
+						"list_values" : [0, 1, 2, 3],
+						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
+						"default" : 0,
+						"hidden" : false
+					}
+				]
+			},
+			"ili9488b" : {
+				"friendly_name" : "ILI988 TFT with 3-Button Input",
+				"filename" : "ili9488b",
+				"description" : "The ILI9488 TFT Display Module LCD Screen is an affordable, popular display with a 480x320 resolution and color.  It comes in 2 different physical sizes, 3.5\" and 4.0\" with and without touch. This version of the module supports a three button input.",
+				"notes" : "Pinout:  Display - MISO = MISO(Pin 21), LED = GPIO05, SCK = SCLK(Pin 23), MOSI = MOSI(Pin 19), DC = GPIO24, RST = GPIO25, CS = CE0(Pin 24). Buttons - UP = GPIO16, DOWN = GPIO20, ENTER = GPIO21, GND = GND, VCC = 3.3V",
+				"default" : true,
+				"image" : "ili9341b.png",
+				"reboot_required" : false,
+				"py_dependencies" : ["luma.lcd", "pillow>=9.2.0", "gpiozero"], 
+				"apt_dependencies" : [],
+				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
+				"settings_dependencies" : {
+					"buttonslevel" : {
+						"friendly_name" : "Button Level",
+						"description" : "Select how your button hardware is configured. (HIGH - Pullups, LOW - Pulldowns)",
+						"options" : {"HIGH" : "Pullups", "LOW": "Pulldowns"},
+						"settings" : ["platform", "buttonslevel"]
+					}
+				},
+				"config" : [
+					{
+						"option_name" : "rotation",
+						"option_friendly_name" : "Screen Rotation", 
+						"option_description" : "Select the display rotation angle (Usually 0 degrees).",
+						"option_type" : "list",
+						"list_values" : [0, 1, 2, 3],
+						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
+						"default" : 0,
+						"hidden" : false
+					}
+				]
+			},
 			"st7789_240x320b" : {
 				"friendly_name" : "ST7789 IPS Display 240x320px w/Button Input",
 				"filename" : "st7789_240x320b",
