@@ -23,7 +23,9 @@ import qrcode
 import logging
 from PIL import Image, ImageDraw, ImageFont
 from common import read_control, write_control, create_logger
-
+log_level = logging.INFO
+eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
+	
 '''
 Display base class definition
 '''
@@ -51,8 +53,6 @@ class DisplayBase:
 		# Attempt to set the log level of PIL so that it does not pollute the logs
 		logging.getLogger('PIL').setLevel(logging.CRITICAL + 1)
 	
-		log_level = logging.INFO
-		eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 		# Init Display Device, Input Device, Assets
 		self._init_globals()
 		self._init_assets() 
