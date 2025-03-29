@@ -397,6 +397,8 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		write_metrics(metrics)
 
 	if mode == 'Hold':
+		# Initialize cycle to minimum ratio.
+
 		OnTime = settings['cycle_data']['HoldCycleTime'] * settings['cycle_data']['u_min']  # Auger On Time
 		OffTime = settings['cycle_data']['HoldCycleTime'] * (1 - settings['cycle_data']['u_min'])  # Auger Off Time
 		CycleTime = settings['cycle_data']['HoldCycleTime']  # Total Cycle Time
@@ -416,6 +418,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		controllerCore.set_target(control['primary_setpoint'])  # Initialize with Set Point for grill
 		eventLogger.debug('On Time = ' + str(OnTime) + ', OffTime = ' + str(OffTime) + ', CycleTime = ' + str(
 			CycleTime) + ', CycleRatio = ' + str(CycleRatio))
+		
 
 	if mode == 'Prime':
 		auger_rate = settings['globals']['augerrate']
@@ -494,6 +497,11 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	# Set the start time
 	start_time = time.time()
 
+	if mode == 'Hold':
+		# Initialize the cycle start time to now.
+		pidLoopStart = start_time
+
+
 	if mode == 'Startup':
 		control['startup_timestamp'] = start_time 
 		write_control(control, direct_write=True, origin='control')
@@ -537,6 +545,9 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		'power' : 0,
 		'pwm' : 0
 	}
+
+	pid_output = 0
+	ControlFanPid = False
 
 	# ============ Main Work Cycle ============
 	while status == 'Active':
@@ -663,6 +674,17 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 
 		# Change Auger State based on Cycle Time
 		if mode in ('Startup', 'Reignite', 'Smoke', 'Hold', 'Prime'):
+			if mode == 'Hold':
+				# Check to see if it's time to update pid and update if needed.
+				if (now - pidLoopStart) > CycleTime:
+					pid_output = controllerCore.update(ptemp)
+					CycleRatio = RawCycleRatio = settings['cycle_data']['u_min'] if LidOpenDetect else pid_output
+					# If ratio is less than min set to min and control via fan.
+					if CycleRatio < settings['cycle_data']['u_min']:
+						CycleRatio = settings['cycle_data']['u_min']
+						ControlFanPid = True
+					# Don't set ratio over maximum.
+					CycleRatio = min(CycleRatio, settings['cycle_data']['u_max'])			
 			if manual_override['auger'] < now:
 				manual_override['auger'] = 0
 				# If Auger is OFF and time since toggle is greater than Off Time
@@ -672,9 +694,6 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 					eventLogger.debug('Cycle Event: Auger On')
 					# Reset Cycle Time for HOLD Mode
 					if mode == 'Hold':
-						CycleRatio = RawCycleRatio = settings['cycle_data']['u_min'] if LidOpenDetect else controllerCore.update(ptemp)
-						CycleRatio = max(CycleRatio, settings['cycle_data']['u_min'])
-						CycleRatio = min(CycleRatio, settings['cycle_data']['u_max'])
 						OnTime = settings['cycle_data']['HoldCycleTime'] * CycleRatio
 						OffTime = settings['cycle_data']['HoldCycleTime'] * (1 - CycleRatio)
 						CycleTime = OnTime + OffTime
@@ -855,8 +874,31 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 							control['duty_cycle'] = settings['pwm']['max_duty_cycle']
 							write_control(control, direct_write=True, origin='control')
 
+			# If Auger ratio is below minimum Cycle the Fan as additional output control.
+			if (mode == 'Hold' and ControlFanPid and not LidOpenDetect):
+				# Adjust the fan ratio based on smoke plus settings or lower.
+				if control['s_plus']:
+					total_fan_cycle = settings['smoke_plus']['on_time'] + settings['smoke_plus']['off_time']
+					max_fan_ratio = settings['smoke_plus']['on_time'] / total_fan_cycle
+				else:
+					max_fan_ratio = 1
+				# Need to adjust the pid output based on what the u_min is.  We will keep the current max_fan_ratio if the pid output is = u_min, otherwise we start lowering it.
+				pid_output_adjusted = pid_output * (1-settings['cycle_data']['u_min'])
+				settings['smoke_plus']['off_time']
+				FanRatio = pid_output_adjusted * max_fan_ratio
+				fan_on_time = total_fan_cycle * FanRatio 
+				fan_off_time = total_fan_cycle * (1 - FanRatio)
+				if (now - fan_cycle_toggle_time) > fan_on_time and current_output_status['fan']:
+					grill_platform.fan_off()
+					fan_cycle_toggle_time = now
+					eventLogger.debug('Fan PID: Fan OFF')
+				elif ((now - fan_cycle_toggle_time) > fan_off_time and not current_output_status['fan']):
+					sp_cycle_toggle_time = now
+					_start_fan(settings, control['duty_cycle'])
+					eventLogger.debug('Fan PID: Fan ON')
+
 			# If in Smoke Plus Mode, Cycle the Fan
-			if (mode == 'Smoke' or (mode == 'Hold' and target_temp_achieved)) and control['s_plus']:
+			if (mode == 'Smoke' or (mode == 'Hold' and target_temp_achieved)) and control['s_plus'] and not ControlFanPid:
 				# If Temperature is > settings['smoke_plus']['max_temp']
 				# or Temperature is < settings['smoke_plus']['min_temp'] then turn on fan
 				if (ptemp > settings['smoke_plus']['max_temp'] or
