@@ -44,6 +44,7 @@ class Display(DisplayBase):
 		led_pin = self.dev_pins['display']['led']
 		rst_pin = self.dev_pins['display']['rst']
 		
+		#bus_speed_hz in [mhz * 1000000 for mhz in [0.5, 1, 2, 4, 8, 16, 20, 24, 28, 32, 36, 40, 44, 48, 50, 52]
 		self.serial = spi(gpio_DC=dc_pin, gpio_RST=rst_pin, bus_speed_hz=8000000)
 		self.device = st7789(self.serial, active_low=False, width=240, height=240, gpio_LIGHT=led_pin)
 
