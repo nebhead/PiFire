@@ -678,6 +678,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 				# Check to see if it's time to update pid and update if needed.
 				if (now - pidLoopStart) > CycleTime:
 					pid_output = controllerCore.update(ptemp)
+					pidLoopStart = now
 					CycleRatio = RawCycleRatio = settings['cycle_data']['u_min'] if LidOpenDetect else pid_output
 					# If ratio is less than min set to min and control via fan.
 					if CycleRatio < settings['cycle_data']['u_min']:
@@ -875,19 +876,23 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 							write_control(control, direct_write=True, origin='control')
 
 			# If Auger ratio is below minimum Cycle the Fan as additional output control.
-			if (mode == 'Hold' and ControlFanPid and not LidOpenDetect):
-				# Adjust the fan ratio based on smoke plus settings or lower.
+			if (mode == 'Hold' and ControlFanPid and not LidOpenDetect and not settings['platform']['dc_fan']):
+				# Adjust the fan ratio based on smoke plus settings or lower.  Currently only working for AC fans.
 				if control['s_plus']:
 					total_fan_cycle = settings['smoke_plus']['on_time'] + settings['smoke_plus']['off_time']
 					max_fan_ratio = settings['smoke_plus']['on_time'] / total_fan_cycle
 				else:
 					max_fan_ratio = 1
-				# Need to adjust the pid output based on what the u_min is.  We will keep the current max_fan_ratio if the pid output is = u_min, otherwise we start lowering it.
-				pid_output_adjusted = pid_output * (1-settings['cycle_data']['u_min'])
+				# Need to adjust the pid output based on what the u_min is.  
+				# We will keep the current max_fan_ratio if the pid output is = u_min, otherwise we start lowering it.
+				# If pid output is > u_min we won't be in this if loop.
+				eventLogger.debug('Fan PID: Fan ON')
+				pid_output_adjusted = pid_output + (1-settings['cycle_data']['u_min'])
 				settings['smoke_plus']['off_time']
 				FanRatio = pid_output_adjusted * max_fan_ratio
 				fan_on_time = total_fan_cycle * FanRatio 
 				fan_off_time = total_fan_cycle * (1 - FanRatio)
+				eventLogger.debug(f'Fan ratio: {FanRatio}, Fan on time: {fan_on_time}, Fan off time: {fan_off_time}')
 				if (now - fan_cycle_toggle_time) > fan_on_time and current_output_status['fan']:
 					grill_platform.fan_off()
 					fan_cycle_toggle_time = now
