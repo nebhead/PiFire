@@ -1159,7 +1159,7 @@ class DisplayBase:
 					write_control(control, origin='display')
 
 					if 'Off' in selected:
-						self.display_text('Shutting\nDown...')
+						self.display_text('Shutdown...')
 						os.system('sleep 3 && sudo shutdown -h now &')
 					#elif 'Restart' in selected:
 					else:
