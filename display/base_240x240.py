@@ -43,9 +43,14 @@ class DisplayBase:
 		self.input_counter = 0
 		self.input_enabled = False
 		self.primary_font = 'trebuc.ttf'
+		self.loop_delay = 0.1
+		self.clear_delay = 1
+		self.monitor_display = False
+
 		#self.primary_font = 'DejaVuSans.ttf'  # May need to switch to a default font in Raspberry Pi OS Lite due to MSTCorefonts Package Deprecation 
 		# Attempt to set the log level of PIL so that it does not pollute the logs
 		logging.getLogger('PIL').setLevel(logging.CRITICAL + 1)
+	
 		# Init Display Device, Input Device, Assets
 		self._init_globals()
 		self._init_assets() 
@@ -60,13 +65,8 @@ class DisplayBase:
 		180, 2 = 180 Degrees Rotation (Pimoroni Libraries, Luma.LCD Libraries)
 		270, 3 = 270 Degrees Rotation (Pimoroni Libraries, Luma.LCD Libraries)
 		'''
-		if self.rotation in [90, 270, 1, 3]:
-			self.WIDTH = 240
-			self.HEIGHT = 240
-		else:
-			self.WIDTH = 240
-			self.HEIGHT = 240
-
+		self.WIDTH = self.HEIGHT = 240
+		
 		self.inc_pulse_color = True 
 		self.icon_color = 100
 		self.fan_rotation = 0
@@ -255,30 +255,35 @@ class DisplayBase:
 		while True:
 			if self.input_enabled:
 				self._event_detect()
-
+				if self.menu_active:
+					time.sleep(self.loop_delay)
 			if self.display_timeout:
 				if time.time() > self.display_timeout:
 					self.display_timeout = None
 					if not self.display_active:
 						self.display_command = 'clear'
-
 			if self.display_command == 'clear':
 				self.display_active = False
 				self.display_timeout = None
 				self.display_command = None
+				self.monitor_display = False
 				self._display_clear()
-
+				time.sleep(self.clear_delay)
+				continue
 			if self.display_command == 'splash':
 				self._display_splash()
 				self.display_timeout = time.time() + 3
 				self.display_command = 'clear'
+				self.monitor_display = False
 				time.sleep(3) # Hold splash screen for 3 seconds
-
+				continue
 			if self.display_command == 'text':
 				self._display_text()
 				self.display_command = None
+				self.monitor_display = False
 				self.display_timeout = time.time() + 10
-
+				time.sleep(self.loop_delay)
+				continue
 			if self.display_command == 'network':
 				try:
 					s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -294,7 +299,9 @@ class DisplayBase:
 					self.display_command = None
 				else:
 					self.display_text("No IP Found")
-			
+				self.monitor_display = False
+				time.sleep(self.loop_delay)
+				continue
 			if self.input_enabled:
 				if self.menu_active and not self.display_timeout:
 					if time.time() - self.menu_time > 5:
@@ -303,16 +310,35 @@ class DisplayBase:
 						self.menu['current']['option'] = 0
 						if not self.display_active:
 							self.display_command = 'clear'
+							time.sleep(self.loop_delay)
+							continue
 				elif not self.display_timeout and self.display_active:
 					if self.in_data is not None and self.status_data is not None:
 						self._display_current(self.in_data, self.status_data)
-
+						self.in_data = None
+						self.status_data = None
+						'''If we are sending the full monitor display for the first time increase loop delay to give display time to handle data.'''
+						if self.monitor_display:
+							time.sleep(self.loop_delay)
+							continue
+						else:
+							self.monitor_display = True
+							time.sleep(self.clear_delay)
+							continue
 			elif not self.display_timeout and self.display_active:
 				if self.in_data is not None and self.status_data is not None:
 					self._display_current(self.in_data, self.status_data)
-
-
-			time.sleep(0.1)
+					self.in_data = None
+					self.status_data = None
+					'''If we are sending the full monitor display for the first time increase loop delay to give display time to handle data.'''
+					if self.monitor_display:
+						time.sleep(self.loop_delay)
+						continue
+					else:
+						self.monitor_display = True
+						time.sleep(self.clear_delay)
+						continue
+			time.sleep(self.loop_delay)
 
 	'''
 	============== Input Callbacks ============= 
@@ -340,14 +366,14 @@ class DisplayBase:
 	'''
 	============== Graphics / Display / Draw Methods ============= 
 	'''
-	def _init_assets(self): 
+	def _init_assets(self):
 		self._init_background()
 		self._init_splash()
 
 	def _init_background(self):
 		self.background = Image.open('static/img/display/background.jpg')
 		self.background = self.background.resize((self.WIDTH, self.HEIGHT))
-	
+
 	def _init_splash(self):
 		self.splash = Image.open('static/img/display/color-boot-splash.png')
 		(self.splash_width, self.splash_height) = self.splash.size
@@ -697,7 +723,6 @@ class DisplayBase:
 		'''
 		pass
 
-
 	def _display_canvas(self, canvas):
 		'''
 		Inheriting classes will override this function to show the canvas on the display device.
@@ -889,24 +914,14 @@ class DisplayBase:
 
 		if status_data['outpins']['fan']:
 			# F = Fan (Upper Left), position (10,10)
-			if self.WIDTH == 240:
-				self._draw_fan_icon(img, (10, 50))
-			else:
-				self._draw_fan_icon(img, (10, 10))
+			self._draw_fan_icon(img, (10, 10))
 
 		if status_data['outpins']['igniter']:
 			# I = Igniter(Center Right)
-			if self.WIDTH == 240:
-				self._draw_ignitor_icon(img, (self.WIDTH - 52, 170))
-			else:
-				self._draw_ignitor_icon(img, (self.WIDTH - 52, 60))
+			self._draw_ignitor_icon(img, (self.WIDTH - 52, 60))
 		
 		if status_data['outpins']['auger']:
-			# A = Auger (Center Left)
-			if self.WIDTH == 240:
-				self._draw_auger_icon(img, (10, 170))
-			else:
-				self._draw_auger_icon(img, (10, 60))
+			self._draw_auger_icon(img, (10, 60))
 
 		# Notification Indicator (Right)
 		show_notify_indicator = False
@@ -917,57 +932,41 @@ class DisplayBase:
 				notify_count += 1
 
 		if status_data['recipe_paused']:
-			if self.WIDTH == 240:
-				self._draw_pause_icon(img, (self.WIDTH - 52, 50))
-			else: 
-				self._draw_pause_icon(img, (self.WIDTH - 52, 10))
+			self._draw_pause_icon(img, (self.WIDTH - 52, 10))
 
 		elif status_data['recipe']:
-			if self.WIDTH == 240:
-				self._draw_recipe_icon(img, (self.WIDTH - 52, 50))
-			else: 
-				self._draw_recipe_icon(img, (self.WIDTH - 52, 10))
+			self._draw_recipe_icon(img, (self.WIDTH - 52, 10))
 
 		elif show_notify_indicator:
-			if self.WIDTH == 240:
-				self._draw_notify_icon(img, (self.WIDTH - 52, 50))
-			else: 
-				self._draw_notify_icon(img, (self.WIDTH - 52, 10))
+			self._draw_notify_icon(img, (self.WIDTH - 52, 10))
 
 			if notify_count > 1:
 				self._text_circle(draw, (self.WIDTH - 24, 40), (22, 22), str(notify_count), fg_color=(255, 255, 255), bg_color=(200, 0, 0))
 
 		# Smoke Plus Indicator
 		if status_data['s_plus'] and (status_data['mode'] == 'Smoke' or status_data['mode'] == 'Hold'):
-			if self.WIDTH == 240:
-				self._draw_splus_icon(img, (self.WIDTH - 52, 170))
-			else:
-				self._draw_splus_icon(img, (self.WIDTH - 52, 60))
+			self._draw_splus_icon(img, (self.WIDTH - 52, 60))
 
 		# Grill Hopper Level (Lower Center)
-		text = "Hopper:" + str(status_data['hopper_level']) + "%"
-		if status_data['hopper_level'] > 70:
-			hopper_color = (0, 255, 0)
-		elif status_data['hopper_level'] > 30:
-			hopper_color = (255, 150, 0)
-		else:
-			hopper_color = (255, 0, 0)
+		if status_data['hopper_level_enabled']:
+			text = "Hopper:" + str(status_data['hopper_level']) + "%"
+			if status_data['hopper_level'] > 70:
+				hopper_color = (0, 255, 0)
+			elif status_data['hopper_level'] > 30:
+				hopper_color = (255, 150, 0)
+			else:
+				hopper_color = (255, 0, 0)
 
-		label_canvas = self._draw_text(text, self.primary_font, 15, hopper_color, rect=True, outline_color=hopper_color, fill_color=(0,0,0))
-		if self.WIDTH == 240:
+			label_canvas = self._draw_text(text, self.primary_font, 15, hopper_color, rect=True, outline_color=hopper_color, fill_color=(0,0,0))
 			coords = self.WIDTH // 2 - (label_canvas.width // 2), self.HEIGHT - 28
-		else:
-			coords = self.WIDTH // 2 - (label_canvas.width // 2), (self.HEIGHT // 2) + 50
 
-		img.paste(label_canvas, coords, label_canvas)
+			img.paste(label_canvas, coords, label_canvas)
 
 		# Current Mode (Bottom Center)
 		text = status_data['mode']  # + ' Mode'
-		label_canvas = self._draw_text(text, self.primary_font, 32, (0,0,0), rect=True, outline_color=(3, 161, 252), fill_color=(255,255,255))
-		if self.WIDTH == 240:
-			coords = (self.WIDTH // 2 - (label_canvas.width // 2), 0)
-		else:
-			coords = (self.WIDTH // 2 - (label_canvas.width // 2), self.HEIGHT - 44)
+		label_canvas = self._draw_text(text, self.primary_font, 20, (0,0,0), rect=True, outline_color=(3, 161, 252), fill_color=(255,255,255))
+
+		coords = (self.WIDTH // 2 - (label_canvas.width // 2), self.HEIGHT - label_canvas.height - 2)
 		img.paste(label_canvas, coords, label_canvas)
 
 		# Draw Units Circle
@@ -982,16 +981,10 @@ class DisplayBase:
 			text_color = (0, 250, 0)
 
 			label_canvas = self._draw_text(text, self.primary_font, 15, text_color, rect=True, outline_color=text_color, fill_color=(0,0,0))
-			if self.WIDTH == 240:
-				if status_data['mode'] == 'Smoke':
-					coords = self.WIDTH // 2 - (label_canvas.width // 2), 60
-				else: 
-					coords = self.WIDTH // 2 - (label_canvas.width // 2), 210
-			else:
-				if status_data['mode'] == 'Smoke':
-					coords = self.WIDTH // 2 - (label_canvas.width // 2), 26
-				else: 
-					coords = self.WIDTH - label_canvas.width - 10, 10
+			if status_data['mode'] == 'Smoke':
+				coords = self.WIDTH // 2 - (label_canvas.width // 2), 26
+			else: 
+				coords = self.WIDTH - label_canvas.width - 10, 10
 
 			img.paste(label_canvas, coords, label_canvas)
 
@@ -1007,7 +1000,7 @@ class DisplayBase:
 			countdown = int(duration - (time.time() - status_data['start_time'])) if int(duration - (time.time() - status_data['start_time'])) > 0 else 0
 			text = f'{countdown}s'
 			label_canvas = self._draw_text(text, self.primary_font, 26, (0,200,0), rect=True, outline_color=(0, 200, 0), fill_color=(0,0,0))
-			coords = (int((self.WIDTH // 2 )- (label_canvas.width // 2)), int((self.HEIGHT // 2) - 120))
+			coords = (int((self.WIDTH // 2 )- (label_canvas.width // 2)), 5)
 			img.paste(label_canvas, coords, label_canvas)
 
 		# Lid open detection timer display
@@ -1016,7 +1009,7 @@ class DisplayBase:
 				duration = int(status_data['lid_open_endtime'] - time.time()) if int(status_data['lid_open_endtime'] - time.time()) > 0 else 0
 				text = f'Lid Pause {duration}s'
 				label_canvas = self._draw_text(text, self.primary_font, 18, (0,200,0), rect=True, outline_color=(0, 200, 0), fill_color=(0,0,0))
-				coords = (int((self.WIDTH // 2 )- (label_canvas.width // 2)), int((self.HEIGHT // 2) - 120))
+				coords = (int((self.WIDTH // 2 )- (label_canvas.width // 2)), 5)
 				img.paste(label_canvas, coords, label_canvas)
 
 		# Display Final Screen
@@ -1130,6 +1123,7 @@ class DisplayBase:
 					control['updated'] = True
 					control['mode'] = 'Startup'
 					write_control(control, origin='display')
+					return
 				elif selected == 'Monitor':
 					self.display_active = True
 					self.menu['current']['mode'] = 'none'
@@ -1140,28 +1134,32 @@ class DisplayBase:
 					control['updated'] = True
 					control['mode'] = 'Monitor'
 					write_control(control, origin='display')
+					return
 				elif selected == 'Stop':
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
 					self.menu_active = False
 					self.menu_time = 0
-					self.clear_display()
+					self.in_data = None 
+					self.status_data = None
+					#self.clear_display()
 					control = read_control()
 					control['updated'] = True
 					control['mode'] = 'Stop'
 					write_control(control, origin='display')
+					return
 				elif selected == 'Power':
 					self.menu['current']['mode'] = 'power_menu'
 					self.menu['current']['option'] = 0
 				elif 'Power_' in selected:
-					self.clear_display()
+					#self.clear_display()
 					control = read_control()
 					control['updated'] = True
 					control['mode'] = 'Stop'
 					write_control(control, origin='display')
 
 					if 'Off' in selected:
-						self.display_text('Shutting Down...')
+						self.display_text('Shutdown...')
 						os.system('sleep 3 && sudo shutdown -h now &')
 					#elif 'Restart' in selected:
 					else:
@@ -1203,6 +1201,7 @@ class DisplayBase:
 							self.menu['current']['option'] = 100  # start at 100 for C
 					else:
 						self.menu['current']['option'] = self.in_data['primary_setpoint']
+					return
 				elif selected == 'Smoke':
 					self.display_active = True
 					self.menu['current']['mode'] = 'none'
@@ -1213,6 +1212,7 @@ class DisplayBase:
 					control['updated'] = True
 					control['mode'] = 'Smoke'
 					write_control(control, origin='display')
+					return
 				elif selected == 'SmokePlus':
 					self.menu['current']['mode'] = 'none'
 					self.menu['current']['option'] = 0
@@ -1224,6 +1224,7 @@ class DisplayBase:
 					else:
 						control['s_plus'] = True
 					write_control(control, origin='display')
+					return
 				elif selected == 'Network':
 					self.display_network()
 				elif selected == 'Prime':
@@ -1282,9 +1283,9 @@ class DisplayBase:
 
 		if self.menu['current']['mode'] == 'grill_hold_value':
 			# Grill Temperature (Large Centered)
-			font_point_size = 80 if self.WIDTH == 240 else 120 
+			font_point_size = 80
 			label_canvas = self._draw_text(str(self.menu['current']['option']), self.primary_font, font_point_size, (255,255,255))
-			label_origin = (int(self.WIDTH // 2 - label_canvas.width // 2), int(self.HEIGHT // 3 - label_canvas.height // 2)) if self.WIDTH == 240 else (int(self.WIDTH // 2 - label_canvas.width // 2 - 20), int(self.HEIGHT // 2.5 - label_canvas.height // 2))
+			label_origin = (int(self.WIDTH // 2 - label_canvas.width // 2), int(self.HEIGHT // 3 - label_canvas.height // 2))
 			img.paste(label_canvas, label_origin, label_canvas)
 
 			# Current Mode (Bottom Center)
@@ -1310,7 +1311,7 @@ class DisplayBase:
 					selected = item
 					break
 				index += 1
-			font_point_size = 80 if self.WIDTH == 240 else 120 
+			font_point_size = 80
 			icon_color = self.menu[self.menu['current']['mode']][selected].get('iconcolor', (255,255,255))  # Get color from menu item, default to white if not defined
 			text = self.menu[self.menu['current']['mode']][selected]['icon']
 			label_canvas = self._draw_text(text, 'static/font/FA-Free-Solid.otf', font_point_size, icon_color)
@@ -1319,7 +1320,7 @@ class DisplayBase:
 
 			# Draw a Plus Icon over the top of the Smoke Icon
 			if selected == 'SmokePlus':
-				font_point_size = 60 if self.WIDTH == 240 else 80
+				font_point_size = 60
 				text = '\uf067'
 				label_canvas = self._draw_text(text, 'static/font/FA-Free-Solid.otf', font_point_size, (0,0,0))
 				label_origin = (int(self.WIDTH // 2 - label_canvas.width // 2), int(self.HEIGHT // 2.5 - label_canvas.height // 2))
@@ -1348,7 +1349,7 @@ class DisplayBase:
 			down_color = (255, 255, 0)
 
 		# Up / Down Arrows (Middle Right)
-		font_point_size = 80 if self.WIDTH == 240 else 60 
+		font_point_size = 80
 		text = '\uf0de'  # FontAwesome Icon Sort (Up Arrow)
 		label_canvas = self._draw_text(text, 'static/font/FA-Free-Solid.otf', font_point_size, up_color)
 		label_origin = ((self.WIDTH - int((label_canvas.width // 2) ** 1.3)), int((self.HEIGHT // 2.5) - (label_canvas.height // 2) - 5))
