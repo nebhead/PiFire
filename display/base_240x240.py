@@ -22,10 +22,8 @@ import socket
 import qrcode
 import logging
 from PIL import Image, ImageDraw, ImageFont
-from common import read_control, write_control, create_logger
-log_level = logging.INFO
-eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
-	
+from common import read_control, write_control
+
 '''
 Display base class definition
 '''
