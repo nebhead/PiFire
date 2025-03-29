@@ -44,7 +44,6 @@ class Display(DisplayBase):
 		self.device = st7789(self.serial, active_low=False, width=240, height=240, gpio_LIGHT=led_pin, bus_speed=4000000)
 
 		# Setup & Start Display Loop Thread 
-		self.device.backlight(True)
 		display_thread = threading.Thread(target=self._display_loop)
 		display_thread.start()
 
