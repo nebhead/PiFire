@@ -84,12 +84,12 @@ def dash():
 	dash_data = settings['dashboard']['dashboards'].get(current, {})
 	probe_status = read_probe_status(settings['probe_settings']['probe_map']['probe_info'])
 	
-	''' Check if control process is up and running. 
+	''' Check if control process is up and running. '''
 	process_command(action='sys', arglist=['check_alive'], origin='dash')  # Request supported commands 
 	data = _get_system_command_output(requested='check_alive')
 	if data['result'] != 'OK':
 		errors.append('The control process did not respond to a request and may be stopped.  Try reloading the page or restarting the system.  Check logs for details.')
-	'''
+
 	return render_template(dash_template,
 						   settings=settings,
 						   control=control,
