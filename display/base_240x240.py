@@ -964,7 +964,7 @@ class DisplayBase:
 
 		# Current Mode (Bottom Center)
 		text = status_data['mode']  # + ' Mode'
-		label_canvas = self._draw_text(text, self.primary_font, 28, (0,0,0), rect=True, outline_color=(3, 161, 252), fill_color=(255,255,255))
+		label_canvas = self._draw_text(text, self.primary_font, 20, (0,0,0), rect=True, outline_color=(3, 161, 252), fill_color=(255,255,255))
 
 		coords = (self.WIDTH // 2 - (label_canvas.width // 2), self.HEIGHT - label_canvas.height - 2)
 		img.paste(label_canvas, coords, label_canvas)
