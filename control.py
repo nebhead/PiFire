@@ -518,8 +518,8 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	# Set time since toggle for display
 	display_toggle_time = start_time
 
-	# Initializing Start Time for Smoke Plus Mode
-	sp_cycle_toggle_time = start_time
+	# Initializing Start Time for Fan
+	fan_cycle_toggle_time = start_time
 
 	# Set time since toggle for hopper check
 	hopper_toggle_time = start_time
@@ -876,16 +876,15 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 							write_control(control, direct_write=True, origin='control')
 
 			# If Auger ratio is below minimum Cycle the Fan as additional output control.
-			if (mode == 'Hold' and ControlFanPid and not LidOpenDetect and not settings['platform']['dc_fan']):
-				# Adjust the fan ratio based on smoke plus settings or lower.  Currently only working for AC fans.
+			if (mode == 'Hold' and target_temp_achieved and ControlFanPid and not LidOpenDetect and not settings['platform']['dc_fan']):
+				# If smoke plus mode is active set max fan ratio to smoke plus ratio otherwise 1 (always on).
 				if control['s_plus']:
 					total_fan_cycle = settings['smoke_plus']['on_time'] + settings['smoke_plus']['off_time']
 					max_fan_ratio = settings['smoke_plus']['on_time'] / total_fan_cycle
 				else:
 					max_fan_ratio = 1
-				# Need to adjust the pid output based on what the u_min is.  
-				# We will keep the current max_fan_ratio if the pid output is = u_min, otherwise we start lowering it.
-				# If pid output is > u_min we won't be in this if loop.
+				# Shift the pid output up to correct for the u_min.  When we are at u_min our fan will be at 100% fan ratio.
+				# When we are below u_min we will lower the fan ratio shortening the fan on time. 
 				eventLogger.debug('Fan PID: Fan ON')
 				pid_output_adjusted = pid_output + (1-settings['cycle_data']['u_min'])
 				settings['smoke_plus']['off_time']
@@ -898,7 +897,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 					fan_cycle_toggle_time = now
 					eventLogger.debug('Fan PID: Fan OFF')
 				elif ((now - fan_cycle_toggle_time) > fan_off_time and not current_output_status['fan']):
-					sp_cycle_toggle_time = now
+					fan_cycle_toggle_time = now
 					_start_fan(settings, control['duty_cycle'])
 					eventLogger.debug('Fan PID: Fan ON')
 
@@ -911,15 +910,15 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 					if not current_output_status['fan']:
 						_start_fan(settings, control['duty_cycle'])
 						eventLogger.debug('Smoke Plus: Over or Under Temp Fan ON')
-				elif (now - sp_cycle_toggle_time) > settings['smoke_plus']['on_time'] and current_output_status['fan']:
+				elif (now - fan_cycle_toggle_time) > settings['smoke_plus']['on_time'] and current_output_status['fan']:
 					if manual_override['fan'] < now:
 						manual_override['fan'] = 0
 						grill_platform.fan_off()
-						sp_cycle_toggle_time = now
+						fan_cycle_toggle_time = now
 						eventLogger.debug('Smoke Plus: Fan OFF')
-				elif ((now - sp_cycle_toggle_time) > settings['smoke_plus']['off_time'] and
+				elif ((now - fan_cycle_toggle_time) > settings['smoke_plus']['off_time'] and
 					  not current_output_status['fan']) and manual_override['fan'] < now:
-					sp_cycle_toggle_time = now
+					fan_cycle_toggle_time = now
 					if (settings['platform']['dc_fan'] and (mode == 'Smoke' or (mode == 'Hold' and not control['pwm_control'])) and
 							settings['smoke_plus']['fan_ramp']):
 						on_time = settings['smoke_plus']['on_time']
