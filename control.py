@@ -680,10 +680,13 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 					pid_output = controllerCore.update(ptemp)
 					pidLoopStart = now
 					CycleRatio = RawCycleRatio = settings['cycle_data']['u_min'] if LidOpenDetect else pid_output
+					
 					# If ratio is less than min set to min and control via fan.
 					if CycleRatio < settings['cycle_data']['u_min']:
 						CycleRatio = settings['cycle_data']['u_min']
 						ControlFanPid = True
+					else:
+						ControlFanPid = False
 					# Don't set ratio over maximum.
 					CycleRatio = min(CycleRatio, settings['cycle_data']['u_max'])			
 			if manual_override['auger'] < now:
