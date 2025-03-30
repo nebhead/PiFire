@@ -889,12 +889,13 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 					max_fan_ratio = 1
 				# Shift the pid output up to correct for the u_min.  When we are at u_min our fan will be at 100% fan ratio.
 				# When we are below u_min we will lower the fan ratio shortening the fan on time. 
-				eventLogger.debug('Fan PID: Fan ON')
+
 				pid_output_adjusted = pid_output + (1-settings['cycle_data']['u_min'])
 				settings['smoke_plus']['off_time']
 				FanRatio = pid_output_adjusted * max_fan_ratio
 				fan_on_time = total_fan_cycle * FanRatio 
 				fan_off_time = total_fan_cycle * (1 - FanRatio)
+				eventLogger.debug(f'Fan PID: Fan ON, pid_output: {pid_output}, pid_output_adjusted: {pid_output_adjusted}')		
 				eventLogger.debug(f'Fan ratio: {FanRatio}, Fan on time: {fan_on_time}, Fan off time: {fan_off_time}')
 				if (now - fan_cycle_toggle_time) > fan_on_time and current_output_status['fan']:
 					grill_platform.fan_off()
