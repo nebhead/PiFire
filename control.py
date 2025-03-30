@@ -224,11 +224,12 @@ except:
 	eventLogger.error(error_event)
 	controlLogger.error(error_event)
 
-# Get current hopper level and save it to the current pellet information
-pelletdb = read_pellet_db()
-pelletdb['current']['hopper_level'] = dist_device.get_level(override=True)
-write_pellet_db(pelletdb)
-eventLogger.info(f'Hopper Level Checked @ {pelletdb["current"]["hopper_level"]}%')
+if status_data['hopper_level_enabled']:
+	# Get current hopper level and save it to the current pellet information
+	pelletdb = read_pellet_db()
+	pelletdb['current']['hopper_level'] = dist_device.get_level(override=True)
+	write_pellet_db(pelletdb)
+	eventLogger.info(f'Hopper Level Checked @ {pelletdb["current"]["hopper_level"]}%')
 
 '''
 *****************************************
@@ -591,7 +592,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			write_control(control, direct_write=True, origin='control')
 
 		# Check hopper level when requested or every 300 seconds
-		if control['hopper_check'] or (now - hopper_toggle_time) > 60:
+		if status_data['hopper_level_enabled'] and (control['hopper_check'] or (now - hopper_toggle_time) > 60):
 			pelletdb = read_pellet_db()
 			override = False 
 			if control['hopper_check']:
