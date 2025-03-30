@@ -878,7 +878,9 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 							control['duty_cycle'] = settings['pwm']['max_duty_cycle']
 							write_control(control, direct_write=True, origin='control')
 
-			# If Auger ratio is below minimum Cycle the Fan as additional output control.
+			# This added section allows for additional pid control by controlling the fan.  
+			# Currenly only implemented for AC fans but should be trivial to extend to DC fans.
+			# If Auger ratio is below minimum Cycle the Fan as additional output control utilizing the pid output.
 			if (mode == 'Hold' and target_temp_achieved and ControlFanPid and not LidOpenDetect and not settings['platform']['dc_fan']):
 				# If smoke plus mode is active set max fan ratio to smoke plus ratio otherwise 1 (always on).
 				if control['s_plus']:
@@ -887,9 +889,11 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 				else:
 					total_fan_cycle = CycleTime
 					max_fan_ratio = 1
-				# Shift the pid output up to correct for the u_min.  When we are at u_min our fan will be at 100% fan ratio.
-				# When we are below u_min we will lower the fan ratio shortening the fan on time. 	
-				# If pid is returning negative values the best we can do is shut off the fan.
+
+				# Divide the pid output by the u_min. 
+				# This way when we are at u_min our fan will be at 100% fan ratio and will drop proportionally down to 0 as pid_output drops.	
+				# If pid is returning negative values the best we can do is shut off the fan so set min to 0.
+				#
 				pid_output_adjusted = max(0,pid_output / settings['cycle_data']['u_min'])
 				settings['smoke_plus']['off_time']
 				FanRatio = pid_output_adjusted * max_fan_ratio
@@ -906,7 +910,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 					_start_fan(settings, control['duty_cycle'])
 					eventLogger.debug('Fan PID: Fan ON')
 
-			# If in Smoke Plus Mode, Cycle the Fan
+			# If in Smoke Plus Mode but not utilizing in the fan pid mode, Cycle the Fan
 			if (mode == 'Smoke' or (mode == 'Hold' and target_temp_achieved)) and control['s_plus'] and not ControlFanPid:
 				# If Temperature is > settings['smoke_plus']['max_temp']
 				# or Temperature is < settings['smoke_plus']['min_temp'] then turn on fan
