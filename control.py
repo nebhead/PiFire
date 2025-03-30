@@ -938,7 +938,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 						eventLogger.debug('Smoke Plus: Fan ON')
 
 			# If Smoke Plus was disabled when fan is OFF return fan to ON
-			elif not current_output_status['fan'] and not control['s_plus'] and manual_override['fan'] < now:
+			elif not current_output_status['fan'] and not control['s_plus'] and not ControlFanPid and manual_override['fan'] < now:
 				_start_fan(settings, control['duty_cycle'])
 				eventLogger.debug('Smoke Plus: Fan Returned to On')
 
