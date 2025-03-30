@@ -890,7 +890,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 				# Shift the pid output up to correct for the u_min.  When we are at u_min our fan will be at 100% fan ratio.
 				# When we are below u_min we will lower the fan ratio shortening the fan on time. 
 
-				pid_output_adjusted = pid_output + (1-settings['cycle_data']['u_min'])
+				pid_output_adjusted = pid_output / settings['cycle_data']['u_min']
 				settings['smoke_plus']['off_time']
 				FanRatio = pid_output_adjusted * max_fan_ratio
 				fan_on_time = total_fan_cycle * FanRatio 
