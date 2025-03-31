@@ -903,7 +903,6 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 				# If pid is returning negative values the best we can do is shut off the fan so set min to 0.
 				#
 				pid_output_adjusted = max(0,pid_output / settings['cycle_data']['u_min'])
-				settings['smoke_plus']['off_time']
 				FanRatio = pid_output_adjusted * max_fan_ratio
 				fan_on_time = total_fan_cycle * FanRatio 
 				fan_off_time = total_fan_cycle * (1 - FanRatio)
