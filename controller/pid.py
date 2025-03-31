@@ -58,15 +58,24 @@ class Controller(ControllerBase):
 
 		self.derv = 0.0
 		self.inter = 0.0
-		self.inter_max = abs(self.center / self.ki)
+		if self.ki != 0:
+			self.inter_max = abs(self.center / self.ki)
+		else: 
+			self.inter_max = 0
 
 		self.last = 150
 
 		self.set_target(0.0)
 
 	def _calculate_gains(self, pb, ti, td):
-		self.kp = -1 / pb
-		self.ki = self.kp / ti
+		if pb == 0:
+			self.kp = 0
+		else:
+			self.kp = -1 / pb
+		if ti == 0:
+			self.ki = 0
+		else:
+			self.ki = self.kp / ti
 		self.kd = self.kp * td
 
 	def update(self, current):
@@ -78,8 +87,9 @@ class Controller(ControllerBase):
 		dt = time.time() - self.last_update
 		# if self.p > 0 and self.p < 1: # Ensure we are in the pb, otherwise do not calculate i to avoid windup
 		self.inter += error * dt
-		self.inter = max(self.inter, -self.inter_max)
-		self.inter = min(self.inter, self.inter_max)
+		if self.center != 0:
+			self.inter = max(self.inter, -self.inter_max)
+			self.inter = min(self.inter, self.inter_max)
 
 		self.i = self.ki * self.inter
 
@@ -106,7 +116,10 @@ class Controller(ControllerBase):
 
 	def set_gains(self, pb, ti, td):
 		self._calculate_gains(pb,ti,td)
-		self.inter_max = abs(self.center / self.ki)
+		if self.ki != 0:
+			self.inter_max = abs(self.center / self.ki)
+		else:
+			self.inter_max = 0
 
 	def get_k(self):
 		return self.kp, self.ki, self.kd
