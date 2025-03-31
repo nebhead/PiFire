@@ -681,7 +681,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 					pidLoopStart = now
 					CycleRatio = RawCycleRatio = settings['cycle_data']['u_min'] if LidOpenDetect else pid_output
 					
-					# If ratio is less than min set to min and control via fan.
+					# If ratio is less than min set auger ratio to min and control further via fan.
 					if CycleRatio < settings['cycle_data']['u_min']:
 						CycleRatio = settings['cycle_data']['u_min']
 						ControlFanPid = True
@@ -834,8 +834,11 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			# Check if a lid open event has occurred only after hold mode has been achieved
 			if target_temp_achieved and settings['cycle_data']['LidOpenDetectEnabled'] and (ptemp < (control['primary_setpoint'] * ((100 - settings['cycle_data']['LidOpenThreshold']) / 100))):
 				LidOpenDetect = True
+				# Stop all control during a lid open event, including fan.  
+				# If we are in a state where the auger ratio is min and we are using the fan for control, turning the fan on here would overshoot the temps.
+				# This is a major issue when using piFire for a wood or charcoal pit or a hybrid wood/pellet pit.
 				grill_platform.auger_off()
-				_start_fan(settings)
+				grill_platform.fan_off()
 				auger_toggle_time = now 
 				LidOpenEventExpires = now + settings['cycle_data']['LidOpenPauseTime']
 				target_temp_achieved = False
@@ -856,7 +859,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 						_start_fan(settings)
 						LidOpenEventExpires = now + settings['cycle_data']['LidOpenPauseTime']
 
-			# If PWM Fan Control enabled set duty_cycle based on temperature
+			# If PWM Fan Control enabled set duty_cycle based on temperature.
 			if (settings['platform']['dc_fan'] and mode == 'Hold' and control['pwm_control'] and
 					(now - fan_update_time) > settings['pwm']['update_time']):
 				fan_update_time = now
@@ -879,10 +882,10 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 							write_control(control, direct_write=True, origin='control')
 
 			# This added section allows for additional pid control by controlling the fan.  
-			# Currenly only implemented for AC fans but should be trivial to extend to DC fans.
+			# Currenly only implemented for AC fans but should be trivial to extend to DC fans however it would require rewriting the above pwm control.
 			# If Auger ratio is below minimum Cycle the Fan as additional output control utilizing the pid output.
 			if (mode == 'Hold' and target_temp_achieved and ControlFanPid and not LidOpenDetect and not settings['platform']['dc_fan']):
-				# If smoke plus mode is active set max fan ratio to smoke plus ratio otherwise 1 (always on).
+				# If smoke plus mode is active set max fan ratio to smoke plus ratio otherwise set to 1.
 				if control['s_plus']:
 					total_fan_cycle = settings['smoke_plus']['on_time'] + settings['smoke_plus']['off_time']
 					max_fan_ratio = settings['smoke_plus']['on_time'] / total_fan_cycle
