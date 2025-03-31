@@ -1201,7 +1201,6 @@ class DisplayBase:
 							self.menu['current']['option'] = 100  # start at 100 for C
 					else:
 						self.menu['current']['option'] = self.in_data['primary_setpoint']
-					return
 				elif selected == 'Smoke':
 					self.display_active = True
 					self.menu['current']['mode'] = 'none'
