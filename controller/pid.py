@@ -58,7 +58,10 @@ class Controller(ControllerBase):
 
 		self.derv = 0.0
 		self.inter = 0.0
-		self.inter_max = abs(self.center / self.ki)
+		if self.ki != 0:
+			self.inter_max = abs(self.center / self.ki)
+		else: 
+			self.inter_max = 0
 
 		self.last = 150
 
@@ -113,7 +116,10 @@ class Controller(ControllerBase):
 
 	def set_gains(self, pb, ti, td):
 		self._calculate_gains(pb,ti,td)
-		self.inter_max = abs(self.center / self.ki)
+		if self.ki != 0:
+			self.inter_max = abs(self.center / self.ki)
+		else:
+			self.inter_max = 0
 
 	def get_k(self):
 		return self.kp, self.ki, self.kd
