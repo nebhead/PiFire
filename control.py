@@ -680,11 +680,16 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 					pid_output = controllerCore.update(ptemp)
 					pidLoopStart = now
 					CycleRatio = RawCycleRatio = settings['cycle_data']['u_min'] if LidOpenDetect else pid_output
-					
 					# If ratio is less than min set auger ratio to min and control further via fan.
 					if CycleRatio < settings['cycle_data']['u_min']:
 						CycleRatio = settings['cycle_data']['u_min']
-						ControlFanPid = True
+						# FanPid control currently not enabled when using PWM control on DC fans.  Too many variables for me to deal with at the moment.
+						# It's far easier and just as effective (and probably better smoke) to simply cycle the fan than deal with cycling plus speed control.
+						# To use fanPid Control with DC fans simply disable the PWM control.
+						if not control['pwm_control']:
+							ControlFanPid = True
+						else:
+							ControlFanPid = False
 					else:
 						ControlFanPid = False
 					# Don't set ratio over maximum.
@@ -855,8 +860,8 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 					else:
 						LidOpenDetect = True
 						grill_platform.auger_off()
+						grill_platform.fan_off()
 						auger_toggle_time = now
-						_start_fan(settings)
 						LidOpenEventExpires = now + settings['cycle_data']['LidOpenPauseTime']
 
 			# If PWM Fan Control enabled set duty_cycle based on temperature.
@@ -882,9 +887,9 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 							write_control(control, direct_write=True, origin='control')
 
 			# This added section allows for additional pid control by controlling the fan.  
-			# Currenly only implemented for AC fans but should be trivial to extend to DC fans however it would require rewriting the above pwm control.
+			# Implemented for AC fans and DC fans not using PWM Control.
 			# If Auger ratio is below minimum Cycle the Fan as additional output control utilizing the pid output.
-			if (mode == 'Hold' and target_temp_achieved and ControlFanPid and not LidOpenDetect and not settings['platform']['dc_fan']):
+			if (mode == 'Hold' and target_temp_achieved and ControlFanPid and not LidOpenDetect and not control['pwm_control']):
 				# If smoke plus mode is active set max fan ratio to smoke plus ratio otherwise set to 1.
 				if control['s_plus']:
 					total_fan_cycle = settings['smoke_plus']['on_time'] + settings['smoke_plus']['off_time']
@@ -913,8 +918,8 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 					_start_fan(settings, control['duty_cycle'])
 					eventLogger.debug('Fan PID: Fan ON')
 
-			# If in Smoke Plus Mode but not utilizing in the fan pid mode, Cycle the Fan
-			if (mode == 'Smoke' or (mode == 'Hold' and target_temp_achieved)) and control['s_plus'] and not ControlFanPid:
+			# If in Smoke Plus Mode but not calling for fan pid control, Cycle the Fan
+			if (mode == 'Smoke' or (mode == 'Hold' and target_temp_achieved)) and control['s_plus'] and not ControlFanPid and not LidOpenDetect:
 				# If Temperature is > settings['smoke_plus']['max_temp']
 				# or Temperature is < settings['smoke_plus']['min_temp'] then turn on fan
 				if (ptemp > settings['smoke_plus']['max_temp'] or
@@ -945,7 +950,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 						eventLogger.debug('Smoke Plus: Fan ON')
 
 			# If Smoke Plus was disabled when fan is OFF return fan to ON
-			elif not current_output_status['fan'] and not control['s_plus'] and not ControlFanPid and manual_override['fan'] < now:
+			elif not current_output_status['fan'] and not control['s_plus'] and not ControlFanPid and not LidOpenDetect and manual_override['fan'] < now:
 				_start_fan(settings, control['duty_cycle'])
 				eventLogger.debug('Smoke Plus: Fan Returned to On')
 
