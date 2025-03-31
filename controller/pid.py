@@ -84,8 +84,9 @@ class Controller(ControllerBase):
 		dt = time.time() - self.last_update
 		# if self.p > 0 and self.p < 1: # Ensure we are in the pb, otherwise do not calculate i to avoid windup
 		self.inter += error * dt
-		self.inter = max(self.inter, -self.inter_max)
-		self.inter = min(self.inter, self.inter_max)
+		if self.center != 0:
+			self.inter = max(self.inter, -self.inter_max)
+			self.inter = min(self.inter, self.inter_max)
 
 		self.i = self.ki * self.inter
 
