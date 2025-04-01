@@ -87,8 +87,7 @@ class Controller(ControllerBase):
 
 		# I
 		dt = time.time() - self.last_update
-		# Clamping anti-windup method.  if we are at saturation, either fully on or fully off, then don't calculate the integral.
-		# if self.p > 0 and self.p < 1: # Ensure we are in the pb, otherwise do not calculate i to avoid windup
+		# Clamping anti-windup method.  if we are at saturation, either fully on or fully off, then don't change the integral.
 		if not ((self.p + self.d) >= 1 and (self.p + self.d) <= 0):
 			self.inter += error * dt
 		
