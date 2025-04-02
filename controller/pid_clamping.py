@@ -14,17 +14,22 @@
  PiSmoker project: https://github.com/DBorello/PiSmoker and modified by GitHub user markalston.
 
  PID controller based on proportional band in standard PID form https://en.wikipedia.org/wiki/PID_controller#Ideal_versus_standard_PID_form
-   u = Kp (e(t)+ 1/Ti INT + Td de/dt)
-  PB = Proportional Band
-  Ti = Goal of eliminating in Ti seconds
-  Td = Predicts error value at Td in seconds
+   u   = Kp (e(t)+ 1/Ti INT + Td de/dt) = controller output
+  PB   = Proportional Band
+  Kp   = Proportional Gain = 1/PB
+  Ti   = Integration Time constant
+  Td   = Derivative Time Constant
+  de   = Change in Error
+  dt   = Change in Time
+  INT  = Historic cumulative value of errors
+  e(t) = Current Error = Set Point - Current Temp
+
   
   Configuration Defaults: 
   "config": {
-      "PB": 60.0,
-      "Td": 45.0,
-      "Ti": 180.0,
-      "center": 0.5
+      "PB": 30.0,
+      "Td": 20.0,
+      "Ti": 120.0
    }
 
 *****************************************
