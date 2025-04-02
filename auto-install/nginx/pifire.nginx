@@ -1,5 +1,5 @@
 server {
-    error_page 400 404 500 502 503 504 /server_error.html;
+    error_page 400 404 500 501 502 503 504 /server_error.html;
     
     location = /server_error.html {
         root /usr/share/nginx/html;
