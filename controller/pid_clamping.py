@@ -10,10 +10,8 @@
  When the output is saturated (either below 0 or above 1) then we do not increase the integral output.
  https://info.erdosmiller.com/blog/pid-anti-windup-techniques
 
- This software was developed by GitHub user DBorello as part of his excellent
- PiSmoker project: https://github.com/DBorello/PiSmoker
-
- Adapted for PiFire
+ This controller was originally developed by GitHub user DBorello as part of his excellent
+ PiSmoker project: https://github.com/DBorello/PiSmoker and modified by GitHub user markalston.
 
  PID controller based on proportional band in standard PID form https://en.wikipedia.org/wiki/PID_controller#Ideal_versus_standard_PID_form
    u = Kp (e(t)+ 1/Ti INT + Td de/dt)
@@ -58,14 +56,13 @@ class Controller(ControllerBase):
 
 		self.last_update = time.time()
 		self.error = 0.0
+		self.error_last = 0.0
 		self.set_point = 0
 
 		self.center = config['center']
 
 		self.derv = 0.0
 		self.inter = 0.0
-
-		self.last = 150
 
 		self.set_target(0.0)
 
@@ -82,40 +79,41 @@ class Controller(ControllerBase):
 		eventLogger.debug('kp: ' + str(self.kp) + ', ki: ' + str(self.ki) + ', kd: ' + str(self.kd))
 
 	def update(self, current):
+		# dt
+		dt = time.time() - self.last_update
+
 		# P
 		error = current - self.set_point
 		self.p = self.kp * error
 
+		# I
+		self.inter += error * dt
+		self.i = self.ki * self.inter
+
 		# D
-		self.derv = (current - self.last) / dt
+		self.derv = (error - self.error_last) / dt
 		self.d = self.kd * self.derv
 
-		# I
-		# calculate I before adding to the integrator to see if we are at saturation first.
-		dt = time.time() - self.last_update
-		self.i = self.ki * (self.inter + error * dt)
+		# PID
+		self.u = self.p + self.i + self.d
 
 		# Clamping anti-windup method. 
 		# Stops integration when the sum of the block components exceeds the output limits 
 		# and the integrator output and block input have the same sign. 
-		# Resumes integration when the sum of the block components exceeds the output limits 
-		# and the integrator output and block input have opposite sign.  
-		# if we are at saturation, either fully on or fully off, then don't change the integral.
-		if not (((self.p + self.d + self.i) >= 1) and (self.i > 0)):
+		# Resumes integration when either the sum of the block components exceeds the output limits 
+		# and the integrator output and block input have opposite sign or the sum no longer exceeds the output limits.
+		# 
+		# Implemented via reversing the addition to self.inter above if we are clamping.		
+		if not ((abs(self.u) >= 1) and (self.i * self.u > 0)):
 			eventLogger.debug('Not clamping integrator.')
-			eventLogger.debug('self.i = ' + str(self.i))
-			self.inter += error * dt
 		else:
 			eventLogger.debug('clamping integrator.')
-			eventLogger.debug('self.i = ' + str(self.i))
+			self.inter -= error * dt
 		
-		# PID
-		self.u = self.p + self.i + self.d
-		eventLogger.debug('p: ' + str(self.p) + ', i: ' + str(self.i) + ', d: ' + str(self.d))
+		eventLogger.debug('PID Update... error: ' + str(error) + ', p: ' + str(self.p) + ', i: ' + str(self.i) + ', d: ' + str(self.d))
 
 		# Update for next cycle
-		self.error = error
-		self.last = current
+		self.error_last = error
 		self.last_update = time.time()
 
 		return self.u
