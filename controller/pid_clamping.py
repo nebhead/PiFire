@@ -36,7 +36,11 @@
 Imported Libraries
 '''
 import time
+import logging
+from common import create_logger
 from controller.base import ControllerBase 
+
+eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 
 '''
 Class Definition
@@ -75,6 +79,7 @@ class Controller(ControllerBase):
 		else:
 			self.ki = self.kp / ti
 		self.kd = self.kp * td
+		eventLogger.debug('kp: ' + str(self.kp) + ', ki: ' + str(self.ki) + ', kd: ' + str(self.kd))
 
 	def update(self, current):
 		# P
@@ -86,15 +91,27 @@ class Controller(ControllerBase):
 		self.d = self.kd * self.derv
 
 		# I
+		# calculate I before adding to the integrator to see if we are at saturation first.
 		dt = time.time() - self.last_update
-		# Clamping anti-windup method.  if we are at saturation, either fully on or fully off, then don't change the integral.
-		if not ((self.p + self.d) >= 1 and (self.p + self.d) <= 0):
-			self.inter += error * dt
-		
-		self.i = self.ki * self.inter
+		self.i = self.ki * (self.inter + error * dt)
 
+		# Clamping anti-windup method. 
+		# Stops integration when the sum of the block components exceeds the output limits 
+		# and the integrator output and block input have the same sign. 
+		# Resumes integration when the sum of the block components exceeds the output limits 
+		# and the integrator output and block input have opposite sign.  
+		# if we are at saturation, either fully on or fully off, then don't change the integral.
+		if not (((self.p + self.d + self.i) >= 1) and (self.i > 0)):
+			eventLogger.debug('Not clamping integrator.')
+			eventLogger.debug('self.i = ' + str(self.i))
+			self.inter += error * dt
+		else:
+			eventLogger.debug('clamping integrator.')
+			eventLogger.debug('self.i = ' + str(self.i))
+		
 		# PID
 		self.u = self.p + self.i + self.d
+		eventLogger.debug('p: ' + str(self.p) + ', i: ' + str(self.i) + ', d: ' + str(self.d))
 
 		# Update for next cycle
 		self.error = error
