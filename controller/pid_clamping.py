@@ -64,8 +64,6 @@ class Controller(ControllerBase):
 		self.error_last = 0.0
 		self.set_point = 0
 
-		self.center = config['center']
-
 		self.derv = 0.0
 		self.inter = 0.0
 
