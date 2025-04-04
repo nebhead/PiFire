@@ -247,7 +247,7 @@
                     "cycle_time" : 10,
                     "cycle_ratio_min" : 0.05,
                     "cycle_ratio_max" : 0.99
-                }   
+                }
             },
             "config" : [
                 {
