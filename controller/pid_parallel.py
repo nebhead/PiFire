@@ -10,15 +10,15 @@
  When the output is saturated (either below 0 or above 1) then we do not increase the integral output.
  https://info.erdosmiller.com/blog/pid-anti-windup-techniques
 
+
  This controller was originally developed by GitHub user DBorello as part of his excellent
  PiSmoker project: https://github.com/DBorello/PiSmoker and modified by GitHub user markalston.
 
- PID controller based on proportional band in standard PID form https://en.wikipedia.org/wiki/PID_controller#Ideal_versus_standard_PID_form
-   u   = Kp (e(t)+ 1/Ti INT + Td de/dt) = controller output
-  PB   = Proportional Band
-  Kp   = Proportional Gain = 1/PB
-  Ti   = Integration Time constant
-  Td   = Derivative Time Constant
+ PID controller based on Parallel (ideal) PID form https://en.wikipedia.org/wiki/PID_controller#Ideal_versus_standard_PID_form
+   u   = Kp*e(t)+ Ki*INT + Kd*de/dt = controller output
+  Kp   = Proportional coefficient
+  Ki   = Integration coefficient
+  Kd   = Derivative coefficient
   de   = Change in Error
   dt   = Change in Time
   INT  = Historic cumulative value of errors
@@ -27,9 +27,9 @@
   
   Configuration Defaults: 
   "config": {
-      "PB": 30.0,
-      "Td": 20.0,
-      "Ti": 120.0
+      "Kp": 30.0,
+      "Ki": 1.5,
+      "Kd": 4
    }
 
 *****************************************
@@ -52,7 +52,9 @@ class Controller(ControllerBase):
 	def __init__(self, config, units, cycle_data):
 		super().__init__(config, units, cycle_data)
 
-		self._calculate_gains(config['PB'], config['Ti'], config['Td'])
+		self.kp = config['Kp']
+		self.ki = config['Ki']
+		self.kd = config['Kd']
 
 		self.p = 0.0
 		self.i = 0.0
@@ -68,18 +70,6 @@ class Controller(ControllerBase):
 		self.inter = 0.0
 
 		self.set_target(0.0)
-
-	def _calculate_gains(self, pb, ti, td):
-		if pb == 0:
-			self.kp = 0
-		else:
-			self.kp = -1 / pb
-		if ti == 0:
-			self.ki = 0
-		else:
-			self.ki = self.kp / ti
-		self.kd = self.kp * td
-		eventLogger.debug('kp: ' + str(self.kp) + ', ki: ' + str(self.ki) + ', kd: ' + str(self.kd))
 
 	def update(self, current):
 		# dt
