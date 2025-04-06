@@ -108,12 +108,13 @@ class Controller(ControllerBase):
 		# 
 		# Implemented via reversing the addition to self.inter above if we are clamping.		
 		if not ((abs(self.u) >= 1) and (self.i * self.u > 0)):
+			clamping_log = "false"
 			eventLogger.debug('Not clamping integrator.')
 		else:
+			clamping_log = "true"
 			eventLogger.debug('clamping integrator.')
-			self.inter -= error * dt
-		
-		eventLogger.debug('PID Update... error: ' + str(error) + ', p: ' + str(self.p) + ', i: ' + str(self.i) + ', d: ' + str(self.d))
+			self.inter -= error * dt		
+		eventLogger.debug('PID Update... error: ' + str(error) + ', p: ' + str(self.p) + ', i: ' + str(self.i) + ', d: ' + str(self.d) + ', pid: ' + str(self.u) + ' , clamping: ' + str(clamping_log))
 
 		# Update for next cycle
 		self.error_last = error

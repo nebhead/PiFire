@@ -24,6 +24,8 @@ import logging
 from PIL import Image, ImageDraw, ImageFont
 from common import read_control, write_control
 
+
+
 '''
 Display base class definition
 '''
@@ -50,7 +52,7 @@ class DisplayBase:
 		#self.primary_font = 'DejaVuSans.ttf'  # May need to switch to a default font in Raspberry Pi OS Lite due to MSTCorefonts Package Deprecation 
 		# Attempt to set the log level of PIL so that it does not pollute the logs
 		logging.getLogger('PIL').setLevel(logging.CRITICAL + 1)
-	
+
 		# Init Display Device, Input Device, Assets
 		self._init_globals()
 		self._init_assets() 
@@ -1193,15 +1195,15 @@ class DisplayBase:
 					write_control(control, origin='display')
 				elif selected == 'Hold':
 					self.display_active = True
+					self.menu_active = True
 					self.menu['current']['mode'] = 'grill_hold_value'
-					if self.in_data['primary_setpoint'] == 0:
+					if self.in_data is None or self.in_data['primary_setpoint'] == 0:
 						if self.units == 'F':
 							self.menu['current']['option'] = 200  # start at 200 for F
 						else:
 							self.menu['current']['option'] = 100  # start at 100 for C
 					else:
 						self.menu['current']['option'] = self.in_data['primary_setpoint']
-					return
 				elif selected == 'Smoke':
 					self.display_active = True
 					self.menu['current']['mode'] = 'none'
@@ -1280,7 +1282,6 @@ class DisplayBase:
 		img.paste(self.background, position)
 		# Create drawing object
 		draw = ImageDraw.Draw(img)
-
 		if self.menu['current']['mode'] == 'grill_hold_value':
 			# Grill Temperature (Large Centered)
 			font_point_size = 80
