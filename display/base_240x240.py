@@ -1192,6 +1192,7 @@ class DisplayBase:
 					control['mode'] = 'Shutdown'
 					write_control(control, origin='display')
 				elif selected == 'Hold':
+					self.display_active = True
 					self.menu_active = True
 					self.menu['current']['mode'] = 'grill_hold_value'
 					if self.in_data['primary_setpoint'] == 0:
