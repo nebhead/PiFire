@@ -340,7 +340,7 @@
                     "option_name" : "Clamping",
                     "option_friendly_name" : "Integral Windup Protection", 
                     "option_description" : "Stops integration when the sum of the block components exceeds the output limits and the integrator output and block input have the same sign. Resumes integration when either the sum of the block components exceeds the output limits and the integrator output and block input have opposite sign or the sum no longer exceeds the output limits. [Default=True]",
-                    "option_type" : "boolean",
+                    "option_type" : "bool",
                     "option_default" : true,
                     "hidden" : false
                 
