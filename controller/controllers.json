@@ -253,20 +253,9 @@
                 {
                     "option_name" : "PB",
                     "option_friendly_name" : "Proportional Band(PB)", 
-                    "option_description" : "The proportional band is the total range of the controlled output that can be produced within the controller’s 0% and 100% limits. Within the PB the command output is between 1.0 and 0.  Outside the band the command output is 1 or -1 (fully on or off). Increase this if you are overshooting setpoint. [Default=30.0]",
+                    "option_description" : "The proportional band is the total range of the controlled output that can be produced within the controller’s 0% and 100% limits.   Within the PB the command output is between 1.0 and 0.  Outside the band the command output is 1 or -1 (fully on or off). Increase this if you are overshooting setpoint.[Default=30.0]",
                     "option_type" : "float",
                     "option_default" : 30.0,
-                    "option_min" : null,
-                    "option_max" : null, 
-                    "option_step" : 0.1,
-                    "hidden" : false
-                },
-                {
-                    "option_name" : "Ti",
-                    "option_friendly_name" : "Integral Time Constant (Ti)", 
-                    "option_description" : "Time constant that determines how quickly we respond to accumulated error. Higher Ti makes the controller less responsive to accumulated error over time. Lower this if you cannot reach setpoint. [Default=120.0]",
-                    "option_type" : "float",
-                    "option_default" : 120.0,
                     "option_min" : null,
                     "option_max" : null, 
                     "option_step" : 0.1,
@@ -282,68 +271,17 @@
                     "option_max" : null,
                     "option_step" : 0.1,  
                     "hidden" : false
-                }
-
-            ]
-        },
-		"pid_parallel" : {
-            "friendly_name" : "Parallel PID w/ Integrator Clamping",
-            "module_name" : "pid_parallel",
-            "image" : "pid.png",
-            "description" : "PID in parallel form with integral anti-windup protection achieved with a clamping method. This controller should only be used if you understand PID systems and wish to play around or have some specific need. This PID method might also be useful if you are following tuning guides such as Ziegler–Nichols. However, the coefficients have less relationship to physical behaviors and is more usefull for theoretical testing of the pid system.",
-            "author" : "Mark Alston",
-            "link" : "https://github.com/markalston/PiFire", 
-            "contributors" : ["Ben Parmeter", "James Weber", "Mark Alston"],
-            "attributions" : [],
-            "recommendations" : {
-                "cycle" : { 
-                    "cycle_time" : 10,
-                    "cycle_ratio_min" : 0.05,
-                    "cycle_ratio_max" : 0.99
-                }
-            },
-            "config" : [
+                },
                 {
-                    "option_name" : "Kp",
-                    "option_friendly_name" : "Proportional Gain", 
-                    "option_description" : "The proportional Gain. Kp = 1/PB. [Default=30.0]",
+                    "option_name" : "Ti",
+                    "option_friendly_name" : "Integral Time Constant (Ti)", 
+                    "option_description" : "Time constant that determines how quickly we respond to accumulated error. Higher Ti makes the controller less responsive to accumulated error over time. Increase this if you cannot reach setpoint. [Default=120.0]",
                     "option_type" : "float",
-                    "option_default" : 30,
+                    "option_default" : 120.0,
                     "option_min" : null,
                     "option_max" : null, 
                     "option_step" : 0.1,
                     "hidden" : false
-                },
-                {
-                    "option_name" : "Ki",
-                    "option_friendly_name" : "Integral Gain", 
-                    "option_description" : "Lower Ki makes the controller less responsive to accumulated error over time. Ki = Kp/Ti or 1/(PB*Ti).  Increase this if you cannot reach setpoint. [Default=1.5]",
-                    "option_type" : "float",
-                    "option_default" : 1.5,
-                    "option_min" : null,
-                    "option_max" : null, 
-                    "option_step" : 0.01,
-                    "hidden" : false
-                },
-                {
-                    "option_name" : "Kd",
-                    "option_friendly_name" : "Derivative Gain", 
-                    "option_description" : "Kd basically acts as a damper on the system. Kd = Kp*Td or Kd = Td/PB. Be cautious with this setting and start low and increase slowly. It might not even be needed and can easily drive a system into instability. [Default=4.0]",
-                    "option_type" : "float",
-                    "option_default" : 4.0,
-                    "option_min" : null,
-                    "option_max" : null,
-                    "option_step" : 0.01,  
-                    "hidden" : false
-                },
-                {
-                    "option_name" : "Clamping",
-                    "option_friendly_name" : "Integral Windup Protection", 
-                    "option_description" : "Stops integration when the sum of the block components exceeds the output limits and the integrator output and block input have the same sign. Resumes integration when either the sum of the block components exceeds the output limits and the integrator output and block input have opposite sign or the sum no longer exceeds the output limits. [Default=True]",
-                    "option_type" : "boolean",
-                    "option_default" : true,
-                    "hidden" : false
-                
                 }
             ]
         },
