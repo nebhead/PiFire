@@ -55,7 +55,7 @@ class GrillPlatform:
 			self.dc_fan = config.get('dc_fan', False)  # Save state for DC Fan
 			self.frequency = config.get('frequency', 100)  # Save configured fan frequency 
 			self.standalone = config.get('standalone', True)  # Save configured state for Standalone
-			self.testmode = config.get('testmode', True) # Test mode disables all relays. This is to troubleshoot code without actually firing up the grill.
+			self.testmode = True # Test mode disables all relays. This is to troubleshoot code without actually firing up the grill.
 			self.current = {}
 		except:
 			self.logger.error('Error parsing platform configuration.  Check your settings.json file.')
