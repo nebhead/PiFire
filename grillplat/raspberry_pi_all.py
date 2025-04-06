@@ -55,10 +55,14 @@ class GrillPlatform:
 			self.dc_fan = config.get('dc_fan', False)  # Save state for DC Fan
 			self.frequency = config.get('frequency', 100)  # Save configured fan frequency 
 			self.standalone = config.get('standalone', True)  # Save configured state for Standalone
+			self.testmode = config.get('testmode', False) # Test mode disables all relays. This is to troubleshoot code without actually firing up the grill.
 			self.current = {}
 		except:
 			self.logger.error('Error parsing platform configuration.  Check your settings.json file.')
 			raise
+
+		if self.testmode:
+			self.logger.debug('WARNING... In testmode, relays will not be controlled')
 
 		if not self.standalone: 
 			self.selector = Button(self.in_pins['selector'])
@@ -87,13 +91,19 @@ class GrillPlatform:
 
 	def auger_on(self):
 		self.logger.debug('auger_on: Turning on auger')
+		if self.testmode:
+			return
 		self.auger.on()
 
 	def auger_off(self):
 		self.logger.debug('auger_off: Turning off auger')
+		if self.testmode:
+			return
 		self.auger.off()
 
 	def fan_on(self, fan_speed_percent=100):
+		if self.testmode:
+			return
 		self.fan.on() # Turn on fan output pin to enable fan power
 		if self.dc_fan:
 			self._stop_ramp()
@@ -103,6 +113,8 @@ class GrillPlatform:
 			self.current_fan_speed_percent = fan_speed_percent # Keep track of our current fan percent speed
 
 	def fan_off(self):
+		if self.testmode:
+			return
 		self.fan.off()
 		if self.dc_fan:
 			self.logger.debug('fan_off: Turning off PWM fan')
@@ -110,12 +122,16 @@ class GrillPlatform:
 			self.current_fan_speed_percent = 0 # Fan is off, so our current fan speed is now 0
 
 	def fan_toggle(self):
+		if self.testmode:
+			return
 		self.fan.toggle()
 
 	def set_duty_cycle(self, fan_speed_percent, override_ramping=True):
 		# This can be called by both control.py and the thread that handles PWM fan ramping (for Smoke Plus).
 		# If control.py is doing the calling, then we want to override the ramping thread, so we need to stop it so the PWM change will stick.
 		# If the ramp thread is doing the calling, then we set override_ramping to False when calling, so we don't end up stopping the thread we are in.
+		if self.testmode:
+			return
 		if override_ramping:
 			self._stop_ramp()
 		self.logger.debug('set_duty_cycle: Changing fan speed percent to ' + str(fan_speed_percent))
@@ -124,6 +140,8 @@ class GrillPlatform:
 		self.current_fan_speed_percent = fan_speed_percent # Keep track of our current fan percent speed
 
 	def pwm_fan_ramp(self, on_time=5, min_duty_cycle=20, max_duty_cycle=100):
+		if self.testmode:
+			return
 		self.fan.on()
 		self.logger.debug('pwm_fan_ramp: Starting fan ramp: on_time: ' + str(on_time) + ' min_duty_cycle: ' + str(min_duty_cycle) + ' max_duty_cycle: ' + str(max_duty_cycle))
 		self._start_ramp(on_time=on_time, min_duty_cycle=min_duty_cycle, max_duty_cycle=max_duty_cycle)
@@ -134,18 +152,26 @@ class GrillPlatform:
 
 	def igniter_on(self):
 		self.logger.debug('igniter_on: Turning on igniter')
+		if self.testmode:
+			return
 		self.igniter.on()
 
 	def igniter_off(self):
 		self.logger.debug('igniter_off: Turning off igniter')
+		if self.testmode:
+			return
 		self.igniter.off()
 
 	def power_on(self):
 		self.logger.debug('power_on: Powering on grill platform')
+		if self.testmode:
+			return
 		self.power.on()
 
 	def power_off(self):
 		self.logger.debug('power_off: Powering off grill platform')
+		if self.testmode:
+			return
 		self.power.off()
 
 	def get_input_status(self):
@@ -166,6 +192,8 @@ class GrillPlatform:
 		return self.current
 
 	def _start_ramp(self, on_time, min_duty_cycle, max_duty_cycle, background=True):
+		if self.testmode:
+			return
 		self._stop_ramp()
 		self.logger.debug('_start_ramp: Setting starting fan percentage for ramp: min_duty_cycle: ' + str(min_duty_cycle))
 		self.logger.debug('_start_ramp: Starting fan ramp thread: on_time: ' + str(on_time) + ' min_duty_cycle: ' + str(min_duty_cycle) + ' max_duty_cycle: ' + str(max_duty_cycle))
@@ -178,12 +206,16 @@ class GrillPlatform:
 			self._ramp_thread = None
 
 	def _stop_ramp(self):
+		if self.testmode:
+			return
 		self.logger.debug('_stop_ramp: Stopping fan ramp')
 		if self._ramp_thread:
 			self._ramp_thread.stop()
 			self._ramp_thread = None
 
 	def _ramp_device(self, on_time, min_duty_cycle, max_duty_cycle, fps=25):
+		if self.testmode:
+			return
 		duty_cycle = max_duty_cycle / 100
 		self.logger.debug('_ramp_device: Fan ramp thread calculating / executing')
 		sequence = []

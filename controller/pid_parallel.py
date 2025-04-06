@@ -55,6 +55,7 @@ class Controller(ControllerBase):
 		self.kp = config['Kp']
 		self.ki = config['Ki']
 		self.kd = config['Kd']
+		self.clamping = config['Clamping']
 
 		self.p = 0.0
 		self.i = 0.0
@@ -96,12 +97,13 @@ class Controller(ControllerBase):
 		# Resumes integration when either the sum of the block components exceeds the output limits 
 		# and the integrator output and block input have opposite sign or the sum no longer exceeds the output limits.
 		# 
-		# Implemented via reversing the addition to self.inter above if we are clamping.		
-		if not ((abs(self.u) >= 1) and (self.i * self.u > 0)):
-			eventLogger.debug('Not clamping integrator.')
-		else:
-			eventLogger.debug('clamping integrator.')
-			self.inter -= error * dt
+		# Implemented via reversing the addition to self.inter above if we are clamping.
+		if self.clamping:		
+			if not ((abs(self.u) >= 1) and (self.i * self.u > 0)):
+				eventLogger.debug('Not clamping integrator.')
+			else:
+				eventLogger.debug('clamping integrator.')
+				self.inter -= error * dt
 		
 		eventLogger.debug('PID Update... error: ' + str(error) + ', p: ' + str(self.p) + ', i: ' + str(self.i) + ', d: ' + str(self.d) + ', pid: ' + str(self.u))
 
