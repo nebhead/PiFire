@@ -22,7 +22,7 @@ import socket
 import qrcode
 import logging
 from PIL import Image, ImageDraw, ImageFont
-from common import read_control, write_control, create_logger
+from common import read_control, write_control
 
 
 
@@ -53,8 +53,6 @@ class DisplayBase:
 		# Attempt to set the log level of PIL so that it does not pollute the logs
 		logging.getLogger('PIL').setLevel(logging.CRITICAL + 1)
 
-		log_level = logging.DEBUG
-		self.eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 		# Init Display Device, Input Device, Assets
 		self._init_globals()
 		self._init_assets() 
@@ -1196,7 +1194,6 @@ class DisplayBase:
 					control['mode'] = 'Shutdown'
 					write_control(control, origin='display')
 				elif selected == 'Hold':
-					self.eventLogger.debug('Hold menu selected.')
 					self.display_active = True
 					self.menu_active = True
 					self.menu['current']['mode'] = 'grill_hold_value'
@@ -1285,7 +1282,6 @@ class DisplayBase:
 		img.paste(self.background, position)
 		# Create drawing object
 		draw = ImageDraw.Draw(img)
-		self.eventLogger.debug('current mode: ' + self.menu['current']['mode'])
 		if self.menu['current']['mode'] == 'grill_hold_value':
 			# Grill Temperature (Large Centered)
 			font_point_size = 80
