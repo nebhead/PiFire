@@ -1200,7 +1200,7 @@ class DisplayBase:
 					self.display_active = True
 					self.menu_active = True
 					self.menu['current']['mode'] = 'grill_hold_value'
-					if self.in_data['primary_setpoint'] == 0:
+					if self.in_data is None or self.in_data['primary_setpoint'] == 0:
 						if self.units == 'F':
 							self.menu['current']['option'] = 200  # start at 200 for F
 						else:
