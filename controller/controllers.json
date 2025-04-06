@@ -275,7 +275,7 @@
                 {
                     "option_name" : "Ti",
                     "option_friendly_name" : "Integral Time Constant (Ti)", 
-                    "option_description" : "Time constant that determines how quickly we respond to accumulated error. Higher Ti makes the controller less responsive to accumulated error over time. Increase this if you cannot reach setpoint. [Default=120.0]",
+                    "option_description" : "Time constant that determines how quickly we respond to accumulated error. Higher Ti makes the controller less responsive to accumulated error over time. Lower this if you cannot reach setpoint. [Default=120.0]",
                     "option_type" : "float",
                     "option_default" : 120.0,
                     "option_min" : null,
