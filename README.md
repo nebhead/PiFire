@@ -14,20 +14,22 @@ Just as with the PiSmoker project, I had a few goals in mind.  I also wanted to 
 
 ### Features
 
+
 * WiFi Enabled Access & Control (WebUI) via computer, phone or tablet
 * Multiple Cook Modes
 	* _Startup Mode_ (fixed auger on times with igniter on)
 	* _Smoke Mode_ (fixed auger on times)
-	* _Hold Mode_ (variable auger on times) using PID for higher accuracy
+	* _Hold Mode_ (variable auger on times) using PID for higher accuracy (multiple PID / Controller options)
 	* _Shutdown Mode_ (auger off, fan on) to burn off pellets after cook is completed
 	* _Monitor Mode_ - See temperatures of grill / probes and get notifications if using another controller or if just checking the temperatures any time.  
 	* _Manual Mode_ - Control fan, auger and igniter manually.  
 	* _Prime_ - Allows you to prime the firepot with pellets prior to a cook.  
 * Supports several different OLED and LCD screens
 	* SSD1306 OLED Display
-	* ST7789 TFT Display
+	* ST7789 TFT Display (240x240 resolution supported, ST7789V experimentally supported)
 	* ILI9341 TFT Display (320x240 resolution only)
-	* DSI Touch Display (**Currently Experimental**) - Requires Raspberry Pi with DSI interface (non-Pi Zero) and is resource heavy, so Pi 3B+ or later recommended 
+	* ILI9488 TFT Display (480x320 resolution)
+	* DSI Touch Display - Requires Raspberry Pi with DSI interface (non-Pi Zero) and is resource heavy, so Pi 3B+ or later recommended
 * Physical Button Input / Control (depending on the display, three button inputs)
 * Encoder support for, so you can control your grill with a spinny knob.
 * One (1) Grill Probe and Many Food Probes
@@ -36,6 +38,7 @@ Just as with the PiSmoker project, I had a few goals in mind.  I also wanted to 
 	* Probe tuning tool to help develop probe profiles
 	* Any number of probe inputs, limited only by the number of devices that the Raspberry Pi can support
 	* Virtual Probes to allow you to do things like averaging probes, finding highest and lowest values of certain probes, etc.
+	* Inkbird iBBQ and Meater/Meater+ Bluetooth probe support added in v1.9.0!
 * Cook Timer - Moved to the Top Bar for Easy Access
 * Notifications (Grill / Food Probes / Timer)
 	* Supports Apprise, IFTTT, Pushover, and Pushbullet Notification Services and now MQTT!
@@ -55,7 +58,7 @@ Just as with the PiSmoker project, I had a few goals in mind.  I also wanted to 
 
 The dashboard is where most of your key information and controls are at.  This is the screen that greets you when you access the PiFire WebUI on your computer, smart phone or tablet in a browser.
 
-![Dashboard](docs/webui/PiFire-Dashboard-00.png)
+![Dashboard](docs/webui/PiFire-Dashboard-01.png)
 
 For those of us who like to see the data, PiFire allows you to graph and save your cook history.  It's also a great way to monitor your cook in realtime.  
 
@@ -110,11 +113,12 @@ I've added a discord server [here](https://discord.gg/F9mbCrbrZS) which can be a
 * 6/2023 - Release v1.5.0 - Arguably one of the biggest overhauls to PiFire since it's inception.  The Probe system has been completely refactored to allow for multiple probe sensing devices (i.e. ADS1115, MAX31865, or even Virtual Probes to augment your inputs).  This extension of the probe system, allows for any number of probe inputs to be tracked in PiFire, allowing from notifications and tracking of history for each probe.  The sky is the limit!  With this change the the probe architecture, a number of other things needed to be modified/updated, including the notification system, the history/charting, the dashboards, cookfiles and recipe modes.  Note that if you are updating to this version, your settings will be upgraded in the process and you will not be able to roll back to a previous version (unless you restore from a backup of your settings).  
 * 11/2023 - Release v1.6.0 - In this month comes another huge update with lots of new features and bug fixes.  Many thanks to the users from discord that have been testing along the way (as well as submitting some bugs), what a great community we have!  Many of these features have been deployed on our development branch for some time, so they should be relatively stable.  Please do file issues on GitHub if you find any new bugs with the formal release.  With that, enjoy and happy grilling/smoking!
 * 5/2024 - Release v1.7.0 - Lot's of new updates in this release with the UI, new features (i.e. exit startup temp, etc.) and new device support.  Some improvements to the tuning tools (including an auto-tuning tool).  Under the covers improvements for stability and cleanup.  As usual, submit issues to GitHub if you run into anything.  Enjoy!
-* **9/2024 - Release v1.8.0** - Overhaul of the configuration wizard and underlying platform pin definitions to support board selection and configuration versus the platform selection that was previously provided.  This allows much more flexibility when it comes to custom pinouts.  This version now supports the PCB v4.x modular design allowing the ability to mix and match probe devices, relay/fan hardware, etc.  
+* 9/2024 - Release v1.8.0 - Overhaul of the configuration wizard and underlying platform pin definitions to support board selection and configuration versus the platform selection that was previously provided.  This allows much more flexibility when it comes to custom pinouts.  This version now supports the PCB v4.x modular design allowing the ability to mix and match probe devices, relay/fan hardware, etc.
+* **4/2025 - Release v1.9.0** - Almost too many new features and bug fixes to include in a short blurb here.  This release brings an overhaul to Manual Mode, moving the manual controls to the control panel with a PWM slider.  Added the ability to override outputs(igniter, auger, fan) on the default dashboard (and on the flex display).  Added new notifications for high and low temperature limits for each probe.  Added Bluetooth probe support for Inkbird iBBQ and some Meater devices.  Added three new PID controllers which further improve performance of the default PID.  New display support for different devices.  Some probe configuration can be done from the settings page and from the Default Dashboard.  Lid/Door Pause button added to Default Dashboard to manually pause the PID.  And much more!
 
 ### Credits
 
-Web Application created by Ben Parmeter, copyright 2020-2024. Check out my other projects on [github](https://github.com/nebhead). If you enjoy this software and feel the need to donate a cup of coffee, a frosty beer or a bottle of wine to the developer you can click [here](https://paypal.me/benparmeter).
+Web Application created by Ben Parmeter, copyright 2020-2025. Check out my other projects on [github](https://github.com/nebhead). If you enjoy this software and feel the need to donate a cup of coffee, a frosty beer or a bottle of wine to the developer you can click [here](https://paypal.me/benparmeter).
 
 Of course, none of this project would be available without the wonderful and amazing folks below.  If I forgot anyone please don't hesitate to let me know.  
 
@@ -151,7 +155,7 @@ This project is licensed under the MIT license.
 ```
 MIT License
 
-Copyright (c) 2020 - 2024 Ben Parmeter and Contributors
+Copyright (c) 2020 - 2025 Ben Parmeter and Contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
