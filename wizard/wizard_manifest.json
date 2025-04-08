@@ -1324,16 +1324,16 @@
 					]
 				}			
 			},
-			"bt_meater" : {
-				"friendly_name" : "Bluetooth - Meater",
-				"filename" : "bt_meater",
-				"description" : "This device module supports Bluetooth LE Meater probe thermometer devices (Original Meater and Meater Plus supported).  At this time the Meater Pro (Meater 2 Plus) devices are not supported. ",
+			"bt_meater_exp" : {
+				"friendly_name" : "BT - Meater Experimental",
+				"filename" : "bt_meater_exp",
+				"description" : "This device module supports Bluetooth LE Meater probe thermometer devices and is experimental. Not that this module relies on the simplepyble module and will not co-exist with other bluetooth modules based on bluepy.  This is not recommended for production use.",
 				"default" : false,
 				"image" : "bt_meater.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["bluepy"], 
-				"apt_dependencies" : ["libglib2.0-dev"],
-				"command_list" : [["sudo", "bash", "/usr/local/bin/pifire/wizard/bluepy.sh"]],
+				"py_dependencies" : ["simplepyble==0.7.3", "icecream"], 
+				"apt_dependencies" : ["libdbus-1-dev"],
+				"command_list" : [],
 				"settings_dependencies" : {
 					"units" : {
 						"friendly_name" : "Temp Units",
@@ -1343,7 +1343,7 @@
 					}
 				},
 				"device_specific" : {
-					"ports" : ["BT_Tip", "BT_Ambient"],
+					"ports" : ["BT0"],
 					"type" : "bluetooth",
 					"config" : [
 						{
@@ -1367,16 +1367,16 @@
 					]
 				}			
 			},
-			"bt_meater_exp" : {
-				"friendly_name" : "BT - Meater Experimental",
-				"filename" : "bt_meater_exp",
-				"description" : "This device module supports Bluetooth LE Meater probe thermometer devices and is experimental. Not that this module relies on the simplepyble module and will not co-exist with other bluetooth modules based on bluepy.  This is not recommended for production use.",
+			"bt_meater" : {
+				"friendly_name" : "Bluetooth - Meater",
+				"filename" : "bt_meater",
+				"description" : "This device module supports Bluetooth LE Meater probe thermometer devices (Original Meater and Meater Plus supported).  At this time the Meater Pro (Meater 2 Plus) devices are not supported. ",
 				"default" : false,
 				"image" : "bt_meater.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["simplepyble==0.7.3", "icecream"], 
-				"apt_dependencies" : ["libdbus-1-dev"],
-				"command_list" : [],
+				"py_dependencies" : ["bluepy"], 
+				"apt_dependencies" : ["libglib2.0-dev"],
+				"command_list" : [["sudo", "bash", "/usr/local/bin/pifire/wizard/bluepy.sh"]],
 				"settings_dependencies" : {
 					"units" : {
 						"friendly_name" : "Temp Units",
@@ -1386,7 +1386,7 @@
 					}
 				},
 				"device_specific" : {
-					"ports" : ["BT0"],
+					"ports" : ["BT_Tip", "BT_Ambient"],
 					"type" : "bluetooth",
 					"config" : [
 						{
