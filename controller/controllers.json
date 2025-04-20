@@ -285,7 +285,7 @@
                 }
             ]
         },
-		"pid_clamping_percent_pb" : {
+        "pid_clamping_percent_pb" : {
             "friendly_name" : "PID w/ Integrator Clamping and PB as %",
             "module_name" : "pid_clamping_percent_pb",
             "image" : "pid.png",
