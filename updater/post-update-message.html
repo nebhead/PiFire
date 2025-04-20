@@ -1,142 +1,44 @@
-<!-- Post Update Message for v1.8.0 -->
+<!-- Post Update Message for v1.10.0 -->
 <H1>
     <img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="50" height="50" class="d-inline-block align-top" alt="">
-    PiFire 1.9.0 Release - April 2025
+    PiFire 1.10.0 Release - TBD 2025
 </H1>
+
 <div class="row justify-content-center">
-    <div class="card" style="width:80%">
-        <div class="card-body">
-            
-            <div class="alert alert-danger" role="alert">
-               Please note that if you were previously using the BT Meater modules (standard or alternative), they have been renamed.  The updater
-               should automatically rename the configuration, but if you experience any errors, please go through the configuration again. <br>  
-            </div>
-             
-            <br>
-             
+   <div class="card" style="width:80%">
+      <div class="card-body">
             <p>
-                This release contains bug fixes and feature updates since the previous version. 
+               This release contains bug fixes and feature updates since the previous version. 
+            </p> 
+            <br>
+            <p>
+               <i class="fa-regular fa-star"></i>&nbsp; <u>Here are just some of the <b>NEW</b> features that were added in this update:</u>
             </p>
-             
-             <br>
-             
-             <p>
-                 <i class="fa-regular fa-star"></i>&nbsp; <u>Here are just some of the <b>NEW</b> features that were added in this update:</u>
-             </p>
-             
-             <ul>
-                 <li>
-                    Minor overhaul of manual mode, moving the controls to the control panel so that you can control the grill outputs directly
-                    from the dashboard if you desire.  Buttons and PWM slider is responsive without reloading the page.  Improved manual mode instructions.  
-                 </li>
-                 <li>
-                    Added the ability to manually override outputs (igniter, auger, fan) on the default dashboard and on the flex touch display.  The user 
-                    can enable this in the safety settings, and select the amount of seconds to override the controller during operation.  Use with caution 
-                    as this can potentially leave the igniter on for extended periods of time.
-                 </li>
-                 <li>
-                    Added high and low limit temperature notifications for each probe.  This allows you to to set limits for the high and low temperatures
-                    and be notified when they exceed those limits during operation.  These limits do not expire, but will only trigger once they are exceeded.
-                    They will reset when the temperature falls below/above the high/low limit.  This feature also allows you to take some actions such as to 
-                    reignite the grill if the temperature goes too low or to shutdown if it goes too high.  
-                 </li>
-                 <li>
-                    Added iBBQ Bluetooth probe support.  Tested with Inkbird BT-4XS.  The device may take some time to be detected and setup before data is 
-                    is streamed out to the dashboard.  
-                 </li>
-                 <li>
-                    User @dogtreatfairy contributed two new controllers including an auto-center PID controller and a PID controller with Smith Predictor. 
-                    Github user @markalston contributed a new clamping PID controller.  
-                    Select these controllers in the settings page.  
-                 </li>
-                 <li>
-                    Added ST7789V with Encoder support.  This should still be considered experimental, as it uses an unsupported forked ST7789 library for display 
-                    support. Note that if you select this display version, it will install this forked library and will cause the original ST7789 library not to 
-                    function anymore.  
-                 </li>
-                 <li>
-                    Added option to delete all debug log files.  This can help with debugging issues, so that we have a clean log file to work with.
-                 </li>
-                 <li>
-                    Added support for Meater Bluetooth probes (Meater Pro is still under development).  This is a work in progress and may not be fully functional.  
-                    The probe must be configured in the Wizard before it can be used.  The probe will automatically connect to the PiFire device when the device is 
-                    powered on.  The probe will also automatically disconnect when the PiFire device is powered off.  The probe will also automatically reconnect if 
-                    the PiFire device is rebooted.  
-                 </li>
-                 <li>
-                    Added device status structure that can be retrieved from the /api/current route.  This includes the current state of the device, the current 
-                    configuration, and the current status of the probes.  This allows the dashboard to display connection status and/or battery status for bluetooth 
-                    probes.
-                 </li>
-                 <li>
-                    Added support for the ILI3941 display with the flex framework.  This utilizes the same framework as is being used for the DSI Touch display, and 
-                    will allow for the ILI9341 display to be customized, as well as allow for the use of different resolutions.  (note 480x320 is not currently implemented)
-                 </li>
-                 <li>
-                    Added bluetooth scanning in the configuration wizard so that you can select the hardware ID of a bluetooth device that you want to use.  It will
-                    flag hardware ids that are already in use, but it won't prevent you from setting them. 
-                 </li>
-                 <li>
-                    Update the probe configuration wizard to hide/show profile selection based on the probe device.  Only ADC devices should show profile selections. 
-                    Also hides/shows the probe enabled selection based on the probe type (AUX is by default hidden).
-                 </li>
-                 <li>
-                    Updated the probe configuration in the settings page.  The default dashboard also has probe configuration built in, using the cog in each of the probe cards.
-                 </li>
-                 <li>
-                    Removed hopper level from the different display types when no hopper level / distance sensor is enabled.  
-                 </li>
-                 <li>
-                    Added a button & menu option to the flex supported displays (DSI Touch / ILI9341f / Prototype Flex).
-                    Added a button/status icon in the status card for the default dashboard.  You can click on this icon during hold mode to toggle lid/door open.
-                 </li>
-                 <li>
-                    Added touch screen mode to the default dashboard configuration, which provides some visual and UI changes that will make using a touch screen 
-                    device easier.  
-                 </li>
-                 <li>
-                    Github user @markalston contributed the ST7789 240x240 display layout and support in a new module.
-                 </li>
-                 <li>
-                    Github user @wightmanjr contributed the ILI9488 320x480 display modules including encoder and button support.   
-                 </li>
-                 <li>
-                     Behind the scenes improvements including:  
-                     <ul>
-                         <li>
-                             Changed order of component installations when installing modules from the wizard.  The wizard will now install apt packages before 
-                             installing python modules to match dependencies for items like bluepy.    
-                         </li>
-                         <li>
-                           Added Lid/Door toggle API call which allows you to manually toggle on/off the lid/door open pause for the controller in Hold mode.
-                         </li>
-                         <li>
-                           Added a nicer Nginx server error landing page that will attempt to load the root ('/') every 10 seconds, provides a link to the Supervisor,
-                           and other helpful links.  This currently will only be available on new installations.
-                         </li>
-                     </ul>
-                 </li>
-             </ul>
-             
-             <p><i class="fa-solid fa-bug-slash"></i>&nbsp; <u>Here are some bug fixes in this update:</u></p>
-             
-             <ul>
-                 <li>
-                    Removed certain unsupported rotations from the ST7789 320x240 display configurations.  (90/270 degrees are not supported by the ST7789 driver module)
-                 </li>
-                 <li>
-                    Fixed a missing voltage bounds check for ADC probes using Celsius units.  This should prevent the probes from reporting invalid temperatures when probes 
-                    are not connected.
-                 </li>
-                 <li>
-                    Github user @markalston contributed a fix for the PID controllers to prevent divide by zero errors from crashing the control process. 
-                 </li>
-             </ul>
-             
-        </div>
-    </div>
-    
-</div>
+            <ul>
+               <li>
+                  New feature 1
+               </li>
+               <li>
+                  <b>Behind the scenes improvements including:</b>  
+                  <ul>
+                     <li>
+                        Improvement 1
+                     </li>
+                  </ul>
+               </li>
+            </ul>
+            
+            <p><i class="fa-solid fa-bug-slash"></i>&nbsp; <u>Here are some bug fixes in this update:</u></p>
+            
+            <ul>
+               <li>
+                  Bug fix 1
+               </li>
+            </ul>
+       
+         </div> <!-- End of Card Body -->
+   </div> <!-- End of Card -->
+</div> <!-- End of Row -->
 
 <br>
 <br>
