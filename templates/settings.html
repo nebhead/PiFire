@@ -720,13 +720,27 @@
                                                 <i class="fas fa-tachometer-alt"></i>&nbsp; Max Duty Cycle
                                             </span>
                                         </div>
-                                        <input id="max_duty_cycle" type="number" inputmode="numeric" min="50" max="100" class="form-control" placeholder="{{ settings['pwm']['max_duty_cycle'] }}" value="{{ settings['pwm']['max_duty_cycle'] }}" name="max_duty_cycle">
+                                        <input id="max_duty_cycle" type="number" inputmode="numeric" min="1" max="100" class="form-control" placeholder="{{ settings['pwm']['max_duty_cycle'] }}" value="{{ settings['pwm']['max_duty_cycle'] }}" name="max_duty_cycle">
                                     </div>
                                 </div>
+
+                                <script>
+                                    // filepath: /home/ben/syncthing/Tech-Projects/PiFire/templates/settings.html
+                                    function validateDutyCycle() {
+                                        const minDutyCycle = parseInt(document.getElementById('min_duty_cycle').value, 10);
+                                        const maxDutyCycle = parseInt(document.getElementById('max_duty_cycle').value, 10);
+
+                                        if (minDutyCycle >= maxDutyCycle) {
+                                            alert('Max Duty Cycle must be greater than Min Duty Cycle.');
+                                            return false; // Prevent form submission
+                                        }
+                                        return true; // Allow form submission
+                                    }
+                                </script>
                             </div>
                         </div><!-- End of card body -->
                         <div class="card-footer bg-light">
-                            <button type="submit" class="btn btn-outline-danger">Save</button>
+                            <button type="submit" class="btn btn-outline-danger" onclick="return validateDutyCycle()">Save</button>
                         </div>
                     </form>
                     </div><!-- End of Card -->

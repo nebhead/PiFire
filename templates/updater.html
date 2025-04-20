@@ -195,7 +195,15 @@
 		<div class="modal-body">
 			Downloading and updating to the latest version from the <b>{{ update_data['branch_target'] }}</b> branch 
 			will destory any <strong>code</strong> changes that might have been made. <i>(settings changes will be preserved)</i><br><br> 
-			<strong>NOTE: </strong>After the update, the server will be restarted.  
+			<strong>NOTE: </strong>After the update, the server will be restarted.
+
+			<!-- Check box for confirmation -->
+			<div class="form-check">
+				<input class="form-check-input" type="checkbox" id="confirm_update" name="confirm_update" value="true" onchange="toggleUpdateButton()" required>
+				<label class="form-check-label" for="confirm_update">
+					I don't have a long cook planned right this minute and I am sure I want to update.
+				</label>
+			</div>
 		</div>
 		<div class="modal-footer">
 			<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -215,4 +223,12 @@
 {% block scripts %}
 	<!-- Updater Script -->
 	<script src="{{ url_for('static', filename='js/updater.js') }}"></script>
+	<script>
+		// filepath: /home/ben/syncthing/Tech-Projects/PiFire/templates/updater.html
+		function toggleUpdateButton() {
+			const checkbox = document.getElementById('confirm_update');
+			const updateButton = document.getElementById('do_update');
+			updateButton.disabled = !checkbox.checked;
+		}
+	</script>
 {% endblock %}

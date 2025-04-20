@@ -1,10 +1,10 @@
 {
   "metadata" : {
     "versions" : {
-      "server" : "1.9.0",
+      "server" : "1.10.0",
       "cookfile" : "1.5.0",
       "recipe" : "1.0.0",
-      "build" : 40
+      "build" : 0
     },
     "update_notes" : "",
     "update_warnings" : ""
@@ -120,6 +120,23 @@
         },
         "control": {
           "py_dependencies": ["numpy==1.24.2"],
+          "apt_dependencies": [],
+          "command_list" : []
+        }
+      }
+    },
+    {
+      "version" : "1.10.0",
+      "build" : 0,
+      "reboot_required" : false,
+      "dependencies" : {
+        "app": {
+          "py_dependencies": [],
+          "apt_dependencies": [],
+          "command_list" : []
+        },
+        "control": {
+          "py_dependencies": [],
           "apt_dependencies": [],
           "command_list" : []
         }
