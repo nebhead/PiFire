@@ -75,7 +75,7 @@ class Controller(ControllerBase):
 		self.set_target(0.0)
 
 	def _calculate_gains(self):
-		if self.pb == 0:
+		if self.pb == 0 or self.set_point == 0:
 			self.kp = 0
 		else:
 			self.kp = -1 / (self.pb * self.set_point)
@@ -118,7 +118,8 @@ class Controller(ControllerBase):
 		else:
 			clamping_log = "true"
 			eventLogger.debug('clamping integrator.')
-			self.inter -= error * dt		
+			self.inter -= error * dt
+
 		eventLogger.debug('PID Update... error: ' + str(error) + ', p: ' + str(self.p) + ', i: ' + str(self.i) + ', d: ' + str(self.d) + ', pid: ' + str(self.u) + ' , clamping: ' + str(clamping_log))
 
 		# Update for next cycle
