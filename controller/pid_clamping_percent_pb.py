@@ -79,7 +79,7 @@ class Controller(ControllerBase):
 			self.kp = 0
 		else:
 			self.kp = -1 / (self.pb * self.set_point)
-		if ti == 0:
+		if self.ti == 0:
 			self.ki = 0
 		else:
 			self.ki = self.kp / self.ti
