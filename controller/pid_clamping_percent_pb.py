@@ -18,7 +18,7 @@
  PID controller based on proportional band in standard PID form https://en.wikipedia.org/wiki/PID_controller#Ideal_versus_standard_PID_form
    u   = Kp (e(t)+ 1/Ti INT + Td de/dt) = controller output
   PB   = Proportional Band as percentage of setpoint
-  Kp   = Proportional Gain = 1/(PB*Setpoint)
+  Kp   = Proportional Gain = 1/((PB/100)*Setpoint)
   Ti   = Integration Time constant
   Td   = Derivative Time Constant
   de   = Change in Error
