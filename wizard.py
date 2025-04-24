@@ -202,12 +202,13 @@ for apt_item in apt_dependencies:
 	set_wizard_install_status(percent, status, output)
 
 # Install Py dependencies
-if settings['globals']['venv']:
-	python_exec = 'bin/python'
-else:
-	python_exec = 'python'
+python_exec = settings['globals'].get('python_exec', 'python')
 
-launch_pip = [python_exec, '-m', 'pip', 'install']
+if settings['globals'].get('uv', False):
+	launch_pip = ['uv', python_exec, '-m', 'pip', 'install']
+else:
+	launch_pip = [python_exec, '-m', 'pip', 'install']
+
 status = 'Installing Python Dependencies...'
 output = ' - Installing Python Dependencies'
 set_wizard_install_status(percent, status, output)
@@ -235,6 +236,13 @@ for py_item in py_dependencies:
 	percent += increment
 	output = f' - Completed Install of {py_item}'
 	set_wizard_install_status(percent, status, output)
+
+# Get PIP List 
+command = [python_exec, 'updater.py', '-p']
+
+pip_list = subprocess.run(command, capture_output=True, text=True)
+if pip_list.returncode == 0:
+	print(f'PIP List Command Success.')
 
 # Run system commands dependencies
 status = 'Installing General Dependencies...'

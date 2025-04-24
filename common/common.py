@@ -102,6 +102,8 @@ def default_settings():
 		'prime_ignition' : False,  # Set to True to enable the igniter in prime & startup mode
 		'updated_message' : False,   # Set to True to display a pop-up message after the system has been updated 
 		'venv' : False,  # Set to True if running in virtual environment (needed for Raspberry Pi OS Bookworm)
+		'python_exec' : 'venv/bin/python',  # Path to the python executable
+		'uv' : True,  # Set to True to enable UV for pip install
 	}
 
 	if os.path.exists('bin'):
@@ -1226,7 +1228,20 @@ def upgrade_settings(prev_ver, settings, settings_default):
 				settings['probe_settings']['probe_map']['probe_devices'][index]['module'] = 'bt_meater'
 			elif device['module'] == 'bt_meater':
 				settings['probe_settings']['probe_map']['probe_devices'][index]['module'] = 'bt_meater_exp'
-				
+
+	''' Check if upgrading from previous to v1.10 or from v1.10.0 build 0 '''
+	if (prev_ver[0] == 1 and prev_ver[1] == 10 and settings['versions'].get('build', 0) == 0) or \
+		(prev_ver[0] == 1 and prev_ver[1] < 10):
+		''' Setup new Python Exec and UV settings '''
+		if settings['globals'].get('venv', False):
+			''' If using VENV, set the python_exec to the bin/python '''
+			settings['globals']['python_exec'] = 'bin/python'
+			settings['globals']['uv'] = False
+		else:
+			settings['globals']['python_exec'] = 'python'
+			settings['globals']['uv'] = False
+			# TODO: Upgrade to VENV for older configs? 
+
 	''' Import any new probe profiles '''
 	for profile in list(settings_default['probe_settings']['probe_profiles'].keys()):
 		if profile not in list(settings['probe_settings']['probe_profiles'].keys()):
