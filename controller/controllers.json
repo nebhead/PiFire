@@ -136,7 +136,7 @@
                 {
                     "option_name" : "PB",
                     "option_friendly_name" : "Proportional Band(PB) as % of Setpoint", 
-                    "option_description" : "The proportional band is the total range of the controlled output that can be produced within the controller’s 0% and 100% limits.   Within the PB the command output is between 1.0 and 0.  Outside the band the command output is 1 or -1 (fully on or off). Increase this if you are overshooting setpoint.[Default=14.0]",
+                    "option_description" : "The proportional band is the total range of the controlled output that can be produced within the controller’s 0% and 100% limits.   Within the PB the command output is between 1.0 and 0.  Outside the band the command output is 1 or -1 (fully on or off). Increase this if you are overshooting setpoint.[Default=20.0]",
                     "option_type" : "float",
                     "option_default" : 20.0,
                     "option_min" : null,
