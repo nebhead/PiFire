@@ -63,6 +63,111 @@
                 }
             ]
         },
+		"pid_clamping" : {
+            "friendly_name" : "PID w/ Integrator Clamping",
+            "module_name" : "pid_clamping",
+            "image" : "pid.png",
+            "description" : "The original PiFire PID modified to both calculate the derivative portion in the classic de/dt method instead of the dT/dt method and with integral anti-windup protection achieved with a clamping method.",
+            "author" : "Mark Alston",
+            "link" : "https://github.com/markalston/PiFire", 
+            "contributors" : ["Ben Parmeter", "James Weber", "Mark Alston"],
+            "attributions" : [],
+            "recommendations" : {
+                "cycle" : { 
+                    "cycle_time" : 10,
+                    "cycle_ratio_min" : 0.05,
+                    "cycle_ratio_max" : 0.99
+                }
+            },
+            "config" : [
+                {
+                    "option_name" : "PB",
+                    "option_friendly_name" : "Proportional Band(PB)", 
+                    "option_description" : "The proportional band is the total range of the controlled output that can be produced within the controller’s 0% and 100% limits. Within the PB the command output is between 1.0 and 0.  Outside the band the command output is 1 or -1 (fully on or off). Increase this if you are overshooting setpoint. [Default=30.0]",
+                    "option_type" : "float",
+                    "option_default" : 30.0,
+                    "option_min" : null,
+                    "option_max" : null, 
+                    "option_step" : 0.1,
+                    "hidden" : false
+                },
+                {
+                    "option_name" : "Ti",
+                    "option_friendly_name" : "Integral Time Constant (Ti)", 
+                    "option_description" : "Time constant that determines how quickly we respond to accumulated error. Higher Ti makes the controller less responsive to accumulated error over time. Lower this if you cannot reach setpoint. [Default=120.0]",
+                    "option_type" : "float",
+                    "option_default" : 120.0,
+                    "option_min" : null,
+                    "option_max" : null, 
+                    "option_step" : 0.1,
+                    "hidden" : false
+                },
+                {
+                    "option_name" : "Td",
+                    "option_friendly_name" : "Derivative Time Constant (Td)", 
+                    "option_description" : "Time constant that determines how quickly the system reponds to changes in error rate. Higher Td makes the controller more responsive to the Error Rate of Change. Td basically acts as a damper on the system. Be cautious with this setting and start low and increase slowly. It might not even be needed and can easily drive a system into instability. [Default=20.0]",
+                    "option_type" : "float",
+                    "option_default" : 20.0,
+                    "option_min" : null,
+                    "option_max" : null,
+                    "option_step" : 0.1,  
+                    "hidden" : false
+                }
+
+            ]
+        },
+        "pid_clamping_percent_pb" : {
+            "friendly_name" : "PID w/ Integrator Clamping and PB as %",
+            "module_name" : "pid_clamping_percent_pb",
+            "image" : "pid.png",
+            "description" : "The original PiFire PID modified to define PB as percentage of setpoint, to calculate the derivative portion in the classic de/dt method instead of the dT/dt method in the original pid, and with integral anti-windup protection achieved with a clamping method.",
+            "author" : "Mark Alston",
+            "link" : "https://github.com/markalston/PiFire", 
+            "contributors" : ["Ben Parmeter", "James Weber", "Mark Alston"],
+            "attributions" : [],
+            "recommendations" : {
+                "cycle" : { 
+                    "cycle_time" : 10,
+                    "cycle_ratio_min" : 0.05,
+                    "cycle_ratio_max" : 0.99
+                }
+            },
+            "config" : [
+                {
+                    "option_name" : "PB",
+                    "option_friendly_name" : "Proportional Band(PB) as % of Setpoint", 
+                    "option_description" : "The proportional band is the total range of the controlled output that can be produced within the controller’s 0% and 100% limits.   Within the PB the command output is between 1.0 and 0.  Outside the band the command output is 1 or -1 (fully on or off). Increase this if you are overshooting setpoint.[Default=14.0]",
+                    "option_type" : "float",
+                    "option_default" : 20.0,
+                    "option_min" : null,
+                    "option_max" : null, 
+                    "option_step" : 0.1,
+                    "hidden" : false
+                },
+                {
+                    "option_name" : "Ti",
+                    "option_friendly_name" : "Integral Time Constant (Ti)", 
+                    "option_description" : "Time constant that determines how quickly we respond to accumulated error. Higher Ti makes the controller less responsive to accumulated error over time. Lower this if you cannot reach setpoint. [Default=120.0]",
+                    "option_type" : "float",
+                    "option_default" : 120.0,
+                    "option_min" : null,
+                    "option_max" : null, 
+                    "option_step" : 0.1,
+                    "hidden" : false
+                },
+                {
+                    "option_name" : "Td",
+                    "option_friendly_name" : "Derivative Time Constant (Td)", 
+                    "option_description" : "Time constant that determines how quickly the system reponds to changes in error rate. Higher Td makes the controller more responsive to the Error Rate of Change. Td basically acts as a damper on the system. Be cautious with this setting and start low and increase slowly. It might not even be needed and can easily drive a system into instability. [Default=20.0]",
+                    "option_type" : "float",
+                    "option_default" : 20.0,
+                    "option_min" : null,
+                    "option_max" : null,
+                    "option_step" : 0.1,  
+                    "hidden" : false
+                }
+            ]
+        },
 		"pid_ac" : {
             "friendly_name" : "PID Auto Center",
             "module_name" : "pid_ac",
@@ -230,111 +335,6 @@
     				"option_max" : null, 
      				"option_step" : 1,
       				"hidden" : false
-                }
-            ]
-        },
-		"pid_clamping" : {
-            "friendly_name" : "PID w/ Integrator Clamping",
-            "module_name" : "pid_clamping",
-            "image" : "pid.png",
-            "description" : "The original PiFire PID modified to both calculate the derivative portion in the classic de/dt method instead of the dT/dt method and with integral anti-windup protection achieved with a clamping method.",
-            "author" : "Mark Alston",
-            "link" : "https://github.com/markalston/PiFire", 
-            "contributors" : ["Ben Parmeter", "James Weber", "Mark Alston"],
-            "attributions" : [],
-            "recommendations" : {
-                "cycle" : { 
-                    "cycle_time" : 10,
-                    "cycle_ratio_min" : 0.05,
-                    "cycle_ratio_max" : 0.99
-                }
-            },
-            "config" : [
-                {
-                    "option_name" : "PB",
-                    "option_friendly_name" : "Proportional Band(PB)", 
-                    "option_description" : "The proportional band is the total range of the controlled output that can be produced within the controller’s 0% and 100% limits. Within the PB the command output is between 1.0 and 0.  Outside the band the command output is 1 or -1 (fully on or off). Increase this if you are overshooting setpoint. [Default=30.0]",
-                    "option_type" : "float",
-                    "option_default" : 30.0,
-                    "option_min" : null,
-                    "option_max" : null, 
-                    "option_step" : 0.1,
-                    "hidden" : false
-                },
-                {
-                    "option_name" : "Ti",
-                    "option_friendly_name" : "Integral Time Constant (Ti)", 
-                    "option_description" : "Time constant that determines how quickly we respond to accumulated error. Higher Ti makes the controller less responsive to accumulated error over time. Lower this if you cannot reach setpoint. [Default=120.0]",
-                    "option_type" : "float",
-                    "option_default" : 120.0,
-                    "option_min" : null,
-                    "option_max" : null, 
-                    "option_step" : 0.1,
-                    "hidden" : false
-                },
-                {
-                    "option_name" : "Td",
-                    "option_friendly_name" : "Derivative Time Constant (Td)", 
-                    "option_description" : "Time constant that determines how quickly the system reponds to changes in error rate. Higher Td makes the controller more responsive to the Error Rate of Change. Td basically acts as a damper on the system. Be cautious with this setting and start low and increase slowly. It might not even be needed and can easily drive a system into instability. [Default=20.0]",
-                    "option_type" : "float",
-                    "option_default" : 20.0,
-                    "option_min" : null,
-                    "option_max" : null,
-                    "option_step" : 0.1,  
-                    "hidden" : false
-                }
-
-            ]
-        },
-        "pid_clamping_percent_pb" : {
-            "friendly_name" : "PID w/ Integrator Clamping and PB as %",
-            "module_name" : "pid_clamping_percent_pb",
-            "image" : "pid.png",
-            "description" : "The original PiFire PID modified to define PB as percentage of setpoint, to calculate the derivative portion in the classic de/dt method instead of the dT/dt method in the original pid, and with integral anti-windup protection achieved with a clamping method.",
-            "author" : "Mark Alston",
-            "link" : "https://github.com/markalston/PiFire", 
-            "contributors" : ["Ben Parmeter", "James Weber", "Mark Alston"],
-            "attributions" : [],
-            "recommendations" : {
-                "cycle" : { 
-                    "cycle_time" : 10,
-                    "cycle_ratio_min" : 0.05,
-                    "cycle_ratio_max" : 0.99
-                }
-            },
-            "config" : [
-                {
-                    "option_name" : "PB",
-                    "option_friendly_name" : "Proportional Band(PB) as % of Setpoint", 
-                    "option_description" : "The proportional band is the total range of the controlled output that can be produced within the controller’s 0% and 100% limits.   Within the PB the command output is between 1.0 and 0.  Outside the band the command output is 1 or -1 (fully on or off). Increase this if you are overshooting setpoint.[Default=14.0]",
-                    "option_type" : "float",
-                    "option_default" : 20.0,
-                    "option_min" : null,
-                    "option_max" : null, 
-                    "option_step" : 0.1,
-                    "hidden" : false
-                },
-                {
-                    "option_name" : "Td",
-                    "option_friendly_name" : "Derivative Time Constant (Td)", 
-                    "option_description" : "Time constant that determines how quickly the system reponds to changes in error rate. Higher Td makes the controller more responsive to the Error Rate of Change. Td basically acts as a damper on the system. Be cautious with this setting and start low and increase slowly. It might not even be needed and can easily drive a system into instability. [Default=20.0]",
-                    "option_type" : "float",
-                    "option_default" : 20.0,
-                    "option_min" : null,
-                    "option_max" : null,
-                    "option_step" : 0.1,  
-                    "hidden" : false
-                },
-                {
-                    "option_name" : "Ti",
-                    "option_friendly_name" : "Integral Time Constant (Ti)", 
-                    "option_description" : "Time constant that determines how quickly we respond to accumulated error. Higher Ti makes the controller less responsive to accumulated error over time. Lower this if you cannot reach setpoint. [Default=120.0]",
-                    "option_type" : "float",
-                    "option_default" : 120.0,
-                    "option_min" : null,
-                    "option_max" : null, 
-                    "option_step" : 0.1,
-                    "hidden" : false
                 }
             ]
         },
