@@ -101,8 +101,8 @@ def default_settings():
 		'boot_to_monitor' : False,  # Set to True to boot directly into monitor mode
 		'prime_ignition' : False,  # Set to True to enable the igniter in prime & startup mode
 		'updated_message' : False,   # Set to True to display a pop-up message after the system has been updated 
-		'venv' : False,  # Set to True if running in virtual environment (needed for Raspberry Pi OS Bookworm)
-		'python_exec' : 'venv/bin/python',  # Path to the python executable
+		'venv' : True,  # Set to True if running in virtual environment (needed for Raspberry Pi OS Bookworm)
+		'python_exec' : '.venv/bin/python',  # Path to the python executable
 		'uv' : True,  # Set to True to enable UV for pip install
 	}
 

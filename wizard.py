@@ -205,7 +205,7 @@ for apt_item in apt_dependencies:
 python_exec = settings['globals'].get('python_exec', 'python')
 
 if settings['globals'].get('uv', False):
-	launch_pip = ['uv', python_exec, '-m', 'pip', 'install']
+	launch_pip = ['uv', 'pip', 'install']
 else:
 	launch_pip = [python_exec, '-m', 'pip', 'install']
 

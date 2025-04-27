@@ -110,21 +110,15 @@ $SUDO usermod -a -G pifire root
 # Change ownership to group=pifire for all files/directories in pifire 
 $SUDO chown -R $USER:pifire pifire 
 # Change ability for pifire group to read/write/execute 
-$SUDO chmod -R 775 pifire/
+$SUDO chmod -R 777 /usr/local/bin
 
 echo " - Installing UV"
-curl -LsSf https://astral.sh/uv/install.sh | sh
-source $HOME/.local/bin/env
-
-#read -p "Press Enter to continue..."
+curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR="/usr/local/bin" sh
 
 echo " - Setting up VENV"
 # Setup VENV
-uv venv --system-site-packages pifire/venv
 cd /usr/local/bin/pifire
-source venv/bin/activate 
-
-#read -p "Press Enter to continue..."
+uv venv --system-site-packages
 
 echo " - Installing module dependencies... "
 # Install module dependencies 
@@ -137,10 +131,8 @@ else
 fi      
 uv pip install -r /usr/local/bin/pifire/auto-install/requirements.txt
 
-#read -p "Press Enter to continue..."
-
 # Find all bluepy-helper executables in various possible locations
-BLUEPY_HELPERS=$(find /usr/local/bin/pifire/lib/ -path "*/bluepy/bluepy-helper" 2>/dev/null)
+BLUEPY_HELPERS=$(find /usr/local/bin/pifire/.venv/lib/ -path "*/bluepy/bluepy-helper" 2>/dev/null)
 
 if [ -z "$BLUEPY_HELPERS" ]; then
     echo "No bluepy-helper found in the standard Python library locations"
@@ -160,7 +152,7 @@ echo "All bluepy-helper executables have been configured"
 
 # Get PIP List into JSON file
 echo " - Getting PIP List into JSON file"
-python updater.py -p
+.venv/bin/python updater.py -p
 
 ### Setup nginx to proxy to gunicorn
 clear
