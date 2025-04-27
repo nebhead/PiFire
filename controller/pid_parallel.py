@@ -27,9 +27,9 @@
   
   Configuration Defaults: 
   "config": {
-      "Kp": 30.0,
-      "Ki": 1.5,
-      "Kd": 4
+      "Kp": 0.0265,
+      "Ki": 0.0002284,
+      "Kd": .529
    }
 
 *****************************************
@@ -52,9 +52,9 @@ class Controller(ControllerBase):
 	def __init__(self, config, units, cycle_data):
 		super().__init__(config, units, cycle_data)
 
-		self.kp = config['Kp']
-		self.ki = config['Ki']
-		self.kd = config['Kd']
+		self.kp = -1 * config['Kp']
+		self.ki = -1 * config['Ki']
+		self.kd = -1 * config['Kd']
 		self.clamping = config['Clamping']
 
 		self.p = 0.0
