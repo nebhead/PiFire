@@ -136,7 +136,7 @@
                 {
                     "option_name" : "PB",
                     "option_friendly_name" : "Proportional Band(PB) as % of Setpoint", 
-                    "option_description" : "The proportional band is the total range of the controlled output that can be produced within the controller’s 0% and 100% limits.   Within the PB the command output is between 1.0 and 0.  Outside the band the command output is 1 or -1 (fully on or off). Increase this if you are overshooting setpoint.[Default=14.0]",
+                    "option_description" : "The proportional band is the total range of the controlled output that can be produced within the controller’s 0% and 100% limits.   Within the PB the command output is between 1.0 and 0.  Outside the band the command output is 1 or -1 (fully on or off). Increase this if you are overshooting setpoint.[Default=20.0]",
                     "option_type" : "float",
                     "option_default" : 20.0,
                     "option_min" : null,
@@ -358,18 +358,18 @@
                 {
                     "option_name" : "Kp",
                     "option_friendly_name" : "Proportional Gain", 
-                    "option_description" : "The proportional Gain. Kp = 1/PB. [Default=30.0]",
+                    "option_description" : "The proportional Gain. Kp = 1/PB. [Default=0.0265]",
                     "option_type" : "float",
                     "option_default" : 0.0265,
                     "option_min" : null,
                     "option_max" : null, 
-                    "option_step" : 0.001,
+                    "option_step" : 0.0001,
                     "hidden" : false
                 },
                 {
                     "option_name" : "Ki",
                     "option_friendly_name" : "Integral Gain", 
-                    "option_description" : "Lower Ki makes the controller less responsive to accumulated error over time. Ki = Kp/Ti or 1/(PB*Ti).  Increase this if you cannot reach setpoint. [Default=1.5]",
+                    "option_description" : "Lower Ki makes the controller less responsive to accumulated error over time. Ki = Kp/Ti or 1/(PB*Ti).  Increase this if you cannot reach setpoint. [Default=0.000228]",
                     "option_type" : "float",
                     "option_default" : 0.000228,
                     "option_min" : null,
@@ -380,7 +380,7 @@
                 {
                     "option_name" : "Kd",
                     "option_friendly_name" : "Derivative Gain", 
-                    "option_description" : "Kd basically acts as a damper on the system. Kd = Kp*Td or Kd = Td/PB. Be cautious with this setting and start low and increase slowly. It might not even be needed and can easily drive a system into instability. [Default=4.0]",
+                    "option_description" : "Kd basically acts as a damper on the system. Kd = Kp*Td or Kd = Td/PB. Be cautious with this setting and start low and increase slowly. It might not even be needed and can easily drive a system into instability. [Default=0.529]",
                     "option_type" : "float",
                     "option_default" : 0.529,
                     "option_min" : null,
