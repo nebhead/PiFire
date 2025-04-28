@@ -74,9 +74,9 @@
             "attributions" : [],
             "recommendations" : {
                 "cycle" : { 
-                    "cycle_time" : 10,
+                    "cycle_time" : 15,
                     "cycle_ratio_min" : 0.05,
-                    "cycle_ratio_max" : 0.99
+                    "cycle_ratio_max" : 0.9
                 }
             },
             "config" : [
@@ -85,7 +85,7 @@
                     "option_friendly_name" : "Proportional Band(PB)", 
                     "option_description" : "The proportional band is the total range of the controlled output that can be produced within the controller’s 0% and 100% limits. Within the PB the command output is between 1.0 and 0.  Outside the band the command output is 1 or -1 (fully on or off). Increase this if you are overshooting setpoint. [Default=30.0]",
                     "option_type" : "float",
-                    "option_default" : 30.0,
+                    "option_default" : 100.0,
                     "option_min" : null,
                     "option_max" : null, 
                     "option_step" : 0.1,
@@ -96,7 +96,7 @@
                     "option_friendly_name" : "Integral Time Constant (Ti)", 
                     "option_description" : "Time constant that determines how quickly we respond to accumulated error. Higher Ti makes the controller less responsive to accumulated error over time. Lower this if you cannot reach setpoint. [Default=120.0]",
                     "option_type" : "float",
-                    "option_default" : 120.0,
+                    "option_default" : 180.0,
                     "option_min" : null,
                     "option_max" : null, 
                     "option_step" : 0.1,
@@ -107,7 +107,7 @@
                     "option_friendly_name" : "Derivative Time Constant (Td)", 
                     "option_description" : "Time constant that determines how quickly the system reponds to changes in error rate. Higher Td makes the controller more responsive to the Error Rate of Change. Td basically acts as a damper on the system. Be cautious with this setting and start low and increase slowly. It might not even be needed and can easily drive a system into instability. [Default=20.0]",
                     "option_type" : "float",
-                    "option_default" : 20.0,
+                    "option_default" : 45.0,
                     "option_min" : null,
                     "option_max" : null,
                     "option_step" : 0.1,  
@@ -127,9 +127,9 @@
             "attributions" : [],
             "recommendations" : {
                 "cycle" : { 
-                    "cycle_time" : 10,
+                    "cycle_time" : 15,
                     "cycle_ratio_min" : 0.05,
-                    "cycle_ratio_max" : 0.99
+                    "cycle_ratio_max" : 0.9
                 }
             },
             "config" : [
@@ -138,7 +138,7 @@
                     "option_friendly_name" : "Proportional Band(PB) as % of Setpoint", 
                     "option_description" : "The proportional band is the total range of the controlled output that can be produced within the controller’s 0% and 100% limits.   Within the PB the command output is between 1.0 and 0.  Outside the band the command output is 1 or -1 (fully on or off). Increase this if you are overshooting setpoint.[Default=20.0]",
                     "option_type" : "float",
-                    "option_default" : 20.0,
+                    "option_default" : 42.0,
                     "option_min" : null,
                     "option_max" : null, 
                     "option_step" : 0.1,
@@ -149,7 +149,7 @@
                     "option_friendly_name" : "Integral Time Constant (Ti)", 
                     "option_description" : "Time constant that determines how quickly we respond to accumulated error. Higher Ti makes the controller less responsive to accumulated error over time. Lower this if you cannot reach setpoint. [Default=120.0]",
                     "option_type" : "float",
-                    "option_default" : 120.0,
+                    "option_default" : 180.0,
                     "option_min" : null,
                     "option_max" : null, 
                     "option_step" : 0.1,
@@ -160,7 +160,7 @@
                     "option_friendly_name" : "Derivative Time Constant (Td)", 
                     "option_description" : "Time constant that determines how quickly the system reponds to changes in error rate. Higher Td makes the controller more responsive to the Error Rate of Change. Td basically acts as a damper on the system. Be cautious with this setting and start low and increase slowly. It might not even be needed and can easily drive a system into instability. [Default=20.0]",
                     "option_type" : "float",
-                    "option_default" : 20.0,
+                    "option_default" : 45.0,
                     "option_min" : null,
                     "option_max" : null,
                     "option_step" : 0.1,  
@@ -358,9 +358,9 @@
                 {
                     "option_name" : "Kp",
                     "option_friendly_name" : "Proportional Gain", 
-                    "option_description" : "The proportional Gain. Kp = 1/PB. [Default=0.0265]",
+                    "option_description" : "The proportional Gain. Kp = 1/PB. [Default=0.01]",
                     "option_type" : "float",
-                    "option_default" : 0.0265,
+                    "option_default" : 0.01,
                     "option_min" : null,
                     "option_max" : null, 
                     "option_step" : 0.0001,
@@ -371,7 +371,7 @@
                     "option_friendly_name" : "Integral Gain", 
                     "option_description" : "Lower Ki makes the controller less responsive to accumulated error over time. Ki = Kp/Ti or 1/(PB*Ti).  Increase this if you cannot reach setpoint. [Default=0.000228]",
                     "option_type" : "float",
-                    "option_default" : 0.000228,
+                    "option_default" : 0.000055,
                     "option_min" : null,
                     "option_max" : null, 
                     "option_step" : 0.000001,
@@ -382,7 +382,7 @@
                     "option_friendly_name" : "Derivative Gain", 
                     "option_description" : "Kd basically acts as a damper on the system. Kd = Kp*Td or Kd = Td/PB. Be cautious with this setting and start low and increase slowly. It might not even be needed and can easily drive a system into instability. [Default=0.529]",
                     "option_type" : "float",
-                    "option_default" : 0.529,
+                    "option_default" : 0.45,
                     "option_min" : null,
                     "option_max" : null,
                     "option_step" : 0.001,  
