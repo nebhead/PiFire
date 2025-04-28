@@ -6,7 +6,7 @@
 #
 # Install with this command (from your Pi):
 #
-# curl https://raw.githubusercontent.com/nebhead/pifire/master/auto-install/install.sh | bash
+# curl https://raw.githubusercontent.com/nebhead/pifire/main/auto-install/install.sh | bash
 #
 # NOTE: Pre-Requisites to run Raspi-Config first.  See README.md.
 
