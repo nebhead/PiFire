@@ -10,13 +10,15 @@
  When the output is saturated (either below 0 or above 1) then we do not increase the integral output.
  https://info.erdosmiller.com/blog/pid-anti-windup-techniques
 
+ Additionally, this controller uses a PB% as a percentage around the setpoing instead of a set PB.
+
  This controller was originally developed by GitHub user DBorello as part of his excellent
  PiSmoker project: https://github.com/DBorello/PiSmoker and modified by GitHub user markalston.
 
  PID controller based on proportional band in standard PID form https://en.wikipedia.org/wiki/PID_controller#Ideal_versus_standard_PID_form
    u   = Kp (e(t)+ 1/Ti INT + Td de/dt) = controller output
-  PB   = Proportional Band
-  Kp   = Proportional Gain = 1/PB
+  PB   = Proportional Band as percentage of setpoint
+  Kp   = Proportional Gain = 1/((PB/100)*Setpoint)
   Ti   = Integration Time constant
   Td   = Derivative Time Constant
   de   = Change in Error
@@ -27,7 +29,7 @@
   
   Configuration Defaults: 
   "config": {
-      "PB": 100.0,
+      "PB": 42.0,
       "Td": 45.0,
       "Ti": 180.0
    }
@@ -52,7 +54,10 @@ class Controller(ControllerBase):
 	def __init__(self, config, units, cycle_data):
 		super().__init__(config, units, cycle_data)
 
-		self._calculate_gains(config['PB'], config['Ti'], config['Td'])
+		self.pb = config['PB']
+		self.ti = config['Ti']
+		self.td = config['Td']
+		eventLogger.debug('PB: ' + str(self.pb) + ', Ti: ' + str(self.ti) + ', Td: ' + str(self.td))
 
 		self.p = 0.0
 		self.i = 0.0
@@ -69,16 +74,16 @@ class Controller(ControllerBase):
 
 		self.set_target(0.0)
 
-	def _calculate_gains(self, pb, ti, td):
-		if pb == 0:
+	def _calculate_gains(self):
+		if self.pb == 0 or self.set_point == 0:
 			self.kp = 0
 		else:
-			self.kp = -1 / pb
-		if ti == 0:
+			self.kp = -1 / ((self.pb / 100) * self.set_point)
+		if self.ti == 0:
 			self.ki = 0
 		else:
-			self.ki = self.kp / ti
-		self.kd = self.kp * td
+			self.ki = self.kp / self.ti
+		self.kd = self.kp * self.td
 		eventLogger.debug('kp: ' + str(self.kp) + ', ki: ' + str(self.ki) + ', kd: ' + str(self.kd))
 
 	def update(self, current):
@@ -113,7 +118,8 @@ class Controller(ControllerBase):
 		else:
 			clamping_log = "true"
 			eventLogger.debug('clamping integrator.')
-			self.inter -= error * dt		
+			self.inter -= error * dt
+
 		eventLogger.debug('PID Update... error: ' + str(error) + ', p: ' + str(self.p) + ', i: ' + str(self.i) + ', d: ' + str(self.d) + ', pid: ' + str(self.u) + ' , clamping: ' + str(clamping_log))
 
 		# Update for next cycle
@@ -124,14 +130,17 @@ class Controller(ControllerBase):
 
 	def set_target(self, set_point):
 		self.set_point = set_point
+		self._calculate_gains()
 		self.error = 0.0
 		self.inter = 0.0
 		self.derv = 0.0
 		self.last_update = time.time()
 
 	def set_gains(self, pb, ti, td):
-		self._calculate_gains(pb,ti,td)
-
+		self.pb = pb
+		self.ti = ti
+		self.td = td
+		self._calculate_gains()
 
 	def get_k(self):
 		return self.kp, self.ki, self.kd
