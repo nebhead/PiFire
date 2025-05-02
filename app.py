@@ -1932,6 +1932,8 @@ def settings_page(action=None):
 								settings['controller']['config'][selected][option_name] = float(value)
 							else: 
 								settings['controller']['config'][selected][option_name] = value
+			control['controller_update'] = True
+			print(f'Controller Settings: {settings["controller"]["config"]}')
  
 		event['type'] = 'updated'
 		event['text'] = 'Successfully updated cycle settings.'

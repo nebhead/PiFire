@@ -493,6 +493,8 @@ def default_control():
 
 	control['distance_update'] = False
 
+	control['controller_update'] = False  # Used to indicate that the controller config/cycle data has been updated
+
 	control['units_change'] = False  	# Used to indicate that a units change has been requested
 
 	control['tuning_mode'] = False  	# Used to set tuning mode enabled so Tr values will be recorded (False by default)

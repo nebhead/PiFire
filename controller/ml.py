@@ -67,9 +67,3 @@ class Controller(ControllerBase):
 		if self.units == 'C':
 			self.set_point = int(set_point * (9/5) + 32)  # Convert to Fahrenheit
 
-	def supported_functions(self):
-		function_list = [
-			'update', 
-	        'set_target'
-        ]
-		return function_list
