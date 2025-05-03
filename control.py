@@ -571,6 +571,17 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 				metrics['auger_cycle_time'] = settings['cycle_data']['SmokeOnCycleTime']
 				write_metrics(metrics)
 
+		if control['controller_update'] and mode == 'Hold':
+			control['controller_update'] = False
+			write_control(control, direct_write=True, origin='control')
+			# Update the controller with the new settings
+			if 'set_config' in controllerCore.supported_functions(): 
+				controllerCore.set_config(settings['controller']['config'][settings['controller']['selected']])
+				eventLogger.info('Controller Config Updated')
+			if 'set_cycle_data' in controllerCore.supported_functions():
+				controllerCore.set_cycle_data(settings['cycle_data'])
+				eventLogger.info('Controller Cycle Data Updated')
+
 		# Check if user changed hopper levels and update if required
 		if control['distance_update']:
 			empty = settings['pelletlevel']['empty']

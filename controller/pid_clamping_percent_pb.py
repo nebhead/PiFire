@@ -53,7 +53,8 @@ Class Definition
 class Controller(ControllerBase):
 	def __init__(self, config, units, cycle_data):
 		super().__init__(config, units, cycle_data)
-
+		self.function_list.append('set_gains') 
+		self.function_list.append('get_k')
 		self.pb = config['PB']
 		self.ti = config['Ti']
 		self.td = config['Td']
@@ -145,12 +146,3 @@ class Controller(ControllerBase):
 	def get_k(self):
 		return self.kp, self.ki, self.kd
 	
-	def supported_functions(self):
-		function_list = [
-			'update', 
-	        'set_target', 
-	        'get_config', 
-			'set_gains', 
-			'get_k'
-        ]
-		return function_list

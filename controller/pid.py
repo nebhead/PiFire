@@ -43,6 +43,9 @@ class Controller(ControllerBase):
 	def __init__(self, config, units, cycle_data):
 		super().__init__(config, units, cycle_data)
 
+		self.function_list.append('set_gains') 
+		self.function_list.append('get_k')
+
 		self._calculate_gains(config['PB'], config['Ti'], config['Td'])
 
 		self.p = 0.0
@@ -123,13 +126,12 @@ class Controller(ControllerBase):
 
 	def get_k(self):
 		return self.kp, self.ki, self.kd
-	
-	def supported_functions(self):
-		function_list = [
-			'update', 
-	        'set_target', 
-	        'get_config', 
-			'set_gains', 
-			'get_k'
-        ]
-		return function_list
+
+	def set_config(self, config):
+		super().set_config(config)
+		self._calculate_gains(config['PB'], config['Ti'], config['Td'])
+		self.center = config['center']
+		if self.ki != 0:
+			self.inter_max = abs(self.center / self.ki)
+		else: 
+			self.inter_max = 0
