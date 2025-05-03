@@ -54,9 +54,7 @@ class Controller(ControllerBase):
 		self.function_list.append('set_gains') 
 		self.function_list.append('get_k')
 		
-		self.kp = -1 * config['Kp']
-		self.ki = -1 * config['Ki']
-		self.kd = -1 * config['Kd']
+		
 		self.clamping = config['Clamping']
 
 		self.p = 0.0
@@ -71,7 +69,8 @@ class Controller(ControllerBase):
 
 		self.derv = 0.0
 		self.inter = 0.0
-
+		self._calculate_gains(config['Kp'], config['Ki'], config['Kd'])
+		self.clamping = config['Clamping']
 		self.set_target(0.0)
 
 	def update(self, current):
@@ -122,9 +121,20 @@ class Controller(ControllerBase):
 		self.derv = 0.0
 		self.last_update = time.time()
 
-	def set_gains(self, pb, ti, td):
-		self._calculate_gains(pb,ti,td)
+	def set_gains(self, kp, ki, kd):
+		self._calculate_gains(kp,ki,kd)
 
+	def set_config(self, config):
+		self.clamping = config['Clamping']
+		self._calculate_gains(config['Kp'], config['Ki'], config['Kd'])
+		self.error = 0.0
+		self.inter = 0.0
+		self.derv = 0.0
+
+	def _calculate_gains(kp, ki, kd):
+		self.kp = -1 * kp
+		self.ki = -1 * ki
+		self.kd = -1 * kd
 
 	def get_k(self):
 		return self.kp, self.ki, self.kd
