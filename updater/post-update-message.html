@@ -27,6 +27,12 @@
                      <li>
                         Changed the behavior of the control script so that controller configuration can be modified while in Hold mode.  This allows you to you to manually tune your PID, potentially, while running a test burn.  In the future, this may be extended to allow auto-tuning capabilities.
                      </li>
+                     <li>
+                        Moved to Flask 3.1.0 which will allow PiFire to take advantage of the new security and performance updates. 
+                     </li>
+                     <li>
+                        Fresh installations will now pin all versions of the python package dependencies to improve reliability and stability. 
+                     </li>
                   </ul>
                </li>
             </ul>
@@ -35,7 +41,7 @@
             
             <ul>
                <li>
-                  Bug fix 1
+                  Fixed bug with fresh installations where Redis python 6.0.0 deprecated charset encoding parameter.  Pinned to Redis Python 5.3.0 for now.
                </li>
             </ul>
        
