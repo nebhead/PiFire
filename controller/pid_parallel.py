@@ -131,7 +131,7 @@ class Controller(ControllerBase):
 		self.inter = 0.0
 		self.derv = 0.0
 
-	def _calculate_gains(kp, ki, kd):
+	def _calculate_gains(self, kp, ki, kd):
 		self.kp = -1 * kp
 		self.ki = -1 * ki
 		self.kd = -1 * kd
