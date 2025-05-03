@@ -110,27 +110,29 @@ $SUDO usermod -a -G pifire root
 # Change ownership to group=pifire for all files/directories in pifire 
 $SUDO chown -R $USER:pifire pifire 
 # Change ability for pifire group to read/write/execute 
-$SUDO chmod -R 775 pifire/
+$SUDO chmod -R 777 /usr/local/bin
+
+echo " - Installing UV"
+curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR="/usr/local/bin" sh
 
 echo " - Setting up VENV"
 # Setup VENV
-python -m venv --system-site-packages pifire
 cd /usr/local/bin/pifire
-source bin/activate 
+uv venv --system-site-packages
 
 echo " - Installing module dependencies... "
 # Install module dependencies 
 if ! python -c "import sys; assert sys.version_info[:2] >= (3,11)" > /dev/null; then
     echo "System is running a python version lower than 3.11, installing eventlet==0.30.2";
-    python -m pip install "eventlet==0.30.2"
+    uv pip install "eventlet==0.30.2"
 else
     echo "System is running a python version 3.11 or greater, installing latest eventlet"
-    python -m pip install eventlet
+    uv pip install eventlet
 fi      
-python -m pip install -r /usr/local/bin/pifire/auto-install/requirements.txt
+uv pip install -r /usr/local/bin/pifire/auto-install/requirements.txt
 
 # Find all bluepy-helper executables in various possible locations
-BLUEPY_HELPERS=$(find /usr/local/bin/pifire/lib/ -path "*/bluepy/bluepy-helper" 2>/dev/null)
+BLUEPY_HELPERS=$(find /usr/local/bin/pifire/.venv/lib/ -path "*/bluepy/bluepy-helper" 2>/dev/null)
 
 if [ -z "$BLUEPY_HELPERS" ]; then
     echo "No bluepy-helper found in the standard Python library locations"
@@ -147,6 +149,10 @@ for helper in $BLUEPY_HELPERS; do
 done
 
 echo "All bluepy-helper executables have been configured"
+
+# Get PIP List into JSON file
+echo " - Getting PIP List into JSON file"
+.venv/bin/python updater.py -p
 
 ### Setup nginx to proxy to gunicorn
 clear

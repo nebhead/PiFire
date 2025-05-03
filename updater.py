@@ -342,13 +342,14 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 		increment = 70 / items_remaining
 
 	# Install Py dependencies
-	settings = read_settings()
-	if settings['globals']['venv']:
-		python_exec = 'bin/python'
+	settings = read_settings(init=True)
+	python_exec = settings['globals'].get('python_exec', 'python')
+
+	if settings['globals'].get('uv', False):
+		launch_pip = ['uv', 'pip', 'install']
 	else:
-		python_exec = 'python'
-	
-	launch_pip = [python_exec, '-m', 'pip', 'install']
+		launch_pip = [python_exec, '-m', 'pip', 'install']
+
 	status = 'Installing Python Dependencies...'
 	output = ' - Installing Python Dependencies'
 	set_updater_install_status(percent, status, output)
@@ -476,10 +477,15 @@ if __name__ == "__main__":
 	parser.add_argument('-b', '--branch', metavar='BRANCH', type=str, required=False, help="Change Branches")
 	parser.add_argument('-u', '--update', metavar='BRANCH', type=str, required=False, help="Update Current Branch")
 	parser.add_argument('-r', '--remote', action='store_true', required=False, help="Update Remote Branches")
+	parser.add_argument('-p', '--piplist', action='store_true', required=False, help="Output PIP List packages to JSON file.")
 
 	args = parser.parse_args()
 
+	# num_args = number of arguments passed to the script
+	num_args = 0
+
 	if args.update:
+		num_args += 1
 		settings = read_generic_json('settings.json')
 		current_version = settings['versions']['server']
 		current_build = settings['versions'].get('build', 0)
@@ -499,6 +505,7 @@ if __name__ == "__main__":
 		install_dependencies(current_version, current_build)
 
 	elif args.branch:
+		num_args += 1
 		settings = read_generic_json('settings.json')
 		current_version = settings['versions']['server']
 		current_build = settings['versions'].get('build', 0)
@@ -518,10 +525,33 @@ if __name__ == "__main__":
 		install_dependencies(current_version, current_build)
 
 	elif args.remote:
+		num_args += 1
 		error_msg = update_remote_branches()
 		if error_msg != '':
 			print(f'Error updating remote branches: {error_msg}')
 
-	else:
-		print('No Arguments Found. Use --help to see available arguments')
+	if args.piplist:
+		num_args += 1
+		settings = read_settings(init=True)
+
+		# Get python executable
+		python_exec = settings['globals'].get('python_exec', 'python')
+
+		if settings['globals'].get('uv', False):
+			command = ['uv', 'pip', 'list', '--format=json']
+		else:
+			command = [python_exec, '-m', 'pip', 'list', '--format=json']
+
+		pip_list = subprocess.run(command, capture_output=True, text=True)
+		if pip_list.returncode == 0:
+			write_generic_json(json.loads(pip_list.stdout), 'pip_list.json')
+			#print(f'PIP List: {pip_list.stdout}')
+		else:
+			print(f'Error creating PIP List: {pip_list.stderr}')
+			pip_list = []
+			write_generic_json(pip_list, 'pip_list.json')
+	
+	''' If no valid arguments are passed, print help message '''
+	if num_args == 0:
+		print('No valid arguments provided. Use -h for help.')
 

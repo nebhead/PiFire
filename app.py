@@ -1932,6 +1932,8 @@ def settings_page(action=None):
 								settings['controller']['config'][selected][option_name] = float(value)
 							else: 
 								settings['controller']['config'][selected][option_name] = value
+			control['controller_update'] = True
+			print(f'Controller Settings: {settings["controller"]["config"]}')
  
 		event['type'] = 'updated'
 		event['text'] = 'Successfully updated cycle settings.'
@@ -2324,7 +2326,11 @@ def admin_page(action=None):
 			filename = '/tmp/control_general.json'
 			write_generic_json(control, filename)
 			return send_file(filename, as_attachment=True, max_age=0)
-
+		
+		if 'download_pip_list' in response:
+			filename = 'pip_list.json'
+			return send_file(filename, as_attachment=True, max_age=0)
+		
 		if 'backupsettings' in response:
 			backup_file = backup_settings()
 			return send_file(backup_file, as_attachment=True, max_age=0)
@@ -2446,11 +2452,18 @@ def admin_page(action=None):
 
 	url = request.url_root
 
+	pip_list = read_generic_json('pip_list.json')
+	if pip_list == {}:
+		event = 'Pip list is empty. Run \'updater.py -p\' to generate pip list.'
+		errors.append(event)
+		pip_list = []
+
 	return render_template('admin.html', settings=settings, uptime=uptime, cpuinfo=cpu_info,
 						   ifconfig=ifconfig, debug_mode=debug_mode, qr_content=url,
+						   pip_list=pip_list,
 						   control=control,
 						   page_theme=settings['globals']['page_theme'],
-						   grill_name=settings['globals']['grill_name'], 
+						   grill_name=settings['globals']['grill_name'],
 						   files=files, errors=errors, warnings=warnings, success=success)
 
 @app.route('/manual', methods=['POST','GET'])
@@ -2579,10 +2592,7 @@ def wizard(action=None):
 	wizardData = read_wizard()
 	errors = []
 
-	if settings['globals']['venv']:
-		python_exec = 'bin/python'
-	else:
-		python_exec = 'python'
+	python_exec = settings['globals'].get('python_exec', 'python')
 
 	if request.method == 'GET':
 		if action=='installstatus':
@@ -3196,10 +3206,7 @@ def update_page(action=None):
 		'text' : ''
 	}
 
-	if settings['globals']['venv']:
-		python_exec = 'bin/python'
-	else:
-		python_exec = 'python'
+	python_exec = settings['globals'].get('python_exec', 'python')
 
 	if request.method == 'GET':
 		if action is None:
@@ -3226,7 +3233,7 @@ def update_page(action=None):
 
 		if 'update_remote_branches' in r:
 			if is_real_hardware():
-				os.system(f'{python_exec} %s %s &' % ('updater.py', '-r'))	 # Update branches from remote 
+				os.system(f'{python_exec} updater.py -r &')	 # Update branches from remote 
 				time.sleep(5)  # Artificial delay to avoid race condition
 			return redirect('/update')
 
@@ -3249,7 +3256,7 @@ def update_page(action=None):
 			control = read_control()
 			if control['mode'] == 'Stop':
 				set_updater_install_status(0, 'Starting Update...', '')
-				os.system(f'{python_exec} updater.py -u {update_data["branch_target"]} &') # Kickoff Update
+				os.system(f'{python_exec} updater.py -u {update_data["branch_target"]} -p &') # Kickoff Update
 				return render_template('updater-status.html', page_theme=settings['globals']['page_theme'],
 									grill_name=settings['globals']['grill_name'])
 			else:

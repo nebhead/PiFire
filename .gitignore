@@ -69,3 +69,5 @@ venv-laptop.sh
 dt.sh
 
 lt.sh
+
+pip_list.json
