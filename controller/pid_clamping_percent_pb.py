@@ -142,6 +142,16 @@ class Controller(ControllerBase):
 		self.ti = ti
 		self.td = td
 		self._calculate_gains()
+	
+	def set_config(self, config):
+		super().set_config(config)
+		self.pb = config['PB']
+		self.ti = config['Ti']
+		self.td = config['Td']
+		self._calculate_gains()
+		self.error = 0.0
+		self.inter = 0.0
+		self.derv = 0.0
 
 	def get_k(self):
 		return self.kp, self.ki, self.kd
