@@ -94,11 +94,3 @@ class Controller(ControllerBase):
             self.set_point = int(set_point * (9/5) + 32)  # Convert to Fahrenheit
         #self.last_update = time.time()
 	
-    def supported_functions(self):
-        function_list = [
-			'update', 
-	        'set_target', 
-	        'get_config',
-            'create_controller'
-        ]
-        return function_list

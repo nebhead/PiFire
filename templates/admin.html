@@ -189,6 +189,11 @@
 									<button type="submit" class="btn btn-outline-primary btn-block shadow" name="download_control" value="true">
 										<i class="fa-solid fa-download"></i>&nbsp; Download control:general database (current)
 									</button>
+									<br>
+									<!-- Download python installed modules list -->
+									<button type="submit" class="btn btn-outline-primary btn-block shadow" name="download_pip_list" value="true">
+										<i class="fa-solid fa-download"></i>&nbsp; Download installed python modules list ('pip_list.json')
+									</button>
 								</form>
 								<br>
 							</div>
@@ -831,7 +836,7 @@
 				<div class="card shadow">
 					<div class="card-header bg-secondary text-white">
 						<h5>
-							<i class="fas fa-info-circle"></i>&nbsp; Modules
+							<i class="fas fa-info-circle"></i>&nbsp; PiFire Modules
 						</h5>
 					</div>
 					<div class="card-body">
@@ -859,7 +864,39 @@
 						</table>
 					</div>
 				</div>
-				<br><br><br>
+				<br><br>
+				<div class="card shadow">
+					<div class="card-header bg-secondary text-white">
+						<h5>
+							<i class="fa-brands fa-python"></i>&nbsp; Installed Python Modules
+						</h5>
+					</div>
+					<div class="card-body">
+						<table class="table">
+							<thead>
+							<tr>
+								<th>Module</th>
+								<th>Version</th>
+							</tr>
+							</thead>
+							<tbody>
+								{% for module in pip_list %}
+									<tr>
+										<td>{{ module['name'] }}</td>
+										<td>{{ module['version'] }}</td>
+									</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+						<form action="/admin/setting" method="POST">
+							<!-- Download python installed modules list -->
+							<button type="submit" class="btn btn-outline-primary btn-block shadow" name="download_pip_list" value="true">
+								<i class="fa-solid fa-download"></i>&nbsp; Download installed python modules list ('pip_list.json')
+							</button>
+						</form>
+					</div>
+				</div>
+				<br><br>
 			</div><!-- End of Tab -->
 			<!-- ============================ PiFire Info ========================== -->
 			
