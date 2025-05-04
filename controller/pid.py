@@ -129,6 +129,10 @@ class Controller(ControllerBase):
 
 	def set_config(self, config):
 		super().set_config(config)
+		self.error = 0.0
+		self.inter = 0.0
+		self.derv = 0.0
+		self.last_update = time.time()
 		self._calculate_gains(config['PB'], config['Ti'], config['Td'])
 		self.center = config['center']
 		if self.ki != 0:
