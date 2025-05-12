@@ -391,6 +391,8 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		OffTime = settings['cycle_data']['SmokeOffCycleTime'] + (settings['cycle_data']['PMode'] * 10)  # Auger Off Time
 		CycleTime = OnTime + OffTime  # Total Cycle Time
 		CycleRatio = RawCycleRatio = OnTime / CycleTime  # Ratio of OnTime to CycleTime
+		LidOpenDetect = False
+		LidOpenEventExpires = 0
 		# Write Metrics (note these will be overwritten if smart start is enabled)
 		metrics['p_mode'] = settings['cycle_data']['PMode']
 		metrics['auger_cycle_time'] = settings['cycle_data']['SmokeOnCycleTime']
