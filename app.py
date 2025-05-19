@@ -24,6 +24,7 @@ from flask_socketio import SocketIO
 from flask_qrcode import QRcode
 from io import BytesIO
 from werkzeug.utils import secure_filename
+from werkzeug.exceptions import InternalServerError
 from collections.abc import Mapping
 import threading
 import zipfile
@@ -63,6 +64,12 @@ app.config['RECIPE_FOLDER'] = RECIPE_FOLDER
  App Routes
 ==============================================================================
 '''
+
+@app.errorhandler(InternalServerError)
+def handle_500(e):
+	''' Handle 500 Server Error '''
+	return render_template('server_error.html'), 500
+
 @app.route('/')
 def index():
 	global settings

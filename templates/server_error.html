@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Error</title>
+    <style>
+        body {
+            font-family: Verdana, Trebuchet MS, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            text-align: center;
+            padding: 50px;
+        }
+        h1 {
+            color: #d9534f;
+        }
+        #countdown {
+            font-size: 24px;
+            margin-top: 20px;
+        }
+        .links {
+            margin-top: 30px;
+        }
+        .links a {
+            color: #337ab7;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        .links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>Oops! Something went wrong.</h1>
+    <p>We're sorry, but the PiFire server encountered an error.</p>  
+    <p><b>Don't panic</b>, if you <i>just</i> performed a system update or a reboot, sometimes it can take a bit for the system to fully initialize.</p>
+    <div id="countdown">Retrying in <span id="timer">10</span> seconds...</div>
+    <div class="links">
+        <a href="/">Click here to Retry Now</a><br><br>
+        <a id="supervisorLink" href="#" target="_blank">Or check server status at the Supervisor WebUI</a> (if installed)<br>
+        <a href="/admin">Or try to get to the Admin page here.</a>
+    </div>
+    <br>
+    <div class="links">
+        <b>If the issue persists, get help here:</b> <br>
+        <a href="https://discord.com/channels/1027346882156052550/1027347974327635980" target="_blank">PiFire Discord Server</a> <br>
+        <a href="https://github.com/nebhead/PiFire/issues" target="_blank">File GitHub Issue</a> <br>
+        <a href="https://nebhead.github.io/PiFire-Pages" target="_blank">Read the PiFire Documentation</a> <br>
+    </div>
+
+    <script>
+        let timeLeft = 10;
+        const timerDisplay = document.getElementById('timer');
+
+        const countdown = setInterval(() => {
+            timeLeft--;
+            timerDisplay.textContent = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                window.location.href = "/";
+            }
+        }, 1000);
+
+        // Dynamically build the supervisor link
+        const supervisorLink = document.getElementById('supervisorLink');
+        const currentHostname = window.location.hostname;
+        const supervisorPort = "9001";
+        supervisorLink.href = `http://${currentHostname}:${supervisorPort}`;
+    </script>
+</body>
+</html>
