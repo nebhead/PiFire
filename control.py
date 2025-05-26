@@ -862,6 +862,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			if mode == 'Hold':
 				if LidOpenDetect and time.time() > LidOpenEventExpires:
 					LidOpenDetect = False
+					_start_fan(settings, control['duty_cycle'])
 				if control['lid_open_toggle']:
 					control['lid_open_toggle'] = False
 					write_control(control, direct_write=True, origin='control')
