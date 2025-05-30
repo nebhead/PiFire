@@ -181,7 +181,4 @@ echo "user=$USER" | tee -a control.conf > /dev/null
 echo "user=$USER" | tee -a webapp.conf > /dev/null
 $SUDO cp *.conf /etc/supervisor/conf.d/
 
-# Restart Supervisor
-$SUDO service supervisor restart
-
 echo " - Upgrade Script Finished."

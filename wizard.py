@@ -39,27 +39,38 @@ def _convert_value(value):
 	- The function assumes that the value parameter is a string.
 	- The function does not perform any validation on the input value.
 	"""
+	print(f'Converting value: {value}')
+
+	if isinstance(value, list):
+		return [_convert_value(item) for item in value]
+
+	if not isinstance(value, str):
+		return value
+
 	if value.isdigit():
 		return int(value)
-	
-	if value.isdecimal():
-		return float(value)
+
+	try:
+		# Try to convert to float (covers decimals)
+		if '.' in value:
+			return float(value)
+	except ValueError:
+		pass
 
 	# Convert Boolean String to Standard Boolean
 	if value == 'True' or value == 'False':
 		return value == 'True'
-	
+
 	# Convert 'None' to None 
 	if value == 'None':
 		return None 
-	
-	# Covert String List to List
-	if type(value) == str:
-		if value.startswith('[') and value.endswith(']'):
-			value = value.replace('\'', '').replace('\"', '').replace(' ', '')
-			return value[1:-1].split(',')
 
-	return value 	
+	# Convert String List to List
+	if value.startswith('[') and value.endswith(']'):
+		value = value.replace('\'', '').replace('\"', '').replace(' ', '')
+		return [_convert_value(item) for item in value[1:-1].split(',') if item]
+
+	return value
 
 def wizardInstallInfoExisting(settings, wizardData):
 	wizardInstallInfo = {
@@ -374,7 +385,7 @@ if __name__ == "__main__":
 	else:
 		log_level = logging.INFO
 
-	logger = create_logger('wizard', filename='./logs/wizard.log', messageformat='%(asctime)s | %(levelname)s | %(message)s', log_level=log_level)
+	logger = create_logger('wizard', filename='./logs/wizard.log', messageformat='%(asctime)s | %(levelname)s | %(message)s', level=log_level)
 
 	if args.existing:
 		print('Running Wizard for Existing PiFire Installation...')
