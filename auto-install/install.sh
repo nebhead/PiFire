@@ -120,6 +120,9 @@ echo " - Setting up VENV"
 cd /usr/local/bin/pifire
 uv venv --system-site-packages
 
+# Activate VENV
+source .venv/bin/activate
+
 echo " - Installing module dependencies... "
 # Install module dependencies 
 if ! python -c "import sys; assert sys.version_info[:2] >= (3,11)" > /dev/null; then
@@ -190,8 +193,8 @@ echo "*************************************************************************"
 # Copy configuration files (control.conf, webapp.conf) to supervisor config directory
 cd /usr/local/bin/pifire/auto-install/supervisor
 # Add the current username to the configuration files 
-echo "user=" $USER | tee -a control.conf > /dev/null
-echo "user=" $USER | tee -a webapp.conf > /dev/null
+echo "user=$USER" | tee -a control.conf > /dev/null
+echo "user=$USER" | tee -a webapp.conf > /dev/null
 
 $SUDO cp *.conf /etc/supervisor/conf.d/
 
