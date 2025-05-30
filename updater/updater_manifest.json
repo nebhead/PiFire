@@ -4,7 +4,7 @@
       "server" : "1.10.0",
       "cookfile" : "1.5.0",
       "recipe" : "1.0.0",
-      "build" : 7
+      "build" : 8
     },
     "update_notes" : "",
     "update_warnings" : ""
@@ -127,8 +127,8 @@
     },
     {
       "version" : "1.10.0",
-      "build" : 0,
-      "reboot_required" : false,
+      "build" : 8,
+      "reboot_required" : true,
       "dependencies" : {
         "app": {
           "py_dependencies": [],
@@ -138,7 +138,9 @@
         "control": {
           "py_dependencies": [],
           "apt_dependencies": [],
-          "command_list" : []
+          "command_list" : [
+            ["sudo", "bash", "updater/upgrade.sh"]
+          ]
         }
       }
     }

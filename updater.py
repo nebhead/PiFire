@@ -307,7 +307,7 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 		''' Walk list of versions in updater_manifest, check for dependencies '''	
 		if (semantic_ver_is_lower(current_version_string, version_info['version'])) or \
 			((current_version_string == version_info['version']) and \
-			(current_build <  version_info['build'])):
+			(current_build < version_info['build'])):
 			
 			# If the current version (pre-update) is less than this version information, install dependencies, etc.
 			for section in version_info['dependencies']:
@@ -478,6 +478,8 @@ if __name__ == "__main__":
 	parser.add_argument('-u', '--update', metavar='BRANCH', type=str, required=False, help="Update Current Branch")
 	parser.add_argument('-r', '--remote', action='store_true', required=False, help="Update Remote Branches")
 	parser.add_argument('-p', '--piplist', action='store_true', required=False, help="Output PIP List packages to JSON file.")
+	parser.add_argument('-v', '--uv', action='store_true', required=False, help="Set uv flag and clear venv flag in settings.json")
+	parser.add_argument('-l', '--legacyvenv', action='store_true', required=False, help="Set venv flag in settings.json")
 
 	args = parser.parse_args()
 
@@ -551,6 +553,24 @@ if __name__ == "__main__":
 			pip_list = []
 			write_generic_json(pip_list, 'pip_list.json')
 	
+	if args.uv:
+		num_args += 1
+		settings = read_settings()
+		settings['globals']['uv'] = True
+		settings['globals']['venv'] = True
+		settings['globals']['python_exec'] = '.venv/bin/python'
+		write_generic_json(settings, 'settings.json')
+		print('Updated settings.json to set uv flag and set venv flag')
+	
+	if args.legacyvenv:
+		num_args += 1
+		settings = read_settings()
+		settings['globals']['uv'] = False
+		settings['globals']['venv'] = True
+		settings['globals']['python_exec'] = 'bin/python'
+		write_generic_json(settings, 'settings.json')
+		print('Updated settings.json to set venv flag and clear uv flag')
+
 	''' If no valid arguments are passed, print help message '''
 	if num_args == 0:
 		print('No valid arguments provided. Use -h for help.')
