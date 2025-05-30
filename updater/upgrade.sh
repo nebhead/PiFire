@@ -119,6 +119,7 @@ else
 
     # Setup VENV
     echo " + Setting up VENV"
+    cd /usr/local/bin/pifire
     uv venv --system-site-packages
 
     # Activate VENV
