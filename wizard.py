@@ -17,6 +17,7 @@
 from common import * # Common Library for writing settings
 import subprocess
 import argparse
+import logging
 
 def _convert_value(value):
 	"""
@@ -120,6 +121,8 @@ def run_wizard(settings, WizardData, WizardInstallInfo):
 	percent = 5
 	status = 'Setting Up Modules...'
 	output = ' - Adding selected modules to the settings.json file. '
+	logger.info(status)
+	logger.info(output)
 	set_wizard_install_status(percent, status, output)
 	time.sleep(2)
 
@@ -138,6 +141,8 @@ def run_wizard(settings, WizardData, WizardInstallInfo):
 	percent = 10
 	status = 'Updating Settings...'
 	output = ' - Adding selected settings to the settings.json file.'
+	logger.info(status)
+	logger.info(output)
 	set_wizard_install_status(percent, status, output)
 	time.sleep(2)
 
@@ -171,6 +176,7 @@ def run_wizard(settings, WizardData, WizardInstallInfo):
 	percent = 15
 	status = 'Installing Dependencies...'
 	output = ' - Installing Dependencies'
+	logger.info(status)
 	set_wizard_install_status(percent, status, output)
 	time.sleep(2)
 
@@ -185,6 +191,7 @@ def run_wizard(settings, WizardData, WizardInstallInfo):
 	percent = 20
 	status = 'Calculating Python/Package Dependencies...'
 	output = ' - Calculating Python, APT Package, and General Dependencies'
+	logger.info(status)
 	set_wizard_install_status(percent, status, output)
 	time.sleep(2)
 	# Get PyPi & Apt dependencies
@@ -217,6 +224,7 @@ def run_wizard(settings, WizardData, WizardInstallInfo):
 	launch_apt = ['sudo', 'apt', 'install']
 	status = 'Installing Package Dependencies...'
 	output = ' - Installing APT Package Dependencies'
+	logger.info(status)
 	set_wizard_install_status(percent, status, output)
 
 	for apt_item in apt_dependencies:
@@ -233,6 +241,7 @@ def run_wizard(settings, WizardData, WizardInstallInfo):
 					break
 				if output:
 					set_wizard_install_status(percent, status, output.strip())
+					logger.info(output.strip())
 					print(output.strip())
 			return_code = process.poll()
 			print(f'Return Code: {return_code}')
@@ -242,6 +251,7 @@ def run_wizard(settings, WizardData, WizardInstallInfo):
 		
 		percent += increment
 		output = f' - Completed Install of {apt_item}'
+		logger.info(output)
 		set_wizard_install_status(percent, status, output)
 
 	# Install Py dependencies
@@ -254,6 +264,7 @@ def run_wizard(settings, WizardData, WizardInstallInfo):
 
 	status = 'Installing Python Dependencies...'
 	output = ' - Installing Python Dependencies'
+	logger.info(status)
 	set_wizard_install_status(percent, status, output)
 
 	for py_item in py_dependencies:
@@ -269,6 +280,7 @@ def run_wizard(settings, WizardData, WizardInstallInfo):
 					break
 				if output:
 					set_wizard_install_status(percent, status, output.strip())
+					logger.info(output.strip())
 					print(output.strip())
 			return_code = process.poll()
 			print(f'Return Code: {return_code}')
@@ -278,6 +290,7 @@ def run_wizard(settings, WizardData, WizardInstallInfo):
 
 		percent += increment
 		output = f' - Completed Install of {py_item}'
+		logger.info(output)
 		set_wizard_install_status(percent, status, output)
 
 	# Get PIP List 
@@ -302,6 +315,7 @@ def run_wizard(settings, WizardData, WizardInstallInfo):
 				if output:
 					set_wizard_install_status(percent, status, output.strip())
 					print(f'command output: {output.strip()}')
+					logger.info(output.strip())
 			#return_code = process.poll()
 		else:
 			# This path is for development/testing
@@ -309,6 +323,7 @@ def run_wizard(settings, WizardData, WizardInstallInfo):
 			
 		percent += increment
 		output = f' - Completed General Dependency Item'
+		logger.info(output)
 		set_updater_install_status(percent, status, output)
 
 	percent = 100
@@ -318,6 +333,7 @@ def run_wizard(settings, WizardData, WizardInstallInfo):
 	else: 
 		output = ' - Finished!  Restarting Server...'
 
+	logger.info(output)
 	set_wizard_install_status(percent, status, output)
 
 	time.sleep(4)
@@ -344,13 +360,21 @@ print('Copyright 2022-2025, MIT License, Ben Parmeter')
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='PiFire Module Wizard')
 	parser.add_argument('-e','--existing', action='store_true', help='Run the wizard to install modules and settings for an existing PiFire installation.')
-	
+	parser.add_argument('-d','--debug', action='store_true', help='Run the wizard in debug mode.')
+
 	args = parser.parse_args()
 
 	# Load Settings
 	settings = read_settings()
 	# Load Wizard Data
 	WizardData = read_wizard()
+
+	if args.debug:
+		log_level = logging.DEBUG
+	else:
+		log_level = logging.INFO
+
+	logger = create_logger('wizard', filename='./logs/wizard.log', messageformat='%(asctime)s | %(levelname)s | %(message)s', log_level=log_level)
 
 	if args.existing:
 		print('Running Wizard for Existing PiFire Installation...')

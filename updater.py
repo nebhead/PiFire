@@ -18,8 +18,7 @@ from common import *
 import pkg_resources
 import subprocess
 import argparse
-
-DEBUG = False
+import logging
 
 '''
 ==============================================================================
@@ -292,6 +291,10 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 		print(f'Percent: {percent}')
 		print(f'Status:  {status}')
 		print(f'Output:  {output}')
+	logger.debug(f'Percent: {percent}')
+	logger.info(f'Status:  {status}')
+	logger.debug(f'Output:  {output}')
+	# Update the status bar with the current status
 	set_updater_install_status(percent, status, output)
 	time.sleep(2)
 
@@ -315,8 +318,10 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 					try:
 						dist = pkg_resources.get_distribution(module)
 						print('{} ({}) is installed'.format(dist.key, dist.version))
+						logger.debug('{} ({}) is installed'.format(dist.key, dist.version))
 					except pkg_resources.DistributionNotFound:
 						print('{} is NOT installed'.format(module))
+						logger.debug('{} is NOT installed'.format(module))
 						py_dependencies.append(module)
 
 				for package in version_info['dependencies'][section]['apt_dependencies']:
@@ -333,6 +338,9 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 		print(f'py_dep: {py_dependencies}')
 		print(f'apt_dep:  {apt_dependencies}')
 		print(f'command:  {command_list}')
+	logger.debug(f'py_dep: {py_dependencies}')
+	logger.debug(f'apt_dep:  {apt_dependencies}')
+	logger.debug(f'command:  {command_list}')
 
 	# Calculate the percent done from remaining items to install
 	items_remaining = len(py_dependencies) + len(apt_dependencies) + len(command_list)
@@ -357,6 +365,9 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 		print(f'Percent: {percent}')
 		print(f'Status:  {status}')
 		print(f'Output:  {output}')
+	logger.debug(f'Percent: {percent}')
+	logger.info(f'Status:  {status}')
+	logger.debug(f'Output:  {output}')
 
 	for py_item in py_dependencies:
 		command = []
@@ -371,6 +382,7 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 				if output:
 					set_wizard_install_status(percent, status, output.strip())
 					print(output.strip())
+					logger.info(output.strip())
 			return_code = process.poll()
 			result += return_code
 			print(f'Return Code: {return_code}')
@@ -382,6 +394,9 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 			print(f'Percent: {percent}')
 			print(f'Status:  {status}')
 			print(f'Output:  {output}')
+		logger.debug(f'Percent: {percent}')
+		logger.debug(f'Status:  {status}')
+		logger.info(f'Output:  {output}')
 
 	time.sleep(4)
 
@@ -405,6 +420,7 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 				if output:
 					set_updater_install_status(percent, status, output.strip())
 					print(output.strip())
+					logger.info(output.strip())
 			return_code = process.poll()
 			result += return_code
 			print(f'Return Code: {return_code}')
@@ -416,6 +432,9 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 			print(f'Percent: {percent}')
 			print(f'Status:  {status}')
 			print(f'Output:  {output}')
+		logger.debug(f'Percent: {percent}')
+		logger.debug(f'Status:  {status}')
+		logger.info(f'Output:  {output}')
 
 	time.sleep(4)
 
@@ -427,7 +446,10 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 		print(f'Percent: {percent}')
 		print(f'Status:  {status}')
 		print(f'Output:  {output}')
-	
+	logger.debug(f'Percent: {percent}')
+	logger.info(f'Status:  {status}')
+	logger.debug(f'Output:  {output}')
+
 	for command in command_list:
 		process = subprocess.Popen(command, stdout=subprocess.PIPE, encoding='utf-8')
 		while True:
@@ -436,7 +458,8 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 				break
 			if output:
 				set_updater_install_status(percent, status, output.strip())
-				print(f'command output: {output.strip()}')
+				print(f'{output.strip()}')
+				logger.info(output.strip())
 		return_code = process.poll()
 		result += return_code
 		print(f'Return Code: {return_code}')
@@ -448,6 +471,9 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 			print(f'Percent: {percent}')
 			print(f'Status:  {status}')
 			print(f'Output:  {output}')
+		logger.debug(f'Percent: {percent}')
+		logger.debug(f'Status:  {status}')
+		logger.debug(f'Output:  {output}')
 
 	time.sleep(4)
 
@@ -480,8 +506,19 @@ if __name__ == "__main__":
 	parser.add_argument('-p', '--piplist', action='store_true', required=False, help="Output PIP List packages to JSON file.")
 	parser.add_argument('-v', '--uv', action='store_true', required=False, help="Set uv flag and clear venv flag in settings.json")
 	parser.add_argument('-l', '--legacyvenv', action='store_true', required=False, help="Set venv flag in settings.json")
+	parser.add_argument('-d', '--debug', action='store_true', required=False, help="Enable Debug Mode")
 
 	args = parser.parse_args()
+
+	''' Setup Logger '''
+	if args.debug:
+		log_level = logging.DEBUG
+		DEBUG = True
+	else:
+		log_level = logging.INFO
+		DEBUG = False
+
+	logger = create_logger('updater', filename='./logs/update.log', messageformat='%(asctime)s | %(levelname)s | %(message)s', level=log_level)
 
 	# num_args = number of arguments passed to the script
 	num_args = 0
