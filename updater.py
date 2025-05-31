@@ -507,6 +507,7 @@ if __name__ == "__main__":
 	parser.add_argument('-v', '--uv', action='store_true', required=False, help="Set uv flag and clear venv flag in settings.json")
 	parser.add_argument('-l', '--legacyvenv', action='store_true', required=False, help="Set venv flag in settings.json")
 	parser.add_argument('-d', '--debug', action='store_true', required=False, help="Enable Debug Mode")
+	parser.add_argument('-i', '--installdependencies', action='store_true', required=False, help="Install Dependencies for current version")
 
 	args = parser.parse_args()
 
@@ -568,6 +569,19 @@ if __name__ == "__main__":
 		error_msg = update_remote_branches()
 		if error_msg != '':
 			print(f'Error updating remote branches: {error_msg}')
+
+	elif args.installdependencies:
+		num_args += 1
+		settings = read_generic_json('settings.json')
+		current_version = settings['versions']['server']
+		current_build = settings['versions'].get('build', 0)
+
+		percent = 10
+		status = f'Installing Dependencies for Current Version...'
+		output = f' - APT, Python and Command Dependencies for version {current_version} ({current_build})'
+		set_updater_install_status(percent, status, output)
+
+		install_dependencies(current_version, current_build)
 
 	if args.piplist:
 		num_args += 1

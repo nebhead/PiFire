@@ -3277,6 +3277,23 @@ def update_page(action=None):
 									grill_name=settings['globals']['grill_name'],
 									update_data=update_data)
 
+		if 'do_upgrade' in r:
+			control = read_control()
+			if control['mode'] == 'Stop':
+				set_updater_install_status(0, 'Starting Upgrade...', '')
+				os.system(f'{python_exec} updater.py -i &')
+				return render_template('updater-status.html', page_theme=settings['globals']['page_theme'],
+									grill_name=settings['globals']['grill_name'])
+			else:
+				alert = {
+					'type' : 'error',
+					'text' : f'PiFire System Upgrade cannot be completed when the system is active.  Please shutdown/stop your smoker before retrying.'
+				}
+				update_data = get_update_data(settings)
+				return render_template('updater.html', alert=alert, settings=settings,
+									page_theme=settings['globals']['page_theme'],
+									grill_name=settings['globals']['grill_name'],
+									update_data=update_data)
 
 		if 'show_log' in r:
 			if r['show_log'].isnumeric():

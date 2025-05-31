@@ -214,6 +214,30 @@
 </div>
 </form>
 
+<!-- Advanced Card - Default accordion card minimized buttons to force an update, upgrade, etc. -->
+<form method="POST" action=/update>
+<div class="card shadow">
+	<div class="card-header" id="headingAdvanced">
+		<button class="btn btn-danger" type="button" data-toggle="collapse" data-target="#collapseAdvanced" aria-expanded="true" aria-controls="collapseAdvanced">
+			<i class="fas fa-cogs"></i>&nbsp; Advanced
+		</button>
+	</div>
+
+	<div id="collapseAdvanced" class="collapse" aria-labelledby="headingAdvanced">
+		<div class="card-body text-center">
+			<i>The below options are provided for debug / development / testing only and should never be performed unless you know what you are doing! <br>You have been warned.</i>
+			<br><br>
+			<!-- Force Update -->
+			<button type="submit" class="btn btn-danger btn-block shadow" name="do_update" value="true">Force Update</button>
+			<br>
+			<!-- Force Upgrade -->
+			<button type="submit" class="btn btn-warning btn-block shadow" name="do_upgrade" value="true">Force Upgrade</button>
+			<br>
+		 </div>
+	 </div>
+</div>
+</form>
+
 </div> <!-- End of Container -->
 {% endblock %}
 
