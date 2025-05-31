@@ -4,7 +4,7 @@
       "server" : "1.10.0",
       "cookfile" : "1.5.0",
       "recipe" : "1.0.0",
-      "build" : 11
+      "build" : 12
     },
     "update_notes" : "",
     "update_warnings" : ""
@@ -138,9 +138,7 @@
         "control": {
           "py_dependencies": [],
           "apt_dependencies": [],
-          "command_list" : [
-            ["bash", "updater/upgrade.sh"]
-          ]
+          "command_list" : []
         }
       }
     }
