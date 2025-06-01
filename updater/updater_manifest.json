@@ -4,7 +4,7 @@
       "server" : "1.10.0",
       "cookfile" : "1.5.0",
       "recipe" : "1.0.0",
-      "build" : 13
+      "build" : 14
     },
     "update_notes" : "",
     "update_warnings" : ""
@@ -127,7 +127,7 @@
     },
     {
       "version" : "1.10.0",
-      "build" : 11,
+      "build" : 14,
       "reboot_required" : true,
       "dependencies" : {
         "app": {
@@ -138,7 +138,7 @@
         "control": {
           "py_dependencies": [],
           "apt_dependencies": [],
-          "command_list" : []
+          "command_list" : [["bash", "/usr/local/bin/pifire/updater/upgrade.sh"]]
         }
       }
     }

@@ -20,40 +20,10 @@ else
     fi
 fi
 
-# Starting actual steps of the upgrade
-#clear
-echo "*************************************************************************"
-echo "**                                                                     **"
-echo "**      Running Apt Update... (This could take several minutes)        **"
-echo "**                                                                     **"
-echo "*************************************************************************"
-#$SUDO apt update
-#clear
-echo "*************************************************************************"
-echo "**                                                                     **"
-echo "**      Running Apt Upgrade... (This could take several minutes)       **"
-echo "**                                                                     **"
-echo "*************************************************************************"
-#$SUDO apt upgrade -y
-
-# Refresh default APT dependencies
-#clear
-echo "*************************************************************************"
-echo "**                                                                     **"
-echo "**      Installing Dependencies... (This could take several minutes)   **"
-echo "**                                                                     **"
-echo "*************************************************************************"
-#$SUDO apt install python3-dev python3-pip python3-venv python3-rpi.gpio python3-scipy nginx git supervisor ttf-mscorefonts-installer redis-server gfortran libatlas-base-dev libopenblas-dev liblapack-dev libopenjp2-7 libglib2.0-dev -y
-
 # Setup Python VENV & Install Python dependencies
 #clear
-echo "*************************************************************************"
-echo "**                                                                     **"
-echo "**      Setting up Python VENV and Installing Modules...               **"
-echo "**            (This could take several minutes)                        **"
-echo "**                                                                     **"
-echo "*************************************************************************"
-echo ""
+echo " * Setting up Python VENV and Installing Modules..."
+sleep 1
 echo " - Setting Up PiFire Group"
 cd /usr/local/bin
 $SUDO groupadd pifire 
@@ -87,17 +57,17 @@ if ! python -c "import sys; assert sys.version_info[:2] >= (3,11)" > /dev/null 2
     BLUEPY_HELPERS=$(find /usr/local/bin/pifire/lib/ -path "*/bluepy/bluepy-helper" 2>/dev/null)
 
     if [ -z "$BLUEPY_HELPERS" ]; then
-        echo "No bluepy-helper found in the standard Python library locations"
+        echo " ! No bluepy-helper found in the standard Python library locations"
     else
         # Apply capabilities to each found bluepy-helper
         for helper in $BLUEPY_HELPERS; do
-            echo "Setting capabilities for $helper"
+            echo " + Setting capabilities for $helper"
             $SUDO setcap "cap_net_raw,cap_net_admin+eip" "$helper"
             
             # Verify the capabilities were set
             getcap "$helper"
         done
-        echo "All bluepy-helper executables have been configured"
+        echo " + All bluepy-helper executables have been configured"
     fi
 
     # Get PIP List into JSON file
@@ -135,17 +105,17 @@ else
     BLUEPY_HELPERS=$(find /usr/local/bin/pifire/.venv/lib/ -path "*/bluepy/bluepy-helper" 2>/dev/null)
 
     if [ -z "$BLUEPY_HELPERS" ]; then
-        echo "No bluepy-helper found in the standard Python library locations"
+        echo " ! No bluepy-helper found in the standard Python library locations"
     else
         # Apply capabilities to each found bluepy-helper
         for helper in $BLUEPY_HELPERS; do
-            echo "Setting capabilities for $helper"
+            echo " + Setting capabilities for $helper"
             $SUDO setcap "cap_net_raw,cap_net_admin+eip" "$helper"
             
             # Verify the capabilities were set
             getcap "$helper"
         done
-        echo "All bluepy-helper executables have been configured"
+        echo " + All bluepy-helper executables have been configured"
     fi
 
     # Set UV flag in settings.json
@@ -177,8 +147,9 @@ else
     cd /usr/local/bin/pifire/auto-install/supervisor
 fi
 # Add the current username to the configuration files 
-echo "user=$USER" | tee -a control.conf > /dev/null
-echo "user=$USER" | tee -a webapp.conf > /dev/null
+USERNAME=$(id -un)
+echo "user=$USERNAME" | tee -a control.conf > /dev/null
+echo "user=$USERNAME" | tee -a webapp.conf > /dev/null
 $SUDO cp *.conf /etc/supervisor/conf.d/
 
 echo " - Upgrade Script Finished."
