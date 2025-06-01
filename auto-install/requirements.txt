@@ -11,7 +11,7 @@ apprise==1.9.3
 scikit-fuzzy==0.5.0
 scikit-learn==1.4.2
 ratelimitingfilter==1.5
-pillow==11.2.0
+pillow==11.2.1
 paho-mqtt==2.1.0
 psutil==7.0.0
 rpi_hardware_pwm==0.2.2
