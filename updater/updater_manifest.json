@@ -4,7 +4,7 @@
       "server" : "1.10.0",
       "cookfile" : "1.5.0",
       "recipe" : "1.0.0",
-      "build" : 14
+      "build" : 15
     },
     "update_notes" : "",
     "update_warnings" : ""
@@ -127,7 +127,7 @@
     },
     {
       "version" : "1.10.0",
-      "build" : 14,
+      "build" : 15,
       "reboot_required" : true,
       "dependencies" : {
         "app": {
