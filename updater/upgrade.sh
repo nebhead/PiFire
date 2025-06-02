@@ -27,10 +27,11 @@ sleep 1
 echo " - Setting Up PiFire Group"
 cd /usr/local/bin
 $SUDO groupadd pifire 
-$SUDO usermod -a -G pifire $USER 
+USERNAME=$(id -un)
+$SUDO usermod -a -G pifire $USERNAME
 $SUDO usermod -a -G pifire root 
 # Change ownership to group=pifire for all files/directories in pifire 
-$SUDO chown -R $USER:pifire pifire 
+$SUDO chown -R $USERNAME:pifire pifire 
 # Change ability for pifire group to read/write/execute 
 $SUDO chmod -R 777 /usr/local/bin
 
