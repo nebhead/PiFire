@@ -20,6 +20,12 @@ else
     fi
 fi
 
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+if ! command -v curl >/dev/null 2>&1; then
+    echo "WARNING: curl is required but not found. Please install curl."
+fi
+
 # Setup Python VENV & Install Python dependencies
 #clear
 echo " * Setting up Python VENV and Installing Modules..."
