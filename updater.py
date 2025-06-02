@@ -350,7 +350,7 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 		increment = 70 / items_remaining
 
 	# Install Py dependencies
-	settings = read_settings(init=True)
+	settings = read_settings()
 	python_exec = settings['globals'].get('python_exec', 'python')
 
 	if settings['globals'].get('uv', False):
@@ -585,7 +585,7 @@ if __name__ == "__main__":
 
 	if args.piplist:
 		num_args += 1
-		settings = read_settings(init=True)
+		settings = read_settings()
 
 		# Get python executable
 		python_exec = settings['globals'].get('python_exec', 'python')
