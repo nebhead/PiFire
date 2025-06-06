@@ -20,9 +20,9 @@ else
     fi
 fi
 
-export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+#export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-if ! command -v curl >/dev/null 2>&1; then
+if ! command -v /bin/curl >/dev/null 2>&1; then
     echo "WARNING: curl is required but not found. Please install curl."
 fi
 
@@ -43,7 +43,7 @@ $SUDO chmod -R 777 /usr/local/bin
 
 echo " - Installing module dependencies... "
 
-if ! python -c "import sys; assert sys.version_info[:2] >= (3,11)" > /dev/null 2>&1; then
+if ! /bin/python -c "import sys; assert sys.version_info[:2] >= (3,11)" > /dev/null 2>&1; then
     echo " + System is running a python version lower than 3.11, skipping uv install.";
     # Check if /usr/local/bin/pifire/bin exists
     if [ -d "/usr/local/bin/pifire/bin" ]; then
@@ -52,7 +52,7 @@ if ! python -c "import sys; assert sys.version_info[:2] >= (3,11)" > /dev/null 2
         echo " + Legacy VENV not found. Creating new legacy VENV."
         cd /usr/local/bin
         # Setup VENV
-        python -m venv --system-site-packages pifire
+        /bin/python -m venv --system-site-packages pifire
     fi
     cd /usr/local/bin/pifire    
     source bin/activate
@@ -92,7 +92,7 @@ else
     echo " + System is running a python version 3.11 or greater, installing uv and latest requirements"
     # Install latest UV
     echo " + Installing UV"
-    curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR="/usr/local/bin" sh
+    /bin/curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR="/usr/local/bin" /bin/sh
 
     # Setup VENV
     echo " + Setting up VENV"
