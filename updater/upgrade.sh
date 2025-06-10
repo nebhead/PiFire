@@ -24,6 +24,26 @@ fi
 
 export HOME=$(eval echo ~${SUDO_USER})
 
+# Detect OS architecture
+ARCH=$(/bin/uname -m)
+echo " + Detecting system architecture: $ARCH" | tee -a /usr/local/bin/pifire/logs/upgrade.log
+
+case $ARCH in
+    aarch64)
+        echo " + 64-bit ARM OS detected (Raspberry Pi running 64-bit OS)" | tee -a /usr/local/bin/pifire/logs/upgrade.log
+        OS_BITS="64"
+        ;;
+    armv7l|armv6l)
+        echo " + 32-bit ARM OS detected (Raspberry Pi running 32-bit OS)" | tee -a /usr/local/bin/pifire/logs/upgrade.log
+        OS_BITS="32"
+        ;;
+    *)
+        echo " !! Warning: Non-standard Raspberry Pi architecture detected: $ARCH" | tee -a /usr/local/bin/pifire/logs/upgrade.log
+        echo " !! This script is designed for Raspberry Pi systems" | tee -a /usr/local/bin/pifire/logs/upgrade.log
+        ;;
+esac
+echo " + System architecture set to: $OS_BITS-bit" | tee -a /usr/local/bin/pifire/logs/upgrade.log
+
 #export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 if ! command -v /bin/curl >/dev/null 2>&1; then
@@ -32,7 +52,6 @@ if ! command -v /bin/curl >/dev/null 2>&1; then
 fi
 
 # Setup Python VENV & Install Python dependencies
-#clear
 echo " * Setting up Python VENV and Installing Modules..." | tee -a /usr/local/bin/pifire/logs/upgrade.log
 sleep 1
 echo " - Setting Up PiFire Group" | tee -a /usr/local/bin/pifire/logs/upgrade.log
@@ -48,8 +67,8 @@ $SUDO chmod -R 777 /usr/local/bin
 
 echo " - Installing module dependencies... " | tee -a /usr/local/bin/pifire/logs/upgrade.log
 
-if ! /bin/python -c "import sys; assert sys.version_info[:2] >= (3,11)" > /dev/null 2>&1; then
-    echo " + System is running a python version lower than 3.11, skipping uv install.";
+if [ "$OS_BITS" = "32" ]; then
+    echo " + OS is 32-Bit, skipping uv install.";
     # Check if /usr/local/bin/pifire/bin exists
     if [ -d "/usr/local/bin/pifire/bin" ]; then
         echo " + Legacy VENV found. " | tee -a /usr/local/bin/pifire/logs/upgrade.log
@@ -61,8 +80,15 @@ if ! /bin/python -c "import sys; assert sys.version_info[:2] >= (3,11)" > /dev/n
     fi
     cd /usr/local/bin/pifire    
     source bin/activate
-    echo " + Installing eventlet==0.30.2 and requirements" | tee -a /usr/local/bin/pifire/logs/upgrade.log
-    python -m pip install "eventlet==0.30.2"
+    # Check for Python 3.11
+    if ! /bin/python -c "import sys; assert sys.version_info[:2] >= (3,11)" > /dev/null 2>&1; then
+        echo " + System is running a python version lower than 3.11, installing eventlet==0.30.2." | tee -a /usr/local/bin/pifire/logs/upgrade.log;
+        python -m pip install "eventlet==0.30.2" 2>&1 | tee -a /usr/local/bin/pifire/logs/upgrade.log
+    else
+        echo " + System is running a python version 3.11 or higher, installing uv." | tee -a /usr/local/bin/pifire/logs/upgrade.log
+        python -m pip install eventlet 2>&1 | tee -a /usr/local/bin/pifire/logs/upgrade.log
+    fi
+
     echo " + Installing requirements.txt... " | tee -a /usr/local/bin/pifire/logs/upgrade.log
     python -m pip install -r /usr/local/bin/pifire/auto-install/requirements.txt
     # Find all bluepy-helper executables in various possible locations
@@ -151,11 +177,11 @@ fi
 echo " + Configuring Supervisord..." | tee -a /usr/local/bin/pifire/logs/upgrade.log
 
 # Copy configuration files (control.conf, webapp.conf) to supervisor config directory
-if ! python -c "import sys; assert sys.version_info[:2] >= (3,11)" > /dev/null 2>&1; then
-    echo " + System is running a python version lower than 3.11, skipping supervisor configuration update" | tee -a /usr/local/bin/pifire/logs/upgrade.log
+if [ "$OS_BITS" = "32" ]; then
+    echo " + System is running a 32-bit OS, using legacy supervisor conf files" | tee -a /usr/local/bin/pifire/logs/upgrade.log
     cd /usr/local/bin/pifire/auto-install/supervisor/legacy
 else
-    echo " + System is running a python version 3.11 or greater, configuring supervisor for uv" | tee -a /usr/local/bin/pifire/logs/upgrade.log
+    echo " + System is running a 64-bit OS, configuring supervisor for uv" | tee -a /usr/local/bin/pifire/logs/upgrade.log
     cd /usr/local/bin/pifire/auto-install/supervisor
 fi
 # Add the current username to the configuration files 
