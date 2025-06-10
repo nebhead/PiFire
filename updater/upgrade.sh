@@ -83,7 +83,7 @@ if [ "$OS_BITS" = "32" ]; then
     # Check for Python 3.11
     if ! /bin/python -c "import sys; assert sys.version_info[:2] >= (3,11)" > /dev/null 2>&1; then
         echo " + System is running a python version lower than 3.11, installing eventlet==0.30.2." | tee -a /usr/local/bin/pifire/logs/upgrade.log;
-        python -m pip install "eventlet==0.30.2" 2>&1 | tee -a /usr/local/bin/pifire/logs/upgrade.log
+        python -m pip install "greenlet==3.1.1" "eventlet==0.30.2" 2>&1 | tee -a /usr/local/bin/pifire/logs/upgrade.log
     else
         echo " + System is running a python version 3.11 or higher, installing uv." | tee -a /usr/local/bin/pifire/logs/upgrade.log
         python -m pip install eventlet 2>&1 | tee -a /usr/local/bin/pifire/logs/upgrade.log
