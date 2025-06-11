@@ -1,7 +1,7 @@
 <!-- Post Update Message for v1.8.0 -->
 <H1>
     <img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="50" height="50" class="d-inline-block align-top" alt="">
-    PiFire 1.9.0 Release - April 2025
+    PiFire 1.9.2 Release - June 2025
 </H1>
 <div class="row justify-content-center">
     <div class="card" style="width:80%">
@@ -125,6 +125,9 @@
                  </li>
                  <li>
                     Pinning all python modules to specific versions to prevent recent issues with the Redis python module deprecating a parameter in the connection call. 
+                 </li>
+                 <li>
+                    Fixed issue with install on Bullseye with Python 3.9 where greenlet was not building correctly. Pinned working version. 
                  </li>
              </ul>
              

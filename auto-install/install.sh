@@ -122,7 +122,7 @@ echo " - Installing module dependencies... "
 # Install module dependencies 
 if ! python -c "import sys; assert sys.version_info[:2] >= (3,11)" > /dev/null; then
     echo "System is running a python version lower than 3.11, installing eventlet==0.30.2";
-    python -m pip install "eventlet==0.30.2"
+    python -m pip install "greenlet==3.1.1" "eventlet==0.30.2"
 else
     echo "System is running a python version 3.11 or greater, installing latest eventlet"
     python -m pip install eventlet
