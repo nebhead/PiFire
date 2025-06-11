@@ -218,7 +218,7 @@ else
         echo " + System is running a python version lower than 3.11, installing eventlet==0.30.2." | tee -a ~/logs/pifire_install.log;
         python -m pip install "greenlet==3.1.1" "eventlet==0.30.2" 2>&1 | tee -a ~/logs/pifire_install.log
     else
-        echo " + System is running a python version 3.11 or higher, installing uv." | tee -a ~/logs/pifire_install.log
+        echo " + System is running a python version 3.11 or higher." | tee -a ~/logs/pifire_install.log
         python -m pip install eventlet 2>&1 | tee -a ~/logs/pifire_install.log
     fi
     # Installing module dependencies from requirements.txt
