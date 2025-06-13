@@ -18,7 +18,8 @@
 import argparse
 import logging
 import os 
-import json 
+import json
+import subprocess
 
 '''
 ==============================================================================
@@ -196,7 +197,8 @@ def enable_gpio_shutdown():
 def rpi_config_write(config_type, feature, add_config={}, pin=0, param='', pin_type='gpio_pin'):
 	result = 'SUCCESS'
 	''' Check OS version, so we can get the correct location of config.txt '''
-	version = os_version()
+	os_info = get_os_info()
+	version = os_info.get('VERSION_ID', None)
 	if version == '12':
 		''' Version 12 Bookworm '''
 		config_filename = '/boot/firmware/config.txt'
@@ -345,19 +347,32 @@ def build_config_line(config_type, config_dict):
 
     return config_line
 
-def os_version():
-	version = None
+def get_os_info():
+	"""Get operating system information"""
+	os_info = {}
+
 	try:
-		with open('/etc/os-release', "r+") as os_info_file:
-			os_info = os_info_file.readlines()
-		for index in range(0, len(os_info)):
-			if 'VERSION_ID=' in os_info[index]:
-				version = os_info[index].replace('VERSION_ID=', '').replace('"', '').replace('\n', '')
-				break
-	except:
-		version = None 
-	
-	return version 
+		# Get OS release info
+		with open('/etc/os-release', 'r') as f:
+			for line in f:
+				if '=' in line:
+					key, value = line.strip().split('=', 1)
+					# Remove quotes if present
+					value = value.strip('"')
+					os_info[key] = value
+		
+		# Get architecture using uname -m
+		arch = subprocess.check_output(['/bin/uname', '-m']).decode().strip()
+		os_info['ARCHITECTURE'] = arch
+		
+		# Save to JSON file
+		write_generic_json(os_info, 'os_info.json')
+		return os_info
+		
+	except Exception as e:
+		event = f"Error getting OS info: {str(e)}"
+		logger.error(event)
+		return os_info
 
 def create_file(filename, lines):
 	result = f'\n - Attempting to write data to {filename}: '
@@ -414,6 +429,15 @@ def read_generic_json(filename):
 		logger.error(event)
 	return dictionary
 
+def write_generic_json(dictionary, filename):
+	try: 
+		json_data_string = json.dumps(dictionary, indent=2, sort_keys=True)
+		with open(filename, 'w') as json_file:
+			json_file.write(json_data_string)
+	except:
+		event = f'Error writing generic json file ({filename})'
+		logger.error(event)
+
 def create_logger(name, filename='./logs/pifire.log', messageformat='%(asctime)s | %(levelname)s | %(message)s', level=logging.INFO):
 	'''Create or Get Existing Logger'''
 	logger = logging.getLogger(name)
@@ -440,15 +464,15 @@ def create_logger(name, filename='./logs/pifire.log', messageformat='%(asctime)s
 if __name__ == "__main__":
 	logger = create_logger('board_config', filename='./logs/board_config.log', level=log_level)
 	
-	print('PiFire Board Configuration Tool v1.0.0')
-	print('Ben Parmeter - 2024 - MIT License')
+	print('PiFire Board Configuration Tool v1.0.1')
+	print('Ben Parmeter - 2025 - MIT License')
 	print(' --help, -h for command details\n')
 	
 	parser = argparse.ArgumentParser(description='This tool performs board specific configuration for certain system level features.  Use the below options to enable/disable and configure these features.  System settings are read from the settings.json file.')
 	parser.add_argument('-pwm', '--pwm', action='store_true', required=False, help="Set PWM GPIO.")
 	parser.add_argument('-ow', '--onewire', action='store_true', required=False, help="Set 1Wire GPIO.")
 	parser.add_argument('-bl', '--backlight', action='store_true', required=False, help="Enable backlight permissions.")
-	parser.add_argument('-ov', '--osversion', action='store_true', required=False, help="Get OS Version.")
+	parser.add_argument('-ov', '--osversion', action='store_true', required=False, help="Get OS Version. Saves to os_info.json.")
 	parser.add_argument('-s', '--spi', action='store_true', required=False, help="Enable SPI.")
 	parser.add_argument('-i', '--i2c', action='store_true', required=False, help="Enable I2C.")
 	parser.add_argument('-is', '--i2cspeed', metavar='BAUD', type=int, required=False, help="Set the I2C baud rate. BAUD should be an integer, i.e. 100000")
@@ -480,7 +504,8 @@ if __name__ == "__main__":
 		results.append(enable_gpio_shutdown())
 
 	if args.osversion:
-		version = os_version()
+		os_info = get_os_info()
+		version = os_info.get('VERSION_ID', 'Unknown')
 		event = f'Detected OS version_id: {version}.'
 		results.append(event)
 

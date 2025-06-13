@@ -2387,7 +2387,7 @@
 				"friendly_name" : "Raspberry Pi DSI Connected Display 800x480 w/Touch",
 				"filename" : "dsi_800x480t",
 				"description" : "Raspberry Pi DSI Connected Display such as the 7\" Raspberry Pi Touch Screen display. Several clones exist which should work perfectly well.",
-				"notes" : "This module may take a very long time to install due to the OS dependencies that are required.  Please be aware that this may take more than 10 minutes to install depending on your system and internet connection.",
+				"notes" : "Raspberry Pi OS 12 Bookworm 64-Bit is not currently compatible with this module.  It has been tested successfully with 32-Bit Bookworm and Bullseye.  This module may take a very long time to install due to the OS dependencies that are required.  Please be aware that this may take more than 10 minutes to install depending on your system and internet connection.",
 				"default" : false,
 				"image" : "dsi_touch.png",
 				"reboot_required" : true,

@@ -71,3 +71,5 @@ dt.sh
 lt.sh
 
 pip_list.json
+
+os_info.json

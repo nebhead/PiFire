@@ -77,7 +77,7 @@ r=$(( r < 20 ? 20 : r ))
 c=$(( c < 70 ? 70 : c ))
 
 # Display the welcome dialog
-whiptail --msgbox --backtitle "Welcome" --title "PiFire Automated Installer" "This installer will transform your Single Board Computer into a connected Smoker Controller.  NOTE: This installer is intended to be run on a fresh install of Raspberry Pi OS Lite 32/64-Bit Bookworm or later." ${r} ${c}
+whiptail --msgbox --backtitle "Welcome" --title "PiFire Automated Installer" "This installer will transform your Single Board Computer into a connected Smoker Controller.  NOTE: This installer is intended to be run on a fresh install of Raspberry Pi OS Lite 32/64-Bit Bullseye or later." ${r} ${c}
 
 # Supervisor WebUI Settings
 SVISOR=$(whiptail --title "Would you like to enable the supervisor WebUI?" --radiolist "This allows you to check the status of the supervised processes via a web browser, and also allows those processes to be restarted directly from this interface. (Recommended)" 20 78 2 "ENABLE_SVISOR" "Enable the WebUI" ON "DISABLE_SVISOR" "Disable the WebUI" OFF 3>&1 1>&2 2>&3)
@@ -249,6 +249,10 @@ fi
 # Get PIP List into JSON file
 echo " - Getting PIP List into JSON file" | tee -a ~/logs/pifire_install.log
 python updater.py --piplist 2>&1 | tee -a ~/logs/pifire_install.log
+
+# Get OS Information into JSON file
+echo " - Getting OS Information into JSON file" | tee -a ~/logs/pifire_install.log
+python board-config.py --ov 2>&1 | tee -a ~/logs/pifire_install.log
 
 ### Setup nginx to proxy to gunicorn
 echo "*************************************************************************" | tee -a ~/logs/pifire_install.log

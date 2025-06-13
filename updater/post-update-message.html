@@ -19,13 +19,13 @@
                   <b>Quality of Life:</b> Added Python Module List to the admin page (Admin > Module List).  This will show you the modules that are installed and their version numbers.  This is useful to debug common package version issues. 
                </li>
                <li>
-                  <b>Installer Improvements:</b> For fresh installations, Raspberry Pi OS 12 (Bookworm) 64-Bit is now the default operating system.  This is the latest stable release of Raspberry Pi OS and is highly recommended for new installations.  If you are running an older version of Raspberry Pi OS, you can still upgrade.  This new installer will install UV and will log the installation process to a file in your home directory.
+                  <b>Installer Improvements:</b> For fresh installations, Raspberry Pi OS 12 (Bookworm) (32/64-Bit) is recommended.  This is the latest stable release of Raspberry Pi OS and is highly recommended for new installations.  If you are running an older version of Raspberry Pi OS, you can still upgrade.  For Bookworm 64-Bit, this new installer will install UV and will log the installation process to a file in your home directory.  Note: If you are using the DSI connected display, you will need to use only 32-Bit Raspberry Pi OS (Bullseye or Bookworm) due to the changes in display drivers in the 64-Bit version. 
                </li>
                <li>
                   <b>Behind the scenes improvements including:</b>  
                   <ul>
                      <li>
-                        Changed install script to utilize UV for creating a VENV and installing dependencies.  This results in a much faster installation process, quicker upgrades and street cred.  Only applicable to Raspberry Pi OS 12 (Bookworm) and later.
+                        Changed install script to utilize UV for creating a VENV and installing dependencies.  This results in a much faster installation process, quicker upgrades and street cred.  Only applicable to Raspberry Pi OS 12 (Bookworm) 64-Bit and later.
                      </li>
                      <li>
                         Changed the behavior of the control script so that controller configuration can be modified while in Hold mode.  This allows you to you to manually tune your PID, potentially, while running a test burn.  In the future, this may be extended to allow auto-tuning capabilities.
@@ -35,6 +35,9 @@
                      </li>
                      <li>
                         Fresh installations will now pin all versions of the python package dependencies to improve reliability and stability. 
+                     </li>
+                     <li>
+                        Updated the board-config utility to gather os information in os_info.json. 
                      </li>
                   </ul>
                </li>

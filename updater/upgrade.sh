@@ -173,6 +173,10 @@ else
     python updater.py --piplist
 fi
 
+# Get OS Information into JSON file
+echo " - Getting OS Information into JSON file" | tee -a ~/logs/pifire_install.log
+python board-config.py --ov 2>&1 | tee -a ~/logs/pifire_install.log
+
 ### Setup Supervisor to Start Apps on Boot / Restart on Failures
 echo " + Configuring Supervisord..." | tee -a /usr/local/bin/pifire/logs/upgrade.log
 
