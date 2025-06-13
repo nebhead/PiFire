@@ -127,7 +127,7 @@
     },
     {
       "version" : "1.10.0",
-      "build" : 24,
+      "build" : 25,
       "reboot_required" : true,
       "dependencies" : {
         "app": {
