@@ -15,7 +15,8 @@
 '''
 
 from common import *
-import pkg_resources
+from importlib.metadata import version, PackageNotFoundError
+
 import subprocess
 import argparse
 import logging
@@ -316,12 +317,10 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 			for section in version_info['dependencies']:
 				for module in version_info['dependencies'][section]['py_dependencies']:
 					try:
-						dist = pkg_resources.get_distribution(module)
-						print('{} ({}) is installed'.format(dist.key, dist.version))
-						logger.debug('{} ({}) is installed'.format(dist.key, dist.version))
-					except pkg_resources.DistributionNotFound:
-						print('{} is NOT installed'.format(module))
-						logger.debug('{} is NOT installed'.format(module))
+						pkg_version = version(module)
+						logger.info(f"Found {module} version {pkg_version}")
+					except PackageNotFoundError:
+						logger.info(f"Package {module} not found, adding to dependencies")
 						py_dependencies.append(module)
 
 				for package in version_info['dependencies'][section]['apt_dependencies']:
