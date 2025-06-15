@@ -81,7 +81,7 @@ class Controller(ControllerBase):
 		self.set_target(0.0)
 
 	def _calculate_gains(self, pb, ti, td):
-		if pd == 0:
+		if pb == 0:
 			self.kp = 0
 		else:
 			self.kp = -1 / pb
