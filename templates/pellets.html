@@ -475,7 +475,7 @@
         setTimeout(function() {
             // Get Hopper Level on Page Load
             req = $.ajax({
-                url : '/hopperlevel',
+                url : '/api/hopper',
                 type : 'GET'
             });
 
@@ -500,7 +500,7 @@
         setInterval(function(){
             // Get Hopper Level
             req = $.ajax({
-                url : '/hopperlevel',
+                url : '/api/hopper',
                 type : 'GET'
             });
 

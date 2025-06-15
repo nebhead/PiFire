@@ -28,7 +28,7 @@ from werkzeug.exceptions import InternalServerError
 from collections.abc import Mapping
 import threading
 import zipfile
-import pathlib
+
 from threading import Thread
 from datetime import datetime
 from updater import *  # Library for doing project updates from GitHub
@@ -36,12 +36,18 @@ from file_mgmt.common import fixup_assets, read_json_file_data, update_json_file
 from file_mgmt.cookfile import read_cookfile, upgrade_cookfile, prepare_chartdata
 from file_mgmt.media import add_asset, set_thumbnail, unpack_thumb
 from file_mgmt.recipes import read_recipefile, create_recipefile
+from common.app import allowed_file, get_supported_cmds, get_system_command_output, create_ui_hash
+
+''' Flask Blueprints '''
+from blueprints.admin import admin_bp
+from blueprints.api import api_bp
 
 '''
 ==============================================================================
  Constants & Globals 
 ==============================================================================
 '''
+from config import ProductionConfig  # ProductionConfig or DevelopmentConfig
 
 BACKUP_PATH = './backups/'  # Path to backups of settings.json, pelletdb.json
 UPLOAD_FOLDER = BACKUP_PATH  # Point uploads to the backup path
@@ -49,15 +55,17 @@ HISTORY_FOLDER = './history/'  # Path to historical cook files
 RECIPE_FOLDER = './recipes/'  # Path to recipe files 
 LOGS_FOLDER = './logs/'  # Path to log files 
 ALLOWED_EXTENSIONS = {'json', 'pifire', 'pfrecipe', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'log'}
-server_status = 'available'
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
 QRcode(app)
 Mobility(app)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['HISTORY_FOLDER'] = HISTORY_FOLDER
-app.config['RECIPE_FOLDER'] = RECIPE_FOLDER
+
+app.config.from_object(ProductionConfig)
+
+''' Register Flask Blueprints '''
+app.register_blueprint(admin_bp, url_prefix='/admin')
+app.register_blueprint(api_bp, url_prefix='/api')
 
 '''
 ==============================================================================
@@ -128,85 +136,6 @@ def dash_config():
 		return redirect('/dash')
 	
 	return 'Bad Request'
-
-@app.route('/hopperlevel')
-def hopper_level():
-	pelletdb = read_pellet_db()
-	cur_pellets_string = pelletdb['archive'][pelletdb['current']['pelletid']]['brand'] + ' ' + \
-						 pelletdb['archive'][pelletdb['current']['pelletid']]['wood']
-	return jsonify({ 'hopper_level' : pelletdb['current']['hopper_level'], 'cur_pellets' : cur_pellets_string })
-
-'''
-This route will be deprecated in an upcoming release and has been replaced with the API calls /api/[get,set]/timer
-'''
-@app.route('/timer', methods=['POST','GET'])
-def timer():
-	global settings 
-	control = read_control()
-
-	if request.method == "GET":
-		return jsonify({ 'start' : control['timer']['start'], 'paused' : control['timer']['paused'],
-						 'end' : control['timer']['end'], 'shutdown': control['timer']['shutdown']})
-	elif request.method == "POST": 
-		if 'input' in request.form:
-			for index, notify_obj in enumerate(control['notify_data']):
-				if notify_obj['type'] == 'timer':
-					break 
-			if 'timer_start' == request.form['input']: 
-				control['notify_data'][index]['req'] = True
-				# If starting new timer
-				if control['timer']['paused'] == 0:
-					now = time.time()
-					control['timer']['start'] = now
-					if 'hoursInputRange' in request.form and 'minsInputRange' in request.form:
-						seconds = int(request.form['hoursInputRange']) * 60 * 60
-						seconds = seconds + int(request.form['minsInputRange']) * 60
-						control['timer']['end'] = now + seconds
-					else:
-						control['timer']['end'] = now + 60
-					if 'shutdownTimer' in request.form:
-						if request.form['shutdownTimer'] == 'true':
-							control['notify_data'][index]['shutdown'] = True
-						else: 
-							control['notify_data'][index]['shutdown'] = False
-					if 'keepWarmTimer' in request.form:
-						if request.form['keepWarmTimer'] == 'true':
-							control['notify_data'][index]['keep_warm'] = True
-						else:
-							control['notify_data'][index]['keep_warm'] = False
-					write_log('Timer started.  Ends at: ' + epoch_to_time(control['timer']['end']))
-					write_control(control, origin='app')
-				else:	# If Timer was paused, restart with new end time.
-					now = time.time()
-					control['timer']['end'] = (control['timer']['end'] - control['timer']['paused']) + now
-					control['timer']['paused'] = 0
-					write_log('Timer unpaused.  Ends at: ' + epoch_to_time(control['timer']['end']))
-					write_control(control, origin='app')
-			elif 'timer_pause' == request.form['input']:
-				if control['timer']['start'] != 0:
-					control['notify_data'][index]['req'] = False
-					now = time.time()
-					control['timer']['paused'] = now
-					write_log('Timer paused.')
-					write_control(control, origin='app')
-				else:
-					control['notify_data'][index]['req'] = False
-					control['timer']['start'] = 0
-					control['timer']['end'] = 0
-					control['timer']['paused'] = 0
-					control['notify_data'][index]['shutdown'] = False
-					control['notify_data'][index]['keep_warm'] = False
-					write_log('Timer cleared.')
-					write_control(control, origin='app')
-			elif 'timer_stop' == request.form['input']:
-				control['notify_data'][index]['req'] = False
-				control['timer']['start'] = 0
-				control['timer']['end'] = 0
-				control['notify_data'][index]['shutdown'] = False
-				control['notify_data'][index]['keep_warm'] = False
-				write_log('Timer stopped.')
-				write_control(control, origin='app')
-		return jsonify({'result':'success'})
 
 @app.route('/history/<action>', methods=['POST','GET'])
 @app.route('/history', methods=['POST','GET'])
@@ -470,7 +399,7 @@ def cookfiledata(action=None):
 			if (remotefile.filename != ''):
 				# If the user does not select a file, the browser submits an
 				# empty file without a filename.
-				if remotefile and _allowed_file(remotefile.filename):
+				if remotefile and allowed_file(remotefile.filename):
 					filename = secure_filename(remotefile.filename)
 					remotefile.save(os.path.join(app.config['HISTORY_FOLDER'], filename))
 				else:
@@ -528,7 +457,7 @@ def cookfiledata(action=None):
 					if not os.path.exists(tmp_path):
 						os.mkdir(tmp_path)
 
-					if remotefile and _allowed_file(remotefile.filename):
+					if remotefile and allowed_file(remotefile.filename):
 						filename = secure_filename(remotefile.filename)
 						pathfile = os.path.join(tmp_path, filename)
 						remotefile.save(pathfile)
@@ -1054,7 +983,7 @@ def logs_page(action=None):
 		os.mkdir(LOGS_FOLDER)
 	log_file_list = os.listdir(LOGS_FOLDER)
 	for file in log_file_list:
-		if not _allowed_file(file):
+		if not allowed_file(file):
 			log_file_list.remove(file)
 
 	if(request.method == 'POST') and ('form' in request.content_type):
@@ -1281,7 +1210,7 @@ def recipes_data(filename=None):
 			remote_file = request.files['recipefile']
 			result = "error"
 			if remote_file.filename != '':
-				if remote_file and _allowed_file(remote_file.filename):
+				if remote_file and allowed_file(remote_file.filename):
 					filename = secure_filename(remote_file.filename)
 					remote_file.save(os.path.join(app.config['RECIPE_FOLDER'], filename))
 					result = "success"
@@ -1302,7 +1231,7 @@ def recipes_data(filename=None):
 					if not os.path.exists(tmp_path):
 						os.mkdir(tmp_path)
 
-					if remotefile and _allowed_file(remotefile.filename):
+					if remotefile and allowed_file(remotefile.filename):
 						asset_filename = secure_filename(remotefile.filename)
 						pathfile = os.path.join(tmp_path, asset_filename)
 						remotefile.save(pathfile)
@@ -2218,261 +2147,6 @@ def settings_page(action=None):
 						   page_theme=settings['globals']['page_theme'],
 						   grill_name=settings['globals']['grill_name'])
 
-@app.route('/admin/<action>', methods=['POST','GET'])
-@app.route('/admin', methods=['POST','GET'])
-def admin_page(action=None):
-	global server_status
-	global settings
-	control = read_control()
-	pelletdb = read_pellet_db()
-
-	errors = []
-	warnings = []
-	success = []
-
-	if not os.path.exists(BACKUP_PATH):
-		os.mkdir(BACKUP_PATH)
-	files = os.listdir(BACKUP_PATH)
-	for file in files:
-		if not _allowed_file(file):
-			files.remove(file)
-
-	if action == 'reboot':
-		event = "Admin: Reboot"
-		write_log(event)
-		server_status = 'rebooting'
-		reboot_system()
-		return render_template('shutdown.html', action=action, page_theme=settings['globals']['page_theme'],
-							   grill_name=settings['globals']['grill_name'])
-
-	elif action == 'shutdown':
-		event = "Admin: Shutdown"
-		write_log(event)
-		server_status = 'shutdown'
-		shutdown_system()
-		return render_template('shutdown.html', action=action, page_theme=settings['globals']['page_theme'],
-							   grill_name=settings['globals']['grill_name'])
-
-	elif action == 'restart':
-		event = "Admin: Restart Server"
-		write_log(event)
-		server_status = 'restarting'
-		restart_scripts()
-		return render_template('shutdown.html', action=action, page_theme=settings['globals']['page_theme'],
-							   grill_name=settings['globals']['grill_name'])
-
-	if request.method == 'POST' and action == 'setting':
-		response = request.form
-
-		if 'debugenabled' in response:
-			control['settings_update'] = True
-			if response['debugenabled'] == 'disabled':
-				write_log('Debug Mode Disabled.')
-				settings['globals']['debug_mode'] = False
-				write_settings(settings)
-				write_control(control, origin='app')
-			else:
-				settings['globals']['debug_mode'] = True
-				write_settings(settings)
-				write_control(control, origin='app')
-				write_log('Debug Mode Enabled.')
-
-		if 'clearhistory' in response:
-			if response['clearhistory'] == 'true':
-				write_log('Clearing History Log.')
-				read_history(0, flushhistory=True)
-
-		if 'clearevents' in response:
-			if response['clearevents'] == 'true':
-				write_log('Clearing Events Log.')
-				os.system('rm /tmp/events.log')
-
-		if 'clearpelletdb' in response:
-			if response['clearpelletdb'] == 'true':
-				write_log('Clearing Pellet Database.')
-				os.system('rm pelletdb.json')
-
-		if 'clearpelletdblog' in response:
-			if response['clearpelletdblog'] == 'true':
-				write_log('Clearing Pellet Database Log.')
-				pelletdb['log'].clear()
-				write_pellet_db(pelletdb)
-
-		if 'factorydefaults' in response:
-			if response['factorydefaults'] == 'true':
-				write_log('Resetting Settings, Control and History to factory defaults.')
-				read_history(0, flushhistory=True)
-				read_control(flush=True)
-				os.system('rm settings.json')
-				os.system('rm pelletdb.json')
-				settings = default_settings()
-				control = default_control()
-				write_settings(settings)
-				write_control(control, origin='app')
-				server_status = 'restarting'
-				restart_scripts()
-				return render_template('shutdown.html', action='restart', page_theme=settings['globals']['page_theme'],
-									   grill_name=settings['globals']['grill_name'])
-
-		if 'download_logs' in response:
-			zip_file = _zip_files_logs('logs')
-			return send_file(zip_file, as_attachment=True, max_age=0)
-		
-		if 'delete_logs' in response:
-			# Delete *.log files in logs/
-			try:
-				os.system('rm logs/*.log')
-				success.append('Log files deleted.')
-			except:
-				errors.append('There was an error restoring pellet database.  Restore file wasn\'t specified or found')
-
-		if 'download_settings' in response: 
-			return send_file('settings.json', as_attachment=True, max_age=0)
-
-		if 'download_control' in response:
-			filename = '/tmp/control_general.json'
-			write_generic_json(control, filename)
-			return send_file(filename, as_attachment=True, max_age=0)
-		
-		if 'download_pip_list' in response:
-			filename = 'pip_list.json'
-			return send_file(filename, as_attachment=True, max_age=0)
-		
-		if 'backupsettings' in response:
-			backup_file = backup_settings()
-			return send_file(backup_file, as_attachment=True, max_age=0)
-
-		if 'restoresettings' in response:
-			# Assume we have request.files and local file in response
-			remote_file = request.files['uploadfile']
-			local_file = request.form['localfile']
-			
-			if local_file != 'none':
-				new_settings = read_settings(filename=BACKUP_PATH+local_file)
-				write_settings(new_settings)
-				server_status = 'restarting'
-				restart_scripts()
-				return render_template('shutdown.html', action='restart', page_theme=settings['globals']['page_theme'],
-									   grill_name=settings['globals']['grill_name'])
-			elif remote_file.filename != '':
-				# If the user does not select a file, the browser submits an
-				# empty file without a filename.
-				if remote_file and _allowed_file(remote_file.filename):
-					filename = secure_filename(remote_file.filename)
-					remote_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-					success.append('Successfully restored settings.')
-					new_settings = read_settings(filename=BACKUP_PATH+filename)
-					write_settings(new_settings)
-					server_status = 'restarting'
-					restart_scripts()
-					return render_template('shutdown.html', action='restart', page_theme=settings['globals']['page_theme'],
-									   		grill_name=settings['globals']['grill_name'])
-				else:
-					errors.append('There was an error restoring settings.  File either is a disallowed type or was not found.')
-			else:
-				errors.append('There was an error restoring settings.  Restore file wasn\'t specified or found')
-
-		if 'backuppelletdb' in response:
-			backup_file = backup_pellet_db(action='backup')
-			return send_file(backup_file, as_attachment=True, max_age=0)
-
-		if 'restorepelletdb' in response:
-			# Assume we have request.files and local file in response
-			remote_file = request.files['uploadfile']
-			local_file = request.form['localfile']
-			
-			if local_file != 'none':
-				pelletdb = read_pellet_db(filename=BACKUP_PATH+local_file)
-				write_pellet_db(pelletdb)
-				success.append('Successfully restored pellet database.')
-			elif remote_file.filename != '':
-				# If the user does not select a file, the browser submits an
-				# empty file without a filename.
-				if remote_file and _allowed_file(remote_file.filename):
-					filename = secure_filename(remote_file.filename)
-					remote_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-					success.append('Successfully restored pellet database.')
-					pelletdb = read_pellet_db(filename=BACKUP_PATH+filename)
-					write_pellet_db(pelletdb)
-				else:
-					errors.append('There was an error restoring the pellet database.  File either is a disallowed type or was not found.')
-			else:
-				errors.append('There was an error restoring pellet database.  Restore file wasn\'t specified or found')
-	
-	if request.method == 'POST' and action == 'boot':
-		response = request.form
-
-		if 'boot_to_monitor' in response:
-			settings['globals']['boot_to_monitor'] = True 
-		else:
-			settings['globals']['boot_to_monitor'] = False 
-		
-		write_settings(settings)
-
-	''' 
-		Get System Information 
-	'''
-
-	# TODO: Convert uptime, cpu_info, infconfig to system commands
-	uptime = os.popen('uptime').readline()
-
-	cpu_info = os.popen('cat /proc/cpuinfo').readlines()
-
-	ifconfig = os.popen('ifconfig').readlines()
-
-	supported_cmds = _get_supported_cmds()
-
-	if 'check_wifi_quality' in supported_cmds:
-		process_command(action='sys', arglist=['check_wifi_quality'], origin='admin')  # Request supported commands 
-		data = _get_system_command_output(requested='check_wifi_quality')
-		if data['result'] != 'OK':
-			event = data['message']
-			errors.append(event)
-		control['system']['wifi_quality_value'] = data['data'].get('wifi_quality_value', None)
-		control['system']['wifi_quality_max'] = data['data'].get('wifi_quality_max', None)
-		control['system']['wifi_quality_percentage'] = data['data'].get('wifi_quality_percentage', None)
-
-	if 'check_throttled' in supported_cmds:
-		process_command(action='sys', arglist=['check_throttled'], origin='admin')  # Request supported commands 
-		data = _get_system_command_output(requested='check_throttled')
-		if data['result'] != 'OK':
-			event = data['message']
-			errors.append(event)
-		control['system']['cpu_throttled'] = data['data'].get('cpu_throttled', None)
-		control['system']['cpu_under_voltage'] = data['data'].get('cpu_under_voltage', None)
-
-		if control['system']['cpu_throttled'] or control['system']['cpu_under_voltage']: 
-			event = "CPU Throttled / Undervoltage event has occurred.  Check your power supply for proper voltage."
-			errors.append(event)
-
-	if 'check_cpu_temp' in supported_cmds:
-		process_command(action='sys', arglist=['check_cpu_temp'], origin='admin')  # Request supported commands 
-		data = _get_system_command_output(requested='check_cpu_temp')
-		if data['result'] != 'OK':
-			event = data['message']
-			errors.append(event)
-		control['system']['cpu_temp'] = data['data'].get('cpu_temp', None)
-
-	write_control(control)
-
-	debug_mode = settings['globals']['debug_mode']
-
-	url = request.url_root
-
-	pip_list = read_generic_json('pip_list.json')
-	if pip_list == {}:
-		event = 'Pip list is empty. Run \'updater.py -p\' to generate pip list.'
-		errors.append(event)
-		pip_list = []
-
-	return render_template('admin.html', settings=settings, uptime=uptime, cpuinfo=cpu_info,
-						   ifconfig=ifconfig, debug_mode=debug_mode, qr_content=url,
-						   pip_list=pip_list,
-						   control=control,
-						   page_theme=settings['globals']['page_theme'],
-						   grill_name=settings['globals']['grill_name'],
-						   files=files, errors=errors, warnings=warnings, success=success)
-
 @app.route('/manual', methods=['POST','GET'])
 def manual_page(action=None):
 
@@ -2482,110 +2156,6 @@ def manual_page(action=None):
 	return render_template('manual.html', settings=settings, control=control,
 						   	page_theme=settings['globals']['page_theme'],
 						   	grill_name=settings['globals']['grill_name'])
-
-@app.route('/api', methods=['POST','GET'])
-@app.route('/api/<action>', methods=['POST','GET'])
-@app.route('/api/<action>/<arg0>', methods=['POST','GET'])
-@app.route('/api/<action>/<arg0>/<arg1>', methods=['POST','GET'])
-@app.route('/api/<action>/<arg0>/<arg1>/<arg2>', methods=['POST','GET'])
-@app.route('/api/<action>/<arg0>/<arg1>/<arg2>/<arg3>', methods=['POST','GET'])
-def api_page(action=None, arg0=None, arg1=None, arg2=None, arg3=None):
-	global settings
-	global server_status
-
-	if action in ['get', 'set', 'cmd', 'sys']:
-		#print(f'action={action}\narg0={arg0}\narg1={arg1}\narg2={arg2}\narg3={arg3}')
-		arglist = []
-		arglist.extend([arg0, arg1, arg2, arg3])
-
-		data = process_command(action=action, arglist=arglist, origin='api')
-
-		if action == 'sys':
-			''' If system command, wait for output from control '''
-			data = _get_system_command_output(requested=arg0)
-		
-		return jsonify(data), 201
-	
-	elif request.method == 'GET':
-		if action == 'settings':
-			return jsonify({'settings':settings}), 201
-		elif action == 'server':
-			return jsonify({'server_status' : server_status}), 201
-		elif action == 'control':
-			control=read_control()
-			return jsonify({'control':control}), 201
-		elif action == 'current':
-			''' Only fetch data from RedisDB or locally available, to improve performance '''
-			current_temps = read_current()  # Get current temperatures
-			control = read_control()  # Get status of control
-			display = read_status()  # Get status of display items
-			probe_status = read_probe_status(settings['probe_settings']['probe_map']['probe_info'])
-
-			''' Create string of probes that can be hashed to ensure UI integrity '''
-			probe_string = ''
-			for group in current_temps:
-				if group in ['P', 'F']:
-					for probe in current_temps[group]:
-						probe_string += probe
-			probe_string += settings['globals']['units']
-
-			notify_data = control['notify_data']
-
-			status = {}
-			status['mode'] = control['mode']
-			status['display_mode'] = display['mode']
-			status['status'] = control['status']
-			status['s_plus'] = control['s_plus']
-			status['units'] = settings['globals']['units']
-			status['name'] = settings['globals']['grill_name']
-			status['start_time'] = display['start_time']
-			status['start_duration'] = display['start_duration']
-			status['shutdown_duration'] = display['shutdown_duration']
-			status['prime_duration'] = display['prime_duration']
-			status['prime_amount'] = display['prime_amount']
-			status['lid_open_detected'] = display['lid_open_detected']
-			status['lid_open_endtime'] = display['lid_open_endtime']
-			status['p_mode'] = display['p_mode']
-			status['outpins'] = display['outpins']
-			status['startup_timestamp'] = display['startup_timestamp']
-			status['ui_hash'] = create_ui_hash()
-			status['probe_status'] = probe_status
-			return jsonify({'current':current_temps, 'notify_data':notify_data, 'status':status}), 201
-		elif action == 'hopper':
-			pelletdb = read_pellet_db()
-			pelletlevel = pelletdb['current']['hopper_level']
-			pelletid = pelletdb['current']['pelletid']
-			pellets = f'{pelletdb["archive"][pelletid]["brand"]} {pelletdb["archive"][pelletid]["wood"]}'
-			return jsonify({'hopper_level': pelletlevel, 'hopper_pellets': pellets}) 
-		else:
-			return jsonify({'Error':'Received GET request, without valid action'}), 404
-	
-	elif request.method == 'POST':
-		if not request.json:
-			event = "Local API Call Failed"
-			write_log(event)
-			abort(400)
-		else:
-			request_json = request.json
-			if(action == 'settings'):
-				settings = deep_update(settings, request.json)
-				'''
-				for key in settings.keys():
-					if key in request_json.keys():
-						settings[key].update(request_json.get(key, {}))
-				'''
-				write_settings(settings)
-				return jsonify({'settings':'success'}), 201
-			elif(action == 'control'):
-				'''
-					Updating of control input data is now done in common.py > execute_commands() 
-				'''
-				write_control(request.json, origin='app')
-				return jsonify({'control':'success'}), 201
-			else:
-				return jsonify({'Error':'Received POST request no valid action.'}), 404
-	else:
-		return jsonify({'Error':'Received undefined/unsupported request.'}), 404
 
 '''
 Wizard Route for PiFire Setup
@@ -3349,10 +2919,6 @@ def _is_not_blank(response, setting):
 def _is_checked(response, setting):
 	return setting in response and response[setting] == 'on'
 
-def _allowed_file(filename):
-	return '.' in filename and \
-		   filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
 def _check_cpu_temp():
 	process_command(action='sys', arglist=['check_cpu_temp'], origin='admin')  # Request supported commands 
 	data = _get_system_command_output(requested='check_cpu_temp')
@@ -3360,10 +2926,6 @@ def _check_cpu_temp():
 	control['system']['cpu_temp'] = data['data'].get('cpu_temp', None)
 	write_control(control)
 	return f"{control['system']['cpu_temp']}C"
-
-def create_ui_hash():
-	global settings 
-	return hash(json.dumps(settings['probe_settings']['probe_map']['probe_info']))
 
 def _prepare_annotations(displayed_starttime, metrics_data=[]):
 	if(metrics_data == []):
@@ -3685,16 +3247,6 @@ def _zip_files_dir(dir_name):
 				zipf.write(os.path.join(root, file))
 	memory_file.seek(0)
 	return memory_file
-
-def _zip_files_logs(dir_name):
-	time_now = datetime.datetime.now()
-	time_str = time_now.strftime('%m-%d-%y_%H%M%S') # Truncate the microseconds
-	file_name = f'/tmp/PiFire_Logs_{time_str}.zip'
-	directory = pathlib.Path(f'{dir_name}')
-	with zipfile.ZipFile(file_name, "w", zipfile.ZIP_DEFLATED) as archive:
-		for file_path in directory.rglob("*.log"):
-			archive.write(file_path, arcname=file_path.relative_to(directory))
-	return file_name
 
 def _get_supported_cmds():
 	process_command(action='sys', arglist=['supported_commands'], origin='admin')  # Request supported commands 
