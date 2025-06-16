@@ -117,7 +117,7 @@ var temperatureCharts = new Chart(document.getElementById('HistoryChart'), {
 					ttl: undefined,   // data will be automatically deleted as it disappears off the chart
 					frameRate: 5,    // data points are drawn 5 times every second
 					onRefresh: chart => {
-						$.get("/historyupdate/stream", function(data){
+						$.get("/history/stream", function(data){
 							checkHashChange(data.ui_hash); 
 							checkModeChange(data.mode);
 							if (chartReady) {
@@ -226,7 +226,7 @@ function refreshChartData(zoom) {
 	}
 
 	req = $.ajax({
-		url : '/historyupdate/refresh',
+		url : '/history/refresh',
 		type : 'POST',
 		data : JSON.stringify(postdata),
 		contentType: "application/json; charset=utf-8",
@@ -316,7 +316,7 @@ $("#annotation_enabled").change(function() {
 	// If streaming is paused, update chart manually
 	if(paused == true) {
 		if (annotation_enabled == true) {
-			$.get("/historyupdate/stream", function(data) {
+			$.get("/history/stream", function(data) {
 				temperatureCharts.options.plugins.annotation.annotations = data.annotations;
 			});
 		} else {

@@ -2,7 +2,7 @@
 Common PiFire WebApp Functions Shared Between Blueprints
 '''
 
-from common.common import process_command, read_settings
+from common.common import process_command, read_settings, read_metrics, seconds_to_string
 from flask import current_app
 from common.redis_queue import RedisQueue
 import time
@@ -88,3 +88,77 @@ def paginate_list(datalist, sortkey='', reversesortorder=False, itemsperpage=10,
 	}
 
 	return (pagination)
+
+def prepare_annotations(displayed_starttime, metrics_data=[]):
+	if(metrics_data == []):
+		metrics_data = read_metrics(all=True)
+	annotation_json = {}
+	# Process Additional Metrics Information for Display
+	for index in range(0, len(metrics_data)):
+		# Check if metric falls in the displayed time window
+		if metrics_data[index]['starttime'] > displayed_starttime:
+			# Convert Start Time
+			# starttime = epoch_to_time(metrics_data[index]['starttime']/1000)
+			mode = metrics_data[index]['mode']
+			color = 'blue'
+			if mode == 'Startup':
+				color = 'green'
+			elif mode == 'Stop':
+				color = 'red'
+			elif mode == 'Shutdown':
+				color = 'black'
+			elif mode == 'Reignite':
+				color = 'orange'
+			elif mode == 'Error':
+				color = 'red'
+			elif mode == 'Hold':
+				color = 'blue'
+			elif mode == 'Smoke':
+				color = 'grey'
+			elif mode in ['Monitor', 'Manual']:
+				color = 'purple'
+			annotation = {
+							'type' : 'line',
+							'xMin' : metrics_data[index]['starttime'],
+							'xMax' : metrics_data[index]['starttime'],
+							'borderColor' : color,
+							'borderWidth' : 2,
+							'label': {
+								'backgroundColor': color,
+								'borderColor' : 'black',
+								'color': 'white',
+								'content': mode,
+								'enabled': True,
+								'position': 'end',
+								'rotation': 0,
+								},
+							'display': True
+						}
+			annotation_json[f'event_{index}'] = annotation
+
+	return(annotation_json)
+
+def prepare_event_totals(events):
+	settings = read_settings()
+	auger_time = 0
+	for index in range(0, len(events)):
+		auger_time += events[index]['augerontime']
+	auger_time = int(auger_time)
+
+	event_totals = {}
+	event_totals['augerontime'] = seconds_to_string(auger_time)
+
+	grams = int(auger_time * settings['globals']['augerrate'])
+	pounds = round(grams * 0.00220462, 2)
+	ounces = round(grams * 0.03527392, 2)
+	event_totals['estusage_m'] = f'{grams} grams'
+	event_totals['estusage_i'] = f'{pounds} pounds ({ounces} ounces)'
+
+	seconds = int((events[-1]['starttime']/1000) - (events[0]['starttime']/1000))
+	
+	event_totals['cooktime'] = seconds_to_string(seconds)
+
+	event_totals['pellet_level_start'] = events[0]['pellet_level_start']
+	event_totals['pellet_level_end'] = events[-2]['pellet_level_end']
+
+	return(event_totals)

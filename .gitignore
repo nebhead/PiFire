@@ -37,7 +37,7 @@ pelletdb.json
 
 static/js/backups/
 
-history/
+/history/
 
 static/img/tmp/
 
@@ -73,3 +73,5 @@ lt.sh
 pip_list.json
 
 os_info.json
+
+blueprints/example/
