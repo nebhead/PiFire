@@ -46,6 +46,7 @@ from blueprints.logs import logs_bp
 from blueprints.manifest import manifest_bp
 from blueprints.manual import manual_bp
 from blueprints.history import history_bp
+from blueprints.metrics import metrics_bp
 
 '''
 ==============================================================================
@@ -76,6 +77,7 @@ app.register_blueprint(logs_bp, url_prefix='/logs')
 app.register_blueprint(manifest_bp, url_prefix='/manifest')
 app.register_blueprint(manual_bp, url_prefix='/manual')
 app.register_blueprint(history_bp, url_prefix='/history')
+app.register_blueprint(metrics_bp, url_prefix='/metrics')
 
 '''
 ==============================================================================
@@ -2697,24 +2699,7 @@ def update_page(action=None):
 End Updater Section
 '''
 
-''' 
-Metrics Routes
-'''
-@app.route('/metrics/<action>', methods=['POST','GET'])
-@app.route('/metrics', methods=['POST','GET'])
-def metrics_page(action=None):
-	global settings
-	control = read_control()
 
-	metrics_data = process_metrics(read_metrics(all=True))
-
-	if (request.method == 'GET') and (action == 'export'):
-		filename = datetime.datetime.now().strftime('%Y%m%d-%H%M') + '-PiFire-Metrics-Export'
-		csvfilename = _prepare_metrics_csv(metrics_data, filename)
-		return send_file(csvfilename, as_attachment=True, max_age=0)
-
-	return render_template('metrics.html', settings=settings, control=control, page_theme=settings['globals']['page_theme'], 
-							grill_name=settings['globals']['grill_name'], metrics_data=metrics_data)
 
 '''
 ==============================================================================
@@ -2788,6 +2773,7 @@ def _prepare_annotations(displayed_starttime, metrics_data=[]):
 
 	return(annotation_json)
 
+# TODO: Remove this function when other dependent functions are updated to use common/app.py
 def _prepare_metrics_csv(metrics_data, filename):
 	filename = filename.replace('.json', '')
 	filename = filename.replace('./history/', '')

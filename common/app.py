@@ -2,7 +2,7 @@
 Common PiFire WebApp Functions Shared Between Blueprints
 '''
 
-from common.common import process_command, read_settings, read_metrics, seconds_to_string
+from common.common import process_command, read_settings, read_metrics, seconds_to_string, metrics_items
 from flask import current_app
 from common.redis_queue import RedisQueue
 import time
@@ -162,3 +162,32 @@ def prepare_event_totals(events):
 	event_totals['pellet_level_end'] = events[-2]['pellet_level_end']
 
 	return(event_totals)
+
+def prepare_metrics_csv(metrics_data, filename):
+	filename = filename.replace('.json', '')
+	filename = filename.replace('./history/', '')
+	filename = '/tmp/' + filename + '-PiFire-Metrics-Export.csv'
+
+	csvfile = open(filename, 'w')
+
+	list_length = len(metrics_data) # Length of list
+
+	if(list_length > 0):
+		# Build the header row
+		writeline=''
+		for item in range(0, len(metrics_items)):
+			writeline += f'{metrics_items[item][0]}, '
+		writeline += '\n'
+		csvfile.write(writeline)
+		for index in range(0, list_length):
+			writeline = ''
+			for item in range(0, len(metrics_items)):
+				writeline += f'{metrics_data[index][metrics_items[item][0]]}, '
+			writeline += '\n'
+			csvfile.write(writeline)
+	else:
+		writeline = 'No Data\n'
+		csvfile.write(writeline)
+
+	csvfile.close()
+	return(filename)
