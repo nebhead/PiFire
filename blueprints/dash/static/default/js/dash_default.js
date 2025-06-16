@@ -1,4 +1,4 @@
-// Dashboard JS
+// Dashboard Default JS
 
 // Global Variables 
 var errorCounter = 0;
@@ -11,14 +11,100 @@ var mode = '';
 var probe_loop; // variable for the interval function
 var notify_data = []; // store all notify data
 var notify_status = {}; // store all notify statuses 
+var probes = []; // List of probe keys 
+var primary = ''; // Primary key 
+var probeGauges = {}; // List of probe gauges 
+var probesReady = false; // Pre-initialized state
 
 var last_fan_status = null;
 var last_auger_status = null;
 var last_igniter_status = null;
 var last_pmode_status = null;
 var last_lid_open_status = false;
+var last_probe_status = {};
 var display_mode = null;
-var dashDataStruct = {};
+
+if (typeof dashDataStruct == 'undefined') {
+    var dashDataStruct = {};
+	console.log('DEBUG: dashDataStruct undefined');
+	// Set max temperatures for units specified 
+	if (units == 'F') {
+		var maxTempPrimary = 600; 
+		var maxTempFood = 300;
+		var minTemp = 0;
+	} else {
+		var maxTempPrimary = 300; 
+		var maxTempFood = 150;
+		var minTemp = -20;
+	};
+} else {
+	if (units == 'F') {
+		var maxTempPrimary = dashDataStruct.config.max_primary_temp_F; 
+		var maxTempFood = dashDataStruct.config.max_food_temp_F;
+		var minTemp = 0;
+	} else {
+		var maxTempPrimary = dashDataStruct.config.max_primary_temp_C; 
+		var maxTempFood = dashDataStruct.config.max_food_temp_C;
+		var minTemp = -20;
+	};
+};
+
+// Credits to https://github.com/naikus for SVG-Gauge (https://github.com/naikus/svg-gauge) MIT License Copyright (c) 2016 Aniket Naik
+var Gauge = window.Gauge;
+
+function initProbeCards() {
+	req = $.ajax({
+		url : '/api/current',
+		type : 'GET',
+		success : function(current){
+			// Update current probe temperatures an store probe labels
+			for (key in current.current.P) {
+				probes.push(key);  // Store probe name to use with notify data
+				primary = key;
+				probeGauges[key] = initProbeGauge(key);
+				probeGauges[key].setValue(0);
+			};
+			for (key in current.current.F) {
+				probes.push(key);  // Store probe name to use with notify data 
+				probeGauges[key] = initProbeGauge(key);
+				probeGauges[key].setValue(0);
+			};
+			last_probe_status = current.status.probe_status;
+			//console.log(last_probe_status);
+			probesReady = true;
+		}
+	});
+};
+
+function initProbeGauge(key) {
+	console.log('Init Probe Gauge: ' + key);
+	// Create a new Gauge
+	if (key == primary) {
+		var maxTemp = maxTempPrimary;
+	} else {
+		var maxTemp = maxTempFood;
+	};
+	var probeGauge = Gauge(document.getElementById(key+"_gauge"), {
+		max: maxTemp,
+		min: minTemp,
+		// custom label renderer
+		label: function(value) {
+				return Math.round(value);
+		},
+		value: 0,
+		// Custom dial colors (Optional)
+		color: function(value) {
+			if(value <= maxTemp * 0.90) {
+				return "#3498db"; // default color
+			}else {
+				return "#ef4655"; // if is temperature is greater than 10% of max value, RED 
+			};
+		}
+	});
+
+	return probeGauge;
+};
+
 function initNotifyStatus() {
 	// This function creates the notify_status object that indicates the current activated/requested notifications
 	for (notify_item in notify_data) {
@@ -46,7 +132,7 @@ function initNotifyStatus() {
 	};
 };
 
-function initNotifyIndicators(probes) {
+function initNotifyIndicators() {
 	for(item in notify_data) {
 		if (probes.includes(notify_data[item].label)) {
 			updateNotificationCard(notify_data[item]);
@@ -67,7 +153,6 @@ function updateProbeCards() {
 			};
 
 			// Local Variables:
-			var probes = [];
 			
 			// Check for server side changes and reload if needed
 			if (ui_hash == '') {
@@ -78,26 +163,24 @@ function updateProbeCards() {
 				clearInterval(probe_loop);  // Stop getting current data from the server
 			};
 
-			// Update current probe temperatures an store probe labels
-			for (key in current.current.P) {
-				updateTempCard(key, current.current.P[key]);
-				probes.push(key);  // Store probe name to use with notify data
-				primary = key;
-			};
-			for (key in current.current.F) {
-				updateTempCard(key, current.current.F[key]);
-				probes.push(key);  // Store probe name to use with notify data 
-			};
+			if (probesReady) {
+				// Update current probe temperatures an store probe labels
+				for (key in current.current.P) {
+					updateTempCard(key, current.current.P[key]);
+				};
+				for (key in current.current.F) {
+					updateTempCard(key, current.current.F[key]);
+				};
 
-			// Check for an update to notifications data 
-			if (notify_data.length == 0) {
-				console.log('Initializing notify_data.')
-				notify_data = JSON.parse(JSON.stringify(current.notify_data)); // Copy data to notify_data variable
-				initAllTargets();
-				initNotifyStatus();
-				initNotifyIndicators(probes);
-			} else {
-				//console.log(probes);
+				// Check for an update to notifications data 
+				if (notify_data.length == 0) {
+					console.log('Initializing notify_data.')
+					notify_data = JSON.parse(JSON.stringify(current.notify_data)); // Copy data to notify_data variable
+					initAllTargets();
+					initNotifyStatus();
+					initNotifyIndicators();
+				} else {
+					//console.log(probes);
 					// First update notify statuses 
 					for(item in current.notify_data) {
 						// Update Notify Status
@@ -112,85 +195,106 @@ function updateProbeCards() {
 						};
 					};
 					// Check for changes in notify data structures 
-				for(item in current.notify_data) {
-					if (probes.includes(current.notify_data[item].label)) {
-						//console.log('Found! ' + current.notify_data[item].label);
-						//console.log('Data: ' + notify_data[item].label);
-						//console.log('current: ' + current.notify_data[item].target + ' last: ' + notify_data[item].target);
-						// Check for changes to triggered state
-						var triggered = false;
-						if (('triggered' in current.notify_data[item]) && ('triggered' in notify_data[item])) {
-							if (current.notify_data[item].triggered != notify_data[item].triggered) {
-								var triggered = true;
+					for(item in current.notify_data) {
+						if (probes.includes(current.notify_data[item].label)) {
+							//console.log('Found! ' + current.notify_data[item].label);
+							//console.log('Data: ' + notify_data[item].label);
+							//console.log('current: ' + current.notify_data[item].target + ' last: ' + notify_data[item].target);
+							// Check for changes to triggered state
+							var triggered = false;
+							if (('triggered' in current.notify_data[item]) && ('triggered' in notify_data[item])) {
+								if (current.notify_data[item].triggered != notify_data[item].triggered) {
+									var triggered = true;
+								};
 							};
-						};
-						if ((current.notify_data[item].target != notify_data[item].target) || 
-							(current.notify_data[item].req != notify_data[item].req) ||
-							(current.notify_data[item].shutdown != notify_data[item].shutdown) ||
-							(current.notify_data[item].keep_warm != notify_data[item].keep_warm) || 
-							(current.notify_data[item].eta != notify_data[item].eta) ||
-							(triggered)
-							) {
-							console.log('Notification data change detected.')
-							// Store Notify Data
-							notify_data[item] = JSON.parse(JSON.stringify(current.notify_data[item])); // Copy data to notify_data variable
+							if ((current.notify_data[item].target != notify_data[item].target) || 
+								(current.notify_data[item].req != notify_data[item].req) ||
+								(current.notify_data[item].shutdown != notify_data[item].shutdown) ||
+								(current.notify_data[item].keep_warm != notify_data[item].keep_warm) || 
+								(current.notify_data[item].eta != notify_data[item].eta) ||
+								(triggered)
+								) {
+								console.log('Notification data change detected.')
+								// Store Notify Data
+								notify_data[item] = JSON.parse(JSON.stringify(current.notify_data[item])); // Copy data to notify_data variable
 								// Update Page
 								updateNotificationCard(notify_data[item]);
 								initTarget(notify_data[item]);
+							};
 						};
 					};
 				};
-			};
 
-			// Check for mode change
-			if (mode != current.status.mode) {
-				if (current.status.mode == 'Hold') {
+				// Check for mode change
+				if (mode != current.status.mode) {
+					if (current.status.mode == 'Hold') {
+						setPrimarySetpointBtn(primary, current.current.PSP);
+						primary_setpoint = current.current.PSP;
+					} else {
+						clearPrimarySetpointBtn(primary);
+					};
+					mode = current.status.mode;
+					if (['Prime', 'Shutdown'].includes(mode)) {
+						$('#status_footer').slideDown();
+						$('#mode_timer_label').show();
+						$('#lid_open_label').hide();
+						$('#lid_open_icon').hide();
+						$('#lid_open_badge').hide();
+						$('#pmode_group').show();
+						$('#pmode_icon').show();
+						$('#pmode_badge').show();
+					} else if (['Startup', 'Reignite'].includes(mode)) {
+						$('#status_footer').slideDown();
+						$('#mode_timer_label').show();
+						$('#lid_open_label').hide();
+						$('#lid_open_icon').hide();
+						$('#lid_open_badge').hide();
+						$('#pmode_group').show();
+						$('#pmode_icon').show();
+						$('#pmode_badge').show();
+					} else if (mode == 'Hold') {
+						$('#status_footer').slideUp();
+						$('#mode_timer_label').hide();
+						$('#lid_open_label').show();
+						$('#lid_open_icon').show();
+						$('#lid_open_badge').show();
+						$('#pmode_group').hide();
+						$('#pmode_icon').hide();
+						$('#pmode_badge').hide();
+					} else if (mode == 'Smoke') {
+						$('#status_footer').slideUp();
+						$('#mode_timer_label').hide();
+						$('#lid_open_label').hide();
+						$('#lid_open_icon').hide();
+						$('#lid_open_badge').hide();
+						$('#pmode_group').show();
+						$('#pmode_icon').show();
+						$('#pmode_badge').show();
+					} else {
+						$('#status_footer').slideUp();
+						$('#mode_timer_label').hide();
+						$('#lid_open_label').hide();
+						$('#lid_open_icon').hide();
+						$('#lid_open_badge').hide();
+						$('#pmode_group').hide();
+						$('#pmode_icon').show();
+						$('#pmode_badge').show();
+					};
+					$('#mode_status').html('<b>' + mode +'</b>');
+				};
+
+				if ((current.status.mode == 'Recipe') && (display_mode != current.status.display_mode)) {
+					display_mode = current.status.display_mode;
+					$('#mode_status').html('<b>Recipe | ' + display_mode +'</b>');
+				};
+
+				// Check for a primary_setpoint change
+				if ((primary_setpoint != current.current.PSP) && (current.status.mode == 'Hold')) {
 					setPrimarySetpointBtn(primary, current.current.PSP);
 					primary_setpoint = current.current.PSP;
-				} else {
-					clearPrimarySetpointBtn(primary);
-				};
-				mode = current.status.mode;
-				if (['Prime', 'Shutdown'].includes(mode)) {
-					$('#status_footer').slideDown();
-					$('#mode_timer_label').show();
-					$('#lid_open_label').hide();
-					$('#pmode_group').hide();
-				} else if (['Startup', 'Reignite'].includes(mode)) {
-					$('#status_footer').slideDown();
-					$('#mode_timer_label').show();
-					$('#lid_open_label').hide();
-					$('#pmode_group').show();
-				} else if (mode == 'Hold') {
-					$('#status_footer').slideUp();
-					$('#mode_timer_label').hide();
-					$('#lid_open_label').show();
-					$('#pmode_group').hide();
-				} else if (mode == 'Smoke') {
-					$('#status_footer').slideUp();
-					$('#mode_timer_label').hide();
-					$('#lid_open_label').hide();
-					$('#pmode_group').show();
-				} else {
-					$('#status_footer').slideUp();
-					$('#mode_timer_label').hide();
-					$('#lid_open_label').hide();
-					$('#pmode_group').hide();
-				};
-				$('#mode_status').html('<b>' + mode +'</b>');
+				};					
 			};
 
-			if ((current.status.mode == 'Recipe') && (display_mode != current.status.display_mode)) {
-				display_mode = current.status.display_mode;
-				$('#mode_status').html('<b>Recipe | ' + display_mode +'</b>');
-			};
-
-			// Check for a primary_setpoint change
-			if ((primary_setpoint != current.current.PSP) && (current.status.mode == 'Hold')) {
-				setPrimarySetpointBtn(primary, current.current.PSP);
-				primary_setpoint = current.current.PSP;
-			};
-			
 			if (current.status.outpins.fan != last_fan_status) {
 				last_fan_status = current.status.outpins.fan;
 				if (last_fan_status) {
@@ -258,11 +362,13 @@ function updateProbeCards() {
 				if (last_lid_open_status) {
 					$('#status_footer').slideDown();
 					$('#mode_timer_label').hide();
+					document.getElementById('lid_status').innerHTML = '<i class="fa-solid fa-door-open fa-beat-fade fa-2x" data-toggle="tooltip" data-placement="top" title="Lid Open Detected" style="color:rgb(0, 140, 255)"></i></span>&nbsp;';
 					$('#lid_open_label').show();
 				} else {
 					$('#status_footer').slideUp();
 					$('#mode_timer_label').hide();
-					$('#lid_open_label').show();
+					$('#lid_open_label').hide();
+					document.getElementById('lid_status').innerHTML = '<i class="fa-solid fa-door-closed fa-2x" data-toggle="tooltip" data-placement="top" title="Lid Closed" style="color:rgb(150, 150, 150)"></i></span>&nbsp;';
 				};
 			}; 
 
@@ -280,12 +386,67 @@ function updateProbeCards() {
 				$('#lid_open_label').html('Lid Open Detected: PID Paused ' + countdown + 's');
 			};
 			
+			// Update Elapsed Time 
+			if (current.status.startup_timestamp != 0) {
+				var time_now = new Date().getTime();
+				time_now = Math.floor(time_now / 1000);
+				//console.log('Time Now Adjusted: ' + time_now);
+				var time_elapsed = time_now - Math.floor(current.status.startup_timestamp);
+				var time_elapsed_string = formatDuration(time_elapsed);
+				$('#time_elapsed_string').html(time_elapsed_string);
+				document.getElementById('time_elapsed_string').className = 'text-primary';
+			} else {
+				$('#time_elapsed_string').html('--');
+				document.getElementById('time_elapsed_string').className = 'text-secondary';
+			};
+
 			//if (current.status.s_plus) {
 			//	document.getElementById('smokeplus_status').innerHTML = '<i class="fas fa-cloud fa-stack-2x" style="color:rgb(104, 0, 104)" data-toggle="tooltip" data-placement="top" title="Smoke Plus ON"></i><i class="fas fa-plus fa-stack-1x fa-inverse"></i>';
 			//} else {
 			//	document.getElementById('smokeplus_status').innerHTML = '<i class="fas fa-cloud fa-stack-2x" style="color:rgb(150, 150, 150)" data-toggle="tooltip" data-placement="top" title="Smoke Plus OFF"></i><i class="fas fa-plus fa-stack-1x fa-inverse"></i>';
 			//};
 
+			// Check for connection status changes
+			for (key in current.status.probe_status.P) {
+				const currentConnected = current.status.probe_status.P[key].status.connected || false;
+				const lastConnected = last_probe_status.P[key].status.connected || false;
+				
+				if (currentConnected !== lastConnected) {
+					updateProbeCardConnStatus(key, currentConnected);
+					last_probe_status.P[key].status.connected = currentConnected;
+				}
+			}
+
+			for (key in current.status.probe_status.F) {
+				const currentConnected = current.status.probe_status.F[key].status.connected || false;
+				const lastConnected = last_probe_status.F[key].status.connected || false;
+				
+				if (currentConnected !== lastConnected) {
+					updateProbeCardConnStatus(key, currentConnected);
+					last_probe_status.F[key].status.connected = currentConnected;
+				}
+			}
+
+			// Check for battery status changes
+			for (key in current.status.probe_status.P) {
+				const currentBattery = current.status.probe_status.P[key].status.battery_percentage || null;
+				const lastBattery = last_probe_status.P[key].status.battery_percentage || null;
+				
+				if (currentBattery !== lastBattery) {
+					updateProbeCardBatStatus(key, currentBattery);
+					last_probe_status.P[key].status.battery_percentage = currentBattery;
+				}
+			}
+
+			for (key in current.status.probe_status.F) {
+				const currentBattery = current.status.probe_status.F[key].status.battery_percentage || null;
+				const lastBattery = last_probe_status.F[key].status.battery_percentage || null;
+				
+				if (currentBattery !== lastBattery) {
+					updateProbeCardBatStatus(key, currentBattery);
+					last_probe_status.F[key].status.battery_percentage = currentBattery;
+				}
+			}
 		},
 		error: function() {
 			console.log('Error: Failed to get current status from server.  Try: ' + errorCounter);
@@ -297,10 +458,88 @@ function updateProbeCards() {
 	});
 };
 
+function updateProbeCardConnStatus(key, connected) {
+	const conn_status_id = 'conn_status_' + key;
+	const conn_status_element = document.getElementById(conn_status_id);
+	const connected_html = '\
+					<span class="fa-stack" style="vertical-align: top;" data-toggle="tooltip" data-placement="top" \
+					title="Connected"> \
+					<i class="fas fa-wifi fa-stack-1x fa-shake" style="--fa-animation-iteration-count: 1;"></i> \
+					</span>'
+	const disconnected_html = '\
+					<span class="fa-stack" style="vertical-align: top;" data-toggle="tooltip" data-placement="top" \
+					  title="Disconnected"> \
+					<i class="fas fa-wifi fa-stack-1x fa-shake" style="--fa-animation-iteration-count: 1;"></i> \
+					<i class="fas fa-slash fa-stack-1x"></i> \
+					</span>';
+	conn_status_element.className = 'badge badge-pill ' + (connected ? 'badge-success' : 'badge-light');
+	// Update the contents of the pill with either the wifi icon or the wifi with slash icon
+	conn_status_element.innerHTML = (connected ? connected_html : disconnected_html);
+	//console.log('Update Probe Card Connection Status: ' + key + ' connected: ' + connected);
+};
+
+function updateProbeCardBatStatus(key, battery_percentage) {
+	const bat_status_id = 'bat_status_' + key;
+	const bat_status_element = document.getElementById(bat_status_id);
+	
+	// If battery_percentage is not null convert battery_percentage to an integer between 0 and 100
+	if (battery_percentage !== null) {
+		battery_percentage = Math.round(battery_percentage); 
+		if (battery_percentage < 0) {
+			battery_percentage = 0;
+		} else if (battery_percentage > 100) {
+			battery_percentage = 100;
+		}
+	}
+	
+	let badgeClass = 'badge-light';
+	if (battery_percentage !== null) {
+		if (battery_percentage < 10) {
+			badgeClass = 'badge-danger';
+		} else if (battery_percentage < 40) {
+			badgeClass = 'badge-warning';
+		} else {
+			badgeClass = 'badge-success';
+		}
+	}
+
+	let batteryIcon;
+	if (battery_percentage === null) {
+		batteryIcon = '<i class="fas fa-battery-empty fa-stack-1x text-secondary"></i>' +
+					 '<i class="fa-solid fa-question fa-stack-1x text-danger"></i>';
+	} else if (battery_percentage < 10) {
+		batteryIcon = '<i class="fas fa-battery-empty fa-stack-1x"></i>';
+	} else if (battery_percentage < 40) {
+		batteryIcon = '<i class="fas fa-battery-half fa-stack-1x"></i>';
+	} else if (battery_percentage < 90) {
+		batteryIcon = '<i class="fa-solid fa-battery-three-quarters fa-stack-1x"></i>';
+	} else {
+		batteryIcon = '<i class="fas fa-battery-full fa-stack-1x"></i>';
+	}
+
+	const battery_html = `<span class="fa-stack" style="vertical-align: top;" data-toggle="tooltip" data-placement="top"
+							   title="${battery_percentage === null ? 'Unknown' : battery_percentage + '%'}"> 
+							${batteryIcon} </span>`;
+
+	bat_status_element.className = 'badge badge-pill ' + badgeClass;
+	bat_status_element.innerHTML = battery_html;
+	//console.log('Update Probe Card Battery Status: ' + key + ' battery_percentage: ' + battery_percentage);
+};
+
 // Update the temperature for a specific probe/card 
-function updateTempCard(label, temp) {
-	idstring = label + "_temp";
-	document.getElementById(idstring).innerHTML = temp;
+function updateTempCard(key, temp) {
+	//console.log('Update Temp Card: ' + key + ' temp: ' + temp);
+	var index = dashDataStruct.custom.hidden_cards.indexOf(key); // Index of cardID
+	if (index == -1) {
+		const card = document.getElementById('card_'+key);
+        const card_enabled = card.getAttribute('data-enabled') === 'true'
+		if ((temp != null) && $('#card_'+key).is(":hidden") && card_enabled) {
+			$('#card_'+key).show();
+		} else if (temp == null) {
+			$('#card_'+key).hide();
+		};
+	};
+	probeGauges[key].setValueAnimated(temp, 0.25); // (value, animation duration in seconds)
 };
 
 // Initialize the notification target sliders for the notification modal
@@ -378,14 +617,14 @@ function updateNotificationCard(notify_info) {
 	if ((type == 'probe') && (notify_status[label]['probe']))  {
 		// Probe Notification Selected
 		// Show the Notification Bell, Target Temp and the ETA 
-	var eta = '<i class="fa-solid fa-spinner fa-spin-pulse"></i>';
-	if (notify_info.eta != null) {
-		eta = formatDuration(notify_info.eta);
-	};
-		document.getElementById(notify_btn_id).innerHTML = '<i class="far fa-bell"></i>&nbsp; ' + target + '&deg;' + units;
-        document.getElementById(eta_btn_id).innerHTML = '<i class="fa-solid fa-hourglass-half"></i>&nbsp; ' + eta;
+		var eta = '<i class="fa-solid fa-spinner fa-spin-pulse"></i>';
+		if (notify_info.eta != null) {
+			eta = formatDuration(notify_info.eta);
+		};
+		document.getElementById(notify_btn_id).innerHTML = '<i class="far fa-bell"></i>&nbsp; ' + target + '&deg;' + units; 
+		document.getElementById(eta_btn_id).innerHTML = '<i class="fa-solid fa-hourglass-half"></i>&nbsp; ' + eta;
 		document.getElementById(notify_btn_id).className = 'btn btn-sm btn-primary';
-        $('#'+eta_btn_id).show();
+		$('#'+eta_btn_id).show();
 	} else if ((!notify_status[label]['probe']) && ((notify_status[label]['probe_limit_high']) || (notify_status[label]['probe_limit_low']))) {
 		// Other Notification Selected
 		// Show the Notification Bell (Limit High / Low) Hide ETA
@@ -402,7 +641,7 @@ function updateNotificationCard(notify_info) {
 		// Turn off the Notification Bell
 		document.getElementById(notify_btn_id).innerHTML = '<i class="far fa-bell-slash"></i>';
 		document.getElementById(notify_btn_id).className = 'btn btn-sm btn-outline-primary';
-        $('#'+eta_btn_id).hide();
+		$('#'+eta_btn_id).hide();
 	};
 
 	if (((notify_status[label]['probe_limit_high']) || (notify_status[label]['probe_limit_low'])) && (triggered)) {
@@ -426,19 +665,19 @@ function setNotify(probe_label) {
 		var target_temp = $("#"+probe_label+"_tempInputId").val();
 		for (item in updated_notify_data) {
 			if ((updated_notify_data[item].type == 'probe') && (updated_notify_data[item].label == probe_label)) {
-			if ($("#"+probe_label +"_shutdown").is(':checked')){
-				shutdown = true;
-			};
-			if ($("#"+probe_label +"_keepWarm").is(':checked')){
-				keepWarm = true;
-			};
-			updated_notify_data[item].target = parseInt(target_temp);
-			updated_notify_data[item].shutdown = shutdown;
-			updated_notify_data[item].keep_warm = keepWarm;
-			updated_notify_data[item].req = true;
-			//console.log('Updated Simple Notify Temp Settings:');
-			//console.log(updated_notify_data[item]);
-			break;
+				if ($("#"+probe_label +"_shutdown").is(':checked')){
+					shutdown = true;
+				};
+				if ($("#"+probe_label +"_keepWarm").is(':checked')){
+					keepWarm = true;
+				};
+				updated_notify_data[item].target = parseInt(target_temp);
+				updated_notify_data[item].shutdown = shutdown;
+				updated_notify_data[item].keep_warm = keepWarm;
+				updated_notify_data[item].req = true;
+				//console.log('Updated Simple Notify Temp Settings:');
+				//console.log(updated_notify_data[item]);
+				break;
 			};
 		};
 	} else {
@@ -459,7 +698,6 @@ function setNotify(probe_label) {
 	// If HIGH limit notify on temperature is set, get the data and update the notification structure
 	if ($("#"+probe_label +"_limit_high_temp").is(':checked')) {
 		var target_temp = $("#"+probe_label+"_high_limit_tempInputId").val();
-		var current_temp = document.getElementById(probe_label+"_temp").innerHTML;
 		for (item in updated_notify_data) {
 			if ((updated_notify_data[item].type == 'probe_limit_high') && (updated_notify_data[item].label == probe_label)) {
 				if ($("#"+probe_label +"_high_limit_shutdown").is(':checked')){
@@ -469,7 +707,7 @@ function setNotify(probe_label) {
 				updated_notify_data[item].shutdown = shutdown;
 				updated_notify_data[item].req = true;
 				// Mark as already triggered if the target value is greater than the current value
-				if (parseInt(current_temp) > parseInt(target_temp)) {
+				if (parseInt(probeGauges[probe_label].getValue()) > parseInt(target_temp)) {
 					updated_notify_data[item].triggered = true;
 				} else {
 					updated_notify_data[item].triggered = false;
@@ -498,7 +736,6 @@ function setNotify(probe_label) {
 	// If LOW limit notify on temperature is set, get the data and update the notification structure
 	if ($("#"+probe_label +"_limit_low_temp").is(':checked')) {
 		var target_temp = $("#"+probe_label+"_low_limit_tempInputId").val();
-		var current_temp = document.getElementById(probe_label+"_temp").innerHTML;
 		for (item in updated_notify_data) {
 			if ((updated_notify_data[item].type == 'probe_limit_low') && (updated_notify_data[item].label == probe_label)) {
 				if ($("#"+probe_label +"_low_limit_shutdown").is(':checked')){
@@ -512,7 +749,7 @@ function setNotify(probe_label) {
 				updated_notify_data[item].reignite = reignite;
 				updated_notify_data[item].req = true;
 				// Mark as already triggered if the target value is less than the current value
-				if (parseInt(current_temp) < parseInt(target_temp)) {
+				if (parseInt(probeGauges[probe_label].getValue()) < parseInt(target_temp)) {
 					updated_notify_data[item].triggered = true;
 				} else {
 					updated_notify_data[item].triggered = false;
@@ -691,7 +928,7 @@ function dashSettings() {
 };
 
 function dashLoadConfig() {
-	$("#dash_config_card").load("/dashconfig");
+	$("#dash_config_card").load("/dash/config");
 };
 
 // Get dashboard data structure
@@ -700,7 +937,7 @@ function dashGetData() {
 		url : '/api/settings',
 		type : 'GET',
 		success : function(settings){
-			dashDataStruct = settings.settings.dashboard.dashboards.Basic;
+			dashDataStruct = settings.settings.dashboard.dashboards.Default;
 			//console.log('dashData Hidden='+dashDataStruct.custom.hidden_cards);
 			//console.log('dashData Name='+dashDataStruct.name);
 		}
@@ -712,7 +949,7 @@ function dashSetData() {
 	var postdata = { 
 		'dashboard' : {
 			'dashboards' : {
-				'Basic' : dashDataStruct
+				'Default' : dashDataStruct
 			}
 		} 
     };
@@ -761,6 +998,78 @@ function dashClearErrorCounter() {
 	errorCounter = 0;
 };
 
+function dash_api_set(command) {
+    $.ajax({
+        url : '/api/set/' + command,
+        type : 'POST',
+        contentType: "application/json; charset=utf-8",
+        traditional: true,
+        success: function (data) {
+            console.log('API Set [' + command + ']: ' + data.message);
+        }
+    });
+};
+
+function dashProbeConfig(selected) {
+	var post_data = {
+		'selected': selected
+	};
+	$("#probe_config_card").load("/settings/probe_config", post_data);
+	$("#probeConfigModal").modal('show');
+}
+
+function dashProbeConfigSave() {
+	// Create an empty object to store our probe configuration
+	let probe_config = {};
+
+	// Gather data by class
+	$(".probe_config").each(function() {
+		const fieldName = $(this).data("field");
+		const fieldValue = $(this).val();
+		probe_config[fieldName] = fieldValue;
+	});
+
+	// Send the data to the Flask server using AJAX
+	$.ajax({
+		url: "/settings/probe_config_save",
+		type: "POST",
+		contentType: "application/json",
+		data: JSON.stringify(probe_config),
+		success: function(response) {
+			console.log("Success:", response);
+			// Handle successful response
+			if (response['status'] == 'label_not_found') {
+				dash_toast_error("Probe label not found.");
+			} else {
+				dash_toast_success("Probe configuration successfully saved.");
+				// Delay for 0.5 seconds before reloading page
+				setTimeout(function() {
+					location.reload();	
+				}, 500);
+			};
+		},
+		error: function(error) {
+			console.error("Error:", error);
+			let errorMsg = "An error occurred while saving settings.";
+			dash_toast_error(errorMsg);
+		}
+	});
+};
+
+function dash_toast_error(message) {
+	$('#toastTitle').text('Error');
+	$('#toastMessage').text(message);
+	$('#notifyToast').removeClass('bg-success text-white').addClass('bg-danger text-white');
+	$('#notifyToast').toast('show');
+};
+
+function dash_toast_success(message) {
+	$('#toastTitle').text('Success');
+	$('#toastMessage').text(message);
+	$('#notifyToast').removeClass('bg-danger text-white').addClass('bg-success text-white');
+	$('#notifyToast').toast('show');
+};
+
 // Main
 $(document).ready(function(){
 	// Setup Listeners 
@@ -769,9 +1078,28 @@ $(document).ready(function(){
 		location.reload(); 
 	});
 
+	$('#igniter_status').click(function() {
+		dash_api_set('manual/igniter/toggle');
+	});
+
+	$('#auger_status').click(function() {
+		dash_api_set('manual/auger/toggle');
+	});
+
+	$('#fan_status').click(function() {
+		dash_api_set('manual/fan/toggle');
+	});
+
+	$('#lid_status').click(function() {
+		dash_api_set('lid_open/toggle');
+	});
+
 	// Initialize Dashboard Data
 	dashGetData();
 
+	// Initialize Probe Cards
+	initProbeCards();
+	
 	// Current temperature(s) loop
 	probe_loop = setInterval(updateProbeCards, 500); // Update every 500ms 
     

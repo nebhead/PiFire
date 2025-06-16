@@ -1,9 +1,9 @@
 {% extends 'base.html' %} 
 
-{% from '_macro_dash_default.html' import render_probe_card, render_status_card, render_time_elapsed_card %}
+{% from 'default/_macro_dash_default.html' import render_probe_card, render_status_card, render_time_elapsed_card %}
 
 {% block cssextend %}
-	<link rel="stylesheet" href="{{ url_for('static', filename='css/dash_default.css') }}" type="text/css" />
+	<link rel="stylesheet" href="{{ url_for('dash_bp.static', filename='default/css/dash_default.css') }}" type="text/css" />
 	<!-- Apply visual changes for Touch Screen Mode Enabled -->
 	{% if settings['dashboard']['dashboards']['Default']['config']['touch_screen_mode'] == 'On' %}
 	<style>
@@ -306,6 +306,6 @@
 		var dashDataStruct = {{ dash_data|tojson }};
 		//console.log(dashDataStruct);
 	</script>
-	<script src="{{ url_for('static', filename='js/dash_default.js') }}"></script>
-	<script src="{{ url_for('static', filename='js/gauge.js') }}"></script>
+	<script src="{{ url_for('dash_bp.static', filename='default/js/dash_default.js') }}"></script>
+	<script src="{{ url_for('dash_bp.static', filename='default/js/gauge.js') }}"></script>
 {% endblock %}

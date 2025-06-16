@@ -1,9 +1,9 @@
 {% extends 'base.html' %} 
 
-{% from '_macro_dash_basic.html' import render_probe_card, render_hopper_card, render_status_card %}
+{% from 'basic/_macro_dash_basic.html' import render_probe_card, render_hopper_card, render_status_card %}
 
 {% block cssextend %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/dash_basic.css') }}" type="text/css" />
+<link rel="stylesheet" href="{{ url_for('dash_bp.static', filename='basic/css/dash_basic.css') }}" type="text/css" />
 {% endblock %} 
 
 {% block title %}Dashboard{% endblock %} 
@@ -233,5 +233,5 @@
 	<script> 
 	var units = "{{ settings['globals']['units'] }}";
 	</script>
-	<script src="{{ url_for('static', filename='js/dash_basic.js') }}"></script>
+	<script src="{{ url_for('dash_bp.static', filename='basic/js/dash_basic.js') }}"></script>
 {% endblock %}
