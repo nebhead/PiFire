@@ -18,7 +18,7 @@ Description: This script will start at boot, and start up the web user
 ==============================================================================
 '''
 
-from flask import Flask, request, abort, render_template, make_response, send_file, jsonify, redirect, render_template_string
+from flask import Flask, request, render_template, send_file, jsonify, redirect, render_template_string
 from flask_mobility import Mobility
 from flask_socketio import SocketIO
 from flask_qrcode import QRcode
@@ -41,6 +41,10 @@ from common.app import allowed_file, get_supported_cmds, get_system_command_outp
 ''' Flask Blueprints '''
 from blueprints.admin import admin_bp
 from blueprints.api import api_bp
+from blueprints.events import events_bp
+from blueprints.logs import logs_bp
+from blueprints.manifest import manifest_bp
+from blueprints.manual import manual_bp
 
 '''
 ==============================================================================
@@ -66,6 +70,10 @@ app.config.from_object(ProductionConfig)
 ''' Register Flask Blueprints '''
 app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(api_bp, url_prefix='/api')
+app.register_blueprint(events_bp, url_prefix='/events')
+app.register_blueprint(logs_bp, url_prefix='/logs')
+app.register_blueprint(manifest_bp, url_prefix='/manifest')
+app.register_blueprint(manual_bp, url_prefix='/manual')
 
 '''
 ==============================================================================
@@ -948,68 +956,6 @@ def tuner_page(action=None):
 						settings=settings,
 						page_theme=settings['globals']['page_theme'],
 						grill_name=settings['globals']['grill_name'])
-
-@app.route('/events/<action>', methods=['POST','GET'])
-@app.route('/events', methods=['POST','GET'])
-def events_page(action=None):
-	global settings
-	control = read_control()
-
-	if(request.method == 'POST') and ('form' in request.content_type):
-		requestform = request.form 
-		if 'eventslist' in requestform:
-			event_list = read_events(legacy=False)
-			page = int(requestform['page'])
-			reverse = True if requestform['reverse'] == 'true' else False
-			itemsperpage = int(requestform['itemsperpage'])
-			pgntd_data = _paginate_list(event_list, reversesortorder=reverse, itemsperpage=itemsperpage, page=page)
-			return render_template('_events_list.html', pgntd_data = pgntd_data)
-		else:
-			return ('Error')
-
-	return render_template('events.html',
-							settings=settings,
-						   	control=control,
-						   	page_theme=settings['globals']['page_theme'],
-						   	grill_name=settings['globals']['grill_name'])
-
-@app.route('/logs/<action>', methods=['POST','GET'])
-@app.route('/logs', methods=['POST','GET'])
-def logs_page(action=None):
-	global settings
-	control = read_control()
-	# Get list of log files 
-	if not os.path.exists(LOGS_FOLDER):
-		os.mkdir(LOGS_FOLDER)
-	log_file_list = os.listdir(LOGS_FOLDER)
-	for file in log_file_list:
-		if not allowed_file(file):
-			log_file_list.remove(file)
-
-	if(request.method == 'POST') and ('form' in request.content_type):
-		requestform = request.form 
-
-		if 'download' in requestform:
-			log_file_name = LOGS_FOLDER + requestform['selectLog']
-			return send_file(log_file_name, as_attachment=True, max_age=0)
-		elif 'eventslist' in requestform:
-			log_file_name = requestform['logfile']
-			event_list = read_log_file(LOGS_FOLDER + log_file_name)
-			event_list = add_line_numbers(event_list)
-			page = int(requestform['page'])
-			reverse = True if requestform['reverse'] == 'true' else False
-			itemsperpage = int(requestform['itemsperpage'])
-			pgntd_data = _paginate_list(event_list, reversesortorder=reverse, itemsperpage=itemsperpage, page=page)
-			return render_template('_log_list.html', pgntd_data = pgntd_data, log_file_name=log_file_name)
-		else:
-			return ('Error')
-
-	return render_template('logs.html',
-							settings=settings,
-							control=control,
-							log_file_list=log_file_list,
-						   	page_theme=settings['globals']['page_theme'],
-						   	grill_name=settings['globals']['grill_name'])
 
 @app.route('/pellets/<action>', methods=['POST','GET'])
 @app.route('/pellets', methods=['POST','GET'])
@@ -2147,16 +2093,6 @@ def settings_page(action=None):
 						   page_theme=settings['globals']['page_theme'],
 						   grill_name=settings['globals']['grill_name'])
 
-@app.route('/manual', methods=['POST','GET'])
-def manual_page(action=None):
-
-	global settings
-	control = read_control()
-
-	return render_template('manual.html', settings=settings, control=control,
-						   	page_theme=settings['globals']['page_theme'],
-						   	grill_name=settings['globals']['grill_name'])
-
 '''
 Wizard Route for PiFire Setup
 '''
@@ -2741,16 +2677,6 @@ def probe_config():
 	else:
 		render_string = "Error!"
 		return render_template_string(render_string)
-
-
-'''
-Manifest Route for Web Application Integration
-'''
-@app.route('/manifest')
-def manifest():
-	res = make_response(render_template('manifest.json'), 200)
-	res.headers["Content-Type"] = "text/cache-manifest"
-	return res
 
 '''
 Updater Function Routes

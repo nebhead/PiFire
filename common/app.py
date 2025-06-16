@@ -43,3 +43,48 @@ def get_system_command_output(requested='supported_commands', timeout=1):
 def create_ui_hash():
 	settings = read_settings()
 	return hash(json.dumps(settings['probe_settings']['probe_map']['probe_info']))
+
+def paginate_list(datalist, sortkey='', reversesortorder=False, itemsperpage=10, page=1):
+	if sortkey != '':
+		#  Sort list if key is specified
+		tempdatalist = sorted(datalist, key=lambda d: d[sortkey], reverse=reversesortorder)
+	else:
+		#  If no key, reverse list if specified, or keep order 
+		if reversesortorder:
+			datalist.reverse()
+		tempdatalist = datalist.copy()
+	listlength = len(tempdatalist)
+	if listlength <= itemsperpage:
+		curpage = 1
+		prevpage = 1 
+		nextpage = 1 
+		lastpage = 1
+		displaydata = tempdatalist.copy()
+	else: 
+		lastpage = (listlength // itemsperpage) + ((listlength % itemsperpage) > 0)
+		if (lastpage < page):
+			curpage = lastpage
+			prevpage = curpage - 1 if curpage > 1 else 1
+			nextpage = curpage + 1 if curpage < lastpage else lastpage 
+		else: 
+			curpage = page if page > 0 else 1
+			prevpage = curpage - 1 if curpage > 1 else 1
+			nextpage = curpage + 1 if curpage < lastpage else lastpage 
+		#  Calculate starting / ending position and create list with that data
+		start = itemsperpage * (curpage - 1)  # Get starting position 
+		end = start + itemsperpage # Get ending position 
+		displaydata = tempdatalist.copy()[start:end]
+
+	reverse = 'true' if reversesortorder else 'false'
+
+	pagination = {
+		'displaydata' : displaydata,
+		'curpage' : curpage,
+		'prevpage' : prevpage,
+		'nextpage' : nextpage, 
+		'lastpage' : lastpage,
+		'reverse' : reverse,
+		'itemspage' : itemsperpage
+	}
+
+	return (pagination)

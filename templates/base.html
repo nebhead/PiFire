@@ -26,7 +26,7 @@
         <link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon" type="image/x-icon" />
 
         <!-- WebApp Manifest -->
-        <link rel="manifest" href="{{ url_for('manifest') }}">
+        <link rel="manifest" href="{{ url_for('manifest_bp.manifest') }}">
 
         <title>{% block title %}{% endblock %}
 			{% if grill_name is defined %}

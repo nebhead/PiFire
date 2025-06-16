@@ -257,7 +257,7 @@ def admin_page(action=None):
         errors.append(event)
         pip_list = []
 
-    return render_template('index.html', settings=settings, uptime=uptime, cpuinfo=cpu_info,
+    return render_template('admin/index.html', settings=settings, uptime=uptime, cpuinfo=cpu_info,
                             ifconfig=ifconfig, debug_mode=debug_mode, qr_content=url,
                             pip_list=pip_list,
                             control=control,
