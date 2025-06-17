@@ -172,7 +172,7 @@ function gotoCFPage(pagenum, sortorder, itemsperpage) {
 		'reverse' : sortorder, 
 		'itemsperpage' : itemsperpage
 	};
-	$('#cookfilelist').load('/cookfiledata', senddata)
+	$('#cookfilelist').load('/cookfile', senddata)
 };
 
 function checkModeChange(mode) {

@@ -1,6 +1,6 @@
 {% extends 'base.html' %} 
 
-{% from "_macro_metrics.html" import render_startup, render_stop, render_smoke, render_hold, render_shutdown, render_reignite, render_manual, render_monitor %}
+{% from "metrics/_macro_metrics.html" import render_startup, render_stop, render_smoke, render_hold, render_shutdown, render_reignite, render_manual, render_monitor %}
 
 {% block title %}History{% endblock %} 
 
@@ -34,7 +34,7 @@
 									<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#thumbModal"><i class="fas fa-image"></i>&nbsp; Change Thumbnail</button>
 									
 									<!-- Thumbnail Modal -->
-									<form method="POST" action="/cookfiledata">
+									<form method="POST" action="/cookfile">
 										<!-- Add filename to input so that we can determine what file to edit -->
 										<input type="hidden" id="filename" name="filename" value="{{ filenameonly }}">
 										<div class="modal fade" id="thumbModal" tabindex="-1" aria-labelledby="thumbModalLabel" aria-hidden="true">
@@ -85,7 +85,7 @@
 									</form>
 
 									<!-- Upload Thumbnail Modal -->
-									<form method="POST" action="/cookfiledata" enctype="multipart/form-data">
+									<form method="POST" action="/cookfile" enctype="multipart/form-data">
 									<div class="modal fade" id="uploadthumbModal" tabindex="-1" aria-labelledby="uploadthumbModalLabel" aria-hidden="true">
 										<div class="modal-dialog">
 										<div class="modal-content">
@@ -180,7 +180,7 @@
 
 				</div> <!-- End of Card Body-->
 				<div class="card-footer">
-					<form action="/cookfiledata" method="POST">
+					<form action="/cookfile" method="POST">
 						<button class="btn btn-primary" type="submit" name="dl_cookfile" id="dl_cookfile" value="{{ cookfilename }}"><i class="fas fa-file-download"></i>&nbsp; Download Cook File</a>
 					</form>
 				</div>
@@ -219,7 +219,7 @@
 					</div>
 				</div> <!-- End of card body -->
 				<div class="card-footer">
-					<form action="/cookfiledata" method="POST">
+					<form action="/cookfile" method="POST">
 						<button class="btn btn-primary" type="submit" name="dl_graphfile" id="dl_graphfile" value="{{ cookfilename }}"><i class="fas fa-file-download"></i>&nbsp; Download CSV File</a>
 					</form>
 				</div>
@@ -341,7 +341,7 @@
 				</div>
 				{% if events != [] %}
 				<div class="card-footer">
-					<form action="/cookfiledata" method="POST">
+					<form action="/cookfile" method="POST">
 						<button class="btn btn-primary" type="submit" name="dl_eventfile" id="dl_eventfile" value="{{ cookfilename }}"><i class="fas fa-file-download"></i>&nbsp; Download CSV File</a>
 					</form>	
 				</div>
@@ -488,7 +488,7 @@
 					</button>
 					
 					<!-- Upload Media Modal -->
-					<form method="POST" action="/cookfiledata" enctype="multipart/form-data">
+					<form method="POST" action="/cookfile" enctype="multipart/form-data">
 						<div class="modal fade" id="uploadmediaModal" tabindex="-1" aria-labelledby="uploadmediaModalLabel" aria-hidden="true">
 							<div class="modal-dialog">
 							<div class="modal-content">
@@ -521,7 +521,7 @@
 					</button>
 
 					<!-- Del Media Modal -->
-					<form method="POST" action="/cookfiledata">
+					<form method="POST" action="/cookfile">
 						<div class="modal fade" id="delmediaModal" tabindex="-1" aria-labelledby="delmediaModalLabel" aria-hidden="true">
 							<div class="modal-dialog modal-lg">
 							<div class="modal-content">
@@ -568,5 +568,5 @@
 	<script src="{{ url_for('static', filename='js/chartjs-plugin-annotation.min.js') }}"></script>
 	<script src="{{ url_for('static', filename='js/hammer.min.js') }}"></script>
 	<script src="{{ url_for('static', filename='js/chartjs-plugin-zoom.min.js') }}"></script>
-	<script src="{{ url_for('static', filename='js/cookfile.js') }}"></script>
+	<script src="{{ url_for('cookfile_bp.static', filename='cookfile/js/cookfile.js') }}"></script>
 {% endblock %}

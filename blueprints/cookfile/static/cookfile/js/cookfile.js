@@ -73,7 +73,7 @@ function editLabel(old_label) {
 	//console.log(postdata);
 
 	req = $.ajax({
-		url : '/updatecookfile',
+		url : '/cookfile/update',
 		type : 'POST',
 		data : JSON.stringify(postdata),
 		contentType: "application/json; charset=utf-8",
@@ -106,7 +106,7 @@ function refreshChart() {
 		'filename' : cookfilename	
 	};
 	req = $.ajax({
-		url : '/cookfiledata',
+		url : '/cookfile',
 		type : 'POST',
 		data : JSON.stringify(postdata),
 		contentType: "application/json; charset=utf-8",
@@ -162,7 +162,7 @@ $(document).ready(function(){
 			'editTitle' : title 	
 		};
 		req = $.ajax({
-			url : '/updatecookfile',
+			url : '/cookfile/update',
 			type : 'POST',
 			data : JSON.stringify(postdata),
 			contentType: "application/json; charset=utf-8",
@@ -188,7 +188,7 @@ $(document).ready(function(){
 			'commentnew' : commenttext 	
 		};
 		req = $.ajax({
-			url : '/updatecookfile',
+			url : '/cookfile/update',
 			type : 'POST',
 			data : JSON.stringify(postdata),
 			contentType: "application/json; charset=utf-8",
@@ -243,7 +243,7 @@ $(document).ready(function(){
 			'delcomment' : commentidselected 	
 		};
 		req = $.ajax({
-			url : '/updatecookfile',
+			url : '/cookfile/update',
 			type : 'POST',
 			data : JSON.stringify(postdata),
 			contentType: "application/json; charset=utf-8",
@@ -272,7 +272,7 @@ $(document).ready(function(){
 			'commentid' : commentid
 		};
 		req = $.ajax({
-			url : '/cookfiledata',
+			url : '/cookfile',
 			type : 'POST',
 			data : JSON.stringify(postdata),
 			contentType: "application/json; charset=utf-8",
@@ -328,7 +328,7 @@ $(document).ready(function(){
 			'cookfilename' : cookfilename, 
 		};
 		req = $.ajax({
-			url : '/cookfiledata',
+			url : '/cookfile',
 			type : 'POST',
 			data : JSON.stringify(postdata),
 			contentType: "application/json; charset=utf-8",
@@ -400,7 +400,7 @@ function navImage(mediafilename, commentid, navigate) {
 		'cookfilename' : cookfilename 	
 	};
 	req = $.ajax({
-		url : '/cookfiledata',
+		url : '/cookfile',
 		type : 'POST',
 		data : JSON.stringify(postdata),
 		contentType: "application/json; charset=utf-8",
@@ -427,7 +427,7 @@ function editComment(commentid) {
 		'editcomment' : commentid 	
 	};
 	req = $.ajax({
-		url : '/updatecookfile',
+		url : '/cookfile/update',
 		type : 'POST',
 		data : JSON.stringify(postdata),
 		contentType: "application/json; charset=utf-8",
@@ -466,7 +466,7 @@ function saveComment(commentid) {
 		'text' : commenttext 	
 	};
 	req = $.ajax({
-		url : '/updatecookfile',
+		url : '/cookfile/update',
 		type : 'POST',
 		data : JSON.stringify(postdata),
 		contentType: "application/json; charset=utf-8",
@@ -505,7 +505,7 @@ function toggleSelectImage(tag, filename, cookfilename, commentid) {
 		'state' : select_state
 	};
 	req = $.ajax({
-		url : '/updatecookfile',
+		url : '/cookfile/update',
 		type : 'POST',
 		data : JSON.stringify(postdata),
 		contentType: "application/json; charset=utf-8",
@@ -545,7 +545,7 @@ function updateCommentThumbs(commentid) {
 		'cookfilename' : cookfilename 
 	};
 	req = $.ajax({
-		url : '/cookfiledata',
+		url : '/cookfile',
 		type : 'POST',
 		data : JSON.stringify(postdata),
 		contentType: "application/json; charset=utf-8",

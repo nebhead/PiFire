@@ -1,9 +1,9 @@
 
-from flask import render_template, request, current_app, jsonify, send_file, redirect
 import os
 import time
-from common.common import read_settings, read_control, read_current, write_settings, epoch_to_time, prepare_csv
-from common.app import create_ui_hash, prepare_annotations, prepare_event_totals
+from flask import render_template, request, current_app, jsonify, send_file, redirect
+from common.common import read_settings, read_control, read_current, write_settings, epoch_to_time
+from common.app import create_ui_hash, prepare_annotations, prepare_event_totals, prepare_csv
 from file_mgmt.cookfile import read_cookfile, prepare_chartdata
 
 from . import history_bp
@@ -85,10 +85,21 @@ def history_page(action=None):
                     labels = cookfilestruct['graph_labels']
                     assets = cookfilestruct['assets']
                     filenameonly = response['opencookfile']
-                    return render_template('cookfile.html', settings=settings, cookfilename=cookfilename, 
-                        filenameonly=filenameonly, events=events, event_totals=event_totals, comments=comments, 
-                        metadata=metadata, labels=labels, assets=assets, errors=errors, 
-                        page_theme=settings['globals']['page_theme'], grill_name=settings['globals']['grill_name'])
+                    return render_template(
+                            'cookfile/index.html',
+                            settings=settings,
+                            cookfilename=cookfilename, 
+                            filenameonly=filenameonly,
+                            events=events, 
+                            event_totals=event_totals,
+                            comments=comments, 
+                            metadata=metadata, 
+                            labels=labels, 
+                            assets=assets, 
+                            errors=errors, 
+                            page_theme=settings['globals'].get('page_theme', 'light'),
+                            grill_name=settings['globals'].get('grill_name', '')
+                            )
                 else:
                     errors.append(status)
                     if 'version' in status:
