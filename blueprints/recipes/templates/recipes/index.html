@@ -161,5 +161,5 @@
 <script>
 	var recipe_units = "{{ settings['globals']['units'] }}";
 </script>
-<script src="{{ url_for('static', filename='js/recipes.js') }}"></script>
+<script src="{{ url_for('recipes_bp.static', filename='recipes/js/recipes.js') }}"></script>
 {% endblock %}

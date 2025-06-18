@@ -44,7 +44,7 @@ $('#recipe_file_upload_btn').click(function(){
 		body: formData,
 	};
 
-	fetch("/recipedata/upload", requestOptions).then(
+	fetch("/recipes/data/upload", requestOptions).then(
 	(response) => {
 		recipeBook(); // Reload the recipe book when completed uploading
 	}
@@ -66,7 +66,7 @@ $('#display_asset_modal').on('show.bs.modal', function (event) {
 		'section_index' : section_index, 
 	};
 	//console.log(senddata);
-	$('#display_asset_content').load('/recipedata', senddata);
+	$('#display_asset_content').load('/recipes/data', senddata);
 });
 
    // === Functions === 
@@ -107,7 +107,7 @@ function recipeManageAssets(filename, section, index) {
 		'index' : index,
 		'filename' : filename
 	};
-	$('#recipe_assets_row').load('/recipedata', senddata).fadeIn(500);
+	$('#recipe_assets_row').load('/recipes/data', senddata).fadeIn(500);
 };
 
 function recipeImageSelectToggle(filename, section, section_index, asset_name, asset_id) {
@@ -175,7 +175,7 @@ function recipeImageSelectToggle(filename, section, section_index, asset_name, a
 
 function recipeAssetsEdit(senddata) {
 	$.ajax({
-        url : '/recipedata',
+        url : '/recipes/data',
         type : 'POST',
         data : JSON.stringify(senddata),
         contentType: "application/json; charset=utf-8",
@@ -218,7 +218,7 @@ function recipeUploadAssets(filename, section, section_index) {
 			body: formData,
 		};
 
-		fetch("/recipedata/upload", requestOptions).then(
+		fetch("/recipes/data/upload", requestOptions).then(
 			(response) => {
 				fileCounter += 1;
 				//console.log('Uploaded File # ' + fileCounter)
@@ -240,7 +240,7 @@ function recipeDeleteFile(delete_this) {
 		'filename' : delete_this
 	};
 	$.ajax({
-        url : '/recipedata',
+        url : '/recipes/data',
         type : 'POST',
         data : JSON.stringify(postdata),
         contentType: "application/json; charset=utf-8",
@@ -299,7 +299,7 @@ function recipeRunStatus(filename) {
 		'reciperunstatus' : true,
 		'filename' : filename
 	};
-	$('#recipe_run_status_row').load('/recipedata', senddata).fadeIn(500);
+	$('#recipe_run_status_row').load('/recipes/data', senddata).fadeIn(500);
 };
 
 // Goto page in pagination of recipe files 
@@ -311,7 +311,7 @@ function gotoRFPage(pagenum, sortorder, itemsperpage) {
 		'reverse' : sortorder, 
 		'itemsperpage' : itemsperpage
 	};
-	$('#recipefilelist').load('/recipedata', senddata)
+	$('#recipefilelist').load('/recipes/data', senddata)
 };
 
 // Open recipe file for viewing / running 
@@ -324,7 +324,7 @@ function recipeOpenFile(filename) {
 		'filename' : filename, 
 	};
 	recipe_selected = filename;
-	$('#recipe_show_row').load('/recipedata', senddata)
+	$('#recipe_show_row').load('/recipes/data', senddata)
 	// Show active toolbar buttons 
 	$('#recipe_toolbar_loadmenu_col, #recipe_toolbar_edit_col, #recipe_toolbar_new_col, #recipe_toolbar_run_col').show();
 	// Hide the inactive rows 
@@ -342,7 +342,7 @@ function recipeEditFile(filename) {
 		'filename' : filename
 	};
 
-	$('#recipe_show_row').load('/recipedata', senddata, function(responseTxt, statusTxt, xhr){
+	$('#recipe_show_row').load('/recipes/data', senddata, function(responseTxt, statusTxt, xhr){
 		if(statusTxt == "success")
 			recipe_selected = $('#recipe_filename').val();
 	  });
@@ -368,24 +368,24 @@ function metadataUpdate(field, value) {
 	};
 
 	if(field == 'description') {
-		$('#recipe_edit_description_row').fadeOut(500).load('/recipedata', senddata).fadeIn(500);
+		$('#recipe_edit_description_row').fadeOut(500).load('/recipes/data', senddata).fadeIn(500);
 		$('#successToastMsg').html('Successfully updated description.');
 		$('#successToast').toast('show');
 	} else if (field == 'title') {
-		$('#recipe_edit_title_row').fadeOut(500).load('/recipedata', senddata).fadeIn(500);
+		$('#recipe_edit_title_row').fadeOut(500).load('/recipes/data', senddata).fadeIn(500);
 		$('#successToastMsg').html('Successfully updated title.');
 		$('#successToast').toast('show');
 	} else if (field == 'food_probes') {
-		$('#recipe_edit_metadata_row').fadeOut(500).load('/recipedata', senddata).fadeIn(500);
+		$('#recipe_edit_metadata_row').fadeOut(500).load('/recipes/data', senddata).fadeIn(500);
 		$('#successToastMsg').html('Successfully updated number of food probes.');
 		$('#successToast').toast('show');
 		var senddata = {
 			'refresh' : 'steps',
 			'filename' : recipe_selected
 		};
-		$('#recipe_edit_steps_row').load('/recipedata', senddata);
+		$('#recipe_edit_steps_row').load('/recipes/data', senddata);
 	} else {
-		$('#recipe_edit_metadata_row').fadeOut(500).load('/recipedata', senddata).fadeIn(500);
+		$('#recipe_edit_metadata_row').fadeOut(500).load('/recipes/data', senddata).fadeIn(500);
 		$('#successToastMsg').html('Successfully updated ' + senddata['field'] + '.');
 		$('#successToast').toast('show');
 	};
@@ -399,13 +399,13 @@ function ingredientSave(index, newname, quantity) {
 		'quantity' : quantity,
 		'filename' : recipe_selected
 	};
-	$('#recipe_edit_ingredients_row').fadeOut(500).load('/recipedata', senddata).fadeIn(500);
+	$('#recipe_edit_ingredients_row').fadeOut(500).load('/recipes/data', senddata).fadeIn(500);
 
 	var senddata = {
 		'refresh' : 'instructions',
 		'filename' : recipe_selected
 	};
-	$('#recipe_edit_instructions_row').load('/recipedata', senddata);
+	$('#recipe_edit_instructions_row').load('/recipes/data', senddata);
 };
 
 function ingredientDelete(index) {
@@ -414,13 +414,13 @@ function ingredientDelete(index) {
 		'index' : index,
 		'filename' : recipe_selected
 	};
-	$('#recipe_edit_ingredients_row').load('/recipedata', senddata);
+	$('#recipe_edit_ingredients_row').load('/recipes/data', senddata);
 
 	var senddata = {
 		'refresh' : 'instructions',
 		'filename' : recipe_selected
 	};
-	$('#recipe_edit_instructions_row').load('/recipedata', senddata);
+	$('#recipe_edit_instructions_row').load('/recipes/data', senddata);
 };
 
 function ingredientAdd() {
@@ -428,13 +428,13 @@ function ingredientAdd() {
 		'add' : 'ingredients',
 		'filename' : recipe_selected
 	};
-	$('#recipe_edit_ingredients_row').load('/recipedata', senddata);
+	$('#recipe_edit_ingredients_row').load('/recipes/data', senddata);
 
 	var senddata = {
 		'refresh' : 'instructions',
 		'filename' : recipe_selected
 	};
-	$('#recipe_edit_instructions_row').load('/recipedata', senddata);
+	$('#recipe_edit_instructions_row').load('/recipes/data', senddata);
 };
 
 function instructionSave(index) {
@@ -449,7 +449,7 @@ function instructionSave(index) {
 		'step' : step,
 		'filename' : recipe_selected
 	};
-	$('#recipe_edit_instructions_row').fadeOut(500).load('/recipedata', senddata).fadeIn(500);
+	$('#recipe_edit_instructions_row').fadeOut(500).load('/recipes/data', senddata).fadeIn(500);
 };
 
 function instructionDelete(index) {
@@ -458,7 +458,7 @@ function instructionDelete(index) {
 		'index' : index,
 		'filename' : recipe_selected
 	};
-	$('#recipe_edit_instructions_row').load('/recipedata', senddata);
+	$('#recipe_edit_instructions_row').load('/recipes/data', senddata);
 };
 
 function instructionAdd() {
@@ -466,7 +466,7 @@ function instructionAdd() {
 		'add' : 'instructions',
 		'filename' : recipe_selected
 	};
-	$('#recipe_edit_instructions_row').load('/recipedata', senddata);
+	$('#recipe_edit_instructions_row').load('/recipes/data', senddata);
 };
 
 function stepUpdate(index) {
@@ -501,7 +501,7 @@ function stepUpdate(index) {
 		'filename' : recipe_selected
 	};
 	//console.log(senddata);
-	$('#recipe_edit_steps_row').load('/recipedata', senddata);
+	$('#recipe_edit_steps_row').load('/recipes/data', senddata);
 }; 
 
 function stepAdd(index) {
@@ -510,7 +510,7 @@ function stepAdd(index) {
 		'index' : index,
 		'filename' : recipe_selected
 	};
-	$('#recipe_edit_steps_row').load('/recipedata', senddata);
+	$('#recipe_edit_steps_row').load('/recipes/data', senddata);
 };
 
 function stepDelete(index) {
@@ -520,7 +520,7 @@ function stepDelete(index) {
 		'filename' : recipe_selected
 	};
 	$('#recipe_edit_step_card_'+index).fadeOut(500);
-	$('#recipe_edit_steps_row').load('/recipedata', senddata);
+	$('#recipe_edit_steps_row').load('/recipes/data', senddata);
 };
 
 function recipeCheckState() {
@@ -570,7 +570,7 @@ function recipeScrollToStep(step_num) {
 
 function recipeDownloadFile(filename) {
 	//console.log('Give me ' + filename);
-	window.location = '/recipedata/download/' + filename;
+	window.location = '/recipes/data/download/' + filename;
 };
 
 	// === Document Ready ===
