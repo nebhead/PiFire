@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
-{% from '_macro_settings.html' import render_controller_config %}
-{% from '_macro_probes.html' import render_probe_select %}
+{% from 'settings/_macro_settings.html' import render_controller_config %}
+{% from 'settings/_macro_probes.html' import render_probe_select %}
 
 {% block body_class %}timer-offset{% endblock %}
 
 {% block cssextend %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-colorpicker.min.css') }}" type="text/css" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}" type="text/css" />
+<link rel="stylesheet" href="{{ url_for('settings_bp.static', filename='settings/css/settings.css') }}" type="text/css" />
 {% endblock %}
 
 {% block title %}Settings{% endblock %}
@@ -725,7 +725,6 @@
                                 </div>
 
                                 <script>
-                                    // filepath: /home/ben/syncthing/Tech-Projects/PiFire/templates/settings.html
                                     function validateDutyCycle() {
                                         const minDutyCycle = parseInt(document.getElementById('min_duty_cycle').value, 10);
                                         const maxDutyCycle = parseInt(document.getElementById('max_duty_cycle').value, 10);
@@ -1808,6 +1807,6 @@
     });
 </script>
 <script src="{{ url_for('static', filename='js/bootstrap-colorpicker.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/settings.js') }}"></script>
+<script src="{{ url_for('settings_bp.static', filename='settings/js/settings.js') }}"></script>
 
 {% endblock %}

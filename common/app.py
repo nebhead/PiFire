@@ -259,3 +259,9 @@ def prepare_csv(data=[], filename=''):
 
 def create_safe_name(name): 
 	return("".join([x for x in name if x.isalnum()]))
+
+def is_not_blank(response, setting):
+	return setting in response and setting != ''
+
+def is_checked(response, setting):
+	return setting in response and response[setting] == 'on'
