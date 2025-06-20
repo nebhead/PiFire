@@ -22,7 +22,6 @@ from flask import Flask, request, render_template, jsonify, redirect, render_tem
 from flask_mobility import Mobility
 from flask_socketio import SocketIO
 from flask_qrcode import QRcode
-from werkzeug.utils import secure_filename
 from werkzeug.exceptions import InternalServerError
 import threading
 
@@ -509,7 +508,7 @@ End Updater Section
  Supporting Functions
 ==============================================================================
 '''
-
+# TODO: Move to socketIO section 
 def _check_cpu_temp():
 	process_command(action='sys', arglist=['check_cpu_temp'], origin='admin')  # Request supported commands 
 	data = get_system_command_output(requested='check_cpu_temp')
@@ -517,53 +516,6 @@ def _check_cpu_temp():
 	control['system']['cpu_temp'] = data['data'].get('cpu_temp', None)
 	write_control(control)
 	return f"{control['system']['cpu_temp']}C"
-
-# TODO Remove this function when other dependent functions are updated to use common/app.py
-def _paginate_list(datalist, sortkey='', reversesortorder=False, itemsperpage=10, page=1):
-	if sortkey != '':
-		#  Sort list if key is specified
-		tempdatalist = sorted(datalist, key=lambda d: d[sortkey], reverse=reversesortorder)
-	else:
-		#  If no key, reverse list if specified, or keep order 
-		if reversesortorder:
-			datalist.reverse()
-		tempdatalist = datalist.copy()
-	listlength = len(tempdatalist)
-	if listlength <= itemsperpage:
-		curpage = 1
-		prevpage = 1 
-		nextpage = 1 
-		lastpage = 1
-		displaydata = tempdatalist.copy()
-	else: 
-		lastpage = (listlength // itemsperpage) + ((listlength % itemsperpage) > 0)
-		if (lastpage < page):
-			curpage = lastpage
-			prevpage = curpage - 1 if curpage > 1 else 1
-			nextpage = curpage + 1 if curpage < lastpage else lastpage 
-		else: 
-			curpage = page if page > 0 else 1
-			prevpage = curpage - 1 if curpage > 1 else 1
-			nextpage = curpage + 1 if curpage < lastpage else lastpage 
-		#  Calculate starting / ending position and create list with that data
-		start = itemsperpage * (curpage - 1)  # Get starting position 
-		end = start + itemsperpage # Get ending position 
-		displaydata = tempdatalist.copy()[start:end]
-
-	reverse = 'true' if reversesortorder else 'false'
-
-	pagination = {
-		'displaydata' : displaydata,
-		'curpage' : curpage,
-		'prevpage' : prevpage,
-		'nextpage' : nextpage, 
-		'lastpage' : lastpage,
-		'reverse' : reverse,
-		'itemspage' : itemsperpage
-	}
-
-	return (pagination)
-
 
 '''
 ==============================================================================
