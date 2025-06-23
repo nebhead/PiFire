@@ -27,6 +27,7 @@ import logging
 from collections.abc import Mapping
 from ratelimitingfilter import RateLimitingFilter
 from common.redis_queue import RedisQueue
+from common.redis_handler import RedisHandler
 
 # *****************************************
 # Constants and Globals 
@@ -76,6 +77,10 @@ def create_logger(name, filename='./logs/pifire.log', messageformat='%(asctime)s
 		handler.setFormatter(formatter)
 		handler.addFilter(ratelimit)  # Add the rate limit filter
 		logger.addHandler(handler)
+		redis_handler = RedisHandler(cmdsts, 'logs:' + name)
+		redis_handler.setFormatter(formatter)
+		redis_handler.addFilter(ratelimit)
+		logger.addHandler(redis_handler)
 	return logger
 
 def default_settings():
@@ -83,6 +88,10 @@ def default_settings():
 
 	updater_info = read_updater_manifest()
 	settings['versions'] = updater_info['metadata']['versions']
+
+	settings['server_info'] = {
+		'uuid' : generate_uuid()
+	}
 
 	settings['probe_settings'] = {}
 	settings['probe_settings']['probe_profiles'] = _default_probe_profiles()
@@ -1084,9 +1093,33 @@ def write_settings(settings):
 	"""
 	settings['lastupdated']['time'] = math.trunc(time.time())
 
+	write_settings_redis(settings)
+
 	json_data_string = json.dumps(settings, indent=2, sort_keys=True)
 	with open("settings.json", 'w') as settings_file:
 		settings_file.write(json_data_string)
+
+def read_settings_redis(init=False):
+	global cmdsts
+
+	if init:
+		settings = read_settings()
+		cmdsts.set('settings:general', json.dumps(settings))
+
+	if not cmdsts.exists('settings:general'):
+		settings = {}
+	else:
+		settings = json.loads(cmdsts.get('settings:general'))
+
+	return(settings)
+
+def write_settings_redis(settings):
+	"""
+	Write Settings to Redis DB
+
+	:param settings: Settings
+	"""
+	cmdsts.set('settings:general', json.dumps(settings))
 
 def backup_settings():
 	# Copy current settings file to a backup copy in /[BACKUP_PATH]/PiFire_[DATE]_[TIME].json 
@@ -1275,6 +1308,58 @@ def downgrade_settings(settings, settings_default):
 	write_log(warning)
 	return(settings)
 
+def read_connected_users(flush=False):
+	"""
+	Read Connected Users from Redis DB
+
+	:param flush: True to clean connected_users. False otherwise
+	:return: connected_users (List of Client ID's)
+	"""
+	global cmdsts
+
+	try:
+		if flush:
+			cmdsts.delete('users:connected')
+
+		if not(cmdsts.exists('users:connected')):
+			connected_users = []
+		else:
+			# Read list of users
+			connected_users = cmdsts.lrange('users:connected', 0, -1)
+	except:
+		event = 'Unable to reach Redis database.  You may need to reinstall PiFire or enable redis-server.'
+		write_log(event)
+
+	return connected_users
+
+def write_connected_user(client_id):
+	"""
+	Write a Connected User to Redis DB
+
+	:param client_id: Users Client ID from Socket IO/Flask
+	"""
+	global cmdsts
+
+	try:
+		cmdsts.rpush('users:connected', client_id)
+	except:
+		event = 'Unable to reach Redis database.  You may need to reinstall PiFire or enable redis-server.'
+		write_log(event)
+
+def remove_connected_user(client_id):
+	"""
+	Removes a Connected User to Redis DB
+
+	:param client_id: Users Client ID from Socket IO/Flask
+	"""
+	global cmdsts
+
+	try:
+		cmdsts.lrem('users:connected', 0, client_id)
+	except:
+		event = 'Unable to reach Redis database.  You may need to reinstall PiFire or enable redis-server.'
+		write_log(event)
+
 def read_pellet_db(filename='pelletdb.json'):
 	"""
 	Read Pellet DataBase from file
@@ -1320,9 +1405,32 @@ def write_pellet_db(pelletdb):
 
 	:param pelletdb: Pellet Database
 	"""
+	write_pellets_redis(pelletdb)
 	json_data_string = json.dumps(pelletdb, indent=2, sort_keys=True)
 	with open("pelletdb.json", 'w') as json_file:
 		json_file.write(json_data_string)
+
+def read_pellets_redis(init=False):
+	global cmdsts
+
+	if init:
+		pelletdb = read_pellet_db()
+		cmdsts.set('pellets:general', json.dumps(pelletdb))
+
+	if not cmdsts.exists('pellets:general'):
+		pelletdb = {}
+	else:
+		pelletdb = json.loads(cmdsts.get('pellets:general'))
+
+	return(pelletdb)
+
+def write_pellets_redis(pelletdb):
+	"""
+	Write Settings to Redis DB
+
+	:param settings: Settings
+	"""
+	cmdsts.set('pellets:general', json.dumps(pelletdb))
 
 def backup_pellet_db(action='backup'):
 	''' Backup & Restore Pellet Database '''
@@ -1455,6 +1563,48 @@ def write_event(settings, event):
 		write_log(event)
 	elif not event.startswith('*'):
 		write_log(event)
+
+def read_events_redis(flush=False):
+	"""
+	Read Events from Redis DB
+
+	:param flush: True to clean events. False otherwise
+	:return: events_list
+	"""
+	global cmdsts
+
+	events_list = []
+
+	try:
+		if flush:
+			cmdsts.delete('logs:events')
+
+		if not(cmdsts.exists('logs:events')):
+			events, num_events = read_events()
+			events_list = []
+			for item in range(min(num_events, 60)):
+				event = {
+					'date': events[item][0],
+					'time': events[item][1],
+					'message': events[item][2].strip('\n')
+				}
+				events_list.append(event)
+				cmdsts.lpush('logs:events', " ".join(events[item]))
+		else:
+			events_list = []
+			for item in cmdsts.lrange('logs:events', 0, -1):
+				item_list = item.split(" ", 2)
+				event = {
+					'date': item_list[0],
+					'time': item_list[1],
+					'message': item_list[2].strip('\n')
+				}
+				events_list.append(event)
+	except:
+		event = 'Unable to reach Redis database.  You may need to reinstall PiFire or enable redis-server.'
+		write_log(event)
+
+	return(events_list)
 
 def read_history(num_items=0, flushhistory=False):
 	"""
@@ -1989,6 +2139,30 @@ def seconds_to_string(seconds):
 		time_string = f'{s}s'
 
 	return time_string
+
+def check_cpu_temp():
+	process_command(action='sys', arglist=['check_cpu_temp'], origin='admin')  # Request supported commands
+	data = get_system_command_output(requested='check_cpu_temp')
+	control = read_control()
+	control['system']['cpu_temp'] = data['data'].get('cpu_temp', None)
+	write_control(control)
+	return f"{control['system']['cpu_temp']}C"
+
+def get_system_command_output(requested='supported_commands', timeout=1):
+	system_output = RedisQueue('control:systemo')
+	endtime = timeout + time.time()
+	while time.time() < endtime:
+		while system_output.length() > 0:
+			data = system_output.pop()
+			if data['command'][0] == requested:
+				return data
+
+	return {
+		'command' : [requested, None, None, None],
+		'result' : 'ERROR',
+		'message' : 'The requested command output could not be found.',
+		'data' : {'Response_Was' : 'To_Fast'}
+	}
 
 def read_generic_json(filename):
 	try:
