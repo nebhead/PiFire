@@ -18,7 +18,7 @@ Description: This library provides socketio functions for app.py
 import threading
 from common import *
 from flask import request
-from app import socketio, RECIPE_FOLDER, update_global_settings
+from app import socketio, RECIPE_FOLDER
 from file_mgmt.recipes import read_recipefile, get_recipefilelist
 from base64 import b64encode
 from datetime import datetime
@@ -823,7 +823,6 @@ def _write_settings(settings, control):
     control['settings_update'] = True
     write_settings(settings)
     write_control(control, origin='app-socketio')
-    update_global_settings(settings)
 
 def check_control_status():
     errors = read_errors()
