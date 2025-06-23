@@ -173,7 +173,7 @@ def _get_dash_data(settings, pelletdb):
         'modeStartTime': math.trunc(status['start_time']),
         'lidOpenDetectEnabled': settings['cycle_data']['LidOpenDetectEnabled'],
         'lidOpenDetected': status['lid_open_detected'],
-        'lidOpenEndTime': status['lid_open_endtime'],
+        'lidOpenEndTime': math.trunc(status['lid_open_endtime']),
         'startDuration': status['start_duration'],
         'shutdownDuration': status['shutdown_duration'],
         'primeDuration': status['prime_duration'],
