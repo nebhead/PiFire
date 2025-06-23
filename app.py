@@ -29,7 +29,7 @@ from threading import Thread
 from datetime import datetime
 from updater import *  # Library for doing project updates from GitHub
 
-from common.app import get_supported_cmds, get_system_command_output
+from common.app import get_system_command_output
 
 ''' Flask Blueprints '''
 from blueprints.admin import admin_bp
@@ -47,6 +47,7 @@ from blueprints.tuner import tuner_bp
 from blueprints.probeconfig import probeconfig_bp
 from blueprints.recipes import recipes_bp
 from blueprints.settings import settings_bp
+from blueprints.wizard import wizard_bp
 
 '''
 ==============================================================================
@@ -85,6 +86,7 @@ app.register_blueprint(tuner_bp, url_prefix='/tuner')
 app.register_blueprint(probeconfig_bp, url_prefix='/probeconfig')
 app.register_blueprint(recipes_bp, url_prefix='/recipes')
 app.register_blueprint(settings_bp, url_prefix='/settings')
+app.register_blueprint(wizard_bp, url_prefix='/wizard')
 
 '''
 ==============================================================================
@@ -105,269 +107,6 @@ def index():
 		return redirect('/wizard/welcome')
 	else: 
 		return redirect('/dash')
-
-'''
-Wizard Route for PiFire Setup
-'''
-@app.route('/wizard/<action>', methods=['POST','GET'])
-@app.route('/wizard', methods=['GET', 'POST'])
-def wizard(action=None):
-	settings = read_settings()
-	control = read_control()
-
-	wizardData = read_wizard()
-	errors = []
-
-	python_exec = settings['globals'].get('python_exec', 'python')
-
-	if request.method == 'GET':
-		if action=='installstatus':
-			percent, status, output = get_wizard_install_status()
-			return jsonify({'percent' : percent, 'status' : status, 'output' : output}) 
-	elif request.method == 'POST':
-		r = request.form
-		if action=='cancel':
-			settings['globals']['first_time_setup'] = False
-			write_settings(settings)
-			return redirect('/')
-
-		if action=='finish':
-			if control['mode'] == 'Stop':
-				wizardInstallInfo = prepare_wizard_data(r)
-				store_wizard_install_info(wizardInstallInfo)
-				set_wizard_install_status(0, 'Starting Install...', '')
-				os.system(f'{python_exec} wizard.py &')	# Kickoff Installation
-				return render_template('wizard-finish.html', page_theme=settings['globals']['page_theme'],
-									grill_name=settings['globals']['grill_name'], wizardData=wizardData)
-
-		if action=='modulecard':
-			module = r['module']
-			section = r['section']
-			if section in ['grillplatform', 'display', 'distance']:
-				moduleData = wizardData['modules'][section][module]
-				moduleSettings = {}
-				moduleSettings['settings'] = get_settings_dependencies_values(settings, moduleData)
-				moduleSettings['config'] = {} if section != 'display' else settings['display']['config'][module]
-				render_string = "{% from '_macro_wizard_card.html' import render_wizard_card %}{{ render_wizard_card(moduleData, moduleSection, moduleSettings) }}"
-				return render_template_string(render_string, moduleData=moduleData, moduleSection=section, moduleSettings=moduleSettings)
-			else:
-				return '<strong color="red">No Data</strong>'
-
-		if action=='bt_scan':
-			itemID=r['itemID']
-			bt_data = []
-			error = None
-
-			try: 
-				supported_cmds = get_supported_cmds()
-
-				if 'scan_bluetooth' in supported_cmds:
-					process_command(action='sys', arglist=['scan_bluetooth'], origin='admin')  # Request supported commands 
-					data = get_system_command_output(requested='scan_bluetooth', timeout=6)
-					#print('[DEBUG] BT Scan Data:', data)
-					if data['result'] != 'OK':
-						error = data['message']
-					else:
-						bt_data = parse_bt_device_info(data['data']['bt_devices'])
-						if bt_data == []:
-							error = 'No bluetooth devices found.'
-				else:
-					error = 'No support for bluetooth scan command.'
-
-			except Exception as e: 
-				error = f'Something bad happened: {e}'
-				#print(f'[DEBUG] {error}')
-
-			render_string = "{% from 'probeconfig/_macro_probes_config.html' import render_bt_scan_table %}{{ render_bt_scan_table(itemID, bt_data, error) }}"
-			return render_template_string(render_string, itemID=itemID, bt_data=bt_data, error=error)
-
-	''' Create Temporary Probe Device/Port Structure for Setup, Use Existing unless First Time Setup '''
-	if settings['globals']['first_time_setup']: 
-		wizardInstallInfo = wizardInstallInfoDefaults(wizardData, settings)
-	else:
-		wizardInstallInfo = wizardInstallInfoExisting(wizardData, settings)
-
-	store_wizard_install_info(wizardInstallInfo)
-
-	if control['mode'] != 'Stop':
-		errors.append('PiFire configuration wizard cannot be run while the system is active.  Please stop the current cook before continuing.')
-
-	return render_template('wizard.html', settings=settings, page_theme=settings['globals']['page_theme'],
-						   grill_name=settings['globals']['grill_name'], wizardData=wizardData, wizardInstallInfo=wizardInstallInfo, control=control, errors=errors)
-
-def parse_bt_device_info(bt_devices):
-	settings = read_settings()
-	# Check if this hardware id is already in use
-	for index, peripheral in enumerate(bt_devices):
-		for device in settings['probe_settings']['probe_map']['probe_devices']:
-			#print(f'[DEBUG] Comparing {device["name"]} ({device["config"].get('hardware_id', None)}) to {name} ({hw_id})')
-			if device['config'].get('hardware_id', None) == peripheral['hw_id']:
-				bt_devices[index]['info'] += f'This hardware ID is already in use by {device["device"]}'
-				return bt_devices
-	return bt_devices
-
-	return {'name':name, 'hw_id':hw_id, 'info':info}
-
-def get_settings_dependencies_values(settings, moduleData):
-	moduleSettings = {}
-	for setting, data in moduleData['settings_dependencies'].items():
-		setting_location = data['settings']
-		setting_value = settings
-		for setting_name in setting_location:
-			setting_value = setting_value[setting_name]
-		moduleSettings[setting] = setting_value 
-	return moduleSettings 
-
-def wizardInstallInfoDefaults(wizardData, settings):
-	
-	wizardInstallInfo = {
-		'modules' : {
-			'grillplatform' : {
-				'profile_selected' : [],  # Reference the profile in wizardData > wizard_manifest.json
-				'settings' : {},
-				'config' : {}
-			}, 
-			'display' : {
-				'profile_selected' : [],
-				'settings' : {},
-				'config' : {}
-			}, 
-			'distance' : {
-				'profile_selected' : [],
-				'settings' : {},
-				'config' : {}
-			}, 
-			'probes' : {
-				'profile_selected' : [],
-				'settings' : {
-					'units' : 'F'
-				},
-				'config' : {}
-			}
-		},
-		'probe_map' : {}
-	}
-	''' Populate Modules Info with Defaults from Wizard Data including Settings '''
-	for component in ['grillplatform', 'display', 'distance']:
-		for module in wizardData['modules'][component]:
-			if wizardData['modules'][component][module]['default']:
-				''' Populate Module Filename'''
-				wizardInstallInfo['modules'][component]['profile_selected'].append(module) #TODO: Change wizard.py to reference the module filename instead, or in grill_platform use platform>system_type
-				for setting in wizardData['modules'][component][module]['settings_dependencies']: 
-					''' Populate all settings with default value '''
-					wizardInstallInfo['modules'][component]['settings'][setting] = list(wizardData['modules'][component][module]['settings_dependencies'][setting]['options'].keys())[0]
-				if module == 'display':
-					wizardInstallInfo['modules'][component]['config'] = settings['display']['config'][module]
-
-	''' Populate the default probe device / probe map from the default PCB Board '''
-	wizardInstallInfo['probe_map'] = wizardData['boards'][wizardInstallInfo['modules']['grillplatform']['profile_selected'][0]]['probe_map']
-
-	''' Populate Probes Module List with all configured probe devices '''
-	for device in wizardInstallInfo['probe_map']['probe_devices']:
-		wizardInstallInfo['modules']['probes']['profile_selected'].append(device['module'])
-
-	return wizardInstallInfo
-
-def wizardInstallInfoExisting(wizardData, settings):
-	wizardInstallInfo = {
-		'modules' : {
-			'grillplatform' : {
-				'profile_selected' : [settings['platform']['current']],
-				'settings' : {},
-				'config' : {}
-			}, 
-			'display' : {
-				'profile_selected' : [settings['modules']['display']],
-				'settings' : {},
-				'config' : {}
-			}, 
-			'distance' : {
-				'profile_selected' : [settings['modules']['dist']],
-				'settings' : {},
-				'config' : {}
-			}, 
-			'probes' : {
-				'profile_selected' : [],
-				'settings' : {
-					'units' : settings['globals']['units']
-				},
-				'config' : {}
-			}
-		}, 
-		'probe_map' : settings['probe_settings']['probe_map']
-	} 
-	''' Populate Probes Module List with all configured probe devices '''
-	for device in wizardInstallInfo['probe_map']['probe_devices']:
-		wizardInstallInfo['modules']['probes']['profile_selected'].append(device['module'])
-	
-	''' Populate Modules Info with current Settings '''
-	for module in ['grillplatform', 'display', 'distance']:
-		selected = wizardInstallInfo['modules'][module]['profile_selected'][0]
-		''' Error condition if the item in settings doesn't match the wizard manifest '''
-		if selected not in wizardData['modules'][module].keys():
-			if module == 'grillplatform':
-				selected = 'custom'
-				settings['platform']['current'] = selected
-			else:
-				selected = 'none'
-			wizardInstallInfo['modules'][module]['profile_selected'] = selected
-
-		for setting in wizardData['modules'][module][selected]['settings_dependencies']:
-			settingsLocation = wizardData['modules'][module][selected]['settings_dependencies'][setting]['settings']
-			settingsValue = settings.copy() 
-			for index in range(0, len(settingsLocation)):
-				settingsValue = settingsValue[settingsLocation[index]]
-			wizardInstallInfo['modules'][module]['settings'][setting] = str(settingsValue)
-		if module == 'display':
-			wizardInstallInfo['modules'][module]['config'] = settings['display']['config'][settings['modules']['display']]
-	return wizardInstallInfo
-
-def prepare_wizard_data(form_data):
-	wizardData = read_wizard()
-	
-	wizardInstallInfo = load_wizard_install_info()
-
-	wizardInstallInfo['modules'] = {
-		'grillplatform' : {
-			'profile_selected' : [form_data['grillplatformSelect']],
-			'settings' : {},
-			'config' : {}
-		}, 
-		'display' : {
-			'profile_selected' : [form_data['displaySelect']],
-			'settings' : {},
-			'config' : {}
-		}, 
-		'distance' : {
-			'profile_selected' : [form_data['distanceSelect']],
-			'settings' : {},
-			'config' : {}
-		}, 
-		'probes' : {
-			'profile_selected' : [],
-			'settings' : {
-				'units' : form_data['probes_units']
-			},
-			'config' : {}
-		}
-	}
-
-	for device in wizardInstallInfo['probe_map']['probe_devices']:
-		wizardInstallInfo['modules']['probes']['profile_selected'].append(device['module'])
-
-	for module in ['grillplatform', 'display', 'distance']:
-		module_ = module + '_'
-		moduleSelect = module + 'Select'
-		selected = form_data[moduleSelect]
-		for setting in wizardData['modules'][module][selected]['settings_dependencies']:
-			settingName = module_ + setting
-			if(settingName in form_data):
-				wizardInstallInfo['modules'][module]['settings'][setting] = form_data[settingName]
-		for config, value in form_data.items():
-			if config.startswith(module_ + 'config_'):
-				wizardInstallInfo['modules'][module]['config'][config.replace(module_ + 'config_', '')] = value
-
-	return(wizardInstallInfo)
 
 '''
 Updater Function Routes
