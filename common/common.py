@@ -2453,6 +2453,32 @@ def process_command(action=None, arglist=[], origin='unknown', direct_write=Fals
 			'''
 			data['data']['mode'] = control['mode']
 
+		elif arglist[0] == 'uuid':
+			'''
+			Get Server Uuid
+			/api/get/uuid
+
+			Returns: 
+			{ 
+				'uuid' : <Server Uuid> 
+			}
+			'''
+			data['data']['uuid'] = settings['server_info']['uuid']
+
+		elif arglist[0] == 'versions':
+			'''
+			Get Server Versions
+			/api/get/versions
+
+			Returns: 
+			{ 
+				'version' : <Server version>,
+				'build' : <Server build>
+			}
+			'''
+			data['data']['version'] = settings['versions']['server']
+			data['data']['build'] = settings['versions']['build']
+
 		elif arglist[0] == 'hopper':
 			'''
 			Get Hopper Level 
