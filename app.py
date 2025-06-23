@@ -23,9 +23,8 @@ from flask_mobility import Mobility
 from flask_socketio import SocketIO
 from flask_qrcode import QRcode
 from werkzeug.exceptions import InternalServerError
-import threading
-
-from threading import Thread
+import zipfile
+import pathlib
 from datetime import datetime
 from updater import *  # Library for doing project updates from GitHub
 
@@ -247,402 +246,360 @@ End Updater Section
  Supporting Functions
 ==============================================================================
 '''
-# TODO: Move to socketIO section 
-def _check_cpu_temp():
-	process_command(action='sys', arglist=['check_cpu_temp'], origin='admin')  # Request supported commands 
-	data = get_system_command_output(requested='check_cpu_temp')
-	control = read_control()
-	control['system']['cpu_temp'] = data['data'].get('cpu_temp', None)
-	write_control(control)
-	return f"{control['system']['cpu_temp']}C"
 
-'''
-==============================================================================
- SocketIO Section
-==============================================================================
-'''
-thread = Thread()
-thread_lock = threading.Lock()
-clients = 0
-force_refresh = False
-
-@socketio.on("connect")
-def connect():
-	global clients
-	clients += 1
-
-@socketio.on("disconnect")
-def disconnect():
-	global clients
-	clients -= 1
-
-@socketio.on('get_dash_data')
-def get_dash_data(force=False):
-	global thread
-	global force_refresh
-	force_refresh = force
-
-	with thread_lock:
-		if not thread.is_alive():
-			thread = socketio.start_background_task(emit_dash_data)
-
-def emit_dash_data():
-	global clients
-	global force_refresh
-	previous_data = ''
-
-	while (clients > 0):
-		control = read_control()
-		pelletdb = read_pellet_db()
-		probe_info = read_current()
-
-		if control['timer']['end'] - time.time() > 0 or bool(control['timer']['paused']):
-			timer_info = {
-				'timer_paused' : bool(control['timer']['paused']),
-				'timer_start_time' : math.trunc(control['timer']['start']),
-				'timer_end_time' : math.trunc(control['timer']['end']),
-				'timer_paused_time' : math.trunc(control['timer']['paused']),
-				'timer_active' : 'true'
-			}
-		else:
-			timer_info = {
-				'timer_paused' : 'false',
-				'timer_start_time' : '0',
-				'timer_end_time' : '0',
-				'timer_paused_time' : '0',
-				'timer_active' : 'false'
-			}
-
-		current_data = {
-			'probe_info' : probe_info,
-			'notify_data' : control['notify_data'],
-			'timer_info' : timer_info,
-			'current_mode' : control['mode'],
-			'smoke_plus' : control['s_plus'],
-			'pwm_control' : control['pwm_control'],
-			'hopper_level' : pelletdb['current']['hopper_level']
-		}
-
-		if force_refresh:
-			socketio.emit('grill_control_data', current_data)
-			force_refresh = False
-			socketio.sleep(2)
-		elif previous_data != current_data:
-			socketio.emit('grill_control_data', current_data)
-			previous_data = current_data
-			socketio.sleep(2)
-		else:
-			socketio.sleep(2)
-
-@socketio.on('get_app_data')
-def get_app_data(action=None, type=None):
+def update_global_settings(updated_settings):
 	global settings
+	settings = updated_settings
 
-	if action == 'settings_data':
-		return settings
+def _create_safe_name(name): 
+	return("".join([x for x in name if x.isalnum()]))
 
-	elif action == 'pellets_data':
-		return read_pellet_db()
+def _is_not_blank(response, setting):
+	return setting in response and setting != ''
 
-	elif action == 'events_data':
-		event_list, num_events = read_events()
-		events_trim = []
-		for x in range(min(num_events, 60)):
-			events_trim.append(event_list[x])
-		return { 'events_list' : events_trim }
+def _is_checked(response, setting):
+	return setting in response and response[setting] == 'on'
 
-	elif action == 'info_data':
-		return {
-			'uptime' : os.popen('uptime').readline(),
-			'cpuinfo' : os.popen('cat /proc/cpuinfo').readlines(),
-			'ifconfig' : os.popen('ifconfig').readlines(),
-			'temp' : _check_cpu_temp(),
-			'outpins' : settings['platform']['outputs'],
-			'inpins' : settings['platform']['inputs'],
-			'dev_pins' : settings['platform']['devices'],
-			'server_version' : settings['versions']['server'],
-			'server_build' : settings['versions']['build'] }
+def _allowed_file(filename):
+	return '.' in filename and \
+		   filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-	elif action == 'manual_data':
-		control = read_control()
-		return {
-			'manual' : control['manual'],
-			'mode' : control['mode'] }
+def create_ui_hash():
+	global settings 
+	return hash(json.dumps(settings['probe_settings']['probe_map']['probe_info']))
+
+def _prepare_annotations(displayed_starttime, metrics_data=[]):
+	if(metrics_data == []):
+		metrics_data = read_metrics(all=True)
+	annotation_json = {}
+	# Process Additional Metrics Information for Display
+	for index in range(0, len(metrics_data)):
+		# Check if metric falls in the displayed time window
+		if metrics_data[index]['starttime'] > displayed_starttime:
+			# Convert Start Time
+			# starttime = epoch_to_time(metrics_data[index]['starttime']/1000)
+			mode = metrics_data[index]['mode']
+			color = 'blue'
+			if mode == 'Startup':
+				color = 'green'
+			elif mode == 'Stop':
+				color = 'red'
+			elif mode == 'Shutdown':
+				color = 'black'
+			elif mode == 'Reignite':
+				color = 'orange'
+			elif mode == 'Error':
+				color = 'red'
+			elif mode == 'Hold':
+				color = 'blue'
+			elif mode == 'Smoke':
+				color = 'grey'
+			elif mode in ['Monitor', 'Manual']:
+				color = 'purple'
+			annotation = {
+							'type' : 'line',
+							'xMin' : metrics_data[index]['starttime'],
+							'xMax' : metrics_data[index]['starttime'],
+							'borderColor' : color,
+							'borderWidth' : 2,
+							'label': {
+								'backgroundColor': color,
+								'borderColor' : 'black',
+								'color': 'white',
+								'content': mode,
+								'enabled': True,
+								'position': 'end',
+								'rotation': 0,
+								},
+							'display': True
+						}
+			annotation_json[f'event_{index}'] = annotation
+
+	return(annotation_json)
+
+def _prepare_metrics_csv(metrics_data, filename):
+	filename = filename.replace('.json', '')
+	filename = filename.replace('./history/', '')
+	filename = '/tmp/' + filename + '-PiFire-Metrics-Export.csv'
+
+	csvfile = open(filename, 'w')
+
+	list_length = len(metrics_data) # Length of list
+
+	if(list_length > 0):
+		# Build the header row
+		writeline=''
+		for item in range(0, len(metrics_items)):
+			writeline += f'{metrics_items[item][0]}, '
+		writeline += '\n'
+		csvfile.write(writeline)
+		for index in range(0, list_length):
+			writeline = ''
+			for item in range(0, len(metrics_items)):
+				writeline += f'{metrics_data[index][metrics_items[item][0]]}, '
+			writeline += '\n'
+			csvfile.write(writeline)
 	else:
-		return {'response': {'result':'error', 'message':'Error: Received request without valid action'}}
+		writeline = 'No Data\n'
+		csvfile.write(writeline)
 
-@socketio.on('post_app_data')
-def post_app_data(action=None, type=None, json_data=None):
-	global settings
+	csvfile.close()
+	return(filename)
 
-	if json_data is not None:
-		request = json.loads(json_data)
+def _prepare_event_totals(events):
+	auger_time = 0
+	for index in range(0, len(events)):
+		auger_time += events[index]['augerontime']
+	auger_time = int(auger_time)
+
+	event_totals = {}
+	event_totals['augerontime'] = seconds_to_string(auger_time)
+
+	grams = int(auger_time * settings['globals']['augerrate'])
+	pounds = round(grams * 0.00220462, 2)
+	ounces = round(grams * 0.03527392, 2)
+	event_totals['estusage_m'] = f'{grams} grams'
+	event_totals['estusage_i'] = f'{pounds} pounds ({ounces} ounces)'
+
+	seconds = int((events[-1]['starttime']/1000) - (events[0]['starttime']/1000))
+	
+	event_totals['cooktime'] = seconds_to_string(seconds)
+
+	event_totals['pellet_level_start'] = events[0]['pellet_level_start']
+	event_totals['pellet_level_end'] = events[-2]['pellet_level_end']
+
+	return(event_totals)
+
+def _paginate_list(datalist, sortkey='', reversesortorder=False, itemsperpage=10, page=1):
+	if sortkey != '':
+		#  Sort list if key is specified
+		tempdatalist = sorted(datalist, key=lambda d: d[sortkey], reverse=reversesortorder)
 	else:
-		request = {''}
+		#  If no key, reverse list if specified, or keep order 
+		if reversesortorder:
+			datalist.reverse()
+		tempdatalist = datalist.copy()
+	listlength = len(tempdatalist)
+	if listlength <= itemsperpage:
+		curpage = 1
+		prevpage = 1 
+		nextpage = 1 
+		lastpage = 1
+		displaydata = tempdatalist.copy()
+	else: 
+		lastpage = (listlength // itemsperpage) + ((listlength % itemsperpage) > 0)
+		if (lastpage < page):
+			curpage = lastpage
+			prevpage = curpage - 1 if curpage > 1 else 1
+			nextpage = curpage + 1 if curpage < lastpage else lastpage 
+		else: 
+			curpage = page if page > 0 else 1
+			prevpage = curpage - 1 if curpage > 1 else 1
+			nextpage = curpage + 1 if curpage < lastpage else lastpage 
+		#  Calculate starting / ending position and create list with that data
+		start = itemsperpage * (curpage - 1)  # Get starting position 
+		end = start + itemsperpage # Get ending position 
+		displaydata = tempdatalist.copy()[start:end]
 
-	if action == 'update_action':
-		if type == 'settings':
-			for key in request.keys():
-				if key in settings.keys():
-					settings = deep_update(settings, request)
-					write_settings(settings)
-					return {'response': {'result':'success'}}
-				else:
-					return {'response': {'result':'error', 'message':'Error: Key not found in settings'}}
-		elif type == 'control':
-			control = read_control()
-			for key in request.keys():
-				if key in control.keys():
-					'''
-						Updating of control input data is now done in common.py > execute_commands() 
-					'''
-					write_control(request, origin='app-socketio')
-					return {'response': {'result':'success'}}
-				else:
-					return {'response': {'result':'error', 'message':'Error: Key not found in control'}}
-		else:
-			return {'response': {'result':'error', 'message':'Error: Received request without valid type'}}
+	reverse = 'true' if reversesortorder else 'false'
 
-	elif action == 'admin_action':
-		if type == 'clear_history':
-			write_log('Clearing History Log.')
-			read_history(0, flushhistory=True)
-			return {'response': {'result':'success'}}
-		elif type == 'clear_events':
-			write_log('Clearing Events Log.')
-			os.system('rm /tmp/events.log')
-			return {'response': {'result':'success'}}
-		elif type == 'clear_pelletdb':
-			write_log('Clearing Pellet Database.')
-			os.system('rm pelletdb.json')
-			return {'response': {'result':'success'}}
-		elif type == 'clear_pelletdb_log':
-			pelletdb = read_pellet_db()
-			pelletdb['log'].clear()
-			write_pellet_db(pelletdb)
-			write_log('Clearing Pellet Database Log.')
-			return {'response': {'result':'success'}}
-		elif type == 'factory_defaults':
-			read_history(0, flushhistory=True)
-			read_control(flush=True)
-			os.system('rm settings.json')
-			settings = default_settings()
-			control = default_control()
-			write_settings(settings)
-			write_control(control, origin='app-socketio')
-			write_log('Resetting Settings, Control, History to factory defaults.')
-			return {'response': {'result':'success'}}
-		elif type == 'reboot':
-			write_log("Admin: Reboot")
-			os.system("sleep 3 && sudo reboot &")
-			return {'response': {'result':'success'}}
-		elif type == 'shutdown':
-			write_log("Admin: Shutdown")
-			os.system("sleep 3 && sudo shutdown -h now &")
-			return {'response': {'result':'success'}}
-		elif type == 'restart':
-			write_log("Admin: Restart Server")
-			restart_scripts()
-			return {'response': {'result':'success'}}
-		else:
-			return {'response': {'result':'error', 'message':'Error: Received request without valid type'}}
+	pagination = {
+		'displaydata' : displaydata,
+		'curpage' : curpage,
+		'prevpage' : prevpage,
+		'nextpage' : nextpage, 
+		'lastpage' : lastpage,
+		'reverse' : reverse,
+		'itemspage' : itemsperpage
+	}
 
-	elif action == 'units_action':
-		if type == 'f_units' and settings['globals']['units'] == 'C':
-			settings = convert_settings_units('F', settings)
-			write_settings(settings)
-			control = read_control()
-			control['updated'] = True
-			control['units_change'] = True
-			write_control(control, origin='app-socketio')
-			write_log("Changed units to Fahrenheit")
-			return {'response': {'result':'success'}}
-		elif type == 'c_units' and settings['globals']['units'] == 'F':
-			settings = convert_settings_units('C', settings)
-			write_settings(settings)
-			control = read_control()
-			control['updated'] = True
-			control['units_change'] = True
-			write_control(control, origin='app-socketio')
-			write_log("Changed units to Celsius")
-			return {'response': {'result':'success'}}
-		else:
-			return {'response': {'result':'error', 'message':'Error: Units could not be changed'}}
+	return (pagination)
 
-	elif action == 'remove_action':
-		if type == 'onesignal_device':
-			if 'onesignal_player_id' in request['onesignal_device']:
-				device = request['onesignal_device']['onesignal_player_id']
-				if device in settings['onesignal']['devices']:
-					settings['onesignal']['devices'].pop(device)
-				write_settings(settings)
-				return {'response': {'result':'success'}}
-			else:
-				return {'response': {'result':'error', 'message':'Error: Device not specified'}}
-		else:
-			return {'response': {'result':'error', 'message':'Error: Remove type not found'}}
+def _get_cookfilelist(folder=HISTORY_FOLDER):
+	# Grab list of Historical Cook Files
+	if not os.path.exists(folder):
+		os.mkdir(folder)
+	dirfiles = os.listdir(folder)
+	cookfiles = []
+	for file in dirfiles:
+		if file.endswith('.pifire'):
+			cookfiles.append(file)
+	return(cookfiles)
 
-	elif action == 'pellets_action':
-		pelletdb = read_pellet_db()
-		if type == 'load_profile':
-			if 'profile' in request['pellets_action']:
-				pelletdb['current']['pelletid'] = request['pellets_action']['profile']
-				now = str(datetime.datetime.now())
-				now = now[0:19]
-				pelletdb['current']['date_loaded'] = now
-				pelletdb['current']['est_usage'] = 0
-				pelletdb['log'][now] = request['pellets_action']['profile']
-				control = read_control()
-				control['hopper_check'] = True
-				write_control(control, origin='app-socketio')
-				write_pellet_db(pelletdb)
-				return {'response': {'result':'success'}}
-			else:
-				return {'response': {'result':'error', 'message':'Error: Profile not included in request'}}
-		elif type == 'hopper_check':
-			control = read_control()
-			control['hopper_check'] = True
-			write_control(control, origin='app-socketio')
-			return {'response': {'result':'success'}}
-		elif type == 'edit_brands':
-			if 'delete_brand' in request['pellets_action']:
-				delBrand = request['pellets_action']['delete_brand']
-				if delBrand in pelletdb['brands']:
-					pelletdb['brands'].remove(delBrand)
-				write_pellet_db(pelletdb)
-				return {'response': {'result':'success'}}
-			elif 'new_brand' in request['pellets_action']:
-				newBrand = request['pellets_action']['new_brand']
-				if newBrand not in pelletdb['brands']:
-					pelletdb['brands'].append(newBrand)
-				write_pellet_db(pelletdb)
-				return {'response': {'result':'success'}}
-			else:
-				return {'response': {'result':'error', 'message':'Error: Function not specified'}}
-		elif type == 'edit_woods':
-			if 'delete_wood' in request['pellets_action']:
-				delWood = request['pellets_action']['delete_wood']
-				if delWood in pelletdb['woods']:
-					pelletdb['woods'].remove(delWood)
-				write_pellet_db(pelletdb)
-				return {'response': {'result':'success'}}
-			elif 'new_wood' in request['pellets_action']:
-				newWood = request['pellets_action']['new_wood']
-				if newWood not in pelletdb['woods']:
-					pelletdb['woods'].append(newWood)
-				write_pellet_db(pelletdb)
-				return {'response': {'result':'success'}}
-			else:
-				return {'response': {'result':'error', 'message':'Error: Function not specified'}}
-		elif type == 'add_profile':
-			profile_id = ''.join(filter(str.isalnum, str(datetime.datetime.now())))
-			pelletdb['archive'][profile_id] = {
-				'id' : profile_id,
-				'brand' : request['pellets_action']['brand_name'],
-				'wood' : request['pellets_action']['wood_type'],
-				'rating' : request['pellets_action']['rating'],
-				'comments' : request['pellets_action']['comments'] }
-			if request['pellets_action']['add_and_load']:
-				pelletdb['current']['pelletid'] = profile_id
-				control = read_control()
-				control['hopper_check'] = True
-				write_control(control, origin='app-socketio')
-				now = str(datetime.datetime.now())
-				now = now[0:19]
-				pelletdb['current']['date_loaded'] = now
-				pelletdb['current']['est_usage'] = 0
-				pelletdb['log'][now] = profile_id
-				write_pellet_db(pelletdb)
-				return {'response': {'result':'success'}}
-			else:
-				write_pellet_db(pelletdb)
-				return {'response': {'result':'success'}}
-		if type == 'edit_profile':
-			if 'profile' in request['pellets_action']:
-				profile_id = request['pellets_action']['profile']
-				pelletdb['archive'][profile_id]['brand'] = request['pellets_action']['brand_name']
-				pelletdb['archive'][profile_id]['wood'] = request['pellets_action']['wood_type']
-				pelletdb['archive'][profile_id]['rating'] = request['pellets_action']['rating']
-				pelletdb['archive'][profile_id]['comments'] = request['pellets_action']['comments']
-				write_pellet_db(pelletdb)
-				return {'response': {'result':'success'}}
-			else:
-				return {'response': {'result':'error', 'message':'Error: Profile not included in request'}}
-		if type == 'delete_profile':
-			if 'profile' in request['pellets_action']:
-				profile_id = request['pellets_action']['profile']
-				if pelletdb['current']['pelletid'] == profile_id:
-					return {'response': {'result':'error', 'message':'Error: Cannot delete current profile'}}
-				else:
-					pelletdb['archive'].pop(profile_id)
-					for index in pelletdb['log']:
-						if pelletdb['log'][index] == profile_id:
-							pelletdb['log'][index] = 'deleted'
-				write_pellet_db(pelletdb)
-				return {'response': {'result':'success'}}
-			else:
-				return {'response': {'result':'error', 'message':'Error: Profile not included in request'}}
-		elif type == 'delete_log':
-			if 'log_item' in request['pellets_action']:
-				delLog = request['pellets_action']['log_item']
-				if delLog in pelletdb['log']:
-					pelletdb['log'].pop(delLog)
-				write_pellet_db(pelletdb)
-				return {'response': {'result':'success'}}
-			else:
-				return {'response': {'result':'error', 'message':'Error: Function not specified'}}
+def _get_cookfilelist_details(cookfilelist):
+	cookfiledetails = []
+	for item in cookfilelist:
+		filename = HISTORY_FOLDER + item['filename']
+		cookfiledata, status = read_json_file_data(filename, 'metadata')
+		if(status == 'OK'):
+			thumbnail = unpack_thumb(cookfiledata['thumbnail'], filename, cookfiledata["id"]) if ('thumbnail' in cookfiledata) else ''
+			cookfiledetails.append({'filename' : item['filename'], 'title' : cookfiledata['title'], 'thumbnail' : thumbnail})
 		else:
-			return {'response': {'result':'error', 'message':'Error: Received request without valid type'}}
+			cookfiledetails.append({'filename' : item['filename'], 'title' : 'ERROR', 'thumbnail' : ''})
+	return(cookfiledetails)
 
-	elif action == 'timer_action':
-		control = read_control()
-		for index, notify_obj in enumerate(control['notify_data']):
-			if notify_obj['type'] == 'timer':
-				break
-		if type == 'start_timer':
-			control['notify_data'][index]['req'] = True
-			if control['timer']['paused'] == 0:
-				now = time.time()
-				control['timer']['start'] = now
-				if 'hours_range' in request['timer_action'] and 'minutes_range' in request['timer_action']:
-					seconds = request['timer_action']['hours_range'] * 60 * 60
-					seconds = seconds + request['timer_action']['minutes_range'] * 60
-					control['timer']['end'] = now + seconds
-					control['notify_data'][index]['shutdown'] = request['timer_action']['timer_shutdown']
-					control['notify_data'][index]['keep_warm'] = request['timer_action']['timer_keep_warm']
-					write_log('Timer started.  Ends at: ' + epoch_to_time(control['timer']['end']))
-					write_control(control, origin='app-socketio')
-					return {'response': {'result':'success'}}
-				else:
-					return {'response': {'result':'error', 'message':'Error: Start time not specified'}}
-			else:
-				now = time.time()
-				control['timer']['end'] = (control['timer']['end'] - control['timer']['paused']) + now
-				control['timer']['paused'] = 0
-				write_log('Timer unpaused.  Ends at: ' + epoch_to_time(control['timer']['end']))
-				write_control(control, origin='app-socketio')
-				return {'response': {'result':'success'}}
-		elif type == 'pause_timer':
-			control['notify_data'][index]['req'] = False
-			now = time.time()
-			control['timer']['paused'] = now
-			write_log('Timer paused.')
-			write_control(control, origin='app-socketio')
-			return {'response': {'result':'success'}}
-		elif type == 'stop_timer':
-			control['notify_data'][index]['req'] = False
-			control['timer']['start'] = 0
-			control['timer']['end'] = 0
-			control['timer']['paused'] = 0
-			control['notify_data'][index]['shutdown'] = False
-			control['notify_data'][index]['keep_warm'] = False
-			write_log('Timer stopped.')
-			write_control(control, origin='app-socketio')
-			return {'response': {'result':'success'}}
+def _calc_shh_coefficients(t1, t2, t3, r1, r2, r3, units='F'):
+	try: 
+		if units=='F':
+			# Convert Temps from Fahrenheit to Kelvin
+			t1 = ((t1 - 32) * (5 / 9)) + 273.15
+			t2 = ((t2 - 32) * (5 / 9)) + 273.15
+			t3 = ((t3 - 32) * (5 / 9)) + 273.15
 		else:
-			return {'response': {'result':'error', 'message':'Error: Received request without valid type'}}
+			# Convert Temps from Celsius to Kelvin
+			t1 = t1 + 273.15
+			t2 = t2 + 273.15
+			t3 = t3 + 273.15
+
+		# https://en.wikipedia.org/wiki/Steinhart%E2%80%93Hart_equation
+
+		# Step 1: L1 = ln (R1), L2 = ln (R2), L3 = ln (R3)
+		l1 = math.log(r1)
+		l2 = math.log(r2)
+		l3 = math.log(r3)
+
+		# Step 2: Y1 = 1 / T1, Y2 = 1 / T2, Y3 = 1 / T3
+		y1 = 1 / t1
+		y2 = 1 / t2
+		y3 = 1 / t3
+
+		# Step 3: G2 = (Y2 - Y1) / (L2 - L1) , G3 = (Y3 - Y1) / (L3 - L1)
+		g2 = (y2 - y1) / (l2 - l1)
+		g3 = (y3 - y1) / (l3 - l1)
+
+		# Step 4: C = ((G3 - G2) / (L3 - L2)) * (L1 + L2 + L3)^-1
+		c = ((g3 - g2) / (l3 - l2)) * math.pow(l1 + l2 + l3, -1)
+
+		# Step 5: B = G2 - C * (L1^2 + (L1*L2) + L2^2)
+		b = g2 - c * (math.pow(l1, 2) + (l1 * l2) + math.pow(l2, 2))
+
+		# Step 6: A = Y1 - (B + L1^2*C) * L1
+		a = y1 - ((b + (math.pow(l1, 2) * c)) * l1)
+	except:
+		event = 'ERROR: Failed to calculate Steinhart-Hart coefficients.'
+		write_log(event)
+		a = 0
+		b = 0
+		c = 0
+	return(a, b, c)
+
+def _temp_to_tr(temp, a, b, c, units='F'):
+	'''
+	# Not recommended for use, as it commonly produces a complex number
+	'''
+
+	try: 
+		if units == 'F':
+			temp_k = ((temp - 32) * (5 / 9)) + 273.15
+		else:
+			temp_k = temp + 273.15
+
+		# https://en.wikipedia.org/wiki/Steinhart%E2%80%93Hart_equation
+		# Inverse of the equation, to determine Tr = Resistance Value of the thermistor
+
+		x = (a - (1 / temp_k)) / c
+		y1 = math.pow((b/(3*c)), 3) 
+		y2 = ((x*x)/4)
+		y = math.sqrt(y1+y2)  # If the result of y1 + y2 is negative, this will throw an exception
+		Tr = math.exp(math.pow(y - (x/2), (1/3)) - math.pow(y + (x/2), (1/3)))
+	except: 
+		Tr = 0
+
+	return int(Tr)
+
+def _tr_to_temp(tr, a, b, c, units='F'):
+	try:
+		#Steinhart Hart Equation
+		# 1/T = A + B(ln(R)) + C(ln(R))^3
+		# T = 1/(a + b[ln(ohm)] + c[ln(ohm)]^3)
+		ln_ohm = math.log(tr) # ln(ohms)
+		t1 = (b * ln_ohm) # b[ln(ohm)]
+		t2 = c * math.pow(ln_ohm, 3) # c[ln(ohm)]^3
+		temp_k = 1/(a + t1 + t2) # calculate temperature in Kelvin
+		temp_c = temp_k - 273.15 # Kelvin to Celsius
+		temp_f = temp_c * (9 / 5) + 32 # Celsius to Fahrenheit
+	except:
+		temp_c = 0.0
+		temp_f = 0
+	if units == 'F': 
+		return int(temp_f) # Return Calculated Temperature and Thermistor Value in Ohms
 	else:
-		return {'response': {'result':'error', 'message':'Error: Received request without valid action'}}
+		return temp_c
+
+def _calc_shh_chart(a, b, c, units='F', temp_range=220, tr_points=[]):
+	'''
+	Based on SHH Coefficients determined during tuning, show Temp (x) vs. Tr (y) chart
+	'''
+
+	labels = []
+
+	for label in range(0, temp_range, temp_range//20):
+		labels.append(label)
+
+	chart_data = []
+
+	for T in labels:
+		R = _temp_to_tr(T, a, b, c, units=units)
+		if R != 0:
+			chart_data.append({'x': int(T), 'y': int(R)})
+		else:
+			# Error/Exception occurred calculating the temperature, break and return
+			chart_data = []
+			break
+
+	return labels, chart_data
+
+def _str_td(td):
+	s = str(td).split(", ", 1)
+	a = s[-1]
+	if a[1] == ':':
+		a = "0" + a
+	s2 = s[:-1] + [a]
+	return ", ".join(s2)
+
+def _zip_files_dir(dir_name):
+	memory_file = BytesIO()
+	with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+		for root, dirs, files in os.walk(dir_name):
+			for file in files:
+				zipf.write(os.path.join(root, file))
+	memory_file.seek(0)
+	return memory_file
+
+def _zip_files_logs(dir_name):
+	time_now = datetime.datetime.now()
+	time_str = time_now.strftime('%m-%d-%y_%H%M%S') # Truncate the microseconds
+	file_name = f'/tmp/PiFire_Logs_{time_str}.zip'
+	directory = pathlib.Path(f'{dir_name}')
+	with zipfile.ZipFile(file_name, "w", zipfile.ZIP_DEFLATED) as archive:
+		for file_path in directory.rglob("*.log"):
+			archive.write(file_path, arcname=file_path.relative_to(directory))
+	return file_name
+
+def _get_supported_cmds():
+	process_command(action='sys', arglist=['supported_commands'], origin='admin')  # Request supported commands 
+	data = _get_system_command_output(requested='supported_commands')
+	if data['result'] != 'ERROR':
+		return data['data']['supported_cmds']
+	else:
+		return data
+
+def _get_system_command_output(requested='supported_commands', timeout=1):
+	system_output = RedisQueue('control:systemo')
+	endtime = timeout + time.time()
+	while time.time() < endtime:
+		while system_output.length() > 0:
+			data = system_output.pop()
+			if data['command'][0] == requested:
+				return data
+
+	return {
+		'command' : [requested, None, None, None],
+		'result' : 'ERROR',
+		'message' : 'The requested command output could not be found.',
+		'data' : {'Response_Was' : 'To_Fast'}
+	}
+
 
 '''
 ==============================================================================
@@ -657,3 +614,10 @@ if __name__ == '__main__':
 		socketio.run(app, host='0.0.0.0')
 	else:
 		socketio.run(app, host='0.0.0.0', debug=True)
+
+'''
+==============================================================================
+ SocketIO Section
+==============================================================================
+'''
+import mobile.socket_io
