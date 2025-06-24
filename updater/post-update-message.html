@@ -7,6 +7,12 @@
 <div class="row justify-content-center">
    <div class="card" style="width:80%">
       <div class="card-body">
+
+            <div class="alert alert-danger" role="alert">
+               <i class="fa-solid fa-triangle-exclamation"></i>&nbsp; <b>WARNING:</b>
+               This is a development release.  Use this at your own risk.  There are known issues with this release. 
+            </div>
+            <br>
             <p>
                This release contains bug fixes and feature updates since the previous version. 
             </p> 
@@ -38,6 +44,12 @@
                      </li>
                      <li>
                         Updated the board-config utility to gather os information in os_info.json. 
+                     </li>
+                     <li>
+                        Moved all Flask Web UI Routes to the Flask Blueprint system.  This will allow for easier management of the web UI in the future and it considerably cleans up the app.py file. 
+                     </li>
+                     <li>
+                        @weberbox updated the SocketIO code to support the latest version of the Android app. 
                      </li>
                   </ul>
                </li>
