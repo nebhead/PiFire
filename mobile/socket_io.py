@@ -17,8 +17,9 @@ Description: This library provides socketio functions for app.py
 '''
 import threading
 from common import *
-from flask import request, current_app
+from flask import request
 from app import socketio
+from config import Config
 from file_mgmt.recipes import read_recipefile, get_recipefilelist
 from base64 import b64encode
 from datetime import datetime
@@ -37,6 +38,8 @@ read_settings_redis(init=True)
 read_pellets_redis(init=True)
 read_connected_users(flush=True)
 read_events_redis(flush=True)
+
+recipe_folder = Config.RECIPE_FOLDER
 
 '''
 ==============================================================================
@@ -150,7 +153,6 @@ def _get_dash_data(settings, pelletdb):
     warnings = read_warnings()
     notify_data = control['notify_data']
     probe_device_info = read_generic_key('probe_device_info')
-    RECIPE_FOLDER = current_app.config['RECIPE_FOLDER']
 
     timer_notify_data = _get_timer_notify_data(notify_data)
     food_probes = _get_probe_data('Food', settings, current, probe_device_info, notify_data)
@@ -209,7 +211,6 @@ def _get_dash_data(settings, pelletdb):
 
 def _get_app_data(action=None, arg01=None, arg02=None):
     settings = read_settings_redis()
-    RECIPE_FOLDER = current_app.config['RECIPE_FOLDER']
 
     if action == 'settings_data':
         return _response(
@@ -265,6 +266,7 @@ def _get_app_data(action=None, arg01=None, arg02=None):
                 'platform': settings['modules']['grillplat'],
                 'display': settings['modules']['display'],
                 'distance': settings['modules']['dist'],
+                'pipList': read_generic_json('pip_list.json'),
                 'dcFan': settings['platform']['dc_fan']
             }
         )
@@ -285,7 +287,7 @@ def _get_app_data(action=None, arg01=None, arg02=None):
                 filelist = get_recipefilelist()
                 recipedetailslist = []
                 for filename in filelist:
-                    filepath = f'{RECIPE_FOLDER}{filename}'
+                    filepath = f'{recipe_folder}{filename}'
                     recipe_data, status = read_recipefile(filepath)
                     if status == 'OK':
                         recipe_data = _encode_assets(recipe_data)
@@ -306,7 +308,6 @@ def _get_app_data(action=None, arg01=None, arg02=None):
 
 def _post_app_data(action=None, type=None, json_data=None):
     settings = read_settings_redis()
-    RECIPE_FOLDER = current_app.config['RECIPE_FOLDER']
 
     if json_data is not None:
         request = json.loads(json_data)
@@ -376,8 +377,16 @@ def _post_app_data(action=None, type=None, json_data=None):
             write_log("Admin: Shutdown")
             os.system("sleep 3 && sudo shutdown -h now &")
             return _response(result='OK')
-        elif type == 'restart':
-            write_log("Admin: Restart Server")
+        elif type == 'restart_control':
+            write_log("Admin: Restart Control")
+            restart_control()
+            return _response(result='OK')
+        elif type == 'restart_webapp':
+            write_log("Admin: Restart WebApp")
+            restart_webapp()
+            return _response(result='OK')
+        elif type == 'restart_supervisor':
+            write_log("Admin: Restart Supervisor")
             restart_scripts()
             return _response(result='OK')
         else:
@@ -568,7 +577,7 @@ def _post_app_data(action=None, type=None, json_data=None):
         if type == 'recipe_delete':
             if request['recipes_action']['filename']:
                 filename = request['recipes_action']['filename']
-                filepath = f'{RECIPE_FOLDER}{filename}'
+                filepath = f'{recipe_folder}{filename}'
                 os.system(f'rm {filepath}')
                 return _response(result='OK')
         elif type == 'recipe_start':
@@ -577,7 +586,7 @@ def _post_app_data(action=None, type=None, json_data=None):
                 filename = request['recipes_action']['filename']
                 control['updated'] = True
                 control['mode'] = 'Recipe'
-                control['recipe']['filename'] = RECIPE_FOLDER + filename
+                control['recipe']['filename'] = recipe_folder + filename
                 write_control(control, origin='app-socketio')
                 return _response(result='OK')
         else:
