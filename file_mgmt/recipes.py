@@ -223,9 +223,11 @@ def get_recipefilelist_details(recipefilelist):
     for item in recipefilelist:
         filename = RECIPE_FOLDER + item['filename']
         recipefiledata, status = read_json_file_data(filename, 'metadata')
-        if(status == 'OK'):
-            thumbnail = unpack_thumb(recipefiledata['thumbnail'], filename) if ('thumbnail' in recipefiledata) else ''
-            recipefiledetails.append({'filename' : item['filename'], 'title' : recipefiledata['title'], 'thumbnail' : thumbnail})
+        if status == 'OK':
+            thumbnail = unpack_thumb(recipefiledata['thumbnail'], filename, recipefiledata["id"]) if (
+                    'thumbnail' in recipefiledata) else ''
+            recipefiledetails.append(
+                {'filename': item['filename'], 'title': recipefiledata['title'], 'thumbnail': thumbnail})
         else:
-            recipefiledetails.append({'filename' : item['filename'], 'title' : 'ERROR', 'thumbnail' : ''})
-    return(recipefiledetails)
+            recipefiledetails.append({'filename': item['filename'], 'title': 'ERROR', 'thumbnail': ''})
+    return recipefiledetails

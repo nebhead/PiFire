@@ -601,7 +601,8 @@ def _get_cookfilelist_details(cookfilelist):
         filename = HISTORY_FOLDER + item['filename']
         cookfiledata, status = read_json_file_data(filename, 'metadata')
         if(status == 'OK'):
-            thumbnail = unpack_thumb(cookfiledata['thumbnail'], filename) if ('thumbnail' in cookfiledata) else ''
+            thumbnail = unpack_thumb(cookfiledata['thumbnail'], filename, cookfiledata["id"]) if (
+                    'thumbnail' in cookfiledata) else ''
             cookfiledetails.append({'filename' : item['filename'], 'title' : cookfiledata['title'], 'thumbnail' : thumbnail})
         else:
             cookfiledetails.append({'filename' : item['filename'], 'title' : 'ERROR', 'thumbnail' : ''})
