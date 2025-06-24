@@ -1839,7 +1839,19 @@ def is_real_hardware(settings=None):
 	if settings == None:
 		settings = read_settings()
 
-	return True if settings['platform']['real_hw'] else False 
+	return True if settings['platform']['real_hw'] else False
+
+def restart_control():
+	"""
+	Restart the Control Script
+	"""
+	os.system("sleep 3 && sudo supervisorctl restart control &")
+
+def restart_webapp():
+	"""
+	Restart the WebApp Script
+	"""
+	os.system("sleep 3 && sudo supervisorctl restart webapp &")
 
 def restart_scripts():
 	"""
