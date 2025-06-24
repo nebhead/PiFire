@@ -1,7 +1,5 @@
 ''' This file contains configuration settings for the application. '''
 
-import os
-
 class Config:
 	BACKUP_PATH = './backups/'  # Path to backups of settings.json, pelletdb.json
 	UPLOAD_FOLDER = BACKUP_PATH  # Point uploads to the backup path

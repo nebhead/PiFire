@@ -2,7 +2,7 @@ $(document).ready(function(){
 	$('#release_notes_html').load('/update/post-message');
 
 	req = $.ajax({
-		url : '/checkupdate',
+		url : '/update/check',
 		type : 'GET'
 	});
 	req.done(function(data) {
@@ -30,7 +30,7 @@ $( "#check_for_update" ).click(function() {
 	$('#update_failed').hide();
 	$('#update_checking').show();
 	req = $.ajax({
-		url : '/checkupdate',
+		url : '/update/check',
 		type : 'GET'
 	});
 	req.done(function(data) {

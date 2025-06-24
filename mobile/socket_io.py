@@ -17,8 +17,8 @@ Description: This library provides socketio functions for app.py
 '''
 import threading
 from common import *
-from flask import request
-from app import socketio, RECIPE_FOLDER
+from flask import request, current_app
+from app import socketio
 from file_mgmt.recipes import read_recipefile, get_recipefilelist
 from base64 import b64encode
 from datetime import datetime
@@ -150,6 +150,7 @@ def _get_dash_data(settings, pelletdb):
     warnings = read_warnings()
     notify_data = control['notify_data']
     probe_device_info = read_generic_key('probe_device_info')
+    RECIPE_FOLDER = current_app.config['RECIPE_FOLDER']
 
     timer_notify_data = _get_timer_notify_data(notify_data)
     food_probes = _get_probe_data('Food', settings, current, probe_device_info, notify_data)
@@ -208,6 +209,7 @@ def _get_dash_data(settings, pelletdb):
 
 def _get_app_data(action=None, arg01=None, arg02=None):
     settings = read_settings_redis()
+    RECIPE_FOLDER = current_app.config['RECIPE_FOLDER']
 
     if action == 'settings_data':
         return _response(
@@ -304,6 +306,7 @@ def _get_app_data(action=None, arg01=None, arg02=None):
 
 def _post_app_data(action=None, type=None, json_data=None):
     settings = read_settings_redis()
+    RECIPE_FOLDER = current_app.config['RECIPE_FOLDER']
 
     if json_data is not None:
         request = json.loads(json_data)
