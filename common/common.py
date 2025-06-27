@@ -24,6 +24,7 @@ import redis
 import uuid
 import random
 import logging
+from logging.handlers import RotatingFileHandler
 from collections.abc import Mapping
 from ratelimitingfilter import RateLimitingFilter
 from common.redis_queue import RedisQueue
@@ -58,7 +59,14 @@ cmdsts = redis.StrictRedis('localhost', 6379, charset="utf-8", decode_responses=
  Functions
 ==============================================================================
 '''
-def create_logger(name, filename='./logs/pifire.log', messageformat='%(asctime)s | %(levelname)s | %(message)s', level=logging.INFO):
+def create_logger(
+		name, 
+		filename='./logs/pifire.log', 
+		messageformat='%(asctime)s | %(levelname)s | %(message)s', 
+		level=logging.INFO,
+		maxBytes=1 * 1024 * 1024,  # 1 MB
+    	backupCount=3
+		):
 	'''Create or Get Existing Logger'''
 	logger = logging.getLogger(name)
 	''' 
@@ -73,10 +81,22 @@ def create_logger(name, filename='./logs/pifire.log', messageformat='%(asctime)s
 		# Add a rate limit filter for the voltage error logging 
 		config = {'match': ['An error occurred reading the voltage from one of the ports.']}
 		ratelimit = RateLimitingFilter(rate=1, per=60, burst=5, **config)  # Allow 1 per 60s (with periodic burst of 5)
-		handler = logging.FileHandler(filename)        
+        
+		# Standard FileHandler
+		'''
+		handler = logging.FileHandler(filename)
 		handler.setFormatter(formatter)
-		handler.addFilter(ratelimit)  # Add the rate limit filter
+		handler.addFilter(ratelimit)
 		logger.addHandler(handler)
+		'''
+		
+		# RotatingFileHandler
+		rotating_handler = RotatingFileHandler(filename, maxBytes=maxBytes, backupCount=backupCount)
+		rotating_handler.setFormatter(formatter)
+		rotating_handler.addFilter(ratelimit)
+		logger.addHandler(rotating_handler)
+
+		# RedisHandler
 		redis_handler = RedisHandler(cmdsts, 'logs:' + name)
 		redis_handler.setFormatter(formatter)
 		redis_handler.addFilter(ratelimit)
