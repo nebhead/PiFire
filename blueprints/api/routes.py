@@ -102,14 +102,25 @@ def api_page(action=None, arg0=None, arg1=None, arg2=None, arg3=None):
 		else:
 			request_json = request.json
 			if(action == 'settings'):
-				settings = deep_update(settings, request.json)
-				'''
-				for key in settings.keys():
-					if key in request_json.keys():
-						settings[key].update(request_json.get(key, {}))
-				'''
-				write_settings(settings)
-				return jsonify({'settings':'success'}), 201
+				try:
+					settings = deep_update(settings, request_json)
+					write_settings(settings)
+					return jsonify(
+							{
+							'settings' : 'success',  # Keeping for compatibility
+							'result' : 'success',
+							'message': 'Settings updated successfully.'
+							}
+						), 201
+				except:
+					return jsonify(
+							{
+							'settings' : 'error',  # Keeping for compatibility
+							'result' : 'error',
+							'message': 'Settings update failed.'
+							}
+						), 201
+
 			elif(action == 'control'):
 				'''
 					Updating of control input data is now done in common.py > execute_commands() 

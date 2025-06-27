@@ -479,24 +479,6 @@ def settings_page(action=None):
 
         write_settings(settings)
 
-    if request.method == 'POST' and action == 'pagesettings':
-        response = request.form
-
-        if is_checked(response, 'darkmode'):
-            settings['globals']['page_theme'] = 'dark'
-        else:
-            settings['globals']['page_theme'] = 'light'
-
-        if is_checked(response, 'global_control_panel'):
-            settings['globals']['global_control_panel'] = True
-        else:
-            settings['globals']['global_control_panel'] = False
-
-        event['type'] = 'updated'
-        event['text'] = 'Successfully updated page settings.'
-
-        write_settings(settings)
-
     if request.method == 'POST' and action == 'safety':
         response = request.form
 

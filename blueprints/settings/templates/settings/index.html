@@ -1372,35 +1372,32 @@
                 </div><!-- End of Card -->
                 <br><br><br>
             </div><!-- End of Tab -->
+            
             <!-- ============================ Page Settings ========================== -->
             <div class="tab-pane fade" id="v-pills-theme" role="tabpanel" aria-labelledby="v-pills-theme-tab">
                 <div class="card shadow">
-                    <form name="pagesettings" action="/settings/pagesettings" method="POST">
-                        <div class="card-header bg-primary text-white">
-                            <h5>
-                                <i class="fas fa-tools"></i>&nbsp; Page Settings
-                            </h5>
+                    <div class="card-header bg-primary text-white">
+                        <h5>
+                            <i class="fas fa-tools"></i>&nbsp; Page Settings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="darkmode" name="darkmode" {% if settings['globals']['page_theme'] == 'dark' %}checked{% endif %}>
+                            <label class="custom-control-label" for="darkmode">Enable Dark Mode</label>
                         </div>
-                        <div class="card-body">
-                            <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="darkmode" name="darkmode" {% if settings['globals']['page_theme'] == 'dark' %}checked{% endif %}>
-                                <label class="custom-control-label" for="darkmode">Enable Dark Mode</label>
-                            </div>
-                            <br>
-                            <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="global_control_panel" name="global_control_panel" {% if settings['globals']['global_control_panel'] %}checked{% endif %}>
-                                <label class="custom-control-label" for="global_control_panel">Show Control Panel on Most Pages</label>
-                            </div>
-                            <br>
-                        </div><!-- End of card body -->
-                        <div class="card-footer bg-light">
-                            <button type="submit" class="btn btn-outline-danger">Save</button>
+                        <br>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="global_control_panel" name="global_control_panel" {% if settings['globals']['global_control_panel'] %}checked{% endif %}>
+                            <label class="custom-control-label" for="global_control_panel">Show Control Panel on Most Pages</label>
                         </div>
-                    </form>
-                    </div><!-- End of Card -->
-                    <br><br><br>
-                </div><!-- End of Tab -->
-                <!-- ========================== Notification Settings ========================== -->
+                        <br>
+                    </div><!-- End of card body -->
+                </div><!-- End of Card -->
+                <br><br><br>
+            </div><!-- End of Tab -->
+            
+            <!-- ========================== Notification Settings ========================== -->
                 <div class="tab-pane fade" id="v-pills-notifications" role="tabpanel" aria-labelledby="v-pills-notifications-tab">
                     <div class="card shadow">
                         <form name="notify" action="/settings/notify" method="POST">

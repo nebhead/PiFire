@@ -7,6 +7,34 @@ var dc_temps_list;
 var dc_profiles;
 
 // Functions
+
+// General API Settings Update
+
+function updateSettingsAPI(settings, reload_page) {
+	$.ajax({
+		url: '/api/settings',
+		type: 'POST',
+		contentType: "application/json; charset=utf-8",
+		traditional: true,
+		data: JSON.stringify(settings),
+		success: function(data) {
+			//console.log('Data: ' + data['result'] + data['message']);
+			if (data['result'] == 'success') {
+				settings_toast_success(data['message']);
+			} else {
+				settings_toast_error(data['message']);
+			};
+			// Reload page if requested
+			if (reload_page) {
+				window.location.reload();
+			};
+		}
+	});
+};
+
+// =========================================================
+// Smart Start Functions
+// =========================================================
 function postSmartStartData(temps_list, profiles) {
 	var postdata = {
 		'temps_list': temps_list,
@@ -342,6 +370,10 @@ function onAdd() {
 	};
 };
 
+// =========================================================
+// PWM Duty Cycle Functions
+// =========================================================
+
 function postPWMDutyCycleData(dc_temps_list, dc_profiles) {
 	var post_data = {
 		'dc_temps_list': dc_temps_list,
@@ -633,10 +665,18 @@ function onAddPWM() {
 	};
 };
 
+// =========================================================
+// Controller Card Functions
+// =========================================================
+
 // Function to change the controller card selected 
 $('#selectController').on('change', function() {
 	$('#controller_config').load("/settings/controller_card", {"selected" : this.value});
 });
+
+// ==========================================================
+// Notification Functions
+// ==========================================================
 
 function sendTestNotification() {
 	$.ajax({
@@ -655,6 +695,10 @@ function sendTestNotification() {
 	});
 };
 
+// ==========================================================
+// Toast Functions
+// ==========================================================
+
 function settings_toast_error(message) {
 	$('#toastTitle').text('Error');
 	$('#toastMessage').text(message);
@@ -669,7 +713,11 @@ function settings_toast_success(message) {
 	$('#notifyToast').toast('show');
 };
 
-// On page load...
+
+// ==========================================================
+// On page load
+// ==========================================================
+
 $(document).ready(function() {
 	// Setup Color Picker for all elements whose id starts with 'clrpck_'
 	$(function () {
@@ -850,6 +898,46 @@ $(document).ready(function() {
 			$('#prime_on_startup_input').slideUp(100);
 			$('#prime_on_startup').val(0); // Zero disables this feature 
 		};
+	});
+
+	// Enable / Disable the Dark Mode Feature
+	$('#darkmode').change(function() {
+		if ($(this).is(':checked')) {
+			// if dark mode is enabled, set the theme to dark by sending an API request to update settings['globals']['page_theme']
+			settings = {
+				'globals': {
+					'page_theme': 'dark'
+				}
+			};
+		} else {
+			settings = {
+				'globals': {
+					'page_theme': 'light'
+				}
+			};
+		};
+		var reload_page = true; // Reload page to apply theme change
+		updateSettingsAPI(settings, reload_page);
+	});
+
+	// Enable / Disable Global Control Panel
+	$('#global_control_panel').change(function() {
+		if ($(this).is(':checked')) {
+			// if global control panel is enabled, set the theme to dark by sending an API request to update settings['globals']['global_control_panel']
+			settings = {
+				'globals': {
+					'global_control_panel': true
+				}
+			};
+		} else {
+			settings = {
+				'globals': {
+					'global_control_panel': false
+				}
+			};
+		};
+		var reload_page = true; // Reload page to apply control panel change
+		updateSettingsAPI(settings, reload_page);
 	});
 
 }); // End of document ready function
