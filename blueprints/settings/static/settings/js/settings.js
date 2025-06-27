@@ -695,6 +695,36 @@ function sendTestNotification() {
 	});
 };
 
+// ===========================================================
+// Dashboard Selection Functions
+// ===========================================================
+
+function selectDashboard(dashboard) {
+	console.log('Dashboard Selected: ' + dashboard);
+	var settings = {
+		'dashboard': {
+			'current' : dashboard
+		}
+	};
+	updateSettingsAPI(settings, false);
+};
+
+// ===========================================================
+// Set Grill Name Functions
+// ===========================================================
+function setGrillName(grillName) {
+	console.log('Grill Name Set: ' + grillName);
+	var settings = {
+		'globals': {
+			'grill_name' : grillName
+		}
+	};
+	updateSettingsAPI(settings, false);
+	// Update the grill name in the header
+	document.getElementById("navbarGrillName").innerHTML = grillName;
+	document.title = 'Settings | ' + grillName;
+};
+
 // ==========================================================
 // Toast Functions
 // ==========================================================

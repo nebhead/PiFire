@@ -273,12 +273,11 @@
                 <!-- ============================ Grill Name ========================== -->
                 <div class="tab-pane fade" id="v-pills-name" role="tabpanel" aria-labelledby="v-pills-name-tab">
                     <div class="card shadow">
-                        <form name="GrillName" action="/settings/grillname" method="POST">
-                            <div class="card-header bg-primary text-white">
-                                <h5>
-                                    <i class="fas fa-file-signature"></i>&nbsp; Grill Name
-                                </h5>
-                            </div>
+                        <div class="card-header bg-primary text-white">
+                            <h5>
+                                <i class="fas fa-file-signature"></i>&nbsp; Grill Name
+                            </h5>
+                        </div>
                         <div class="card-body">
                             <div class="input-group mb-3">
                                 <div class="input-group-prepend">
@@ -289,9 +288,8 @@
                             </div>
                         </div><!-- End of card body -->
                         <div class="card-footer bg-light">
-                            <button type="submit" class="btn btn-outline-danger">Save</button>
+                            <button type="button" class="btn btn-outline-danger" onclick="setGrillName(document.getElementById('grill_name').value);">Save</button>
                         </div>
-                    </form>
                     </div><!-- End of Card -->
                     <br><br><br>
                 </div><!-- End of Tab -->
@@ -1019,8 +1017,7 @@
                 <!-- ============================ Dashboard Settings ========================== -->
                 <div class="tab-pane fade" id="v-pills-dash" role="tabpanel" aria-labelledby="v-pills-dash-tab">
                     <div class="card shadow">
-                        <form name="miscsettings" action="/settings/dashboard" method="POST">
-                            <div class="card-header bg-primary text-white">
+                        <div class="card-header bg-primary text-white">
                                 <h5>
                                     <i class="fas fa-tools"></i>&nbsp; Dashboard Settings
                                 </h5>
@@ -1036,9 +1033,8 @@
                             </div>
                         </div><!-- End of card body -->
                         <div class="card-footer bg-light">
-                            <button type="submit" class="btn btn-outline-danger">Save</button>
+                            <button type="button" class="btn btn-outline-danger" onclick="selectDashboard(document.getElementById('dashboardSelect').value);">Save</button>
                         </div>
-                    </form>
                     </div><!-- End of Card -->
                     <br><br><br>
                 </div><!-- End of Tab -->

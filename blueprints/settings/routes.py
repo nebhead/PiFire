@@ -419,14 +419,6 @@ def settings_page(action=None):
         write_settings(settings)
         write_control(control, origin='app')
 
-    if request.method == 'POST' and action == 'dashboard':
-        response = request.form
-        if is_not_blank(response, 'dashboardSelect'):
-            settings['dashboard']['current'] = response['dashboardSelect']
-            write_settings(settings)
-            event['type'] = 'updated'
-            event['text'] = 'Successfully updated dashboard settings.'
-
     if request.method == 'POST' and action == 'history':
         response = request.form
 
@@ -503,16 +495,6 @@ def settings_page(action=None):
 
         event['type'] = 'updated'
         event['text'] = 'Successfully updated safety settings.'
-
-        write_settings(settings)
-
-    if request.method == 'POST' and action == 'grillname':
-        response = request.form
-
-        if 'grill_name' in response:
-            settings['globals']['grill_name'] = response['grill_name']
-            event['type'] = 'updated'
-            event['text'] = 'Successfully updated grill name.'
 
         write_settings(settings)
 
