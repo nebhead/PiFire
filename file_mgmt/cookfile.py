@@ -150,8 +150,6 @@ def create_cookfile():
 def read_cookfile(filename):
 	'''
 	Read FULL Cook File into Python Dictionary
-	
-	TODO: Fix bug where a second image is attached to file, and the image filename is passed to this function mistakenly. 
 	'''
 	settings = read_settings()
 

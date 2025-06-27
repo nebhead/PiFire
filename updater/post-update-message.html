@@ -61,6 +61,18 @@
                <li>
                   Fixed bug with fresh installations where Redis python 6.0.0 deprecated charset encoding parameter.  Pinned to Redis Python 5.3.0 for now.
                </li>
+               <li>
+                  Development Environment: Unable to complete wizard setup because it falsely detects real hardware. Root Caused to Python Exec when launching wizard.py
+               </li>
+               <li>
+                  With Socket IO changes from weberbox, unpack_thumb is broken in cookfile route. Root caused to added ID parameter in the cookfile module. 
+               </li>
+               <li>
+                  Global control panel fix in base.html where control was being over written to a boolean. 
+               </li>
+               <li>
+                  Cookfile: Uploading a new image/thumb after previously uploading an image or thumb would cause the page to crash.  
+               </li>
             </ul>
        
          </div> <!-- End of Card Body -->

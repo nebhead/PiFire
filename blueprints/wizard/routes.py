@@ -1,6 +1,6 @@
 import os
 from flask import render_template, request, jsonify, redirect, render_template_string
-from common.common import read_settings, read_control, read_wizard, get_wizard_install_status, set_wizard_install_status, store_wizard_install_info, write_settings
+from common.common import read_settings, read_control, read_wizard, get_wizard_install_status, set_wizard_install_status, store_wizard_install_info, write_settings, is_real_hardware
 from common.app import get_supported_cmds, process_command, get_system_command_output
 
 from . import wizard_bp
@@ -14,7 +14,10 @@ def wizard_page(action=None):
     wizardData = read_wizard()
     errors = []
 
-    python_exec = settings['globals'].get('python_exec', 'python')
+    if is_real_hardware():
+        python_exec = settings['globals'].get('python_exec', 'python')
+    else:
+        python_exec = 'python'  # Bug fix for development environment where python_exec isn't relevant
 
     if request.method == 'GET':
         if action=='installstatus':

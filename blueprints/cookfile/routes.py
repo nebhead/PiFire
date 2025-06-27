@@ -208,7 +208,7 @@ def cookfile_page():
                 uploadedfiles = request.files.getlist('ulmedia')
                 cookfilename = HISTORY_FOLDER + requestform['ulmediafn']
                 filenameonly = requestform['ulmediafn']
-            else: 
+            else:
                 uploadedfile = request.files['ulthumbnail']
                 cookfilename = HISTORY_FOLDER + requestform['ulthumbfn']
                 filenameonly = requestform['ulthumbfn']
@@ -252,7 +252,7 @@ def cookfile_page():
                             'cookfile/index.html',
                             settings=settings,
                             cookfilename=cookfilename, 
-                            filenameonly=filename,
+                            filenameonly=filenameonly,
                             events=events, 
                             event_totals=event_totals,
                             comments=comments, 
@@ -336,7 +336,7 @@ def cookfile_page():
                             'cookfile/index.html',
                             settings=settings,
                             cookfilename=cookfilename, 
-                            filenameonly=filename,
+                            filenameonly=filenameonly,
                             events=events, 
                             event_totals=event_totals,
                             comments=comments, 
@@ -385,7 +385,7 @@ def cookfile_page():
                             'cookfile/index.html',
                             settings=settings,
                             cookfilename=cookfilename, 
-                            filenameonly=filename,
+                            filenameonly=filenameonly,
                             events=events, 
                             event_totals=event_totals,
                             comments=comments, 
@@ -436,7 +436,7 @@ def cookfile_page():
                             'cookfile/index.html',
                             settings=settings,
                             cookfilename=cookfilename, 
-                            filenameonly=filename,
+                            filenameonly=filenameonly,
                             events=events, 
                             event_totals=event_totals,
                             comments=comments, 
