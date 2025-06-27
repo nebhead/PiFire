@@ -172,9 +172,10 @@ class ProbeInterface:
 
 			tempF = tempC * (9/5) + 32 # Celsius to Farenheit
 			
-			''' Check bounds for realistic temperature values (0-600F), else report 0F '''
+			''' Check bounds for realistic temperature values (ex. 0-600F, 0-314C), else report 0 '''
 			if (tempF < 0) or (tempF > 600):
 				tempF = 0
+			if (tempC < 0) or (tempC > 314):
 				tempC = 0
 
 		else:
