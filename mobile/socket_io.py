@@ -189,7 +189,7 @@ def _get_dash_data(settings, pelletdb):
         'primeAmount': status['prime_amount'],
         'tempUnits': settings['globals']['units'],
         'hasDcFan': settings['platform']['dc_fan'],
-        'hasDistanceSensor': settings['modules']['distance'] != 'none',
+        'hasDistanceSensor': settings['modules']['dist'] != 'none',
         'startupCheck': settings['safety']['startup_check'],
         'allowManualOutputs': settings['safety']['allow_manual_changes'],
         'timer': {
