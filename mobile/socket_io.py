@@ -98,13 +98,19 @@ def post_app_data(action=None, type=None, json_data=None):
 def _emit_app_data(event, force_refresh):
     global thread
 
+    check_control_time = time.time()
+
     previous_dash = ''
     previous_event = ''
     previous_pellet = ''
 
     try:
         while event.is_set():
-            check_control_status()
+            now = time.time()
+            if (now - check_control_time) > 30:
+                check_control_time = now
+                _check_control_status()
+
             settings = read_settings_redis()
             pelletdb = read_pellets_redis()
             uuid = settings['server_info']['uuid']
@@ -183,6 +189,7 @@ def _get_dash_data(settings, pelletdb):
         'primeAmount': status['prime_amount'],
         'tempUnits': settings['globals']['units'],
         'hasDcFan': settings['platform']['dc_fan'],
+        'hasDistanceSensor': settings['modules']['distance'] != 'none',
         'startupCheck': settings['safety']['startup_check'],
         'allowManualOutputs': settings['safety']['allow_manual_changes'],
         'timer': {
@@ -401,7 +408,7 @@ def _post_app_data(action=None, type=None, json_data=None):
             control['units_change'] = True
             write_control(control, origin='app-socketio')
             write_log("Changed units to Fahrenheit")
-            return _response(result='OK')
+            return _response(result='OK', data=settings)
         elif type == 'c_units' and settings['globals']['units'] == 'F':
             settings = convert_settings_units('C', settings)
             control = read_control()
@@ -410,7 +417,7 @@ def _post_app_data(action=None, type=None, json_data=None):
             control['units_change'] = True
             write_control(control, origin='app-socketio')
             write_log("Changed units to Celsius")
-            return _response(result='OK')
+            return _response(result='OK', data=settings)
         else:
             return _response(result='Error', message='Error: Units could not be changed')
 
@@ -836,13 +843,13 @@ def _write_settings(settings, control):
     write_settings(settings)
     write_control(control, origin='app-socketio')
 
-def check_control_status():
+def _check_control_status():
     errors = read_errors()
     ''' Check if control process is up and running. '''
     process_command(action='sys', arglist=['check_alive'], origin='app-socketio')
     data = get_system_command_output(requested='check_alive')
     if data['result'] != 'OK':
-        error = 'The control process did not respond to a request and may be stopped. Check logs for details.'
+        error = 'The control process did not respond to a request and may be stopped.  Try reloading the page or restarting the system.  Check logs for details.'
         if error not in errors:
             errors.append(error)
             write_errors(errors)
