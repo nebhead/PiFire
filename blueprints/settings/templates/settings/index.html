@@ -245,28 +245,28 @@
             <!-- ============================ Select Temp Units ========================== -->
             <div class="tab-pane fade" id="v-pills-units" role="tabpanel" aria-labelledby="v-pills-units-tab">
                 <div class="card shadow">
-                    <form name="Units" action="/settings/units" method="POST">
-                        <div class="card-header bg-primary text-white">
-                            <h5>
-                                <i class="fas fa-temperature-low"></i>&nbsp; Select Units
-                            </h5>
+
+                    <div class="card-header bg-primary text-white">
+                        <h5>
+                            <i class="fas fa-temperature-low"></i>&nbsp; Select Units
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="selectedUnits">Select temperature units to be used
+                                globally:</label>
+                            <select class="form-control" id="selectedUnits" name="units">
+                                <option value="F" {% if settings['globals']['units'] == 'F' %}selected{% endif %}>Fahrenheit (F)</option>
+                                <option value="C" {% if settings['globals']['units'] == 'C' %}selected{% endif %}>Celsius (C)</option>
+                            </select>
                         </div>
-                        <div class="card-body">
-                            <div class="form-group">
-                                <label for="selectUnits">Select temperature units to be used
-                                    globally:</label>
-                                <select class="form-control" id="selectUnits" name="units">
-                                    <option value="F" {% if settings['globals']['units'] == 'F' %}selected{% endif %}>Fahrenheit (F)</option>
-                                    <option value="C" {% if settings['globals']['units'] == 'C' %}selected{% endif %}>Celsius (C)</option>
-                                </select>
-                            </div>
-                            <span class="badge badge-warning">NOTE:</span>
-                            <i class="small"> Changing the scale/units will restart the grill controller (stopping any currently running modes) and automatically erase history. </i>
-                        </div><!-- End of card body -->
-                        <div class="card-footer bg-light">
-                            <button type="submit" class="btn btn-outline-danger">Save</button>
-                        </div>
-                    </form>
+                        <span class="badge badge-warning">NOTE:</span>
+                        <i class="small"> Changing the scale/units will restart the grill controller (stopping any currently running modes) and automatically erase history. </i>
+                    </div><!-- End of card body -->
+                    <div class="card-footer bg-light">
+                        <button type="button" class="btn btn-outline-danger" onclick="selectUnits(document.getElementById('selectedUnits').value)">Save</button>
+                    </div>
+
                     </div><!-- End of Card -->
                     <br><br><br>
                 </div><!-- End of Tab -->

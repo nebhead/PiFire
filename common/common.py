@@ -1836,18 +1836,19 @@ def convert_settings_units(units, settings):
 	:param settings: Settings
 	:return: Updated Settings
 	"""
-	settings['globals']['units'] = units
-	settings['startup']['startup_exit_temp'] = convert_temp(units, settings['startup']['startup_exit_temp'])
-	settings['safety']['maxstartuptemp'] = convert_temp(units, settings['safety']['maxstartuptemp'])
-	settings['safety']['maxtemp'] = convert_temp(units, settings['safety']['maxtemp'])
-	settings['safety']['minstartuptemp'] = convert_temp(units, settings['safety']['minstartuptemp'])
-	settings['smoke_plus']['max_temp'] = convert_temp(units, settings['smoke_plus']['max_temp'])
-	settings['smoke_plus']['min_temp'] = convert_temp(units, settings['smoke_plus']['min_temp'])
-	settings['keep_warm']['temp'] = convert_temp(units, settings['keep_warm']['temp'])
-	for temp in range(0, len(settings['startup']['smartstart']['temp_range_list'])):
-		settings['startup']['smartstart']['temp_range_list'][temp] = convert_temp(
-			units, settings['startup']['smartstart']['temp_range_list'][temp])
-	settings['startup']['smartstart']['exit_temp'] = convert_temp(units, settings['startup']['smartstart']['exit_temp'])
+	if units in ['C', 'F'] and units != settings['globals']['units']:
+		settings['globals']['units'] = units
+		settings['startup']['startup_exit_temp'] = convert_temp(units, settings['startup']['startup_exit_temp'])
+		settings['safety']['maxstartuptemp'] = convert_temp(units, settings['safety']['maxstartuptemp'])
+		settings['safety']['maxtemp'] = convert_temp(units, settings['safety']['maxtemp'])
+		settings['safety']['minstartuptemp'] = convert_temp(units, settings['safety']['minstartuptemp'])
+		settings['smoke_plus']['max_temp'] = convert_temp(units, settings['smoke_plus']['max_temp'])
+		settings['smoke_plus']['min_temp'] = convert_temp(units, settings['smoke_plus']['min_temp'])
+		settings['keep_warm']['temp'] = convert_temp(units, settings['keep_warm']['temp'])
+		for temp in range(0, len(settings['startup']['smartstart']['temp_range_list'])):
+			settings['startup']['smartstart']['temp_range_list'][temp] = convert_temp(
+				units, settings['startup']['smartstart']['temp_range_list'][temp])
+		settings['startup']['smartstart']['exit_temp'] = convert_temp(units, settings['startup']['smartstart']['exit_temp'])
 	return(settings)
 
 def is_real_hardware(settings=None):
@@ -2591,6 +2592,23 @@ def process_command(action=None, arglist=[], origin='unknown', direct_write=Fals
 			else:
 				data['result'] = 'ERROR'
 				data['message'] = f'Primary set point should be an integer or float in degrees {settings["globals"]["units"]}'
+		elif arglist[0] == 'units':
+			'''
+			Units
+			/api/set/units/{C/F}
+			'''
+			if arglist[1] in ['C', 'F']:
+				settings = convert_settings_units(arglist[1], settings)
+				write_settings(settings)
+				control['settings_update'] = True
+				write_control(control, direct_write=direct_write, origin=origin)
+				control['updated'] = True
+				control['units_change'] = True
+				write_control(control, direct_write=direct_write, origin=origin)
+				#print(f'Settings Units Changed to {arglist[1]}')
+			else:
+				data['result'] = 'ERROR'
+				data['message'] = f'Set Units {arglist[1]} not recognized.'
 
 		elif arglist[0] == 'mode':
 			'''
@@ -2722,7 +2740,7 @@ def process_command(action=None, arglist=[], origin='unknown', direct_write=Fals
 					data['result'] = 'ERROR'
 					data['message'] = f'Notify object label {arglist[1]} was not found.'
 				else:
-					print(f'{object["label"]} FOUND')
+					#print(f'{object["label"]} FOUND')
 					if arglist[2] in ['req', 'shutdown', 'keep_warm', 'reignite']:
 						if arglist[3] == 'true':
 							control['notify_data'][index][arglist[2]] = True

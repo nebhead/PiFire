@@ -75,3 +75,4 @@ pip_list.json
 os_info.json
 
 blueprints/example/
+*.1

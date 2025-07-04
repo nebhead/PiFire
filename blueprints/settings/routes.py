@@ -349,7 +349,7 @@ def settings_page(action=None):
                             else: 
                                 settings['controller']['config'][selected][option_name] = value
             control['controller_update'] = True
-            print(f'Controller Settings: {settings["controller"]["config"]}')
+            #print(f'Controller Settings: {settings["controller"]["config"]}')
 
         event['type'] = 'updated'
         event['text'] = 'Successfully updated cycle settings.'
@@ -531,28 +531,6 @@ def settings_page(action=None):
         write_settings(settings)
         write_control(control, origin='app')
 
-    if request.method == 'POST' and action == 'units':
-        response = request.form
-
-        if 'units' in response:
-            if response['units'] == 'C' and settings['globals']['units'] == 'F':
-                settings = convert_settings_units('C', settings)
-                write_settings(settings)
-                event['type'] = 'updated'
-                event['text'] = 'Successfully updated units to Celsius.'
-                control = {}
-                control['updated'] = True
-                control['units_change'] = True
-                write_control(control, origin='app')
-            elif response['units'] == 'F' and settings['globals']['units'] == 'C':
-                settings = convert_settings_units('F', settings)
-                write_settings(settings)
-                event['type'] = 'updated'
-                event['text'] = 'Successfully updated units to Fahrenheit.'
-                control = {}
-                control['updated'] = True
-                control['units_change'] = True
-                write_control(control, origin='app')
     '''
     Smart Start Settings
     '''

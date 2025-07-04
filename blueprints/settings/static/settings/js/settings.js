@@ -21,15 +21,54 @@ function updateSettingsAPI(settings, reload_page) {
 			//console.log('Data: ' + data['result'] + data['message']);
 			if (data['result'] == 'success') {
 				settings_toast_success(data['message']);
+				// Reload page if requested
+				if (reload_page) {
+					window.location.reload();
+				};
 			} else {
 				settings_toast_error(data['message']);
 			};
-			// Reload page if requested
-			if (reload_page) {
-				window.location.reload();
+		}
+	});
+};
+
+function updateControlAPI(control, reload_page) {
+	$.ajax({
+		url: '/api/control',
+		type: 'POST',
+		contentType: "application/json; charset=utf-8",
+		traditional: true,
+		data: JSON.stringify(control),
+		success: function(data) {
+			//console.log('Data: ' + data['result'] + data['message']);
+			if (data['result'] == 'success') {
+				settings_toast_success(data['message']);
+				// Reload page if requested
+				if (reload_page) {
+					window.location.reload();
+				};
+			} else {
+				settings_toast_error(data['message']);
 			};
 		}
 	});
+};
+
+function setAPI(command) {
+    $.ajax({
+        url : '/api/set/' + command,
+        type : 'POST',
+        contentType: "application/json; charset=utf-8",
+        traditional: true,
+        success: function (data) {
+            console.log('API Set [' + command + ']: ' + data.message);
+			if (data.result == 'OK') {
+				settings_toast_success('Update successful.');
+			} else {
+				settings_toast_error('API Error with Command [' + command + ']: ' + data.message);
+			}
+        }
+    });
 };
 
 // =========================================================
@@ -723,6 +762,16 @@ function setGrillName(grillName) {
 	// Update the grill name in the header
 	document.getElementById("navbarGrillName").innerHTML = grillName;
 	document.title = 'Settings | ' + grillName;
+};
+
+// ==========================================================
+// Units Selection Functions 
+// ==========================================================
+
+function selectUnits(units) {
+	console.log('Units Selected: ' + units);
+	const command = 'units/' + units;
+	setAPI(command);
 };
 
 // ==========================================================

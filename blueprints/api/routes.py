@@ -125,8 +125,24 @@ def api_page(action=None, arg0=None, arg1=None, arg2=None, arg3=None):
 				'''
 					Updating of control input data is now done in common.py > execute_commands() 
 				'''
-				write_control(request.json, origin='app')
-				return jsonify({'control':'success'}), 201
+				try:
+					# Update control data with request JSON
+					write_control(request_json, origin='app')
+					return jsonify(
+							{
+								'control': 'success',
+								'result' : 'success',
+								'message': 'Settings updated successfully.'
+							}
+						), 201
+				except:
+					return jsonify(
+							{
+								'control': 'error',
+								'result' : 'error',
+								'message': 'Settings update failed.'
+							}
+						), 201
 			else:
 				return jsonify({'Error':'Received POST request no valid action.'}), 404
 	else:

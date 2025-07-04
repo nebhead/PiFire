@@ -1328,6 +1328,7 @@ while True:
 			control['mode'] = 'Stop'  # Stop any activity
 			control['units_change'] = False
 			read_history(0, flushhistory=True)  # Clear history data
+			# No need to write control, as it should be written by the 'Stop' mode change
 
 		# Check if there was an Error flagged in Monitor Mode - If no, then change status to active
 		if control['status'] != 'monitor' and control['mode'] != 'Error':
