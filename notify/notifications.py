@@ -23,7 +23,7 @@ import json
 import apprise
 import logging
 import math
-from common import write_settings, write_control, create_logger, read_history
+from common import write_settings, write_control, create_logger, read_history, read_settings, read_control, read_pellet_db
 from sklearn.linear_model import LinearRegression
 
 '''
@@ -88,7 +88,7 @@ def check_notify(settings, control, in_data=None, pelletdb=None, grill_platform=
 				# If target temperature meets the condition, send notification and clear request/data
 				if _check_condition(item['condition'], probe_temp_list[item['label']], item['target']):
 					if item['type'] == 'probe':
-						send_notifications("Probe_Temp_Achieved", control, settings, pelletdb, label=item['label'], target=in_data['notify_targets'][item['label']])
+						send_notifications("Probe_Temp_Achieved", label=item['label'], target=in_data['notify_targets'][item['label']])
 						if control['mode'] == 'Recipe':
 							if control['recipe']['step_data']['trigger_temps'][item['label']] > 0:
 								control['recipe']['step_data']['triggered'] = True
@@ -96,7 +96,7 @@ def check_notify(settings, control, in_data=None, pelletdb=None, grill_platform=
 						control['notify_data'][index]['target'] = 0 
 						control['notify_data'][index]['eta'] = None 
 					if item['type'] in ['probe_limit_high', 'probe_limit_low'] and not item['triggered']:
-						send_notifications("Probe_Temp_Limit_Alarm", control, settings, pelletdb, label=item['label'], target=item['target'])
+						send_notifications("Probe_Temp_Limit_Alarm", label=item['label'], target=item['target'])
 						control['notify_data'][index]['triggered'] = True
 				elif item['type'] in ['probe_limit_high', 'probe_limit_low'] and item['triggered']:
 					# If the temperature goes back into the right range, reset the 'triggered' flag
@@ -104,7 +104,7 @@ def check_notify(settings, control, in_data=None, pelletdb=None, grill_platform=
 
 			elif item['type'] == 'timer':
 				if time.time() >= control['timer']['end']:
-					send_notifications("Timer_Expired", control, settings, pelletdb)
+					send_notifications("Timer_Expired")
 					if control['mode'] == 'Recipe':
 						if control['recipe']['step_data']['timer'] > 0:
 							control['recipe']['step_data']['triggered'] = True
@@ -116,11 +116,11 @@ def check_notify(settings, control, in_data=None, pelletdb=None, grill_platform=
 			elif item['type'] == 'hopper':
 				if (time.time() - item['last_check']) > (settings['pelletlevel']['warning_time'] * 60):
 					if pelletdb['current']['hopper_level'] <= settings['pelletlevel']['warning_level']:
-						send_notifications("Pellet_Level_Low", control, settings, pelletdb)
+						send_notifications("Pellet_Level_Low")
 						control['notify_data'][index]['last_check'] = time.time()
 			
 			elif item['type'] == 'test':
-				send_notifications("Test_Notify", control, settings, pelletdb)
+				send_notifications("Test_Notify")
 				control['notify_data'][index]['last_check'] = time.time()
 				control['notify_data'][index]['req'] = False
 
@@ -144,7 +144,7 @@ def check_notify(settings, control, in_data=None, pelletdb=None, grill_platform=
 
 	return control
 
-def send_notifications(notify_event, control, settings, pelletdb, label='Probe', target=0):
+def send_notifications(notify_event, label='Probe', target=0):
 	"""
 	Build and send notification based on notify_event and write to log.
 
@@ -153,6 +153,7 @@ def send_notifications(notify_event, control, settings, pelletdb, label='Probe',
 	:param settings: Settings
 	:param pelletdb: Pellet DB
 	"""
+	settings = read_settings()
 	log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
 	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 	date = datetime.datetime.now()
@@ -181,6 +182,7 @@ def send_notifications(notify_event, control, settings, pelletdb, label='Probe',
 		query_args = {"value1": 'Your timer has expired.'}
 		eventLogger.info(body_message)
 	elif "Pellet_Level_Low" in notify_event:
+		pelletdb = read_pellet_db()
 		title_message = "Low Pellet Level"
 		body_message = f"Your pellet level is currently at {pelletdb['current']['hopper_level']}%"
 		channel = 'pifire_pellet_alerts'
@@ -200,6 +202,7 @@ def send_notifications(notify_event, control, settings, pelletdb, label='Probe',
 		query_args = {"value1": str(settings['safety']['maxtemp'])}
 		eventLogger.info(body_message)
 	elif "Grill_Error_02" in notify_event:
+		control = read_control()
 		title_message = "Grill Error!"
 		body_message = "Grill temperature dropped below minimum startup temperature of " + str(
 			control['safety']['startuptemp']) + unit + "! Shutting down to prevent firepot overload. " + str(now)
@@ -207,6 +210,7 @@ def send_notifications(notify_event, control, settings, pelletdb, label='Probe',
 		query_args = {"value1": str(control['safety']['startuptemp'])}
 		eventLogger.info(body_message)
 	elif "Grill_Error_03" in notify_event:
+		control = read_control()
 		title_message = "Grill Error!"
 		body_message = "Grill temperature dropped below minimum startup temperature of " + str(
 			control['safety']['startuptemp']) + unit + "! Starting a re-ignite attempt, per user settings."
@@ -231,6 +235,12 @@ def send_notifications(notify_event, control, settings, pelletdb, label='Probe',
 		channel = 'pifire_test_message'
 		query_args = {"value1": "This is a test notification from PiFire."}
 		eventLogger.info(body_message)
+	elif "Control_Process_Stopped" in notify_event:
+		title_message = "Control Process Stopped!"
+		body_message = "The control process has encountered an issue and has been stopped. Check on your grill as soon as possible to prevent damage!"
+		channel = 'pifire_error_alerts'
+		query_args = {"value1": 'Control Process Stopped'}
+		eventLogger.info(body_message)
 	else:
 		title_message = "PiFire: Unknown Notification issue"
 		body_message = "Whoops! PiFire had the following unhandled notify event: " + notify_event + " at " + str(now)
@@ -250,6 +260,7 @@ def send_notifications(notify_event, control, settings, pelletdb, label='Probe',
 	if settings['notify_services']['onesignal']['app_id'] != '' and settings['notify_services']['onesignal']['enabled']:
 		_send_onesignal_notification(settings, title_message, body_message, channel)
 	if settings['notify_services']['mqtt']['broker'] != '' and settings['notify_services']['mqtt']['enabled']:
+		control = read_control()
 		_send_mqtt_notification(control, settings, notify_event=title_message)
 
 def _send_apprise_notifications(settings, title_message, body_message):

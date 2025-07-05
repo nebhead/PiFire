@@ -26,7 +26,8 @@ import time
 import threading 
 import subprocess 
 import logging 
-from common import create_logger, is_real_hardware
+from common import create_logger, is_real_hardware, write_control, read_control
+from notify.notifications import *
 
 '''
 ==============================================================================
@@ -80,7 +81,15 @@ class Process_Monitor:
         while True:
             while self.active: 
                 now = time.time()
-                if now - self.last_heartbeat > self.timeout: 
+                if now - self.last_heartbeat > self.timeout:
+                    # Set control process critical error flag 
+                    control = read_control()
+                    control['updated'] = True 
+                    control['mode'] = 'Error'
+                    control['critical_error'] = True
+                    write_control(control, direct_write=True, origin='process_monitor')
+                    # Send notification
+                    send_notifications("Control_Process_Stopped") 
                     # Log error
                     message = f'The {self.process} process experienced a timeout event (no heartbeat detected in {self.timeout} seconds) and is being reset.'
                     self.event_logger.error(message)

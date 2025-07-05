@@ -24,6 +24,8 @@ var last_lid_open_status = false;
 var last_probe_status = {};
 var display_mode = null;
 
+var critical_error_message_viewed = false; // Flag to indicate if the critical error message has been viewed
+
 if (typeof dashDataStruct == 'undefined') {
     var dashDataStruct = {};
 	console.log('DEBUG: dashDataStruct undefined');
@@ -162,6 +164,15 @@ function updateProbeCards() {
 				$("#serverReloadModal").modal('show');
 				clearInterval(probe_loop);  // Stop getting current data from the server
 			};
+
+			if (current.status.critical_error) {
+				if (!critical_error_message_viewed) {
+					// Handle critical error
+					console.log('Critical error detected.');
+					$("#criticalErrorModal").modal('show');
+					critical_error_message_viewed = true; // Set flag to true so we don't show the modal again
+				}
+			}
 
 			if (probesReady) {
 				// Update current probe temperatures an store probe labels

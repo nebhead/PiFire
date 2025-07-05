@@ -454,7 +454,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 				control['mode'] = 'Error'
 				control['updated'] = True
 				write_control(control, direct_write=True, origin='control')
-				send_notifications("Grill_Error_02", control, settings, pelletdb)
+				send_notifications("Grill_Error_02")
 			else:
 				control['safety']['reigniteretries'] -= 1
 				control['safety']['reignitelaststate'] = mode
@@ -463,7 +463,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 				control['mode'] = 'Reignite'
 				control['updated'] = True
 				write_control(control, direct_write=True, origin='control')
-				send_notifications("Grill_Error_03", control, settings, pelletdb)
+				send_notifications("Grill_Error_03")
 
 	# Apply Smart Start Settings if Enabled 
 	startup_timer = settings['startup']['duration']
@@ -828,7 +828,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 					control['mode'] = 'Error'
 					control['updated'] = True
 					write_control(control, direct_write=True, origin='control')
-					send_notifications("Grill_Error_02", control, settings, pelletdb)
+					send_notifications("Grill_Error_02")
 					break
 				else:
 					control['safety']['reigniteretries'] -= 1
@@ -837,7 +837,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 					control['mode'] = 'Reignite'
 					control['updated'] = True
 					write_control(control, direct_write=True, origin='control')
-					send_notifications("Grill_Error_03", control, settings, pelletdb)
+					send_notifications("Grill_Error_03")
 					break
 
 
@@ -1030,7 +1030,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			control['mode'] = 'Error'
 			control['updated'] = True
 			write_control(control, direct_write=True, origin='control')
-			send_notifications("Grill_Error_01", control, settings, pelletdb)
+			send_notifications("Grill_Error_01")
 			break
 
 		# End of Loop Recipe Check
@@ -1039,14 +1039,14 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			if control['recipe']['step_data']['triggered'] and not control['recipe']['step_data']['pause']:
 				# If a notification / message was requested
 				if control['recipe']['step_data']['notify']:
-					send_notifications('Recipe_Step_Message', control, settings, pelletdb)
+					send_notifications('Recipe_Step_Message')
 				# Exit the main work cycle
 				break
 			# If a recipe event was triggered and a pause was requested
 			elif control['recipe']['step_data']['triggered'] and control['recipe']['step_data']['pause']:
 				# If notification / message was requested, notify and clear notification 
 				if control['recipe']['step_data']['notify']:
-					send_notifications('Recipe_Step_Message', control, settings, pelletdb)
+					send_notifications('Recipe_Step_Message')
 					control['recipe']['step_data']['notify'] = False
 					write_control(control, direct_write=True, origin='control')
 				# Continue until 'pause' variable is cleared 
@@ -1279,7 +1279,7 @@ while True:
 	for index, item in enumerate(control['notify_data']):
 		if item['type'] == 'timer' and item['req']:
 			if time.time() >= control['timer']['end']:
-				send_notifications("Timer_Expired", control, settings, pelletdb)
+				send_notifications("Timer_Expired")
 				control['notify_data'][index]['req'] = False
 				control['timer']['start'] = 0
 				control['timer']['paused'] = 0

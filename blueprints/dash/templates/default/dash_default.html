@@ -141,6 +141,33 @@
 	</div>
 </div> <!-- End Server Offline Modal -->
 
+<!-- Critical Error Modal -->
+<div class="modal" id="criticalErrorModal">
+	<div class="modal-dialog">
+	  <div class="modal-content">
+  
+		<!-- Modal Header -->
+		<div class="modal-header btn-danger">
+		  <h4 class="modal-title"><i class="fa-solid fa-bomb"></i>&nbsp; Critical Error Detected</h4>
+		  <button type="button" class="close" data-dismiss="modal">&times;</button>
+		</div>
+  
+		<!-- Modal body -->
+		<div class="modal-body">
+		  A critical error has been detected. This may mean that the system is experiencing issues, such as a control process hang.  Please check the system logs for more information.
+		</div>
+  
+		<!-- Modal footer -->
+		<div class="modal-footer">
+		  <button type="button" class="btn btn-danger" id="criticalErrorOffline" data-dismiss="modal" onclick="location.reload();">Reload</button>
+		  <button type="button" class="btn btn-warning" data-dismiss="modal">Dismiss</button>
+		  <button type="button" class="btn btn-secondary" onclick="window.location.href='/events'">Event Log</button>
+		</div>
+  
+	  </div>
+	</div>
+</div> <!-- End Critical Error Modal -->
+
 <!-- Dash Gear Icon for Dash Settings -->
 <span class="gear-icon" onclick="dashSettings();">
 	<i class="fa-solid fa-gear"></i>

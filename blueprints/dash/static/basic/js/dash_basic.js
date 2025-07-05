@@ -19,6 +19,9 @@ var last_pmode_status = null;
 var last_lid_open_status = false;
 var display_mode = null;
 var dashDataStruct = {};
+
+var critical_error_message_viewed = false; // Flag to indicate if the critical error message has been viewed
+
 function initNotifyStatus() {
 	// This function creates the notify_status object that indicates the current activated/requested notifications
 	for (notify_item in notify_data) {
@@ -77,6 +80,15 @@ function updateProbeCards() {
 				$("#serverReloadModal").modal('show');
 				clearInterval(probe_loop);  // Stop getting current data from the server
 			};
+
+			if (current.status.critical_error) {
+				if (!critical_error_message_viewed) {
+					// Handle critical error
+					console.log('Critical error detected.');
+					$("#criticalErrorModal").modal('show');
+					critical_error_message_viewed = true; // Set flag to true so we don't show the modal again
+				}
+			}
 
 			// Update current probe temperatures an store probe labels
 			for (key in current.current.P) {
