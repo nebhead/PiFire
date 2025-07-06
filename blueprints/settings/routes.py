@@ -18,6 +18,16 @@ def settings_page(action=None):
         'text' : ''
     }
 
+    if request.method == 'POST' and action == 'dashboard_config':
+        response = request.form
+        selected = response.get('selected', '')
+        if selected == '':
+            selected = settings['dashboard']['selected']
+        elif selected not in settings['dashboard']['dashboards']:
+            selected = list(settings['dashboard']['dashboards'].keys())[0]
+        render_string = "{% from 'settings/_macro_settings.html' import render_dash_settings %}{{ render_dash_settings(selected, settings) }}"
+        return render_template_string(render_string, selected=selected, settings=settings)
+
     if request.method == 'POST' and action == 'probe_select':
         response = request.form
 
@@ -28,7 +38,7 @@ def settings_page(action=None):
             selected = response['selected']
             probe_info = settings['probe_settings']['probe_map']['probe_info']
 
-        render_string = "{% from '_macro_probes.html' import render_probe_select %}{{ render_probe_select(selected, probe_info, settings) }}"
+        render_string = "{% from 'settings/_macro_probes.html' import render_probe_select %}{{ render_probe_select(selected, probe_info, settings) }}"
         return render_template_string(render_string, selected=selected, probe_info=probe_info, settings=settings)
 
     if request.method == 'POST' and action == 'probe_config':
@@ -48,7 +58,7 @@ def settings_page(action=None):
         if probe_info == None:
             probe_info = settings['probe_settings']['probe_map']['probe_info'][0]
 
-        render_string = "{% from '_macro_probes.html' import render_probe_config %}{{ render_probe_config(probe_info, settings) }}"
+        render_string = "{% from 'settings/_macro_probes.html' import render_probe_config %}{{ render_probe_config(probe_info, settings) }}"
         return render_template_string(render_string, probe_info=probe_info, settings=settings)
 
     if request.method == 'POST' and action == 'probe_config_save':
@@ -270,7 +280,7 @@ def settings_page(action=None):
 
     if request.method == 'POST' and action == 'controller_card':
         response = request.form
-        render_string = "{% from '_macro_settings.html' import render_controller_config %}{{ render_controller_config(selected, metadata, settings, cycle_data) }}"
+        render_string = "{% from 'settings/_macro_settings.html' import render_controller_config %}{{ render_controller_config(selected, metadata, settings, cycle_data) }}"
         return render_template_string(render_string, 
                 selected=response['selected'], 
                 metadata=controller['metadata'], 

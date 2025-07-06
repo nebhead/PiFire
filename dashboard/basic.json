@@ -9,6 +9,7 @@
     "contributors" : ["Ben Parmeter"],
     "attributions" : [],
     "thumbnail" : "",
+    "screenshot" : "screenshot.png",
     "custom" : {
         "hidden_cards" : []
     },

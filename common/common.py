@@ -358,6 +358,7 @@ def _default_dashboard():
 				'html_name' : dash_metadata['html_name'],
 				'metadata' : filename,
 				'custom' : dash_metadata['custom'],
+				'screenshot' : dash_metadata.get('screenshot', ''),  # Use get to avoid KeyError if screenshot is not present
 				'config' : {}
 			}
 			for item in dash_metadata['config']:

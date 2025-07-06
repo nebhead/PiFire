@@ -34,6 +34,9 @@
                   <b>Safety:</b> Added notification capability to the process monitor, so that it can notify the user if the control script crashes.  Updated the default and basic dashboards to display an error message when a critical error is detected, such as the control process crashing. 
                </li>
                <li>
+                  <b>Settings Dashboard Select: Added a screenshot when selecting dashboard.</b>
+               </li>
+               <li>
                   <b>Behind the scenes improvements including:</b>  
                   <ul>
                      <li>
@@ -81,6 +84,9 @@
                </li>
                <li>
                   Celsius mode shows negative temperatures when no probe is connected with ADC devices.  Changed to show 0C when no probe is connected or temperature is less than 0C.
+               </li>
+               <li>
+                  Fixed a bug where probe configuration was not being loaded by the Jinja template because it was not looking in the right blueprint path. 
                </li>
             </ul>
        

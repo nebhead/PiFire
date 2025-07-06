@@ -175,6 +175,54 @@
     aria-describedby="{{name}}_addon" name="controller_config_{{ name }}"/>
 {% endmacro %}
 
+{% macro render_dash_select(selected, settings) %}
+    <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <span class="input-group-text">
+                <b>Select a Dashboard:</b>
+            </span>
+        </div>
+        <select class="form-control" id="dashboardSelect" name="dashboardSelect"
+            onchange="settingsLoadDashboardConfig(this.value);">
+            {% for dashboard, dashinfo in settings['dashboard']['dashboards'].items() %}
+            <option value="{{ dashboard }}"{% if (selected == '' and dashinfo['name'] == settings['dashboard']['current']) or (selected == dashboard) %} selected{% endif %}>{{ dashinfo['friendly_name'] }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="card shadow">
+        <div class="card-body">
+            <div id="dashboardSettings">
+                <!-- Dashboard Config Placeholder -->
+                {% if selected == '' %}
+                    {{ render_dash_settings(settings['dashboard']['current'], settings) }}
+                {% else %}
+                    {% for dashboard, dashinfo in settings['dashboard']['dashboards'].items() %}
+                        {% if dashboard == selected %}
+                            {{ render_dash_settings(dashboard, settings) }}
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <script>
+        function settingsLoadDashboardConfig(selected) {
+            var post_data = {
+                'selected': selected
+            };
+            $("#dashboardSettings").load("/settings/dashboard_config", post_data);
+        }
+    </script>
+{% endmacro %}
+
+{% macro render_dash_settings(dashboard, settings) %}
+    {% if settings['dashboard']['dashboards'][dashboard]['screenshot'] %}
+    <center>
+        <img src="{{ url_for('dash_bp.static', filename=dashboard | lower + '/img/' + settings['dashboard']['dashboards'][dashboard]['screenshot']) }}" alt="Screenshot" width="400"><br>
+    </center>
+    {% endif %}
+{% endmacro %}
+
 <script>
     $(function () {
         $('[data-toggle="tooltip"]').tooltip()

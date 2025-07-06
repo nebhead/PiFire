@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% from 'settings/_macro_settings.html' import render_controller_config %}
+{% from 'settings/_macro_settings.html' import render_controller_config, render_dash_select %}
 {% from 'settings/_macro_probes.html' import render_probe_select %}
 
 {% block body_class %}timer-offset{% endblock %}
@@ -1022,15 +1022,8 @@
                                     <i class="fas fa-tools"></i>&nbsp; Dashboard Settings
                                 </h5>
                         </div>
-                        <div class="card-body">
-                            <div class="form-group">
-                                <label for="dashboardSelect">Select Dashboard</label>
-                                <select class="form-control" id="dashboardSelect" name="dashboardSelect">
-                                    {% for dashboard, dashinfo in settings['dashboard']['dashboards'].items() %}
-                                    <option value="{{ dashboard }}"{% if dashinfo['name'] == settings['dashboard']['current'] %} selected{% endif %}>{{ dashinfo['friendly_name'] }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
+                        <div class="card-body" id="dashboardSelectionCard">
+                            {{ render_dash_select('', settings) }}
                         </div><!-- End of card body -->
                         <div class="card-footer bg-light">
                             <button type="button" class="btn btn-outline-danger" onclick="selectDashboard(document.getElementById('dashboardSelect').value);">Save</button>
