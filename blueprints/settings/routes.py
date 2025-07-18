@@ -421,6 +421,11 @@ def settings_page(action=None):
         settings['startup']['start_to_mode']['after_startup_mode'] = response['after_startup_mode']
         settings['startup']['start_to_mode']['primary_setpoint'] = int(response['startup_mode_setpoint'])
         
+        if is_checked(response, 'startup_start_to_hold_prompt'):
+            settings['startup']['start_to_mode']['start_to_hold_prompt'] = True
+        else:
+            settings['startup']['start_to_mode']['start_to_hold_prompt'] = False
+
         event['type'] = 'updated'
         event['text'] = 'Successfully updated startup/shutdown settings.'
 

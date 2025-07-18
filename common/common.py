@@ -282,7 +282,8 @@ def default_settings():
 		'startup_exit_temp' : 0,  # Exit startup at this temperature threshold. [0 = disabled]
 		'start_to_mode' : {
 			'after_startup_mode' : 'Smoke',  # Transition to this mode after startup completes
-			'primary_setpoint' : 165  # If Hold, set the setpoint
+			'primary_setpoint' : 165,  # If Hold, set the setpoint
+			'start_to_hold_prompt' : False  # If True, always prompt for hold temperature on startup
 		},
 		'smartstart' : {
 			'enabled' : False,   # Disable Smart Start by default on new installations
@@ -1840,6 +1841,7 @@ def convert_settings_units(units, settings):
 	if units in ['C', 'F'] and units != settings['globals']['units']:
 		settings['globals']['units'] = units
 		settings['startup']['startup_exit_temp'] = convert_temp(units, settings['startup']['startup_exit_temp'])
+		settings['startup']['start_to_mode']['primary_setpoint'] = convert_temp(units, settings['startup']['start_to_mode']['primary_setpoint'])
 		settings['safety']['maxstartuptemp'] = convert_temp(units, settings['safety']['maxstartuptemp'])
 		settings['safety']['maxtemp'] = convert_temp(units, settings['safety']['maxtemp'])
 		settings['safety']['minstartuptemp'] = convert_temp(units, settings['safety']['minstartuptemp'])

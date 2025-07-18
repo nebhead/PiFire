@@ -23,7 +23,7 @@ var cpOutpins = {};
 var cpOutpinsLast = {};
 
 // API Calls
-function api_post(postdata) {
+function cp_api_control_post(postdata) {
     $.ajax({
         url : '/api/control',
         type : 'POST',
@@ -36,7 +36,20 @@ function api_post(postdata) {
     });
 };
 
-function api_set(command) {
+function cp_api_settings_post(postdata) {
+    $.ajax({
+        url : '/api/settings',
+        type : 'POST',
+        data : JSON.stringify(postdata),
+        contentType: "application/json; charset=utf-8",
+        traditional: true,
+        success: function (data) {
+            console.log('API Post Call: ' + data.control);
+        }
+    });
+};
+
+function cp_api_set(command) {
     $.ajax({
         url : '/api/set/' + command,
         type : 'POST',
@@ -56,7 +69,7 @@ function setPrime(prime_amount, next_mode) {
         'prime_amount' : prime_amount,
         'next_mode' : next_mode	
     };
-    api_post(postdata);
+    cp_api_control_post(postdata);
 };
 
 function update_mode() {
@@ -373,7 +386,7 @@ function cpRecipeUnpause() {
             'step_data' : cpRecipeStepData
         }
     };
-    api_post(postdata);
+    cp_api_control_post(postdata);
     cpRecipePause = false;
     update_recipe_pause();
 };
@@ -394,11 +407,28 @@ function cpStartup() {
         'mode' : 'Startup'	
     };
     console.log('Requesting Startup.');
-    api_post(postdata);
+    cp_api_control_post(postdata);
+};
+
+function cpStartupHold(targetTemp) {
+    var target = parseInt(targetTemp);
+    console.log('Requesting Startup with Hold at: ' + target);
+    var postdata = { 
+        'startup' : {
+            'start_to_mode' : {
+                'after_startup_mode' : 'Hold',
+                'start_to_hold_prompt' : true,
+                'primary_setpoint' : target
+            },
+            }	
+    };
+    console.log('Requesting Startup.');
+    cp_api_settings_post(postdata);
+    cpStartup();
 };
 
 function cpUpdatePWM(dutyCycle) {
-        api_set('manual/pwm/'+dutyCycle);
+        cp_api_set('manual/pwm/'+dutyCycle);
         console.log('Requesting manual pwm duty cycle: ' + dutyCycle);
 };
 
@@ -420,7 +450,7 @@ $(document).ready(function(){
             'mode' : 'Monitor'	
         };
         console.log('Requesting Monitor.');
-        api_post(postdata);
+        cp_api_control_post(postdata);
     });
 
     $("#shutdown_active_btn, #cp_recipe_shutdown_btn").click(function(){
@@ -429,7 +459,7 @@ $(document).ready(function(){
             'mode' : 'Shutdown'	
         };
         console.log('Requesting Shutdown.');
-        api_post(postdata);
+        cp_api_control_post(postdata);
     });
 
     $("#stop_active_btn, #stop_inactive_btn").click(function(){
@@ -438,7 +468,7 @@ $(document).ready(function(){
             'mode' : 'Stop'	
         };
         console.log('Requesting Stop.');
-        api_post(postdata);
+        cp_api_control_post(postdata);
     });
 
     $("#smoke_inactive_btn, #smoke_active_btn").click(function(){
@@ -448,7 +478,7 @@ $(document).ready(function(){
             //'s_plus' : splusDefault
         };
         console.log('Requesting Smoke.');
-        api_post(postdata);
+        cp_api_control_post(postdata);
     });
 
     $("#splus_btn").click(function(){
@@ -460,7 +490,7 @@ $(document).ready(function(){
             var postdata = { 's_plus' : true };
             console.log('splus_state = ' + splus_state + ' Requesting true.');
         };
-        api_post(postdata);
+        cp_api_control_post(postdata);
     });
 
     $("#pwm_control_btn").click(function(){
@@ -472,7 +502,7 @@ $(document).ready(function(){
             var postdata = { 'pwm_control' : true };
             console.log('pwm_control_state = ' + cpPWMControl + ' Requesting true.');
         };
-        api_post(postdata);
+        cp_api_control_post(postdata);
     });
 
     $("#hold_modal_btn").click(function(){
@@ -484,7 +514,7 @@ $(document).ready(function(){
             'primary_setpoint' : setPoint 
         };
         console.log('Requesting Hold at: ' + setPoint);
-        api_post(postdata);
+        cp_api_control_post(postdata);
     });
 
     $("#cp_recipe_next_step_btn").click(function(){
@@ -499,7 +529,7 @@ $(document).ready(function(){
             var postdata = { 
                 'updated' : true
             };
-            api_post(postdata);
+            cp_api_control_post(postdata);
         };
     });
 
@@ -510,26 +540,26 @@ $(document).ready(function(){
             'mode' : 'Stop'	
         };
         console.log('Requesting Manual Mode Stop.');
-        api_post(postdata);
+        cp_api_control_post(postdata);
     });
 
     $("#cp_manual_mode_power_btn").click(function(){
-        api_set('manual/power/toggle');
+        cp_api_set('manual/power/toggle');
         console.log('Requesting manual power toggle.');
     });
 
     $("#cp_manual_mode_igniter_btn").click(function(){
-        api_set('manual/igniter/toggle');
+        cp_api_set('manual/igniter/toggle');
         console.log('Requesting manual igniter toggle.');
     });
 
     $("#cp_manual_mode_auger_btn").click(function(){
-        api_set('manual/auger/toggle');
+        cp_api_set('manual/auger/toggle');
         console.log('Requesting manual auger toggle.');
     });
 
     $("#cp_manual_mode_fan_btn").click(function(){
-        api_set('manual/fan/toggle');
+        cp_api_set('manual/fan/toggle');
         console.log('Requesting manual fan toggle.');
     });
 

@@ -787,16 +787,22 @@
                                           <option value="Hold" {% if settings['startup']['start_to_mode']['after_startup_mode'] == 'Hold' %}selected{% endif %}>Hold Mode</option>
                                         </select>
                                     </div>
-
-                                    <div id="startup_hold_value_input" class="input-group mb-3"{% if settings['startup']['start_to_mode']['after_startup_mode'] != 'Hold' %} style="display:none"{% endif %}>
-										<div class="input-group-prepend">
-											<span class="input-group-text" data-toggle="tooltip" title="Setpoint Temperature for Hold Mode">
-                                                <i class="fas fa-temperature-low"></i>&nbsp; Hold Temp</span>
-										</div>
-										<input id="startup_mode_setpoint" type="number" inputmode="numeric" min="{{ settings['safety']['maxstartuptemp'] }}" max="{{ settings['safety']['maxtemp'] }}" class="form-control" value="{{ settings['startup']['start_to_mode']['primary_setpoint'] }}" name="startup_mode_setpoint" style="min-width: 4ch;">
+                                    <div id="startup_hold_value_input" class="card"{% if settings['startup']['start_to_mode']['after_startup_mode'] != 'Hold' %} style="display:none"{% endif %}>
+                                        <div class="card-body">
+                                            <div class="input-group mb-3">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text" data-toggle="tooltip" title="Setpoint Temperature for Hold Mode">
+                                                        <i class="fas fa-temperature-low"></i>&nbsp; Hold Temp</span>
+                                                </div>
+                                                <input id="startup_mode_setpoint" type="number" inputmode="numeric" min="{{ settings['safety']['maxstartuptemp'] }}" max="{{ settings['safety']['maxtemp'] }}" class="form-control" value="{{ settings['startup']['start_to_mode']['primary_setpoint'] }}" name="startup_mode_setpoint" style="min-width: 4ch;">
+                                            </div>
+                                            <div class="custom-control custom-switch">
+                                                <input type="checkbox" class="custom-control-input" id="startup_start_to_hold_prompt" name="startup_start_to_hold_prompt" {% if settings['startup']['start_to_mode']['start_to_hold_prompt'] %}checked{% endif %}>
+                                                <label class="custom-control-label" for="startup_start_to_hold_prompt">Always ask for hold temperature on startup</label>
+                                            </div>
+                                        </div>
                                     </div>
-
-                                    <br>
+                                    <br><br>
                                     <div class="custom-control custom-switch">
 										<input type="checkbox" class="custom-control-input" id="startup_exit_temp_toggle" {% if settings['startup']['startup_exit_temp'] > 0 %}checked{% endif %}>
 										<label class="custom-control-label" for="startup_exit_temp_toggle">Exit Startup @ Temperature</label>

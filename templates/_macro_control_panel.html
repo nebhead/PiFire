@@ -86,7 +86,8 @@
             </div>
         </div>
         <div id="inactive_core_group" class="btn-group mr-2 shadow" role="group">
-            <button type="button" title="Startup" class="btn btn-outline-success border border-secondary" id="startup_btn" onclick="cpStartupCheck('{{settings['safety']['startup_check']}}');"><i class="fas fa-play"></i></button>
+            {% set startup_modal_enabled = settings['safety']['startup_check'] or (settings['startup']['start_to_mode']['start_to_hold_prompt'] and settings['startup']['start_to_mode']['after_startup_mode'] == 'Hold') %}
+            <button type="button" title="Startup" class="btn btn-outline-success border border-secondary" id="startup_btn" onclick="cpStartupCheck('{{startup_modal_enabled}}');"><i class="fas fa-play"></i></button>
             <button type="button" data-toggle="tooltip" title="Monitor" class="btn btn-outline-secondary border border-secondary" id="monitor_btn" name="setmodemonitor" value="true"><i class="fas fa-glasses"></i></button>
             <button type="button" data-toggle="tooltip" title="Smoke Mode" class="btn btn-outline-secondary border border-secondary" id="smoke_inactive_btn" name="setmodesmoke" value="true"{% if control['mode'] not in ['Startup', 'Reignite'] %} style="display:none"{% endif %}><i class="fas fa-cloud"></i></button>
             <button type="button" data-toggle="modal" data-target="#setpointModal" class="btn btn-outline-secondary border border-secondary" id="hold_inactive_btn"{% if control['mode'] not in ['Startup', 'Reignite'] %} style="display:none"{% endif %}><i class="fas fa-crosshairs"></i></button>
@@ -209,13 +210,40 @@
             <div class="modal-content">
                 <!-- Modal Header -->
                 <div class="modal-header">
-                    <h4 class="modal-title"><i class="fa-solid fa-triangle-exclamation"></i> Startup Check</h4>
+                    <h4 class="modal-title"><i class="fa-solid fa-triangle-exclamation"></i> 
+                    {% if settings['startup']['start_to_mode']['after_startup_mode'] == 'Hold' and settings['startup']['start_to_mode']['start_to_hold_prompt'] %}
+                        Change Hold Temp?
+                    {% else %}
+                        Startup Check
+                    {% endif %}
+                    </h4>
                     <button type="button" class="close" data-dismiss="modal">×</button>
                 </div>
                 <!-- Modal body -->
                 <div class="modal-body text-center">
-                    Confirm Startup Grill?<br><br>
-                    <button class="btn btn-primary" onclick="cpStartup()">Startup</button>
+                    {% if settings['startup']['start_to_mode']['after_startup_mode'] == 'Hold' and settings['startup']['start_to_mode']['start_to_hold_prompt'] %}
+                        Change Hold Temperature after Startup?
+                        <br><br>
+                        <div class="row d-flex justify-content-center">
+                            <div class="input-group w-50">
+                                <input class="form-control text-center temperature-input border-0" name="tempHoldOutput" id="tempHoldOutputId" type="text" min="0" value="{{ settings['startup']['start_to_mode']['primary_setpoint'] }}" pattern="[0-9]*" inputmode="numeric" 
+                                oninput="tempHoldInputId.value = tempHoldOutputId.value"
+                                onclick="this.select()"
+                                onfocus="this.select()">
+                            </div>
+                        </div>
+                        {% if settings['globals']['units'] == 'F' %}
+                            <input type="range" class="custom-range" min="125" max="600" step="5" value="{{ settings['startup']['start_to_mode']['primary_setpoint'] }}" id="tempHoldInputId" name="tempHoldInputRange" oninput="tempHoldOutputId.value = tempHoldInputId.value" onclick="this.select();">
+                        {% else %}
+                            <input type="range" class="custom-range" min="50" max="260" value="{{ settings['startup']['start_to_mode']['primary_setpoint'] }}" id="tempHoldInputId" name="tempHoldInputRange" oninput="tempHoldOutputId.value = tempHoldInputId.value" onclick="this.select();">
+                        {% endif %}
+                        <br><br>
+                        <button class="btn btn-primary" onclick="cpStartupHold(document.getElementById('tempHoldOutputId').value)">Startup</button>
+                    {% else %}
+                        Confirm Startup Grill?
+                        <br><br>
+                        <button class="btn btn-primary" onclick="cpStartup()">Startup</button>
+                    {% endif %}
                 </div>
                 <!-- Modal footer -->
                 <div class="modal-footer">
