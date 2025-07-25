@@ -24,7 +24,8 @@ from flask_mobility import Mobility
 from flask_socketio import SocketIO
 from flask_qrcode import QRcode
 from werkzeug.exceptions import InternalServerError
-from common.common import read_settings, is_real_hardware
+from common.common import read_settings, is_real_hardware, create_logger
+import logging 
 
 '''
 ==============================================================================
@@ -114,6 +115,19 @@ import mobile.socket_io
  Main Program Start
 ==============================================================================
 '''
+
+# Setup logging
+settings = read_settings()
+
+log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.ERROR
+webappLogger = create_logger('webapp', filename='./logs/webapp.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
+
+log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
+eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
+
+event_message = f"PiFire Web UI started. PiFire Version: {settings['versions']['server']} Build: {settings['versions']['build']}, Debug Mode: {settings['globals']['debug_mode']}"
+webappLogger.info(event_message)
+eventLogger.info(event_message)
 
 if __name__ == '__main__':
 	if is_real_hardware():

@@ -46,8 +46,10 @@ controlLogger = create_logger('control', filename='./logs/control.log', messagef
 log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
 eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 
-eventLogger.info('Control Script Starting Up.')
-controlLogger.info('Control Script Starting Up.')
+event_message = f"PiFire Control Process started. PiFire Version: {settings['versions']['server']} Build: {settings['versions']['build']}, Debug Mode: {settings['globals']['debug_mode']}"
+
+eventLogger.info(event_message)
+controlLogger.info(event_message)
 
 # Flush Redis DB and create JSON structure
 control = read_control(flush=True)
