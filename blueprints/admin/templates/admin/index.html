@@ -780,6 +780,7 @@
 						<br>
 						<b>Network Info:</b><br>
 							{% for interface in system_info['network_info'] %}
+							{% if interface != 'lo' %}
 							<ul>
 								<li>
 									<b>Interface: </b><i>{{ interface }}</i>
@@ -827,6 +828,7 @@
 									</ul>
 								</li>
 							</ul>
+							{% endif %}
 							{% endfor %}
 						<br>
 
