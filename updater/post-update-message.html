@@ -1,7 +1,7 @@
 <!-- Post Update Message for v1.8.0 -->
 <H1>
     <img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="50" height="50" class="d-inline-block align-top" alt="">
-    PiFire 1.9.4 Release - June 2025
+    PiFire 1.9.5 Release - July 2025
 </H1>
 <div class="row justify-content-center">
     <div class="card" style="width:80%">
@@ -134,6 +134,9 @@
                  </li>
                  <li>
                     When in Celsius mode with standard ADC, prevent showing temperatures below 0C.  This will prevent probes that are unconnected from showing a negative temperature on the dashboard.
+                 </li>
+                 <li>
+                    Fixed issue where the ST7789 was attempting to install the latest version of numpy, which will cause a hang when building on the Raspberry Pi.  Install valid earlier version of numpy before attempting install of ST7789 module. 
                  </li>
              </ul>
              
