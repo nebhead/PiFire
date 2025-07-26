@@ -223,11 +223,13 @@ def admin_page(action=None):
     system_info['hardware_info'] = {
             'total_ram': 'Unknown',
             'available_ram': 'Unknown',
-            'hardware': 'Unknown',
-			'model': 'Unknown',
-			'model_name': 'Unknown',
-			'cores': 'Unknown',
-			'frequency': 'Unknown'
+            'cpu_info': {
+                'hardware': 'Unknown',
+                'model': 'Unknown',
+                'model_name': 'Unknown',
+                'cores': 'Unknown',
+                'frequency': 'Unknown'
+            }
         }
 
     supported_cmds = get_supported_cmds()

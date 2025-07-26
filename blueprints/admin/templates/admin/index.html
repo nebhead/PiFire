@@ -786,6 +786,40 @@
 									<ul>
 										<li>
 											IP Address: {{ system_info['network_info'][interface]['ip_address'] }}
+											{% if system_info['network_info'][interface]['ip_address'] != '0.0.0.0' %}
+
+											<!-- QR Code {{ interface }} -->
+											<button type="button" class="btn btn-outline-primary btn-sm shadow" data-toggle="modal" data-target="#qrModal{{ interface }}">
+												<i class="fa-solid fa-qrcode"></i> QR Code
+											</button>
+											<!-- QR Modal {{ interface }} -->
+											<div class="modal power-modal" id="qrModal{{ interface }}" data-backdrop="false">
+												<div class="modal-dialog">
+													<div class="modal-content">
+														<!-- Modal Header -->
+														<div class="modal-header">
+															<h4 class="modal-title"><i class="fas fa-qrcode"></i> QR Code</h4>
+															<button type="button" class="close" data-dismiss="modal">&times;</button>
+														</div>
+														<!-- Modal body -->
+														<div class="modal-body text-center">
+															Scan QR Code to setup application
+															<br>
+															<br>
+															{{ system_info['network_info'][interface]['ip_address'] }}
+															<br>
+															<br>
+															<img src="{{ qrcode(system_info['network_info'][interface]['ip_address']) }}">
+														</div>
+														<!-- Modal footer -->
+														<div class="modal-footer">
+															<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
+														</div>
+													</div>
+												</div>
+											</div>
+											{% endif %}
+
 										</li>
 										<li>
 											MAC Address: {{ system_info['network_info'][interface]['mac_address'] }}
