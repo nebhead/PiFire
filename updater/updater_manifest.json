@@ -4,7 +4,7 @@
       "server" : "1.10.0",
       "cookfile" : "1.5.0",
       "recipe" : "1.0.0",
-      "build" : 33
+      "build" : 34
     },
     "update_notes" : "",
     "update_warnings" : ""
@@ -127,11 +127,11 @@
     },
     {
       "version" : "1.10.0",
-      "build" : 25,
+      "build" : 34,
       "reboot_required" : true,
       "dependencies" : {
         "app": {
-          "py_dependencies": [],
+          "py_dependencies": ["netifaces==0.11.0"],
           "apt_dependencies": [],
           "command_list" : []
         },

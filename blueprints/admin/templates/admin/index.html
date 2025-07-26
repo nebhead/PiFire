@@ -97,7 +97,7 @@
 							<div class="card-body">
 								<form name="input" action="/admin/setting" method="POST">
 									<!-- Enable / Disable Debug Mode -->
-									{% if debug_mode == True %}
+									{% if settings['globals']['debug_mode'] == True %}
 									<button type="submit" name="debugenabled" value="disabled" class="btn btn-success btn-block shadow"><i class="fa-solid fa-toggle-on"></i>&nbsp; Enabled</button>
 									{% else %}
 									<button type="submit" name="debugenabled" value="enabled" class="btn btn-outline-success btn-block shadow"><i class="fa-solid fa-toggle-off"></i>&nbsp; Disabled</button>
@@ -666,7 +666,7 @@
 						</h5>
 					</div>
 					<div class="card-body">
-						{{ uptime }}
+						{{ system_info['uptime'] }}
 					</div>
 				</div>
 				<br>
@@ -735,17 +735,69 @@
 						</h5>
 					</div>
 					<div class="card-body">
-						<b>CPU Info:</b><br>
-						{% for line in cpuinfo %}
-							{{ line }}<br>
-						{% endfor %}
+						<b>Platform Info:</b><br>
+						<ul>
+							<li>
+								System Model: {{ system_info['hardware_info']['cpu_info']['model'] }}
+							</li>
+							<li>
+								CPU Model: {{ system_info['hardware_info']['cpu_info']['model_name'] }}
+							</li>
+							<li>
+								CPU Hardware: {{ system_info['hardware_info']['cpu_info']['hardware'] }}
+							</li>
+							<li>
+								CPU Cores: {{ system_info['hardware_info']['cpu_info']['cores'] }}
+							</li>
+							<li>
+								CPU Frequency: {{ system_info['hardware_info']['cpu_info']['frequency'] }}
+							</li>
+							<li>
+								Total Ram: {{ system_info['hardware_info']['total_ram'] }}
+							</li>
+							<li>
+								Available Ram: {{ system_info['hardware_info']['available_ram'] }}
+							</li>
+						</ul>
+						<br>
+						<b>OS Info:</b><br>
+						<ul>
+							<li>
+								<b>{{ system_info['os_info']['PRETTY_NAME'] }}</b>
+								<ul>
+									<li>
+										Version: {{ system_info['os_info']['VERSION'] }}
+									</li>
+									<li>
+										Codename: {{ system_info['os_info']['VERSION_CODENAME'] }}
+									</li>
+									<li>
+										Architecture: {{ system_info['os_info']['BITS'] }} ({{ system_info['os_info']['ARCHITECTURE'] }})
+									</li>
+								</ul>
+							</li>
+						</ul>
 						<br>
 						<b>Network Info:</b><br>
-						{% for lines in ifconfig %}
-							{{ lines }}<br>
-						{% endfor %}
+							{% for interface in system_info['network_info'] %}
+							<ul>
+								<li>
+									<b>Interface: </b><i>{{ interface }}</i>
+									<ul>
+										<li>
+											IP Address: {{ system_info['network_info'][interface]['ip_address'] }}
+										</li>
+										<li>
+											MAC Address: {{ system_info['network_info'][interface]['mac_address'] }}
+										</li>
+									</ul>
+								</li>
+							</ul>
+							{% endfor %}
+						<br>
+
+						</div>
 					</div>
-				</div>
 				<br><br><br>
 			</div><!-- End of Tab -->
 			<!-- ============================ GPIO Info ========================== -->

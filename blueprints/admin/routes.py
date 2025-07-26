@@ -4,7 +4,9 @@ import pathlib
 import zipfile
 from flask import render_template, current_app, request, send_file
 from werkzeug.utils import secure_filename
-from common.common import process_command, read_settings, write_settings, read_control, write_control, read_pellet_db, write_pellet_db, read_history, write_log, read_generic_json, write_generic_json, reboot_system, shutdown_system, restart_scripts, default_settings, default_control, backup_settings, backup_pellet_db
+from common.common import process_command, read_settings, write_settings, read_control, write_control, read_pellet_db, \
+            write_pellet_db, read_history, write_log, read_generic_json, write_generic_json, reboot_system, shutdown_system, \
+            restart_scripts, default_settings, default_control, backup_settings, backup_pellet_db, get_os_info
 from common.app import allowed_file, get_supported_cmds, get_system_command_output
 from . import admin_bp
 
@@ -205,12 +207,28 @@ def admin_page(action=None):
         Get System Information 
     '''
 
-    # TODO: Convert uptime, cpu_info, infconfig to system commands
-    uptime = os.popen('uptime').readline()
+    system_info = {}
 
-    cpu_info = os.popen('cat /proc/cpuinfo').readlines()
+    system_info['uptime'] = os.popen('uptime').readline()
 
-    ifconfig = os.popen('ifconfig').readlines()
+    system_info['os_info'] = _get_os_info()
+
+    system_info['network_info'] = {
+            'Unknown': {
+                'ip_address': '0.0.0.0',
+                'mac_address': '00:00:00:00:00:00'
+            }
+        }
+
+    system_info['hardware_info'] = {
+            'total_ram': 'Unknown',
+            'available_ram': 'Unknown',
+            'hardware': 'Unknown',
+			'model': 'Unknown',
+			'model_name': 'Unknown',
+			'cores': 'Unknown',
+			'frequency': 'Unknown'
+        }
 
     supported_cmds = get_supported_cmds()
 
@@ -245,9 +263,27 @@ def admin_page(action=None):
             errors.append(event)
         control['system']['cpu_temp'] = data['data'].get('cpu_temp', None)
 
-    write_control(control)
+    if 'network_info' in supported_cmds:
+        process_command(action='sys', arglist=['network_info'], origin='admin')
+        data = get_system_command_output(requested='network_info')
+        if data['result'] != 'OK':
+            event = data['message']
+            errors.append(event)
+        else:
+            network_info = data.get('data', None)
+            if network_info:
+                system_info['network_info'] = network_info
 
-    debug_mode = settings['globals']['debug_mode']
+    if 'hardware_info' in supported_cmds:
+        process_command(action='sys', arglist=['hardware_info'], origin='admin')
+        data = get_system_command_output(requested='hardware_info')
+        if data['result'] != 'OK':
+            event = data['message']
+            errors.append(event)
+        else:
+            system_info['hardware_info'] = data.get('data', {})
+
+    write_control(control)
 
     url = request.url_root
 
@@ -257,10 +293,10 @@ def admin_page(action=None):
         errors.append(event)
         pip_list = []
 
-    return render_template('admin/index.html', settings=settings, uptime=uptime, cpuinfo=cpu_info,
-                            ifconfig=ifconfig, debug_mode=debug_mode, qr_content=url,
+    return render_template('admin/index.html', settings=settings, control=control,
+                            system_info=system_info, 
+                            qr_content=url,
                             pip_list=pip_list,
-                            control=control,
                             page_theme=settings['globals'].get('page_theme', 'light'),
                             grill_name=settings['globals'].get('grill_name', ''),
                             files=files, errors=errors, warnings=warnings, success=success)
@@ -274,3 +310,40 @@ def _zip_files_logs(dir_name):
 		for file_path in directory.rglob("*.log"):
 			archive.write(file_path, arcname=file_path.relative_to(directory))
 	return file_name
+
+def _get_os_info():
+    try:
+        os_info = read_generic_json('os_info.json')
+        if not os_info:
+            os_info = get_os_info()
+
+    except Exception as e:
+        current_app.logger.error(f"Error reading OS info: {e}")
+
+    finally:
+        if not os_info:
+            os_info = {
+            "PRETTY_NAME" : 'Unknown.',
+            "NAME" : 'Unknown.',
+            "VERSION_ID" : 'Unknown.',
+            "VERSION" : 'Unknown.',
+            "VERSION_CODENAME" : 'Unknown.',
+            "ARCHITECTURE" : 'Unknown.',
+            "BITS" : 'Unknown.'
+            }
+        else:
+            # Ensure the os_info has all expected keys
+            os_info.setdefault("PRETTY_NAME", 'Unknown.')
+            os_info.setdefault("NAME", 'Unknown.')
+            os_info.setdefault("VERSION_ID", 'Unknown.')
+            os_info.setdefault("VERSION", 'Unknown.')
+            os_info.setdefault("VERSION_CODENAME", 'Unknown.')
+            os_info.setdefault("ARCHITECTURE", 'Unknown.')
+            if os_info['ARCHITECTURE'] in ['armv7l', 'armv6l', 'armv5l', 'arm', 'i386', 'i486', 'i586', 'i686']:
+                os_info['BITS'] = '32-Bit'
+            elif os_info['ARCHITECTURE'] in ['aarch64', 'x86_64']:
+                os_info['BITS'] = '64-Bit'
+            else:
+                os_info['BITS'] = 'Unknown'
+
+        return os_info

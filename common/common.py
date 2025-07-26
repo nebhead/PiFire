@@ -24,6 +24,7 @@ import redis
 import uuid
 import random
 import logging
+import subprocess
 from logging.handlers import RotatingFileHandler
 from collections.abc import Mapping
 from ratelimitingfilter import RateLimitingFilter
@@ -1562,14 +1563,14 @@ def add_line_numbers(event_list):
 		event_lines.append([index, line])
 	return event_lines 
 
-def write_log(event):
+def write_log(event, loggername='events'):
 	"""
 	Write event to event.log
 
 	:param event: String event
 	"""
 	log_level = logging.INFO
-	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
+	eventLogger = create_logger(loggername, filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 	eventLogger.info(event)
 
 def write_event(settings, event):
@@ -3054,3 +3055,30 @@ def write_generic_key(key, value):
 	global cmdsts
 
 	cmdsts.set(key, json.dumps(value))
+
+def get_os_info(filepath='os_info.json', loggername='events'):
+	"""Get operating system information"""
+	os_info = {}
+
+	try:
+		# Get OS release info
+		with open('/etc/os-release', 'r') as f:
+			for line in f:
+				if '=' in line:
+					key, value = line.strip().split('=', 1)
+					# Remove quotes if present
+					value = value.strip('"')
+					os_info[key] = value
+		
+		# Get architecture using uname -m
+		arch = subprocess.check_output(['/bin/uname', '-m']).decode().strip()
+		os_info['ARCHITECTURE'] = arch
+		
+		# Save to JSON file
+		write_generic_json(os_info, filepath)
+		return os_info
+		
+	except Exception as e:
+		event = f"Error getting OS info: {str(e)}"
+		write_log(event, level='error', loggername=loggername)
+		return os_info

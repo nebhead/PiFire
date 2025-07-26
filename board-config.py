@@ -19,7 +19,7 @@ import argparse
 import logging
 import os 
 import json
-import subprocess
+from common.common import get_os_info
 
 '''
 ==============================================================================
@@ -347,33 +347,6 @@ def build_config_line(config_type, config_dict):
 
     return config_line
 
-def get_os_info():
-	"""Get operating system information"""
-	os_info = {}
-
-	try:
-		# Get OS release info
-		with open('/etc/os-release', 'r') as f:
-			for line in f:
-				if '=' in line:
-					key, value = line.strip().split('=', 1)
-					# Remove quotes if present
-					value = value.strip('"')
-					os_info[key] = value
-		
-		# Get architecture using uname -m
-		arch = subprocess.check_output(['/bin/uname', '-m']).decode().strip()
-		os_info['ARCHITECTURE'] = arch
-		
-		# Save to JSON file
-		write_generic_json(os_info, 'os_info.json')
-		return os_info
-		
-	except Exception as e:
-		event = f"Error getting OS info: {str(e)}"
-		logger.error(event)
-		return os_info
-
 def create_file(filename, lines):
 	result = f'\n - Attempting to write data to {filename}: '
 	try:
@@ -504,10 +477,12 @@ if __name__ == "__main__":
 		results.append(enable_gpio_shutdown())
 
 	if args.osversion:
-		os_info = get_os_info()
-		version = os_info.get('VERSION_ID', 'Unknown')
-		event = f'Detected OS version_id: {version}.'
+		os_info = get_os_info(loggername='board_config')
+		event = 'OS Version Information: '
 		results.append(event)
+		for key, value in os_info.items():
+			event = f'   {key} : {value}'
+			results.append(event)
 
 	if len(results) == 0:
 		print('No Arguments Found. Use --help to see available arguments')
