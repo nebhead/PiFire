@@ -1,7 +1,7 @@
 <!-- Post Update Message for v1.8.0 -->
 <H1>
     <img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="50" height="50" class="d-inline-block align-top" alt="">
-    PiFire 1.9.5 Release - July 2025
+    PiFire 1.9.6 Release - July 2025
 </H1>
 <div class="row justify-content-center">
     <div class="card" style="width:80%">
@@ -137,6 +137,9 @@
                  </li>
                  <li>
                     Fixed issue where the ST7789 was attempting to install the latest version of numpy, which will cause a hang when building on the Raspberry Pi.  Install valid earlier version of numpy before attempting install of ST7789 module. 
+                 </li>
+                 <li>
+                    Added rotation support for the Raspberry Pi DSI Touch display.  This allows the display to be rotated 90/180/270 degrees and includes translation of the touch coordinates to match the display rotation.
                  </li>
              </ul>
              
