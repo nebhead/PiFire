@@ -43,7 +43,7 @@ import logging
 from common import create_logger
 from controller.base import ControllerBase 
 log_level = logging.DEBUG
-eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
+eventLogger = create_logger('events', filename='./logs/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 
 '''
 Class Definition

@@ -354,7 +354,7 @@ def _post_app_data(action=None, type=None, json_data=None):
             return _response(result='OK')
         elif type == 'clear_events':
             write_log('Clearing Events Log.')
-            os.system('rm /tmp/events.log')
+            os.system('rm ./logs/events.log')
             return _response(result='OK')
         elif type == 'clear_pelletdb':
             write_log('Clearing Pellet Database.')

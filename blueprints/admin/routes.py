@@ -79,7 +79,7 @@ def admin_page(action=None):
         if 'clearevents' in response:
             if response['clearevents'] == 'true':
                 write_log('Clearing Events Log.')
-                os.system('rm /tmp/events.log')
+                os.system('rm ./logs/events.log')
 
         if 'clearpelletdb' in response:
             if response['clearpelletdb'] == 'true':

@@ -83,14 +83,6 @@ def create_logger(
 		config = {'match': ['An error occurred reading the voltage from one of the ports.']}
 		ratelimit = RateLimitingFilter(rate=1, per=60, burst=5, **config)  # Allow 1 per 60s (with periodic burst of 5)
         
-		# Standard FileHandler
-		'''
-		handler = logging.FileHandler(filename)
-		handler.setFormatter(formatter)
-		handler.addFilter(ratelimit)
-		logger.addHandler(handler)
-		'''
-		
 		# RotatingFileHandler
 		rotating_handler = RotatingFileHandler(filename, maxBytes=maxBytes, backupCount=backupCount)
 		rotating_handler.setFormatter(formatter)
@@ -1512,12 +1504,12 @@ def read_events(legacy=True):
 	"""
 	# Read all lines of events.log into a list(array)
 	try:
-		with open('/tmp/events.log') as event_file:
+		with open('./logs/events.log') as event_file:
 			event_lines = event_file.readlines()
 			event_file.close()
 	# If file not found error, then create events.log file
 	except(IOError, OSError):
-		event_file = open('/tmp/events.log', "w")
+		event_file = open('./logs/events.log', "w")
 		event_file.close()
 		event_lines = []
 
@@ -1544,12 +1536,12 @@ def read_events(legacy=True):
 	return(event_list, num_events)
 
 def read_log_file(filepath):
-	# Read all lines of events.log into a list(array)
+	# Read all lines of log file into a list(array)
 	try:
 		with open(filepath) as log_file:
 			log_file_lines = log_file.readlines()
 			log_file.close()
-	# If file not found error, then create events.log file
+	# If file not found error, then log it
 	except(IOError, OSError):
 		event = f'Unable to open log file: {filepath}'
 		write_log(event)
@@ -1570,7 +1562,7 @@ def write_log(event, loggername='events'):
 	:param event: String event
 	"""
 	log_level = logging.INFO
-	eventLogger = create_logger(loggername, filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
+	eventLogger = create_logger(loggername, filename='./logs/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 	eventLogger.info(event)
 
 def write_event(settings, event):
