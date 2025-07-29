@@ -66,6 +66,9 @@
                      <li>
                         @weberbox updated the SocketIO code to support the latest version of the Android app. 
                      </li>
+                     <li>
+                        Moved the events.log file back to the /logs folder instead of the /tmp folder.  This is to ensure that the log file is not lost on reboot and can be easily accessed by the user.
+                     </li>
                   </ul>
                </li>
             </ul>
@@ -93,6 +96,9 @@
                </li>
                <li>
                   Fixed a bug where probe configuration was not being loaded by the Jinja template because it was not looking in the right blueprint path. 
+               </li>
+               <li>
+                  Added rotation to the Raspberry Pi DSI Display, which was previously missing.  This includes translation for the touch interface.  
                </li>
             </ul>
        
