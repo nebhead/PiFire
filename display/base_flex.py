@@ -92,7 +92,8 @@ class DisplayBase:
         Initialize the dash/home/menu framework 
         '''
         self.display_data = read_generic_json(self.config['display_data_filename'])
-        if self.config.get('rotation', 0) in [0, 180, 2]:
+        self.ROTATION = self.config.get('rotation', 0)
+        if self.ROTATION in [0, 180, 2]:
             self.WIDTH = self.display_data['metadata'].get('screen_width', 800)
             self.HEIGHT = self.display_data['metadata'].get('screen_height', 480)
         else:

@@ -237,10 +237,16 @@ class Display(DisplayBase):
 		pygame.display.update() 
 
 	def _canvas_to_surface(self):
+		if self.ROTATION in [90, 180, 270]:
+			# Rotate the canvas for 90, 180, or 270 degrees
+			self.transform_canvas = self.display_canvas.rotate(self.ROTATION, expand=True)
+		else:
+			# Use the canvas as is for landscape mode
+			self.transform_canvas = self.display_canvas.copy()
 		# Convert temporary canvas to PyGame surface 
-		strFormat = self.display_canvas.mode
-		size = self.display_canvas.size
-		raw_str = self.display_canvas.tobytes("raw", strFormat)
+		strFormat = self.transform_canvas.mode
+		size = self.transform_canvas.size
+		raw_str = self.transform_canvas.tobytes("raw", strFormat)
 		self.display_surface.blit(PyImage.fromstring(raw_str, size, strFormat), (0,0))
 
 	def _display_background(self):
@@ -383,6 +389,21 @@ class Display(DisplayBase):
 			'''
 			Loop through current displayed objects and check for touch collisions
 			'''
+			# Draw the touch position on the canvas for debugging where self.display_canvas is the PIL Image object
+			#self.display_canvas.paste((255,0,0,255), (self.touch_pos[0], self.touch_pos[1], self.touch_pos[0] + 10, self.touch_pos[1] + 10))
+			#self._display_canvas()
+			
+			if self.ROTATION == 90:
+				self.touch_pos = (self.WIDTH - self.touch_pos[1], self.touch_pos[0])
+			elif self.ROTATION == 180:
+				self.touch_pos = (self.WIDTH - self.touch_pos[0], self.HEIGHT - self.touch_pos[1])
+			elif self.ROTATION == 270:
+				self.touch_pos = (self.touch_pos[1], self.HEIGHT - self.touch_pos[0])
+			
+			# Draw the touch position on the canvas for debugging
+			#self.display_canvas.paste((255,255,0,255), (self.touch_pos[0], self.touch_pos[1], self.touch_pos[0] + 10, self.touch_pos[1] + 10))
+			#self._display_canvas()
+
 			for pointer, object in enumerate(self.display_object_list):
 				objectData = object.get_object_data()
 				for index, touch_area in enumerate(objectData['touch_areas']):
