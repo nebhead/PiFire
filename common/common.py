@@ -2105,14 +2105,6 @@ def seconds_to_string(seconds):
 
 	return time_string
 
-def check_cpu_temp():
-	process_command(action='sys', arglist=['check_cpu_temp'], origin='admin')  # Request supported commands
-	data = get_system_command_output(requested='check_cpu_temp')
-	control = read_control()
-	control['system']['cpu_temp'] = data['data'].get('cpu_temp', None)
-	write_control(control)
-	return f"{control['system']['cpu_temp']}C"
-
 def get_system_command_output(requested='supported_commands', timeout=1):
 	system_output = RedisQueue('control:systemo')
 	endtime = timeout + time.time()

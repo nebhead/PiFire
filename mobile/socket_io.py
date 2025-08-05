@@ -17,6 +17,7 @@ Description: This library provides socketio functions for app.py
 '''
 import threading
 from common import *
+from common.app import get_supported_cmds
 from flask import request
 from app import socketio
 from config import Config
@@ -47,6 +48,7 @@ recipe_folder = Config.RECIPE_FOLDER
 ==============================================================================
 '''
 
+
 @socketio.on("connect")
 def handle_connect():
     client_id = request.sid
@@ -54,6 +56,7 @@ def handle_connect():
     connected_users = read_connected_users()
     listen_app_data(force=True)
     print(f"User {client_id} connected. Current connected users: {connected_users}")
+
 
 @socketio.on("disconnect")
 def handle_disconnect():
@@ -69,6 +72,7 @@ def handle_disconnect():
                 thread.join()
                 thread = None
 
+
 @socketio.on('listen_app_data')
 def listen_app_data(force=False):
     global thread
@@ -80,9 +84,11 @@ def listen_app_data(force=False):
 
     return _response(result='OK')
 
+
 @socketio.on('get_app_data')
 def get_app_data(action=None, arg01=None, arg02=None):
     return _get_app_data(action, arg01, arg02)
+
 
 @socketio.on('post_app_data')
 def post_app_data(action=None, type=None, json_data=None):
@@ -94,6 +100,7 @@ def post_app_data(action=None, type=None, json_data=None):
  Supporting Functions
 ==============================================================================
 '''
+
 
 def _emit_app_data(event, force_refresh):
     global thread
@@ -116,13 +123,13 @@ def _emit_app_data(event, force_refresh):
             uuid = settings['server_info']['uuid']
 
             pellet_data = {
-                'uuid' : uuid,
-                'pellets' : pelletdb
+                'uuid': uuid,
+                'pellets': pelletdb
             }
 
             event_data = {
-                'uuid' : uuid,
-                'events' : read_events_redis()
+                'uuid': uuid,
+                'events': read_events_redis()
             }
 
             dash_data = _get_dash_data(settings, pelletdb)
@@ -216,6 +223,7 @@ def _get_dash_data(settings, pelletdb):
     }
     return dash_data
 
+
 def _get_app_data(action=None, arg01=None, arg02=None):
     settings = read_settings_redis()
 
@@ -257,14 +265,35 @@ def _get_app_data(action=None, arg01=None, arg02=None):
         )
 
     elif action == 'info_data':
+        system_info = _get_system_info(read_control())
         return _response(
             result='OK',
             data={
                 'uuid': settings['server_info']['uuid'],
-                'upTime': os.popen('uptime').readline(),
-                'cpuInfo': os.popen('cat /proc/cpuinfo').readlines(),
-                'ifConfig': os.popen('ifconfig').readlines(),
-                'cpuTemp': check_cpu_temp(),
+                'platformInfo': {
+                    'systemModel': system_info['hardware_info']['cpu_info']['model'],
+                    'cpuModel': system_info['hardware_info']['cpu_info']['model_name'],
+                    'cpuHardware': system_info['hardware_info']['cpu_info']['hardware'],
+                    'cpuCores': system_info['hardware_info']['cpu_info']['cores'],
+                    'cpuFrequency': system_info['hardware_info']['cpu_info']['frequency'],
+                    'totalRam': system_info['hardware_info']['total_ram'],
+                    'availableRam': system_info['hardware_info']['available_ram']
+                },
+                'osInfo': {
+                    'prettyName': system_info['os_info']['PRETTY_NAME'],
+                    'version': system_info['os_info']['VERSION'],
+                    'codeName': system_info['os_info']['VERSION_CODENAME'],
+                    'architecture': system_info['os_info']['ARCHITECTURE'],
+                    'bits': system_info['os_info']['BITS'],
+                },
+                'networkInfo': system_info['network_info'],
+                'cpuThrottled': system_info['cpu_throttled'],
+                'cpuUnderVolt': system_info['cpu_under_voltage'],
+                'wifiQualityValue': system_info['wifi_quality_value'],
+                'wifiQualityMax': system_info['wifi_quality_max'],
+                'wifiQualityPercentage': system_info['wifi_quality_percentage'],
+                'upTime': system_info['uptime'],
+                'cpuTemp': system_info['cpu_temp'],
                 'outPins': settings['platform']['outputs'],
                 'inPins': settings['platform']['inputs'],
                 'devPins': settings['platform']['devices'],
@@ -736,6 +765,7 @@ def _get_timer_notify_data(notify_data):
             timer_info['shutdown'] = notify_obj['shutdown']
     return timer_info
 
+
 def _encode_assets(recipe_data):
     img_size = ['full', 'thumb']
     recipe_id = recipe_data['metadata']['id']
@@ -750,6 +780,7 @@ def _encode_assets(recipe_data):
             continue
     return recipe_data
 
+
 def _encode_img(recipe_id, asset_filename, thumb=False):
     filepath = f'./static/img/tmp/{recipe_id}/thumbs/' if thumb else f'./static/img/tmp/{recipe_id}/'
     try:
@@ -759,6 +790,7 @@ def _encode_img(recipe_id, asset_filename, thumb=False):
     except:
         asset_img = ''
     return asset_img
+
 
 def _update_probe_config(settings, control, request):
     probe_config = request['probes_action']
@@ -791,6 +823,7 @@ def _update_probe_config(settings, control, request):
         return _response(result='OK', data=settings)
     else:
         return _response(result='Error', message='Error: Probe was not found')
+
 
 def _update_notify_data(control, request):
     notify_dto = request['notify_action']
@@ -838,10 +871,12 @@ def _update_notify_data(control, request):
     write_control(control, origin='app-socketio')
     return _response(result="OK")
 
+
 def _write_settings(settings, control):
     control['settings_update'] = True
     write_settings(settings)
     write_control(control, origin='app-socketio')
+
 
 def _check_control_status():
     errors = read_errors()
@@ -854,6 +889,118 @@ def _check_control_status():
             errors.append(error)
             write_errors(errors)
 
+
 def _response(result: str, message: str = None, data: dict = None):
     return {'data': data, 'result': result, 'message': message}
 
+
+def _get_system_info(control):
+    system_info = {}
+
+    system_info['uptime'] = os.popen('uptime').readline()
+
+    system_info['os_info'] = _get_os_info()
+
+    system_info['network_info'] = {
+        'Unknown': {
+            'ip_address': '0.0.0.0',
+            'mac_address': '00:00:00:00:00:00'
+        }
+    }
+
+    system_info['hardware_info'] = {
+        'total_ram': 'Unknown',
+        'available_ram': 'Unknown',
+        'cpu_info': {
+            'hardware': 'Unknown',
+            'model': 'Unknown',
+            'model_name': 'Unknown',
+            'cores': 'Unknown',
+            'frequency': 'Unknown'
+        }
+    }
+
+    supported_cmds = get_supported_cmds()
+
+    if 'check_wifi_quality' in supported_cmds:
+        process_command(action='sys', arglist=['check_wifi_quality'], origin='admin')  # Request supported commands
+        data = get_system_command_output(requested='check_wifi_quality')
+        control['system']['wifi_quality_value'] = data['data'].get('wifi_quality_value', None)
+        control['system']['wifi_quality_max'] = data['data'].get('wifi_quality_max', None)
+        control['system']['wifi_quality_percentage'] = data['data'].get('wifi_quality_percentage', None)
+
+    if 'check_throttled' in supported_cmds:
+        process_command(action='sys', arglist=['check_throttled'], origin='admin')  # Request supported commands
+        data = get_system_command_output(requested='check_throttled')
+        control['system']['cpu_throttled'] = data['data'].get('cpu_throttled', None)
+        control['system']['cpu_under_voltage'] = data['data'].get('cpu_under_voltage', None)
+
+    if 'check_cpu_temp' in supported_cmds:
+        process_command(action='sys', arglist=['check_cpu_temp'], origin='admin')  # Request supported commands
+        data = get_system_command_output(requested='check_cpu_temp')
+        control['system']['cpu_temp'] = data['data'].get('cpu_temp', None)
+
+    if 'network_info' in supported_cmds:
+        process_command(action='sys', arglist=['network_info'], origin='admin')
+        data = get_system_command_output(requested='network_info')
+        if data['result'] == 'OK':
+            network_info = data.get('data', None)
+            if network_info:
+                system_info['network_info'] = network_info
+
+    if 'hardware_info' in supported_cmds:
+        process_command(action='sys', arglist=['hardware_info'], origin='admin')
+        data = get_system_command_output(requested='hardware_info')
+        if data['result'] == 'OK':
+            system_info['hardware_info'] = data.get('data', {})
+
+    write_control(control, origin='app-socketio')
+
+    info_details = {
+        'wifi_quality_value': control['system']['wifi_quality_value'],
+        'wifi_quality_max': control['system']['wifi_quality_max'],
+        'wifi_quality_percentage': control['system']['wifi_quality_percentage'],
+        'cpu_throttled': control['system']['cpu_throttled'],
+        'cpu_under_voltage': control['system']['cpu_under_voltage'],
+        'cpu_temp': control['system']['cpu_temp'],
+        'network_info': system_info['network_info'],
+        'hardware_info': system_info['hardware_info'],
+        'os_info': system_info['os_info'],
+        'uptime': system_info['uptime']
+    }
+
+    return info_details
+
+def _get_os_info():
+    try:
+        os_info = read_generic_json('os_info.json')
+    except:
+        os_info = None
+
+    if not os_info:
+        os_info = get_os_info()
+
+    if not os_info:
+        os_info = {}
+
+    defaults = {
+        "PRETTY_NAME": 'Unknown',
+        "NAME": 'Unknown',
+        "VERSION_ID": 'Unknown',
+        "VERSION": 'Unknown',
+        "VERSION_CODENAME": 'Unknown',
+        "ARCHITECTURE": 'Unknown',
+    }
+
+    for key, default in defaults.items():
+        os_info.setdefault(key, default)
+
+    arch = os_info["ARCHITECTURE"]
+    if arch in {'armv7l', 'armv6l', 'armv5l', 'arm', 'i386', 'i486', 'i586', 'i686'}:
+        os_info['BITS'] = '32-Bit'
+    elif arch in {'aarch64', 'x86_64'}:
+        os_info['BITS'] = '64-Bit'
+    else:
+        os_info['BITS'] = 'Unknown'
+
+    return os_info
