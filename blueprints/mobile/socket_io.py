@@ -73,6 +73,8 @@ def handle_disconnect():
                 thread = None
 
 
+from flask_socketio import emit
+
 @socketio.on('listen_app_data')
 def listen_app_data(force=False):
     global thread

@@ -105,10 +105,16 @@ def index():
 
 '''
 ==============================================================================
- SocketIO Section
+ Register Mobile Blueprint
 ==============================================================================
 '''
-import mobile.socket_io
+# Initialize Flask-SocketIO
+socketio = SocketIO(app, cors_allowed_origins="*")
+
+# Register mobile blueprint and provide it with socketio instance
+from blueprints.mobile import mobile_bp, socket_io
+mobile_bp.socketio = socketio
+app.register_blueprint(mobile_bp, url_prefix='/mobile')
 
 '''
 ==============================================================================
