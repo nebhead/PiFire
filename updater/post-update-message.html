@@ -100,6 +100,9 @@
                <li>
                   Added rotation to the Raspberry Pi DSI Display, which was previously missing.  This includes translation for the touch interface.  
                </li>
+               <li>
+                  Fixed a bug where the control script would crash when predicting the ETA for a probe set temperature.  This was due to the Linear Regression model returning an infinite or NaN value. 
+               </li>
             </ul>
        
          </div> <!-- End of Card Body -->

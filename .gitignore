@@ -76,3 +76,5 @@ os_info.json
 
 blueprints/example/
 *.1
+*.2
+*.3
