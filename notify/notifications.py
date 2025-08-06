@@ -520,11 +520,13 @@ def _estimate_eta(temperatures, target_temperature, interval_seconds=3, max_hist
 		if predicted_time < 0:
 			eventLogger.debug(f'ETA: Estimated time is negative. [{predicted_time}]')
 			return None
+		if math.isinf(predicted_time) or math.isnan(predicted_time):
+			eventLogger.debug(f'ETA: Estimated time is infinite or NaN. [{predicted_time}]')
+			return None
+		return int(predicted_time)
 	except:
 		eventLogger.debug(f'ETA: Error calculating ETA.')
 		return None
-			
-	return int(predicted_time)
 
 mqtt = None
 def _send_mqtt_notification(control, settings, 
