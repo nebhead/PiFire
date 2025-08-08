@@ -51,7 +51,7 @@ def wizard_page(action=None):
                 moduleSettings = {}
                 moduleSettings['settings'] = get_settings_dependencies_values(settings, moduleData)
                 moduleSettings['config'] = {} if section != 'display' else settings['display']['config'][module]
-                render_string = "{% from '_macro_wizard_card.html' import render_wizard_card %}{{ render_wizard_card(moduleData, moduleSection, moduleSettings) }}"
+                render_string = "{% from 'wizard/_macro_wizard_card.html' import render_wizard_card %}{{ render_wizard_card(moduleData, moduleSection, moduleSettings) }}"
                 return render_template_string(render_string, moduleData=moduleData, moduleSection=section, moduleSettings=moduleSettings)
             else:
                 return '<strong color="red">No Data</strong>'
