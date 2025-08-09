@@ -49,7 +49,7 @@ def set_pwm_gpio():
 		if system_type == 'raspberry_pi_all' or system_type == 'prototype':
 			# "dtoverlay=pwm,pin=13,func=4"
 			pin = int(pin) if pin != None else None
-			result += rpi_config_write('dtoverlay', 'pwm', add_config={'func' : '4'}, pin=pin, pin_type='pin')
+			result += rpi_config_write('dtoverlay', 'pwm-2chan', add_config={'func' : '4'}, pin=pin, pin_type='pin')
 		else:
 			result += 'NA - No system defined'
 	except:
