@@ -8,12 +8,13 @@ from common.common import process_command, read_settings, write_settings, read_c
             write_pellet_db, read_history, write_log, read_generic_json, write_generic_json, reboot_system, shutdown_system, \
             restart_scripts, default_settings, default_control, backup_settings, backup_pellet_db, get_os_info
 from common.app import allowed_file, get_supported_cmds, get_system_command_output
+from common.server_status import set_server_status, get_server_status
 from . import admin_bp
 
 @admin_bp.route('/<action>', methods=['POST','GET'])
 @admin_bp.route('/', methods=['POST','GET'])
 def admin_page(action=None):
-    server_status = 'available'
+    server_status = get_server_status()
     settings = read_settings()
     control = read_control()
     pelletdb = read_pellet_db()
@@ -34,7 +35,7 @@ def admin_page(action=None):
     if action == 'reboot':
         event = "Admin: Reboot"
         write_log(event)
-        server_status = 'rebooting'
+        server_status = set_server_status('rebooting')
         reboot_system()
         return render_template('shutdown.html', action=action, page_theme=settings['globals']['page_theme'],
                                 grill_name=settings['globals']['grill_name'])
@@ -42,7 +43,7 @@ def admin_page(action=None):
     elif action == 'shutdown':
         event = "Admin: Shutdown"
         write_log(event)
-        server_status = 'shutdown'
+        server_status = set_server_status('shutdown')
         shutdown_system()
         return render_template('shutdown.html', action=action, page_theme=settings['globals']['page_theme'],
                                 grill_name=settings['globals']['grill_name'])
@@ -50,7 +51,7 @@ def admin_page(action=None):
     elif action == 'restart':
         event = "Admin: Restart Server"
         write_log(event)
-        server_status = 'restarting'
+        server_status = set_server_status('restarting')
         restart_scripts()
         return render_template('shutdown.html', action=action, page_theme=settings['globals']['page_theme'],
                                 grill_name=settings['globals']['grill_name'])
@@ -103,7 +104,7 @@ def admin_page(action=None):
                 control = default_control()
                 write_settings(settings)
                 write_control(control, origin='app')
-                server_status = 'restarting'
+                server_status = set_server_status('restarting')
                 restart_scripts()
                 return render_template('shutdown.html', action='restart', page_theme=settings['globals']['page_theme'],
                                         grill_name=settings['globals']['grill_name'])
@@ -144,7 +145,7 @@ def admin_page(action=None):
             if local_file != 'none':
                 new_settings = read_settings(filename=BACKUP_PATH+local_file)
                 write_settings(new_settings)
-                server_status = 'restarting'
+                server_status = set_server_status('restarting')
                 restart_scripts()
                 return render_template('shutdown.html', action='restart', page_theme=settings['globals']['page_theme'],
                                         grill_name=settings['globals']['grill_name'])
@@ -157,7 +158,7 @@ def admin_page(action=None):
                     success.append('Successfully restored settings.')
                     new_settings = read_settings(filename=BACKUP_PATH+filename)
                     write_settings(new_settings)
-                    server_status = 'restarting'
+                    server_status = set_server_status('restarting')
                     restart_scripts()
                     return render_template('shutdown.html', action='restart', page_theme=settings['globals']['page_theme'],
                                             grill_name=settings['globals']['grill_name'])

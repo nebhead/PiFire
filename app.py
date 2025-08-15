@@ -33,6 +33,7 @@ import logging
 ==============================================================================
 '''
 from config import ProductionConfig  # ProductionConfig or DevelopmentConfig
+from common.server_status import set_server_status
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
@@ -128,6 +129,10 @@ eventLogger = create_logger('events', filename='./logs/events.log', messageforma
 event_message = f"PiFire Web UI started. PiFire Version: {settings['versions']['server']} Build: {settings['versions']['build']}, Debug Mode: {settings['globals']['debug_mode']}"
 webappLogger.info(event_message)
 eventLogger.info(event_message)
+
+# Initialize server status to 'available' when app starts
+with app.app_context():
+    set_server_status('available')
 
 if __name__ == '__main__':
 	if is_real_hardware():

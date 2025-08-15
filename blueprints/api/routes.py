@@ -13,6 +13,7 @@ from common.common import (
 	deep_update
 	)
 from common.app import get_system_command_output, create_ui_hash
+from common.server_status import get_server_status
 from . import api_bp
 
 @api_bp.route('/', methods=['POST','GET'])
@@ -24,8 +25,7 @@ from . import api_bp
 def api_page(action=None, arg0=None, arg1=None, arg2=None, arg3=None):
 	settings = read_settings()
     # Get current server status
-	# TODO: Add Server Status Functionality
-	server_status = 'available'
+	server_status = get_server_status()
 
 	if action in ['get', 'set', 'cmd', 'sys']:
 		#print(f'action={action}\narg0={arg0}\narg1={arg1}\narg2={arg2}\narg3={arg3}')
