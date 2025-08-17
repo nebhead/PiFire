@@ -64,7 +64,7 @@
                         Moved all Flask Web UI Routes to the Flask Blueprint system.  This will allow for easier management of the web UI in the future and it considerably cleans up the app.py file. 
                      </li>
                      <li>
-                        @weberbox updated the SocketIO code to support the latest version of the Android app. 
+                        @weberbox updated the SocketIO code to support the latest version of the Android app.  Moved SocketIO to use Flask-SocketIO Blueprints for better organization.
                      </li>
                      <li>
                         Moved the events.log file back to the /logs folder instead of the /tmp folder.  This is to ensure that the log file is not lost on reboot and can be easily accessed by the user.
