@@ -73,6 +73,8 @@ def handle_disconnect():
                 thread = None
 
 
+from flask_socketio import emit
+
 @socketio.on('listen_app_data')
 def listen_app_data(force=False):
     global thread
@@ -198,6 +200,9 @@ def _get_dash_data(settings, pelletdb):
         'hasDcFan': settings['platform']['dc_fan'],
         'hasDistanceSensor': settings['modules']['dist'] != 'none',
         'startupCheck': settings['safety']['startup_check'],
+        'startToHoldPrompt': settings['startup']['start_to_mode']['start_to_hold_prompt'],
+        'startupGotoTemp': settings['startup']['start_to_mode']['primary_setpoint'],
+        'startupGotoMode': settings['startup']['start_to_mode']['after_startup_mode'],
         'allowManualOutputs': settings['safety']['allow_manual_changes'],
         'timer': {
             'start': math.trunc(control['timer']['start']),
