@@ -59,6 +59,7 @@ $(document).ready(function() {
 				if(output != data.output) {
 					var textArea = document.getElementById("installOutput");
 					textArea.value +=  data.output + '\r\n';
+                    textArea.scrollTop = textArea.scrollHeight;
 					//$('#installOutput').append(data.output);
 					output = data.output;
 				}
