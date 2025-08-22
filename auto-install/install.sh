@@ -110,7 +110,7 @@ echo "**                                                                     **"
 echo "**      Running Apt Upgrade... (This could take several minutes)       **" | tee -a ~/logs/pifire_install.log
 echo "**                                                                     **" | tee -a ~/logs/pifire_install.log
 echo "*************************************************************************" | tee -a ~/logs/pifire_install.log
-$SUDO apt upgrade -y 2>&1 | tee -a ~/logs/pifire_install.log
+#$SUDO apt upgrade -y 2>&1 | tee -a ~/logs/pifire_install.log
 
 # Install APT dependencies
 echo "*************************************************************************" | tee -a ~/logs/pifire_install.log
@@ -317,9 +317,11 @@ echo "+ Installation completed at $(date '+%Y-%m-%d %H:%M:%S')" | tee -a ~/logs/
 # Ask user if they want to reboot
 if whiptail --backtitle "Install Complete" --title "Installation Completed" --yesno "Congratulations, the installation is complete.\n\nIt's recommended to reboot your system now for all changes to take effect. On first boot, the wizard will guide you through the remaining setup steps.\n\nYou should be able to access your application by opening a browser on your PC or other device and using the IP address (or http://[hostname].local) for this device.\n\nWould you like to reboot now?" ${r} ${c}; then
     echo "Rebooting system..." | tee -a ~/logs/pifire_install.log
+    $SUDO cp ~/logs/pifire_install.log /usr/local/bin/pifire/logs/pifire_install_$(date '+%Y%m%d_%H%M%S').log
     $SUDO reboot
 else
     echo "Reboot skipped. Please reboot manually when convenient." | tee -a ~/logs/pifire_install.log
+    $SUDO cp ~/logs/pifire_install.log /usr/local/bin/pifire/logs/pifire_install_$(date '+%Y%m%d_%H%M%S').log
     exit 0
 fi
 
