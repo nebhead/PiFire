@@ -317,6 +317,9 @@ def run_wizard(settings, WizardData, WizardInstallInfo):
 	set_wizard_install_status(percent, status, output)
 
 	for command in command_list:
+		if "sudo" in command and "python" in command:
+			#replace "python" with python_exec
+			command = command.replace("python", python_exec)
 		if is_real_hardware():
 			process = subprocess.Popen(command, stdout=subprocess.PIPE, encoding='utf-8')
 			while True:

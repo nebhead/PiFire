@@ -19,7 +19,7 @@ import argparse
 import logging
 import os 
 import json
-from common.common import get_os_info
+import subprocess
 
 '''
 ==============================================================================
@@ -438,6 +438,32 @@ def create_logger(name, filename='./logs/pifire.log', messageformat='%(asctime)s
 		logger.addHandler(handler)
 	return logger
 
+def get_os_info(filepath='os_info.json', loggername='events'):
+	"""Get operating system information"""
+	os_info = {}
+
+	try:
+		# Get OS release info
+		with open('/etc/os-release', 'r') as f:
+			for line in f:
+				if '=' in line:
+					key, value = line.strip().split('=', 1)
+					# Remove quotes if present
+					value = value.strip('"')
+					os_info[key] = value
+		
+		# Get architecture using uname -m
+		arch = subprocess.check_output(['/bin/uname', '-m']).decode().strip()
+		os_info['ARCHITECTURE'] = arch
+		
+		# Save to JSON file
+		write_generic_json(os_info, filepath)
+		return os_info
+
+	except Exception as e:
+		event = f"Error getting OS info: {str(e)}"
+		logger.error(event)
+		return os_info
 
 '''
 ==============================================================================

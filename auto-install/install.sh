@@ -252,7 +252,7 @@ python updater.py --piplist 2>&1 | tee -a ~/logs/pifire_install.log
 
 # Get OS Information into JSON file
 echo " - Getting OS Information into JSON file" | tee -a ~/logs/pifire_install.log
-python board-config.py --ov 2>&1 | tee -a ~/logs/pifire_install.log
+python board-config.py -ov 2>&1 | tee -a ~/logs/pifire_install.log
 
 ### Setup nginx to proxy to gunicorn
 echo "*************************************************************************" | tee -a ~/logs/pifire_install.log
