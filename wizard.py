@@ -318,8 +318,8 @@ def run_wizard(settings, WizardData, WizardInstallInfo):
 
 	for command in command_list:
 		if "sudo" in command and "python" in command:
-			#replace "python" with python_exec
-			command = command.replace("python", python_exec)
+			#replace "python" with python_exec in command list object
+			command = [python_exec if item == "python" else item for item in command]
 		if is_real_hardware():
 			process = subprocess.Popen(command, stdout=subprocess.PIPE, encoding='utf-8')
 			while True:

@@ -451,8 +451,8 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 
 	for command in command_list:
 		if "sudo" in command and "python" in command:
-			#replace "python" with python_exec
-			command = command.replace("python", python_exec)
+			#replace "python" with python_exec in command list object
+			command = [python_exec if item == "python" else item for item in command]
 		process = subprocess.Popen(command, stdout=subprocess.PIPE, encoding='utf-8')
 		while True:
 			output = process.stdout.readline()
