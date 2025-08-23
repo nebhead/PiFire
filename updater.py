@@ -176,28 +176,40 @@ def get_log(num_commits=10):
 
 def get_remote_version():
 	remote_url, error_msg = get_remote_url()
-	if error_msg == '':
-		# Reference command: git ls-remote --tags --sort="v:refname" git://github.com/nebhead/test-update.git
-		# 	| tail -n1 | sed "s/.*\\///;"
-		# Gets a list of the remote hashes/tags sorted by version, then takes the last (tail) and processes the
-		# 	output to remove the hash and ref/tags/
-		command = ['git', 'ls-remote', '--tags', '--sort=v:refname', remote_url]
+	current_branch, branch_error = get_branch()
+	
+	if error_msg == '' and branch_error == '':
+		# Instead of getting all tags, we'll get tags that are on the current branch
+		# First fetch the latest tags
+		fetch_command = ['git', 'fetch', '--tags']
+		fetch = subprocess.run(fetch_command, capture_output=True, text=True)
+		
+		if fetch.returncode != 0:
+			return "ERROR Fetching Tags.", fetch.stderr.replace('\n', ' | ')
+		
+		# Now get tags that contain commits from the current branch
+		# This command finds tags that are reachable from the branch
+		command = ['git', 'tag', '--sort=v:refname', '--merged', f'origin/{current_branch}']
 		versions = subprocess.run(command, capture_output=True, text=True)
+		
 		if versions.returncode == 0:
 			version_list = versions.stdout.split('\n')  # Make a list of versions from the output
-			if version_list != ['']:
-				# Get the last version from the sorted version list (-1 is actually an empty string, so go -2 to
-				# 	get the last item)
-				result = version_list[-2]
-				# Trickery to split the string after "refs/tags/" to get the version suffix
-				result = result.split("refs/tags/",1)[1]
+			# Remove empty entries
+			version_list = [v for v in version_list if v]
+			
+			if version_list:
+				# Get the latest tag from the list
+				result = version_list[-1]
 			else: 
-				result = "No versions found"
+				result = "No tags found on current branch"
 		else: 
 			result = "ERROR Getting Remote Version."
 			error_msg = versions.stderr.replace('\n', ' | ')
 	else: 
-		result = 'ERROR Getting Remote URL.'
+		result = 'ERROR Getting Remote URL or Branch.'
+		if error_msg: 
+			error_msg += ' | '
+		error_msg += branch_error
 	return(result, error_msg)
 
 def get_current_tag():
