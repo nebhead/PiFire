@@ -6,7 +6,6 @@ gunicorn==23.0.0
 gpiozero==2.0.1
 redis==5.3.0
 uuid==1.30
-influxdb_client[ciso]==1.48.0
 apprise==1.9.3
 scikit-fuzzy==0.5.0
 scikit-learn==1.4.2 

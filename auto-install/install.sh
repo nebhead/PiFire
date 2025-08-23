@@ -110,7 +110,9 @@ echo "**                                                                     **"
 echo "**      Running Apt Upgrade... (This could take several minutes)       **" | tee -a ~/logs/pifire_install.log
 echo "**                                                                     **" | tee -a ~/logs/pifire_install.log
 echo "*************************************************************************" | tee -a ~/logs/pifire_install.log
-#$SUDO apt upgrade -y 2>&1 | tee -a ~/logs/pifire_install.log
+$SUDO DEBIAN_FRONTEND=noninteractive apt-get upgrade -y \
+    -o Dpkg::Options::=--force-confdef \
+    -o Dpkg::Options::=--force-confold 2>&1 | tee -a ~/logs/pifire_install.log
 
 # Install APT dependencies
 echo "*************************************************************************" | tee -a ~/logs/pifire_install.log
@@ -119,6 +121,10 @@ echo "**      Installing Dependencies... (This could take several minutes)   **"
 echo "**                                                                     **" | tee -a ~/logs/pifire_install.log
 echo "*************************************************************************" | tee -a ~/logs/pifire_install.log
 $SUDO apt install python3-dev python3-pip python3-venv python3-scipy nginx git supervisor ttf-mscorefonts-installer redis-server gfortran libatlas-base-dev libopenblas-dev liblapack-dev libopenjp2-7 libglib2.0-dev -y 2>&1 | tee -a ~/logs/pifire_install.log
+if grep -q "Raspberry Pi 5" /proc/device-tree/model 2>/dev/null; then
+    echo " + Raspberry Pi 5 detected, installing python3-rpi-lgpio" | tee -a ~/logs/pifire_install.log
+    $SUDO apt install python3-rpi-lgpio -y
+fi
 
 # Grab project files
 echo "*************************************************************************" | tee -a ~/logs/pifire_install.log
@@ -184,6 +190,11 @@ if [ "$OS_BITS" = "64" ]; then
         exit 1
     fi
 
+    if ! uv pip install "influxdb_client[ciso]==1.48.0" 2>&1 | tee -a ~/logs/pifire_install.log; then
+        echo " !! Failed to install influxdb_client. Installation cannot continue." | tee -a ~/logs/pifire_install.log
+        exit 1
+    fi
+
     echo " + Installing requirements.txt... " | tee -a ~/logs/pifire_install.log      
     if ! uv pip install -r /usr/local/bin/pifire/auto-install/requirements.txt 2>&1 | tee -a ~/logs/pifire_install.log; then
         echo " !! Failed to install requirements.txt. Installation cannot continue." | tee -a ~/logs/pifire_install.log
@@ -217,9 +228,11 @@ else
     if ! /bin/python -c "import sys; assert sys.version_info[:2] >= (3,11)" > /dev/null 2>&1; then
         echo " + System is running a python version lower than 3.11, installing eventlet==0.30.2." | tee -a ~/logs/pifire_install.log;
         python -m pip install "greenlet==3.1.1" "eventlet==0.30.2" 2>&1 | tee -a ~/logs/pifire_install.log
+        python -m pip install "influxdb_client==1.48.0" 2>&1 | tee -a ~/logs/pifire_install.log
     else
         echo " + System is running a python version 3.11 or higher." | tee -a ~/logs/pifire_install.log
         python -m pip install eventlet 2>&1 | tee -a ~/logs/pifire_install.log
+        python -m pip install "influxdb_client[ciso]==1.48.0" 2>&1 | tee -a ~/logs/pifire_install.log
     fi
     # Installing module dependencies from requirements.txt
     echo " + Installing requirements.txt... " | tee -a ~/logs/pifire_install.log
