@@ -44,10 +44,11 @@ Requirements:
 import threading
 import time
 import logging
+import struct  # NEW: required for battery unpack in DataDelegate
 
 from probes.base import ProbeInterface
 from bluepy.btle import *
-#from icecream import ic  # For debugging
+# from icecream import ic  # For debugging
 
 '''
 *****************************************
@@ -62,8 +63,8 @@ class ScanDelegate(DefaultDelegate):
 	def handleDiscovery(self, dev, isNewDev, isNewData):
 		if isNewDev:
 			logger_msg = f'(ibbq) Discovered device {dev.addr}'
-			#self.logger.debug(logger_msg)
-			#ic(logger_msg)
+			# self.logger.debug(logger_msg)
+			# ic(logger_msg)
 
 class DataDelegate(DefaultDelegate):
 	def __init__(self):
@@ -72,38 +73,42 @@ class DataDelegate(DefaultDelegate):
 		self.probe_temps = []
 		self.data_initialized = False
 		self.batt_percent = None
+		self.temp_handle = None       # NEW: dynamic handle for realtime temps (FFF4)
+		self.info_handle = None       # NEW: dynamic handle for settings/info (FFF1)
+
+	def set_handles(self, temp_handle, info_handle):  # NEW
+		self.temp_handle = temp_handle                 # NEW
+		self.info_handle = info_handle                 # NEW
 
 	def handleNotification(self, cHandle, data):
-		if cHandle == 48:
-			# this is temperature data!  48 is the handle of the probes characteristic XXX check terminology
-			temps = [int.from_bytes(data[i:i+2], "little") for i in range(0,len(data),2)]
-			
+		# NEW: use dynamic handles instead of hard-coded 48/37
+		if self.temp_handle is not None and cHandle == self.temp_handle:
+			# Temperature payload is 4x uint16 little-endian (tenths of °C), 0xFFFF => unplugged
+			temps = [int.from_bytes(data[i:i+2], "little") for i in range(0, len(data), 2)]
 			if not self.data_initialized:
-				for i in range(len(temps)):
-					self.probe_temps.append(None)
+				self.probe_temps = [None] * max(4, len(temps))  # NEW: init slots
 				self.data_initialized = True
 
-			# Note: "0xFF" or 65526 means the probe is not connected and so should be ignored.
-			#self.logger.debug(f'(ibbq) Temps(C) [BT0, BT1, BT2, BT3]: {temps}')
-			for idx, item in enumerate(temps):
-				if item != 65526: # This is what gets reported when the probe isn't plugged in.
-					item = item / 10 # Value in Celsius
-					self.probe_temps[idx] = item
+			for idx, item in enumerate(temps[:4]):
+				if item != 0xFFFF and item != 65526:  # 0xFFFF unplugged; keep legacy 65526 check
+					self.probe_temps[idx] = item / 10.0
 				else:
 					self.probe_temps[idx] = None
 
-		elif cHandle == 37:
-			# this is battery data!
-			# The first byte is a header and should always be 0x24
-			# It looks like the last byte is always zero
-			# The other bytes should be for current voltage and max voltage
-			# Thanks @sil for the help with the struct
-			header, current_voltage, max_voltage,pad = struct.unpack("<BHHB", data)
-			if max_voltage == 0: max_voltage = 6580 # XXX check this
-			self.batt_percent = 100 * current_voltage / max_voltage
-			logger_msg = f'(ibbq) Battery Percent: {self.batt_percent}'
-			self.logger.debug(logger_msg) # (batt_percent)
-			#ic(logger_msg)
+		elif self.info_handle is not None and cHandle == self.info_handle:
+			# Info/Settings results (FFF1). Battery reports begin with 0x24.
+			if len(data) >= 5 and data[0] == 0x24:
+				# Battery format: <BHHB  (0x24, current_mV, max_mV, pad)
+				try:
+					header, current_voltage, max_voltage, pad = struct.unpack("<BHHB", data[:6])
+					if max_voltage == 0: max_voltage = 6580
+					self.batt_percent = 100 * current_voltage / max_voltage
+					self.logger.debug(f'(ibbq) Battery Percent: {self.batt_percent}')
+				except Exception as e:
+					self.logger.debug(f'(ibbq) Battery parse error: {e} data={data.hex()}')  # NEW
+			else:
+				# Quietly log other status frames (e.g., 0B 01 02 01 FF FF 05 01 00 00 00 00)
+				self.logger.debug(f'(ibbq) Info frame (FFF1): {data.hex()}')  # NEW
 
 		else:
 			self.logger.debug(f'(ibbq) Unknown data received from handle {cHandle}: {data}')
@@ -167,6 +172,12 @@ class iBBQ_Device():
 		# Static hex little endian ones and zeros
 		ON                   = bytearray.fromhex("01 00")
 		OFF                  = bytearray.fromhex("00 00")
+
+		# NEW: Additional observed xBBQ initialization messages (safe on older units)
+		XBBQ_MSG_0823        = bytearray.fromhex("08 23 00 00 00 00")  # NEW
+		XBBQ_MSG_0824        = bytearray.fromhex("08 24 00 00 00 00")  # NEW
+		XBBQ_MSG_0825        = bytearray.fromhex("08 25 00 00 00 00")  # NEW
+		SECURE_MODE          = bytearray.fromhex("02 01 00 00 00 00")  # NEW
 		
 		while True:
 			try:
@@ -176,98 +187,104 @@ class iBBQ_Device():
 					devices = scanner.scan(10.0)
 
 					for dev in devices:
-						#self.logger.info(f'(ibbq) Device {dev.addr}, RSSI={dev.rssi}dB')
+						# self.logger.info(f'(ibbq) Device {dev.addr}, RSSI={dev.rssi}dB')
 						for (adtype, desc, value) in dev.getScanData():
-							if desc == 'Complete Local Name' and value == 'iBBQ':
+							# Accept both legacy "iBBQ" and newer "xBBQ" advertising names
+							if desc == 'Complete Local Name' and value in ('iBBQ', 'xBBQ'):  # NEW
 								bbqs[dev.rssi] = dev
-								logger_msg = f'(ibbq) Found iBBQ device {value} at address {dev.addr}. RSSI {dev.rssi}'
+								logger_msg = f'(ibbq) Found Inkbird device {value} at address {dev.addr}. RSSI {dev.rssi}'  # NEW (generic label)
 								self.logger.info(logger_msg)
 
 					# We should now have a dict of bbq devices, let's sort by rssi and choose the one with the best connection
 					if len(bbqs) > 0:
 						bbq = bbqs[sorted(bbqs.keys(), reverse=True)[0]].addr
-						logger_msg = f'(ibbq) Using iBBQ device {bbq}'
+						logger_msg = f'(ibbq) Using Inkbird device {bbq}'  # NEW (generic label)
 						self.logger.debug(logger_msg)
-						#ic(logger_msg)
+						# ic(logger_msg)
 						self.hardware_id = bbq
 					else:
-						logger_msg = f'(ibbq) No iBBQ devices found'
-						#self.logger.debug(logger_msg)
-						#ic(logger_msg)
+						logger_msg = f'(ibbq) No iBBQ/xBBQ devices found'  # NEW
+						# self.logger.debug(logger_msg)
+						# ic(logger_msg)
 			except Exception as e:
 				self.device_setup = False
 				self.hardware_id = None
-				logger_msg = f'(ibbq) Error scanning for iBBQ devices: {e}. Might be related to bluetooth permissions.'
+				logger_msg = f'(ibbq) Error scanning for iBBQ/xBBQ devices: {e}. Might be related to bluetooth permissions.'  # NEW
 				self.logger.debug(logger_msg)
-				#ic(logger_msg)
+				# ic(logger_msg)
 				time.sleep(10)
 				continue
 
 			if self.hardware_id != None and self.device_setup == False:
-				#ic("Setting up iBBQ device thread active")
+				# ic("Setting up iBBQ device thread active")
 				try:
 					self.ibbq_device = Peripheral(self.hardware_id)
 					self.main_service = self.ibbq_device.getServiceByUUID(MAIN_SERVICE)
 					self.ibbq_delegate = DataDelegate()
 					self.ibbq_device.setDelegate(self.ibbq_delegate)
 
-					# First we have to log in
+					# Resolve characteristics up front so we can capture their runtime handles  # NEW
+					realtime_characteristic = self.main_service.getCharacteristics(REALTIMEDATA_UUID)[0]      # NEW
+					settingsresult_characteristic = self.main_service.getCharacteristics(SETTINGS_RESULTS)[0]  # NEW
+
+					# First we have to log in (legacy method remains for back-compat)
 					login_characteristic = self.main_service.getCharacteristics(PAIR_UUID)[0]
 					login_characteristic.write(CREDENTIALS_MESSAGE) # Send the magic bytes to login
 
-					# Scan the device for all the services.  You don't seem to need to do both
-					# of these, but you do _have_ to do one of them.  If you don't then the notifications
-					# don't work and you won't get a temperature reading.  Doing both for the sake of it.
-					bbq_characteristic = self.ibbq_device.getCharacteristics()
-					main_descriptors = self.main_service.getDescriptors()
+					# Optionally get a full list (historically helped notifications)
+					_ = self.ibbq_device.getCharacteristics()
+					_ = self.main_service.getDescriptors()
 
-					# Then we have to enable real time data collection
+					# --- Enable CCCDs BEFORE init writes to avoid missing early frames (xBBQ-friendly) ---  # NEW
+					temperature_cccd = realtime_characteristic.getDescriptors(forUUID=CCCD_UUID)[0]          # NEW
+					temperature_cccd.write(ON)                                                              # NEW
+					settingsresults_cccd = settingsresult_characteristic.getDescriptors(forUUID=CCCD_UUID)[0]# NEW
+					settingsresults_cccd.write(ON)                                                          # NEW
+
+					# Hand the actual value handles to the delegate (no hard-coded numbers)  # NEW
+					self.ibbq_delegate.set_handles(realtime_characteristic.getHandle(),
+					                               settingsresult_characteristic.getHandle())              # NEW
+
+					# --- xBBQ compatibility: send observed init sequence (harmless on older units) ---
 					settings_characteristic = self.main_service.getCharacteristics(CMD_UUID)[0]
-					settings_characteristic.write(REALTIME_DATA_ENABLE, withResponse=True)
+					try:
+						settings_characteristic.write(XBBQ_MSG_0823, withResponse=True)  # NEW
+						settings_characteristic.write(XBBQ_MSG_0824, withResponse=True)  # NEW
+						settings_characteristic.write(XBBQ_MSG_0825, withResponse=True)  # NEW
+						settings_characteristic.write(REALTIME_DATA_ENABLE, withResponse=True)  # NEW
+						settings_characteristic.write(SECURE_MODE, withResponse=True)  # NEW
+					except Exception as _e:
+						pass  # NEW
 
-					# The device logs all temperature in degrees c, but we can fix that for you.  Here we change the display units, and in the DataDelegate function we convert the temps
+					# The device logs all temperature in degrees C, but we can fix that for you (affects on-device display)
 					if self.units == "F":
 						settings_characteristic.write(UNITS_FAHRENHEIT, withResponse=True)
 					else:
 						settings_characteristic.write(UNITS_CELSIUS, withResponse=True)
 
-					# And we have to switch on notifications for the realtime characteristic.
-					# UUID 2902 is the standard descriptor UUID for CCCD which we need to write to in order
-					# to have data sent to us.  You can switch the services on and off with 0100 and 0000.
-					# The CCCD descriptor is on the REALTIMEDATA_UUID - which means it controls the data for the probes.
-					realtime_characteristic = self.main_service.getCharacteristics(REALTIMEDATA_UUID)[0] # This is where the temperature data lives.
-					temperature_cccd = realtime_characteristic.getDescriptors(forUUID=CCCD_UUID)[0] # This wasn't in the docs, but was in the source. It still took me all day to work it out.
-					# Now all we need to do is write a 1 (little endian) to it, and it will start sending data!  Easy when you know how.
-					temperature_cccd.write(ON)
-
-					# Let's see if we can get the battery level out of this thing as well.
-					# This is supposed to be read on 0xFFF1 SETTINGS_RESULTS.
+					# Ask for battery (report comes as a 0x24 frame on FFF1)
 					settings_characteristic.write(BATTERY_LEVEL, withResponse=True)
-					# Then we need to do the same as before and get the CCCD descriptor and switch on notifications.
-					# Battery notifications are sent about every 5 mins
-					settingsresult_characteristic = self.main_service.getCharacteristics(SETTINGS_RESULTS)[0]
-					settingsresults_cccd = settingsresult_characteristic.getDescriptors(forUUID=CCCD_UUID)[0]
-					settingsresults_cccd.write(ON)
+
 					time.sleep(1)
 					self.device_setup = True
-					logger_msg = f'(ibbq) iBBQ device setup complete.'
+					logger_msg = f'(ibbq) iBBQ/xBBQ device setup complete.'  # NEW
 					self.logger.debug(logger_msg)
-					#ic(logger_msg)
-				except:
-					logger_msg = f'(ibbq) Failed to setup iBBQ device.'
+					# ic(logger_msg)
+				except Exception as e:  # NEW: log the reason
+					logger_msg = f'(ibbq) Failed to setup iBBQ/xBBQ device: {e}'  # NEW
 					self.logger.debug(logger_msg)
-					#ic(logger_msg)
+					# ic(logger_msg)
 					self.device_setup = False
-					#self.hardware_id = None
+					# self.hardware_id = None
 
 			time.sleep(10)
 
 	def _sensing_loop(self):
-		#ic('Starting iBBQ sensor loop')
+		# ic('Starting iBBQ sensor loop')
 		while True:
 			if self.device_setup:
 				self.sensor_thread_active = True
-				#ic("Sensor Loop Active!")
+				# ic("Sensor Loop Active!")
 				try:
 					while self.sensor_thread_active:
 						if self.ibbq_device.waitForNotifications(1):
@@ -277,24 +294,24 @@ class iBBQ_Device():
 					logger_msg = f'(ibbq) Sensor thread inactive.'
 					self.logger.debug(logger_msg)
 					self.sensor_thread_active = False
-					#self.device_setup = False
-					#self.hardware_id = None
+					# self.device_setup = False
+					# self.hardware_id = None
 
 				except BTLEDisconnectError:
-					logger_msg = f'(ibbq) iBBQ device has gone away...'
+					logger_msg = f'(ibbq) iBBQ/xBBQ device has gone away...'  # NEW
 					self.logger.debug(logger_msg)
-					#ic(logger_msg)
+					# ic(logger_msg)
 					# Clean up
 					self.sensor_thread_active = False
 					self.device_setup = False
-					#self.hardware_id = None
+					# self.hardware_id = None
 				except Exception as e:
 					logger_msg = f'(ibbq) Error in sensor loop: {e}'
 					self.logger.debug(logger_msg)
-					#ic(logger_msg)
+					# ic(logger_msg)
 					self.sensor_thread_active = False
 					self.device_setup = False
-					#self.hardware_id = None
+					# self.hardware_id = None
 			else:
 				time.sleep(1)
 
@@ -340,8 +357,8 @@ class ReadProbes(ProbeInterface):
 		if self.hardware_id == '':
 			self.hardware_id = None
 		super().__init__(probe_info, device_info, units)
-		#ic(self.port_map)
-		#ic(self.output_data)
+		# ic(self.port_map)
+		# ic(self.output_data)
 
 	def _init_device(self):
 		self.time_delay = 0
@@ -351,13 +368,13 @@ class ReadProbes(ProbeInterface):
 		port_values = {}
 
 		probe_values_C = self.device.get_port_values()
-		##ic(probe_values_C) # Debugging only	
+		# ic(probe_values_C) # Debugging only	
 
 		if len(probe_values_C) >= len(self.port_map):
 			for index, port in enumerate(self.port_map):
 				''' Read Ports from Device '''
 				port_values[port] = probe_values_C[index] if self.units == 'C' else self._to_fahrenheit(probe_values_C[index])
-				#output_value = port_values[port] if port_values[port] != None else 0 # If the read value is None, pass that to the output
+				# output_value = port_values[port] if port_values[port] != None else 0 # If the read value is None, pass that to the output
 				output_value = port_values[port]
 
 				''' Output Tr '''
