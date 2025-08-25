@@ -250,21 +250,26 @@ class GrillPlatform:
 		Returns:
 			(bool, bool): A tuple of (under_voltage, throttled) indicating their status.
 		"""
+		try:
+			output = subprocess.check_output(["vcgencmd", "get_throttled"])
+			status_str = output.decode("utf-8").strip()[10:]  # Extract the numerical value
+			status_int = int(status_str, 16)  # Convert from hex to decimal
 
-		output = subprocess.check_output(["vcgencmd", "get_throttled"])
-		status_str = output.decode("utf-8").strip()[10:]  # Extract the numerical value
-		status_int = int(status_str, 16)  # Convert from hex to decimal
-
-		under_voltage = bool(status_int & 0x10000)  # Check bit 16 for under-voltage
-		throttled = bool(status_int & 0x5)  # Check bits 0 and 2 for active throttling
-
-		if under_voltage or throttled:
-			message = 'WARNING: Under-voltage or throttled situation detected'
-		else:
-			message = 'No under-voltage or throttling detected.'
+			under_voltage = bool(status_int & 0x10000)  # Check bit 16 for under-voltage
+			throttled = bool(status_int & 0x5)  # Check bits 0 and 2 for active throttling
+			if under_voltage or throttled:
+				message = 'WARNING: Under-voltage or throttled situation detected'
+			else:
+				message = 'No under-voltage or throttling detected.'
+			result = 'OK'
+		except:
+			under_voltage = False
+			throttled = False
+			message = 'Error obtaining throttled status.'
+			result = 'ERROR'
 
 		data = {
-			'result' : 'OK',
+			'result' : result,
 			'message' : message,
 			'data' : {
 				'cpu_under_voltage' : under_voltage,
@@ -316,17 +321,26 @@ class GrillPlatform:
 		return data
 
 	def check_cpu_temp(self, arglist):
-		output = subprocess.check_output(["vcgencmd", "measure_temp"])
-		temp = output.decode("utf-8").replace("temp=","").replace("'C", "").replace("\n", "")
+		try:
+			output = subprocess.check_output(["vcgencmd", "measure_temp"])
+			temp = output.decode("utf-8").replace("temp=","").replace("'C", "").replace("\n", "")
+			result = 'OK'
+			message = 'Successfully obtained CPU temperature.'
 
-		if is_float(temp):
-			temp = float(temp)
-		else:
+			if is_float(temp):
+				temp = float(temp)
+			else:
+				temp = 0.0
+				message = 'Error: command output is not a valid float.'
+				result = 'ERROR'
+		except:
 			temp = 0.0
+			message = 'Error obtaining CPU temperature.'
+			result = 'ERROR'
 
 		data = {
-			'result' : 'OK',
-			'message' : 'Success.',
+			'result' : result,
+			'message' : message,
 			'data' : {
 				'cpu_temp' : float(temp)
 			}
