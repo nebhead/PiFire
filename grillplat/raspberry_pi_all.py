@@ -251,7 +251,7 @@ class GrillPlatform:
 			(bool, bool): A tuple of (under_voltage, throttled) indicating their status.
 		"""
 		try:
-			output = subprocess.check_output(["vcgencmd", "get_throttled"])
+			output = subprocess.check_output(["sudo", "vcgencmd", "get_throttled"])
 			status_str = output.decode("utf-8").strip()[10:]  # Extract the numerical value
 			status_int = int(status_str, 16)  # Convert from hex to decimal
 
@@ -322,7 +322,7 @@ class GrillPlatform:
 
 	def check_cpu_temp(self, arglist):
 		try:
-			output = subprocess.check_output(["vcgencmd", "measure_temp"])
+			output = subprocess.check_output(["sudo", "vcgencmd", "measure_temp"])
 			temp = output.decode("utf-8").replace("temp=","").replace("'C", "").replace("\n", "")
 			result = 'OK'
 			message = 'Successfully obtained CPU temperature.'
