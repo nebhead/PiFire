@@ -131,7 +131,7 @@ def enable_i2c():
 		if system_type == 'raspberry_pi_all':
 			# dtparam=i2c_arm=on
 			result += rpi_config_write('dtparam', 'i2c_arm')
-			# To enable userspace access to I2C ensure that /etc/modules contains "12c-dev"
+			# To enable userspace access to I2C ensure that /etc/modules contains "i2c-dev"
 			# echo "i2c-dev" | $SUDO tee -a /etc/modules
 			result += append_file('/etc/modules', 'i2c-dev\n')
 		else:
