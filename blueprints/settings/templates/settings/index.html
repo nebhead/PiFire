@@ -832,6 +832,18 @@
                                             <input id="prime_on_startup" type="number" inputmode="numeric" min="0" max="200" class="form-control" value="{{ settings['startup']['prime_on_startup'] }}" name="prime_on_startup" style="min-width: 4ch;">
                                         </div>
                                     </div>
+                                    {% if settings['platform']['dc_fan'] %}
+                                    <!-- Set Duty Cycle during Startup -->
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> Duty cycle for the DC fan during startup/reignite cycles. PiFire will honor min/max duty cycle in the <a href="#" onclick="event.preventDefault(); document.getElementById('v-pills-pwm-tab').click();">PWM Settings</a>.</i>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Set the duty cycle for the DC fan during startup/reignite cycles.">
+                                                <i class="fas fa-fan"></i>&nbsp; DC Fan Duty Cycle (%)</span>
+                                        </div>
+                                        <input id="pwm_duty_cycle" type="number" inputmode="numeric" min="0" max="100" class="form-control" value="{{ settings['startup']['pwm_duty_cycle'] }}" name="pwm_duty_cycle" style="min-width: 4ch;">
+                                    </div>
+                                    {% endif %}
 
                                 </div>
 							</div>

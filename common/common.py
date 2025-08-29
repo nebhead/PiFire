@@ -304,7 +304,8 @@ def default_settings():
 					'p_mode' : 5
 				}
 			]
-		}
+		},
+		'pwm_duty_cycle' : 100  # Default PWM duty cycle during startup
 	}
 
 	settings['shutdown'] = {

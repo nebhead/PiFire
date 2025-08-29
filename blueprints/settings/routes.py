@@ -426,6 +426,10 @@ def settings_page(action=None):
         else:
             settings['startup']['start_to_mode']['start_to_hold_prompt'] = False
 
+        if is_not_blank(response, 'pwm_duty_cycle'):
+            settings['startup']['pwm_duty_cycle'] = min(int(response['pwm_duty_cycle']), settings['pwm']['max_duty_cycle'])
+            settings['startup']['pwm_duty_cycle'] = max(settings['startup']['pwm_duty_cycle'], settings['pwm']['min_duty_cycle'])
+
         event['type'] = 'updated'
         event['text'] = 'Successfully updated startup/shutdown settings.'
 

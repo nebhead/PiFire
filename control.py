@@ -357,7 +357,10 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	grill_platform.auger_off()
 
 	if mode in ('Startup', 'Reignite', 'Smoke', 'Hold', 'Shutdown'):
-		_start_fan(settings)
+		if mode in ('Startup', 'Reignite') and settings['platform']['dc_fan'] and settings['startup'].get('pwm_duty_cycle') is not None:
+			_start_fan(settings, duty_cycle=settings['startup']['pwm_duty_cycle'])
+		else:
+			_start_fan(settings)
 		grill_platform.power_on()
 		eventLogger.debug('Power ON, Fan ON, Igniter OFF, Auger OFF')
 	elif mode in ('Prime'):
