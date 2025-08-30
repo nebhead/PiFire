@@ -55,6 +55,9 @@ def check_notify(settings, control, in_data=None, pelletdb=None, grill_platform=
 	if settings['notify_services']['influxdb']['url'] != '' and settings['notify_services']['influxdb']['enabled']:
 		_send_influxdb_notification('GRILL_STATE', control, settings, pelletdb, in_data, grill_platform)
 
+	if settings['notify_services']['wled']['device_address'] != '' and settings['notify_services']['wled']['enabled']:
+		_send_wled_notification('GRILL_STATE', control, settings)
+
 	''' Get simple list of temperatures key:value pairs '''
 	probe_temp_list = {}
 	if in_data is not None:
@@ -149,11 +152,11 @@ def send_notifications(notify_event, label='Probe', target=0):
 	Build and send notification based on notify_event and write to log.
 
 	:param notify_event: String Event
-	:param control: Control
-	:param settings: Settings
-	:param pelletdb: Pellet DB
+	:param label: Label
+	:param target: Target Value
 	"""
 	settings = read_settings()
+	control = read_control()
 	log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
 	eventLogger = create_logger('events', filename='./logs/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 	date = datetime.datetime.now()
@@ -262,6 +265,8 @@ def send_notifications(notify_event, label='Probe', target=0):
 	if settings['notify_services']['mqtt']['broker'] != '' and settings['notify_services']['mqtt']['enabled']:
 		control = read_control()
 		_send_mqtt_notification(control, settings, notify_event=title_message)
+	if settings['notify_services']['wled']['device_address'] != '' and settings['notify_services']['wled']['enabled']:
+		_send_wled_notification(notify_event, control, settings)
 
 def _send_apprise_notifications(settings, title_message, body_message):
 	"""
@@ -597,3 +602,21 @@ def _check_condition(condition, current, target):
 		return current <= target
 	else:
 		return False
+	
+wled_handler = None
+def _send_wled_notification(notify_event, control, settings):
+	"""
+	Send WLED Notifications
+
+	:param notify_event: String Event
+	:param control: Control
+	:param settings: Settings
+	:param pelletdb: Pellet DB
+	:param in_data: In Data (Probe Temps)
+	:param grill_platform: Grill Platform
+	"""
+	global wled_handler
+	if not wled_handler:
+		from notify.wled_handler import WLEDNotificationHandler
+		wled_handler = WLEDNotificationHandler(settings)
+	wled_handler.notify(notify_event, control, settings)

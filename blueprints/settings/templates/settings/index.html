@@ -1408,11 +1408,11 @@
                 <div class="tab-pane fade" id="v-pills-notifications" role="tabpanel" aria-labelledby="v-pills-notifications-tab">
                     <div class="card shadow">
                         <form name="notify" action="/settings/notify" method="POST">
-                            <div class="card-header bg-primary text-white">
-                                <h5>
-                                    <i class="far fa-bell"></i>&nbsp; Notification Settings
-                                </h5>
-                            </div>
+                        <div class="card-header bg-primary text-white">
+                            <h5>
+                                <i class="far fa-bell"></i>&nbsp; Notification Settings
+                            </h5>
+                        </div>
                         <div class="card-body">
                             <!-- Apprise Notifications -->
                             <div class="card shadow-sm">
@@ -1779,21 +1779,108 @@
                                     <br><br>
                                 </div><!-- End of card body -->
                             </div><!-- End of card body -->
-                            <div class="card-footer bg-light">
-                                <button type="button" class="btn btn-outline-success" onclick="sendTestNotification();">Send Test Notification</button>
-                                <button type="submit" class="btn btn-outline-danger">Save</button>
-                                <br><br>
-                                <span class="badge badge-warning">NOTE:</span>
-                                <i class="small"> 
-                                    You must enable the service(s) and 'Save' before you can test the service(s).
-                                </i>
-                            </div>
-                        </div><!-- End of Card -->
-                    </form>
+                            <br>
+                            <!-- WLED Settings -->
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h5>WLED</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="wled_enabled" name="wled_enabled" {% if settings['notify_services']['wled']['enabled'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="wled_enabled">WLED Enabled</label>
+                                    </div>
+                                    <br>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> 
+                                        The IP or URL address of your WLED device.  (Static IP is highly recommended instead of mDNS url)
+                                    </i>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fa-solid fa-microchip"></i>&nbsp; WLED Device Address</span>
+                                        </div>
+                                        <input id="wled_device_address" type="text" class="form-control" name="wled_device_address" value="{{settings['notify_services']['wled']['device_address']}}" style="min-width: 11ch;">
+                                    </div>
+                                    <br>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> 
+                                        Number of seconds to keep the EVENT notification active on the WLED device.  Default is 120 seconds. (requires reboot/restart to take effect)
+                                    </i>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fa-solid fa-stopwatch"></i>&nbsp; Event Notification Duration (seconds)</span>
+                                        </div>
+                                        <input id="wled_notify_duration" type="number" min="0" max="3600" class="form-control" name="wled_notify_duration" value="{{settings['notify_services']['wled']['notify_duration']}}" style="min-width: 11ch;">
+                                    </div>
+                                    <br>
+                                    <div class="card">
+                                        <div class="card-header bg-light">
+                                            <i class="fa-solid fa-stamp"></i>&nbsp; Grill Mode WLED Presets
+                                        </div>
+                                        <div class="card-body">
+                                            <span class="badge badge-info">INFO:</span>
+                                            <i class="small"> 
+                                                Preset WLED modes to use for each grill mode.  These modes will be set when the grill enters the corresponding mode.
+                                            </i>
+                                            {% for mode, preset in settings['notify_services']['wled']['mode_presets'].items() %}
+                                            <div class="input-group mb-3">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">
+                                                       {{ mode }} Mode - Preset
+                                                    </span>
+                                                </div>
+                                                <input id="wled_mode_{{ mode|lower }}" type="number" min="0" max="250" class="form-control" name="wled_mode_{{ mode|lower }}" value="{{settings['notify_services']['wled']['mode_presets'][mode]}}" style="min-width: 11ch;">
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div> <!-- End of Grill Mode WLED Presets -->
+                                    <br>
+                                    <div class="card">
+                                        <div class="card-header bg-light">
+                                            <i class="fa-solid fa-stamp"></i>&nbsp; Event Trigger WLED Presets
+                                        </div>
+                                        <div class="card-body">
+                                            <span class="badge badge-info">INFO:</span>
+                                            <i class="small"> 
+                                                Preset WLED modes to use for each event trigger.  These modes will be set when the corresponding event occurs.
+                                            </i>
+                                            {% for event, preset in settings['notify_services']['wled']['event_presets'].items() %}
+                                            <div class="input-group mb-3">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">
+                                                        {{ event.replace('_', ' ') }} Event - Preset
+                                                    </span>
+                                                </div>
+                                                <input id="wled_event_{{ event|lower }}" type="number" min="0" max="250" class="form-control" name="wled_event_{{ event|lower }}" value="{{settings['notify_services']['wled']['event_presets'][event]}}" style="min-width: 11ch;">
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        <br><br>
+                                    </div> <!-- End of Event Trigger WLED Presets -->
+                                    <span class="badge badge-info">INFO:</span>
+                                    <i class="small"> 
+                                        When testing this notification, it will use the preset for the 'Startup' grill mode.
+                                    </i>
+                                </div> <!-- End of WLED card body-->
+                            </div> <!-- End of WLED card -->
+                            </div><!-- End of main card body -->
+                        <br>
 
-                </div><!-- End of Tab -->
+                    <div class="card-footer bg-light">
+                        <button type="button" class="btn btn-outline-success" onclick="sendTestNotification();">Send Test Notification</button>
+                        <button type="submit" class="btn btn-outline-danger">Save</button>
+                        <br><br>
+                        <span class="badge badge-warning">NOTE:</span>
+                        <i class="small"> 
+                            You must enable the service(s) and 'Save' before you can test the service(s).
+                        </i>
+                    </div>
+                    </form>
+                </div> <!-- End of Card -->
                 <br><br><br>
-            </div>
+            </div> <!-- End of Tab -->
         </div>
     </div>
 {% endblock %}

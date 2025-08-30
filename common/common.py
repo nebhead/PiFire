@@ -480,6 +480,28 @@ def default_notify_services():
       "username": ""
     }
 
+	services['wled'] = {
+		'enabled': False,
+		'device_address': 'wled.local',
+		'mode_presets': {
+			'Stop' : 8,
+			'Startup' : 5,
+			'Reignite' : 5, 
+			'Smoke' : 6,
+			'Hold' : 6,
+			'Shutdown' : 7,
+			'Prime' : 5
+		},
+		'event_presets' : {
+			'Temp_Achieved' : 7,
+			'Recipe_Next' : 7,
+			'Grill_Error' : 7,
+			'Pellet_Level_Low' : 7,
+			'Timer_Expired' : 7
+		},
+		'notify_duration' : 120  # number of seconds to keep notifications active
+	}
+
 	return services
 
 def default_control():

@@ -181,7 +181,25 @@ def settings_page(action=None):
                     'device_name' : response['DeviceName_' + DeviceID],
                     'app_version' : response['AppVersion_' + DeviceID]
                 }
+        """ WLED Notifications Settings """
+        if is_checked(response, 'wled_enabled'):
+            settings['notify_services']['wled']['enabled'] = True
+        else:
+            settings['notify_services']['wled']['enabled'] = False
+        if 'wled_device_address' in response:
+            settings['notify_services']['wled']['device_address'] = response['wled_device_address']
+        if 'wled_notify_duration' in response:
+            settings['notify_services']['wled']['notify_duration'] = max(int(response['wled_notify_duration']), 0)
+        for mode in settings['notify_services']['wled']['mode_presets']:
+            key = f'wled_mode_{mode.lower()}'
+            if key in response:
+                settings['notify_services']['wled']['mode_presets'][mode] = int(response[key])
+        for trigger_event in settings['notify_services']['wled']['event_presets']:
+            key = f'wled_event_{trigger_event.lower()}'
+            if key in response:
+                settings['notify_services']['wled']['event_presets'][trigger_event] = int(response[key])
 
+        """ Update Control to Indicate a Settings Update """
         control['settings_update'] = True
 
         event['type'] = 'updated'
