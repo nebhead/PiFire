@@ -1825,7 +1825,10 @@
 				"reboot_required" : false,
 				"py_dependencies" : ["luma.lcd==2.11.0", "pyky040==0.1.4", "pillow==11.1.0"], 
 				"apt_dependencies" : [],
-				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
+				"command_list" : [
+					["sudo", "python", "board-config.py", "-s"],
+					["sudo", "bash", "/usr/local/bin/pifire/wizard/raspi5.sh"]
+				],
 				"settings_dependencies" :{},
 				"config" : [
 					{
@@ -1850,7 +1853,10 @@
 				"reboot_required" : false,
 				"py_dependencies" : ["luma.lcd==2.11.0", "pyky040==0.1.4", "pillow==11.1.0"], 
 				"apt_dependencies" : [],
-				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
+				"command_list" : [
+					["sudo", "python", "board-config.py", "-s"],
+					["sudo", "bash", "/usr/local/bin/pifire/wizard/raspi5.sh"]
+				],
 				"settings_dependencies" : {},
 				"config" : [
 					{
@@ -1932,7 +1938,10 @@
 				"reboot_required" : true,
 				"py_dependencies" : ["luma.lcd==2.11.0", "pillow==11.1.0", "gpiozero==2.0.1", "pyky040==0.1.4"], 
 				"apt_dependencies" : [],
-				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
+				"command_list" : [
+					["sudo", "python", "board-config.py", "-s"],
+					["sudo", "bash", "/usr/local/bin/pifire/wizard/raspi5.sh"]
+				],
 				"settings_dependencies" : {
 					"buttonslevel" : {
 						"friendly_name" : "Button Level",
@@ -1984,7 +1993,10 @@
 				"reboot_required" : false,
 				"py_dependencies" : ["luma.lcd==2.11.0", "pyky040==0.1.4", "pillow==11.1.0"], 
 				"apt_dependencies" : [],
-				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
+				"command_list" : [
+					["sudo", "python", "board-config.py", "-s"],
+					["sudo", "bash", "/usr/local/bin/pifire/wizard/raspi5.sh"]
+				],
 				"settings_dependencies" :{},
 				"config" : [
 					{
@@ -2009,7 +2021,10 @@
 				"reboot_required" : false,
 				"py_dependencies" : ["luma.lcd==2.11.0", "pyky040==0.1.4", "pillow==11.1.0"], 
 				"apt_dependencies" : [],
-				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
+				"command_list" : [
+					["sudo", "python", "board-config.py", "-s"],
+					["sudo", "bash", "/usr/local/bin/pifire/wizard/raspi5.sh"]
+				],
 				"settings_dependencies" : {},
 				"config" : [
 					{
@@ -2123,7 +2138,10 @@
 				"reboot_required" : false,
 				"py_dependencies" : ["numpy==1.26.4", "st7789==1.0.1", "pyky040==0.1.4", "pillow==11.1.0"],
 				"apt_dependencies" : [],
-				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
+				"command_list" : [
+					["sudo", "python", "board-config.py", "-s"],
+					["sudo", "bash", "/usr/local/bin/pifire/wizard/raspi5.sh"]
+				],
 				"settings_dependencies" : {},
 				"config" : [
 					{
@@ -2198,7 +2216,10 @@
 				"reboot_required" : false,
 				"py_dependencies" : ["numpy==1.26.4", "git+https://github.com/mander1000/st7789-python", "pyky040==0.1.4"],
 				"apt_dependencies" : [],
-				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
+				"command_list" : [
+					["sudo", "python", "board-config.py", "-s"],
+					["sudo", "bash", "/usr/local/bin/pifire/wizard/raspi5.sh"]
+				],
 				"settings_dependencies" : {},
 				"config" : [
 					{
@@ -2343,7 +2364,10 @@
 				"reboot_required" : false,
 				"py_dependencies" : ["luma.lcd==2.11.0", "pyky040==0.1.4", "pillow==11.1.0"], 
 				"apt_dependencies" : [],
-				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
+				"command_list" : [
+					["sudo", "python", "board-config.py", "-s"],
+					["sudo", "bash", "/usr/local/bin/pifire/wizard/raspi5.sh"]
+				],
 				"settings_dependencies" :{},
 				"config" : [
 					{

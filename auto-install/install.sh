@@ -194,6 +194,16 @@ if [ "$OS_BITS" = "64" ]; then
         echo " !! Failed to install influxdb_client. Installation cannot continue." | tee -a ~/logs/pifire_install.log
         exit 1
     fi
+    
+    if grep -q "Raspberry Pi 5" /proc/device-tree/model 2>/dev/null; then
+        echo " + Raspberry Pi 5 detected, skipping install of rpi.gpio" | tee -a ~/logs/pifire_install.log
+    else
+        echo " + Installing rpi.gpio==0.7.1" | tee -a ~/logs/pifire_install.log
+        if ! uv pip install rpi.gpio==0.7.1 2>&1 | tee -a ~/logs/pifire_install.log; then
+            echo " !! Failed to install rpi.gpio. Installation cannot continue." | tee -a ~/logs/pifire_install.log
+            exit 1
+        fi
+    fi
 
     echo " + Installing requirements.txt... " | tee -a ~/logs/pifire_install.log      
     if ! uv pip install -r /usr/local/bin/pifire/auto-install/requirements.txt 2>&1 | tee -a ~/logs/pifire_install.log; then
@@ -233,6 +243,15 @@ else
         echo " + System is running a python version 3.11 or higher." | tee -a ~/logs/pifire_install.log
         python -m pip install eventlet 2>&1 | tee -a ~/logs/pifire_install.log
         python -m pip install "influxdb_client[ciso]==1.48.0" 2>&1 | tee -a ~/logs/pifire_install.log
+    fi
+    if grep -q "Raspberry Pi 5" /proc/device-tree/model 2>/dev/null; then
+        echo " + Raspberry Pi 5 detected, skipping install of rpi.gpio" | tee -a ~/logs/pifire_install.log
+    else
+        echo " + Installing rpi.gpio==0.7.1" | tee -a ~/logs/pifire_install.log
+        if ! python -m pip install rpi.gpio==0.7.1 2>&1 | tee -a ~/logs/pifire_install.log; then
+            echo " !! Failed to install rpi.gpio. Installation cannot continue." | tee -a ~/logs/pifire_install.log
+            exit 1
+        fi
     fi
     # Installing module dependencies from requirements.txt
     echo " + Installing requirements.txt... " | tee -a ~/logs/pifire_install.log
