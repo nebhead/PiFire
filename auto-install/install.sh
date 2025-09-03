@@ -15,6 +15,8 @@
 # -dev: Use this option to install the development branch of PiFire instead of the main branch.
 #        This is useful for testing new features or bug fixes that are not yet in the main branch.
 #        If this option is not used, the main branch will be installed by default.
+# -venv: Use this option to force vanilla venv install
+# -uv:   Use this option to force the use of UV 
 
 # Create logs directory if it doesn't exist
 mkdir -p ~/logs
@@ -63,6 +65,18 @@ case $ARCH in
         ;;
 esac
 echo " + System architecture set to: $OS_BITS-bit" | tee -a ~/logs/pifire_install.log
+
+if [[ " $@ " =~ " -venv " ]]; then
+    echo " + Vanilla venv install selected" | tee -a ~/logs/pifire_install.log
+    VENV_TYPE="vanilla"
+elif [[ " $@ " =~ " -uv " ]]; then
+    echo " + UV install selected" | tee -a ~/logs/pifire_install.log
+    VENV_TYPE="uv"
+else
+    VENV_TYPE="auto"
+    echo " + Auto venv type selected" | tee -a ~/logs/pifire_install.log
+fi
+
 sleep 2
 # Find the rows and columns. Will default to 80x24 if it can not be detected.
 screen_size=$(stty size 2>/dev/null || echo 24 80)
@@ -135,7 +149,7 @@ echo "*************************************************************************"
 cd /usr/local/bin
 
 # Check if -dev option is used
-if [ "$1" = "-dev" ]; then
+if [[ " $@ " =~ " -dev " ]]; then
     echo " + Cloning development branch..." | tee -a ~/logs/pifire_install.log
     # Replace the below command to fetch development branch
     $SUDO git clone --depth 1 --branch development https://github.com/nebhead/pifire 2>&1 | tee -a ~/logs/pifire_install.log
@@ -164,8 +178,9 @@ $SUDO chown -R $USER:pifire pifire
 $SUDO chmod -R 777 /usr/local/bin
 
 # Install UV (Universal Virtualenv) for Python 3.11+
-if [ "$OS_BITS" = "64" ]; then
-    echo " + Setting up 64-bit specific configurations" | tee -a ~/logs/pifire_install.log
+# If using 64-bit OS OR -uv option is set
+if [ "$OS_BITS" = "64" ] && [ ! "$VENV_TYPE" = "vanilla" ]; then
+    echo " + Setting up UV configuration (64-Bit)" | tee -a ~/logs/pifire_install.log
     # Add any 64-bit specific configurations here if needed
     echo " + Installing UV" | tee -a ~/logs/pifire_install.log
     if ! /bin/curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR="/usr/local/bin" /bin/sh; then
@@ -227,9 +242,8 @@ if [ "$OS_BITS" = "64" ]; then
         echo " + All bluepy-helper executables have been configured" | tee -a ~/logs/pifire_install.log
     fi
 else
-    echo " + Setting up 32-bit specific configurations" | tee -a ~/logs/pifire_install.log
     # Add any 32-bit specific configurations here if needed
-    echo " + Setting up VENV" | tee -a ~/logs/pifire_install.log
+    echo " + Setting up Vanilla VENV" | tee -a ~/logs/pifire_install.log
     # Setup VENV
     cd /usr/local/bin
     /bin/python -m venv --system-site-packages pifire
@@ -318,7 +332,7 @@ echo "**                                                                     **"
 echo "*************************************************************************" | tee -a ~/logs/pifire_install.log
 
 # Copy configuration files (control.conf, webapp.conf) to supervisor config directory
-if [ "$OS_BITS" = "64" ]; then
+if [ "$OS_BITS" = "64" ] && [ ! "$VENV_TYPE" = "vanilla" ]; then
     cd /usr/local/bin/pifire/auto-install/supervisor
 else
     cd /usr/local/bin/pifire/auto-install/supervisor/legacy
