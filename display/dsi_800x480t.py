@@ -52,7 +52,7 @@ class Display(DisplayBase):
 		''' Init backlight '''
 		backlight_hardware = False
 		# Use pathlib to check if /sys/class/backlight/rpi_backlight/ exists
-		if Path('/sys/class/backlight/rpi_backlight/').exists():
+		if Path('/sys/class/backlight/').exists():
 			backlight_hardware = True
 
 		if self.real_hardware and backlight_hardware:
