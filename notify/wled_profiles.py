@@ -337,16 +337,18 @@ class WLEDProfileManager:
     
     def create_preset(self, preset_number, profile_data):
         """Create or update a WLED preset."""
-        url = f"http://{self.device_address}/json/state"
+        url = f"http://{self.device_address}/json"
         
-        # First, apply the profile state
+        # Create payload that combines state and preset save in one request
+        # This matches the working curl command format
+        payload = profile_data.copy()
+        payload["psave"] = preset_number
+        payload["n"] = profile_data['name']  # Preset name
+        payload["ib"] = True  # Include brightness in preset
+        payload["sb"] = True  # Include segments in preset
+        
         try:
-            response = requests.post(url, json=profile_data, timeout=5)
-            response.raise_for_status()
-            
-            # Then save it as a preset
-            save_payload = {"psave": preset_number}
-            response = requests.post(url, json=save_payload, timeout=5)
+            response = requests.post(url, json=payload, timeout=10)
             response.raise_for_status()
             
             self.logger.info(f"Created WLED preset {preset_number}: {profile_data.get('name', 'Unnamed')}")
@@ -386,8 +388,10 @@ class WLEDProfileManager:
         
         for profile_name, profile_number in profile_numbers.items():
             if profile_name in WLED_PROFILE_DEFINITIONS:
-                # Get base profile definition
-                profile_data = WLED_PROFILE_DEFINITIONS[profile_name].copy()
+                # Get base profile definition and extract the config
+                profile_def = WLED_PROFILE_DEFINITIONS[profile_name]
+                profile_data = profile_def['config'].copy()
+                profile_data['name'] = profile_def['name']  # Add the name to the config
                 
                 # Apply user customizations
                 profile_data = self._apply_user_customizations(profile_name, profile_data)
