@@ -59,16 +59,28 @@ WLED_COLORS = {
     'rainbow': 'rainbow'  # Special case for rainbow effect
 }
 
-# Effect definitions for WLED
+# Effect definitions for WLED (effect IDs may vary by WLED version)
 WLED_EFFECTS = {
     'solid': 0,
     'blink': 1,
     'breathe': 2,
     'wipe': 3,
+    'wipe_random': 4,
+    'random_colors': 5,
+    'sweep': 6,
+    'dynamic': 7,
+    'colorloop': 8,
     'rainbow': 9,
+    'scan': 10,
+    'dual_scan': 11,
     'strobe': 12,
-    'fade': 2,
-    'chase': 28
+    'strobe_rainbow': 13,
+    'multi_strobe': 14,
+    'fade': 16,
+    'chase': 28,
+    'running': 29,
+    'saw': 30,
+    'twinkle': 31
 }
 
 class WLEDNotificationHandler:
@@ -193,15 +205,21 @@ class WLEDNotificationHandler:
         if color is not None:
             if isinstance(color, str) and color in WLED_COLORS:
                 if color == 'rainbow':
+                    # Rainbow is an effect, not a color - don't set col
                     payload["fx"] = WLED_EFFECTS['rainbow']
                 else:
+                    # WLED expects color in format: "col": [[r,g,b]]
                     payload["col"] = [WLED_COLORS[color]]
             elif isinstance(color, list) and len(color) == 3:
+                # WLED expects color in format: "col": [[r,g,b]]
                 payload["col"] = [color]
                 
         if effect is not None:
             if isinstance(effect, str) and effect in WLED_EFFECTS:
                 payload["fx"] = WLED_EFFECTS[effect]
+                # If setting rainbow effect, remove any color to avoid conflicts
+                if effect == 'rainbow' and "col" in payload:
+                    del payload["col"]
             elif isinstance(effect, int):
                 payload["fx"] = effect
                 
@@ -214,9 +232,20 @@ class WLEDNotificationHandler:
         try:
             response = requests.post(url, json=payload)
             response.raise_for_status()
-            self.logger.debug(f"Direct WLED command sent: {payload}")
+            self.logger.info(f"Direct WLED command sent successfully to {self.device_address}")
+            self.logger.info(f"Payload: {payload}")
+            
+            # Log the response for debugging
+            if response.text:
+                try:
+                    response_data = response.json()
+                    self.logger.info(f"WLED Response: {response_data}")
+                except:
+                    self.logger.info(f"WLED Response (raw): {response.text}")
+                    
         except requests.RequestException as e:
             self.logger.error(f"Error sending direct command to WLED device at {self.device_address}: {e}")
+            self.logger.error(f"Failed payload: {payload}")
         
         self.last_updated = time.time()
 
@@ -252,10 +281,12 @@ class WLEDNotificationHandler:
                 self.send_direct_command(color='white', brightness=idle_brightness, effect='solid')
                 
         elif state == 'booting':
-            self.send_direct_command(color='white', brightness=128, effect='breathe', speed=100)
+            # Slow white pulse using breathe effect
+            self.send_direct_command(color='white', brightness=128, effect='breathe', speed=80)
             
         elif state == 'preheat':
-            self.send_direct_command(color='orange', brightness=128, effect='breathe', speed=100)
+            # Orange slow pulse using breathe effect
+            self.send_direct_command(color='orange', brightness=128, effect='breathe', speed=80)
             
         elif state == 'cooking':
             if night_mode:
@@ -265,27 +296,27 @@ class WLEDNotificationHandler:
             self.send_direct_command(color=cooking_color, brightness=brightness, effect='solid')
             
         elif state == 'cooldown':
-            # Fade from orange to blue - using orange for now, effect could be enhanced
+            # Orange fade effect
             self.send_direct_command(color='orange', brightness=128, effect='fade', speed=50)
             
         elif state == 'target_reached':
-            # Green flash 3x
-            self.send_direct_command(color='green', brightness=255, effect='blink', speed=200, intensity=255)
+            # Green blink - using solid effect then off to create blink manually
+            self.send_direct_command(color='green', brightness=255, effect='solid')
             
         elif state == 'overshoot_alarm':
-            # Rapid red strobe
-            self.send_direct_command(color='red', brightness=255, effect='strobe', speed=255, intensity=255)
+            # Rapid red strobe - try blink first, fallback to solid
+            self.send_direct_command(color='red', brightness=255, effect='blink', speed=255)
             
         elif state == 'probe_alarm':
-            # Red/white alternating flash - using strobe with red for now
-            self.send_direct_command(color='red', brightness=255, effect='strobe', speed=150, intensity=200)
+            # Red blink for alarm - use blink effect for visibility
+            self.send_direct_command(color='red', brightness=255, effect='blink', speed=100)
             
         elif state == 'low_pellets':
-            # Yellow pulse every 10s
-            self.send_direct_command(color='yellow', brightness=128, effect='breathe', speed=80)
+            # Yellow breathing pulse - use solid if breathe doesn't work
+            self.send_direct_command(color='yellow', brightness=128, effect='breathe', speed=100)
             
         elif state == 'timer_done':
-            # Rainbow chase
+            # Rainbow effect - just set the effect
             self.send_direct_command(effect='rainbow', brightness=200, speed=150)
             
         elif state == 'error':

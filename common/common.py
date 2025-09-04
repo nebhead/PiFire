@@ -25,6 +25,7 @@ import uuid
 import random
 import logging
 import subprocess
+import threading
 from logging.handlers import RotatingFileHandler
 from collections.abc import Mapping
 from ratelimitingfilter import RateLimitingFilter
@@ -1905,21 +1906,75 @@ def restart_scripts():
 	Restart the Control and WebApp Scripts
 	"""
 	if is_real_hardware():
-		os.system("sleep 3 && sudo service supervisor restart &")
+		def _restart_supervisor():
+			try:
+				# Try systemctl first (modern systemd systems)
+				result = subprocess.run(['sudo', 'systemctl', 'restart', 'supervisor'], 
+									   capture_output=True, text=True, timeout=10)
+				if result.returncode != 0:
+					# Log the error and try fallback
+					print(f"systemctl restart failed: {result.stderr}")
+					# Fallback to service command
+					subprocess.run(['sudo', 'service', 'supervisor', 'restart'], timeout=10)
+			except subprocess.TimeoutExpired:
+				print("Supervisor restart command timed out")
+			except Exception as e:
+				print(f"Error restarting supervisor: {e}")
+				# Final fallback to original method
+				os.system("sleep 3 && sudo service supervisor restart &")
+		
+		# Run in background thread to avoid blocking
+		threading.Thread(target=_restart_supervisor, daemon=True).start()
 
 def reboot_system():
 	"""
 	Reboot the system
 	"""
 	if is_real_hardware():
-		os.system("sleep 3 && sudo reboot &")
+		def _reboot():
+			try:
+				time.sleep(3)  # Give time for response to be sent
+				# Try systemctl first (preferred method for systemd)
+				result = subprocess.run(['sudo', 'systemctl', 'reboot'], 
+									   capture_output=True, text=True, timeout=10)
+				if result.returncode != 0:
+					print(f"systemctl reboot failed: {result.stderr}")
+					# Fallback to traditional reboot command
+					subprocess.run(['sudo', 'reboot'], timeout=10)
+			except subprocess.TimeoutExpired:
+				print("Reboot command timed out")
+			except Exception as e:
+				print(f"Error rebooting system: {e}")
+				# Final fallback to original method
+				os.system("sudo reboot")
+		
+		# Run in background thread
+		threading.Thread(target=_reboot, daemon=True).start()
 
 def shutdown_system():
 	"""
 	Shutdown the system
 	"""
 	if is_real_hardware():
-		os.system("sleep 3 && sudo shutdown -h now &")
+		def _shutdown():
+			try:
+				time.sleep(3)  # Give time for response to be sent
+				# Try systemctl first (preferred method for systemd)
+				result = subprocess.run(['sudo', 'systemctl', 'poweroff'], 
+									   capture_output=True, text=True, timeout=10)
+				if result.returncode != 0:
+					print(f"systemctl poweroff failed: {result.stderr}")
+					# Fallback to traditional shutdown command
+					subprocess.run(['sudo', 'shutdown', '-h', 'now'], timeout=10)
+			except subprocess.TimeoutExpired:
+				print("Shutdown command timed out")
+			except Exception as e:
+				print(f"Error shutting down system: {e}")
+				# Final fallback to original method
+				os.system("sudo shutdown -h now")
+		
+		# Run in background thread
+		threading.Thread(target=_shutdown, daemon=True).start()
 
 def read_wizard(filename='wizard/wizard_manifest.json'):
 	"""
