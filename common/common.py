@@ -484,22 +484,40 @@ def default_notify_services():
 	services['wled'] = {
 		'enabled': False,
 		'device_address': 'wled.local',
-		'use_suggested_presets': False,  # Use PiFire suggested LED behaviors instead of user presets
+		'use_profiles': True,  # Use profile-based control (recommended)
+		'use_suggested_presets': False,  # Use PiFire suggested LED behaviors instead of user presets (legacy)
+		'profile_numbers': {
+			# Default profile numbers for each PiFire state (200+ range to avoid conflicts)
+			'idle': 200,
+			'booting': 201, 
+			'preheat': 202,
+			'cooking': 203,
+			'cooldown': 204,
+			'target_reached': 205,
+			'overshoot_alarm': 206,
+			'probe_alarm': 207,
+			'low_pellets': 208,
+			'timer_done': 209,
+			'error_fault': 210,
+			'night_mode': 211
+		},
 		'mode_presets': {
-			'Stop' : 8,
-			'Startup' : 5,
-			'Reignite' : 5, 
-			'Smoke' : 6,
-			'Hold' : 6,
-			'Shutdown' : 7,
-			'Prime' : 5
+			# Legacy traditional presets (kept for backward compatibility)
+			'Stop' : 1,
+			'Startup' : 1,
+			'Reignite' : 1, 
+			'Smoke' : 1,
+			'Hold' : 1,
+			'Shutdown' : 1,
+			'Prime' : 1
 		},
 		'event_presets' : {
-			'Temp_Achieved' : 7,
-			'Recipe_Next' : 7,
-			'Grill_Error' : 7,
-			'Pellet_Level_Low' : 7,
-			'Timer_Expired' : 7
+			# Legacy event presets (kept for backward compatibility)
+			'Temp_Achieved' : 1,
+			'Recipe_Next' : 1,
+			'Grill_Error' : 1,
+			'Pellet_Level_Low' : 1,
+			'Timer_Expired' : 1
 		},
 		'suggested_config': {
 			'cooking_color': 'blue',  # blue or green

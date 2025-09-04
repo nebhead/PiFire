@@ -8,7 +8,8 @@ addressable RGB(W) LEDs from an ESP8266/ESP32 microcontroller over WiFi.
 This handler supports:
 - Communicating with WLED devices via HTTP API
 - Triggering LED presets based on different grill states and events
-- Direct color and effect control for suggested presets
+- Profile-based LED control using predefined WLED presets
+- Direct color and effect control for legacy compatibility
 - Managing notification durations and cooldowns
 - Reading device info and sending state commands
 
@@ -17,7 +18,11 @@ Required settings format:
     'notify_services': {
         'wled': {
             'device_address': 'ip_address_or_hostname',
-            'use_suggested_presets': bool,
+            'use_profiles': bool,  # Use profile-based control (recommended)
+            'use_suggested_presets': bool,  # Legacy direct control mode
+            'profile_numbers': {
+                'idle': 1, 'booting': 2, 'cooking': 4, ...
+            },
             'mode_presets': {
                 'Startup': preset_number,
                 'Smoke': preset_number,
@@ -44,46 +49,7 @@ Required settings format:
 """
 import time
 import requests
-from common import create_logger
-
-# Color definitions for suggested presets (RGB values)
-WLED_COLORS = {
-    'white': [255, 255, 255],
-    'red': [255, 0, 0],
-    'green': [0, 255, 0],
-    'blue': [0, 0, 255],
-    'orange': [255, 165, 0],
-    'orange_cooking': [255, 120, 0],  # Specific orange for cooking from your curl command
-    'yellow': [255, 255, 0],
-    'amber': [255, 191, 0],
-    'purple': [128, 0, 128],
-    'rainbow': 'rainbow'  # Special case for rainbow effect
-}
-
-# Effect definitions for WLED (effect IDs may vary by WLED version)
-WLED_EFFECTS = {
-    'solid': 0,
-    'blink': 1,
-    'breathe': 2,
-    'wipe': 3,
-    'wipe_random': 4,
-    'random_colors': 5,
-    'sweep': 6,
-    'dynamic': 7,
-    'colorloop': 8,
-    'rainbow': 9,
-    'scan': 10,
-    'dual_scan': 11,
-    'strobe': 12,
-    'strobe_rainbow': 13,
-    'multi_strobe': 14,
-    'running': 15,  # This is the effect from your working curl command
-    'fade': 16,
-    'theater_chase': 17,
-    'chase': 28,
-    'saw': 30,
-    'twinkle': 31
-}
+from notify.wled_profiles import WLEDProfileManager, WLED_COLORS, WLED_EFFECTS
 
 class WLEDNotificationHandler:
     """
@@ -91,6 +57,11 @@ class WLEDNotificationHandler:
     
     This class manages the connection to a WLED device and provides methods
     to send notifications based on different grill events and states.
+    
+    Supports multiple control modes:
+    - Profile-based: Uses predefined WLED presets (recommended)
+    - Direct control: Sends color/effect commands directly (legacy)
+    - Traditional presets: Uses user-configured preset numbers
     
     Attributes:
         device_address (str): Cleaned IP address or hostname of the WLED device
@@ -100,6 +71,7 @@ class WLEDNotificationHandler:
         config (dict): WLED-specific configuration from settings
         notify_duration (int): Minimum time between notifications in seconds
         state (dict): Current state information from the WLED device
+        profile_manager (WLEDProfileManager): Manages WLED profiles
     """
     def __init__(self, settings):
         """
@@ -113,7 +85,8 @@ class WLEDNotificationHandler:
         1. Extracts and cleans the device address
         2. Sets up logging
         3. Initializes tracking variables
-        4. Attempts to retrieve the initial device state
+        4. Creates profile manager for profile-based control
+        5. Attempts to retrieve the initial device state
         """
         self.device_address = settings['notify_services']['wled'].get("device_address")
         if 'http://' in self.device_address:
@@ -121,17 +94,44 @@ class WLEDNotificationHandler:
         if 'https://' in self.device_address:
             self.device_address = self.device_address.replace('https://', '')
         self.device_address = self.device_address.strip().rstrip('/')
-        self.logger = create_logger("control")
+        
+        # Import logger locally to avoid circular imports
+        try:
+            from common import create_logger
+            self.logger = create_logger("control")
+        except ImportError:
+            # Fallback if common module not available
+            import logging
+            self.logger = logging.getLogger("wled_handler")
+            
         self.last_updated = time.time()
         self.last_mode = None
         self.logger.info(f"WLED Notification Handler initialized for device at {self.device_address}")
         self.config = settings['notify_services']['wled']
         self.notify_duration = 1
+        
+        # Initialize profile manager
+        self.profile_manager = WLEDProfileManager(self.device_address, settings)
+        
         self.state = self.get_info()
         if self.state is None:
             self.logger.error(f"Failed to get initial info from WLED device at {self.device_address}")
         else:
             self.logger.info(f"Initial state retrieved from WLED device at {self.device_address}: {self.state}")
+
+    def get_control_mode(self):
+        """
+        Determine the control mode to use based on settings.
+        
+        Returns:
+            str: 'profiles', 'suggested', or 'traditional'
+        """
+        if self.config.get('use_profiles', False):
+            return 'profiles'
+        elif self.config.get('use_suggested_presets', False):
+            return 'suggested'
+        else:
+            return 'traditional'
 
     def get_info(self):
         """
@@ -180,11 +180,21 @@ class WLEDNotificationHandler:
             "ps": preset
         }
         try:
-            response = requests.post(url, json=payload)
+            response = requests.post(url, json=payload, timeout=5)
             response.raise_for_status()
+            self.logger.info(f"WLED preset {preset} activated successfully")
         except requests.RequestException as e:
             self.logger.error(f"Error sending notification to WLED device at {self.device_address}: {e}")
         self.last_updated = time.time()
+
+    def send_profile_notification(self, profile_number):
+        """
+        Send a notification using profile-based control.
+        
+        Args:
+            profile_number (int): Profile/preset number to activate
+        """
+        return self.send_notification(profile_number)
 
     def send_direct_command(self, color=None, brightness=None, effect=None, speed=None, intensity=None, on=True):
         """
@@ -349,7 +359,7 @@ class WLEDNotificationHandler:
         Process notification events and trigger WLED presets based on event type.
         
         This is the main method called by the notification system. It handles different
-        types of events and maps them to appropriate WLED presets or suggested behaviors.
+        types of events and maps them to appropriate WLED presets, profiles, or suggested behaviors.
         
         Args:
             notifyevent (str): The type of notification event. Supported events:
@@ -370,109 +380,153 @@ class WLEDNotificationHandler:
             - When a non-GRILL_STATE event is processed, the last_mode is reset to
               allow immediate notification of the next state change
         """
-        use_suggested = self.config.get('use_suggested_presets', False)
+        control_mode = self.get_control_mode()
         
-        if use_suggested:
-            # Use suggested preset system with direct color/effect control
-            suggested_config = self.config.get('suggested_config', {})
+        if control_mode == 'profiles':
+            # Use profile-based control (recommended)
+            self._notify_profiles(notifyevent, control, settings)
             
-            if notifyevent == "GRILL_STATE" and self.last_updated < time.time() - self.notify_duration:
-                if control is None:
-                    self.logger.warning("Control data is None, cannot determine grill state.")
-                    return
-                elif control['mode'] != self.last_mode:
-                    self.last_mode = control['mode']
-                    self.notify_duration = 1  # Reset duration for state changes
-                    
-                    # Map PiFire modes to suggested states
-                    if control['mode'] == 'Stop':
-                        self.send_suggested_preset('idle', suggested_config)
-                    elif control['mode'] in ['Startup', 'Prime']:
-                        self.send_suggested_preset('booting', suggested_config)
-                    elif control['mode'] == 'Reignite':
-                        self.send_suggested_preset('preheat', suggested_config)
-                    elif control['mode'] in ['Smoke', 'Hold']:
-                        self.send_suggested_preset('cooking', suggested_config)
-                    elif control['mode'] == 'Shutdown':
-                        self.send_suggested_preset('cooldown', suggested_config)
-                    else:
-                        self.send_suggested_preset('idle', suggested_config)
+        elif control_mode == 'suggested':
+            # Use suggested preset system with direct color/effect control (legacy)
+            self._notify_suggested(notifyevent, control, settings)
+            
+        else:
+            # Use traditional preset system (legacy)
+            self._notify_traditional(notifyevent, control, settings)
 
-            elif notifyevent == 'Test_Notify':
-                self.send_suggested_preset('booting', suggested_config)
-                self.logger.info(f"WLED Test Notification Triggered with suggested preset")
-
-            elif notifyevent == 'Probe_Temp_Achieved':
-                self.send_suggested_preset('target_reached', suggested_config)
-
-            elif 'Probe_Temp_Limit_Alarm' in notifyevent:
-                self.send_suggested_preset('probe_alarm', suggested_config)
-
-            elif notifyevent == 'Timer_Expired':
-                self.send_suggested_preset('timer_done', suggested_config)
-
-            elif notifyevent == 'Pellet_Level_Low':
-                self.send_suggested_preset('low_pellets', suggested_config)
-
-            elif 'Grill_Warning' in notifyevent:
-                # Use low_pellets for warnings (yellow pulse)
-                self.send_suggested_preset('low_pellets', suggested_config)
-
-            elif 'Recipe_Step_Message' in notifyevent:
-                # Use target_reached for recipe steps (green flash)
-                self.send_suggested_preset('target_reached', suggested_config)
-
-            elif 'Grill_Error' in notifyevent or notifyevent == 'Control_Process_Stopped':
-                self.send_suggested_preset('error', suggested_config)
+    def _notify_profiles(self, notifyevent, control, settings):
+        """Handle notifications using profile-based control."""
+        if notifyevent == "GRILL_STATE" and self.last_updated < time.time() - self.notify_duration:
+            if control is None:
+                self.logger.warning("Control data is None, cannot determine grill state.")
+                return
+            elif control['mode'] != self.last_mode:
+                self.last_mode = control['mode']
+                self.notify_duration = 1  # Reset duration for state changes
                 
+                # Get profile number for the current mode
+                profile_number = self.profile_manager.get_profile_number_for_state(control['mode'])
+                self.send_profile_notification(profile_number)
+                self.logger.info(f"WLED Profile notification sent for mode {control['mode']} (profile {profile_number})")
+
+        elif notifyevent == 'Test_Notify':
+            profile_number = self.profile_manager.get_profile_number_for_state('Startup')
+            self.send_profile_notification(profile_number)
+            self.logger.info(f"WLED Test notification sent (profile {profile_number})")
+
+        elif notifyevent != 'GRILL_STATE':
+            # Handle event notifications
+            profile_number = self.profile_manager.get_profile_number_for_event(notifyevent)
+            self.send_profile_notification(profile_number)
+            
             # Set cooldown for non-state events
+            self.notify_duration = self.config.get('notify_duration', 120)
+            self.last_mode = None  # Reset last mode to allow state change notifications
+            self.logger.info(f"WLED Profile notification sent for event {notifyevent} (profile {profile_number})")
+
+    def _notify_suggested(self, notifyevent, control, settings):
+        """Handle notifications using suggested presets (direct control)."""
+    def _notify_suggested(self, notifyevent, control, settings):
+        """Handle notifications using suggested presets (direct control)."""
+        suggested_config = self.config.get('suggested_config', {})
+        
+        if notifyevent == "GRILL_STATE" and self.last_updated < time.time() - self.notify_duration:
+            if control is None:
+                self.logger.warning("Control data is None, cannot determine grill state.")
+                return
+            elif control['mode'] != self.last_mode:
+                self.last_mode = control['mode']
+                self.notify_duration = 1  # Reset duration for state changes
+                
+                # Map PiFire modes to suggested states
+                if control['mode'] == 'Stop':
+                    self.send_suggested_preset('idle', suggested_config)
+                elif control['mode'] in ['Startup', 'Prime']:
+                    self.send_suggested_preset('booting', suggested_config)
+                elif control['mode'] == 'Reignite':
+                    self.send_suggested_preset('preheat', suggested_config)
+                elif control['mode'] in ['Smoke', 'Hold']:
+                    self.send_suggested_preset('cooking', suggested_config)
+                elif control['mode'] == 'Shutdown':
+                    self.send_suggested_preset('cooldown', suggested_config)
+                else:
+                    self.send_suggested_preset('idle', suggested_config)
+
+        elif notifyevent == 'Test_Notify':
+            self.send_suggested_preset('booting', suggested_config)
+            self.logger.info(f"WLED Test Notification Triggered with suggested preset")
+
+        elif notifyevent == 'Probe_Temp_Achieved':
+            self.send_suggested_preset('target_reached', suggested_config)
+
+        elif 'Probe_Temp_Limit_Alarm' in notifyevent:
+            self.send_suggested_preset('probe_alarm', suggested_config)
+
+        elif notifyevent == 'Timer_Expired':
+            self.send_suggested_preset('timer_done', suggested_config)
+
+        elif notifyevent == 'Pellet_Level_Low':
+            self.send_suggested_preset('low_pellets', suggested_config)
+
+        elif 'Grill_Warning' in notifyevent:
+            # Use low_pellets for warnings (yellow pulse)
+            self.send_suggested_preset('low_pellets', suggested_config)
+
+        elif 'Recipe_Step_Message' in notifyevent:
+            # Use target_reached for recipe steps (green flash)
+            self.send_suggested_preset('target_reached', suggested_config)
+
+        elif 'Grill_Error' in notifyevent or notifyevent == 'Control_Process_Stopped':
+            self.send_suggested_preset('error', suggested_config)
+            
+        # Set cooldown for non-state events
+        if notifyevent != 'GRILL_STATE':
+            self.notify_duration = self.config.get('notify_duration', 120)
+            self.last_mode = None # Reset last mode to allow state change notifications
+            self.logger.info(f"WLED Suggested Notification Sent for event {notifyevent}")
+
+    def _notify_traditional(self, notifyevent, control, settings):
+        """Handle notifications using traditional preset system."""
+        preset = -1    
+        if notifyevent == "GRILL_STATE" and self.last_updated < time.time() - self.notify_duration:
+            if control is None:
+                self.logger.warning("Control data is None, cannot determine grill state.")
+                return
+            elif control['mode'] != self.last_mode:
+                self.last_mode = control['mode']
+                self.notify_duration = 1  # Reset duration for state changes
+                if control['mode'] in list(self.config['mode_presets'].keys()):
+                    preset = self.config['mode_presets'][control['mode']]
+
+        elif notifyevent == 'Test_Notify':
+            preset = self.config['mode_presets'].get('Startup', -1)
+            self.logger.info(f"WLED Test Notification Triggered: {preset}")
+
+        elif notifyevent == 'Probe_Temp_Achieved':
+            preset = self.config['event_presets'].get('Temp_Achieved', -1)
+
+        elif 'Probe_Temp_Limit_Alarm' in notifyevent:
+            preset = self.config['event_presets'].get('Grill_Error', -1)  # Use error preset for alarms
+
+        elif notifyevent == 'Timer_Expired':
+            preset = self.config['event_presets'].get('Timer_Expired', -1)
+
+        elif notifyevent == 'Pellet_Level_Low':
+            preset = self.config['event_presets'].get('Pellet_Level_Low', -1)
+
+        elif 'Grill_Warning' in notifyevent:
+            preset = self.config['event_presets'].get('Pellet_Level_Low', -1)  # Use pellet low preset for warnings
+
+        elif 'Recipe_Step_Message' in notifyevent:
+            preset = self.config['event_presets'].get('Recipe_Next', -1)
+
+        elif 'Grill_Error' in notifyevent or notifyevent == 'Control_Process_Stopped':
+            preset = self.config['event_presets'].get('Grill_Error', -1)
+
+        if preset != -1:
+            self.send_notification(preset)
             if notifyevent != 'GRILL_STATE':
                 self.notify_duration = self.config.get('notify_duration', 120)
                 self.last_mode = None # Reset last mode to allow state change notifications
-                self.logger.info(f"WLED Suggested Notification Sent for event {notifyevent}")
-        
-        else:
-            # Use traditional preset system
-            preset = -1    
-            if notifyevent == "GRILL_STATE" and self.last_updated < time.time() - self.notify_duration:
-                if control is None:
-                    self.logger.warning("Control data is None, cannot determine grill state.")
-                    return
-                elif control['mode'] != self.last_mode:
-                    self.last_mode = control['mode']
-                    self.notify_duration = 1  # Reset duration for state changes
-                    if control['mode'] in list(self.config['mode_presets'].keys()):
-                        preset = self.config['mode_presets'][control['mode']]
-
-            elif notifyevent == 'Test_Notify':
-                preset = self.config['mode_presets'].get('Startup', -1)
-                self.logger.info(f"WLED Test Notification Triggered: {preset}")
-
-            elif notifyevent == 'Probe_Temp_Achieved':
-                preset = self.config['event_presets'].get('Temp_Achieved', -1)
-
-            elif 'Probe_Temp_Limit_Alarm' in notifyevent:
-                preset = self.config['event_presets'].get('Grill_Error', -1)  # Use error preset for alarms
-
-            elif notifyevent == 'Timer_Expired':
-                preset = self.config['event_presets'].get('Timer_Expired', -1)
-
-            elif notifyevent == 'Pellet_Level_Low':
-                preset = self.config['event_presets'].get('Pellet_Level_Low', -1)
-
-            elif 'Grill_Warning' in notifyevent:
-                preset = self.config['event_presets'].get('Pellet_Level_Low', -1)  # Use pellet low preset for warnings
-
-            elif 'Recipe_Step_Message' in notifyevent:
-                preset = self.config['event_presets'].get('Recipe_Next', -1)
-
-            elif 'Grill_Error' in notifyevent or notifyevent == 'Control_Process_Stopped':
-                preset = self.config['event_presets'].get('Grill_Error', -1)
-
-            if preset != -1:
-                self.send_notification(preset)
-                if notifyevent != 'GRILL_STATE':
-                    self.notify_duration = self.config.get('notify_duration', 120)
-                    self.last_mode = None # Reset last mode to allow state change notifications
-                    self.logger.info(f"WLED Notification Sent for event {notifyevent} with preset {preset}")
+                self.logger.info(f"WLED Notification Sent for event {notifyevent} with preset {preset}")
     

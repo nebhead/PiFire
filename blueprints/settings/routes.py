@@ -209,15 +209,19 @@ def settings_page(action=None):
         else:
             settings['notify_services']['wled']['suggested_config']['night_mode'] = False
             
-        # Traditional preset settings (only process if not using suggested presets)
-        for mode in settings['notify_services']['wled']['mode_presets']:
-            key = f'wled_mode_{mode.lower()}'
+        # Profile-based settings
+        if is_checked(response, 'wled_use_profiles'):
+            settings['notify_services']['wled']['use_profiles'] = True
+            # Disable suggested presets when using profiles
+            settings['notify_services']['wled']['use_suggested_presets'] = False
+        else:
+            settings['notify_services']['wled']['use_profiles'] = False
+            
+        # Profile numbers configuration
+        for state in settings['notify_services']['wled']['profile_numbers']:
+            key = f'wled_profile_{state}'
             if key in response:
-                settings['notify_services']['wled']['mode_presets'][mode] = int(response[key])
-        for trigger_event in settings['notify_services']['wled']['event_presets']:
-            key = f'wled_event_{trigger_event.lower()}'
-            if key in response:
-                settings['notify_services']['wled']['event_presets'][trigger_event] = int(response[key])
+                settings['notify_services']['wled']['profile_numbers'][state] = max(1, min(250, int(response[key])))
 
         """ Update Control to Indicate a Settings Update """
         control['settings_update'] = True
