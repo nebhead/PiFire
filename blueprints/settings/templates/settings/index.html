@@ -1801,6 +1801,27 @@
                                                 <i class="fa-solid fa-microchip"></i>&nbsp; WLED Device Address</span>
                                         </div>
                                         <input id="wled_device_address" type="text" class="form-control" name="wled_device_address" value="{{settings['notify_services']['wled']['device_address']}}" style="min-width: 11ch;">
+                                        <div class="input-group-append">
+                                            <button type="button" id="wled_discover_btn" class="btn btn-outline-secondary" onclick="discoverWLEDDevices()" title="Discover WLED devices on your network">
+                                                <i class="fa-solid fa-search"></i>&nbsp; Find WLED Devices
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- WLED Device Discovery Results -->
+                                    <div id="wled_discovery_results" style="display: none;">
+                                        <div class="card">
+                                            <div class="card-header bg-success text-white">
+                                                <i class="fa-solid fa-network-wired"></i>&nbsp; Discovered WLED Devices
+                                                <button type="button" class="close text-white" onclick="hideDiscoveryResults()" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="card-body" id="wled_device_list">
+                                                <!-- Device list will be populated here -->
+                                            </div>
+                                        </div>
+                                        <br>
                                     </div>
                                     <br>
                                     
@@ -1970,6 +1991,196 @@
             suggestedConfig.style.display = 'none';
             traditionalPresets.style.display = 'block';
         }
+    }
+    
+    function discoverWLEDDevices() {
+        var button = document.getElementById('wled_discover_btn');
+        var originalText = button.innerHTML;
+        
+        // Show loading state
+        button.disabled = true;
+        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>&nbsp; Discovering...';
+        
+        // Hide previous results
+        hideDiscoveryResults();
+        
+        // Make API call to discover devices
+        fetch('/api/wled_discover?timeout=15')
+            .then(response => response.json())
+            .then(data => {
+                if (data.result === 'success') {
+                    displayDiscoveredDevices(data.devices);
+                } else {
+                    showWLEDError(data.message || 'Failed to discover WLED devices');
+                }
+            })
+            .catch(error => {
+                showWLEDError('Network error during WLED discovery: ' + error.message);
+            })
+            .finally(() => {
+                // Restore button state
+                button.disabled = false;
+                button.innerHTML = originalText;
+            });
+    }
+    
+    function displayDiscoveredDevices(devices) {
+        var deviceList = document.getElementById('wled_device_list');
+        var resultsDiv = document.getElementById('wled_discovery_results');
+        
+        if (devices.length === 0) {
+            deviceList.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fa-solid fa-exclamation-triangle"></i>&nbsp; 
+                    No WLED devices found on your network. Make sure your WLED device is:
+                    <ul class="mt-2 mb-0">
+                        <li>Powered on and connected to the same network</li>
+                        <li>Running recent WLED firmware</li>
+                        <li>Not blocking mDNS/Bonjour broadcasts</li>
+                    </ul>
+                </div>`;
+        } else {
+            var deviceHTML = `
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Device Name</th>
+                                <th>IP Address</th>
+                                <th>LED Count</th>
+                                <th>Version</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+            
+            devices.forEach(function(device) {
+                var ledCountText = device.led_count > 0 ? device.led_count : 'Unknown';
+                var versionText = device.version || 'Unknown';
+                var statusBadge = device.online ? 
+                    '<span class="badge badge-success">Online</span>' : 
+                    '<span class="badge badge-danger">Offline</span>';
+                
+                deviceHTML += `
+                    <tr>
+                        <td>
+                            <strong>${escapeHtml(device.name)}</strong><br>
+                            <small class="text-muted">${escapeHtml(device.product)}</small>
+                        </td>
+                        <td>
+                            <code>${escapeHtml(device.ip)}:${device.port}</code><br>
+                            ${statusBadge}
+                        </td>
+                        <td>
+                            <span class="badge badge-info">${ledCountText}</span>
+                        </td>
+                        <td>
+                            <small>${escapeHtml(versionText)}</small>
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-primary" 
+                                    onclick="selectWLEDDevice('${escapeHtml(device.ip)}', ${device.led_count}, '${escapeHtml(device.name)}')"
+                                    ${!device.online ? 'disabled' : ''}>
+                                <i class="fa-solid fa-check"></i>&nbsp; Select
+                            </button>
+                        </td>
+                    </tr>`;
+            });
+            
+            deviceHTML += `
+                        </tbody>
+                    </table>
+                </div>`;
+            
+            deviceList.innerHTML = deviceHTML;
+        }
+        
+        resultsDiv.style.display = 'block';
+    }
+    
+    function selectWLEDDevice(ip, ledCount, deviceName) {
+        // Set the device address
+        document.getElementById('wled_device_address').value = ip;
+        
+        // Update LED count if available and field exists
+        if (ledCount > 0) {
+            var ledCountField = document.getElementById('wled_led_count');
+            if (ledCountField) {
+                ledCountField.value = ledCount;
+            }
+        }
+        
+        // Hide discovery results
+        hideDiscoveryResults();
+        
+        // Show success message
+        showWLEDSuccess(`Selected WLED device: ${deviceName} (${ip})`);
+        
+        // Highlight the selected device address field briefly
+        var addressField = document.getElementById('wled_device_address');
+        addressField.classList.add('border-success');
+        setTimeout(function() {
+            addressField.classList.remove('border-success');
+        }, 3000);
+    }
+    
+    function hideDiscoveryResults() {
+        document.getElementById('wled_discovery_results').style.display = 'none';
+    }
+    
+    function showWLEDError(message) {
+        var alertHTML = `
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fa-solid fa-exclamation-circle"></i>&nbsp; ${escapeHtml(message)}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>`;
+        
+        // Insert after the WLED device address input
+        var addressInput = document.getElementById('wled_device_address').parentNode.parentNode;
+        addressInput.insertAdjacentHTML('afterend', alertHTML);
+        
+        // Auto-dismiss after 10 seconds
+        setTimeout(function() {
+            var alert = document.querySelector('.alert-danger');
+            if (alert) {
+                alert.remove();
+            }
+        }, 10000);
+    }
+    
+    function showWLEDSuccess(message) {
+        var alertHTML = `
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fa-solid fa-check-circle"></i>&nbsp; ${escapeHtml(message)}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>`;
+        
+        // Insert after the WLED device address input
+        var addressInput = document.getElementById('wled_device_address').parentNode.parentNode;
+        addressInput.insertAdjacentHTML('afterend', alertHTML);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(function() {
+            var alert = document.querySelector('.alert-success');
+            if (alert) {
+                alert.remove();
+            }
+        }, 5000);
+    }
+    
+    function escapeHtml(text) {
+        var map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
     }
 </script>
 <script src="{{ url_for('static', filename='js/bootstrap-colorpicker.min.js') }}"></script>

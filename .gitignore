@@ -81,3 +81,24 @@ blueprints/example/
 
 # Test files are included in the repository
 # test_wled_suggested_presets.py
+
+# WLED Discovery Test Files - Do not commit
+test_wled_suggested_presets.py
+manual_wled_test.py
+test_wled_api_format.py
+test_pifire_wled_integration.py
+test_wled_final.py
+debug_wled_discovery.py
+test_wled_api.py
+test_wled_ui.html
+wled_discover_standalone.py
+
+# Other test/debug files
+debug_server_status.html
+test_server_status.py
+
+# General patterns for test files
+test_*.py
+debug_*.py
+debug_*.html
+*_test.py

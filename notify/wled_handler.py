@@ -53,6 +53,7 @@ WLED_COLORS = {
     'green': [0, 255, 0],
     'blue': [0, 0, 255],
     'orange': [255, 165, 0],
+    'orange_cooking': [255, 120, 0],  # Specific orange for cooking from your curl command
     'yellow': [255, 255, 0],
     'amber': [255, 191, 0],
     'purple': [128, 0, 128],
@@ -76,9 +77,10 @@ WLED_EFFECTS = {
     'strobe': 12,
     'strobe_rainbow': 13,
     'multi_strobe': 14,
+    'running': 15,  # This is the effect from your working curl command
     'fade': 16,
+    'theater_chase': 17,
     'chase': 28,
-    'running': 29,
     'saw': 30,
     'twinkle': 31
 }
@@ -187,6 +189,7 @@ class WLEDNotificationHandler:
     def send_direct_command(self, color=None, brightness=None, effect=None, speed=None, intensity=None, on=True):
         """
         Send direct color and effect commands to WLED device (for suggested presets).
+        Uses the correct WLED API format with segments.
         
         Args:
             color (str or list): Color name from WLED_COLORS or RGB list [r,g,b]
@@ -196,38 +199,42 @@ class WLEDNotificationHandler:
             intensity (int): Effect intensity 0-255  
             on (bool): Turn device on/off
         """
-        url = f"http://{self.device_address}/json/state"
-        payload = {"on": on}
+        url = f"http://{self.device_address}/json"
+        
+        # Build the payload using the correct WLED API format with segments
+        payload = {
+            "on": on,
+            "transition": 0  # Immediate transition
+        }
         
         if brightness is not None:
             payload["bri"] = max(0, min(255, brightness))
+        
+        # Build segment configuration
+        seg_config = {}
+        
+        if effect is not None:
+            if isinstance(effect, str) and effect in WLED_EFFECTS:
+                seg_config["fx"] = WLED_EFFECTS[effect]
+            elif isinstance(effect, int):
+                seg_config["fx"] = effect
+                
+        if speed is not None:
+            seg_config["sx"] = max(0, min(255, speed))
+            
+        if intensity is not None:
+            seg_config["ix"] = max(0, min(255, intensity))
             
         if color is not None:
             if isinstance(color, str) and color in WLED_COLORS:
-                if color == 'rainbow':
-                    # Rainbow is an effect, not a color - don't set col
-                    payload["fx"] = WLED_EFFECTS['rainbow']
-                else:
-                    # WLED expects color in format: "col": [[r,g,b]]
-                    payload["col"] = [WLED_COLORS[color]]
+                if color != 'rainbow':  # Rainbow effect doesn't need color
+                    seg_config["col"] = [WLED_COLORS[color]]
             elif isinstance(color, list) and len(color) == 3:
-                # WLED expects color in format: "col": [[r,g,b]]
-                payload["col"] = [color]
-                
-        if effect is not None:
-            if isinstance(effect, str) and effect in WLED_EFFECTS:
-                payload["fx"] = WLED_EFFECTS[effect]
-                # If setting rainbow effect, remove any color to avoid conflicts
-                if effect == 'rainbow' and "col" in payload:
-                    del payload["col"]
-            elif isinstance(effect, int):
-                payload["fx"] = effect
-                
-        if speed is not None:
-            payload["sx"] = max(0, min(255, speed))
-            
-        if intensity is not None:
-            payload["ix"] = max(0, min(255, intensity))
+                seg_config["col"] = [color]
+        
+        # Only add seg if we have segment configuration
+        if seg_config:
+            payload["seg"] = [seg_config]
         
         try:
             response = requests.post(url, json=payload)
@@ -289,11 +296,21 @@ class WLEDNotificationHandler:
             self.send_direct_command(color='orange', brightness=128, effect='breathe', speed=80)
             
         elif state == 'cooking':
+            # Use the "running" effect with orange color like the working curl command
+            # This matches: "fx":15,"sx":160,"ix":200,"col":[[255,120,0]]
             if night_mode:
                 brightness = int(idle_brightness * 0.5)
             else:
-                brightness = 128
-            self.send_direct_command(color=cooking_color, brightness=brightness, effect='solid')
+                brightness = 255  # Use full brightness like the curl command
+            
+            # Use orange_cooking color and running effect with same parameters as curl command
+            self.send_direct_command(
+                color='orange_cooking', 
+                brightness=brightness, 
+                effect='running', 
+                speed=160,      # sx from curl command
+                intensity=200   # ix from curl command
+            )
             
         elif state == 'cooldown':
             # Orange fade effect
