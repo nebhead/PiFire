@@ -1841,7 +1841,7 @@
                                                 When enabled, PiFire will use predefined LED colors and effects that automatically match grill states and events. This provides optimal visual feedback without requiring manual preset configuration.
                                             </i>
                                             
-                                            <div id="suggested_config" style="display: {% if settings['notify_services']['wled']['use_suggested_presets'] %}block{% else %}none{% endif %};">
+                                            <div id="suggested_config" style="display: '{% if settings['notify_services']['wled']['use_suggested_presets'] %}block{% else %}none{% endif %}';">
                                                 <br>
                                                 <div class="input-group mb-3">
                                                     <div class="input-group-prepend">
@@ -1893,7 +1893,7 @@
                                     <br>
                                     
                                     <!-- Traditional Preset Configuration (hidden when using suggested presets) -->
-                                    <div id="traditional_presets" style="display: {% if not settings['notify_services']['wled']['use_suggested_presets'] %}block{% else %}none{% endif %};">
+                                    <div id="traditional_presets" style="display: '{% if not settings['notify_services']['wled']['use_suggested_presets'] %}block{% else %}none{% endif %}';">
                                         <div class="card">
                                             <div class="card-header bg-light">
                                                 <i class="fa-solid fa-stamp"></i>&nbsp; Grill Mode WLED Presets
