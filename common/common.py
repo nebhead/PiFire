@@ -483,6 +483,7 @@ def default_notify_services():
 	services['wled'] = {
 		'enabled': False,
 		'device_address': 'wled.local',
+		'use_suggested_presets': False,  # Use PiFire suggested LED behaviors instead of user presets
 		'mode_presets': {
 			'Stop' : 8,
 			'Startup' : 5,
@@ -498,6 +499,12 @@ def default_notify_services():
 			'Grill_Error' : 7,
 			'Pellet_Level_Low' : 7,
 			'Timer_Expired' : 7
+		},
+		'suggested_config': {
+			'cooking_color': 'blue',  # blue or green
+			'idle_brightness': 20,    # percentage (1-100)
+			'night_mode': False,      # use dim amber instead of normal colors
+			'led_count': 6           # number of LEDs on the strip
 		},
 		'notify_duration' : 120  # number of seconds to keep notifications active
 	}

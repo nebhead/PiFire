@@ -1803,6 +1803,61 @@
                                         <input id="wled_device_address" type="text" class="form-control" name="wled_device_address" value="{{settings['notify_services']['wled']['device_address']}}" style="min-width: 11ch;">
                                     </div>
                                     <br>
+                                    
+                                    <!-- Suggested Presets Configuration -->
+                                    <div class="card">
+                                        <div class="card-header bg-info text-white">
+                                            <i class="fa-solid fa-magic"></i>&nbsp; Suggested Presets (Recommended)
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="custom-control custom-switch">
+                                                <input type="checkbox" class="custom-control-input" id="wled_use_suggested_presets" name="wled_use_suggested_presets" {% if settings['notify_services']['wled']['use_suggested_presets'] %}checked{% endif %} onchange="toggleWLEDPresetType()">
+                                                <label class="custom-control-label" for="wled_use_suggested_presets">Use PiFire Suggested LED Behaviors</label>
+                                            </div>
+                                            <br>
+                                            <span class="badge badge-info">INFO:</span>
+                                            <i class="small"> 
+                                                When enabled, PiFire will use predefined LED colors and effects that automatically match grill states and events. This provides optimal visual feedback without requiring manual preset configuration.
+                                            </i>
+                                            
+                                            <div id="suggested_config" style="display: {% if settings['notify_services']['wled']['use_suggested_presets'] %}block{% else %}none{% endif %};">
+                                                <br>
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text">
+                                                            <i class="fa-solid fa-palette"></i>&nbsp; Cooking Color</span>
+                                                    </div>
+                                                    <select id="wled_cooking_color" class="form-control" name="wled_cooking_color">
+                                                        <option value="blue" {% if settings['notify_services']['wled']['suggested_config']['cooking_color'] == 'blue' %}selected{% endif %}>Blue</option>
+                                                        <option value="green" {% if settings['notify_services']['wled']['suggested_config']['cooking_color'] == 'green' %}selected{% endif %}>Green</option>
+                                                    </select>
+                                                </div>
+                                                
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text">
+                                                            <i class="fa-solid fa-lightbulb"></i>&nbsp; Idle Brightness (%)</span>
+                                                    </div>
+                                                    <input id="wled_idle_brightness" type="number" min="1" max="100" class="form-control" name="wled_idle_brightness" value="{{settings['notify_services']['wled']['suggested_config']['idle_brightness']}}" style="min-width: 11ch;">
+                                                </div>
+                                                
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text">
+                                                            <i class="fa-solid fa-list-ol"></i>&nbsp; LED Count</span>
+                                                    </div>
+                                                    <input id="wled_led_count" type="number" min="1" max="1000" class="form-control" name="wled_led_count" value="{{settings['notify_services']['wled']['suggested_config']['led_count']}}" style="min-width: 11ch;">
+                                                </div>
+                                                
+                                                <div class="custom-control custom-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="wled_night_mode" name="wled_night_mode" {% if settings['notify_services']['wled']['suggested_config']['night_mode'] %}checked{% endif %}>
+                                                    <label class="custom-control-label" for="wled_night_mode">Night Mode (dim amber glow)</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <br>
+                                    
                                     <span class="badge badge-warning">NOTE:</span>
                                     <i class="small"> 
                                         Number of seconds to keep the EVENT notification active on the WLED device.  Default is 120 seconds. (requires reboot/restart to take effect)
@@ -1815,15 +1870,18 @@
                                         <input id="wled_notify_duration" type="number" min="0" max="3600" class="form-control" name="wled_notify_duration" value="{{settings['notify_services']['wled']['notify_duration']}}" style="min-width: 11ch;">
                                     </div>
                                     <br>
-                                    <div class="card">
-                                        <div class="card-header bg-light">
-                                            <i class="fa-solid fa-stamp"></i>&nbsp; Grill Mode WLED Presets
-                                        </div>
-                                        <div class="card-body">
-                                            <span class="badge badge-info">INFO:</span>
-                                            <i class="small"> 
-                                                Preset WLED modes to use for each grill mode.  These modes will be set when the grill enters the corresponding mode.
-                                            </i>
+                                    
+                                    <!-- Traditional Preset Configuration (hidden when using suggested presets) -->
+                                    <div id="traditional_presets" style="display: {% if not settings['notify_services']['wled']['use_suggested_presets'] %}block{% else %}none{% endif %};">
+                                        <div class="card">
+                                            <div class="card-header bg-light">
+                                                <i class="fa-solid fa-stamp"></i>&nbsp; Grill Mode WLED Presets
+                                            </div>
+                                            <div class="card-body">
+                                                <span class="badge badge-info">INFO:</span>
+                                                <i class="small"> 
+                                                    Preset WLED modes to use for each grill mode.  These modes will be set when the grill enters the corresponding mode.
+                                                </i>
                                             {% for mode, preset in settings['notify_services']['wled']['mode_presets'].items() %}
                                             <div class="input-group mb-3">
                                                 <div class="input-group-prepend">
@@ -1859,6 +1917,8 @@
                                         </div>
                                         <br><br>
                                     </div> <!-- End of Event Trigger WLED Presets -->
+                                    </div> <!-- End of traditional_presets div -->
+                                    
                                     <span class="badge badge-info">INFO:</span>
                                     <i class="small"> 
                                         When testing this notification, it will use the preset for the 'Startup' grill mode.
@@ -1896,6 +1956,21 @@
             $('#settingsNav').collapse('hide');
         });
     });
+</script>
+<script>
+    function toggleWLEDPresetType() {
+        var useSuggested = document.getElementById('wled_use_suggested_presets').checked;
+        var suggestedConfig = document.getElementById('suggested_config');
+        var traditionalPresets = document.getElementById('traditional_presets');
+        
+        if (useSuggested) {
+            suggestedConfig.style.display = 'block';
+            traditionalPresets.style.display = 'none';
+        } else {
+            suggestedConfig.style.display = 'none';
+            traditionalPresets.style.display = 'block';
+        }
+    }
 </script>
 <script src="{{ url_for('static', filename='js/bootstrap-colorpicker.min.js') }}"></script>
 <script src="{{ url_for('settings_bp.static', filename='settings/js/settings.js') }}"></script>
