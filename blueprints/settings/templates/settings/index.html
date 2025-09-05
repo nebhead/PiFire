@@ -1801,8 +1801,154 @@
                                                 <i class="fa-solid fa-microchip"></i>&nbsp; WLED Device Address</span>
                                         </div>
                                         <input id="wled_device_address" type="text" class="form-control" name="wled_device_address" value="{{settings['notify_services']['wled']['device_address']}}" style="min-width: 11ch;">
+                                        <div class="input-group-append">
+                                            <button type="button" id="wled_discover_btn" class="btn btn-outline-secondary" onclick="discoverWLEDDevices()" title="Discover WLED devices on your network">
+                                                <i class="fa-solid fa-search"></i>&nbsp; Find WLED Devices
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- WLED Device Discovery Results -->
+                                    <div id="wled_discovery_results" style="display: none;">
+                                        <div class="card">
+                                            <div class="card-header bg-success text-white">
+                                                <i class="fa-solid fa-network-wired"></i>&nbsp; Discovered WLED Devices
+                                                <button type="button" class="close text-white" onclick="hideDiscoveryResults()" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="card-body" id="wled_device_list">
+                                                <!-- Device list will be populated here -->
+                                            </div>
+                                        </div>
+                                        <br>
                                     </div>
                                     <br>
+                                    
+                                    <!-- Suggested Presets Configuration -->
+                                    <div class="card">
+                                        <div class="card-header bg-info text-white">
+                                            <i class="fa-solid fa-magic"></i>&nbsp; Suggested Presets (Recommended)
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="custom-control custom-switch">
+                                                <input type="checkbox" class="custom-control-input" id="wled_use_suggested_presets" name="wled_use_suggested_presets" {% if settings['notify_services']['wled']['use_suggested_presets'] %}checked{% endif %} onchange="toggleWLEDPresetType()">
+                                                <label class="custom-control-label" for="wled_use_suggested_presets">Use PiFire Suggested LED Behaviors</label>
+                                            </div>
+                                            <br>
+                                            <span class="badge badge-info">INFO:</span>
+                                            <i class="small"> 
+                                                When enabled, PiFire will use predefined LED colors and effects that automatically match grill states and events. This provides optimal visual feedback without requiring manual preset configuration.
+                                            </i>
+                                            
+                                            <div id="suggested_config" style="display: '{% if settings['notify_services']['wled']['use_suggested_presets'] %}block{% else %}none{% endif %}';">
+                                                <br>
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text">
+                                                            <i class="fa-solid fa-palette"></i>&nbsp; Cooking Color</span>
+                                                    </div>
+                                                    <select id="wled_cooking_color" class="form-control" name="wled_cooking_color">
+                                                        <option value="blue" {% if settings['notify_services']['wled']['suggested_config']['cooking_color'] == 'blue' %}selected{% endif %}>Blue</option>
+                                                        <option value="green" {% if settings['notify_services']['wled']['suggested_config']['cooking_color'] == 'green' %}selected{% endif %}>Green</option>
+                                                    </select>
+                                                </div>
+                                                
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text">
+                                                            <i class="fa-solid fa-lightbulb"></i>&nbsp; Idle Brightness (%)</span>
+                                                    </div>
+                                                    <input id="wled_idle_brightness" type="number" min="1" max="100" class="form-control" name="wled_idle_brightness" value="{{settings['notify_services']['wled']['suggested_config']['idle_brightness']}}" style="min-width: 11ch;">
+                                                </div>
+                                                
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text">
+                                                            <i class="fa-solid fa-list-ol"></i>&nbsp; LED Count</span>
+                                                    </div>
+                                                    <input id="wled_led_count" type="number" min="1" max="1000" class="form-control" name="wled_led_count" value="{{settings['notify_services']['wled']['suggested_config']['led_count']}}" style="min-width: 11ch;">
+                                                </div>
+                                                
+                                                <div class="custom-control custom-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="wled_night_mode" name="wled_night_mode" {% if settings['notify_services']['wled']['suggested_config']['night_mode'] %}checked{% endif %}>
+                                                    <label class="custom-control-label" for="wled_night_mode">Night Mode (dim amber glow)</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <br>
+                                    
+                                    <!-- Profile-Based Configuration -->
+                                    <div class="card">
+                                        <div class="card-header bg-primary text-white">
+                                            <i class="fa-solid fa-microchip"></i>&nbsp; Profile-Based Control (Recommended)
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="custom-control custom-switch">
+                                                <input type="checkbox" class="custom-control-input" id="wled_use_profiles" name="wled_use_profiles" {% if settings['notify_services']['wled']['use_profiles'] %}checked{% endif %} onchange="toggleWLEDProfileMode()">
+                                                <label class="custom-control-label" for="wled_use_profiles">Use Profile-Based WLED Control</label>
+                                            </div>
+                                            <br>
+                                            <span class="badge badge-primary">RECOMMENDED:</span>
+                                            <i class="small"> 
+                                                Profile-based control pushes PiFire LED profiles directly to your WLED device, allowing you to customize colors and effects while maintaining automatic state changes.
+                                            </i>
+                                            
+                                            <div id="profile_config" style="display: {% if settings['notify_services']['wled']['use_profiles'] %}block{% else %}none{% endif %};">
+                                                <br>
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <button type="button" id="wled_push_profiles_btn" class="btn btn-success btn-block" onclick="pushWLEDProfiles()" title="Push PiFire profiles to your WLED device">
+                                                            <i class="fa-solid fa-upload"></i>&nbsp; Push Profiles to WLED
+                                                        </button>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <button type="button" id="wled_test_profile_btn" class="btn btn-outline-info btn-block" onclick="testWLEDProfile()" title="Test the current cooking profile">
+                                                            <i class="fa-solid fa-flask"></i>&nbsp; Test Profile
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <br>
+                                                
+                                                <!-- Profile Numbers Configuration -->
+                                                <div class="card">
+                                                    <div class="card-header bg-light">
+                                                        <i class="fa-solid fa-list-ol"></i>&nbsp; Profile Numbers
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <span class="badge badge-info">INFO:</span>
+                                                        <i class="small"> 
+                                                            Customize which WLED profile numbers to use for each PiFire state. Default range is 200-211 to avoid conflicts with existing user profiles.
+                                                        </i>
+                                                        <br><br>
+                                                        <div class="row">
+                                                            {% for state, number in settings['notify_services']['wled']['profile_numbers'].items() %}
+                                                            <div class="col-md-6">
+                                                                <div class="input-group mb-3">
+                                                                    <div class="input-group-prepend">
+                                                                        <span class="input-group-text">{{ state.replace('_', ' ').title() }}</span>
+                                                                    </div>
+                                                                    <input type="number" min="1" max="250" class="form-control" name="wled_profile_{{ state }}" value="{{ number }}" style="min-width: 8ch;">
+                                                                </div>
+                                                            </div>
+                                                            {% endfor %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Profile Push Status -->
+                                                <div id="wled_profile_status" style="display: none;">
+                                                    <div class="alert alert-info">
+                                                        <i class="fa-solid fa-info-circle"></i>&nbsp; 
+                                                        <span id="wled_profile_status_text">Ready to push profiles...</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <br>
+                                    
                                     <span class="badge badge-warning">NOTE:</span>
                                     <i class="small"> 
                                         Number of seconds to keep the EVENT notification active on the WLED device.  Default is 120 seconds. (requires reboot/restart to take effect)
@@ -1815,50 +1961,7 @@
                                         <input id="wled_notify_duration" type="number" min="0" max="3600" class="form-control" name="wled_notify_duration" value="{{settings['notify_services']['wled']['notify_duration']}}" style="min-width: 11ch;">
                                     </div>
                                     <br>
-                                    <div class="card">
-                                        <div class="card-header bg-light">
-                                            <i class="fa-solid fa-stamp"></i>&nbsp; Grill Mode WLED Presets
-                                        </div>
-                                        <div class="card-body">
-                                            <span class="badge badge-info">INFO:</span>
-                                            <i class="small"> 
-                                                Preset WLED modes to use for each grill mode.  These modes will be set when the grill enters the corresponding mode.
-                                            </i>
-                                            {% for mode, preset in settings['notify_services']['wled']['mode_presets'].items() %}
-                                            <div class="input-group mb-3">
-                                                <div class="input-group-prepend">
-                                                    <span class="input-group-text">
-                                                       {{ mode }} Mode - Preset
-                                                    </span>
-                                                </div>
-                                                <input id="wled_mode_{{ mode|lower }}" type="number" min="0" max="250" class="form-control" name="wled_mode_{{ mode|lower }}" value="{{settings['notify_services']['wled']['mode_presets'][mode]}}" style="min-width: 11ch;">
-                                            </div>
-                                            {% endfor %}
-                                        </div>
-                                    </div> <!-- End of Grill Mode WLED Presets -->
-                                    <br>
-                                    <div class="card">
-                                        <div class="card-header bg-light">
-                                            <i class="fa-solid fa-stamp"></i>&nbsp; Event Trigger WLED Presets
-                                        </div>
-                                        <div class="card-body">
-                                            <span class="badge badge-info">INFO:</span>
-                                            <i class="small"> 
-                                                Preset WLED modes to use for each event trigger.  These modes will be set when the corresponding event occurs.
-                                            </i>
-                                            {% for event, preset in settings['notify_services']['wled']['event_presets'].items() %}
-                                            <div class="input-group mb-3">
-                                                <div class="input-group-prepend">
-                                                    <span class="input-group-text">
-                                                        {{ event.replace('_', ' ') }} Event - Preset
-                                                    </span>
-                                                </div>
-                                                <input id="wled_event_{{ event|lower }}" type="number" min="0" max="250" class="form-control" name="wled_event_{{ event|lower }}" value="{{settings['notify_services']['wled']['event_presets'][event]}}" style="min-width: 11ch;">
-                                            </div>
-                                            {% endfor %}
-                                        </div>
-                                        <br><br>
-                                    </div> <!-- End of Event Trigger WLED Presets -->
+                                    
                                     <span class="badge badge-info">INFO:</span>
                                     <i class="small"> 
                                         When testing this notification, it will use the preset for the 'Startup' grill mode.
@@ -1896,6 +1999,336 @@
             $('#settingsNav').collapse('hide');
         });
     });
+</script>
+<script>
+    function toggleWLEDPresetType() {
+        var useSuggested = document.getElementById('wled_use_suggested_presets').checked;
+        var suggestedConfig = document.getElementById('suggested_config');
+        
+        if (useSuggested) {
+            suggestedConfig.style.display = 'block';
+        } else {
+            suggestedConfig.style.display = 'none';
+        }
+    }
+    
+    function discoverWLEDDevices() {
+        var button = document.getElementById('wled_discover_btn');
+        var originalText = button.innerHTML;
+        
+        // Show loading state
+        button.disabled = true;
+        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>&nbsp; Discovering...';
+        
+        // Hide previous results
+        hideDiscoveryResults();
+        
+        // Make API call to discover devices
+        fetch('/api/wled_discover?timeout=15')
+            .then(response => response.json())
+            .then(data => {
+                if (data.result === 'success') {
+                    displayDiscoveredDevices(data.devices);
+                } else {
+                    showWLEDError(data.message || 'Failed to discover WLED devices');
+                }
+            })
+            .catch(error => {
+                showWLEDError('Network error during WLED discovery: ' + error.message);
+            })
+            .finally(() => {
+                // Restore button state
+                button.disabled = false;
+                button.innerHTML = originalText;
+            });
+    }
+    
+    function displayDiscoveredDevices(devices) {
+        var deviceList = document.getElementById('wled_device_list');
+        var resultsDiv = document.getElementById('wled_discovery_results');
+        
+        if (devices.length === 0) {
+            deviceList.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fa-solid fa-exclamation-triangle"></i>&nbsp; 
+                    No WLED devices found on your network. Make sure your WLED device is:
+                    <ul class="mt-2 mb-0">
+                        <li>Powered on and connected to the same network</li>
+                        <li>Running recent WLED firmware</li>
+                        <li>Not blocking mDNS/Bonjour broadcasts</li>
+                    </ul>
+                </div>`;
+        } else {
+            var deviceHTML = `
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Device Name</th>
+                                <th>IP Address</th>
+                                <th>LED Count</th>
+                                <th>Version</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+            
+            devices.forEach(function(device) {
+                var ledCountText = device.led_count > 0 ? device.led_count : 'Unknown';
+                var versionText = device.version || 'Unknown';
+                var statusBadge = device.online ? 
+                    '<span class="badge badge-success">Online</span>' : 
+                    '<span class="badge badge-danger">Offline</span>';
+                
+                deviceHTML += `
+                    <tr>
+                        <td>
+                            <strong>${escapeHtml(device.name)}</strong><br>
+                            <small class="text-muted">${escapeHtml(device.product)}</small>
+                        </td>
+                        <td>
+                            <code>${escapeHtml(device.ip)}:${device.port}</code><br>
+                            ${statusBadge}
+                        </td>
+                        <td>
+                            <span class="badge badge-info">${ledCountText}</span>
+                        </td>
+                        <td>
+                            <small>${escapeHtml(versionText)}</small>
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-primary" 
+                                    onclick="selectWLEDDevice('${escapeHtml(device.ip)}', ${device.led_count}, '${escapeHtml(device.name)}')"
+                                    ${!device.online ? 'disabled' : ''}>
+                                <i class="fa-solid fa-check"></i>&nbsp; Select
+                            </button>
+                        </td>
+                    </tr>`;
+            });
+            
+            deviceHTML += `
+                        </tbody>
+                    </table>
+                </div>`;
+            
+            deviceList.innerHTML = deviceHTML;
+        }
+        
+        resultsDiv.style.display = 'block';
+    }
+    
+    function selectWLEDDevice(ip, ledCount, deviceName) {
+        // Set the device address
+        document.getElementById('wled_device_address').value = ip;
+        
+        // Update LED count if available and field exists
+        if (ledCount > 0) {
+            var ledCountField = document.getElementById('wled_led_count');
+            if (ledCountField) {
+                ledCountField.value = ledCount;
+            }
+        }
+        
+        // Hide discovery results
+        hideDiscoveryResults();
+        
+        // Show success message
+        showWLEDSuccess(`Selected WLED device: ${deviceName} (${ip})`);
+        
+        // Highlight the selected device address field briefly
+        var addressField = document.getElementById('wled_device_address');
+        addressField.classList.add('border-success');
+        setTimeout(function() {
+            addressField.classList.remove('border-success');
+        }, 3000);
+    }
+    
+    function hideDiscoveryResults() {
+        document.getElementById('wled_discovery_results').style.display = 'none';
+    }
+    
+    function showWLEDError(message) {
+        var alertHTML = `
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fa-solid fa-exclamation-circle"></i>&nbsp; ${escapeHtml(message)}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>`;
+        
+        // Insert after the WLED device address input
+        var addressInput = document.getElementById('wled_device_address').parentNode.parentNode;
+        addressInput.insertAdjacentHTML('afterend', alertHTML);
+        
+        // Auto-dismiss after 10 seconds
+        setTimeout(function() {
+            var alert = document.querySelector('.alert-danger');
+            if (alert) {
+                alert.remove();
+            }
+        }, 10000);
+    }
+    
+    function showWLEDSuccess(message) {
+        var alertHTML = `
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fa-solid fa-check-circle"></i>&nbsp; ${escapeHtml(message)}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>`;
+        
+        // Insert after the WLED device address input
+        var addressInput = document.getElementById('wled_device_address').parentNode.parentNode;
+        addressInput.insertAdjacentHTML('afterend', alertHTML);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(function() {
+            var alert = document.querySelector('.alert-success');
+            if (alert) {
+                alert.remove();
+            }
+        }, 5000);
+    }
+    
+    function escapeHtml(text) {
+        var map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+    
+    function toggleWLEDProfileMode() {
+        var useProfiles = document.getElementById('wled_use_profiles').checked;
+        var profileConfig = document.getElementById('profile_config');
+        
+        if (useProfiles) {
+            profileConfig.style.display = 'block';
+            // Disable suggested presets when using profiles
+            document.getElementById('wled_use_suggested_presets').checked = false;
+            toggleWLEDPresetType();
+        } else {
+            profileConfig.style.display = 'none';
+        }
+    }
+    
+    function pushWLEDProfiles() {
+        var button = document.getElementById('wled_push_profiles_btn');
+        var originalText = button.innerHTML;
+        var deviceAddress = document.getElementById('wled_device_address').value;
+        
+        if (!deviceAddress || deviceAddress.trim() === '') {
+            showWLEDError('Please enter a WLED device address first.');
+            return;
+        }
+        
+        // Show loading state
+        button.disabled = true;
+        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>&nbsp; Pushing Profiles...';
+        
+        // Show status
+        showProfileStatus('Pushing PiFire profiles to WLED device...', 'info');
+        
+        // Get profile numbers from form
+        var profileNumbers = {};
+        var profileInputs = document.querySelectorAll('input[name^="wled_profile_"]');
+        profileInputs.forEach(function(input) {
+            var stateName = input.name.replace('wled_profile_', '');
+            profileNumbers[stateName] = parseInt(input.value);
+        });
+        
+        // Make API call to push profiles
+        fetch('/api/wled_push_profiles', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                device_address: deviceAddress,
+                profile_numbers: profileNumbers
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.result === 'success') {
+                showProfileStatus(`Successfully pushed ${data.profiles_pushed} profiles to WLED device!`, 'success');
+                showWLEDSuccess(`${data.profiles_pushed} PiFire profiles pushed to WLED device successfully!`);
+            } else {
+                showProfileStatus(`Error: ${data.message}`, 'error');
+                showWLEDError(`Failed to push profiles: ${data.message}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error pushing profiles:', error);
+            showProfileStatus('Error: Failed to communicate with server', 'error');
+            showWLEDError('Failed to push profiles: Network error');
+        })
+        .finally(() => {
+            // Restore button
+            button.disabled = false;
+            button.innerHTML = originalText;
+            
+            // Hide status after 10 seconds
+            setTimeout(() => {
+                hideProfileStatus();
+            }, 10000);
+        });
+    }
+    
+    function testWLEDProfile() {
+        var deviceAddress = document.getElementById('wled_device_address').value;
+        
+        if (!deviceAddress || deviceAddress.trim() === '') {
+            showWLEDError('Please enter a WLED device address first.');
+            return;
+        }
+        
+        var cookingProfileNumber = document.querySelector('input[name="wled_profile_cooking"]').value;
+        
+        // Make API call to test profile
+        fetch('/api/wled_test_profile', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                device_address: deviceAddress,
+                profile_number: parseInt(cookingProfileNumber)
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.result === 'success') {
+                showWLEDSuccess(`Test successful! Activated profile ${cookingProfileNumber} on WLED device.`);
+            } else {
+                showWLEDError(`Test failed: ${data.message}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error testing profile:', error);
+            showWLEDError('Failed to test profile: Network error');
+        });
+    }
+    
+    function showProfileStatus(message, type) {
+        var statusDiv = document.getElementById('wled_profile_status');
+        var statusText = document.getElementById('wled_profile_status_text');
+        var alertClass = type === 'error' ? 'alert-danger' : 
+                        type === 'success' ? 'alert-success' : 'alert-info';
+        
+        statusText.textContent = message;
+        statusDiv.className = `alert ${alertClass}`;
+        statusDiv.style.display = 'block';
+    }
+    
+    function hideProfileStatus() {
+        var statusDiv = document.getElementById('wled_profile_status');
+        statusDiv.style.display = 'none';
+    }
 </script>
 <script src="{{ url_for('static', filename='js/bootstrap-colorpicker.min.js') }}"></script>
 <script src="{{ url_for('settings_bp.static', filename='settings/js/settings.js') }}"></script>

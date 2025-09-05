@@ -91,7 +91,68 @@ def api_page(action=None, arg0=None, arg1=None, arg2=None, arg3=None):
 			pelletlevel = pelletdb['current']['hopper_level']
 			pelletid = pelletdb['current']['pelletid']
 			pellets = f'{pelletdb["archive"][pelletid]["brand"]} {pelletdb["archive"][pelletid]["wood"]}'
-			return jsonify({'hopper_level': pelletlevel, 'hopper_pellets': pellets}) 
+			return jsonify({'hopper_level': pelletlevel, 'hopper_pellets': pellets})
+		elif action == 'wled_discover':
+			''' Discover WLED devices on the network '''
+			try:
+				import subprocess
+				import json
+				import sys
+				import os
+				
+				# Get timeout from query parameter, default to 10 seconds
+				timeout = request.args.get('timeout', 10, type=int)
+				timeout = max(5, min(30, timeout))  # Clamp between 5-30 seconds
+				
+				# Use standalone script to avoid threading conflicts with eventlet/gunicorn
+				script_path = '/usr/local/bin/pifire/wled_discover_standalone.py'
+				python_path = '/usr/local/bin/pifire/bin/python3'
+				
+				# Run discovery in a separate process
+				process = subprocess.Popen(
+					[python_path, script_path, str(timeout)],
+					stdout=subprocess.PIPE,
+					stderr=subprocess.PIPE,
+					cwd='/usr/local/bin/pifire'
+				)
+				
+				stdout, stderr = process.communicate(timeout=timeout + 15)
+				
+				if process.returncode == 0 and stdout:
+					try:
+						result = json.loads(stdout.decode())
+						if result.get('success', False):
+							return jsonify({
+								'result': 'success',
+								'message': f'Found {result["count"]} WLED devices',
+								'devices': result['devices']
+							}), 200
+						else:
+							return jsonify({
+								'result': 'error',
+								'message': f'Discovery failed: {result.get("error", "Unknown error")}',
+								'devices': []
+							}), 500
+					except json.JSONDecodeError as e:
+						return jsonify({
+							'result': 'error',
+							'message': f'Failed to parse discovery result: {e}',
+							'devices': []
+						}), 500
+				else:
+					error_msg = stderr.decode() if stderr else 'Discovery process failed'
+					return jsonify({
+						'result': 'error',
+						'message': f'Discovery process error: {error_msg}',
+						'devices': []
+					}), 500
+					
+			except Exception as e:
+				return jsonify({
+					'result': 'error', 
+					'message': f'WLED discovery failed: {str(e)}',
+					'devices': []
+				}), 500 
 		else:
 			return jsonify({'Error':'Received GET request, without valid action'}), 404
 	
@@ -144,6 +205,90 @@ def api_page(action=None, arg0=None, arg1=None, arg2=None, arg3=None):
 								'message': 'Settings update failed.'
 							}
 						), 201
+			elif action == 'wled_push_profiles':
+				''' Push PiFire profiles to WLED device '''
+				try:
+					from notify.wled_profiles import WLEDProfileManager
+					
+					device_address = request_json.get('device_address', '').strip()
+					profile_numbers = request_json.get('profile_numbers', {})
+					
+					if not device_address:
+						return jsonify({
+							'result': 'error',
+							'message': 'Device address is required'
+						}), 400
+					
+					# Create profile manager and push profiles
+					profile_manager = WLEDProfileManager(device_address, settings)
+					result = profile_manager.push_all_profiles(custom_profile_numbers=profile_numbers)
+					
+					if result['success']:
+						return jsonify({
+							'result': 'success',
+							'message': f'Successfully pushed {result["profiles_pushed"]} profiles',
+							'profiles_pushed': result['profiles_pushed'],
+							'profiles': result['profiles']
+						}), 200
+					else:
+						return jsonify({
+							'result': 'error',
+							'message': result['message']
+						}), 500
+					
+				except Exception as e:
+					return jsonify({
+						'result': 'error',
+						'message': f'Failed to push profiles: {str(e)}'
+					}), 500
+					
+			elif action == 'wled_test_profile':
+				''' Test a WLED profile '''
+				try:
+					import requests
+					
+					device_address = request_json.get('device_address', '').strip()
+					profile_number = request_json.get('profile_number', 1)
+					
+					if not device_address:
+						return jsonify({
+							'result': 'error',
+							'message': 'Device address is required'
+						}), 400
+					
+					# Clean device address
+					if 'http://' in device_address:
+						device_address = device_address.replace('http://', '')
+					if 'https://' in device_address:
+						device_address = device_address.replace('https://', '')
+					device_address = device_address.strip().rstrip('/')
+					
+					# Send test command to WLED
+					url = f"http://{device_address}/json/state"
+					payload = {
+						"on": True,
+						"bri": 128,
+						"ps": profile_number
+					}
+					
+					response = requests.post(url, json=payload, timeout=5)
+					response.raise_for_status()
+					
+					return jsonify({
+						'result': 'success',
+						'message': f'Profile {profile_number} activated successfully'
+					}), 200
+					
+				except requests.RequestException as e:
+					return jsonify({
+						'result': 'error',
+						'message': f'Failed to communicate with WLED device: {str(e)}'
+					}), 500
+				except Exception as e:
+					return jsonify({
+						'result': 'error',
+						'message': f'Failed to test profile: {str(e)}'
+					}), 500
 			else:
 				return jsonify({'Error':'Received POST request no valid action.'}), 404
 	else:

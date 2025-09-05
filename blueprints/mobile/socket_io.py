@@ -412,11 +412,21 @@ def _post_app_data(action=None, type=None, json_data=None):
             return _response(result='OK')
         elif type == 'reboot':
             write_log("Admin: Reboot")
-            os.system("sleep 3 && sudo reboot &")
+            try:
+                reboot_system()  # Use the improved function from common
+            except Exception as e:
+                write_log(f"Admin: Reboot failed: {e}")
+                # Fallback to original method
+                os.system("sleep 3 && sudo reboot &")
             return _response(result='OK')
         elif type == 'shutdown':
             write_log("Admin: Shutdown")
-            os.system("sleep 3 && sudo shutdown -h now &")
+            try:
+                shutdown_system()  # Use the improved function from common
+            except Exception as e:
+                write_log(f"Admin: Shutdown failed: {e}")
+                # Fallback to original method
+                os.system("sleep 3 && sudo shutdown -h now &")
             return _response(result='OK')
         elif type == 'restart_control':
             write_log("Admin: Restart Control")

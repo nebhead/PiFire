@@ -190,14 +190,38 @@ def settings_page(action=None):
             settings['notify_services']['wled']['device_address'] = response['wled_device_address']
         if 'wled_notify_duration' in response:
             settings['notify_services']['wled']['notify_duration'] = max(int(response['wled_notify_duration']), 0)
-        for mode in settings['notify_services']['wled']['mode_presets']:
-            key = f'wled_mode_{mode.lower()}'
+            
+        # Suggested presets settings
+        if is_checked(response, 'wled_use_suggested_presets'):
+            settings['notify_services']['wled']['use_suggested_presets'] = True
+        else:
+            settings['notify_services']['wled']['use_suggested_presets'] = False
+            
+        # Suggested preset configuration
+        if 'wled_cooking_color' in response:
+            settings['notify_services']['wled']['suggested_config']['cooking_color'] = response['wled_cooking_color']
+        if 'wled_idle_brightness' in response:
+            settings['notify_services']['wled']['suggested_config']['idle_brightness'] = max(1, min(100, int(response['wled_idle_brightness'])))
+        if 'wled_led_count' in response:
+            settings['notify_services']['wled']['suggested_config']['led_count'] = max(1, min(1000, int(response['wled_led_count'])))
+        if is_checked(response, 'wled_night_mode'):
+            settings['notify_services']['wled']['suggested_config']['night_mode'] = True
+        else:
+            settings['notify_services']['wled']['suggested_config']['night_mode'] = False
+            
+        # Profile-based settings
+        if is_checked(response, 'wled_use_profiles'):
+            settings['notify_services']['wled']['use_profiles'] = True
+            # Disable suggested presets when using profiles
+            settings['notify_services']['wled']['use_suggested_presets'] = False
+        else:
+            settings['notify_services']['wled']['use_profiles'] = False
+            
+        # Profile numbers configuration
+        for state in settings['notify_services']['wled']['profile_numbers']:
+            key = f'wled_profile_{state}'
             if key in response:
-                settings['notify_services']['wled']['mode_presets'][mode] = int(response[key])
-        for trigger_event in settings['notify_services']['wled']['event_presets']:
-            key = f'wled_event_{trigger_event.lower()}'
-            if key in response:
-                settings['notify_services']['wled']['event_presets'][trigger_event] = int(response[key])
+                settings['notify_services']['wled']['profile_numbers'][state] = max(1, min(250, int(response[key])))
 
         """ Update Control to Indicate a Settings Update """
         control['settings_update'] = True

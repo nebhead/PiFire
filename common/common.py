@@ -25,6 +25,7 @@ import uuid
 import random
 import logging
 import subprocess
+import threading
 from logging.handlers import RotatingFileHandler
 from collections.abc import Mapping
 from ratelimitingfilter import RateLimitingFilter
@@ -483,21 +484,46 @@ def default_notify_services():
 	services['wled'] = {
 		'enabled': False,
 		'device_address': 'wled.local',
+		'use_profiles': True,  # Use profile-based control (recommended)
+		'use_suggested_presets': False,  # Use PiFire suggested LED behaviors instead of user presets (legacy)
+		'profile_numbers': {
+			# Default profile numbers for each PiFire state (200+ range to avoid conflicts)
+			'idle': 200,
+			'booting': 201, 
+			'preheat': 202,
+			'cooking': 203,
+			'cooldown': 204,
+			'target_reached': 205,
+			'overshoot_alarm': 206,
+			'probe_alarm': 207,
+			'low_pellets': 208,
+			'timer_done': 209,
+			'error_fault': 210,
+			'night_mode': 211
+		},
 		'mode_presets': {
-			'Stop' : 8,
-			'Startup' : 5,
-			'Reignite' : 5, 
-			'Smoke' : 6,
-			'Hold' : 6,
-			'Shutdown' : 7,
-			'Prime' : 5
+			# Legacy traditional presets (kept for backward compatibility)
+			'Stop' : 1,
+			'Startup' : 1,
+			'Reignite' : 1, 
+			'Smoke' : 1,
+			'Hold' : 1,
+			'Shutdown' : 1,
+			'Prime' : 1
 		},
 		'event_presets' : {
-			'Temp_Achieved' : 7,
-			'Recipe_Next' : 7,
-			'Grill_Error' : 7,
-			'Pellet_Level_Low' : 7,
-			'Timer_Expired' : 7
+			# Legacy event presets (kept for backward compatibility)
+			'Temp_Achieved' : 1,
+			'Recipe_Next' : 1,
+			'Grill_Error' : 1,
+			'Pellet_Level_Low' : 1,
+			'Timer_Expired' : 1
+		},
+		'suggested_config': {
+			'cooking_color': 'blue',  # blue or green
+			'idle_brightness': 20,    # percentage (1-100)
+			'night_mode': False,      # use dim amber instead of normal colors
+			'led_count': 6           # number of LEDs on the strip
 		},
 		'notify_duration' : 120  # number of seconds to keep notifications active
 	}
@@ -1898,21 +1924,75 @@ def restart_scripts():
 	Restart the Control and WebApp Scripts
 	"""
 	if is_real_hardware():
-		os.system("sleep 3 && sudo service supervisor restart &")
+		def _restart_supervisor():
+			try:
+				# Try systemctl first (modern systemd systems)
+				result = subprocess.run(['sudo', 'systemctl', 'restart', 'supervisor'], 
+									   capture_output=True, text=True, timeout=10)
+				if result.returncode != 0:
+					# Log the error and try fallback
+					print(f"systemctl restart failed: {result.stderr}")
+					# Fallback to service command
+					subprocess.run(['sudo', 'service', 'supervisor', 'restart'], timeout=10)
+			except subprocess.TimeoutExpired:
+				print("Supervisor restart command timed out")
+			except Exception as e:
+				print(f"Error restarting supervisor: {e}")
+				# Final fallback to original method
+				os.system("sleep 3 && sudo service supervisor restart &")
+		
+		# Run in background thread to avoid blocking
+		threading.Thread(target=_restart_supervisor, daemon=True).start()
 
 def reboot_system():
 	"""
 	Reboot the system
 	"""
 	if is_real_hardware():
-		os.system("sleep 3 && sudo reboot &")
+		def _reboot():
+			try:
+				time.sleep(3)  # Give time for response to be sent
+				# Try systemctl first (preferred method for systemd)
+				result = subprocess.run(['sudo', 'systemctl', 'reboot'], 
+									   capture_output=True, text=True, timeout=10)
+				if result.returncode != 0:
+					print(f"systemctl reboot failed: {result.stderr}")
+					# Fallback to traditional reboot command
+					subprocess.run(['sudo', 'reboot'], timeout=10)
+			except subprocess.TimeoutExpired:
+				print("Reboot command timed out")
+			except Exception as e:
+				print(f"Error rebooting system: {e}")
+				# Final fallback to original method
+				os.system("sudo reboot")
+		
+		# Run in background thread
+		threading.Thread(target=_reboot, daemon=True).start()
 
 def shutdown_system():
 	"""
 	Shutdown the system
 	"""
 	if is_real_hardware():
-		os.system("sleep 3 && sudo shutdown -h now &")
+		def _shutdown():
+			try:
+				time.sleep(3)  # Give time for response to be sent
+				# Try systemctl first (preferred method for systemd)
+				result = subprocess.run(['sudo', 'systemctl', 'poweroff'], 
+									   capture_output=True, text=True, timeout=10)
+				if result.returncode != 0:
+					print(f"systemctl poweroff failed: {result.stderr}")
+					# Fallback to traditional shutdown command
+					subprocess.run(['sudo', 'shutdown', '-h', 'now'], timeout=10)
+			except subprocess.TimeoutExpired:
+				print("Shutdown command timed out")
+			except Exception as e:
+				print(f"Error shutting down system: {e}")
+				# Final fallback to original method
+				os.system("sudo shutdown -h now")
+		
+		# Run in background thread
+		threading.Thread(target=_shutdown, daemon=True).start()
 
 def read_wizard(filename='wizard/wizard_manifest.json'):
 	"""
