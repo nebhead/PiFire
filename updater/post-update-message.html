@@ -121,6 +121,9 @@
                <li>
                   Wizard would display probe profiles for devices that don't use a probe profile.  Now it should simply say NA (Not Applicable) for devices that do not use profiles (i.e. non-ADC devices).  
                </li>
+               <li>
+                  Fixed various bugs/issues when installing on a Raspberry Pi 5.  Note that for DSI display to function correctly, you must use the 32-Bit Lite version of Raspberry Pi OS (Bookworm) due to changes in the 64-Bit display drivers.  Since the 32-Bit version of Raspberry Pi OS has a 64-Bit kernel, you must use the '-venv' option for the installer script.  
+               </li>
             </ul>
        
          </div> <!-- End of Card Body -->
