@@ -37,7 +37,7 @@ class ProbesMain:
 		for device in probe_devices:
 			try: 
 				if not self.disable:
-					modulename = device['module']
+					modulename = device.get('module_filename', device['module'])
 				else: 
 					modulename = 'disabled'
 				devicename = device['device']

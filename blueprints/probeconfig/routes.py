@@ -80,6 +80,7 @@ def probeconfig_page():
                         "config": {},
                         "device": device_name,
                         "module": r['module'],
+                        "module_filename": wizardData['modules']['probes'][r['module']]['filename'],
                         "ports": wizardData['modules']['probes'][r['module']]['device_specific']['ports']
                     }
                     # If any device specific configuration settings, set them here
@@ -127,6 +128,7 @@ def probeconfig_page():
                         "config": {},
                         "device": r['newname'],
                         "module": "",
+                        "module_filename": "",
                         "ports": []
                     }
                     # If any device specific configuration settings, set them here
@@ -142,6 +144,7 @@ def probeconfig_page():
                         if probe['device'] == r['name']:
                             new_device['ports'] = probe['ports']
                             new_device['module'] = probe['module']
+                            new_device['module_filename'] = probe.get('module_filename', probe['module'])
                             wizardInstallInfo['probe_map']['probe_devices'][index] = new_device
                             store_wizard_install_info(wizardInstallInfo)
                             break

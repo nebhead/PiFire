@@ -812,6 +812,7 @@ def default_probe_map(probe_profiles):
 	device = {
 			'device' : 'proto_adc',   # Unique name for the device
 			'module' : 'prototype',  # Module to support the hardware device
+			'module_filename' : 'prototype',  # Filename of the module to load
 			'ports' : ['ADC0', 'ADC1', 'ADC2', 'ADC3'],    # Optionally define ports, otherwise, leave this up to the module to define
 			'config' : {
 				'ADC0_rd': '10000',

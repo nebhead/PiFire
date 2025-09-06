@@ -11,10 +11,11 @@ Description:
 	
 	device_info = {
 			'device' : 'your_device_name',	# Unique name for the device
-			'module' : 'bt_ibt4xs',  			# Must be populated for this module to load properly
-			'ports' : ['BT0', 'BT1', 'BT2', 'BT3'], # This should be defined by the user with the number of ports desired
+			'module' : 'bt_ibbq',  			# Must be populated for this module to load properly
+			'ports' : ['BT0', 'BT1', 'BT2', 'BT3', 'BT4', 'BT5'], # This should be defined by the user with the number of ports desired
 			'config' : {
-				'transient' : True
+				'transient' : True,
+				'num_probes' : 6,  # Number of probes supported by the device (4 or 6)
 			} 
 		}
 
@@ -48,7 +49,7 @@ import struct  # NEW: required for battery unpack in DataDelegate
 
 from probes.base import ProbeInterface
 from bluepy.btle import *
-# from icecream import ic  # For debugging
+#from icecream import ic  # For debugging
 
 '''
 *****************************************
@@ -86,7 +87,7 @@ class DataDelegate(DefaultDelegate):
 			# Temperature payload is 4x uint16 little-endian (tenths of °C), 0xFFFF => unplugged
 			temps = [int.from_bytes(data[i:i+2], "little") for i in range(0, len(data), 2)]
 			if not self.data_initialized:
-				self.probe_temps = [None] * max(4, len(temps))  # NEW: init slots
+				self.probe_temps = [None] * len(temps)  # NEW: init slots (remove legacy 4-probe limit)
 				self.data_initialized = True
 
 			for idx, item in enumerate(temps[:4]):

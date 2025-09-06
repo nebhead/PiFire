@@ -1282,7 +1282,7 @@
 				}
 			},
 			"bt_ibbq" : {
-				"friendly_name" : "Bluetooth - iBBQ / Inkbird BT",
+				"friendly_name" : "Bluetooth - iBBQ / Inkbird BT (4 Probes)",
 				"filename" : "bt_ibbq",
 				"description" : "This device module supports Bluetooth LE iBBQ devices such as the Inkbird IBT-4XS four probe thermometer.  Note that the device can take up to a minute to be discovered and to start streaming data once turned on.  This has only been tested with the Inkbird IBT-4XS, but it may also work with other iBBQ models.  This module is still experimental, so feedback is welcome.",
 				"default" : false,
@@ -1320,10 +1320,75 @@
 							"list_labels" : ["Transient (sometimes detached)", "Fixed (always attached)"],
 							"default" : "True",
 							"hidden" : true
+						},
+						{
+							"label" : "num_probes", 
+							"friendly_name" : "Number of Probes",
+							"description" : "Select the number of probes for this device.",
+							"type" : "int", 
+							"min" : 2,
+							"max" : 4,
+							"step" : 1,
+							"default" : 4,
+							"hidden" : true
 						}
 					]
 				}			
 			},
+			"bt_ibt6xs" : {
+				"friendly_name" : "Bluetooth - iBBQ / Inkbird BT (6 Probes)",
+				"filename" : "bt_ibbq",
+				"description" : "This device module supports Bluetooth LE iBBQ devices such as the Inkbird IBT-6XS six probe thermometer.  Note that the device can take up to a minute to be discovered and to start streaming data once turned on.  This has only been tested with the Inkbird IBT-6XS, but it may also work with other iBBQ models.  This module is still experimental, so feedback is welcome.",
+				"default" : false,
+				"image" : "bt_ibt6xs.png",
+				"reboot_required" : false,
+				"py_dependencies" : ["bluepy==1.3.0"], 
+				"apt_dependencies" : ["libglib2.0-dev"],
+				"command_list" : [["sudo", "bash", "/usr/local/bin/pifire/wizard/bluepy.sh"]],
+				"settings_dependencies" : {
+					"units" : {
+						"friendly_name" : "Temp Units",
+						"description" : "Select the temperature units to use for PiFire globally.  (This can be modified in settings later)",
+						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
+						"settings" : ["globals", "units"]
+					}
+				},
+				"device_specific" : {
+					"ports" : ["BT0", "BT1", "BT2", "BT3", "BT4", "BT5"],
+					"type" : "bluetooth",
+					"config" : [
+						{
+							"label" : "hardware_id", 
+							"friendly_name" : "Hardware ID",
+							"description" : "This is the unique Hardware ID or Address of the peripheral (format: xx:xx:xx:xx:xx:xx).  This should be discovered during scanning.",
+							"type" : "bt_address", 
+							"default" : "",
+							"hidden" : false
+						},
+						{
+							"label" : "transient", 
+							"friendly_name" : "Transient",
+							"description" : "Select whether this device is fixed/always attached (default) or if it is transient/sometimes detached.",
+							"type" : "list", 
+							"list_values" : ["True", "False"],
+							"list_labels" : ["Transient (sometimes detached)", "Fixed (always attached)"],
+							"default" : "True",
+							"hidden" : true
+						},
+						{
+							"label" : "num_probes", 
+							"friendly_name" : "Number of Probes",
+							"description" : "Select the number of probes for this device.",
+							"type" : "int", 
+							"min" : 2,
+							"max" : 6,
+							"step" : 1,
+							"default" : 6,
+							"hidden" : true
+						}
+					]
+				}			
+			},			
 			"bt_meater" : {
 				"friendly_name" : "Bluetooth - Meater",
 				"filename" : "bt_meater",
@@ -2600,6 +2665,7 @@
 					},
 					"device": "ADS1115",
 					"module": "ads1115_adafruit",
+					"module_filename": "ads1115_adafruit.py",
 					"ports": [
 					  "ADC0",
 					  "ADC1",
@@ -2674,6 +2740,7 @@
 					},
 					"device": "ADS1115",
 					"module": "ads1115_adafruit",
+					"module_filename": "ads1115_adafruit.py",
 					"ports": [
 					  "ADC0",
 					  "ADC1",
@@ -2763,6 +2830,7 @@
 					},
 					"device": "ADS1115",
 					"module": "ads1115_adafruit",
+					"module_filename": "ads1115_adafruit.py",
 					"ports": [
 					  "ADC0",
 					  "ADC1",
@@ -2852,6 +2920,7 @@
 					},
 					"device": "ADS1115",
 					"module": "ads1115_adafruit",
+					"module_filename": "ads1115_adafruit.py",
 					"ports": [
 					  "ADC0",
 					  "ADC1",
