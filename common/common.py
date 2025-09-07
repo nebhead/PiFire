@@ -1128,7 +1128,7 @@ def read_settings(filename='settings.json', init=False, retry_count=0):
 			backup_settings()  # Backup Old Settings Before Performing Downgrade 
 			settings = downgrade_settings(settings, settings_default)
 			update_settings = True
-		elif (settings_default['versions']['server'] == settings['versions']['server']) and (settings['versions']['build'] < settings_default['versions']['build']):
+		elif (settings_default['versions']['server'] == settings['versions']['server']) and (settings['versions']['build'] <= settings_default['versions']['build']):
 			''' Minor Upgrade Path '''
 			prev_ver = semantic_ver_to_list(settings['versions']['server'])
 			settings = upgrade_settings(prev_ver, settings, settings_default)
@@ -1341,6 +1341,17 @@ def upgrade_settings(prev_ver, settings, settings_default):
 			settings['globals']['python_exec'] = 'python'
 			settings['globals']['uv'] = False
 			# TODO: Upgrade to VENV for older configs? 
+
+	''' Check if upgrading from previous to v1.10 or from v1.10.0 build 51 '''
+	if (prev_ver[0] == 1 and prev_ver[1] == 10 and settings['versions'].get('build', 0) <= 51) or \
+		(prev_ver[0] == 1 and prev_ver[1] < 10):
+		''' Update probe map devices to include module_filename '''
+		print('Upgrading probe map devices to include module_filename')
+		for index, device in enumerate(settings['probe_settings']['probe_map']['probe_devices']):
+			if 'module_filename' not in list(device.keys()):
+				print(f'   Updating device: {device["device"]} - {device["module"]}')
+				device['module_filename'] = device['module']
+				settings['probe_settings']['probe_map']['probe_devices'][index] = device
 
 	''' Import any new probe profiles '''
 	for profile in list(settings_default['probe_settings']['probe_profiles'].keys()):
