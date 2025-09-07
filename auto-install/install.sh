@@ -104,14 +104,6 @@ else
     echo "No Supervisor WebUI Setup." | tee -a ~/logs/pifire_install.log
 fi
 
-# Starting actual steps for installation
-echo "*************************************************************************" | tee -a ~/logs/pifire_install.log
-echo "**                                                                     **" | tee -a ~/logs/pifire_install.log
-echo "**      Setting /tmp to RAM based storage in /etc/fstab                **" | tee -a ~/logs/pifire_install.log
-echo "**                                                                     **" | tee -a ~/logs/pifire_install.log
-echo "*************************************************************************" | tee -a ~/logs/pifire_install.log
-echo "tmpfs /tmp  tmpfs defaults,noatime 0 0" | sudo tee -a /etc/fstab > /dev/null
-
 echo "*************************************************************************" | tee -a ~/logs/pifire_install.log
 echo "**                                                                     **" | tee -a ~/logs/pifire_install.log
 echo "**      Running Apt Update... (This could take several minutes)        **" | tee -a ~/logs/pifire_install.log
@@ -308,6 +300,14 @@ echo "**                                                                     **"
 echo "*************************************************************************" | tee -a ~/logs/pifire_install.log
 # Move into install directory
 cd /usr/local/bin/pifire/auto-install/nginx
+
+# Generate Self-Signed SSL Certificate
+echo " + Generating Self-Signed SSL Certificate" | tee -a ~/logs/pifire_install.log
+if ! $SUDO openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout /etc/ssl/private/localhost.key -out /etc/ssl/certs/localhost.crt -subj "/CN=localhost" -batch; then
+    echo " !! Failed to generate SSL certificate. HTTPS may not function correctly." | tee -a ~/logs/pifire_install.log
+else
+    echo " + SSL Certificate generation successful." | tee -a ~/logs/pifire_install.log
+fi
 
 # Delete default configuration
 $SUDO rm /etc/nginx/sites-enabled/default
