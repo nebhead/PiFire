@@ -2665,7 +2665,7 @@
 					},
 					"device": "ADS1115",
 					"module": "ads1115_adafruit",
-					"module_filename": "ads1115_adafruit.py",
+					"module_filename": "ads1115_adafruit",
 					"ports": [
 					  "ADC0",
 					  "ADC1",
@@ -2740,7 +2740,7 @@
 					},
 					"device": "ADS1115",
 					"module": "ads1115_adafruit",
-					"module_filename": "ads1115_adafruit.py",
+					"module_filename": "ads1115_adafruit",
 					"ports": [
 					  "ADC0",
 					  "ADC1",
@@ -2830,7 +2830,7 @@
 					},
 					"device": "ADS1115",
 					"module": "ads1115_adafruit",
-					"module_filename": "ads1115_adafruit.py",
+					"module_filename": "ads1115_adafruit",
 					"ports": [
 					  "ADC0",
 					  "ADC1",
@@ -2920,7 +2920,7 @@
 					},
 					"device": "ADS1115",
 					"module": "ads1115_adafruit",
-					"module_filename": "ads1115_adafruit.py",
+					"module_filename": "ads1115_adafruit",
 					"ports": [
 					  "ADC0",
 					  "ADC1",
