@@ -12,16 +12,50 @@
 # 
 # Usage: 
 # ./install.sh [-dev]
-# -dev: Use this option to install the development branch of PiFire instead of the main branch.
+# -dev: Use this option to run the installation script from the development branch of PiFire instead of the main branch.
 #        This is useful for testing new features or bug fixes that are not yet in the main branch.
 #        If this option is not used, the main branch will be installed by default.
+# -devrepo: Used to pull the development branch repository instead of the main branch.
+#          Uses the current installation script running with the development branch of the repository.
+#          This is useful for testing new features or bug fixes that are not yet in the main branch.
+#          If this option is not used, the main branch will be installed by default.
+#          Note: This option is ignored if -dev is also used.
+#          Example usage: curl https://raw.githubusercontent.com/nebhead/pifire/development/auto-install/install.sh | bash -s -- -devrepo
 # -venv: Use this option to force vanilla venv install
 # -uv:   Use this option to force the use of UV 
+
+# Install script version variable for logging
+INSTALL_SCRIPT_VERSION="1.10.x"
+DEV_INSTALLER="false"
+for arg in "$@"; do
+  if [[ "$arg" == "-dev" ]]; then
+    DEV_INSTALLER="true"
+  fi
+done
+
+DEV_REPO="false"
+for arg in "$@"; do
+  if [[ "$arg" == "-devrepo" ]]; then
+    DEV_REPO="true"
+  fi
+done
 
 # Create logs directory if it doesn't exist
 mkdir -p ~/logs
 
-# Log installation start time
+# Check if -dev flag is used and run install from development branch and exit this script
+if [[ $DEV_INSTALLER == "true" ]]; then
+    echo " + Running installation script from development branch..." | tee -a ~/logs/pifire_install.log
+    curl -SL https://raw.githubusercontent.com/nebhead/pifire/development/auto-install/install.sh | bash -s -- -devrepo 
+    exit 0
+elif [[ $DEV_REPO == "true" ]]; then
+    echo " + Running installation script from development branch based on version $INSTALL_SCRIPT_VERSION..." | tee -a ~/logs/pifire_install.log
+else
+    echo " + Running installation script from main branch based on version $INSTALL_SCRIPT_VERSION..." | tee -a ~/logs/pifire_install.log
+fi
+
+# Start logging
+echo "*************************************************************************" | tee ~/logs/pifire_install.log
 echo "PiFire Installation Started at $(date '+%Y-%m-%d %H:%M:%S')" | tee ~/logs/pifire_install.log
 echo "*************************************************************************" | tee -a ~/logs/pifire_install.log
 echo " ** Logging to ~/logs/pifire_install.log **" | tee -a ~/logs/pifire_install.log
@@ -140,8 +174,8 @@ echo "**                                                                     **"
 echo "*************************************************************************" | tee -a ~/logs/pifire_install.log
 cd /usr/local/bin
 
-# Check if -dev option is used
-if [[ " $@ " =~ " -dev " ]]; then
+# Check if -devrepo option is used
+if [[ $DEV_REPO == "true" ]]; then
     echo " + Cloning development branch..." | tee -a ~/logs/pifire_install.log
     # Replace the below command to fetch development branch
     $SUDO git clone --depth 1 --branch development https://github.com/nebhead/pifire 2>&1 | tee -a ~/logs/pifire_install.log
