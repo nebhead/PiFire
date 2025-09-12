@@ -46,7 +46,16 @@ mkdir -p ~/logs
 # Check if -dev flag is used and run install from development branch and exit this script
 if [[ $DEV_INSTALLER == "true" ]]; then
     echo " + Running installation script from development branch..." | tee -a ~/logs/pifire_install.log
-    curl -SL https://raw.githubusercontent.com/nebhead/pifire/development/auto-install/install.sh | bash -s -- -devrepo 
+    # Pass through all arguments except -dev to the development branch installer
+    # Build a new argument list excluding -dev
+    passthrough_args=()
+    for arg in "$@"; do
+        if [[ "$arg" != "-dev" ]]; then
+            passthrough_args+=("$arg")
+        fi
+    done
+    echo " + Passing through arguments to development branch installer: ${passthrough_args[*]}" | tee -a ~/logs/pifire_install.log
+    curl -SL https://raw.githubusercontent.com/nebhead/pifire/development/auto-install/install.sh | bash -s -- -devrepo "${passthrough_args[@]}"
     exit 0
 elif [[ $DEV_REPO == "true" ]]; then
     echo " + Running installation script from development branch based on version $INSTALL_SCRIPT_VERSION..." | tee -a ~/logs/pifire_install.log
