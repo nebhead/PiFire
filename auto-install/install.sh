@@ -255,11 +255,29 @@ if [ "$OS_BITS" = "64" ] && [ ! "$VENV_TYPE" = "vanilla" ]; then
         fi
     fi
 
-    echo " + Installing requirements.txt... " | tee -a ~/logs/pifire_install.log      
-    if ! uv pip install -r /usr/local/bin/pifire/auto-install/requirements.txt 2>&1 | tee -a ~/logs/pifire_install.log; then
-        echo " !! Failed to install requirements.txt. Installation cannot continue." | tee -a ~/logs/pifire_install.log
-        exit 1
-    fi
+    echo " + Installing modules from requirements.txt one at a time... " | tee -a ~/logs/pifire_install.log
+    while IFS= read -r req || [ -n "$req" ]; do
+        # Strip inline comments and trim whitespace
+        req="${req%%#*}"
+        req="$(echo "$req" | xargs)"
+        # Skip empty lines
+        [ -z "$req" ] && continue
+        # Skip requirement file/options directives
+        case "$req" in
+            -r*|--requirement*|--find-links*|-f*|--index-url*|--extra-index-url*|--trusted-host*|--no-binary*|--only-binary*|--*)
+                echo " - Skipping requirement option: $req" | tee -a ~/logs/pifire_install.log
+                continue
+                ;;
+        esac
+        echo " - Installing $req ..." | tee -a ~/logs/pifire_install.log
+        uv pip install "$req" 2>&1 | tee -a ~/logs/pifire_install.log
+        status=${PIPESTATUS[0]}
+        if [ $status -ne 0 ]; then
+            echo " !! Failed to install $req. Installation cannot continue." | tee -a ~/logs/pifire_install.log
+            exit 1
+        fi
+    done < /usr/local/bin/pifire/auto-install/requirements.txt
+    echo " + requirements.txt installation complete." | tee -a ~/logs/pifire_install.log
     # Find all bluepy-helper executables in various possible locations
         BLUEPY_HELPERS=$(find /usr/local/bin/pifire/.venv/lib/ -path "*/bluepy/bluepy-helper" 2>/dev/null)
 
@@ -302,9 +320,30 @@ else
             exit 1
         fi
     fi
-    # Installing module dependencies from requirements.txt
-    echo " + Installing requirements.txt... " | tee -a ~/logs/pifire_install.log
-    python -m pip install -r /usr/local/bin/pifire/auto-install/requirements.txt
+    # Installing module dependencies from requirements.txt one at a time
+    echo " + Installing modules from requirements.txt one at a time... " | tee -a ~/logs/pifire_install.log
+    while IFS= read -r req || [ -n "$req" ]; do
+        # Strip inline comments and trim whitespace
+        req="${req%%#*}"
+        req="$(echo "$req" | xargs)"
+        # Skip empty lines
+        [ -z "$req" ] && continue
+        # Skip requirement file/options directives
+        case "$req" in
+            -r*|--requirement*|--find-links*|-f*|--index-url*|--extra-index-url*|--trusted-host*|--no-binary*|--only-binary*|--*)
+                echo " - Skipping requirement option: $req" | tee -a ~/logs/pifire_install.log
+                continue
+                ;;
+        esac
+        echo " - Installing $req ..." | tee -a ~/logs/pifire_install.log
+        python -m pip install "$req" 2>&1 | tee -a ~/logs/pifire_install.log
+        status=${PIPESTATUS[0]}
+        if [ $status -ne 0 ]; then
+            echo " !! Failed to install $req. Installation cannot continue." | tee -a ~/logs/pifire_install.log
+            exit 1
+        fi
+    done < /usr/local/bin/pifire/auto-install/requirements.txt
+    echo " + requirements.txt installation complete." | tee -a ~/logs/pifire_install.log
     # Find all bluepy-helper executables in various possible locations
     BLUEPY_HELPERS=$(find /usr/local/bin/pifire/lib/ -path "*/bluepy/bluepy-helper" 2>/dev/null)
 
