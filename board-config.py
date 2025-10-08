@@ -199,8 +199,8 @@ def rpi_config_write(config_type, feature, add_config={}, pin=0, param='', pin_t
 	''' Check OS version, so we can get the correct location of config.txt '''
 	os_info = get_os_info()
 	version = os_info.get('VERSION_ID', None)
-	if version == '12':
-		''' Version 12 Bookworm '''
+	if version in  ['12', '13']:
+		''' Version 12 Bookworm or Version 13 Trixie '''
 		config_filename = '/boot/firmware/config.txt'
 	elif version == '11':
 		''' Version 11 Bullseye '''

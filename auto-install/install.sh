@@ -2,7 +2,6 @@
 
 # Automatic Installation Script
 # Many thanks to the PiVPN project (pivpn.io) for much of the inspiration for this script
-# Run from https://raw.githubusercontent.com/nebhead/pifire/master/auto-install/install.sh
 #
 # Install with this command (from your Pi):
 #
@@ -109,6 +108,17 @@ case $ARCH in
 esac
 echo " + System architecture set to: $OS_BITS-bit" | tee -a ~/logs/pifire_install.log
 
+# Determine OS version number
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    OS_NAME=$NAME
+    OS_VERSION=$VERSION_ID
+    echo " + Detected OS: $OS_NAME Version: $OS_VERSION" | tee -a ~/logs/pifire_install.log
+else
+    echo " !! Unable to determine OS version. /etc/os-release not found." | tee -a ~/logs/pifire_install.log
+    exit 1
+fi  
+
 if [[ " $@ " =~ " -venv " ]]; then
     echo " + Vanilla venv install selected" | tee -a ~/logs/pifire_install.log
     VENV_TYPE="vanilla"
@@ -152,16 +162,22 @@ echo "**                                                                     **"
 echo "**      Running Apt Update... (This could take several minutes)        **" | tee -a ~/logs/pifire_install.log
 echo "**                                                                     **" | tee -a ~/logs/pifire_install.log
 echo "*************************************************************************" | tee -a ~/logs/pifire_install.log
-$SUDO apt update 2>&1 | tee -a ~/logs/pifire_install.log
+# Update package list, exit if failed
+$SUDO apt update 2>&1 | tee -a ~/logs/pifire_install.log || exit 1
 
 echo "*************************************************************************" | tee -a ~/logs/pifire_install.log
 echo "**                                                                     **" | tee -a ~/logs/pifire_install.log
 echo "**      Running Apt Upgrade... (This could take several minutes)       **" | tee -a ~/logs/pifire_install.log
 echo "**                                                                     **" | tee -a ~/logs/pifire_install.log
 echo "*************************************************************************" | tee -a ~/logs/pifire_install.log
+# Upgrade packages, exit if failed
 $SUDO DEBIAN_FRONTEND=noninteractive apt-get upgrade -y \
     -o Dpkg::Options::=--force-confdef \
     -o Dpkg::Options::=--force-confold 2>&1 | tee -a ~/logs/pifire_install.log
+if [ ${PIPESTATUS[0]} -ne 0 ]; then
+    echo " !! Failed to upgrade packages. Installation cannot continue." | tee -a ~/logs/pifire_install.log
+    exit 1
+fi
 
 # Install APT dependencies
 echo "*************************************************************************" | tee -a ~/logs/pifire_install.log
@@ -169,7 +185,20 @@ echo "**                                                                     **"
 echo "**      Installing Dependencies... (This could take several minutes)   **" | tee -a ~/logs/pifire_install.log
 echo "**                                                                     **" | tee -a ~/logs/pifire_install.log
 echo "*************************************************************************" | tee -a ~/logs/pifire_install.log
-$SUDO apt install python3-dev python3-pip python3-venv python3-scipy nginx git supervisor ttf-mscorefonts-installer redis-server gfortran libatlas-base-dev libopenblas-dev liblapack-dev libopenjp2-7 libglib2.0-dev -y 2>&1 | tee -a ~/logs/pifire_install.log
+# Install dependencies, exit if failed
+$SUDO apt install python3-dev python3-pip python3-venv python3-scipy nginx git supervisor ttf-mscorefonts-installer redis-server gfortran libopenblas-dev liblapack-dev libopenjp2-7 libglib2.0-dev -y 2>&1 | tee -a ~/logs/pifire_install.log
+if [ ${PIPESTATUS[0]} -ne 0 ]; then
+    echo " !! Failed to install dependencies. Installation cannot continue." | tee -a ~/logs/pifire_install.log
+    exit 1
+fi
+# If OS_Version is 11 or 12, install libatlas-base-dev
+if [[ "$OS_VERSION" == "11" || "$OS_VERSION" == "12" ]]; then
+    echo " + OS Version $OS_VERSION detected, installing libatlas-base-dev" | tee -a ~/logs/pifire_install.log
+    $SUDO apt install libatlas-base-dev -y 2>&1 | tee -a ~/logs/pifire_install.log
+else
+    echo " + Skipping libatlas-base-dev installation for OS Version $OS_VERSION" | tee -a ~/logs/pifire_install.log
+fi
+# If Raspberry Pi 5, install python3-rpi-lgpio
 if grep -q "Raspberry Pi 5" /proc/device-tree/model 2>/dev/null; then
     echo " + Raspberry Pi 5 detected, installing python3-rpi-lgpio" | tee -a ~/logs/pifire_install.log
     $SUDO apt install python3-rpi-lgpio -y
@@ -240,17 +269,34 @@ if [ "$OS_BITS" = "64" ] && [ ! "$VENV_TYPE" = "vanilla" ]; then
         exit 1
     fi
 
+    # Install influxdb_client with CISO support for better performance
     if ! uv pip install "influxdb_client[ciso]==1.48.0" 2>&1 | tee -a ~/logs/pifire_install.log; then
         echo " !! Failed to install influxdb_client. Installation cannot continue." | tee -a ~/logs/pifire_install.log
         exit 1
     fi
     
+    # If Raspberry Pi 5, skip rpi.gpio installation as it is not supported
     if grep -q "Raspberry Pi 5" /proc/device-tree/model 2>/dev/null; then
         echo " + Raspberry Pi 5 detected, skipping install of rpi.gpio" | tee -a ~/logs/pifire_install.log
     else
         echo " + Installing rpi.gpio==0.7.1" | tee -a ~/logs/pifire_install.log
         if ! uv pip install rpi.gpio==0.7.1 2>&1 | tee -a ~/logs/pifire_install.log; then
             echo " !! Failed to install rpi.gpio. Installation cannot continue." | tee -a ~/logs/pifire_install.log
+            exit 1
+        fi
+    fi
+
+    # If OS_version is "11" or "12", install scikit-learn==1.4.2 else install scikit-learn==1.7.2
+    if [[ "$OS_VERSION" == "11" || "$OS_VERSION" == "12" ]]; then
+        echo " + Installing scikit-learn==1.4.2" | tee -a ~/logs/pifire_install.log
+        if ! uv pip install scikit-learn==1.4.2 2>&1 | tee -a ~/logs/pifire_install.log; then
+            echo " !! Failed to install scikit-learn. Installation cannot continue." | tee -a ~/logs/pifire_install.log
+            exit 1
+        fi
+    else
+        echo " + Installing scikit-learn==1.7.2" | tee -a ~/logs/pifire_install.log
+        if ! uv pip install scikit-learn==1.7.2 2>&1 | tee -a ~/logs/pifire_install.log; then
+            echo " !! Failed to install scikit-learn. Installation cannot continue." | tee -a ~/logs/pifire_install.log
             exit 1
         fi
     fi
@@ -278,6 +324,7 @@ if [ "$OS_BITS" = "64" ] && [ ! "$VENV_TYPE" = "vanilla" ]; then
         fi
     done < /usr/local/bin/pifire/auto-install/requirements.txt
     echo " + requirements.txt installation complete." | tee -a ~/logs/pifire_install.log
+    
     # Find all bluepy-helper executables in various possible locations
         BLUEPY_HELPERS=$(find /usr/local/bin/pifire/.venv/lib/ -path "*/bluepy/bluepy-helper" 2>/dev/null)
 
