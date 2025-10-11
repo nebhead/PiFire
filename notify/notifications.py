@@ -24,7 +24,6 @@ import apprise
 import logging
 import math
 from common import write_settings, write_control, create_logger, read_history, read_settings, read_control, read_pellet_db
-from sklearn.linear_model import LinearRegression
 
 '''
 ==============================================================================
@@ -467,15 +466,46 @@ def _send_influxdb_notification(notify_event, control, settings, pelletdb, in_da
 		influx_handler = InfluxNotificationHandler(settings)
 	influx_handler.notify(notify_event, control, settings, pelletdb, in_data, grill_platform)
 
+def _smooth_temperatures(temperatures, window_size=3):
+	"""
+	Apply a simple moving average smoothing to the temperature data.
+	
+	Args:
+		temperatures: List of temperature readings
+		window_size: Size of the moving average window
+		
+	Returns:
+		List of smoothed temperature values
+	"""
+	if len(temperatures) < window_size:
+		return temperatures[:]
+		
+	smoothed = []
+	
+	# Keep first few points unchanged
+	for i in range(window_size // 2):
+		smoothed.append(temperatures[i])
+		
+	# Apply moving average
+	for i in range(window_size // 2, len(temperatures) - window_size // 2):
+		window = temperatures[i - window_size // 2:i + window_size // 2 + 1]
+		smoothed.append(sum(window) / len(window))
+		
+	# Keep last few points unchanged
+	for i in range(len(temperatures) - window_size // 2, len(temperatures)):
+		smoothed.append(temperatures[i])
+		
+	return smoothed
+
 def _estimate_eta(temperatures, target_temperature, interval_seconds=3, max_history_minutes=5, min_history_minutes=1):
 	"""
 	Estimates the ETA (Estimated Time of Arrival) for the food probe to reach a specific target temperature using 
-	Linear Interpolation from the SciPy library module.  
+	a simple linear regression implementation with smoothing and weighted regression.
 
 	Args:
 		temperatures: A list of temperatures measured by the food probe over time.
 		target_temperature: The desired target temperature.  Value should be larger than the temperatures in the list.
-		interval: Time between temperature readings.  Value between 1 and 60. 
+		interval_seconds: Time between temperature readings.  Value between 1 and 60. 
 		max_history_minutes:  Maximum minutes of history to use for calculating ETA 
 		min_history_minutes:  Minimum minutes of history to use for calculating ETA 
 
@@ -487,17 +517,15 @@ def _estimate_eta(temperatures, target_temperature, interval_seconds=3, max_hist
 
 	# Ensure target temperature is not already reached
 	if target_temperature <= max(temperatures):
-		#print('DEBUG: ETA: Target temperature already achieved.')
 		eventLogger.debug(f'ETA: Target temperature already achieved.')
 		return None
 
 	# Ensure that interval is between 1 and 60 seconds 
 	if interval_seconds > 60 or interval_seconds < 1:
-		#print('DEBUG: ETA: History data interval not between 1 and 60 seconds.')
 		eventLogger.debug(f'ETA: History data interval not between 1 and 60 seconds.')
 		return None
 
-    # Convert minutes to seconds
+	# Convert minutes to seconds
 	max_data_points = int(max_history_minutes * 60 / interval_seconds)
 	min_data_points = int(min_history_minutes * 60 / interval_seconds)
 
@@ -509,17 +537,48 @@ def _estimate_eta(temperatures, target_temperature, interval_seconds=3, max_hist
 	# Truncate data to fit within limits
 	temperatures = temperatures[-max_data_points:]
 
-	# Prepare data for linear regression
-	X = [[i] for i in range(len(temperatures))]  # Time steps as features
-	y = temperatures  # Temperature values as target
-
 	try:
-		# Fit the linear regression model
-		model = LinearRegression()
-		model.fit(X, y)
-
+		# Apply smoothing to reduce impact of fluctuations
+		smoothed_temps = _smooth_temperatures(temperatures, window_size=5)
+		
+		# Prepare for weighted linear regression
+		n = len(smoothed_temps)
+		x_values = list(range(n))
+		
+		# Create weights that emphasize more recent readings
+		# Exponential weighting - newer readings get more weight
+		weights = [math.exp(i/10) for i in range(n)]
+		weight_sum = sum(weights)
+		weights = [w / weight_sum for w in weights]  # Normalize weights
+		
+		# Calculate weighted means
+		mean_x = sum(x * w for x, w in zip(x_values, weights))
+		mean_y = sum(y * w for y, w in zip(smoothed_temps, weights))
+		
+		# Calculate weighted slope (m) and intercept (b) for y = mx + b
+		numerator = sum(w * (x - mean_x) * (y - mean_y) for x, y, w in zip(x_values, smoothed_temps, weights))
+		denominator = sum(w * (x - mean_x) ** 2 for x, w in zip(x_values, weights))
+		
+		# Avoid division by zero
+		if denominator == 0:
+			eventLogger.debug(f'ETA: Cannot calculate slope - no temperature change detected.')
+			return None
+			
+		slope = numerator / denominator
+		intercept = mean_y - slope * mean_x
+		
+		# If temperature isn't rising (or is falling), we can't predict ETA
+		if slope <= 0:
+			eventLogger.debug(f'ETA: Temperature not increasing, cannot estimate ETA.')
+			return None
+		
 		# Predict time to reach target temperature (assuming linear trend)
-		predicted_time = (target_temperature - y[-1]) / model.coef_[0] * interval_seconds
+		# Formula: (target - current) / rate_of_change
+		current_temp = smoothed_temps[-1]  # Use the smoothed temperature
+		predicted_time = (target_temperature - current_temp) / slope * interval_seconds
+		
+		# Log some debug information about the calculation
+		eventLogger.debug(f'ETA: Using smoothed temp: current={current_temp}, slope={slope:.4f}, predicted={predicted_time:.1f}s')
 		
 		# Ensure positive prediction
 		if predicted_time < 0:
@@ -528,9 +587,10 @@ def _estimate_eta(temperatures, target_temperature, interval_seconds=3, max_hist
 		if math.isinf(predicted_time) or math.isnan(predicted_time):
 			eventLogger.debug(f'ETA: Estimated time is infinite or NaN. [{predicted_time}]')
 			return None
+			
 		return int(predicted_time)
-	except:
-		eventLogger.debug(f'ETA: Error calculating ETA.')
+	except Exception as e:
+		eventLogger.debug(f'ETA: Error calculating ETA: {str(e)}')
 		return None
 
 mqtt = None
