@@ -294,10 +294,15 @@ if [ "$OS_BITS" = "64" ] && [ ! "$VENV_TYPE" = "vanilla" ]; then
             exit 1
         fi
     else
-        echo " + Installing scikit-learn==1.7.2" | tee -a ~/logs/pifire_install.log
-        if ! uv pip install scikit-learn==1.7.2 2>&1 | tee -a ~/logs/pifire_install.log; then
-            echo " !! Failed to install scikit-learn. Installation cannot continue." | tee -a ~/logs/pifire_install.log
-            exit 1
+        # if OSBITS is 64, install scikit-learn==1.7.2
+        if [ "$OS_BITS" = "64" ]; then
+            echo " + Installing scikit-learn==1.7.2" | tee -a ~/logs/pifire_install.log
+            if ! uv pip install scikit-learn==1.7.2 2>&1 | tee -a ~/logs/pifire_install.log; then
+                echo " !! Failed to install scikit-learn. Installation cannot continue." | tee -a ~/logs/pifire_install.log
+                exit 1
+            fi
+        else
+            echo " + Skipping scikit-learn installation for 32-bit OS" | tee -a ~/logs/pifire_install.log
         fi
     fi
 
