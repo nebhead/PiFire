@@ -2481,7 +2481,7 @@
 				"image" : "dsi_touch.png",
 				"reboot_required" : true,
 				"py_dependencies" : ["rpi-backlight==2.6.0", "pillow==11.1.0", "pygame==2.6.1"], 
-				"apt_dependencies" : ["lightdm", "libsdl2-2.0-0"],
+				"apt_dependencies" : ["lightdm", "libsdl2-2.0-0", "python3-pygame"],
 				"command_list" : [["sudo", "python", "board-config.py", "-bl"]],
 				"settings_dependencies" : {
 					"buttonslevel" : {
