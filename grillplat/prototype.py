@@ -17,7 +17,7 @@
 """
 
 from gpiozero.threads import GPIOThread
-from common import is_float, create_logger
+from common import is_float, create_logger, get_os_info
 
 """
 	==============================
@@ -165,7 +165,10 @@ class GrillPlatform:
 			'check_cpu_temp',
 			'supported_commands',
 			'check_alive',
-			'scan_bluetooth'
+			'scan_bluetooth',
+			'os_info',
+			'network_info',
+			'hardware_info'
 		]
 
 		data = {
@@ -251,24 +254,105 @@ class GrillPlatform:
 		'''
 		from bluepy import btle
 		#print('[DEBUG] Imported bluepy...')
-		scanner = btle.Scanner()
-		#print('[DEBUG] Created scanner object...')
-		bt_devices = []
+		try:
+			scanner = btle.Scanner()
+			#print('[DEBUG] Created scanner object...')
+			bt_devices = []
 
-		for entry in scanner.scan(5):
-			name = entry.getValueText(9)
-			if name is None:
-				name = 'Unknown'
-			hw_id = entry.addr
-			info = ''
-			bt_devices.append({'name':name, 'hw_id':hw_id, 'info':info})
-			#print(f'[DEBUG] Found device: {name} ({hw_id})')
+			for entry in scanner.scan(5):
+				name = entry.getValueText(9)
+				if name is None:
+					name = 'Unknown'
+				hw_id = entry.addr
+				info = ''
+				bt_devices.append({'name':name, 'hw_id':hw_id, 'info':info})
+				#print(f'[DEBUG] Found device: {name} ({hw_id})')
+			
+			data = {
+				'result' : 'OK',
+				'message' : 'The control script is running.',
+				'data' : {
+					'bt_devices' : bt_devices
+				}
+			}
+		except Exception as e:
+			data = {
+				'result' : 'ERROR',
+				'message' : f'An error occurred while scanning for bluetooth devices: {str(e)}',
+				'data' : {}
+			}
+		return data
+	
+	def os_info(self, arglist):
+		"""
+		Retrieve OS information such as version and architecture.
+		"""
+		os_info = get_os_info()
 		
 		data = {
 			'result' : 'OK',
-			'message' : 'The control script is running.',
+			'message' : 'OS information retrieved successfully.',
+			'data' : os_info
+		}
+		return data
+	
+	def network_info(self, arglist):
+		"""
+		Retrieve network information such as IP address and MAC address.
+		"""
+		import netifaces
+		
+		ifaces = netifaces.interfaces()
+		net_info = {}
+		
+		for iface in ifaces:
+			addrs = netifaces.ifaddresses(iface)
+			ip_addr = addrs.get(netifaces.AF_INET, [{}])[0].get('addr', 'N/A')
+			mac_addr = addrs.get(netifaces.AF_LINK, [{}])[0].get('addr', 'N/A')
+			net_info[iface] = {
+				'ip_address': ip_addr,
+				'mac_address': mac_addr
+			}
+		
+		data = {
+			'result' : 'OK',
+			'message' : 'Network information retrieved successfully.',
+			'data' : net_info
+		}
+		return data
+	
+	def hardware_info(self, arglist):
+		"""
+		Retrieve hardware information such as CPU model and RAM size.
+		"""
+		import psutil
+
+		cpu_info = {
+			'hardware': 'Unknown',
+			'model': 'Unknown',
+			'model_name': 'Unknown',
+			'cores': psutil.cpu_count(logical=True),
+			'frequency': psutil.cpu_freq().current if psutil.cpu_freq() else 'Unknown'
+		}
+
+		with open('/proc/cpuinfo') as f:
+			for line in f:
+				if 'hardware' in line.lower():
+					cpu_info['hardware'] = line.strip().split(':')[1].strip()
+				if 'model name' in line.lower():
+					cpu_info['model_name'] = line.strip().split(':')[1].strip()
+				elif 'model' in line.lower():
+					cpu_info['model'] = line.strip().split(':')[1].strip()
+
+		mem_info = psutil.virtual_memory()
+		
+		data = {
+			'result' : 'OK',
+			'message' : 'Hardware information retrieved successfully.',
 			'data' : {
-				'bt_devices' : bt_devices
+				'cpu_info': cpu_info,
+				'total_ram': mem_info.total,
+				'available_ram': mem_info.available
 			}
 		}
 		return data

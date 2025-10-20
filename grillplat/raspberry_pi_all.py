@@ -33,7 +33,7 @@
 """
 
 import subprocess
-from common import is_float, create_logger
+from common import is_float, create_logger, get_os_info
 from gpiozero import OutputDevice
 from gpiozero import Button
 from gpiozero.threads import GPIOThread
@@ -229,7 +229,10 @@ class GrillPlatform:
 			'check_cpu_temp',
 			'supported_commands',
 			'check_alive',
-			'scan_bluetooth'
+			'scan_bluetooth',
+			'os_info',
+			'network_info',
+			'hardware_info'
 		]
 
 		data = {
@@ -247,21 +250,26 @@ class GrillPlatform:
 		Returns:
 			(bool, bool): A tuple of (under_voltage, throttled) indicating their status.
 		"""
+		try:
+			output = subprocess.check_output(["sudo", "vcgencmd", "get_throttled"])
+			status_str = output.decode("utf-8").strip()[10:]  # Extract the numerical value
+			status_int = int(status_str, 16)  # Convert from hex to decimal
 
-		output = subprocess.check_output(["vcgencmd", "get_throttled"])
-		status_str = output.decode("utf-8").strip()[10:]  # Extract the numerical value
-		status_int = int(status_str, 16)  # Convert from hex to decimal
-
-		under_voltage = bool(status_int & 0x10000)  # Check bit 16 for under-voltage
-		throttled = bool(status_int & 0x5)  # Check bits 0 and 2 for active throttling
-
-		if under_voltage or throttled:
-			message = 'WARNING: Under-voltage or throttled situation detected'
-		else:
-			message = 'No under-voltage or throttling detected.'
+			under_voltage = bool(status_int & 0x10000)  # Check bit 16 for under-voltage
+			throttled = bool(status_int & 0x5)  # Check bits 0 and 2 for active throttling
+			if under_voltage or throttled:
+				message = 'WARNING: Under-voltage or throttled situation detected'
+			else:
+				message = 'No under-voltage or throttling detected.'
+			result = 'OK'
+		except:
+			under_voltage = False
+			throttled = False
+			message = 'Error obtaining throttled status.'
+			result = 'ERROR'
 
 		data = {
-			'result' : 'OK',
+			'result' : result,
 			'message' : message,
 			'data' : {
 				'cpu_under_voltage' : under_voltage,
@@ -313,17 +321,26 @@ class GrillPlatform:
 		return data
 
 	def check_cpu_temp(self, arglist):
-		output = subprocess.check_output(["vcgencmd", "measure_temp"])
-		temp = output.decode("utf-8").replace("temp=","").replace("'C", "").replace("\n", "")
+		try:
+			output = subprocess.check_output(["sudo", "vcgencmd", "measure_temp"])
+			temp = output.decode("utf-8").replace("temp=","").replace("'C", "").replace("\n", "")
+			result = 'OK'
+			message = 'Successfully obtained CPU temperature.'
 
-		if is_float(temp):
-			temp = float(temp)
-		else:
+			if is_float(temp):
+				temp = float(temp)
+			else:
+				temp = 0.0
+				message = 'Error: command output is not a valid float.'
+				result = 'ERROR'
+		except:
 			temp = 0.0
+			message = 'Error obtaining CPU temperature.'
+			result = 'ERROR'
 
 		data = {
-			'result' : 'OK',
-			'message' : 'Success.',
+			'result' : result,
+			'message' : message,
 			'data' : {
 				'cpu_temp' : float(temp)
 			}
@@ -367,6 +384,80 @@ class GrillPlatform:
 			'message' : 'The control script is running.',
 			'data' : {
 				'bt_devices' : bt_devices
+			}
+		}
+		return data
+	
+	def os_info(self, arglist):
+		"""
+		Retrieve OS information such as version and architecture.
+		"""
+		os_info = get_os_info()
+		
+		data = {
+			'result' : 'OK',
+			'message' : 'OS information retrieved successfully.',
+			'data' : os_info
+		}
+		return data
+	
+	def network_info(self, arglist):
+		"""
+		Retrieve network information such as IP address and MAC address.
+		"""
+		import netifaces
+		
+		ifaces = netifaces.interfaces()
+		net_info = {}
+		
+		for iface in ifaces:
+			addrs = netifaces.ifaddresses(iface)
+			ip_addr = addrs.get(netifaces.AF_INET, [{}])[0].get('addr', 'N/A')
+			mac_addr = addrs.get(netifaces.AF_LINK, [{}])[0].get('addr', 'N/A')
+			net_info[iface] = {
+				'ip_address': ip_addr,
+				'mac_address': mac_addr
+			}
+		
+		data = {
+			'result' : 'OK',
+			'message' : 'Network information retrieved successfully.',
+			'data' : net_info
+		}
+		return data
+	
+	def hardware_info(self, arglist):
+		"""
+		Retrieve hardware information such as CPU model and RAM size.
+		"""
+		import psutil
+
+		cpu_info = {
+			'hardware': 'Unknown',
+			'model': 'Unknown',
+			'model_name': 'Unknown',
+			'cores': psutil.cpu_count(logical=True),
+			'frequency': psutil.cpu_freq().current if psutil.cpu_freq() else 'Unknown'
+		}
+
+		with open('/proc/cpuinfo') as f:
+			for line in f:
+				if 'hardware' in line.lower():
+					cpu_info['hardware'] = line.strip().split(':')[1].strip()
+				if 'model name' in line.lower():
+					cpu_info['model_name'] = line.strip().split(':')[1].strip()
+				elif 'model' in line.lower():
+					cpu_info['model'] = line.strip().split(':')[1].strip()
+
+		mem_info = psutil.virtual_memory()
+		
+		data = {
+			'result' : 'OK',
+			'message' : 'Hardware information retrieved successfully.',
+			'data' : {
+				'cpu_info': cpu_info,
+				'total_ram': mem_info.total,
+				'available_ram': mem_info.available
 			}
 		}
 		return data

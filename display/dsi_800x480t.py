@@ -23,6 +23,7 @@ from pygame import image as PyImage
 from PIL import Image, ImageFilter
 from display.base_flex import DisplayBase
 from display.flexobject import FlexObject
+from pathlib import Path
 
 '''
 Dummy backlight class for prototyping 
@@ -49,10 +50,20 @@ class Display(DisplayBase):
 
 	def _init_display_device(self):
 		''' Init backlight '''
-		if self.real_hardware:
+		backlight_hardware = False
+		# Use pathlib to check if /sys/class/backlight/rpi_backlight/ exists
+		if Path('/sys/class/backlight/').exists():
+			backlight_hardware = True
+
+		if self.real_hardware and backlight_hardware:
 			# Use the rpi-backlight module if running on the RasPi
-			from rpi_backlight import Backlight
-			self.backlight = Backlight()
+			try:
+				from rpi_backlight import Backlight
+				self.backlight = Backlight()
+			except:
+				self.eventLogger.error('Falling back to dummy backlight class. Backlight control will not work.')
+				self.real_hardware = False
+				self.backlight = DummyBacklight()
 		else: 
 			# Else use a fake module class for backlight
 			self.backlight = DummyBacklight()

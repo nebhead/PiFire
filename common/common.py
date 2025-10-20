@@ -24,9 +24,13 @@ import redis
 import uuid
 import random
 import logging
+import subprocess
+import threading
+from logging.handlers import RotatingFileHandler
 from collections.abc import Mapping
 from ratelimitingfilter import RateLimitingFilter
 from common.redis_queue import RedisQueue
+from common.redis_handler import RedisHandler
 
 # *****************************************
 # Constants and Globals 
@@ -57,7 +61,14 @@ cmdsts = redis.StrictRedis('localhost', 6379, charset="utf-8", decode_responses=
  Functions
 ==============================================================================
 '''
-def create_logger(name, filename='./logs/pifire.log', messageformat='%(asctime)s | %(levelname)s | %(message)s', level=logging.INFO):
+def create_logger(
+		name, 
+		filename='./logs/pifire.log', 
+		messageformat='%(asctime)s | %(levelname)s | %(message)s', 
+		level=logging.INFO,
+		maxBytes=1 * 1024 * 1024,  # 1 MB
+    	backupCount=3
+		):
 	'''Create or Get Existing Logger'''
 	logger = logging.getLogger(name)
 	''' 
@@ -72,10 +83,18 @@ def create_logger(name, filename='./logs/pifire.log', messageformat='%(asctime)s
 		# Add a rate limit filter for the voltage error logging 
 		config = {'match': ['An error occurred reading the voltage from one of the ports.']}
 		ratelimit = RateLimitingFilter(rate=1, per=60, burst=5, **config)  # Allow 1 per 60s (with periodic burst of 5)
-		handler = logging.FileHandler(filename)        
-		handler.setFormatter(formatter)
-		handler.addFilter(ratelimit)  # Add the rate limit filter
-		logger.addHandler(handler)
+        
+		# RotatingFileHandler
+		rotating_handler = RotatingFileHandler(filename, maxBytes=maxBytes, backupCount=backupCount)
+		rotating_handler.setFormatter(formatter)
+		rotating_handler.addFilter(ratelimit)
+		logger.addHandler(rotating_handler)
+
+		# RedisHandler
+		redis_handler = RedisHandler(cmdsts, 'logs:' + name)
+		redis_handler.setFormatter(formatter)
+		redis_handler.addFilter(ratelimit)
+		logger.addHandler(redis_handler)
 	return logger
 
 def default_settings():
@@ -83,6 +102,10 @@ def default_settings():
 
 	updater_info = read_updater_manifest()
 	settings['versions'] = updater_info['metadata']['versions']
+
+	settings['server_info'] = {
+		'uuid' : generate_uuid()
+	}
 
 	settings['probe_settings'] = {}
 	settings['probe_settings']['probe_profiles'] = _default_probe_profiles()
@@ -101,7 +124,9 @@ def default_settings():
 		'boot_to_monitor' : False,  # Set to True to boot directly into monitor mode
 		'prime_ignition' : False,  # Set to True to enable the igniter in prime & startup mode
 		'updated_message' : False,   # Set to True to display a pop-up message after the system has been updated 
-		'venv' : False,  # Set to True if running in virtual environment (needed for Raspberry Pi OS Bookworm)
+		'venv' : True,  # Set to True if running in virtual environment (needed for Raspberry Pi OS Bookworm)
+		'python_exec' : '.venv/bin/python',  # Path to the python executable
+		'uv' : True,  # Set to True to enable UV for pip install
 	}
 
 	if os.path.exists('bin'):
@@ -251,7 +276,8 @@ def default_settings():
 		'startup_exit_temp' : 0,  # Exit startup at this temperature threshold. [0 = disabled]
 		'start_to_mode' : {
 			'after_startup_mode' : 'Smoke',  # Transition to this mode after startup completes
-			'primary_setpoint' : 165  # If Hold, set the setpoint
+			'primary_setpoint' : 165,  # If Hold, set the setpoint
+			'start_to_hold_prompt' : False  # If True, always prompt for hold temperature on startup
 		},
 		'smartstart' : {
 			'enabled' : False,   # Disable Smart Start by default on new installations
@@ -279,7 +305,8 @@ def default_settings():
 					'p_mode' : 5
 				}
 			]
-		}
+		},
+		'pwm_duty_cycle' : 100  # Default PWM duty cycle during startup
 	}
 
 	settings['shutdown'] = {
@@ -327,6 +354,7 @@ def _default_dashboard():
 				'html_name' : dash_metadata['html_name'],
 				'metadata' : filename,
 				'custom' : dash_metadata['custom'],
+				'screenshot' : dash_metadata.get('screenshot', ''),  # Use get to avoid KeyError if screenshot is not present
 				'config' : {}
 			}
 			for item in dash_metadata['config']:
@@ -453,6 +481,53 @@ def default_notify_services():
       "username": ""
     }
 
+	services['wled'] = {
+		'enabled': False,
+		'device_address': 'wled.local',
+		'use_profiles': True,  # Use profile-based control (recommended)
+		'use_suggested_presets': False,  # Use PiFire suggested LED behaviors instead of user presets (legacy)
+		'profile_numbers': {
+			# Default profile numbers for each PiFire state (200+ range to avoid conflicts)
+			'idle': 200,
+			'booting': 201, 
+			'preheat': 202,
+			'cooking': 203,
+			'cooldown': 204,
+			'target_reached': 205,
+			'overshoot_alarm': 206,
+			'probe_alarm': 207,
+			'low_pellets': 208,
+			'timer_done': 209,
+			'error_fault': 210,
+			'night_mode': 211
+		},
+		'mode_presets': {
+			# Legacy traditional presets (kept for backward compatibility)
+			'Stop' : 1,
+			'Startup' : 1,
+			'Reignite' : 1, 
+			'Smoke' : 1,
+			'Hold' : 1,
+			'Shutdown' : 1,
+			'Prime' : 1
+		},
+		'event_presets' : {
+			# Legacy event presets (kept for backward compatibility)
+			'Temp_Achieved' : 1,
+			'Recipe_Next' : 1,
+			'Grill_Error' : 1,
+			'Pellet_Level_Low' : 1,
+			'Timer_Expired' : 1
+		},
+		'suggested_config': {
+			'cooking_color': 'blue',  # blue or green
+			'idle_brightness': 20,    # percentage (1-100)
+			'night_mode': False,      # use dim amber instead of normal colors
+			'led_count': 6           # number of LEDs on the strip
+		},
+		'notify_duration' : 120  # number of seconds to keep notifications active
+	}
+
 	return services
 
 def default_control():
@@ -490,6 +565,8 @@ def default_control():
 	control['settings_update'] = False
 
 	control['distance_update'] = False
+
+	control['controller_update'] = False  # Used to indicate that the controller config/cycle data has been updated
 
 	control['units_change'] = False  	# Used to indicate that a units change has been requested
 
@@ -735,6 +812,7 @@ def default_probe_map(probe_profiles):
 	device = {
 			'device' : 'proto_adc',   # Unique name for the device
 			'module' : 'prototype',  # Module to support the hardware device
+			'module_filename' : 'prototype',  # Filename of the module to load
 			'ports' : ['ADC0', 'ADC1', 'ADC2', 'ADC3'],    # Optionally define ports, otherwise, leave this up to the module to define
 			'config' : {
 				'ADC0_rd': '10000',
@@ -1050,7 +1128,7 @@ def read_settings(filename='settings.json', init=False, retry_count=0):
 			backup_settings()  # Backup Old Settings Before Performing Downgrade 
 			settings = downgrade_settings(settings, settings_default)
 			update_settings = True
-		elif (settings_default['versions']['server'] == settings['versions']['server']) and (settings['versions']['build'] < settings_default['versions']['build']):
+		elif (settings_default['versions']['server'] == settings['versions']['server']) and (settings['versions']['build'] <= settings_default['versions']['build']):
 			''' Minor Upgrade Path '''
 			prev_ver = semantic_ver_to_list(settings['versions']['server'])
 			settings = upgrade_settings(prev_ver, settings, settings_default)
@@ -1080,9 +1158,33 @@ def write_settings(settings):
 	"""
 	settings['lastupdated']['time'] = math.trunc(time.time())
 
+	write_settings_redis(settings)
+
 	json_data_string = json.dumps(settings, indent=2, sort_keys=True)
 	with open("settings.json", 'w') as settings_file:
 		settings_file.write(json_data_string)
+
+def read_settings_redis(init=False):
+	global cmdsts
+
+	if init:
+		settings = read_settings()
+		cmdsts.set('settings:general', json.dumps(settings))
+
+	if not cmdsts.exists('settings:general'):
+		settings = {}
+	else:
+		settings = json.loads(cmdsts.get('settings:general'))
+
+	return(settings)
+
+def write_settings_redis(settings):
+	"""
+	Write Settings to Redis DB
+
+	:param settings: Settings
+	"""
+	cmdsts.set('settings:general', json.dumps(settings))
 
 def backup_settings():
 	# Copy current settings file to a backup copy in /[BACKUP_PATH]/PiFire_[DATE]_[TIME].json 
@@ -1226,7 +1328,31 @@ def upgrade_settings(prev_ver, settings, settings_default):
 				settings['probe_settings']['probe_map']['probe_devices'][index]['module'] = 'bt_meater'
 			elif device['module'] == 'bt_meater':
 				settings['probe_settings']['probe_map']['probe_devices'][index]['module'] = 'bt_meater_exp'
-				
+
+	''' Check if upgrading from previous to v1.10 or from v1.10.0 build 0 '''
+	if (prev_ver[0] == 1 and prev_ver[1] == 10 and settings['versions'].get('build', 0) == 0) or \
+		(prev_ver[0] == 1 and prev_ver[1] < 10):
+		''' Setup new Python Exec and UV settings '''
+		if settings['globals'].get('venv', False):
+			''' If using VENV, set the python_exec to the bin/python '''
+			settings['globals']['python_exec'] = 'bin/python'
+			settings['globals']['uv'] = False
+		else:
+			settings['globals']['python_exec'] = 'python'
+			settings['globals']['uv'] = False
+			# TODO: Upgrade to VENV for older configs? 
+
+	''' Check if upgrading from previous to v1.10 or from v1.10.0 build 51 '''
+	if (prev_ver[0] == 1 and prev_ver[1] == 10 and settings['versions'].get('build', 0) <= 51) or \
+		(prev_ver[0] == 1 and prev_ver[1] < 10):
+		''' Update probe map devices to include module_filename '''
+		print('Upgrading probe map devices to include module_filename')
+		for index, device in enumerate(settings['probe_settings']['probe_map']['probe_devices']):
+			if 'module_filename' not in list(device.keys()):
+				print(f'   Updating device: {device["device"]} - {device["module"]}')
+				device['module_filename'] = device['module']
+				settings['probe_settings']['probe_map']['probe_devices'][index] = device
+
 	''' Import any new probe profiles '''
 	for profile in list(settings_default['probe_settings']['probe_profiles'].keys()):
 		if profile not in list(settings['probe_settings']['probe_profiles'].keys()):
@@ -1257,6 +1383,58 @@ def downgrade_settings(settings, settings_default):
 	write_warning(warning)
 	write_log(warning)
 	return(settings)
+
+def read_connected_users(flush=False):
+	"""
+	Read Connected Users from Redis DB
+
+	:param flush: True to clean connected_users. False otherwise
+	:return: connected_users (List of Client ID's)
+	"""
+	global cmdsts
+
+	try:
+		if flush:
+			cmdsts.delete('users:connected')
+
+		if not(cmdsts.exists('users:connected')):
+			connected_users = []
+		else:
+			# Read list of users
+			connected_users = cmdsts.lrange('users:connected', 0, -1)
+	except:
+		event = 'Unable to reach Redis database.  You may need to reinstall PiFire or enable redis-server.'
+		write_log(event)
+
+	return connected_users
+
+def write_connected_user(client_id):
+	"""
+	Write a Connected User to Redis DB
+
+	:param client_id: Users Client ID from Socket IO/Flask
+	"""
+	global cmdsts
+
+	try:
+		cmdsts.rpush('users:connected', client_id)
+	except:
+		event = 'Unable to reach Redis database.  You may need to reinstall PiFire or enable redis-server.'
+		write_log(event)
+
+def remove_connected_user(client_id):
+	"""
+	Removes a Connected User to Redis DB
+
+	:param client_id: Users Client ID from Socket IO/Flask
+	"""
+	global cmdsts
+
+	try:
+		cmdsts.lrem('users:connected', 0, client_id)
+	except:
+		event = 'Unable to reach Redis database.  You may need to reinstall PiFire or enable redis-server.'
+		write_log(event)
 
 def read_pellet_db(filename='pelletdb.json'):
 	"""
@@ -1303,9 +1481,32 @@ def write_pellet_db(pelletdb):
 
 	:param pelletdb: Pellet Database
 	"""
+	write_pellets_redis(pelletdb)
 	json_data_string = json.dumps(pelletdb, indent=2, sort_keys=True)
 	with open("pelletdb.json", 'w') as json_file:
 		json_file.write(json_data_string)
+
+def read_pellets_redis(init=False):
+	global cmdsts
+
+	if init:
+		pelletdb = read_pellet_db()
+		cmdsts.set('pellets:general', json.dumps(pelletdb))
+
+	if not cmdsts.exists('pellets:general'):
+		pelletdb = {}
+	else:
+		pelletdb = json.loads(cmdsts.get('pellets:general'))
+
+	return(pelletdb)
+
+def write_pellets_redis(pelletdb):
+	"""
+	Write Settings to Redis DB
+
+	:param settings: Settings
+	"""
+	cmdsts.set('pellets:general', json.dumps(pelletdb))
 
 def backup_pellet_db(action='backup'):
 	''' Backup & Restore Pellet Database '''
@@ -1364,12 +1565,12 @@ def read_events(legacy=True):
 	"""
 	# Read all lines of events.log into a list(array)
 	try:
-		with open('/tmp/events.log') as event_file:
+		with open('./logs/events.log') as event_file:
 			event_lines = event_file.readlines()
 			event_file.close()
 	# If file not found error, then create events.log file
 	except(IOError, OSError):
-		event_file = open('/tmp/events.log', "w")
+		event_file = open('./logs/events.log', "w")
 		event_file.close()
 		event_lines = []
 
@@ -1396,12 +1597,12 @@ def read_events(legacy=True):
 	return(event_list, num_events)
 
 def read_log_file(filepath):
-	# Read all lines of events.log into a list(array)
+	# Read all lines of log file into a list(array)
 	try:
 		with open(filepath) as log_file:
 			log_file_lines = log_file.readlines()
 			log_file.close()
-	# If file not found error, then create events.log file
+	# If file not found error, then log it
 	except(IOError, OSError):
 		event = f'Unable to open log file: {filepath}'
 		write_log(event)
@@ -1415,14 +1616,14 @@ def add_line_numbers(event_list):
 		event_lines.append([index, line])
 	return event_lines 
 
-def write_log(event):
+def write_log(event, loggername='events'):
 	"""
 	Write event to event.log
 
 	:param event: String event
 	"""
 	log_level = logging.INFO
-	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
+	eventLogger = create_logger(loggername, filename='./logs/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 	eventLogger.info(event)
 
 def write_event(settings, event):
@@ -1438,6 +1639,48 @@ def write_event(settings, event):
 		write_log(event)
 	elif not event.startswith('*'):
 		write_log(event)
+
+def read_events_redis(flush=False):
+	"""
+	Read Events from Redis DB
+
+	:param flush: True to clean events. False otherwise
+	:return: events_list
+	"""
+	global cmdsts
+
+	events_list = []
+
+	try:
+		if flush:
+			cmdsts.delete('logs:events')
+
+		if not(cmdsts.exists('logs:events')):
+			events, num_events = read_events()
+			events_list = []
+			for item in range(min(num_events, 60)):
+				event = {
+					'date': events[item][0],
+					'time': events[item][1],
+					'message': events[item][2].strip('\n')
+				}
+				events_list.append(event)
+				cmdsts.lpush('logs:events', " ".join(events[item]))
+		else:
+			events_list = []
+			for item in cmdsts.lrange('logs:events', 0, -1):
+				item_list = item.split(" ", 2)
+				event = {
+					'date': item_list[0],
+					'time': item_list[1],
+					'message': item_list[2].strip('\n')
+				}
+				events_list.append(event)
+	except:
+		event = 'Unable to reach Redis database.  You may need to reinstall PiFire or enable redis-server.'
+		write_log(event)
+
+	return(events_list)
 
 def read_history(num_items=0, flushhistory=False):
 	"""
@@ -1627,70 +1870,6 @@ def read_autotune(flush=False, size_only=False):
 
 	return output_data
 
-def prepare_csv(data=[], filename=''):
-	# Create filename if no name specified
-	if(filename == ''):
-		now = datetime.datetime.now()
-		filename = now.strftime('%Y%m%d-%H%M') + '-PiFire-Export'
-	else:
-		filename = filename.replace('.json', '')
-		filename = filename.replace('./history/', '')
-		filename += '-Pifire-Export'
-	
-	exportfilename = '/tmp/' + filename + ".csv"
-	
-	# Open CSV File for editing
-	csvfile = open(exportfilename, "w")
-
-	if(data == []):
-		data = read_history()
-
-	exd_data = True if 'EXD' in data[0].keys() else False 
-
-	# Set Standard Labels 
-	labels = 'Time, '
-	primary_key = list(data[0]['P'].keys())[0]
-	labels += f'{primary_key} Temp, {primary_key} Set Point, {primary_key} Notify Target' 
-	for key in data[0]['F']:
-		labels += f', {key} Temp, {key} Notify Target'
-	for key in data[0]['AUX']:
-		labels += f', {key} Temp'
-	if exd_data: 
-		for key in data[0]['EXD']:
-			labels += f', {key}'
-
-	# End the labels line
-	labels += '\n'
-
-	# Get the length of the data (number of captured events)
-	list_length = len(data)
-
-	if(list_length > 0):
-		writeline = labels
-		csvfile.write(writeline)
-
-		for index in range(0, list_length):
-			converted_dt = datetime.datetime.fromtimestamp(int(data[index]['T']) / 1000)
-			timestr = converted_dt.strftime('%Y-%m-%d %H:%M:%S')
-			writeline = f"{timestr}, {data[index]['P'][primary_key]}, {data[index]['PSP']}, {data[index]['NT'][primary_key]}"
-			for key in data[index]['F']:
-				writeline += f", {data[index]['F'][key]}, {data[index]['NT'][key]}"
-			for key in data[index]['AUX']:
-				writeline += f", {data[index]['AUX'][key]}"
-			# Add any additional data if keys exist
-			if exd_data: 
-				for key in data[index]['EXD']:
-					writeline += f", {data[index]['EXD'][key]}"
-			# Write line to file
-			csvfile.write(writeline + '\n')
-	else:
-		writeline = 'No Data\n'
-		csvfile.write(writeline)
-
-	csvfile.close()
-
-	return(exportfilename)
-
 def convert_temp(units, temp):
 	"""
 	Convert Temp Based on Units
@@ -1713,18 +1892,20 @@ def convert_settings_units(units, settings):
 	:param settings: Settings
 	:return: Updated Settings
 	"""
-	settings['globals']['units'] = units
-	settings['startup']['startup_exit_temp'] = convert_temp(units, settings['startup']['startup_exit_temp'])
-	settings['safety']['maxstartuptemp'] = convert_temp(units, settings['safety']['maxstartuptemp'])
-	settings['safety']['maxtemp'] = convert_temp(units, settings['safety']['maxtemp'])
-	settings['safety']['minstartuptemp'] = convert_temp(units, settings['safety']['minstartuptemp'])
-	settings['smoke_plus']['max_temp'] = convert_temp(units, settings['smoke_plus']['max_temp'])
-	settings['smoke_plus']['min_temp'] = convert_temp(units, settings['smoke_plus']['min_temp'])
-	settings['keep_warm']['temp'] = convert_temp(units, settings['keep_warm']['temp'])
-	for temp in range(0, len(settings['startup']['smartstart']['temp_range_list'])):
-		settings['startup']['smartstart']['temp_range_list'][temp] = convert_temp(
-			units, settings['startup']['smartstart']['temp_range_list'][temp])
-	settings['startup']['smartstart']['exit_temp'] = convert_temp(units, settings['startup']['smartstart']['exit_temp'])
+	if units in ['C', 'F'] and units != settings['globals']['units']:
+		settings['globals']['units'] = units
+		settings['startup']['startup_exit_temp'] = convert_temp(units, settings['startup']['startup_exit_temp'])
+		settings['startup']['start_to_mode']['primary_setpoint'] = convert_temp(units, settings['startup']['start_to_mode']['primary_setpoint'])
+		settings['safety']['maxstartuptemp'] = convert_temp(units, settings['safety']['maxstartuptemp'])
+		settings['safety']['maxtemp'] = convert_temp(units, settings['safety']['maxtemp'])
+		settings['safety']['minstartuptemp'] = convert_temp(units, settings['safety']['minstartuptemp'])
+		settings['smoke_plus']['max_temp'] = convert_temp(units, settings['smoke_plus']['max_temp'])
+		settings['smoke_plus']['min_temp'] = convert_temp(units, settings['smoke_plus']['min_temp'])
+		settings['keep_warm']['temp'] = convert_temp(units, settings['keep_warm']['temp'])
+		for temp in range(0, len(settings['startup']['smartstart']['temp_range_list'])):
+			settings['startup']['smartstart']['temp_range_list'][temp] = convert_temp(
+				units, settings['startup']['smartstart']['temp_range_list'][temp])
+		settings['startup']['smartstart']['exit_temp'] = convert_temp(units, settings['startup']['smartstart']['exit_temp'])
 	return(settings)
 
 def is_real_hardware(settings=None):
@@ -1736,28 +1917,94 @@ def is_real_hardware(settings=None):
 	if settings == None:
 		settings = read_settings()
 
-	return True if settings['platform']['real_hw'] else False 
+	return True if settings['platform']['real_hw'] else False
+
+def restart_control():
+	"""
+	Restart the Control Script
+	"""
+	os.system("sleep 3 && sudo supervisorctl restart control &")
+
+def restart_webapp():
+	"""
+	Restart the WebApp Script
+	"""
+	os.system("sleep 3 && sudo supervisorctl restart webapp &")
 
 def restart_scripts():
 	"""
 	Restart the Control and WebApp Scripts
 	"""
 	if is_real_hardware():
-		os.system("sleep 3 && sudo service supervisor restart &")
+		def _restart_supervisor():
+			try:
+				# Try systemctl first (modern systemd systems)
+				result = subprocess.run(['sudo', 'systemctl', 'restart', 'supervisor'], 
+									   capture_output=True, text=True, timeout=10)
+				if result.returncode != 0:
+					# Log the error and try fallback
+					print(f"systemctl restart failed: {result.stderr}")
+					# Fallback to service command
+					subprocess.run(['sudo', 'service', 'supervisor', 'restart'], timeout=10)
+			except subprocess.TimeoutExpired:
+				print("Supervisor restart command timed out")
+			except Exception as e:
+				print(f"Error restarting supervisor: {e}")
+				# Final fallback to original method
+				os.system("sleep 3 && sudo service supervisor restart &")
+		
+		# Run in background thread to avoid blocking
+		threading.Thread(target=_restart_supervisor, daemon=True).start()
 
 def reboot_system():
 	"""
 	Reboot the system
 	"""
 	if is_real_hardware():
-		os.system("sleep 3 && sudo reboot &")
+		def _reboot():
+			try:
+				time.sleep(3)  # Give time for response to be sent
+				# Try systemctl first (preferred method for systemd)
+				result = subprocess.run(['sudo', 'systemctl', 'reboot'], 
+									   capture_output=True, text=True, timeout=10)
+				if result.returncode != 0:
+					print(f"systemctl reboot failed: {result.stderr}")
+					# Fallback to traditional reboot command
+					subprocess.run(['sudo', 'reboot'], timeout=10)
+			except subprocess.TimeoutExpired:
+				print("Reboot command timed out")
+			except Exception as e:
+				print(f"Error rebooting system: {e}")
+				# Final fallback to original method
+				os.system("sudo reboot")
+		
+		# Run in background thread
+		threading.Thread(target=_reboot, daemon=True).start()
 
 def shutdown_system():
 	"""
 	Shutdown the system
 	"""
 	if is_real_hardware():
-		os.system("sleep 3 && sudo shutdown -h now &")
+		def _shutdown():
+			try:
+				time.sleep(3)  # Give time for response to be sent
+				# Try systemctl first (preferred method for systemd)
+				result = subprocess.run(['sudo', 'systemctl', 'poweroff'], 
+									   capture_output=True, text=True, timeout=10)
+				if result.returncode != 0:
+					print(f"systemctl poweroff failed: {result.stderr}")
+					# Fallback to traditional shutdown command
+					subprocess.run(['sudo', 'shutdown', '-h', 'now'], timeout=10)
+			except subprocess.TimeoutExpired:
+				print("Shutdown command timed out")
+			except Exception as e:
+				print(f"Error shutting down system: {e}")
+				# Final fallback to original method
+				os.system("sudo shutdown -h now")
+		
+		# Run in background thread
+		threading.Thread(target=_shutdown, daemon=True).start()
 
 def read_wizard(filename='wizard/wizard_manifest.json'):
 	"""
@@ -1972,6 +2219,22 @@ def seconds_to_string(seconds):
 		time_string = f'{s}s'
 
 	return time_string
+
+def get_system_command_output(requested='supported_commands', timeout=1):
+	system_output = RedisQueue('control:systemo')
+	endtime = timeout + time.time()
+	while time.time() < endtime:
+		while system_output.length() > 0:
+			data = system_output.pop()
+			if data['command'][0] == requested:
+				return data
+
+	return {
+		'command' : [requested, None, None, None],
+		'result' : 'ERROR',
+		'message' : 'The requested command output could not be found.',
+		'data' : {'Response_Was' : 'To_Fast'}
+	}
 
 def read_generic_json(filename):
 	try:
@@ -2262,6 +2525,32 @@ def process_command(action=None, arglist=[], origin='unknown', direct_write=Fals
 			'''
 			data['data']['mode'] = control['mode']
 
+		elif arglist[0] == 'uuid':
+			'''
+			Get Server Uuid
+			/api/get/uuid
+
+			Returns: 
+			{ 
+				'uuid' : <Server Uuid> 
+			}
+			'''
+			data['data']['uuid'] = settings['server_info']['uuid']
+
+		elif arglist[0] == 'versions':
+			'''
+			Get Server Versions
+			/api/get/versions
+
+			Returns: 
+			{ 
+				'version' : <Server version>,
+				'build' : <Server build>
+			}
+			'''
+			data['data']['version'] = settings['versions']['server']
+			data['data']['build'] = settings['versions']['build']
+
 		elif arglist[0] == 'hopper':
 			'''
 			Get Hopper Level 
@@ -2406,6 +2695,23 @@ def process_command(action=None, arglist=[], origin='unknown', direct_write=Fals
 			else:
 				data['result'] = 'ERROR'
 				data['message'] = f'Primary set point should be an integer or float in degrees {settings["globals"]["units"]}'
+		elif arglist[0] == 'units':
+			'''
+			Units
+			/api/set/units/{C/F}
+			'''
+			if arglist[1] in ['C', 'F']:
+				settings = convert_settings_units(arglist[1], settings)
+				write_settings(settings)
+				control['settings_update'] = True
+				write_control(control, direct_write=direct_write, origin=origin)
+				control['updated'] = True
+				control['units_change'] = True
+				write_control(control, direct_write=direct_write, origin=origin)
+				#print(f'Settings Units Changed to {arglist[1]}')
+			else:
+				data['result'] = 'ERROR'
+				data['message'] = f'Set Units {arglist[1]} not recognized.'
 
 		elif arglist[0] == 'mode':
 			'''
@@ -2537,7 +2843,7 @@ def process_command(action=None, arglist=[], origin='unknown', direct_write=Fals
 					data['result'] = 'ERROR'
 					data['message'] = f'Notify object label {arglist[1]} was not found.'
 				else:
-					print(f'{object["label"]} FOUND')
+					#print(f'{object["label"]} FOUND')
 					if arglist[2] in ['req', 'shutdown', 'keep_warm', 'reignite']:
 						if arglist[3] == 'true':
 							control['notify_data'][index][arglist[2]] = True
@@ -2848,3 +3154,30 @@ def write_generic_key(key, value):
 	global cmdsts
 
 	cmdsts.set(key, json.dumps(value))
+
+def get_os_info(filepath='os_info.json', loggername='events'):
+	"""Get operating system information"""
+	os_info = {}
+
+	try:
+		# Get OS release info
+		with open('/etc/os-release', 'r') as f:
+			for line in f:
+				if '=' in line:
+					key, value = line.strip().split('=', 1)
+					# Remove quotes if present
+					value = value.strip('"')
+					os_info[key] = value
+		
+		# Get architecture using uname -m
+		arch = subprocess.check_output(['/bin/uname', '-m']).decode().strip()
+		os_info['ARCHITECTURE'] = arch
+		
+		# Save to JSON file
+		write_generic_json(os_info, filepath)
+		return os_info
+		
+	except Exception as e:
+		event = f"Error getting OS info: {str(e)}"
+		write_log(event, level='error', loggername=loggername)
+		return os_info

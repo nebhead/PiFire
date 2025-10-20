@@ -1,0 +1,566 @@
+{% macro render_probe_devices(probe_map, modules, alerts) %} 
+<div id="probeDevicesCard">
+    {% if alerts != [] %}
+    <!-- Alerts -->
+    <div id="alerts">
+    {% for alert in alerts %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <strong><i class="fas fa-exclamation-circle"></i>&nbsp; Oops! Something isn't right.</strong><br>
+            <i>{{ alert['message'] }}</i>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Device List -->
+    <div class="card shadow"> 
+        <div class="card-header">
+            Probe Input Devices
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead class="thead-light">
+                    <tr>
+                    <th scope="col">Thumbnail</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Type</th>
+                    <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for device in probe_map['probe_devices'] %}
+                    <tr>
+                        <td class="align-middle">
+                            <img src="{{ url_for('static', filename='img/wizard/' + modules[device['module']]['image']) }}" class="rounded" alt="thumbnail" width="48" height="48"> 
+                        </td>
+                        <td class="align-middle">{{ device['device'] }}</td>
+                        <td class="align-middle">{{ device['module'] }}</td>
+                        <td class="align-middle" style="width: 20%">
+                            <div class="btn-toolbar" role="toolbar">
+                                <div class="btn-group mr-2">
+                                    <button class="btn btn-primary btn-sm text-white" type="button" data-val="{{ device['device'] }}" data-toggle="modal" data-target="#editProbeDeviceModal" onclick="probe_editShowDeviceConfig('{{ device['device'] }}')"><i class="far fa-edit"></i></button>
+                                </div>
+                                <div class="btn-group mr-2">
+                                    <button class="btn btn-danger btn-sm text-white" type="button" data-val="{{ device['device'] }}" data-toggle="modal" data-target="#delProbeDeviceModal" onclick="probe_selectDevice('{{ device['device'] }}')"><i class="far fa-trash-alt"></i></button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    <tr>
+                        <td class="align-top"></td>
+                        <td class="align-top"></td>
+                        <td class="align-top"></td>
+                        <td class="align-top">
+                            <button class="btn btn-success btn-sm text-white" type="button" id="addProbeDevice" data-toggle="modal" data-target="#addProbeDeviceModal"><i class="fas fa-plus"></i></button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <input type="hidden" id="probeModuleList" name="probeModuleList" value="{% for device in probe_map['probe_devices'] %}{{device['module']}}<br>{% endfor %}">
+
+    <!-- Device List Modals -->
+    <!-- delProbeDeviceModal -->
+    <div class="modal fade power-modal" id="delProbeDeviceModal" data-backdrop="false" tabindex="-1" aria-labelledby="delProbeDeviceModalLabel" aria-hidden="true" >
+        <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title" id="delProbeDeviceModalLabel">Delete Probe Device?</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            </div>
+            <div class="modal-body">
+            Are you sure you want to delete this probe device?<br>
+            <i><strong>Note:</strong>&nbsp; All probes associated with this device will also be deleted.</i>
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-danger" data-dismiss="modal" value="" id="probeDelDeviceBtn" onclick="probe_deleteDevice('delProbeDeviceModal')">Confirm</button>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- editProbeDeviceModal -->
+    <div class="modal fade power-modal" id="editProbeDeviceModal" data-backdrop="false" tabindex="-1" aria-labelledby="editProbeDeviceModalLabel" aria-hidden="true" >
+        <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title" id="editProbeDeviceModalLabel">Edit Probe Device</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            </div>
+            <div class="modal-body" id="editProbeDeviceField">
+            Configure the probe device here! 
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" data-dismiss="modal" val="" id="probeEditDeviceBtn" onclick="probe_editSubmitDeviceConfig()">Save</button>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- addProbeDeviceModal -->
+    <div class="modal fade power-modal" id="addProbeDeviceModal" data-backdrop="false" tabindex="-1" aria-labelledby="addProbeDeviceModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title" id="addProbeDeviceModalLabel">Add Probe Device</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            </div>
+            <div class="modal-body">
+                <!-- Select Drop Down -->
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="addProbeDeviceSelect">Select Device</label>
+                    </div>
+                    <select class="form-control" id="addProbeDeviceSelect" name="addProbeDeviceSelect" onchange="probe_addShowDeviceConfig(this.value)">
+                        <option value="none" selected disabled hidden>Select a Device Module</option>
+                        {% for module, object in modules.items() %}
+                        <option value="{{ module }}">
+                        {{ object['friendly_name'] }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div id="addProbeDeviceField">
+                    <!-- Probe Device Configuration Info Here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" data-dismiss="modal" val="" id="probeAddDeviceBtn" onclick="probe_addSubmitDeviceConfig()">Save</button>
+            </div>
+        </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+{% macro render_probe_device_settings(moduleData, moduleSection, defaultName, defaultConfig, available_probes, mode) %} 
+<!-- Form for Selected Module -->
+<div class="card">
+	<div class="media">
+		<img src="{{ url_for('static', filename='img/wizard/' + moduleData['image']) }}">
+		<div class="media-body">
+			<h5 class="mt-0">{{ moduleData['friendly_name'] }}</h5>
+			<br>
+			{{ moduleData['description'] }}
+			<br>
+			{% if moduleData['notes'] %}
+			<br>
+			<span class="badge badge-warning">NOTE:</span>
+			<i class="small"> {{ moduleData['notes'] }} </i>
+			<br>
+			<br>
+			{% endif %}
+		</div>
+	</div>
+
+	<table class="table">
+		<thead class="thead-light">
+			<tr>
+			<th scope="col">Setting</th>
+			<th scope="col" style="min-width: 200px;">Options</th>
+			<th scope="col">Description</th>
+			</tr>
+		</thead>
+		<tbody>
+            <!-- Device Specifc Configuration Items-->
+            {% for setting in moduleData['device_specific']['config'] %}
+			<!-- hide row if setting['hidden'] is true -->
+            <tr{% if setting['hidden'] %} style="display:none;" {% endif %}>
+				<td>
+                    {{ setting['friendly_name'] }}
+                </td>
+				<td>
+                    {% if setting['label'] == 'probes_list' %} 
+                    <select multiple class="form-control deviceSpecific{{ mode }}" id="{{ moduleSection }}_devspec_{{ setting['label'] }}" name="{{ moduleSection }}_devspec_{{ setting['label'] }}">
+                        {% for probe in available_probes %}
+                        <option value="{{ probe }}" {% if probe in defaultConfig['probes_list'] %}selected{% endif %}>{{ probe }}</option>
+                        {% endfor %}
+                    </select>
+                    {% else %}
+                        {% if mode == 'Edit' %}
+                            {% if setting['type'] in ['float', 'int'] %}
+                                {{ render_input_float_int(moduleSection, mode, setting['label'], defaultConfig[setting['label']], setting['min'], setting['max'], setting['step']) }} 
+                            {% elif setting['type'] == 'list' %}
+                                {{ render_input_list(moduleSection, mode, setting['label'], defaultConfig[setting['label']], setting['list_values'], setting['list_labels']) }}
+                            {% elif setting['type'] == 'bt_address' %}
+                                {{ render_input_bt_address(moduleSection, mode, setting['label'], defaultConfig[setting['label']]) }}
+                            {% else %}
+                                {{ render_input_string(moduleSection, mode, setting['label'], defaultConfig[setting['label']]) }}
+                            {% endif %}
+                        {% else %}
+                            {% if setting['type'] in ['float', 'int'] %}
+                                {{ render_input_float_int(moduleSection, mode, setting['label'], setting['default'], setting['min'], setting['max'], setting['step']) }} 
+                            {% elif setting['type'] == 'list' %}
+                                {{ render_input_list(moduleSection, mode, setting['label'], setting['default'], setting['list_values'], setting['list_labels']) }}
+                            {% elif setting['type'] == 'bt_address' %}
+                                {{ render_input_bt_address(moduleSection, mode, setting['label'], defaultConfig[setting['label']]) }}
+                            {% else %}
+                                {{ render_input_string(moduleSection, mode, setting['label'], setting['default']) }}
+                            {% endif %}
+                        {% endif %}
+                    {% endif %}
+                </td>
+				<td>
+                    {% if setting['type'] == 'bt_address' %}
+                        Turn on your bluetooth device then click this button to scan for available devices.
+                    {% else %}
+                        {{ setting['description'] }}
+                    {% endif %}
+                </td>
+				</tr>
+			{% endfor %}
+            <tr>
+                <td>
+                    Unique Device Name
+                </td>
+                <td>
+                    <input type="text" class="form-control" value="{{ defaultName }}" id="probeDeviceName{{ mode }}" aria-label="Device Name" aria-describedby="device_label" required>
+                </td>
+                <td>
+                    Device name must be unique (not shared with any other devices) and should only contain alpha-numeric characters without spaces.  Used to reference a specific device/port mapping.
+                </td>
+            </tr>
+
+        </tbody>
+	</table>
+
+    <br>
+</div>
+{% endmacro %}
+
+{% macro render_probe_ports(probe_map, modules, alerts) %}
+<div id="probePortsCard">
+    {% if alerts != [] %}
+    <!-- Alerts -->
+    <div id="alerts">
+    {% for alert in alerts %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <strong><i class="fas fa-exclamation-circle"></i>&nbsp; Oops! Something isn't right.</strong><br>
+            <i>{{ alert['message'] }}</i>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Port List -->
+    <div class="card shadow"> 
+        <div class="card-header">
+            Probe Configuration
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead class="thead-light">
+                    <tr>
+                    <th scope="col">Display Name</th>
+                    <th scope="col">Enabled</th>
+                    <th scope="col">Type</th>
+                    <th scope="col">Device</th>
+                    <th scope="col">Port</th>
+                    <th scope="col">Profile</th>
+                    <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for probe in probe_map['probe_info'] %}
+                    <tr>
+                        <td class="align-middle">
+                            <strong>{{ probe['name'] }}</strong>
+                        </td>
+                        <td class="align-middle">
+                            {% if probe['enabled'] %}<span class="text-success"><i class="far fa-check-circle"></i></span>
+                            {% else %}<span class="text-warning"><i class="far fa-times-circle"></i></span>
+                            {% endif %}
+                        </td>
+                        <td class="align-middle">
+                            {{ probe['type'] }}
+                        </td>
+                        <td class="align-middle">
+                            {{ probe['device'] }}
+                        </td>
+                        <td class="align-middle">
+                            {{ probe['port'] }}
+                        </td>
+                        <td class="align-middle">
+                            {% if 'ADC' in probe['port'] %}
+                            {{ probe['profile']['name'] }}
+                            {% else %}
+                            NA
+                            {% endif %}
+                        </td>
+                        <td class="align-middle" style="width: 20%">
+                            <div class="btn-toolbar" role="toolbar">
+                                <div class="btn-group mr-2">
+                                    <button class="btn btn-primary btn-sm text-white" type="button" data-toggle="modal" data-target="#editProbePortModal" onclick="probe_showProbeConfig('{{ probe['label'] }}')"><i class="far fa-edit"></i></button>
+                                </div>
+                                <div class="btn-group mr-2">
+                                    <button class="btn btn-danger btn-sm text-white" type="button" data-toggle="modal" data-target="#delProbePortModal" onclick="probe_selectProbe('{{ probe['label'] }}')"><i class="far fa-trash-alt"></i></button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    <tr>
+                        <td class="align-top"></td>
+                        <td class="align-top"></td>
+                        <td class="align-top"></td>
+                        <td class="align-top"></td>
+                        <td class="align-top"></td>
+                        <td class="align-top"></td>
+                        <td class="align-top">
+                            <button class="btn btn-success btn-sm text-white" type="button" data-toggle="modal" data-target="#addProbePortModal" onclick="probe_showProbeConfig('')"><i class="fas fa-plus"></i></button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Probe Port List Modals -->
+
+    <!-- delProbePortModal -->
+    <div class="modal fade power-modal" id="delProbePortModal" data-backdrop="false" tabindex="-1" aria-labelledby="delProbePortModalLabel" aria-hidden="true" >
+        <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title" id="delProbePortModalLabel">Delete Probe?</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            </div>
+            <div class="modal-body">
+            Are you sure you want to delete this probe?
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="probe_deleteProbe()">Confirm</button>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- editProbePortModal -->
+    <div class="modal fade power-modal" id="editProbePortModal" data-backdrop="false" tabindex="-1" aria-labelledby="editProbePortModalLabel" aria-hidden="true" >
+        <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title" id="editProbePortModalLabel">Edit Probe</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            </div>
+            <div class="modal-body">
+                <div id="editProbePortField">
+                    <!-- Probe Port Configuration Info Here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" data-dismiss="modal" val="" id="probeEditPortBtn" onclick="probe_submitProbeConfig('edit')">Save</button>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- addProbePortModal -->
+    <div class="modal fade power-modal" id="addProbePortModal" data-backdrop="false" tabindex="-1" aria-labelledby="addProbePortModalLabel" aria-hidden="true" >
+        <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title" id="addProbeDevicePortLabel">Add Probe</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            </div>
+            <div class="modal-body">
+                <div id="addProbePortField">
+                    <!-- Probe Port Configuration Info Here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="probe_submitProbeConfig('add')">Save</button>
+            </div>
+        </div>
+        </div>
+    </div>
+
+</div>
+
+{% endmacro %}
+
+{% macro render_probe_port_settings(defaultLabel, defaultConfig, configOptions) %} 
+
+<table class="table">
+    <thead class="thead-light">
+        <tr>
+        <th scope="col">Setting</th>
+        <th scope="col" style="min-width: 200px;">Options</th>
+        <th scope="col">Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Configuration Items-->
+        {% for setting in configOptions %}
+        <tr id="probe_config_row_{{ setting }}">
+            <td>
+                {{ configOptions[setting]['display_name'] }}
+            </td>
+            <td>
+                {% if setting == 'name' %} 
+                    <input type="text" class="form-control probeConfig" value="{{ defaultConfig[setting] }}" id="probe_config_{{ setting }}" required>
+                {% else %} 
+                    <select class="form-control probeConfig" id="probe_config_{{ setting }}" name="probe_config_{{ setting }}" onchange="probe_showHideFields(this.value, this.id)">
+                    {% for option in configOptions[setting]['options'] %}
+                        <option value="{{ option }}" {% if option == defaultConfig[setting] %}selected{% endif %}>{{ configOptions[setting]['options'][option] }}</option>
+                    {% endfor %}
+                    </select>
+                {% endif %}
+            </td>
+            <td>
+                {{ configOptions[setting]['description'] | safe }}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+    $(document).ready(function() {
+        probe_showHideFields($("#probe_config_device_port").val(), "probe_config_device_port");
+        probe_showHideFields($("#probe_config_type").val(), "probe_config_type");
+});
+</script>
+
+{% endmacro %}
+
+{% macro render_input_float_int(section, mode, label, default, min, max, step) %}
+<input type="number" class="form-control deviceSpecific{{ mode }}" aria-label="{{ label }}" 
+    aria-describedby="{{name}}_addon" 
+    value="{{ default }}" 
+    min="{{ min }}" 
+    max="{{ max }}" 
+    step="{{ step }}"
+    id="{{ section }}_devspec_{{ label }}" 
+    name="{{ section }}_devspec_{{ label }}"/>
+{% endmacro %}
+
+{% macro render_input_list(section, mode, label, default, list_values, list_labels) %}
+<select class="form-control deviceSpecific{{ mode }}"
+    id="{{ section }}_devspec_{{ label }}" 
+    name="{{ section }}_devspec_{{ label }}">
+    {% for item in list_values %}
+    <option value="{{ item }}"{% if default == item %} selected{% endif %}>{{ list_labels[loop.index0] }}</option>
+    {% endfor %}
+</select>
+{% endmacro %}
+
+{% macro render_input_string(section, mode, label, default) %}
+<input type="text" class="form-control deviceSpecific{{ mode }}" 
+    value="{{ default }}" aria-label="{{ label }}" 
+    aria-describedby="{{name}}_addon" 
+    id="{{ section }}_devspec_{{ label }}" 
+    name="{{ section }}_devspec_{{ label }}"/>
+{% endmacro %}
+
+{% macro render_input_bt_address(section, mode, label, default) %}
+
+<div class="input-group mb-3">
+    <input type="text" class="form-control deviceSpecific{{ mode }}" 
+    value="{{ default }}" aria-label="{{ label }}" 
+    aria-describedby="{{name}}_addon" 
+    id="{{ section }}_devspec_{{ label }}" 
+    name="{{ section }}_devspec_{{ label }}"
+    aria-label="hardware_id" aria-describedby="bt_{{ section }}_devspec_{{ label }}_Scan"/>
+    <div class="input-group-append">
+        <button type="button" class="btn btn-success" id="bt_{{ section }}_devspec_{{ label }}_Scan" onclick="scanBluetooth('{{ section }}_devspec_{{ label }}')">Scan</button>
+    </div>
+</div>
+  
+<!-- Scan Bluetooth Modal -->
+<div class="modal fade power-modal" id="bt_{{ section }}_devspec_{{ label }}_Modal" data-backdrop="false" tabindex="-1" aria-labelledby="bt_{{ section }}_devspec_{{ label }}_Label" aria-hidden="true" >
+    <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+        <div class="modal-header">
+        <h5 class="modal-title" id="bt_{{ section }}_devspec_{{ label }}_Label">Scanning for Bluetooth Devices</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        </div>
+        <div class="modal-body text-center">
+
+            <div id="bt_{{ section }}_devspec_{{ label }}_Select">
+                <br>
+                <!-- Probe Device Configuration Info Here -->
+                <h4>Scanning...</h4>
+                <br>
+                <div class="fa-3x">
+                    <i class="fa-solid fa-magnifying-glass fa-bounce"></i>
+                </div>
+                <br>
+            </div>
+
+        </div>
+        <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" value="" onclick="scanBluetooth('{{ section }}_devspec_{{ label }}')">Refresh</button>
+        </div>
+    </div>
+    </div>
+</div>
+
+{% endmacro %}
+
+{% macro render_bt_scan_table(itemID, bt_data, error) %}
+    {% if error %}
+        <div class="alert alert-danger" role="alert">
+            {{ error }}
+        </div>
+    {% else %}
+        <table class="table table-hover">
+            <thead>
+            <tr>
+                <th scope="col">Name</th>
+                <th scope="col">HW ID</th>
+                <th scope="col">Action</th>
+                <th scope="col">Info</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for device in bt_data %}
+                <tr>
+                    <th scope="row">
+                        {{ device['name'] }}
+                    </th>
+                    <td>
+                        {{ device['hw_id'] }}
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-primary" onclick="selectBluetoothDevice('{{ device['hw_id'] }}', '{{ itemID }}')">Select</button>
+                    </td>
+                    <td>
+                        {{ device['info'] }}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endmacro %}

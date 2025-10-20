@@ -44,10 +44,12 @@ log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.ERRO
 controlLogger = create_logger('control', filename='./logs/control.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 
 log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
-eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
+eventLogger = create_logger('events', filename='./logs/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 
-eventLogger.info('Control Script Starting Up.')
-controlLogger.info('Control Script Starting Up.')
+event_message = f"PiFire Control Process started. PiFire Version: {settings['versions']['server']} Build: {settings['versions']['build']}, Debug Mode: {settings['globals']['debug_mode']}"
+
+eventLogger.info(event_message)
+controlLogger.info(event_message)
 
 # Flush Redis DB and create JSON structure
 control = read_control(flush=True)
@@ -355,7 +357,10 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	grill_platform.auger_off()
 
 	if mode in ('Startup', 'Reignite', 'Smoke', 'Hold', 'Shutdown'):
-		_start_fan(settings)
+		if mode in ('Startup', 'Reignite') and settings['platform']['dc_fan'] and settings['startup'].get('pwm_duty_cycle') is not None:
+			_start_fan(settings, duty_cycle=settings['startup']['pwm_duty_cycle'])
+		else:
+			_start_fan(settings)
 		grill_platform.power_on()
 		eventLogger.debug('Power ON, Fan ON, Igniter OFF, Auger OFF')
 	elif mode in ('Prime'):
@@ -391,12 +396,15 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		OffTime = settings['cycle_data']['SmokeOffCycleTime'] + (settings['cycle_data']['PMode'] * 10)  # Auger Off Time
 		CycleTime = OnTime + OffTime  # Total Cycle Time
 		CycleRatio = RawCycleRatio = OnTime / CycleTime  # Ratio of OnTime to CycleTime
+		LidOpenDetect = False
+		LidOpenEventExpires = 0
 		# Write Metrics (note these will be overwritten if smart start is enabled)
 		metrics['p_mode'] = settings['cycle_data']['PMode']
 		metrics['auger_cycle_time'] = settings['cycle_data']['SmokeOnCycleTime']
 		write_metrics(metrics)
 
 	if mode == 'Hold':
+		# Initialize cycle to minimum ratio.
 		OnTime = settings['cycle_data']['HoldCycleTime'] * settings['cycle_data']['u_min']  # Auger On Time
 		OffTime = settings['cycle_data']['HoldCycleTime'] * (1 - settings['cycle_data']['u_min'])  # Auger Off Time
 		CycleTime = settings['cycle_data']['HoldCycleTime']  # Total Cycle Time
@@ -451,7 +459,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 				control['mode'] = 'Error'
 				control['updated'] = True
 				write_control(control, direct_write=True, origin='control')
-				send_notifications("Grill_Error_02", control, settings, pelletdb)
+				send_notifications("Grill_Error_02")
 			else:
 				control['safety']['reigniteretries'] -= 1
 				control['safety']['reignitelaststate'] = mode
@@ -460,7 +468,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 				control['mode'] = 'Reignite'
 				control['updated'] = True
 				write_control(control, direct_write=True, origin='control')
-				send_notifications("Grill_Error_03", control, settings, pelletdb)
+				send_notifications("Grill_Error_03")
 
 	# Apply Smart Start Settings if Enabled 
 	startup_timer = settings['startup']['duration']
@@ -494,6 +502,10 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	# Set the start time
 	start_time = time.time()
 
+	if mode == 'Hold':
+		# Initialize the cycle start time to now.
+		controllerCycleStart = start_time
+
 	if mode == 'Startup':
 		control['startup_timestamp'] = start_time 
 		write_control(control, direct_write=True, origin='control')
@@ -510,8 +522,8 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 	# Set time since toggle for display
 	display_toggle_time = start_time
 
-	# Initializing Start Time for Smoke Plus Mode
-	sp_cycle_toggle_time = start_time
+	# Initializing Start Time for Fan
+	fan_cycle_toggle_time = start_time
 
 	# Set time since toggle for hopper check
 	hopper_toggle_time = start_time
@@ -537,6 +549,9 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		'power' : 0,
 		'pwm' : 0
 	}
+
+	pid_output = 0
+	ControlFanPid = False
 
 	# ============ Main Work Cycle ============
 	while status == 'Active':
@@ -570,6 +585,17 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 				metrics['p_mode'] = settings['cycle_data']['PMode']
 				metrics['auger_cycle_time'] = settings['cycle_data']['SmokeOnCycleTime']
 				write_metrics(metrics)
+
+		if control['controller_update'] and mode == 'Hold':
+			control['controller_update'] = False
+			write_control(control, direct_write=True, origin='control')
+			# Update the controller with the new settings
+			if 'set_config' in controllerCore.supported_functions(): 
+				controllerCore.set_config(settings['controller']['config'][settings['controller']['selected']])
+				eventLogger.info('Controller Config Updated')
+			if 'set_cycle_data' in controllerCore.supported_functions():
+				controllerCore.set_cycle_data(settings['cycle_data'])
+				eventLogger.info('Controller Cycle Data Updated')
 
 		# Check if user changed hopper levels and update if required
 		if control['distance_update']:
@@ -663,6 +689,26 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 
 		# Change Auger State based on Cycle Time
 		if mode in ('Startup', 'Reignite', 'Smoke', 'Hold', 'Prime'):
+			if mode == 'Hold':
+				# Check to see if it's time to update pid and update if needed.
+				if (now - controllerCycleStart) > CycleTime:
+					pid_output = controllerCore.update(ptemp)
+					controllerCycleStart = now
+					CycleRatio = RawCycleRatio = settings['cycle_data']['u_min'] if LidOpenDetect else pid_output
+					# If ratio is less than min set auger ratio to min and control further via fan.
+					if CycleRatio < settings['cycle_data']['u_min']:
+						CycleRatio = settings['cycle_data']['u_min']
+						# FanPid control currently not enabled when using PWM control on DC fans.  Too many variables for me to deal with at the moment.
+						# It's far easier and just as effective (and probably better smoke) to simply cycle the fan than deal with cycling plus speed control.
+						# To use fanPid Control with DC fans simply disable the PWM control.
+						if not control['pwm_control']:
+							ControlFanPid = True
+						else:
+							ControlFanPid = False
+					else:
+						ControlFanPid = False
+					# Don't set ratio over maximum.
+					CycleRatio = min(CycleRatio, settings['cycle_data']['u_max'])			
 			if manual_override['auger'] < now:
 				manual_override['auger'] = 0
 				# If Auger is OFF and time since toggle is greater than Off Time
@@ -672,9 +718,6 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 					eventLogger.debug('Cycle Event: Auger On')
 					# Reset Cycle Time for HOLD Mode
 					if mode == 'Hold':
-						CycleRatio = RawCycleRatio = settings['cycle_data']['u_min'] if LidOpenDetect else controllerCore.update(ptemp)
-						CycleRatio = max(CycleRatio, settings['cycle_data']['u_min'])
-						CycleRatio = min(CycleRatio, settings['cycle_data']['u_max'])
 						OnTime = settings['cycle_data']['HoldCycleTime'] * CycleRatio
 						OffTime = settings['cycle_data']['HoldCycleTime'] * (1 - CycleRatio)
 						CycleTime = OnTime + OffTime
@@ -790,7 +833,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 					control['mode'] = 'Error'
 					control['updated'] = True
 					write_control(control, direct_write=True, origin='control')
-					send_notifications("Grill_Error_02", control, settings, pelletdb)
+					send_notifications("Grill_Error_02")
 					break
 				else:
 					control['safety']['reigniteretries'] -= 1
@@ -799,7 +842,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 					control['mode'] = 'Reignite'
 					control['updated'] = True
 					write_control(control, direct_write=True, origin='control')
-					send_notifications("Grill_Error_03", control, settings, pelletdb)
+					send_notifications("Grill_Error_03")
 					break
 
 
@@ -811,8 +854,11 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			# Check if a lid open event has occurred only after hold mode has been achieved
 			if target_temp_achieved and settings['cycle_data']['LidOpenDetectEnabled'] and (ptemp < (control['primary_setpoint'] * ((100 - settings['cycle_data']['LidOpenThreshold']) / 100))):
 				LidOpenDetect = True
+				# Stop all control during a lid open event, including fan.  
+				# If we are in a state where the auger ratio is min and we are using the fan for control, turning the fan on here would overshoot the temps.
+				# This is a major issue when using piFire for a wood or charcoal pit or a hybrid wood/pellet pit.
 				grill_platform.auger_off()
-				_start_fan(settings)
+				grill_platform.fan_off()
 				auger_toggle_time = now 
 				LidOpenEventExpires = now + settings['cycle_data']['LidOpenPauseTime']
 				target_temp_achieved = False
@@ -821,6 +867,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			if mode == 'Hold':
 				if LidOpenDetect and time.time() > LidOpenEventExpires:
 					LidOpenDetect = False
+					_start_fan(settings, control['duty_cycle'])
 				if control['lid_open_toggle']:
 					control['lid_open_toggle'] = False
 					write_control(control, direct_write=True, origin='control')
@@ -829,11 +876,11 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 					else:
 						LidOpenDetect = True
 						grill_platform.auger_off()
+						grill_platform.fan_off()
 						auger_toggle_time = now
-						_start_fan(settings)
 						LidOpenEventExpires = now + settings['cycle_data']['LidOpenPauseTime']
 
-			# If PWM Fan Control enabled set duty_cycle based on temperature
+			# If PWM Fan Control enabled set duty_cycle based on temperature.
 			if (settings['platform']['dc_fan'] and mode == 'Hold' and control['pwm_control'] and
 					(now - fan_update_time) > settings['pwm']['update_time']):
 				fan_update_time = now
@@ -855,8 +902,39 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 							control['duty_cycle'] = settings['pwm']['max_duty_cycle']
 							write_control(control, direct_write=True, origin='control')
 
-			# If in Smoke Plus Mode, Cycle the Fan
-			if (mode == 'Smoke' or (mode == 'Hold' and target_temp_achieved)) and control['s_plus']:
+			# This added section allows for additional pid control by controlling the fan.  
+			# Implemented for AC fans and DC fans not using PWM Control.
+			# If Auger ratio is below minimum Cycle the Fan as additional output control utilizing the pid output.
+			if (mode == 'Hold' and target_temp_achieved and ControlFanPid and not LidOpenDetect and not control['pwm_control']):
+				# If smoke plus mode is active set max fan ratio to smoke plus ratio otherwise set to 1.
+				if control['s_plus']:
+					total_fan_cycle = settings['smoke_plus']['on_time'] + settings['smoke_plus']['off_time']
+					max_fan_ratio = settings['smoke_plus']['on_time'] / total_fan_cycle
+				else:
+					total_fan_cycle = CycleTime
+					max_fan_ratio = 1
+
+				# Divide the pid output by the u_min. 
+				# This way when we are at u_min our fan will be at 100% fan ratio and will drop proportionally down to 0 as pid_output drops.	
+				# If pid is returning negative values the best we can do is shut off the fan so set min to 0.
+				#
+				pid_output_adjusted = max(0,pid_output / settings['cycle_data']['u_min'])
+				FanRatio = pid_output_adjusted * max_fan_ratio
+				fan_on_time = total_fan_cycle * FanRatio 
+				fan_off_time = total_fan_cycle * (1 - FanRatio)
+				eventLogger.debug(f'Fan PID: Fan ON, pid_output: {pid_output}, pid_output_adjusted: {pid_output_adjusted}')		
+				eventLogger.debug(f'Fan ratio: {FanRatio}, Fan on time: {fan_on_time}, Fan off time: {fan_off_time}')
+				if (now - fan_cycle_toggle_time) > fan_on_time and current_output_status['fan']:
+					grill_platform.fan_off()
+					fan_cycle_toggle_time = now
+					eventLogger.debug('Fan PID: Fan OFF')
+				elif ((now - fan_cycle_toggle_time) > fan_off_time and not current_output_status['fan']):
+					fan_cycle_toggle_time = now
+					_start_fan(settings, control['duty_cycle'])
+					eventLogger.debug('Fan PID: Fan ON')
+
+			# If in Smoke Plus Mode but not calling for fan pid control, Cycle the Fan
+			if (mode == 'Smoke' or (mode == 'Hold' and target_temp_achieved)) and control['s_plus'] and not ControlFanPid and not LidOpenDetect:
 				# If Temperature is > settings['smoke_plus']['max_temp']
 				# or Temperature is < settings['smoke_plus']['min_temp'] then turn on fan
 				if (ptemp > settings['smoke_plus']['max_temp'] or
@@ -864,15 +942,15 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 					if not current_output_status['fan']:
 						_start_fan(settings, control['duty_cycle'])
 						eventLogger.debug('Smoke Plus: Over or Under Temp Fan ON')
-				elif (now - sp_cycle_toggle_time) > settings['smoke_plus']['on_time'] and current_output_status['fan']:
+				elif (now - fan_cycle_toggle_time) > settings['smoke_plus']['on_time'] and current_output_status['fan']:
 					if manual_override['fan'] < now:
 						manual_override['fan'] = 0
 						grill_platform.fan_off()
-						sp_cycle_toggle_time = now
+						fan_cycle_toggle_time = now
 						eventLogger.debug('Smoke Plus: Fan OFF')
-				elif ((now - sp_cycle_toggle_time) > settings['smoke_plus']['off_time'] and
+				elif ((now - fan_cycle_toggle_time) > settings['smoke_plus']['off_time'] and
 					  not current_output_status['fan']) and manual_override['fan'] < now:
-					sp_cycle_toggle_time = now
+					fan_cycle_toggle_time = now
 					if (settings['platform']['dc_fan'] and (mode == 'Smoke' or (mode == 'Hold' and not control['pwm_control'])) and
 							settings['smoke_plus']['fan_ramp']):
 						on_time = settings['smoke_plus']['on_time']
@@ -887,7 +965,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 						eventLogger.debug('Smoke Plus: Fan ON')
 
 			# If Smoke Plus was disabled when fan is OFF return fan to ON
-			elif not current_output_status['fan'] and not control['s_plus'] and manual_override['fan'] < now:
+			elif not current_output_status['fan'] and not control['s_plus'] and not ControlFanPid and not LidOpenDetect and manual_override['fan'] < now:
 				_start_fan(settings, control['duty_cycle'])
 				eventLogger.debug('Smoke Plus: Fan Returned to On')
 
@@ -957,7 +1035,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			control['mode'] = 'Error'
 			control['updated'] = True
 			write_control(control, direct_write=True, origin='control')
-			send_notifications("Grill_Error_01", control, settings, pelletdb)
+			send_notifications("Grill_Error_01")
 			break
 
 		# End of Loop Recipe Check
@@ -966,14 +1044,14 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			if control['recipe']['step_data']['triggered'] and not control['recipe']['step_data']['pause']:
 				# If a notification / message was requested
 				if control['recipe']['step_data']['notify']:
-					send_notifications('Recipe_Step_Message', control, settings, pelletdb)
+					send_notifications('Recipe_Step_Message')
 				# Exit the main work cycle
 				break
 			# If a recipe event was triggered and a pause was requested
 			elif control['recipe']['step_data']['triggered'] and control['recipe']['step_data']['pause']:
 				# If notification / message was requested, notify and clear notification 
 				if control['recipe']['step_data']['notify']:
-					send_notifications('Recipe_Step_Message', control, settings, pelletdb)
+					send_notifications('Recipe_Step_Message')
 					control['recipe']['step_data']['notify'] = False
 					write_control(control, direct_write=True, origin='control')
 				# Continue until 'pause' variable is cleared 
@@ -1206,7 +1284,7 @@ while True:
 	for index, item in enumerate(control['notify_data']):
 		if item['type'] == 'timer' and item['req']:
 			if time.time() >= control['timer']['end']:
-				send_notifications("Timer_Expired", control, settings, pelletdb)
+				send_notifications("Timer_Expired")
 				control['notify_data'][index]['req'] = False
 				control['timer']['start'] = 0
 				control['timer']['paused'] = 0
@@ -1255,6 +1333,7 @@ while True:
 			control['mode'] = 'Stop'  # Stop any activity
 			control['units_change'] = False
 			read_history(0, flushhistory=True)  # Clear history data
+			# No need to write control, as it should be written by the 'Stop' mode change
 
 		# Check if there was an Error flagged in Monitor Mode - If no, then change status to active
 		if control['status'] != 'monitor' and control['mode'] != 'Error':

@@ -1,0 +1,230 @@
+{% macro render_controller_config(selected, metadata, settings, cycle_data) %}
+<div class="row">
+    <div class="col-12">
+        <!-- Media Section-->
+        <div class="mb-3 mb-md-0 mr-lg-3">
+            {% if metadata[selected]['image'] != "" %}
+            <img src="{{ url_for('static', filename='img/controller/' + metadata[selected]['image']) }}" class="mr-3 mr-md-0 border border-secondary rounded" width="128">
+            {% else %}
+            <img src="{{ url_for('static', filename='img/controller/none.jpg') }}" class="mr-3 mr-md-0 border border-secondary rounded" width="128">
+            {% endif %}
+        </div>
+        <!-- Media Text-->
+        <div class="media-body">
+            <strong>Description: </strong>{{ metadata[selected]['description'] }}<br>
+            <strong>Original Author: </strong>{{ metadata[selected]['author'] }}<br>
+            {% if metadata[selected]['link'] != "" %}
+            <strong>Link to Homepage: </strong><a href="{{ metadata[selected]['link'] }}" target="_blank">{{ metadata[selected]['link'] }} <i class="fas fa-external-link-alt"></i></a><br>
+            {% endif %}
+            {% if metadata[selected]['contributors'] != [] %}
+            <strong>Contributors: </strong>
+            {% for contributor in metadata[selected]['contributors'] %}{% if loop.index0 != 0 %}, {% endif %}{{ contributor }}{% endfor %}<br>
+            {% endif %}
+            {% if metadata[selected]['attributions'] != [] %}
+            <strong>Attributions: </strong>
+            {% for attribution in metadata[selected]['attributions'] %}
+                {% if loop.index0 != 0 %}, {% endif %}
+                {{ attribution }}
+            {% endfor %}<br>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-12">
+        <br><br>
+        {% if metadata[selected]['config'] != [] %}
+        <!-- Data Table-->
+        <table class="table">
+            <thead class="thead-light">
+                <tr>
+                    <th scope="col">Option</th>
+                    <th scope="col" style="min-width: 12ch;">Setting</th>
+                    <th scope="col" class="d-none d-md-table-cell">Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for option in metadata[selected]['config'] %}
+                <tr {% if option['hidden'] %} hidden {% endif %}>
+                    <td>{{ option['option_friendly_name'] }}</td>
+                    <td>
+                        <span data-toggle="tooltip" data-placement="top" title="{{ option['option_description'] }}">
+                            {% if option['option_type'] == 'float' or option['option_type'] == 'int' %}
+                                {{ render_input_float_int(option['option_friendly_name'], option['option_name'], settings['config'][selected][option['option_name']], option['option_min'], option['option_max'], option['option_step']) }} 
+                            {% elif option['option_type'] == 'bool' %}
+                                {{ render_input_bool(option['option_friendly_name'], option['option_name'], value=settings['config'][selected][option['option_name']]) }}
+                            {% elif option['option_type'] == 'list' or option['option_type'] == 'numlist' %}
+                                {{ render_input_list(option['option_friendly_name'], option['option_name'], settings['config'][selected][option['option_name']], option['option_list'], option['option_list_labels']) }}
+                            {% else %}
+                                {{ render_input_string(option['option_friendly_name'], option['option_name'], settings['config'][selected][option['option_name']]) }}
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td class="d-none d-md-table-cell">{{ option['option_description'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <i><strong>Note:</strong> No configuration options are exposed for this controller.</i>
+        {% endif %}
+    </div>
+</div>
+
+<br>
+
+<div class="card-header">
+    <i class="fas fa-wave-square"></i>&nbsp; Controller Cycle Settings
+</div>
+<div class="card-body">
+    <i>
+        For each controller, you can set certain cycle settings, 
+        like the cycle time (length of time between controller sampling 
+        temperature and adjusting the amount of auger ON time).  To use the 
+        recommended values for the currently selected controller, click on 
+        the button in the recommended column.  
+    </i><br><br>
+
+    <table class="table">
+        <thead class="thead-light">
+            <tr>
+            <th scope="col" style="min-width: 10ch;">Setting</th>
+            <th scope="col" style="min-width: 12ch;">Value</th>
+            <th scope="col" style="min-width: 12ch;">Default</th>
+            <th scope="col">Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td data-toggle="tooltip" title="Amount of seconds for a complete cycle. At the beginning of each cycle, the controller will check the current temperature and set point to determine the cycle ratio (auger ON time / auger OFF time). [Default={{ metadata[selected]['recommendations']['cycle']['cycle_time'] }}]">
+                    <i class="far fa-clock"></i>&nbsp; Cycle Time (s)</td>
+                <td>
+                    <input id="holdcycletime" type="number" inputmode="numeric" min="1" step="1" class="form-control" value="{{ cycle_data['HoldCycleTime'] }}" name="holdcycletime" style="width: 10ch;">
+                </td>
+                <td class="d-none d-md-table-cell">
+                    <button class="btn btn-outline-secondary" data-toggle="tooltip" title="Click to Use Recommended Value." type="button" onclick="$('#holdcycletime').val({{ metadata[selected]['recommendations']['cycle']['cycle_time'] }})">
+                        <i class="fas fa-arrow-left"></i> {{ metadata[selected]['recommendations']['cycle']['cycle_time'] }}
+                    </button>
+                </td>
+                <td class="d-none d-md-table-cell">
+                    Amount of seconds for a complete cycle. At the beginning of each cycle, the controller will check the current temperature and set point to determine the cycle ratio (auger ON time / auger OFF time). [Default={{ metadata[selected]['recommendations']['cycle']['cycle_time'] }}]
+                </td>
+            </tr>
+            <tr>
+                <td data-toggle="tooltip" title="Minimum percentage of cycle where the auger is on. This is to prevent flame-out which can happen with a cycle ratio of less than 0.1. (0.0 - 0.99) [Default={{ metadata[selected]['recommendations']['cycle']['cycle_ratio_min'] }}]">
+                    <i class="fas fa-percentage"></i>&nbsp; Min Cycle Ratio
+                </td>
+                <td>
+                    <input id="u_min" type="number" inputmode="numeric" min="0.05" max="0.99" step="0.01" class="form-control" value="{{ cycle_data['u_min'] }}" name="u_min" style="width: 10ch;">
+                </td>
+                <td class="d-none d-md-table-cell">
+                    <button class="btn btn-outline-secondary" data-toggle="tooltip" title="Use Recommended Value." type="button" onclick="$('#u_min').val({{ metadata[selected]['recommendations']['cycle']['cycle_ratio_min'] }})">
+                        <i class="fas fa-arrow-left"></i> {{ metadata[selected]['recommendations']['cycle']['cycle_ratio_min'] }}
+                    </button>
+                </td>
+                <td class="d-none d-md-table-cell">
+                    Minimum percentage of cycle where the auger is on. This is to prevent flame-out which can happen with a cycle ratio of less than 0.1. (0.0 - 0.99) [Default={{ metadata[selected]['recommendations']['cycle']['cycle_ratio_min'] }}]
+                </td>
+            </tr>
+            <tr>
+                <td data-toggle="tooltip" title="Maximum percentage of cycle where the auger is on. This is to minimize possible overshoots, or overcompensation in temperature. (0.0 - 1.0) [Default={{ metadata[selected]['recommendations']['cycle']['cycle_ratio_max'] }}]">
+                    <i class="fas fa-percentage"></i>&nbsp; Max Cycle Ratio
+                </td>
+                <td>
+                    <input id="u_max" type="number" inputmode="numeric" min="0.1" max="1" step="0.01" class="form-control" value="{{ cycle_data['u_max'] }}" name="u_max" style="width: 10ch;">
+                </td>
+                <td class="d-none d-md-table-cell">
+                    <button class="btn btn-outline-secondary" data-toggle="tooltip" title="Use Recommended Value." type="button" onclick="$('#u_max').val({{ metadata[selected]['recommendations']['cycle']['cycle_ratio_max'] }})">
+                        <i class="fas fa-arrow-left"></i> {{ metadata[selected]['recommendations']['cycle']['cycle_ratio_max'] }}
+                    </button>
+                </td>
+                <td class="d-none d-md-table-cell">
+                    Maximum percentage of cycle where the auger is on. This is to minimize possible overshoots, or overcompensation in temperature. (0.0 - 1.0) [Default={{ metadata[selected]['recommendations']['cycle']['cycle_ratio_max'] }}]
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+
+{% endmacro %}
+
+
+{% macro render_input_float_int(label, name, value, min, max, step) %}
+<input type="number" class="form-control" value="{{ value }}" aria-label="{{ label }}" 
+    aria-describedby="{{name}}_addon" name="controller_config_{{ name }}" min="{{ min }}" 
+    max="{{ max }}" step="{{ step }}" inputmode="numeric"/>
+{% endmacro %}
+
+{% macro render_input_bool(label, name, value) %}
+<select class="form-control" name="controller_config_{{ name }}">
+    <option value="true"{% if value %} selected{% endif %}>True</option>
+    <option value="false"{% if not value %} selected{% endif %}>False</option>
+</select>
+{% endmacro %}
+
+{% macro render_input_list(label, name, value, list, list_labels) %}
+<select class="form-control" name="controller_config_{{ name }}">
+    {% for listitem in list %}
+    <option value="{{ listitem }}"{% if value == listitem %} selected{% endif %}>{{ list_labels[loop.index0] }}</option>
+    {% endfor %}
+</select>
+{% endmacro %}
+
+{% macro render_input_string(label, name, value) %}
+<input type="text" class="form-control" value="{{ value }}" aria-label="{{ label }}" 
+    aria-describedby="{{name}}_addon" name="controller_config_{{ name }}"/>
+{% endmacro %}
+
+{% macro render_dash_select(selected, settings) %}
+    <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <span class="input-group-text">
+                <b>Select a Dashboard:</b>
+            </span>
+        </div>
+        <select class="form-control" id="dashboardSelect" name="dashboardSelect"
+            onchange="settingsLoadDashboardConfig(this.value);">
+            {% for dashboard, dashinfo in settings['dashboard']['dashboards'].items() %}
+            <option value="{{ dashboard }}"{% if (selected == '' and dashinfo['name'] == settings['dashboard']['current']) or (selected == dashboard) %} selected{% endif %}>{{ dashinfo['friendly_name'] }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="card shadow">
+        <div class="card-body">
+            <div id="dashboardSettings">
+                <!-- Dashboard Config Placeholder -->
+                {% if selected == '' %}
+                    {{ render_dash_settings(settings['dashboard']['current'], settings) }}
+                {% else %}
+                    {% for dashboard, dashinfo in settings['dashboard']['dashboards'].items() %}
+                        {% if dashboard == selected %}
+                            {{ render_dash_settings(dashboard, settings) }}
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <script>
+        function settingsLoadDashboardConfig(selected) {
+            var post_data = {
+                'selected': selected
+            };
+            $("#dashboardSettings").load("/settings/dashboard_config", post_data);
+        }
+    </script>
+{% endmacro %}
+
+{% macro render_dash_settings(dashboard, settings) %}
+    {% if settings['dashboard']['dashboards'][dashboard]['screenshot'] %}
+    <center>
+        <img src="{{ url_for('dash_bp.static', filename=dashboard | lower + '/img/' + settings['dashboard']['dashboards'][dashboard]['screenshot']) }}" alt="Screenshot" width="400"><br>
+    </center>
+    {% endif %}
+{% endmacro %}
+
+<script>
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+    })
+</script>

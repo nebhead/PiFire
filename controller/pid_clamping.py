@@ -27,9 +27,9 @@
   
   Configuration Defaults: 
   "config": {
-      "PB": 30.0,
-      "Td": 20.0,
-      "Ti": 120.0
+      "PB": 100.0,
+      "Td": 45.0,
+      "Ti": 180.0
    }
 
 *****************************************
@@ -43,7 +43,7 @@ import logging
 from common import create_logger
 from controller.base import ControllerBase 
 log_level = logging.DEBUG
-eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
+eventLogger = create_logger('events', filename='./logs/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 
 '''
 Class Definition
@@ -51,7 +51,8 @@ Class Definition
 class Controller(ControllerBase):
 	def __init__(self, config, units, cycle_data):
 		super().__init__(config, units, cycle_data)
-
+		self.function_list.append('set_gains') 
+		self.function_list.append('get_k')
 		self._calculate_gains(config['PB'], config['Ti'], config['Td'])
 
 		self.p = 0.0
@@ -132,16 +133,13 @@ class Controller(ControllerBase):
 	def set_gains(self, pb, ti, td):
 		self._calculate_gains(pb,ti,td)
 
+	def set_config(self,config):
+		super().set_config(config)
+		self._calculate_gains(config['PB'], config['Ti'], config['Td'])
+		self.error = 0.0
+		self.inter = 0.0
+		self.derv = 0.0
 
 	def get_k(self):
 		return self.kp, self.ki, self.kd
 	
-	def supported_functions(self):
-		function_list = [
-			'update', 
-	        'set_target', 
-	        'get_config', 
-			'set_gains', 
-			'get_k'
-        ]
-		return function_list

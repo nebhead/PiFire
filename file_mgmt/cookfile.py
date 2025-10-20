@@ -66,7 +66,7 @@ def create_cookfile():
 	#global cmdsts
 	global HISTORY_FOLDER
 
-	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s')
+	eventLogger = create_logger('events', filename='./logs/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s')
 
 	settings = read_settings()
 

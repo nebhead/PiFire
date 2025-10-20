@@ -1,0 +1,2336 @@
+{% extends 'base.html' %}
+{% from 'settings/_macro_settings.html' import render_controller_config, render_dash_select %}
+{% from 'settings/_macro_probes.html' import render_probe_select %}
+
+{% block body_class %}timer-offset{% endblock %}
+
+{% block cssextend %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-colorpicker.min.css') }}" type="text/css" />
+<link rel="stylesheet" href="{{ url_for('settings_bp.static', filename='settings/css/settings.css') }}" type="text/css" />
+{% endblock %}
+
+{% block title %}Settings{% endblock %}
+
+{% block notify %}
+<div class="container-fluid main-content">
+    <!-- Settings Success -->
+    {% if (alert['type'] == "updated") %}
+    <br>
+    <div class="alert alert-success alert-dismissible">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <b>
+            <i class="far fa-check-circle"></i>&nbsp; {{ alert['text'] }}
+        </b>
+    </div>
+    {% elif (alert['type'] == "warning") %}
+    <br>
+    <div class="alert alert-warning alert-dismissible">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <b>
+            <i class="far fa-exclamation-circle"></i>&nbsp; {{ alert['text'] }}
+        </b>
+    </div>
+    {% elif (alert['type'] == "error") %}
+    <br>
+    <div class="alert alert-danger alert-dismissible">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <b>
+            <i class="fas fa-bomb"></i>&nbsp; {{ alert['text'] }}
+        </b>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+<input type="hidden" id="units" name="units" value="{{ settings['globals']['units'] }}">
+<br>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Navigation -->
+        <div class="col-lg-3 nav-settings-fixed">
+            <nav class="navbar navbar-expand-lg navbar-dark flex-lg-column">
+                <a class="navbar d-lg-none dropdown-toggle btn btn-primary settings-button" href="#" id="navbarDropdown" role="button" data-toggle="collapse" data-target="#settingsNav" aria-haspopup="true" aria-expanded="false">
+                    Settings
+                </a>
+                <div class="collapse navbar-collapse" id="settingsNav">
+                    <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                        <a class="nav-link active" id="v-pills-probes-tab" data-toggle="pill" href="#v-pills-probes" role="tab" aria-controls="v-pills-probes" aria-selected="true">Probe Settings</a>
+                        <a class="nav-link" id="v-pills-probe-profiles-tab" data-toggle="pill" href="#v-pills-probe-profiles" role="tab" aria-controls="v-pills-probe-profiles" aria-selected="false">Probe Profiles</a>
+                        <a class="nav-link" id="v-pills-units-tab" data-toggle="pill" href="#v-pills-units" role="tab" aria-controls="v-pills-units" aria-selected="false">Units</a>
+                        <a class="nav-link" id="v-pills-name-tab" data-toggle="pill" href="#v-pills-name" role="tab" aria-controls="v-pills-name" aria-selected="false">Grill Name</a>
+                        <a class="nav-link" id="v-pills-work-mode-tab" data-toggle="pill" href="#v-pills-work-mode" role="tab" aria-controls="v-pills-work-mode" aria-selected="false">Work Mode</a>
+                        {% if settings['platform']['dc_fan'] %}
+                        <a class="nav-link" id="v-pills-pwm-tab" data-toggle="pill" href="#v-pills-pwm" role="tab" aria-controls="v-pills-pwm" aria-selected="false">PWM Settings</a>
+                        {% endif %}
+                        <a class="nav-link" id="v-pills-startup-tab" data-toggle="pill" href="#v-pills-startup" role="tab" aria-controls="v-pills-startup" aria-selected="false">Startup & Shutdown</a>
+                        <a class="nav-link" id="v-pills-dash-tab" data-toggle="pill" href="#v-pills-dash" role="tab" aria-controls="v-pills-dash" aria-selected="false">Dashboard</a>
+                        <a class="nav-link" id="v-pills-history-tab" data-toggle="pill" href="#v-pills-history" role="tab" aria-controls="v-pills-history" aria-selected="false">History</a>
+                        <a class="nav-link" id="v-pills-safety-tab" data-toggle="pill" href="#v-pills-safety" role="tab" aria-controls="v-pills-safety" aria-selected="false">Safety</a>
+                        <a class="nav-link" id="v-pills-pellets-tab" data-toggle="pill" href="#v-pills-pellets" role="tab" aria-controls="v-pills-pellets" aria-selected="false">Pellets</a>
+                        <a class="nav-link" id="v-pills-theme-tab" data-toggle="pill" href="#v-pills-theme" role="tab" aria-controls="v-pills-theme" aria-selected="false">Theme</a>
+                        <a class="nav-link" id="v-pills-notifications-tab" data-toggle="pill" href="#v-pills-notifications" role="tab" aria-controls="v-pills-notifications" aria-selected="false">Notifications</a>
+                    </div>
+                </div>
+            </nav>
+        </div>
+        <div class="col-lg-9 main-content">
+            <!-- ============================ Probe Settings =============================== -->
+            <div class="tab-content" id="v-pills-tabContent">
+                <div class="tab-pane fade show active" id="v-pills-probes" role="tabpanel" aria-labelledby="v-pills-probes-tab">
+                    <div class="card shadow">
+                        <div class="card-header bg-primary text-white">
+                            <h5>
+                                <i class="fas fa-thermometer"></i>&nbsp; Probe Settings
+                            </h5>
+                        </div>
+                    <div class="card-body">
+                        <div id="settings_probe_select"> 
+                            <!-- Probe Selection -->
+                            {{ render_probe_select('', settings['probe_settings']['probe_map']['probe_info'], settings) }}
+                        </div>
+                    </div><!-- End of Probe Settings Card body -->
+                </div><!-- End of Probe Settings Card -->
+                <br><br><br>
+            </div><!-- End of Tab -->
+            <!-- ============================ Edit / Add / Delete Probe Profiles ========================== -->
+            <div class="tab-pane fade" id="v-pills-probe-profiles" role="tabpanel" aria-labelledby="v-pills-probe-profiles-tab">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h5>
+                        <i class="fas fa-toolbox"></i>&nbsp; Probe Profile Creation Tools
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <a href="/tuner" class="btn btn-outline-primary btn-block shadow" role="button"><i class="fa-solid fa-rocket"></i>&nbsp; Goto Tools</a>
+                    </div>
+                </div>
+                <br>
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h5>
+                            <i class="fa-solid fa-file-circle-plus"></i>&nbsp; New Probe Profile
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        
+                        <div class="card shadow">
+                            <form name="addprofile" action="/settings/addprofile" method="POST">
+                                <div class="card-header bg-light text-dark">
+                                    <h5>
+                                        <a href="#addprofile" data-toggle="collapse">
+                                            <i class="fas fa-plus-circle"></i>&nbsp; Add Profile </a>
+                                    </h5>
+                                </div>
+                                <div id="addprofile" class="collapse">
+                                    <div class="card-body">
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="Human readable name for profile. Used to display above.">
+                                                    <i class="fas fa-user-circle"></i>&nbsp; Name </span>
+                                            </div>
+                                            <input id="Name" type="text" inputmode="text" class="form-control" placeholder="Name" name="Name" required style="min-width: 11ch;">
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="Coefficient A in Steinhart Hart Calculation">
+                                                    <i class="fas fa-calculator"></i>&nbsp; CoEff A </span>
+                                            </div>
+                                            <input id="A" type="text" inputmode="numeric" class="form-control" name="A" required style="min-width: 11ch;">
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="Coefficient B in Steinhart Hart Calculation">
+                                                    <i class="fas fa-calculator"></i>&nbsp; CoEff B </span>
+                                            </div>
+                                            <input id="B" type="text" inputmode="numeric" class="form-control" name="B" required style="min-width: 11ch;">
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend"><span class="input-group-text" data-toggle="tooltip" title="Coefficient C in Steinhart Hart Calculation">
+                                                <i class="fas fa-calculator"></i>&nbsp; CoEff C </span>
+                                            </div>
+                                            <input id="C" type="text" inputmode="numeric" class="form-control" name="C" required style="min-width: 11ch;">
+                                        </div>
+                                    </div>
+                                    <div class="card-footer bg-light">
+                                        <button type="submit" class="btn btn-outline-danger">Save</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                    </div>
+                </div>
+                <br>
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h5>
+                            <i class="fas fa-edit"></i>&nbsp; Probe Profile Editor
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% for index, data in settings['probe_settings']['probe_profiles'].items()|sort %}
+                        <div class="card shadow">
+                            <form name="editprofile" action="/settings/editprofile" method="POST">
+                                <div class="card-header bg-light text-dark">
+                                    <h5>
+                                        <a href="#edit{{ index }}" data-toggle="collapse">
+                                            <i class="far fa-caret-square-down"></i>&nbsp; {{ data['name'] }}</a>
+                                    </h5>
+                                </div>
+                                <div id="edit{{ index }}" class="collapse">
+                                    <div class="card-body">
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="Human readable name for profile. Used to display above.">
+                                                    <i class="fas fa-user-circle"></i>&nbsp; Name </span>
+                                            </div>
+                                            <input id="Name_{{ index }}" type="text" inputmode="text" class="form-control" name="Name_{{ index }}" value="{{ data['name'] }}" style="min-width: 11ch;">
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="Coefficient A in Steinhart Hart Calculation">
+                                                    <i class="fas fa-calculator"></i>&nbsp; CoEff A </span>
+                                            </div>
+                                            <input id="A_{{ index }}" type="text" inputmode="numeric" class="form-control" name="A_{{ index }}" value="{{ data['A'] }}" style="min-width: 11ch;">
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="Coefficient B in Steinhart Hart Calculation">
+                                                    <i class="fas fa-calculator"></i>&nbsp; CoEff B </span>
+                                            </div>
+                                            <input id="B_{{ index }}" type="text" inputmode="numeric" class="form-control" name="B_{{ index }}" value="{{ data['B'] }}" style="min-width: 11ch;">
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="Coefficient C in Steinhart Hart Calculation">
+                                                    <i class="fas fa-calculator"></i>&nbsp; CoEff C </span>
+                                            </div>
+                                            <input id="C_{{ index }}" type="text" inputmode="numeric" class="form-control" name="C_{{ index }}" value="{{ data['C'] }}" style="min-width: 11ch;">
+                                        </div>
+                                    </div>
+                                    <div class="card-footer bg-light">
+                                        <button type="submit" class="btn btn-danger" name="editprofile" value="{{ index }}">Save</button>
+                                        <!-- Button to Open the Modal -->
+                                        <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#DeleteProfileModal{{ index }}">Delete</button>
+                                        <!-- The Modal -->
+                                        <div class="modal" id="DeleteProfileModal{{ index }}">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <!-- Modal Header -->
+                                                    <div class="modal-header">
+                                                        <h4 class="modal-title">Delete Profile {{ data['name'] }}</h4>
+                                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                    </div>
+                                                    <!-- Modal body -->
+                                                    <div class="modal-body"> Are you sure you want to delete the {{ data['name'] }} profile?</div>
+                                                    <!-- Modal footer -->
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                                        <button type="submit" class="btn btn-danger" name="delete" value="{{ index }}">Delete</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <br>
+                        {% endfor %}
+                    </div><!-- End of card body -->
+                </div><!-- End of Card -->
+                <br><br><br>
+            </div><!-- End of Tab -->
+            <!-- ============================ Select Temp Units ========================== -->
+            <div class="tab-pane fade" id="v-pills-units" role="tabpanel" aria-labelledby="v-pills-units-tab">
+                <div class="card shadow">
+
+                    <div class="card-header bg-primary text-white">
+                        <h5>
+                            <i class="fas fa-temperature-low"></i>&nbsp; Select Units
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="selectedUnits">Select temperature units to be used
+                                globally:</label>
+                            <select class="form-control" id="selectedUnits" name="units">
+                                <option value="F" {% if settings['globals']['units'] == 'F' %}selected{% endif %}>Fahrenheit (F)</option>
+                                <option value="C" {% if settings['globals']['units'] == 'C' %}selected{% endif %}>Celsius (C)</option>
+                            </select>
+                        </div>
+                        <span class="badge badge-warning">NOTE:</span>
+                        <i class="small"> Changing the scale/units will restart the grill controller (stopping any currently running modes) and automatically erase history. </i>
+                    </div><!-- End of card body -->
+                    <div class="card-footer bg-light">
+                        <button type="button" class="btn btn-outline-danger" onclick="selectUnits(document.getElementById('selectedUnits').value)">Save</button>
+                    </div>
+
+                    </div><!-- End of Card -->
+                    <br><br><br>
+                </div><!-- End of Tab -->
+                <!-- ============================ Grill Name ========================== -->
+                <div class="tab-pane fade" id="v-pills-name" role="tabpanel" aria-labelledby="v-pills-name-tab">
+                    <div class="card shadow">
+                        <div class="card-header bg-primary text-white">
+                            <h5>
+                                <i class="fas fa-file-signature"></i>&nbsp; Grill Name
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Choose a name for your grill!">
+                                        <i class="fas fa-user-ninja"></i>&nbsp; Grill Name </span>
+                                </div>
+                                <input id="grill_name" type="text" inputmode="text" class="form-control" placeholder="{{ settings['globals']['grill_name'] }}" value="{{ settings['globals']['grill_name'] }}" name="grill_name" style="min-width: 11ch;">
+                            </div>
+                        </div><!-- End of card body -->
+                        <div class="card-footer bg-light">
+                            <button type="button" class="btn btn-outline-danger" onclick="setGrillName(document.getElementById('grill_name').value);">Save</button>
+                        </div>
+                    </div><!-- End of Card -->
+                    <br><br><br>
+                </div><!-- End of Tab -->
+                <!-- ============================ Work Mode Settings ========================== -->
+                <div class="tab-pane fade" id="v-pills-work-mode" role="tabpanel" aria-labelledby="v-pills-work-mode-tab">
+                    <div class="card shadow">
+                        <form name="cycle_settings" action="/settings/cycle" method="POST">
+                            <div class="card-header bg-primary text-white">
+                                <h5>
+                                    <i class="fas fa-tools"></i>&nbsp; Work Mode Settings
+                                </h5>
+                            </div>
+                        <div class="card-body">
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h5>
+                                        <i class="fas fa-play"></i>&nbsp; Startup / Smoke Mode Cycle Settings
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <span class="badge badge-info">INFO:</span>
+                                    During Startup and Smoke modes, the cycle time (Auger On Time + Auger Off Time) is fixed, and does not change dynamically based on any other inputs.
+                                    Effectively, this may allow you to adjust the rough smoke temperature depending other external factors like ambient temperature (seasonal), etc. <br><br>
+                                    The Auger On/Off Time can be configured here, to have a finer control over the cycle times. 
+                                    <br><br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Auger-On Time for Smoke / Startup (seconds)[Default=15]">
+                                                <i class="far fa-clock"></i>&nbsp; Auger On Time
+                                            </span>
+                                        </div>
+                                        <input id="SmokeOnCycleTime" type="number" inputmode="numeric" min="1" class="form-control" placeholder="{{ settings['cycle_data']['SmokeOnCycleTime'] }}" value="{{ settings['cycle_data']['SmokeOnCycleTime'] }}" name="SmokeOnCycleTime" style="min-width: 5ch;">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Auger-Off Time for Smoke / Startup (seconds)[Default=45].  This is also used for the PMode below.">
+                                                <i class="far fa-clock"></i>&nbsp; Auger Off Time
+                                            </span>
+                                        </div>
+                                        <input id="SmokeOffCycleTime" type="number" inputmode="numeric" min="1" class="form-control" placeholder="{{ settings['cycle_data']['SmokeOffCycleTime'] }}" value="{{ settings['cycle_data']['SmokeOffCycleTime'] }}" name="SmokeOffCycleTime" style="min-width: 5ch;">
+                                    </div>
+
+                                    <hr/>
+
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="(Auger-Off Time: Set P-Mode for Smoke Cycle (1-10)">
+                                                <i class="fas fa-cog"></i>&nbsp; P-Mode
+                                            </span>
+                                        </div>
+                                        <input id="pmode" type="number" inputmode="numeric" min="0" max="9" class="form-control" placeholder="{{ settings['cycle_data']['PMode'] }}" value="{{ settings['cycle_data']['PMode'] }}" name="pmode" style="min-width: 3ch;">
+                                    </div>
+
+                                    <span class="badge badge-info">INFO:</span>
+                                    If a PMode of greater than zero is selected, the PMode is multiplied by 10s will be added to the Auger Off Time.  
+                                    [For example: <i>Cycle Time = Auger On Time + Auger Off Time + (Pmode * 10)</i>]  
+                                    This calculation is reflected in the table below.  If you don't want to use PMode to
+                                    configure the cycle time, then select a PMode of 0.<br><br>
+                                    
+                                    <i> More information about the PMode can be found <a href="http://tipsforbbq.com/Definition/Traeger-P-Setting" target="blank">here.</a> 
+                                        P-Mode is used for both Startup and Smoke modes, but not Hold mode.  Note that PMode settings may be overriden by the Smart Start feature.  
+                                        See the Startup/Shutdown settings tab to enable/disable and configure Smart Start.</i>
+                                    <br>
+                                    <br>
+
+                                    <table class="table table-bordered">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>P-Mode</th>
+                                                <th>Auger ON Time</th>
+                                                <th>Auger OFF Time</th>
+                                                <th>Total Cycle Time</th>
+                                            </tr>
+                                        </thead>
+                                        {% for row in range(10) %}
+                                        <tbody>
+                                        {% if row == settings['cycle_data']['PMode'] %}
+                                        <tr class="table-warning">
+                                            {% else %}
+                                        <tr>
+                                            {% endif %}
+                                            <td>{{ row }} {% if (row == 2) %}(Factory Default){% endif %}</td>
+                                            <td>{{ settings['cycle_data']['SmokeOnCycleTime'] }}s</td>
+                                            <td>{{ (row * 10) + settings['cycle_data']['SmokeOffCycleTime'] }}s</td>
+                                            <td>{{ settings['cycle_data']['SmokeOnCycleTime'] + (row * 10) + settings['cycle_data']['SmokeOffCycleTime'] }}s</td>
+                                        </tr>
+                                        {% endfor %}
+                                        </tbody>
+                                    </table>
+                                    <br>
+                                </div><!-- End of card body -->
+                            </div><!-- End of Card -->
+                            <br>
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h5>
+                                        <i class="fas fa-fan"></i>&nbsp; Smoke Plus Settings (SMOKE & HOLD Mode) [Fan Cycling]
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small">Smoke Plus Mode can be toggled on/off by tapping the fan icon button on the dashboard. 
+                                        The icon will be highlighted blue indicating that smoke plus is enabled. Smoke Plus will cycle the fan on and off 
+                                        during smoke and hold mode to promote additional smoke generation. Fan cycling will only occur between the below 
+                                        min/max temperatures.</i>
+                                    <br>
+                                    <br>
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="default_smoke_plus" name="default_smoke_plus" {% if settings['smoke_plus']['enabled'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="default_smoke_plus">Smoke Plus Enabled by Default</label>
+                                    </div>
+                                    <br>
+                                    {% if settings['platform']['dc_fan'] %}
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small">Fan Ramping will ramp the fan from off to the desired duty cycle instead of just turning on to full speed during Smoke Plus cycling. You can control the ramp duration by setting the Fan ON Time below. The desired duty cycle can also be set below.</i>
+                                    <br>
+                                    <br>
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="sp_fan_ramp" name="sp_fan_ramp" {% if settings['smoke_plus']['fan_ramp'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="sp_fan_ramp">Fan Ramping Enabled</label>
+                                    </div>
+                                    <br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Duty cycle that will be used during fan ramping (percent) [Default: 75]">
+                                                <i class="far fa-clock"></i>&nbsp; Ramp Duty Cycle (%)
+                                            </span>
+                                        </div>
+                                        <input id="sp_duty_cycle" type="number" inputmode="numeric" min="20" max="100" class="form-control" placeholder="{{ settings['smoke_plus']['duty_cycle'] }}" value="{{ settings['smoke_plus']['duty_cycle'] }}" name="sp_duty_cycle" style="min-width: 5ch;">
+                                    </div>
+                                    {% endif %}
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Number of seconds the fan will remain ON during fan cycling (seconds) [Default: 5]">
+                                                <i class="far fa-clock"></i>&nbsp; Fan ON Time (s)
+                                            </span>
+                                        </div>
+                                        <input id="sp_on_time" type="number" inputmode="numeric" min="sp_fade_in.value" class="form-control" placeholder="{{ settings['smoke_plus']['on_time'] }}" value="{{ settings['smoke_plus']['on_time'] }}" name="sp_on_time" style="min-width: 5ch;">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Number of seconds the fan will remain OFF during fan cycling (seconds) [Default: 5]">
+                                                <i class="far fa-clock"></i>&nbsp; Fan OFF Time (s)
+                                            </span>
+                                        </div>
+                                        <input id="sp_off_time" type="number" inputmode="numeric" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['off_time'] }}" value="{{ settings['smoke_plus']['off_time'] }}" name="sp_off_time" style="min-width: 5ch;">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Lowest temperature for Smoke Plus to operate. ({{settings['globals']['units']}}) [Default: 160F/71C]">
+                                                <i class="fas fa-temperature-high"></i>&nbsp; Min Operational Temp ({{settings['globals']['units']}})
+                                            </span>
+                                        </div>
+                                        <input id="sp_min_temp" type="number" inputmode="numeric" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['min_temp'] }}" value="{{ settings['smoke_plus']['min_temp'] }}" name="sp_min_temp" style="min-width: 5ch;">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Highest temperature for Smoke Plus to operate. ({{settings['globals']['units']}}) [Default: 220F/104C]">
+                                                <i class="fas fa-temperature-high"></i>&nbsp; Max Operational Temp ({{settings['globals']['units']}})
+                                            </span>
+                                        </div>
+                                        <input id="sp_max_temp" type="number" inputmode="numeric" min="1" class="form-control" placeholder="{{ settings['smoke_plus']['max_temp'] }}" value="{{ settings['smoke_plus']['max_temp'] }}" name="sp_max_temp" style="min-width: 5ch;">
+                                    </div>
+                                </div><!-- End of card body -->
+                            </div><!-- End of Card -->
+                            <br>
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h5>
+                                        <i class="fas fa-microchip"></i>&nbsp; Controller Configuration (HOLD Mode)
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label for="selectController"><i>Selected Controller Type:</i></label>
+                                        <select class="form-control" id="selectController" name="selectController">
+                                            {% for controller in controller_metadata %}
+                                                <option value="{{ controller }}" {% if settings['controller']['selected'] == controller %}selected{% endif %}>{{ controller_metadata[controller]['friendly_name'] }}</option>
+                                            {% endfor %}    
+                                        </select>
+                                    </div>
+                                    <div id="controller_config">
+                                        {{ render_controller_config(settings['controller']['selected'], controller_metadata, settings['controller'], settings['cycle_data']) }}
+                                    </div>
+                                </div><!-- End of card body -->
+                            </div><!-- End of Card -->
+                            <br>
+
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h5>
+                                        <i class="fas fa-door-open"></i>&nbsp; Lid Open Detection Settings (HOLD Mode)
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    If enabled, the system will attempt to determine if the lid was opened and temporarily suspend the controller.  
+                                    If the temperature drops below the threshold (percentage of the hold temperature), a lid open event is triggered.  
+                                    Once lid open is detected, it will pause the controller calculations for the specified amount of seconds. <br>
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="lid_open_detect_enable" name="lid_open_detect_enable" {% if settings['cycle_data']['LidOpenDetectEnabled'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="lid_open_detect_enable">Auto Lid Open Detection</label>
+                                    </div>
+                                    <br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Percentage of hold set temperature threshold to trigger lid open detection.">
+                                                <i class="fas fa-percent"></i>&nbsp; Lid Open Threshold Percentage
+                                            </span>
+                                        </div>
+                                        <input id="lid_open_threshold" type="number" inputmode="numeric" min="1" step="1" max="80" class="form-control" placeholder="{{ settings['cycle_data']['LidOpenThreshold'] }}" value="{{ settings['cycle_data']['LidOpenThreshold'] }}" name="lid_open_threshold" style="min-width: 4ch;">
+                                    </div>
+
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Time in seconds to pause the controller when lid open detected.">
+                                                <i class="fas fa-clock"></i>&nbsp; Lid Open Pause Time (s)
+                                            </span>
+                                        </div>
+                                        <input id="lid_open_pausetime" inputmode="numeric" type="number" min="10" step="1" max="1000" class="form-control" placeholder="{{ settings['cycle_data']['LidOpenPauseTime'] }}" value="{{ settings['cycle_data']['LidOpenPauseTime'] }}" name="lid_open_pausetime" style="min-width: 6ch;">
+                                    </div>
+
+                                </div><!-- End of card body -->
+                            </div><!-- End of Card -->
+                            <br>
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h5>
+                                        <i class="fas fa-tachometer-alt"></i>&nbsp; Keep Warm Settings
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    The Keep Warm mode is a specified Hold temperature, that you can define, <u>that can be activated by a timer or 
+                                    notification targets.</u>  When the grill is active, you can click on the timer dialog and check the Keep Warm 
+                                    box.  Or you can click on the Notification Targets for any of the probes and select the Keep Warm box. 
+                                    The Keep Warm function will be activated when a probe notify target has been achieved 
+                                    or the timer has expired. The Grill will exit the currently running mode and switch to Hold Mode then 
+                                    attempt to maintain the temperature set below. 
+                                    <br><br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Keep Warm Temperature ({{settings['globals']['units']}}) [Default: 165F/74C]">
+                                                <i class="fas fa-temperature-high"></i>&nbsp; Keep Warm Temp ({{settings['globals']['units']}})
+                                            </span>
+                                        </div>
+                                        <input id="keep_warm_temp" type="number" inputmode="numeric" min="1" class="form-control" placeholder="{{ settings['keep_warm']['temp'] }}" value="{{ settings['keep_warm']['temp'] }}" name="keep_warm_temp"  style="min-width: 4ch;">
+                                    </div>
+                                    <br>
+                                    You can also enable or disable the Smoke Plus feature during Keep Warm.
+                                    <br>
+                                    <br>
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="keep_warm_s_plus" name="keep_warm_s_plus" {% if settings['keep_warm']['s_plus'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="keep_warm_s_plus">Smoke Plus Enabled During 'Keep Warm'</label>
+                                    </div>
+                                    <br>
+                                </div><!-- End of card body -->
+                            </div><!-- End of Card -->
+                        </div><!-- End of card body -->
+                        <div class="card-footer bg-light">
+                            <button type="submit" class="btn btn-outline-danger">Save</button>
+                        </div>
+                    </form>
+                    </div><!-- End of Card -->
+                    <br><br><br>
+                </div><!-- End of Tab -->
+                <!-- ============================ PWM Settings ========================== -->
+                {% if settings['platform']['dc_fan'] %}
+                <div class="tab-pane fade" id="v-pills-pwm" role="tabpanel" aria-labelledby="v-pills-pwm-tab">
+                    <div class="card shadow">
+                        <form name="pwm" action="/settings/pwm" method="POST">
+                            <div class="card-header bg-primary text-white">
+                                <h5>
+                                    <i class="fas fa-tools"></i>&nbsp; PWM Settings
+                                </h5>
+                            </div>
+                        <div class="card-body">
+                            <!-- Temp Fan Control Settings -->
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h5>
+                                        <i class="fas fa-tachometer-alt"></i>&nbsp; PWM Temp Control Settings
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="pwm_control" name="pwm_control" {% if settings['pwm']['pwm_control'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="pwm_control">Temp Control Enabled by Default</label>
+                                    </div>
+                                    <br>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small">If enabled PWM Temp Control will override Smoke Plus fan ramping. The fan will adjust with temperature and cycle on and off but will not ramp up to speed.</i>
+                                    <br>
+                                    <br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="How often the Fan Speed will be updated based on Temperature (seconds) [Default=10]">
+                                                <i class="far fa-clock"></i>&nbsp; Update Time (s)
+                                            </span>
+                                        </div>
+                                        <input id="pwm_update" type="number" inputmode="numeric" min="1" class="form-control" placeholder="{{ settings['pwm']['update_time'] }}" value="{{ settings['pwm']['update_time'] }}" name="pwm_update" style="min-width: 4ch;">
+                                    </div>
+                                    <br>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small">If Current Grill Temp is over Set Temp Fan will be set to Minimum Duty Cycle. If the Grill temp is below the Set Temp the Duty Cycles below will be used. Example: If Current Grill Temp drops below Set Temp by 1-3 ° a 20% PWM will be set. If the Grill Temp drops below the Set Temp by 15° a 75% Duty Cycle will be set. </i>
+                                    <br>
+                                    <br>
+                                    <table class="table table-sm" id="duty_cycle_table">
+                                        <thead>
+                                        <tr>
+                                            <th scope="col">Action</th>
+                                            <th scope="col">Temp Range</th>
+                                            <th scope="col">Duty Cycle</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                        <tfoot>
+                                        <tr>
+                                            <td>
+                                                <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#dc_add_modal"><i class="fas fa-plus"></i></button>
+                                            </td>
+                                            <td></td>
+                                            <td></td>
+                                        </tr>
+                                        </tfoot>
+                                    </table>
+                                    <!-- Temp Fan Control Profile modal -->
+                                    <div class="modal fade" id="dc_add_modal" tabindex="-1" aria-labelledby="dc_add_modal_label" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="dc_add_modal_label">Add PWM Temp Profile</h5>
+                                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                        <span aria-hidden="true">&times;</span>
+                                                    </button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <span class="badge badge-warning">NOTE:</span>
+                                                    <i class="small">Enter a value greater than <span id="dc_add_temp">0</span>{{ settings['globals']['units'] }}</i>
+                                                    <br>
+                                                    <br>
+                                                    <div class="input-group mb-3">
+                                                        <div class="input-group-prepend">
+                                                            <span class="input-group-text" id="dc_temp_label">Temp Range ({{ settings['globals']['units'] }})</span>
+                                                        </div>
+                                                        <input type="number" inputmode="numeric" class="form-control" value="5" min="1" max="100" name="dc_temp" id="dc_temp" aria-label="Temp Range" aria-describedby="dc_temp_label" style="min-width: 4ch;">
+                                                    </div>
+                                                    <div class="input-group mb-3">
+                                                        <div class="input-group-prepend">
+                                                            <span class="input-group-text" id="dc_duty_cycle_label">Duty Cycle (%)</span>
+                                                        </div>
+                                                        <input type="number" inputmode="numeric" class="form-control" value="50" min="1" max="100" name="dc_duty_cycle" id="dc_duty_cycle" aria-label="Duty Cycle" aria-describedby="dc_duty_cycle_label" style="min-width: 4ch;">
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                    <button type="button" class="btn btn-danger" data-dismiss="modal" onClick="onAddPWM()">Save changes</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div><!-- End of Add Modal-->
+                                    <!-- Temp Fan Control Edit Profile modal -->
+                                    <div class="modal fade" id="dc_edit_modal" tabindex="-1" aria-labelledby="dc_edit_modal_label" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="dc_edit_modal_label">Edit PWM Temp Profile</h5>
+                                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                        <span aria-hidden="true">&times;</span>
+                                                    </button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <span class="badge badge-warning">NOTE:</span>
+                                                    <i class="small" id="dc_edit_range_text">Enter a value in the range <span id="dc_edit_range_min">0</span>-<span id="dc_edit_range_max">100</span>{{ settings['globals']['units'] }}</i>
+                                                    <br>
+                                                    <br>
+                                                    <div class="input-group mb-3">
+                                                        <div class="input-group-prepend">
+                                                            <span class="input-group-text" id="dc_edit_temp_label">Temp Range ({{ settings['globals']['units'] }})</span>
+                                                        </div>
+                                                        <input type="number" inputmode="numeric" class="form-control" value="55" min="0" max="200" name="dc_edit_temp" id="dc_edit_temp" aria-label="Temp Range" aria-describedby="dc_edit_temp_label" style="min-width: 4ch;">
+                                                    </div>
+                                                    <div class="input-group mb-3">
+                                                        <div class="input-group-prepend">
+                                                            <span class="input-group-text" id="dc_edit_duty_cycle_label">Duty Cycle (%)</span>
+                                                        </div>
+                                                        <input type="number" inputmode="numeric" class="form-control" value="50" min="1" max="100" name="dc_edit_duty_cycle" id="dc_edit_duty_cycle" aria-label="Duty Cycle" aria-describedby="dc_edit_duty_cycle_label" style="min-width: 4ch;">
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                    <button type="button" class="btn btn-danger" id="dc_save_edits" value="" data-dismiss="modal" onClick="saveChangesPWM(this.value)">Save changes</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div><!-- End of Edit Modal-->
+                                </div>
+                            </div>
+                            <br>
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h5>
+                                        <i class="fas fa-tools"></i>&nbsp; General Fan Settings
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="PWM Fan Frequency. This will vary with different fans. [Default=100]">
+                                                <i class="fas fa-wave-square"></i>&nbsp; Frequency (Hz)
+                                            </span>
+                                        </div>
+                                        <input id="frequency" type="number" inputmode="numeric" min="1" class="form-control" placeholder="{{ settings['pwm']['frequency'] }}" value="{{ settings['pwm']['frequency'] }}" name="frequency">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="This is the minimum duty cycle that can be set. Some fans stall below a certain speed [Default=20]">
+                                                <i class="fas fa-tachometer-alt"></i>&nbsp; Min Duty Cycle
+                                            </span>
+                                        </div>
+                                        <input id="min_duty_cycle" type="number" inputmode="numeric" min="1" max="100" class="form-control" placeholder="{{ settings['pwm']['min_duty_cycle'] }}" value="{{ settings['pwm']['min_duty_cycle'] }}" name="min_duty_cycle">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="This is the maximum duty cycle that can be set. Can limit fans that are overpowered. If Fan is too overpowered settings a Duty Cycle > 50% is not advised. It would be best to source a fan with less CFM. [Default=100]">
+                                                <i class="fas fa-tachometer-alt"></i>&nbsp; Max Duty Cycle
+                                            </span>
+                                        </div>
+                                        <input id="max_duty_cycle" type="number" inputmode="numeric" min="1" max="100" class="form-control" placeholder="{{ settings['pwm']['max_duty_cycle'] }}" value="{{ settings['pwm']['max_duty_cycle'] }}" name="max_duty_cycle">
+                                    </div>
+                                </div>
+
+                                <script>
+                                    function validateDutyCycle() {
+                                        const minDutyCycle = parseInt(document.getElementById('min_duty_cycle').value, 10);
+                                        const maxDutyCycle = parseInt(document.getElementById('max_duty_cycle').value, 10);
+
+                                        if (minDutyCycle >= maxDutyCycle) {
+                                            alert('Max Duty Cycle must be greater than Min Duty Cycle.');
+                                            return false; // Prevent form submission
+                                        }
+                                        return true; // Allow form submission
+                                    }
+                                </script>
+                            </div>
+                        </div><!-- End of card body -->
+                        <div class="card-footer bg-light">
+                            <button type="submit" class="btn btn-outline-danger" onclick="return validateDutyCycle()">Save</button>
+                        </div>
+                    </form>
+                    </div><!-- End of Card -->
+                    <br><br><br>
+                </div>
+                {% endif %}
+                <!-- End of Tab -->
+                <!-- ============================ Startup/Shutdown Settings ========================== -->
+                <div class="tab-pane fade" id="v-pills-startup" role="tabpanel" aria-labelledby="v-pills-startup-tab">
+                    <div class="card shadow">
+                        <form name="startup_shutdown_settings" action="/settings/startup" method="POST">
+                            <div class="card-header bg-primary text-white">
+                                <h5>
+                                    <i class="fas fa-tools"></i>&nbsp; Startup & Shutdown Settings
+                                </h5>
+                            </div>
+                        <div class="card-body">
+                            <!-- Startup Settings -->
+							<div class="card shadow">
+								<div class="card-header">
+									<h5>
+										<i class="fas fa-play"></i>&nbsp; Default Startup Settings
+									</h5>
+								</div>
+								<div class="card-body">
+									<span class="badge badge-warning">NOTE:</span>
+									<i class="small"> Amount of time for startup before transitioning to next mode or attempting a reignite</i>
+                                    <div class="input-group mb-3">
+										<div class="input-group-prepend">
+											<span class="input-group-text" data-toggle="tooltip" title="Startup Duration (seconds) [Default=240]">
+												<i class="far fa-clock"></i>&nbsp; Startup Duration (seconds)</span>
+										</div>
+										<input id="startup_duration" type="number" inputmode="numeric" min="1" class="form-control" placeholder="{{ settings['startup']['duration'] }}" value="{{ settings['startup']['duration'] }}" name="startup_duration" style="min-width: 4ch;">
+									</div>
+
+									<span class="badge badge-warning">NOTE:</span>
+									<i class="small"> Select what mode to transition to after initial startup. Default is 'Smoke Mode'.</i>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                          <label class="input-group-text" for="after_startup_mode">
+                                            <i class="fa-solid fa-diamond-turn-right"></i>&nbsp;
+                                             Goto Mode After Startup: 
+                                          </label>
+                                        </div>
+                                        <select class="custom-select" id="after_startup_mode" name="after_startup_mode">
+                                          <option value="Smoke" {% if settings['startup']['start_to_mode']['after_startup_mode'] == 'Smoke' %}selected{% endif %}>Smoke Mode</option>
+                                          <option value="Hold" {% if settings['startup']['start_to_mode']['after_startup_mode'] == 'Hold' %}selected{% endif %}>Hold Mode</option>
+                                        </select>
+                                    </div>
+                                    <div id="startup_hold_value_input" class="card"{% if settings['startup']['start_to_mode']['after_startup_mode'] != 'Hold' %} style="display:none"{% endif %}>
+                                        <div class="card-body">
+                                            <div class="input-group mb-3">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text" data-toggle="tooltip" title="Setpoint Temperature for Hold Mode">
+                                                        <i class="fas fa-temperature-low"></i>&nbsp; Hold Temp</span>
+                                                </div>
+                                                <input id="startup_mode_setpoint" type="number" inputmode="numeric" min="{{ settings['safety']['maxstartuptemp'] }}" max="{{ settings['safety']['maxtemp'] }}" class="form-control" value="{{ settings['startup']['start_to_mode']['primary_setpoint'] }}" name="startup_mode_setpoint" style="min-width: 4ch;">
+                                            </div>
+                                            <div class="custom-control custom-switch">
+                                                <input type="checkbox" class="custom-control-input" id="startup_start_to_hold_prompt" name="startup_start_to_hold_prompt" {% if settings['startup']['start_to_mode']['start_to_hold_prompt'] %}checked{% endif %}>
+                                                <label class="custom-control-label" for="startup_start_to_hold_prompt">Always ask for hold temperature on startup</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <br><br>
+                                    <div class="custom-control custom-switch">
+										<input type="checkbox" class="custom-control-input" id="startup_exit_temp_toggle" {% if settings['startup']['startup_exit_temp'] > 0 %}checked{% endif %}>
+										<label class="custom-control-label" for="startup_exit_temp_toggle">Exit Startup @ Temperature</label>
+									</div>
+                                    <br>
+                                    <div id="startup_exit_temp_input" class="input-group mb-3"{% if settings['startup']['startup_exit_temp'] == 0 %} style="display:none"{% endif %}>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="Exit startup when this temperature is achieved. [0 = Disabled]">
+                                                    <i class="fas fa-temperature-high"></i>&nbsp; Exit Startup Temperature ({{ settings['globals']['units'] }})</span>
+                                            </div>
+                                            <input id="startup_exit_temp" type="number" inputmode="numeric" min="0" class="form-control" value="{{ settings['startup']['startup_exit_temp'] }}" name="startup_exit_temp" style="min-width: 4ch;">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="custom-control custom-switch">
+										<input type="checkbox" class="custom-control-input" id="prime_on_startup_toggle" {% if settings['startup']['prime_on_startup'] > 0 %}checked{% endif %}>
+										<label class="custom-control-label" for="prime_on_startup_toggle">Always Prime on Startup</label>
+									</div>
+                                    <br>
+                                    <div id="prime_on_startup_input" class="input-group mb-3"{% if settings['startup']['prime_on_startup'] == 0 %} style="display:none"{% endif %}>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" data-toggle="tooltip" title="Always prime on startup, value in grams of pellets to prime. [0 = Disabled/Default] [max = 200grams]">
+                                                    <i class="fa-solid fa-angles-right"></i>&nbsp; Prime on Startup (grams)</span>
+                                            </div>
+                                            <input id="prime_on_startup" type="number" inputmode="numeric" min="0" max="200" class="form-control" value="{{ settings['startup']['prime_on_startup'] }}" name="prime_on_startup" style="min-width: 4ch;">
+                                        </div>
+                                    </div>
+                                    {% if settings['platform']['dc_fan'] %}
+                                    <!-- Set Duty Cycle during Startup -->
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> Duty cycle for the DC fan during startup/reignite cycles. PiFire will honor min/max duty cycle in the <a href="#" onclick="event.preventDefault(); document.getElementById('v-pills-pwm-tab').click();">PWM Settings</a>.</i>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Set the duty cycle for the DC fan during startup/reignite cycles.">
+                                                <i class="fas fa-fan"></i>&nbsp; DC Fan Duty Cycle (%)</span>
+                                        </div>
+                                        <input id="pwm_duty_cycle" type="number" inputmode="numeric" min="0" max="100" class="form-control" value="{{ settings['startup']['pwm_duty_cycle'] }}" name="pwm_duty_cycle" style="min-width: 4ch;">
+                                    </div>
+                                    {% endif %}
+
+                                </div>
+							</div>
+							<br>
+							<!-- Smart Start Settings -->
+							<div class="card shadow">
+								<div class="card-header">
+									<h5>
+										<i class="fas fa-brain"></i>&nbsp; Smart Start Settings
+									</h5>
+								</div>
+								<div class="card-body">
+									<span class="badge badge-warning">NOTE:</span>
+									<i class="small"> Smart Start will sample the temperature from your grill temperature probe on startup to determine the startup mode time and the Smoke mode cycle settings.  If this mode is enabled, it will override the above startup and smoke cycle settings.  Edit the profiles below to customize the behavior of startup. </i>
+                                    <br>
+                                    <br>
+									<div class="custom-control custom-switch">
+										<input type="checkbox" class="custom-control-input" id="smartstart_enable" name="smartstart_enable" {% if settings['startup']['smartstart']['enabled'] %}checked{% endif %}>
+										<label class="custom-control-label" for="smartstart_enable">Smart Start Enabled</label>
+									</div>
+                                    <br>
+									<!-- Smart Start Profiles -->
+									<table class="table table-sm" id="smartStartTable">
+										<thead>
+										  <tr>
+											<th scope="col">Action</th>
+											<th scope="col">Temp Range</th>
+											<th scope="col">Startup</th>
+											<th scope="col">AugerOn</th>
+											<th scope="col">P-Mode</th>
+										</tr>
+										</thead>
+										<tbody>
+										</tbody>
+										<tfoot>
+											<tr>
+												<td>
+													<button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#sstrt_add_modal"><i class="fas fa-plus"></i></button>
+												</td>
+												<td></td>
+												<td></td>
+												<td></td>
+												<td></td>
+											</tr>
+										</tfoot>
+									</table>
+									<!-- Smart Start ADD Profile modal -->
+									<div class="modal fade" id="sstrt_add_modal" tabindex="-1" aria-labelledby="sstrt_add_modal_label" aria-hidden="true">
+										<div class="modal-dialog">
+										<div class="modal-content">
+											<div class="modal-header">
+											<h5 class="modal-title" id="sstrt_add_modal_label">Add Smart Start Profile</h5>
+											<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+												<span aria-hidden="true">&times;</span>
+											</button>
+											</div>
+											<div class="modal-body">
+                                                <span class="badge badge-warning">NOTE:</span>
+                                                <i class="small">Enter a value greater than <span id="addMinTemp">0</span>{{ settings['globals']['units'] }}</i>
+												<div class="input-group mb-3">
+													<div class="input-group-prepend">
+													  <span class="input-group-text" id="minTempLabel">Min Temperature({{ settings['globals']['units'] }})</span>
+													</div>
+													<input type="number" inputmode="numeric" class="form-control" value="55" min="0" max="200" name="minTemp" id="minTemp" aria-label="Min Temperature" aria-describedby="minTempLabel" style="min-width: 4ch;">
+												</div>
+												<div class="input-group mb-3">
+													<div class="input-group-prepend">
+													  <span class="input-group-text" id="startupTimeLabel">Startup Time(s)</span>
+													</div>
+													<input type="number" inputmode="numeric" class="form-control" value="240" min="30" max="1200" name="startupTime" id="startupTime" aria-label="Startup Time" aria-describedby="startupTimeLabel" style="min-width: 5ch;">
+												</div>
+												<div class="input-group mb-3">
+													<div class="input-group-prepend">
+													  <span class="input-group-text" id="augeronTimeLabel">Auger On Time(s)</span>
+													</div>
+													<input type="number" inputmode="numeric" class="form-control" value="15" min="1" max="1000" name="augeronTime" id="augeronTime" aria-label="Auger On Time" aria-describedby="augeronTimeLabel" style="min-width: 5ch;">
+												</div>
+												<div class="input-group mb-3">
+													<div class="input-group-prepend">
+													  <span class="input-group-text" id="pModeLabel">P-Mode</span>
+													</div>
+													<input type="number" inputmode="numeric" class="form-control" value="2" min="0" max="9" name="pMode" id="pMode" aria-label="P-Mode" aria-describedby="pModeLabel" style="min-width: 3ch;">
+												</div>
+
+											</div>
+											<div class="modal-footer">
+											<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+											<button type="button" class="btn btn-danger" data-dismiss="modal" onClick="onAdd()">Save changes</button>
+											</div>
+										</div>
+										</div>
+									</div><!-- End of Add Modal-->
+                                    <!-- Smart Start EDIT Profile modal -->
+									<div class="modal fade" id="sstrt_edit_modal" tabindex="-1" aria-labelledby="sstrt_edit_modal_label" aria-hidden="true">
+										<div class="modal-dialog">
+										<div class="modal-content">
+											<div class="modal-header">
+											<h5 class="modal-title" id="sstrt_edit_modal_label">Edit Smart Start Profile</h5>
+											<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+												<span aria-hidden="true">&times;</span>
+											</button>
+											</div>
+											<div class="modal-body">
+                                                <span class="badge badge-warning">NOTE:</span>
+                                                <i class="small" id="edit_RangeText">Enter a value in the range <span id="editRangeMin">0</span>-<span id="editRangeMax">200</span>{{ settings['globals']['units'] }}</i>
+                                                <div class="input-group mb-3">
+													<div class="input-group-prepend">
+													  <span class="input-group-text" id="edit_minTempLabel">Max Temperature({{ settings['globals']['units'] }})</span>
+													</div>
+													<input type="number" inputmode="numeric" class="form-control" value="55" min="0" max="200" name="edit_minTemp" id="edit_minTemp" aria-label="Min Temperature" aria-describedby="edit_minTempLabel" style="min-width: 4ch;">
+												</div>
+												<div class="input-group mb-3">
+													<div class="input-group-prepend">
+													  <span class="input-group-text" id="edit_startupTimeLabel">Startup Time(s)</span>
+													</div>
+													<input type="number" inputmode="numeric" class="form-control" value="240" min="30" max="1200" name="edit_startupTime" id="edit_startupTime" aria-label="Startup Time" aria-describedby="edit_startupTimeLabel" style="min-width: 5ch;">
+												</div>
+												<div class="input-group mb-3">
+													<div class="input-group-prepend">
+													  <span class="input-group-text" id="edit_augeronTimeLabel">Auger On Time(s)</span>
+													</div>
+													<input type="number" inputmode="numeric" class="form-control" value="15" min="1" max="1000" name="edit_augeronTime" id="edit_augeronTime" aria-label="Auger On Time" aria-describedby="edit_augeronTimeLabel" style="min-width: 5ch;">
+												</div>
+												<div class="input-group mb-3">
+													<div class="input-group-prepend">
+													  <span class="input-group-text" id="edit_pModeLabel">P-Mode</span>
+													</div>
+													<input type="number" inputmode="numeric" class="form-control" value="2" min="0" max="9" name="edit_pMode" id="edit_pMode" aria-label="P-Mode" aria-describedby="edit_pModeLabel" style="min-width: 3ch;">
+												</div>
+											</div>
+											<div class="modal-footer">
+											<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+											<button type="button" class="btn btn-danger" id="saveEdits" value="" data-dismiss="modal" onClick="saveChanges(this.value)">Save changes</button>
+											</div>
+										</div>
+										</div>
+									</div><!-- End of Add Modal-->
+
+                                    <span class="badge badge-warning">NOTE:</span>
+									<i class="small"> Set this value to 0 to disable this startup exit temperature.</i>
+                                    <div class="input-group mb-3">
+										<div class="input-group-prepend">
+											<span class="input-group-text" data-toggle="tooltip" title="Exit startup when this temperature is achieved. [0 = Disabled]">
+												<i class="fas fa-temperature-high"></i>&nbsp; Exit Startup Temperature ({{ settings['globals']['units'] }})</span>
+										</div>
+										<input id="smartstart_exit_temp" type="number" inputmode="numeric" min="0" class="form-control" placeholder="{{ settings['startup']['smartstart']['exit_temp'] }}" value="{{ settings['startup']['smartstart']['exit_temp'] }}" name="smartstart_exit_temp" style="min-width: 4ch;">
+									</div>
+
+								</div><!-- End of Smart Start Settings Card Body -->
+							</div><!-- End of Smart Start Settings Card-->
+							<br>
+							<!-- Shutdown Settings -->
+							<div class="card shadow">
+								<div class="card-header">
+									<h5>
+										<i class="fas fa-flag-checkered"></i>&nbsp; Default Shutdown Settings
+									</h5>
+								</div>
+								<div class="card-body">
+									<div class="input-group mb-3">
+										<div class="input-group-prepend">
+											<span class="input-group-text" data-toggle="tooltip" title="Shutdown timer (seconds) [Default=60]">
+												<i class="far fa-clock"></i>&nbsp; Shutdown Duration (seconds)</span>
+										</div>
+										<input id="shutdown_duration" type="number" inputmode="numeric" min="1" class="form-control" placeholder="{{ settings['shutdown']['shutdown_duration'] }}" value="{{ settings['shutdown']['shutdown_duration'] }}" name="shutdown_duration" style="min-width: 4ch;">
+									</div>
+									<span class="badge badge-warning">NOTE:</span>
+									<i class="small"> Amount of time fan will run after shutdown is selected </i>
+									<br>
+									<br>
+									<div class="custom-control custom-switch">
+										<input type="checkbox" class="custom-control-input" id="auto_power_off" name="auto_power_off" {% if settings['shutdown']['auto_power_off'] %}checked{% endif %}>
+										<label class="custom-control-label" for="auto_power_off">Auto Power Off</label>
+									</div>
+                                    <br>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> When enabled the system will auto power off after the Grill Shutdown Mode has ended</i>
+                                    <br>
+								</div>
+							</div> <!-- End of Shutdown Settings Card-->
+                        </div><!-- End of card body -->
+                        <div class="card-footer bg-light">
+                            <button type="submit" class="btn btn-outline-danger">Save</button>
+                        </div>
+                    </form>
+                    </div><!-- End of Card -->
+                    <br><br><br>
+                </div><!-- End of Tab -->
+                <!-- ============================ Dashboard Settings ========================== -->
+                <div class="tab-pane fade" id="v-pills-dash" role="tabpanel" aria-labelledby="v-pills-dash-tab">
+                    <div class="card shadow">
+                        <div class="card-header bg-primary text-white">
+                                <h5>
+                                    <i class="fas fa-tools"></i>&nbsp; Dashboard Settings
+                                </h5>
+                        </div>
+                        <div class="card-body" id="dashboardSelectionCard">
+                            {{ render_dash_select('', settings) }}
+                        </div><!-- End of card body -->
+                        <div class="card-footer bg-light">
+                            <button type="button" class="btn btn-outline-danger" onclick="selectDashboard(document.getElementById('dashboardSelect').value);">Save</button>
+                        </div>
+                    </div><!-- End of Card -->
+                    <br><br><br>
+                </div><!-- End of Tab -->
+                <!-- ============================ History Settings ========================== -->
+                <div class="tab-pane fade" id="v-pills-history" role="tabpanel" aria-labelledby="v-pills-history-tab">
+                    <div class="card shadow">
+                        <form name="miscsettings" action="/settings/history" method="POST">
+                            <div class="card-header bg-primary text-white">
+                                <h5>
+                                    <i class="fas fa-tools"></i>&nbsp; History Settings
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Amount of history to display on the history page (minutes). [Default = 60]">
+                                        <i class="far fa-clock"></i>&nbsp; History to Display (mins)</span>
+                                </div>
+                                <input id="historymins" type="number" inputmode="numeric" min="1" class="form-control" placeholder="{{ settings['history_page']['minutes'] }}" value="{{ settings['history_page']['minutes'] }}" name="historymins" style="min-width: 4ch;">
+                            </div>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Number of datapoints to display per page.">
+                                        <i class="far fa-clock"></i>&nbsp; Datapoints to Display</span>
+                                </div>
+                                <input id="datapoints" type="number" inputmode="numeric" min="10" class="form-control" placeholder="{{ settings['history_page']['datapoints'] }}" value="{{ settings['history_page']['datapoints'] }}" name="datapoints" style="min-width: 4ch;">
+                            </div>
+
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="historyautorefresh" name="historyautorefresh" {% if settings['history_page']['autorefresh'] == 'on' %}checked{% endif %}>
+                                <label class="custom-control-label" for="historyautorefresh">History Auto-Refresh</label>
+                            </div>
+                            <br>
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="ext_data" name="ext_data" {% if settings['globals']['ext_data'] %}checked{% endif %}>
+                                <label class="custom-control-label" for="ext_data">Track Extended Data<br>
+                                    <span class="badge badge-warning">DEBUG</span> 
+                                    <i>Extended data is stored in the database, and exported to cookfile/CSV files for debug purposes.  This setting can only be changed when the grill is inactive (i.e. 'Stop' mode). </i>
+                                </label>
+                            </div>
+                            <br>
+
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <span class="align-middle">
+                                        <button type="button" class="btn btn-outline-primary" data-toggle="collapse" data-target="#collapseColors" aria-expanded="false" aria-controls="collapseColors">
+                                            <i class="fas fa-palette"></i>&nbsp; Expand Color Config
+                                        </button>
+                                    </span>
+                                </div>
+                                <div class="collapse" id="collapseColors">
+                                <div class="card-body">
+                                    <span class="badge badge-primary">Note</span> 
+                                    <i>Click on the color swatch on the right of each line item to use the integrated color picker.  
+                                        Configure the line color and background color for each Probe, Probe Notification Target, and for Primary Probes, the Setpoint.</i>
+                                    <br><br>
+                                    {% for probe in settings['history_page']['probe_config'] %}
+                                    <div id="clrpck_temp_{{ probe }}" class="input-group" data-color="{{ settings['history_page']['probe_config'][probe]['line_color'] }}">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">{{ settings['history_page']['probe_config'][probe]['name'] }} Temperature Color</span>
+                                        </div>
+                                        <input type="text" inputmode="text" class="form-control input-lg" id="clr_temp_{{ probe }}" name="clr_temp_{{ probe }}" style="min-width: 11ch;"/>
+                                        <span class="input-group-append">
+                                            <span class="input-group-text colorpicker-input-addon"><i></i></span>
+                                        </span>
+                                    </div>
+                                    <div id="clrpck_bgtemp_{{ probe }}" class="input-group" data-color="{{ settings['history_page']['probe_config'][probe]['bg_color'] }}">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">{{ settings['history_page']['probe_config'][probe]['name'] }} Background Temperature Color</span>
+                                        </div>
+                                        <input type="text" inputmode="text" class="form-control input-lg" id="clrbg_temp_{{ probe }}" name="clrbg_temp_{{ probe }}" style="min-width: 11ch;"/>
+                                        <span class="input-group-append">
+                                            <span class="input-group-text colorpicker-input-addon"><i></i></span>
+                                        </span>
+                                    </div>
+                                    {% if 'line_color_setpoint' in settings['history_page']['probe_config'][probe].keys() %} 
+                                    <div id="clrpck_setpoint_{{ probe }}" class="input-group" data-color="{{ settings['history_page']['probe_config'][probe]['line_color_setpoint'] }}">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">{{ settings['history_page']['probe_config'][probe]['name'] }} Setpoint Color</span>
+                                        </div>
+                                        <input type="text" inputmode="text" class="form-control input-lg" id="clr_setpoint_{{ probe }}" name="clr_setpoint_{{ probe }}" style="min-width: 11ch;"/>
+                                        <span class="input-group-append">
+                                            <span class="input-group-text colorpicker-input-addon"><i></i></span>
+                                        </span>
+                                    </div>
+                                    <div id="clrpck_bgsetpoint_{{ probe }}" class="input-group" data-color="{{ settings['history_page']['probe_config'][probe]['bg_color_setpoint'] }}">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">{{ settings['history_page']['probe_config'][probe]['name'] }} Background Setpoint Color</span>
+                                        </div>
+                                        <input type="text" inputmode="text" class="form-control input-lg" id="clrbg_setpoint_{{ probe }}" name="clrbg_setpoint_{{ probe }}" style="min-width: 11ch;"/>
+                                        <span class="input-group-append">
+                                            <span class="input-group-text colorpicker-input-addon"><i></i></span>
+                                        </span>
+                                    </div>
+                                    {% endif %}
+                                    <div id="clrpck_target_{{ probe }}" class="input-group" data-color="{{ settings['history_page']['probe_config'][probe]['line_color_target'] }}">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">{{ settings['history_page']['probe_config'][probe]['name'] }} Notify Target Color</span>
+                                        </div>
+                                        <input type="text" inputmode="text" class="form-control input-lg" id="clr_target_{{ probe }}" name="clr_target_{{ probe }}" style="min-width: 11ch;"/>
+                                        <span class="input-group-append">
+                                            <span class="input-group-text colorpicker-input-addon"><i></i></span>
+                                        </span>
+                                    </div>
+                                    <div id="clrpck_bgtarget_{{ probe }}" class="input-group" data-color="{{ settings['history_page']['probe_config'][probe]['bg_color_target'] }}">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">{{ settings['history_page']['probe_config'][probe]['name'] }} Background Notify Target Color</span>
+                                        </div>
+                                        <input type="text" inputmode="text" class="form-control input-lg" id="clrbg_target_{{ probe }}" name="clrbg_target_{{ probe }}" style="min-width: 11ch;"/>
+                                        <span class="input-group-append">
+                                            <span class="input-group-text colorpicker-input-addon"><i></i></span>
+                                        </span>
+                                    </div>
+                                    <br>
+                                    {% endfor %}
+                                </div> <!-- End of card body -->
+                            </div> <!-- End of collapse -->
+                        </div> <!-- End of Color Picker Card -->
+                        </div><!-- End of card body -->
+                        <div class="card-footer bg-light">
+                            <button type="submit" class="btn btn-outline-danger">Save</button>
+                        </div>
+                    </form>
+                </div><!-- End of Card -->
+                <br><br><br>
+            </div><!-- End of Tab -->
+            <!-- ============================ Safety Settings ========================== -->
+            <div class="tab-pane fade" id="v-pills-safety" role="tabpanel" aria-labelledby="v-pills-safety-tab">
+                <div class="card shadow">
+                    <form name="safetysettings" action="/settings/safety" method="POST">
+                        <div class="card-header bg-primary text-white">
+                            <h5>
+                                <i class="fas fa-tools"></i>&nbsp; Safety Settings
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <span class="badge badge-danger">WARNING:</span>
+                            <i class="small"> Safety features are not infallible and may not prevent safety issues with your grill in all cases. As with any grill, it is the operator's responsibility to monitor their equipment to ensure proper operational safety.</i>
+                            <hr>
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="startup_check" name="startup_check" {% if settings['safety']['startup_check'] %}checked{% endif %}>
+                                <label class="custom-control-label" for="startup_check" data-toggle="tooltip" title="Enables an additional check after clicking startup, to prevent accidental startup.">Enable Startup Check</label>
+                            </div>
+                            <span class="badge badge-warning">NOTE:</span>
+                            <i class="small"> Enables an additional check after clicking startup, to prevent accidental startup.</i>
+                            <br>
+                            <hr>
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="allow_manual_changes" name="allow_manual_changes" {% if settings['safety']['allow_manual_changes'] %}checked{% endif %}>
+                                <label class="custom-control-label" for="allow_manual_changes" data-toggle="tooltip" title="Select to allow manual changes to outputs (igniter, fan, auger, power, etc) during operation.">Allow Manual Changes/Overrides to Outputs During Operation</label>
+                            </div>
+                            <span class="badge badge-warning">NOTE:</span>
+                            <i class="small"> Allow the ability to manually control outputs like the igniter, fan, auger, power, etc. during normal operation.  Keep in mind that during normal operation the igniter, fan and auger may (or may not) be controlled by the controller and user changes may be overridden.  Use the below override time to block the controller from making changes for a period of seconds.</i>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Number of seconds to override any controller changes to the outputs.">
+                                        <i class="fas fa-stopwatch"></i>&nbsp; Override Time (s)
+                                    </span>
+                                </div>
+                                <input id="manual_override_time" type="number" inputmode="numeric" min="0" class="form-control" placeholder="{{ settings['safety']['manual_override_time'] }}" value="{{ settings['safety']['manual_override_time'] }}" name="manual_override_time" style="min-width: 4ch;">
+                            </div>
+                            <hr>
+                            <i class="fas fa-temperature-quarter"></i>&nbsp; <i>Operating Temperature Settings</i>
+                            <br>
+                            <br>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Lowest temperature after startup allowed.  Shut down grill to prevent firepot overload.">
+                                        <i class="fas fa-temperature-low"></i>&nbsp; Min Startup Temp ({{settings['globals']['units']}})
+                                    </span>
+                                </div>
+                                <input id="minstartuptemp" type="number" inputmode="numeric" min="1" class="form-control" placeholder="{{ settings['safety']['minstartuptemp'] }}" value="{{ settings['safety']['minstartuptemp'] }}" name="minstartuptemp" style="min-width: 4ch;">
+                            </div>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Lowest allowed operational temperature, after startup has completed. Shut down grill to prevent firepot overload.">
+                                        <i class="fas fa-temperature-low"></i>&nbsp; Max Startup Temp ({{settings['globals']['units']}})</span>
+                                </div>
+                                <input id="maxstartuptemp" type="number" inputmode="numeric" min="1" class="form-control" placeholder="{{ settings['safety']['maxstartuptemp'] }}" value="{{ settings['safety']['maxstartuptemp'] }}" name="maxstartuptemp" style="min-width: 4ch;">
+                            </div>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Maximum allowable temperature.  Shut down grill to prevent potential damage.">
+                                        <i class="fas fa-temperature-high"></i>&nbsp; Max Operational Temp ({{settings['globals']['units']}})</span>
+                                </div>
+                                <input id="maxtemp" type="number" inputmode="numeric" min="1" class="form-control" placeholder="{{ settings['safety']['maxtemp'] }}" value="{{ settings['safety']['maxtemp'] }}" name="maxtemp" style="min-width: 4ch;">
+                            </div>
+                            <span class="badge badge-warning">NOTE:</span>
+                            <i class="small"> In an error condition (temp too low, temp too high) the grill will immediately shutdown and log the error in the events log. Notifications of an error will be sent if enabled. The Max Temp safety setting is also enabled in Monitor mode. If the temperature is too low, the grill can attempt a re-ignite a certain number of times specified below.</i>
+                            <hr>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" data-toggle="tooltip" title="Number of retries to attempt re-ignite after the grill temperature goes too low. Set to zero to disable. [default=1]">
+                                        <i class="fas fa-redo-alt"></i>&nbsp; Reignite Retries</span>
+                                </div>
+                                <input id="reigniteretries" type="number" inputmode="numeric" min="0" max="10" class="form-control" placeholder="{{ settings['safety']['reigniteretries'] }}" value="{{ settings['safety']['reigniteretries'] }}" name="reigniteretries" style="min-width: 4ch;">
+                            </div>
+                            <br>
+                        </div><!-- End of card body -->
+                        <div class="card-footer bg-light">
+                            <button type="submit" class="btn btn-outline-danger">Save</button>
+                        </div>
+                        </form>
+                    </div><!-- End of Card -->
+                    <br><br><br>
+                </div><!-- End of Tab -->
+                <!-- ============================ Pellet Settings ========================== -->
+                <div class="tab-pane fade" id="v-pills-pellets" role="tabpanel" aria-labelledby="v-pills-pellets-tab">
+                    <div class="card shadow">
+                        <form name="pelletsettings" action="/settings/pellets" method="POST">
+                            <div class="card-header bg-primary text-white">
+                                <h5>
+                                    <i class="fas fa-tools"></i>&nbsp; Pellet Settings
+                                </h5>
+                            </div>
+                        <div class="card-body">
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h5>
+                                        <i class="fas fa-tools"></i>&nbsp; Pellet Warnings
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="pellet_warning" name="pellet_warning" {% if settings['pelletlevel']['warning_enabled'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="pellet_warning">Pellet Level Warning</label>
+                                    </div>
+                                    <br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="How often the pellet level will be checked for low levels and notifications sent. (minutes)">
+                                                <i class="far fa-clock"></i>&nbsp; Check Time (mins)
+                                            </span>
+                                        </div>
+                                        <input id="warning_time" type="number" inputmode="numeric" min="5" max="240" class="form-control" placeholder="{{ settings['pelletlevel']['warning_time'] }}" value="{{ settings['pelletlevel']['warning_time'] }}" name="warning_time"  style="min-width: 4ch;">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Low Pellet Level Warning (percent)">
+                                                <i class="fas fa-exclamation-triangle"></i>&nbsp; Level Warning (%)
+                                            </span>
+                                        </div>
+                                        <input id="warning_level" type="number" inputmode="numeric" min="0" max="100" class="form-control" placeholder="{{ settings['pelletlevel']['warning_level'] }}" value="{{ settings['pelletlevel']['warning_level'] }}" name="warning_level" style="min-width: 4ch;">
+                                    </div>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> Pellet levels below the input percent will receive notifications every {{ settings['pelletlevel']['warning_time'] }} minutes during a cook</i>
+                                    <br>
+                                </div><!-- End of card body -->
+                            </div><!-- End of Card -->
+                            <br>
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h5>
+                                        <i class="fas fa-tools"></i>&nbsp; Pellet Levels
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Distance (cm) measured when the hopper is full.">
+                                                <i class="fas fa-level-up-alt"></i>&nbsp; Hopper Full Distance (cm)
+                                            </span>
+                                        </div>
+                                        <input id="full" type="number" inputmode="numeric" min="0" max="100" class="form-control" placeholder="{{ settings['pelletlevel']['full'] }}" value="{{ settings['pelletlevel']['full'] }}" name="full" style="min-width: 4ch;">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Distance (cm) measured when the hopper is empty.">
+                                                <i class="fas fa-level-down-alt"></i>&nbsp; Hopper Empty Distance (cm)
+                                            </span>
+                                        </div>
+                                        <input id="empty" type="number" inputmode="numeric" min="1" max="100" class="form-control" placeholder="{{ settings['pelletlevel']['empty'] }}" value="{{ settings['pelletlevel']['empty'] }}" name="empty" style="min-width: 4ch;">
+                                    </div>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> The distance value for full must be smaller than the value for empty. </i>
+                                    <br>
+                                </div><!-- End of card body -->
+                            </div><!-- End of Card -->
+                            <br>
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h5>
+                                        <i class="fas fa-tools"></i>&nbsp; Auger Rate
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" data-toggle="tooltip" title="Auger Rate = grams / second">
+                                                <i class="fas fa-angle-double-right"></i>&nbsp; Auger Rate (g/s)
+                                            </span>
+                                        </div>
+                                        <input id="auger_rate" type="number" inputmode="numeric" min="0" step="0.05" class="form-control" value="{{ settings['globals']['augerrate'] }}" name="auger_rate" style="min-width: 4ch;">
+                                    </div>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> This value is used to calculate how long to run the auger when priming, and to calculate estimated pellet usage.
+                                    This value can be tuned for your auger speed, by going into manual mode and running the auger for 10 seconds, then weighing the pellets
+                                    that have been dispensed into the firepot.  For example, if you run the auger for 10 seconds and 3 grams of pellets are dispensed, then
+                                    the calculation would be 3g / 10s = 0.3.  That means 0.3 grams are dispensed per second of auger on time.     
+                                    </i>
+                                    <br>
+                                </div>
+                            </div>
+                            <br>
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h5>
+                                        <i class="fas fa-angle-double-right"></i>&nbsp; Prime Settings
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="prime_ignition" name="prime_ignition" {% if settings['globals']['prime_ignition'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="prime_ignition">Start Igniter During Prime + Startup</label>
+                                    </div>
+                                    <span class="badge badge-danger">DANGER:</span>
+                                    <i class="small"> 
+                                        Only enable the igniter during Priming, if you are absolutely sure that you need to do this.  
+                                        Enabling the igniter will ignite pellets and start the firepot, even without the fan enabled. 
+                                        This feature will only turn on the igniter if Prime & Startup is selected.  Otherwise, priming 
+                                        without startup will not utilize the igniter.  
+                                    </i>
+                                    <br>
+                                </div>
+                            </div>
+                        </div><!-- End of card body -->
+                        <div class="card-footer bg-light">
+                            <button type="submit" class="btn btn-outline-danger">Save</button>
+                        </div>
+                    </form>
+                </div><!-- End of Card -->
+                <br><br><br>
+            </div><!-- End of Tab -->
+            
+            <!-- ============================ Page Settings ========================== -->
+            <div class="tab-pane fade" id="v-pills-theme" role="tabpanel" aria-labelledby="v-pills-theme-tab">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h5>
+                            <i class="fas fa-tools"></i>&nbsp; Page Settings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="darkmode" name="darkmode" {% if settings['globals']['page_theme'] == 'dark' %}checked{% endif %}>
+                            <label class="custom-control-label" for="darkmode">Enable Dark Mode</label>
+                        </div>
+                        <br>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="global_control_panel" name="global_control_panel" {% if settings['globals']['global_control_panel'] %}checked{% endif %}>
+                            <label class="custom-control-label" for="global_control_panel">Show Control Panel on Most Pages</label>
+                        </div>
+                        <br>
+                    </div><!-- End of card body -->
+                </div><!-- End of Card -->
+                <br><br><br>
+            </div><!-- End of Tab -->
+            
+            <!-- ========================== Notification Settings ========================== -->
+                <div class="tab-pane fade" id="v-pills-notifications" role="tabpanel" aria-labelledby="v-pills-notifications-tab">
+                    <div class="card shadow">
+                        <form name="notify" action="/settings/notify" method="POST">
+                        <div class="card-header bg-primary text-white">
+                            <h5>
+                                <i class="far fa-bell"></i>&nbsp; Notification Settings
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Apprise Notifications -->
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h5>Apprise Notifications</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="apprise_enabled" name="apprise_enabled" {% if settings['notify_services']['apprise']['enabled'] == True %}checked{% endif %}>
+                                        <label class="custom-control-label" for="apprise_enabled">Apprise Enabled</label>
+                                    </div>
+                                    <br>
+                                    {% if settings['notify_services']['apprise']['locations']|length %}
+                                    {% for location in settings['notify_services']['apprise']['locations'] %}<div class="input-group mb-3 appriselocation">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-link"></i>&nbsp; Location</span>
+                                        </div>
+                                        <input id="appriselocations" type="text" inputmode="text" class="form-control" name="appriselocations" value="{{location}}" placeholder="format://user@location/authorization" style="min-width: 11ch;">
+                                        <div class="input-group-append">
+                                            <button type="button" name="appriseDeleteRow" class="btn btn-danger"><i class="fas fa-minus"></i></button>
+                                        </div>
+                                    </div>{% endfor %}
+                                    {% else %}<div class="input-group mb-3 appriselocation">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-link"></i>&nbsp; Location</span>
+                                        </div>
+                                        <input id="appriselocations" type="text" inputmode="text" class="form-control" name="appriselocations" value="" placeholder="format://user@location/authorization" style="min-width: 11ch;">
+                                        <div class="input-group-append">
+                                            <button type="button" name="appriseDeleteRow" class="btn btn-danger"><i class="fas fa-minus"></i></button>
+                                        </div>
+                                    </div>{% endif %}
+                                    <div class="mb-3 text-right">
+                                        <button type="button" name="addAppriseLocation" class="btn btn-primary"><i class="fas fa-plus"></i> Add Location</button>
+                                    </div>
+                                </div>
+                                <!-- End of card body -->
+                            </div>
+                            <!-- End of Card -->
+                            <br>
+                            <!-- IFTTT WebHooks -->
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h5>IFTTT WebHooks</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="ifttt_enabled" name="ifttt_enabled" {% if settings['notify_services']['ifttt']['enabled'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="ifttt_enabled">IFTTT Enabled</label>
+                                    </div>
+                                    <br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-key"></i>&nbsp; API Key</span>
+                                        </div>
+                                        <input id="iftttapi" type="text" inputmode="text" class="form-control" name="iftttapi" value="{{settings['notify_services']['ifttt']['APIKey']}}" style="min-width: 11ch;">
+                                    </div>
+                                </div><!-- End of card body -->
+                            </div><!-- End of Card -->
+                            <br>
+                            <!-- PushOver Notifications -->
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h5>PushOver</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="pushover_enabled" name="pushover_enabled" {% if settings['notify_services']['pushover']['enabled'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="pushover_enabled">PushOver Enabled</label>
+                                    </div>
+                                    <br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-key"></i>&nbsp; API Key</span>
+                                        </div>
+                                        <input id="pushover_apikey" type="text" inputmode="text" class="form-control" name="pushover_apikey" value="{{settings['notify_services']['pushover']['APIKey']}}" style="min-width: 11ch;">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-key"></i>&nbsp; User Keys</span>
+                                        </div>
+                                        <input id="pushover_userkeys" type="text" inputmode="text" class="form-control" name="pushover_userkeys" value="{{settings['notify_services']['pushover']['UserKeys']}}" style="min-width: 11ch;">
+                                    </div>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> Add commas for multiple user keys. Leave blank to disable.</i>
+                                    <br>
+                                    <br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-link"></i>&nbsp; Public URL </span>
+                                        </div>
+                                        <input id="pushover_publicurl" type="text" inputmode="text" class="form-control" name="pushover_publicurl" value="{{settings['notify_services']['pushover']['PublicURL']}}" style="min-width: 11ch;">
+                                    </div>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> URL to be added to Pushover notifications.</i>
+                                </div><!-- End of card body -->
+                            </div><!-- End of Card -->
+                            <br>
+                            <!-- Pushbullet Notifications -->
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h5>Pushbullet</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="pushbullet_enabled" name="pushbullet_enabled" {% if settings['notify_services']['pushbullet']['enabled'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="pushbullet_enabled">Pushbullet Enabled</label>
+                                    </div>
+                                    <br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-key"></i>&nbsp; API Key</span>
+                                        </div>
+                                        <input id="pushbullet_apikey" type="text" inputmode="text" class="form-control" name="pushbullet_apikey" value="{{settings['notify_services']['pushbullet']['APIKey']}}" style="min-width: 11ch;">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-link"></i>&nbsp; Public URL</span>
+                                        </div>
+                                        <input id="pushbullet_publicurl" type="text" inputmode="text" class="form-control" name="pushbullet_publicurl" value="{{settings['notify_services']['pushbullet']['PublicURL']}}" style="min-width: 11ch;">
+                                    </div>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> URL to be added to Pushbullet notifications.</i>
+                                </div><!-- End of card body -->
+                            </div><!-- End of Card -->
+                            <br>
+                            <!-- Android Push Notifications -->
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h5>Push Notifications</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input"
+                                               id="onesignal_enabled"
+                                               name="onesignal_enabled" {% if settings['notify_services']['onesignal']['enabled'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="onesignal_enabled">OneSignal Enabled</label>
+                                    </div>
+                                    <br>
+                                    {% for index, data in settings['notify_services']['onesignal']['devices'].items()|sort %}
+                                    <div class="card shadow">
+                                        <div class="card-header bg-light text-white">
+                                            <h5>
+                                                <a href="#edit_device{{ index }}" data-toggle="collapse">
+                                                    {% if data['friendly_name'] == '' %}
+                                                    <i class="far fa-caret-square-down"></i>&nbsp; {{ data['device_name'] }}
+                                                    {% else %}
+                                                    <i class="far fa-caret-square-down"></i>&nbsp; {{ data['friendly_name'] }}
+                                                    {% endif %}
+                                                </a>
+                                            </h5>
+                                        </div>
+                                        <div id="edit_device{{ index }}" class="collapse">
+                                            <div class="card-body">
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" data-toggle="tooltip" title="Human readable name for device used to display above.">
+                                                            <i class="fas fa-user-circle"></i>&nbsp; Friendly Name
+                                                        </span>
+                                                    </div>
+                                                    <input id="FriendlyName_{{ index }}" type="text" inputmode="text" class="form-control" name="FriendlyName_{{ index }}" value="{{ data['friendly_name'] }}" style="min-width: 11ch;">
+                                                </div>
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" data-toggle="tooltip" title="The factory device name">
+                                                            <i class="fas fa-user-circle"></i>&nbsp; Device Name</span>
+                                                    </div>
+                                                    <input id="DeviceName_{{ index }}" type="text" inputmode="text" class="form-control" name="DeviceName_{{ index }}" value="{{ data['device_name'] }}" readonly style="min-width: 11ch;">
+                                                </div>
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" data-toggle="tooltip" title="Android app version">
+                                                            <i class="fas fa-info-circle"></i>&nbsp; App Version</span>
+                                                    </div>
+                                                    <input id="AppVersion_{{ index }}" type="text" inputmode="text" class="form-control" name="AppVersion_{{ index }}" value="{{ data['app_version'] }}" readonly style="min-width: 11ch;">
+                                                </div>
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" data-toggle="tooltip" title="The OneSignal device ID">
+                                                            <i class="fas fa-fingerprint"></i>&nbsp; OneSignal Device ID</span>
+                                                    </div>
+                                                    <input id="DeviceID_{{ index }}" type="text" inputmode="text" class="form-control" name="DeviceID_{{ index }}" value="{{ index }}" disabled>
+                                                </div>
+                                            </div>
+                                            <div class="card-footer bg-light">
+                                                <button type="submit" class="btn btn-danger" name="edit_device" value="{{ index }}">Save</button>
+                                                <!-- Button to Open the Modal -->
+                                                <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#DeleteDeviceModal{{ index }}">Delete</button>
+                                                <!-- The Modal -->
+                                                <div class="modal" id="DeleteDeviceModal{{ index }}">
+                                                    <div class="modal-dialog">
+                                                        <div class="modal-content">
+                                                            <!-- Modal Header -->
+                                                            <div class="modal-header">
+                                                                {% if data['friendly_name'] == '' %}
+                                                                <h4 class="modal-title">Delete Device {{ data['device_name'] }}</h4>
+                                                                {% else %}
+                                                                <h4 class="modal-title">Delete Device {{ data['friendly_name'] }}</h4>
+                                                                {% endif %}
+                                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                            </div>
+                                                            <!-- Modal body -->
+                                                            {% if data['friendly_name'] == '' %}
+                                                            <div class="modal-body"> Are you sure you want to delete the {{ data['device_name'] }} device?</div>
+                                                            {% else %}
+                                                            <div class="modal-body"> Are you sure you want to delete the {{ data['friendly_name'] }} device?</div>
+                                                            {% endif %}
+                                                            <!-- Modal footer -->
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                                                <button type="submit" class="btn btn-danger" name="delete_device" value="{{ index }}">Delete</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <br>
+                                    {% endfor %}
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> You can download the Android application from <a href="https://github.com/weberbox/PiFire-Android" target="blank">Github</a> </i>
+                                    <br>
+                                </div><!-- End of card body -->
+                            </div><!-- End of Card -->
+                            <br>
+                            <!-- InfluxDB Notifications -->
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h5>InfluxDB</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="influxdb_enabled" name="influxdb_enabled" {% if settings['notify_services']['influxdb']['enabled'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="influxdb_enabled">InfluxDB Enabled</label>
+                                    </div>
+                                    <br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-key"></i>&nbsp; URL </span>
+                                        </div>
+                                        <input id="influxdb_url" type="text" inputmode="text" class="form-control" name="influxdb_url" value="{{settings['notify_services']['influxdb']['url']}}" style="min-width: 11ch;">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-key"></i>&nbsp; token </span>
+                                        </div>
+                                        <input id="influxdb_token" type="text" inputmode="text" class="form-control" name="influxdb_token" value="{{settings['notify_services']['influxdb']['token']}}" style="min-width: 11ch;">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-key"></i>&nbsp; org </span>
+                                        </div>
+                                        <input id="influxdb_org" type="text" inputmode="text" class="form-control" name="influxdb_org" value="{{settings['notify_services']['influxdb']['org']}}" style="min-width: 11ch;">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-key"></i>&nbsp; bucket </span>
+                                        </div>
+                                        <input id="influxdb_bucket" type="text" inputmode="text" class="form-control" name="influxdb_bucket" value="{{settings['notify_services']['influxdb']['bucket']}}" style="min-width: 11ch;">
+                                    </div>
+                                </div><!-- End of card body -->
+                            </div><!-- End of Card -->
+                            <br>
+                            <!-- MQTT -->
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h5>MQTT</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="mqtt_enabled" name="mqtt_enabled" {% if settings['notify_services']['mqtt']['enabled'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="mqtt_enabled">MQTT Enabled</label>
+                                    </div>
+                                    <br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-key"></i>&nbsp; PiFire Unique ID</span>
+                                        </div>
+                                        <input id="mqtt_id" type="text" inputmode="text" class="form-control" name="mqtt_id" value="{{settings['notify_services']['mqtt']['id']}}" style="min-width: 11ch;">
+                                    </div>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> 
+                                        Enter a unique name for this instance of PiFire.  This name is used as the root mqtt topic for this device.  Changing
+                                        it later will result in new mqtt topics being created, and if using Home Assistant will result in new sensors being created.      
+                                    </i>
+                                    <br>
+                                    <br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-link"></i>&nbsp; MQTT Broker</span>
+                                        </div>
+                                        <input id="mqtt_broker" type="text" inputmode="text" class="form-control" name="mqtt_broker" value="{{settings['notify_services']['mqtt']['broker']}}" style="min-width: 16ch;">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-link"></i>&nbsp; MQTT Port</span>
+                                        </div>
+                                        <input id="mqtt_port" type="text" inputmode="numeric" class="form-control" name="mqtt_port" value="{{settings['notify_services']['mqtt']['port']}}" style="min-width: 5ch;">
+                                    </div>      
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> 
+                                        Enter the IP or host name of your mqtt broker and port. ex:homeassistant.local 1883
+                                    </i>
+                                    <br>
+                                    <br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-key"></i>&nbsp; Username</span>
+                                        </div>
+                                        <input id="mqtt_user" type="text" class="form-control" name="mqtt_user" value="{{settings['notify_services']['mqtt']['username']}}" style="min-width: 11ch;">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-key"></i>&nbsp; Password</span>
+                                        </div>
+                                        <input id="mqtt_pw" type="text" class="form-control" name="mqtt_pw" value="{{settings['notify_services']['mqtt']['password']}}" style="min-width: 11ch;">
+                                    </div>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> 
+                                        Leave the username and password blank if your broker does not require authentication.
+                                    </i>
+                                    <br><br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-clock"></i>&nbsp; Refresh Rate (sec)</span>
+                                        </div>
+                                        <input id="mqtt_freq" type="text" inputmode="numeric" class="form-control" name="mqtt_freq" value="{{settings['notify_services']['mqtt']['update_sec']}}" style="min-width: 4ch;">
+                                    </div>                               
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> 
+                                        Specify in seconds, how often you would like to publish PiFire data to the mqtt broker.
+                                    </i>
+                                    <br><br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-wand-magic-sparkles"></i>&nbsp; Home Assistant Discovery Topic</span>
+                                        </div>
+                                        <input id="mqtt_auto_d" type="text" class="form-control" name="mqtt_auto_d" value="{{settings['notify_services']['mqtt']['homeassistant_autodiscovery_topic']}}" style="min-width: 11ch;">
+                                    </div>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> 
+                                        The <a href="https://www.home-assistant.io/integrations/mqtt/" target="blank">Home Asstant MQTT integration.</a> can automatically
+                                        add PiFire and its devices if you specify the discovery topic name here.
+                                    </i>
+                                    <br><br>
+                                </div><!-- End of card body -->
+                            </div><!-- End of card body -->
+                            <br>
+                            <!-- WLED Settings -->
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h5>WLED</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="wled_enabled" name="wled_enabled" {% if settings['notify_services']['wled']['enabled'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="wled_enabled">WLED Enabled</label>
+                                    </div>
+                                    <br>
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> 
+                                        The IP or URL address of your WLED device.  (Static IP is highly recommended instead of mDNS url)
+                                    </i>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fa-solid fa-microchip"></i>&nbsp; WLED Device Address</span>
+                                        </div>
+                                        <input id="wled_device_address" type="text" class="form-control" name="wled_device_address" value="{{settings['notify_services']['wled']['device_address']}}" style="min-width: 11ch;">
+                                        <div class="input-group-append">
+                                            <button type="button" id="wled_discover_btn" class="btn btn-outline-secondary" onclick="discoverWLEDDevices()" title="Discover WLED devices on your network">
+                                                <i class="fa-solid fa-search"></i>&nbsp; Find WLED Devices
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- WLED Device Discovery Results -->
+                                    <div id="wled_discovery_results" style="display: none;">
+                                        <div class="card">
+                                            <div class="card-header bg-success text-white">
+                                                <i class="fa-solid fa-network-wired"></i>&nbsp; Discovered WLED Devices
+                                                <button type="button" class="close text-white" onclick="hideDiscoveryResults()" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="card-body" id="wled_device_list">
+                                                <!-- Device list will be populated here -->
+                                            </div>
+                                        </div>
+                                        <br>
+                                    </div>
+                                    <br>
+                                    
+                                    <!-- Suggested Presets Configuration -->
+                                    <div class="card">
+                                        <div class="card-header bg-info text-white">
+                                            <i class="fa-solid fa-magic"></i>&nbsp; Suggested Presets (Recommended)
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="custom-control custom-switch">
+                                                <input type="checkbox" class="custom-control-input" id="wled_use_suggested_presets" name="wled_use_suggested_presets" {% if settings['notify_services']['wled']['use_suggested_presets'] %}checked{% endif %} onchange="toggleWLEDPresetType()">
+                                                <label class="custom-control-label" for="wled_use_suggested_presets">Use PiFire Suggested LED Behaviors</label>
+                                            </div>
+                                            <br>
+                                            <span class="badge badge-info">INFO:</span>
+                                            <i class="small"> 
+                                                When enabled, PiFire will use predefined LED colors and effects that automatically match grill states and events. This provides optimal visual feedback without requiring manual preset configuration.
+                                            </i>
+                                            
+                                            <div id="suggested_config" style="display: '{% if settings['notify_services']['wled']['use_suggested_presets'] %}block{% else %}none{% endif %}';">
+                                                <br>
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text">
+                                                            <i class="fa-solid fa-palette"></i>&nbsp; Cooking Color</span>
+                                                    </div>
+                                                    <select id="wled_cooking_color" class="form-control" name="wled_cooking_color">
+                                                        <option value="blue" {% if settings['notify_services']['wled']['suggested_config']['cooking_color'] == 'blue' %}selected{% endif %}>Blue</option>
+                                                        <option value="green" {% if settings['notify_services']['wled']['suggested_config']['cooking_color'] == 'green' %}selected{% endif %}>Green</option>
+                                                    </select>
+                                                </div>
+                                                
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text">
+                                                            <i class="fa-solid fa-lightbulb"></i>&nbsp; Idle Brightness (%)</span>
+                                                    </div>
+                                                    <input id="wled_idle_brightness" type="number" min="1" max="100" class="form-control" name="wled_idle_brightness" value="{{settings['notify_services']['wled']['suggested_config']['idle_brightness']}}" style="min-width: 11ch;">
+                                                </div>
+                                                
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text">
+                                                            <i class="fa-solid fa-list-ol"></i>&nbsp; LED Count</span>
+                                                    </div>
+                                                    <input id="wled_led_count" type="number" min="1" max="1000" class="form-control" name="wled_led_count" value="{{settings['notify_services']['wled']['suggested_config']['led_count']}}" style="min-width: 11ch;">
+                                                </div>
+                                                
+                                                <div class="custom-control custom-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="wled_night_mode" name="wled_night_mode" {% if settings['notify_services']['wled']['suggested_config']['night_mode'] %}checked{% endif %}>
+                                                    <label class="custom-control-label" for="wled_night_mode">Night Mode (dim amber glow)</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <br>
+                                    
+                                    <!-- Profile-Based Configuration -->
+                                    <div class="card">
+                                        <div class="card-header bg-primary text-white">
+                                            <i class="fa-solid fa-microchip"></i>&nbsp; Profile-Based Control (Recommended)
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="custom-control custom-switch">
+                                                <input type="checkbox" class="custom-control-input" id="wled_use_profiles" name="wled_use_profiles" {% if settings['notify_services']['wled']['use_profiles'] %}checked{% endif %} onchange="toggleWLEDProfileMode()">
+                                                <label class="custom-control-label" for="wled_use_profiles">Use Profile-Based WLED Control</label>
+                                            </div>
+                                            <br>
+                                            <span class="badge badge-primary">RECOMMENDED:</span>
+                                            <i class="small"> 
+                                                Profile-based control pushes PiFire LED profiles directly to your WLED device, allowing you to customize colors and effects while maintaining automatic state changes.
+                                            </i>
+                                            
+                                            <div id="profile_config" style="display: {% if settings['notify_services']['wled']['use_profiles'] %}block{% else %}none{% endif %};">
+                                                <br>
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <button type="button" id="wled_push_profiles_btn" class="btn btn-success btn-block" onclick="pushWLEDProfiles()" title="Push PiFire profiles to your WLED device">
+                                                            <i class="fa-solid fa-upload"></i>&nbsp; Push Profiles to WLED
+                                                        </button>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <button type="button" id="wled_test_profile_btn" class="btn btn-outline-info btn-block" onclick="testWLEDProfile()" title="Test the current cooking profile">
+                                                            <i class="fa-solid fa-flask"></i>&nbsp; Test Profile
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <br>
+                                                
+                                                <!-- Profile Numbers Configuration -->
+                                                <div class="card">
+                                                    <div class="card-header bg-light">
+                                                        <i class="fa-solid fa-list-ol"></i>&nbsp; Profile Numbers
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <span class="badge badge-info">INFO:</span>
+                                                        <i class="small"> 
+                                                            Customize which WLED profile numbers to use for each PiFire state. Default range is 200-211 to avoid conflicts with existing user profiles.
+                                                        </i>
+                                                        <br><br>
+                                                        <div class="row">
+                                                            {% for state, number in settings['notify_services']['wled']['profile_numbers'].items() %}
+                                                            <div class="col-md-6">
+                                                                <div class="input-group mb-3">
+                                                                    <div class="input-group-prepend">
+                                                                        <span class="input-group-text">{{ state.replace('_', ' ').title() }}</span>
+                                                                    </div>
+                                                                    <input type="number" min="1" max="250" class="form-control" name="wled_profile_{{ state }}" value="{{ number }}" style="min-width: 8ch;">
+                                                                </div>
+                                                            </div>
+                                                            {% endfor %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Profile Push Status -->
+                                                <div id="wled_profile_status" style="display: none;">
+                                                    <div class="alert alert-info">
+                                                        <i class="fa-solid fa-info-circle"></i>&nbsp; 
+                                                        <span id="wled_profile_status_text">Ready to push profiles...</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <br>
+                                    
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> 
+                                        Number of seconds to keep the EVENT notification active on the WLED device.  Default is 120 seconds. (requires reboot/restart to take effect)
+                                    </i>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fa-solid fa-stopwatch"></i>&nbsp; Event Notification Duration (seconds)</span>
+                                        </div>
+                                        <input id="wled_notify_duration" type="number" min="0" max="3600" class="form-control" name="wled_notify_duration" value="{{settings['notify_services']['wled']['notify_duration']}}" style="min-width: 11ch;">
+                                    </div>
+                                    <br>
+                                    
+                                    <span class="badge badge-info">INFO:</span>
+                                    <i class="small"> 
+                                        When testing this notification, it will use the preset for the 'Startup' grill mode.
+                                    </i>
+                                </div> <!-- End of WLED card body-->
+                            </div> <!-- End of WLED card -->
+                            </div><!-- End of main card body -->
+                        <br>
+
+                    <div class="card-footer bg-light">
+                        <button type="button" class="btn btn-outline-success" onclick="sendTestNotification();">Send Test Notification</button>
+                        <button type="submit" class="btn btn-outline-danger">Save</button>
+                        <br><br>
+                        <span class="badge badge-warning">NOTE:</span>
+                        <i class="small"> 
+                            You must enable the service(s) and 'Save' before you can test the service(s).
+                        </i>
+                    </div>
+                    </form>
+                </div> <!-- End of Card -->
+                <br><br><br>
+            </div> <!-- End of Tab -->
+        </div>
+    </div>
+{% endblock %}
+{% block postcontainer %}
+{% endblock %}
+{% block scripts %}
+<script>
+    var dc_fan_enabled = "{{ settings['platform']['dc_fan'] }}";
+</script>
+<script>
+    $(document).ready(function() {
+        $('#settingsNav .nav-link').on('click', function() {
+            $('#settingsNav').collapse('hide');
+        });
+    });
+</script>
+<script>
+    function toggleWLEDPresetType() {
+        var useSuggested = document.getElementById('wled_use_suggested_presets').checked;
+        var suggestedConfig = document.getElementById('suggested_config');
+        
+        if (useSuggested) {
+            suggestedConfig.style.display = 'block';
+        } else {
+            suggestedConfig.style.display = 'none';
+        }
+    }
+    
+    function discoverWLEDDevices() {
+        var button = document.getElementById('wled_discover_btn');
+        var originalText = button.innerHTML;
+        
+        // Show loading state
+        button.disabled = true;
+        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>&nbsp; Discovering...';
+        
+        // Hide previous results
+        hideDiscoveryResults();
+        
+        // Make API call to discover devices
+        fetch('/api/wled_discover?timeout=15')
+            .then(response => response.json())
+            .then(data => {
+                if (data.result === 'success') {
+                    displayDiscoveredDevices(data.devices);
+                } else {
+                    showWLEDError(data.message || 'Failed to discover WLED devices');
+                }
+            })
+            .catch(error => {
+                showWLEDError('Network error during WLED discovery: ' + error.message);
+            })
+            .finally(() => {
+                // Restore button state
+                button.disabled = false;
+                button.innerHTML = originalText;
+            });
+    }
+    
+    function displayDiscoveredDevices(devices) {
+        var deviceList = document.getElementById('wled_device_list');
+        var resultsDiv = document.getElementById('wled_discovery_results');
+        
+        if (devices.length === 0) {
+            deviceList.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fa-solid fa-exclamation-triangle"></i>&nbsp; 
+                    No WLED devices found on your network. Make sure your WLED device is:
+                    <ul class="mt-2 mb-0">
+                        <li>Powered on and connected to the same network</li>
+                        <li>Running recent WLED firmware</li>
+                        <li>Not blocking mDNS/Bonjour broadcasts</li>
+                    </ul>
+                </div>`;
+        } else {
+            var deviceHTML = `
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Device Name</th>
+                                <th>IP Address</th>
+                                <th>LED Count</th>
+                                <th>Version</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+            
+            devices.forEach(function(device) {
+                var ledCountText = device.led_count > 0 ? device.led_count : 'Unknown';
+                var versionText = device.version || 'Unknown';
+                var statusBadge = device.online ? 
+                    '<span class="badge badge-success">Online</span>' : 
+                    '<span class="badge badge-danger">Offline</span>';
+                
+                deviceHTML += `
+                    <tr>
+                        <td>
+                            <strong>${escapeHtml(device.name)}</strong><br>
+                            <small class="text-muted">${escapeHtml(device.product)}</small>
+                        </td>
+                        <td>
+                            <code>${escapeHtml(device.ip)}:${device.port}</code><br>
+                            ${statusBadge}
+                        </td>
+                        <td>
+                            <span class="badge badge-info">${ledCountText}</span>
+                        </td>
+                        <td>
+                            <small>${escapeHtml(versionText)}</small>
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-primary" 
+                                    onclick="selectWLEDDevice('${escapeHtml(device.ip)}', ${device.led_count}, '${escapeHtml(device.name)}')"
+                                    ${!device.online ? 'disabled' : ''}>
+                                <i class="fa-solid fa-check"></i>&nbsp; Select
+                            </button>
+                        </td>
+                    </tr>`;
+            });
+            
+            deviceHTML += `
+                        </tbody>
+                    </table>
+                </div>`;
+            
+            deviceList.innerHTML = deviceHTML;
+        }
+        
+        resultsDiv.style.display = 'block';
+    }
+    
+    function selectWLEDDevice(ip, ledCount, deviceName) {
+        // Set the device address
+        document.getElementById('wled_device_address').value = ip;
+        
+        // Update LED count if available and field exists
+        if (ledCount > 0) {
+            var ledCountField = document.getElementById('wled_led_count');
+            if (ledCountField) {
+                ledCountField.value = ledCount;
+            }
+        }
+        
+        // Hide discovery results
+        hideDiscoveryResults();
+        
+        // Show success message
+        showWLEDSuccess(`Selected WLED device: ${deviceName} (${ip})`);
+        
+        // Highlight the selected device address field briefly
+        var addressField = document.getElementById('wled_device_address');
+        addressField.classList.add('border-success');
+        setTimeout(function() {
+            addressField.classList.remove('border-success');
+        }, 3000);
+    }
+    
+    function hideDiscoveryResults() {
+        document.getElementById('wled_discovery_results').style.display = 'none';
+    }
+    
+    function showWLEDError(message) {
+        var alertHTML = `
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fa-solid fa-exclamation-circle"></i>&nbsp; ${escapeHtml(message)}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>`;
+        
+        // Insert after the WLED device address input
+        var addressInput = document.getElementById('wled_device_address').parentNode.parentNode;
+        addressInput.insertAdjacentHTML('afterend', alertHTML);
+        
+        // Auto-dismiss after 10 seconds
+        setTimeout(function() {
+            var alert = document.querySelector('.alert-danger');
+            if (alert) {
+                alert.remove();
+            }
+        }, 10000);
+    }
+    
+    function showWLEDSuccess(message) {
+        var alertHTML = `
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fa-solid fa-check-circle"></i>&nbsp; ${escapeHtml(message)}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>`;
+        
+        // Insert after the WLED device address input
+        var addressInput = document.getElementById('wled_device_address').parentNode.parentNode;
+        addressInput.insertAdjacentHTML('afterend', alertHTML);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(function() {
+            var alert = document.querySelector('.alert-success');
+            if (alert) {
+                alert.remove();
+            }
+        }, 5000);
+    }
+    
+    function escapeHtml(text) {
+        var map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+    
+    function toggleWLEDProfileMode() {
+        var useProfiles = document.getElementById('wled_use_profiles').checked;
+        var profileConfig = document.getElementById('profile_config');
+        
+        if (useProfiles) {
+            profileConfig.style.display = 'block';
+            // Disable suggested presets when using profiles
+            document.getElementById('wled_use_suggested_presets').checked = false;
+            toggleWLEDPresetType();
+        } else {
+            profileConfig.style.display = 'none';
+        }
+    }
+    
+    function pushWLEDProfiles() {
+        var button = document.getElementById('wled_push_profiles_btn');
+        var originalText = button.innerHTML;
+        var deviceAddress = document.getElementById('wled_device_address').value;
+        
+        if (!deviceAddress || deviceAddress.trim() === '') {
+            showWLEDError('Please enter a WLED device address first.');
+            return;
+        }
+        
+        // Show loading state
+        button.disabled = true;
+        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>&nbsp; Pushing Profiles...';
+        
+        // Show status
+        showProfileStatus('Pushing PiFire profiles to WLED device...', 'info');
+        
+        // Get profile numbers from form
+        var profileNumbers = {};
+        var profileInputs = document.querySelectorAll('input[name^="wled_profile_"]');
+        profileInputs.forEach(function(input) {
+            var stateName = input.name.replace('wled_profile_', '');
+            profileNumbers[stateName] = parseInt(input.value);
+        });
+        
+        // Make API call to push profiles
+        fetch('/api/wled_push_profiles', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                device_address: deviceAddress,
+                profile_numbers: profileNumbers
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.result === 'success') {
+                showProfileStatus(`Successfully pushed ${data.profiles_pushed} profiles to WLED device!`, 'success');
+                showWLEDSuccess(`${data.profiles_pushed} PiFire profiles pushed to WLED device successfully!`);
+            } else {
+                showProfileStatus(`Error: ${data.message}`, 'error');
+                showWLEDError(`Failed to push profiles: ${data.message}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error pushing profiles:', error);
+            showProfileStatus('Error: Failed to communicate with server', 'error');
+            showWLEDError('Failed to push profiles: Network error');
+        })
+        .finally(() => {
+            // Restore button
+            button.disabled = false;
+            button.innerHTML = originalText;
+            
+            // Hide status after 10 seconds
+            setTimeout(() => {
+                hideProfileStatus();
+            }, 10000);
+        });
+    }
+    
+    function testWLEDProfile() {
+        var deviceAddress = document.getElementById('wled_device_address').value;
+        
+        if (!deviceAddress || deviceAddress.trim() === '') {
+            showWLEDError('Please enter a WLED device address first.');
+            return;
+        }
+        
+        var cookingProfileNumber = document.querySelector('input[name="wled_profile_cooking"]').value;
+        
+        // Make API call to test profile
+        fetch('/api/wled_test_profile', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                device_address: deviceAddress,
+                profile_number: parseInt(cookingProfileNumber)
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.result === 'success') {
+                showWLEDSuccess(`Test successful! Activated profile ${cookingProfileNumber} on WLED device.`);
+            } else {
+                showWLEDError(`Test failed: ${data.message}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error testing profile:', error);
+            showWLEDError('Failed to test profile: Network error');
+        });
+    }
+    
+    function showProfileStatus(message, type) {
+        var statusDiv = document.getElementById('wled_profile_status');
+        var statusText = document.getElementById('wled_profile_status_text');
+        var alertClass = type === 'error' ? 'alert-danger' : 
+                        type === 'success' ? 'alert-success' : 'alert-info';
+        
+        statusText.textContent = message;
+        statusDiv.className = `alert ${alertClass}`;
+        statusDiv.style.display = 'block';
+    }
+    
+    function hideProfileStatus() {
+        var statusDiv = document.getElementById('wled_profile_status');
+        statusDiv.style.display = 'none';
+    }
+</script>
+<script src="{{ url_for('static', filename='js/bootstrap-colorpicker.min.js') }}"></script>
+<script src="{{ url_for('settings_bp.static', filename='settings/js/settings.js') }}"></script>
+
+{% endblock %}

@@ -1,0 +1,338 @@
+{% extends 'base.html' %} 
+
+{% from 'default/_macro_dash_default.html' import render_probe_card, render_status_card, render_time_elapsed_card %}
+
+{% block cssextend %}
+	<link rel="stylesheet" href="{{ url_for('dash_bp.static', filename='default/css/dash_default.css') }}" type="text/css" />
+	<!-- Apply visual changes for Touch Screen Mode Enabled -->
+	{% if settings['dashboard']['dashboards']['Default']['config']['touch_screen_mode'] == 'On' %}
+	<style>
+		.btn {
+			font-size: 1.05em;
+			padding: 1.05em 2em; 
+		}
+	</style>
+	{% endif %}
+{% endblock %} 
+
+{% block title %}Dashboard{% endblock %} 
+
+{% block content %}
+<!-- Card Section -->
+<div class="row"> <!-- Probe Cards -->
+	{% for key, probe in probe_status['P'].items() %}
+		<div id="card_{{ probe['label'] }}" class="col-lg-4 col-md-6 col-sm-12" 
+			{% if key in dash_data['custom']['hidden_cards'] or not probe['enabled'] %}
+				style="display:none" 
+			{% endif %}
+			{% if probe['enabled'] %}
+				data-enabled="true"
+			{% else %}
+				data-enabled="false"
+			{% endif %}
+			>
+			<br>
+			<!-- Card for Probe Data -->
+			{{ render_probe_card(probe, settings, control, probe['enabled']) }}
+			<br>
+		</div>
+	{% endfor %}
+	{% for key, probe in probe_status['F'].items() %}
+	<div id="card_{{ probe['label'] }}" class="col-lg-4 col-md-6 col-sm-12" 
+		{% if key in dash_data['custom']['hidden_cards'] or not probe['enabled'] %}
+			style="display:none" 
+		{% endif %}
+		{% if probe['enabled'] %}
+			data-enabled="true"
+		{% else %}
+			data-enabled="false"
+		{% endif %}
+		>
+		<br>
+		<!-- Card for Probe Data -->
+		{{ render_probe_card(probe, settings, control, probe['enabled']) }}
+		<br>
+	</div>
+	{% endfor %}
+		<div id="card_status" class="col-lg-4 col-md-6 col-sm-12" 
+		{% if 'status' in dash_data['custom']['hidden_cards'] %}
+			style="display:none"
+		{% endif %}>
+		<br>
+		{{ render_status_card(settings) }}
+		<br>
+		</div>
+		<div id="card_time_elapsed" class="col-lg-4 col-md-6 col-sm-12" 
+		{% if 'time_elapsed' in dash_data['custom']['hidden_cards'] %}
+			style="display:none"
+		{% endif %}>
+		<br>
+		{{ render_time_elapsed_card() }}
+		<br>
+	</div>
+</div> <!-- End of Row -->
+
+<br>
+<br>
+
+<!-- Navigation Button Row -->
+<div class="row" id="card_history_button" 
+	{% if 'history_button' in dash_data['custom']['hidden_cards'] %}
+	style="display:none"
+	{% endif %}>
+	<div class="col">
+		<a href="/history" class="btn btn-outline-primary btn-block shadow" role="button"><i class="fas fa-chart-line"></i> Status & History Graphs</a>
+	</div> <!-- End of Column -->
+</div> <!-- End of Row -->
+<br>
+<br>
+<br>
+<br>
+
+<!-- Server Reload Modal -->
+<div class="modal" id="serverReloadModal">
+	<div class="modal-dialog">
+	  <div class="modal-content">
+  
+		<!-- Modal Header -->
+		<div class="modal-header">
+		  <h4 class="modal-title">Server Change Detected</h4>
+		  <button type="button" class="close" data-dismiss="modal">&times;</button>
+		</div>
+  
+		<!-- Modal body -->
+		<div class="modal-body">
+		  A server side change was detected (probably some probes got reconfigured) and needs to reload this page. <br>
+		  <br>
+		  Please click reload below to reload the page.
+		</div>
+  
+		<!-- Modal footer -->
+		<div class="modal-footer">
+		  <button type="button" class="btn btn-danger" id="reloadPage" data-dismiss="modal">Reload</button>
+		</div>
+  
+	  </div>
+	</div>
+</div> <!-- End Server Reload Modal -->
+
+<!-- Server Offline Modal -->
+<div class="modal" id="serverOfflineModal">
+	<div class="modal-dialog">
+	  <div class="modal-content">
+  
+		<!-- Modal Header -->
+		<div class="modal-header">
+		  <h4 class="modal-title">Server is Unresponsive / Offline</h4>
+		  <button type="button" class="close" data-dismiss="modal">&times;</button>
+		</div>
+  
+		<!-- Modal body -->
+		<div class="modal-body">
+		  The server is unresponsive/offline and hasn't responded to recent requests. Check that your system is on and connected to the network.<br>
+		</div>
+  
+		<!-- Modal footer -->
+		<div class="modal-footer">
+		  <button type="button" class="btn btn-danger" id="serverOffline" data-dismiss="modal" onclick="dashClearErrorCounter();">Wait Longer</button>
+		</div>
+  
+	  </div>
+	</div>
+</div> <!-- End Server Offline Modal -->
+
+<!-- Critical Error Modal -->
+<div class="modal" id="criticalErrorModal">
+	<div class="modal-dialog">
+	  <div class="modal-content">
+  
+		<!-- Modal Header -->
+		<div class="modal-header btn-danger">
+		  <h4 class="modal-title"><i class="fa-solid fa-bomb"></i>&nbsp; Critical Error Detected</h4>
+		  <button type="button" class="close" data-dismiss="modal">&times;</button>
+		</div>
+  
+		<!-- Modal body -->
+		<div class="modal-body">
+		  A critical error has been detected. This may mean that the system is experiencing issues, such as a control process hang.  Please check the system logs for more information.
+		</div>
+  
+		<!-- Modal footer -->
+		<div class="modal-footer">
+		  <button type="button" class="btn btn-danger" id="criticalErrorOffline" data-dismiss="modal" onclick="location.reload();">Reload</button>
+		  <button type="button" class="btn btn-warning" data-dismiss="modal">Dismiss</button>
+		  <button type="button" class="btn btn-secondary" onclick="window.location.href='/events'">Event Log</button>
+		</div>
+  
+	  </div>
+	</div>
+</div> <!-- End Critical Error Modal -->
+
+<!-- Dash Gear Icon for Dash Settings -->
+<span class="gear-icon" onclick="dashSettings();">
+	<i class="fa-solid fa-gear"></i>
+</span>
+
+<!-- Dashboard Settings Modal -->
+<div class="modal" id="dashSettingsModal">
+	<div class="modal-dialog modal-xl">
+	  <div class="modal-content">
+  
+		<!-- Modal Header -->
+		<div class="modal-header">
+		  <h4 class="modal-title">Dashboard Settings</h4>
+		  <button type="button" class="close" data-dismiss="modal">&times;</button>
+		</div>
+  
+		<!-- Modal body -->
+		<div class="modal-body">
+			<!-- Warning Message if Manual Override/Changes are Active-->
+			{% if settings['safety']['allow_manual_changes'] %}
+				<div class="alert alert-warning" role="alert">
+					<h4><i class="fa-solid fa-triangle-exclamation"></i>&nbsp; Warning!</h4>
+					<p>This dashboard is currently allowing manual changes to the outputs (fan/auger/igniter) by clicking on the icons in the status card.
+					If you would like to disable this feature, click <a href="settings">here</a> to go to settings > safety and <b>deselect</b> 
+					"Allow Manual Changes/Overrides to Outputs During Operation".
+					</p>
+				</div>
+			{% endif %}
+			<div id="dash_config_card">
+				<div class="card">
+					<div class="card-header">
+						Dashboard Configuration Settings
+					</div>
+					<div class="card-body">
+							There doesn't seem to be any config settings for this dashboard. <br>
+					</div>
+					<div class="card-footer">
+						<button type="button" class="btn btn-secondary" onclick="dashLoadConfig();">Refresh</button>
+					</div>
+				</div>
+			</div>
+
+			<br>
+			<!-- Custom Dashboard Configuration Settings -->
+			<div class="card">
+				<div class="card-header">
+					Dashboard Custom Configuration
+				</div>
+				<div class="card-body">
+					<strong>Visible Cards:</strong><br>
+					<i>Click the label below to toggle shown/hide each of the cards.</i>
+					<table class="table table-hover table-borderless">
+						<tbody>
+						{% for probe in settings['probe_settings']['probe_map']['probe_info'] %}
+							{% if probe['enabled'] %}
+							<tr onclick="dashToggleVisible('{{ probe['label'] }}');">
+								<td>
+									<span id="visibleStatus_{{ probe['label'] }}">
+									{% if probe['label'] not in dash_data['custom']['hidden_cards'] %}
+									<i class="fa-solid fa-eye text-success"></i>&nbsp;
+									{% else %}
+									<i class="fa-solid fa-eye-slash text-secondary"></i>&nbsp;
+									{% endif %}
+									</span>
+									{{ probe['name'] }} Card
+								</td>
+							</tr>
+							{% endif %}
+						{% endfor %}
+						<tr onclick="dashToggleVisible('status');">
+							<td>
+								<span id="visibleStatus_status">
+								{% if 'status' not in dash_data['custom']['hidden_cards'] %}
+								<i class="fa-solid fa-eye text-success"></i>&nbsp;
+								{% else %}
+								<i class="fa-solid fa-eye-slash text-secondary"></i>&nbsp;
+								{% endif %}
+								</span>
+								Status Card
+							</td>
+						</tr>
+
+						<tr onclick="dashToggleVisible('time_elapsed');">
+							<td>
+								<span id="visibleStatus_time_elapsed">
+								{% if 'time_elapsed' not in dash_data['custom']['hidden_cards'] %}
+								<i class="fa-solid fa-eye text-success"></i>&nbsp;
+								{% else %}
+								<i class="fa-solid fa-eye-slash text-secondary"></i>&nbsp;
+								{% endif %}
+								</span>
+								Time Elapsed Card
+							</td>
+						</tr>
+
+						<tr onclick="dashToggleVisible('history_button');">
+							<td>
+								<span id="visibleStatus_history_button">
+								{% if 'history_button' not in dash_data['custom']['hidden_cards'] %}
+								<i class="fa-solid fa-eye text-success"></i>&nbsp;
+								{% else %}
+								<i class="fa-solid fa-eye-slash text-secondary"></i>&nbsp;
+								{% endif %}
+								</span>
+								Status & History Graphs Button
+							</td>
+						</tr>
+					</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+
+		<!-- Modal footer -->
+		<div class="modal-footer">
+			<button type="button" class="btn btn-secondary" data-dismiss="modal">Dismiss</button>
+		</div>
+  
+	  </div>
+	</div>
+</div> <!-- End Server Reload Modal -->
+
+<!-- Modal for Probe Config -->
+<div class="modal fade" id="probeConfigModal" tabindex="-1" role="dialog" aria-labelledby="probeConfigModalLabel" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="probeConfigModalLabel">Probe Configuration</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<div id="probe_config_card">
+					<!-- Probe Config Card -->
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">Dismiss</button>
+				<button type="button" class="btn btn-outline-danger" onclick="dashProbeConfigSave();">Save</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+{% endblock %}
+
+{% block controlpanel %}
+<!-- Control Panel -->
+{% from "_macro_control_panel.html" import render_container %}
+{{ render_container(settings, control) }}
+<!-- End Control Panel -->
+{% endblock %}
+
+{% block controlpanel_scripts %}
+<!-- Control Panel JS -->
+<script src="{{ url_for('static', filename='js/control_panel.js') }}"></script>
+{% endblock %}
+
+{% block scripts %}
+	<script> 
+		var units = "{{ settings['globals']['units'] }}";
+		var dashDataStruct = {{ dash_data|tojson }};
+		//console.log(dashDataStruct);
+	</script>
+	<script src="{{ url_for('dash_bp.static', filename='default/js/dash_default.js') }}"></script>
+	<script src="{{ url_for('dash_bp.static', filename='default/js/gauge.js') }}"></script>
+{% endblock %}

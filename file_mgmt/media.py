@@ -158,31 +158,33 @@ def set_thumbnail(filename, thumbfilename):
 		metadata['thumbnail'] = f'{thumbfilename}'
 		update_json_file_data(metadata, filename, 'metadata')
 
-def unpack_thumb(thumbname, filename):
+def unpack_thumb(thumbname, filename, tmp_id):
 	try:
 		with zipfile.ZipFile(filename, mode="r") as archive:
 			thumb = archive.read(f'assets/thumbs/{thumbname}')  # Read bytes into variable
-			tmp_id = generate_uuid()
 
-			if not os.path.exists(f'/tmp/pifire'):
-				os.mkdir(f'/tmp/pifire')
+			if not os.path.exists(f'./static/img/tmp/{tmp_id}/{thumbname}'):
 
-			if not os.path.exists(f'/tmp/pifire/{tmp_id}'):
-				os.mkdir(f'/tmp/pifire/{tmp_id}')
+				if not os.path.exists(f'/tmp/pifire'):
+					os.mkdir(f'/tmp/pifire')
 
-			#  Write fullsize image to disk
-			destination = open(f'/tmp/pifire/{tmp_id}/{thumbname}', "wb")  # Write bytes to proper destination
-			destination.write(thumb)
-			destination.close()
-			path_filename = f'{tmp_id}/{thumbname}'
+				if not os.path.exists(f'/tmp/pifire/{tmp_id}'):
+					os.mkdir(f'/tmp/pifire/{tmp_id}')
 
-			#  Create temporary folder for the thumbnail
-			if not os.path.exists('./static/img/tmp'):
-				os.mkdir(f'./static/img/tmp')
-			if not os.path.exists(f'./static/img/tmp/{tmp_id}'):
-				os.symlink(f'/tmp/pifire/{tmp_id}', f'./static/img/tmp/{tmp_id}')
+				#  Write fullsize image to disk
+				destination = open(f'/tmp/pifire/{tmp_id}/{thumbname}', "wb")  # Write bytes to proper destination
+				destination.write(thumb)
+				destination.close()
+				path_filename = f'{tmp_id}/{thumbname}'
 
+				#  Create temporary folder for the thumbnail
+				if not os.path.exists('./static/img/tmp'):
+					os.mkdir(f'./static/img/tmp')
+				if not os.path.exists(f'./static/img/tmp/{tmp_id}'):
+					os.symlink(f'/tmp/pifire/{tmp_id}', f'./static/img/tmp/{tmp_id}')
+			else:
+				path_filename = f'{tmp_id}/{thumbname}'
 	except:
 		path_filename = ''
-	
-	return path_filename 
+
+	return path_filename

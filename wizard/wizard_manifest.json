@@ -8,7 +8,7 @@
 				"default" : false,
 				"image" : "custom.png",
 				"reboot_required" : true,
-				"py_dependencies" : ["rpi-hardware-pwm"], 
+				"py_dependencies" : ["rpi-hardware-pwm==0.2.2"], 
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-pwm", "-ow", "-bl", "-s", "-i"]],
 				"settings_dependencies" : {
@@ -160,7 +160,7 @@
 				"default" : false,
 				"image" : "pcb_2.00a.png",
 				"reboot_required" : true,
-				"py_dependencies" : ["rpi-hardware-pwm"], 
+				"py_dependencies" : ["rpi-hardware-pwm==0.2.2"], 
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-ow", "-s", "-i"]],
 				"settings_dependencies" : {
@@ -334,10 +334,10 @@
 				"friendly_name" : "PiFire PCB v3.01a",
 				"filename" : "raspberry_pi_all",
 				"description" : "Default settings/configuration for the PiFire PCB v3.01a designed by James Weber.",
-				"default" : true,
+				"default" : false,
 				"image" : "pcb_3.01a.png",
 				"reboot_required" : true,
-				"py_dependencies" : ["rpi-hardware-pwm"], 
+				"py_dependencies" : ["rpi-hardware-pwm==0.2.2"], 
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-ow", "-s", "-i"]],
 				"settings_dependencies" : {
@@ -520,7 +520,7 @@
 				"default" : false,
 				"image" : "pcb_pwm.png",
 				"reboot_required" : true,
-				"py_dependencies" : ["rpi-hardware-pwm"], 
+				"py_dependencies" : ["rpi-hardware-pwm==0.2.2"], 
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-pwm", "-s", "-i"]],
 				"settings_dependencies" : {
@@ -702,10 +702,10 @@
 				"friendly_name" : "PiFire PCB 4.x.x Modular PCB",
 				"filename" : "raspberry_pi_all",
 				"description" : "Default settings/configuration for the PiFire PCB v4.x.x modular PCB.  This PCB aims to provide modular options to the user for probe inputs and relay outputs.",
-				"default" : false,
+				"default" : true,
 				"image" : "pcb_4.x.x.png",
 				"reboot_required" : true,
-				"py_dependencies" : ["rpi-hardware-pwm"], 
+				"py_dependencies" : ["rpi-hardware-pwm==0.2.2"], 
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-pwm", "-ow", "-bl", "-s", "-i", "-gs"]],
 				"settings_dependencies" : {
@@ -889,7 +889,7 @@
 				"default" : true,
 				"image" : "ads1115.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["adafruit-circuitpython-ads1x15"], 
+				"py_dependencies" : ["adafruit-circuitpython-ads1x15==2.4.3"], 
 				"apt_dependencies" : [],
 				"command_list" : [],
 				"settings_dependencies" : {
@@ -989,7 +989,7 @@
 				"default" : false,
 				"image" : "ads1115.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["adafruit-circuitpython-ads1x15"], 
+				"py_dependencies" : ["adafruit-circuitpython-ads1x15==2.4.3"], 
 				"apt_dependencies" : [],
 				"command_list" : [],
 				"settings_dependencies" : {
@@ -1166,7 +1166,7 @@
 				"default" : false,
 				"image" : "max31865.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["adafruit-circuitpython-max31865"], 
+				"py_dependencies" : ["adafruit-circuitpython-max31865==2.2.24"], 
 				"apt_dependencies" : [],
 				"command_list" : [],
 				"settings_dependencies" : {
@@ -1243,7 +1243,7 @@
 				"default" : false,
 				"image" : "mcp9600.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["adafruit-circuitpython-mcp9600"], 
+				"py_dependencies" : ["adafruit-circuitpython-mcp9600==2.0.6"], 
 				"apt_dependencies" : [],
 				"command_list" : [],
 				"settings_dependencies" : {
@@ -1282,13 +1282,13 @@
 				}
 			},
 			"bt_ibbq" : {
-				"friendly_name" : "Bluetooth - iBBQ / Inkbird BT",
+				"friendly_name" : "Bluetooth - iBBQ / Inkbird BT (4 Probes)",
 				"filename" : "bt_ibbq",
 				"description" : "This device module supports Bluetooth LE iBBQ devices such as the Inkbird IBT-4XS four probe thermometer.  Note that the device can take up to a minute to be discovered and to start streaming data once turned on.  This has only been tested with the Inkbird IBT-4XS, but it may also work with other iBBQ models.  This module is still experimental, so feedback is welcome.",
 				"default" : false,
 				"image" : "bt_ibbq.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["bluepy"], 
+				"py_dependencies" : ["bluepy==1.3.0"], 
 				"apt_dependencies" : ["libglib2.0-dev"],
 				"command_list" : [["sudo", "bash", "/usr/local/bin/pifire/wizard/bluepy.sh"]],
 				"settings_dependencies" : {
@@ -1320,10 +1320,75 @@
 							"list_labels" : ["Transient (sometimes detached)", "Fixed (always attached)"],
 							"default" : "True",
 							"hidden" : true
+						},
+						{
+							"label" : "num_probes", 
+							"friendly_name" : "Number of Probes",
+							"description" : "Select the number of probes for this device.",
+							"type" : "int", 
+							"min" : 2,
+							"max" : 4,
+							"step" : 1,
+							"default" : 4,
+							"hidden" : true
 						}
 					]
 				}			
 			},
+			"bt_ibt6xs" : {
+				"friendly_name" : "Bluetooth - iBBQ / Inkbird BT (6 Probes)",
+				"filename" : "bt_ibbq",
+				"description" : "This device module supports Bluetooth LE iBBQ devices such as the Inkbird IBT-6XS six probe thermometer.  Note that the device can take up to a minute to be discovered and to start streaming data once turned on.  This has only been tested with the Inkbird IBT-6XS, but it may also work with other iBBQ models.  This module is still experimental, so feedback is welcome.",
+				"default" : false,
+				"image" : "bt_ibt6xs.png",
+				"reboot_required" : false,
+				"py_dependencies" : ["bluepy==1.3.0"], 
+				"apt_dependencies" : ["libglib2.0-dev"],
+				"command_list" : [["sudo", "bash", "/usr/local/bin/pifire/wizard/bluepy.sh"]],
+				"settings_dependencies" : {
+					"units" : {
+						"friendly_name" : "Temp Units",
+						"description" : "Select the temperature units to use for PiFire globally.  (This can be modified in settings later)",
+						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
+						"settings" : ["globals", "units"]
+					}
+				},
+				"device_specific" : {
+					"ports" : ["BT0", "BT1", "BT2", "BT3", "BT4", "BT5"],
+					"type" : "bluetooth",
+					"config" : [
+						{
+							"label" : "hardware_id", 
+							"friendly_name" : "Hardware ID",
+							"description" : "This is the unique Hardware ID or Address of the peripheral (format: xx:xx:xx:xx:xx:xx).  This should be discovered during scanning.",
+							"type" : "bt_address", 
+							"default" : "",
+							"hidden" : false
+						},
+						{
+							"label" : "transient", 
+							"friendly_name" : "Transient",
+							"description" : "Select whether this device is fixed/always attached (default) or if it is transient/sometimes detached.",
+							"type" : "list", 
+							"list_values" : ["True", "False"],
+							"list_labels" : ["Transient (sometimes detached)", "Fixed (always attached)"],
+							"default" : "True",
+							"hidden" : true
+						},
+						{
+							"label" : "num_probes", 
+							"friendly_name" : "Number of Probes",
+							"description" : "Select the number of probes for this device.",
+							"type" : "int", 
+							"min" : 2,
+							"max" : 6,
+							"step" : 1,
+							"default" : 6,
+							"hidden" : true
+						}
+					]
+				}			
+			},			
 			"bt_meater" : {
 				"friendly_name" : "Bluetooth - Meater",
 				"filename" : "bt_meater",
@@ -1331,7 +1396,7 @@
 				"default" : false,
 				"image" : "bt_meater.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["bluepy"], 
+				"py_dependencies" : ["bluepy==1.3.0"], 
 				"apt_dependencies" : ["libglib2.0-dev"],
 				"command_list" : [["sudo", "bash", "/usr/local/bin/pifire/wizard/bluepy.sh"]],
 				"settings_dependencies" : {
@@ -1374,7 +1439,7 @@
 				"default" : false,
 				"image" : "bt_meater.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["simplepyble==0.7.3", "icecream"], 
+				"py_dependencies" : ["simplepyble==0.7.3", "icecream==2.1.4"], 
 				"apt_dependencies" : ["libdbus-1-dev"],
 				"command_list" : [],
 				"settings_dependencies" : {
@@ -1517,7 +1582,7 @@
 				"default" : false,
 				"image" : "ads1115.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["ADS1115"], 
+				"py_dependencies" : ["ADS1115==0.2.1"], 
 				"apt_dependencies" : [],
 				"command_list" : [],
 				"settings_dependencies" : {
@@ -1617,7 +1682,7 @@
 				"default" : false,
 				"image" : "ds18b20.png",
 				"reboot_required" : true,
-				"py_dependencies" : ["w1thermsensor"], 
+				"py_dependencies" : ["w1thermsensor==2.3.0"], 
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "bash", "wizard/ds18b20.sh"]],
 				"settings_dependencies" : {
@@ -1823,9 +1888,12 @@
 				"default" : false,
 				"image" : "ili9341-ky040.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["luma.lcd", "pyky040==0.1.4", ">=9.2.0"], 
+				"py_dependencies" : ["luma.lcd==2.11.0", "pyky040==0.1.4", "pillow==11.1.0"], 
 				"apt_dependencies" : [],
-				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
+				"command_list" : [
+					["sudo", "python", "board-config.py", "-s"],
+					["sudo", "bash", "/usr/local/bin/pifire/wizard/raspi5.sh"]
+				],
 				"settings_dependencies" :{},
 				"config" : [
 					{
@@ -1848,9 +1916,12 @@
 				"default" : false,
 				"image" : "ili9341-ky040.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["luma.lcd", "pyky040==0.1.4", "pillow>=9.2.0"], 
+				"py_dependencies" : ["luma.lcd==2.11.0", "pyky040==0.1.4", "pillow==11.1.0"], 
 				"apt_dependencies" : [],
-				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
+				"command_list" : [
+					["sudo", "python", "board-config.py", "-s"],
+					["sudo", "bash", "/usr/local/bin/pifire/wizard/raspi5.sh"]
+				],
 				"settings_dependencies" : {},
 				"config" : [
 					{
@@ -1873,7 +1944,7 @@
 				"default" : false,
 				"image" : "ili9341.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["luma.lcd", "pillow>=9.2.0"], 
+				"py_dependencies" : ["luma.lcd==2.11.0", "pillow==11.1.0"], 
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
 				"settings_dependencies" : {},
@@ -1898,7 +1969,7 @@
 				"default" : true,
 				"image" : "ili9341b.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["luma.lcd", "pillow>=9.2.0", "gpiozero"], 
+				"py_dependencies" : ["luma.lcd==2.11.0", "pillow==11.1.0", "gpiozero==2.0.1"], 
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
 				"settings_dependencies" : {
@@ -1930,9 +2001,12 @@
 				"default" : false,
 				"image" : "ili9341.png",
 				"reboot_required" : true,
-				"py_dependencies" : ["luma.lcd", "pillow>=10.0.0", "gpiozero", "pyky040==0.1.4"], 
+				"py_dependencies" : ["luma.lcd==2.11.0", "pillow==11.1.0", "gpiozero==2.0.1", "pyky040==0.1.4"], 
 				"apt_dependencies" : [],
-				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
+				"command_list" : [
+					["sudo", "python", "board-config.py", "-s"],
+					["sudo", "bash", "/usr/local/bin/pifire/wizard/raspi5.sh"]
+				],
 				"settings_dependencies" : {
 					"buttonslevel" : {
 						"friendly_name" : "Button Level",
@@ -1982,9 +2056,12 @@
 				"default" : false,
 				"image" : "ili9488-ky040.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["luma.lcd", "pyky040==0.1.4", ">=9.2.0"], 
+				"py_dependencies" : ["luma.lcd==2.11.0", "pyky040==0.1.4", "pillow==11.1.0"], 
 				"apt_dependencies" : [],
-				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
+				"command_list" : [
+					["sudo", "python", "board-config.py", "-s"],
+					["sudo", "bash", "/usr/local/bin/pifire/wizard/raspi5.sh"]
+				],
 				"settings_dependencies" :{},
 				"config" : [
 					{
@@ -2007,9 +2084,12 @@
 				"default" : false,
 				"image" : "ili9488-ky040.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["luma.lcd", "pyky040==0.1.4", "pillow>=9.2.0"], 
+				"py_dependencies" : ["luma.lcd==2.11.0", "pyky040==0.1.4", "pillow==11.1.0"], 
 				"apt_dependencies" : [],
-				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
+				"command_list" : [
+					["sudo", "python", "board-config.py", "-s"],
+					["sudo", "bash", "/usr/local/bin/pifire/wizard/raspi5.sh"]
+				],
 				"settings_dependencies" : {},
 				"config" : [
 					{
@@ -2032,7 +2112,7 @@
 				"default" : false,
 				"image" : "ili9488.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["luma.lcd", "pillow>=9.2.0"], 
+				"py_dependencies" : ["luma.lcd==2.11.0", "pillow==11.1.0"], 
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
 				"settings_dependencies" : {},
@@ -2057,7 +2137,7 @@
 				"default" : true,
 				"image" : "ili9488b.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["luma.lcd", "pillow>=9.2.0", "gpiozero"], 
+				"py_dependencies" : ["luma.lcd==2.11.0", "pillow==11.1.0", "gpiozero"], 
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
 				"settings_dependencies" : {
@@ -2123,7 +2203,10 @@
 				"reboot_required" : false,
 				"py_dependencies" : ["numpy==1.26.4", "st7789==1.0.1", "pyky040==0.1.4", "pillow==11.1.0"],
 				"apt_dependencies" : [],
-				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
+				"command_list" : [
+					["sudo", "python", "board-config.py", "-s"],
+					["sudo", "bash", "/usr/local/bin/pifire/wizard/raspi5.sh"]
+				],
 				"settings_dependencies" : {},
 				"config" : [
 					{
@@ -2198,7 +2281,10 @@
 				"reboot_required" : false,
 				"py_dependencies" : ["numpy==1.26.4", "git+https://github.com/mander1000/st7789-python", "pyky040==0.1.4"],
 				"apt_dependencies" : [],
-				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
+				"command_list" : [
+					["sudo", "python", "board-config.py", "-s"],
+					["sudo", "bash", "/usr/local/bin/pifire/wizard/raspi5.sh"]
+				],
 				"settings_dependencies" : {},
 				"config" : [
 					{
@@ -2246,7 +2332,7 @@
 				"default" : false,
 				"image" : "pygame.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["pygame"], 
+				"py_dependencies" : ["pygame==2.6.1"], 
 				"apt_dependencies" : [],
 				"command_list" : [],
 				"settings_dependencies" : {},
@@ -2259,7 +2345,7 @@
 				"default" : false,
 				"image" : "pygame.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["pygame", "pillow>=9.2.0"], 
+				"py_dependencies" : ["pygame==2.6.1", "pillow==11.1.0"], 
 				"apt_dependencies" : [],
 				"command_list" : [],
 				"settings_dependencies" : {},
@@ -2283,7 +2369,7 @@
 				"default" : false,
 				"image" : "pygame.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["pygame", "pillow>=9.2.0"], 
+				"py_dependencies" : ["pygame==2.6.1", "pillow==11.1.0"], 
 				"apt_dependencies" : [],
 				"command_list" : [],
 				"settings_dependencies" : {},
@@ -2307,7 +2393,7 @@
 				"default" : false,
 				"image" : "ssd1306.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["luma.oled"], 
+				"py_dependencies" : ["luma.oled==3.14.0"], 
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-i"]],
 				"settings_dependencies" : {},
@@ -2320,7 +2406,7 @@
 				"default" : false,
 				"image" : "ssd1306b.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["luma.oled"], 
+				"py_dependencies" : ["luma.oled==3.14.0"], 
 				"apt_dependencies" : [],
 				"command_list" : [["sudo", "python", "board-config.py", "-i"]],
 				"settings_dependencies" : {
@@ -2341,9 +2427,12 @@
 				"default" : false,
 			        "image" : "st7789p.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["luma.lcd", "pyky040==0.1.4", ">=9.2.0"], 
+				"py_dependencies" : ["luma.lcd==2.11.0", "pyky040==0.1.4", "pillow==11.1.0"], 
 				"apt_dependencies" : [],
-				"command_list" : [["sudo", "python", "board-config.py", "-s"]],
+				"command_list" : [
+					["sudo", "python", "board-config.py", "-s"],
+					["sudo", "bash", "/usr/local/bin/pifire/wizard/raspi5.sh"]
+				],
 				"settings_dependencies" :{},
 				"config" : [
 					{
@@ -2387,12 +2476,12 @@
 				"friendly_name" : "Raspberry Pi DSI Connected Display 800x480 w/Touch",
 				"filename" : "dsi_800x480t",
 				"description" : "Raspberry Pi DSI Connected Display such as the 7\" Raspberry Pi Touch Screen display. Several clones exist which should work perfectly well.",
-				"notes" : "This module may take a very long time to install due to the OS dependencies that are required.  Please be aware that this may take more than 10 minutes to install depending on your system and internet connection.",
+				"notes" : "Raspberry Pi OS 12 Bookworm 64-Bit is not currently compatible with this module.  It has been tested successfully with 32-Bit Bookworm and Bullseye.  This module may take a very long time to install due to the OS dependencies that are required.  Please be aware that this may take more than 10 minutes to install depending on your system and internet connection.",
 				"default" : false,
 				"image" : "dsi_touch.png",
 				"reboot_required" : true,
-				"py_dependencies" : ["rpi-backlight", "pillow>=10.0.0", "pygame>=2.5.0"], 
-				"apt_dependencies" : ["lightdm", "libsdl2-2.0-0"],
+				"py_dependencies" : ["rpi-backlight==2.6.0", "pillow==11.1.0", "pygame==2.6.1"], 
+				"apt_dependencies" : ["lightdm", "libsdl2-2.0-0", "python3-pygame"],
 				"command_list" : [["sudo", "python", "board-config.py", "-bl"]],
 				"settings_dependencies" : {
 					"buttonslevel" : {
@@ -2441,7 +2530,7 @@
 				"default" : false,
 				"image" : "protoflex.png",
 				"reboot_required" : true,
-				"py_dependencies" : ["pillow>=10.0.0", "pygame>=2.5.0"], 
+				"py_dependencies" : ["pillow==11.1.0", "pygame==2.6.1"], 
 				"apt_dependencies" : [],
 				"command_list" : [],
 				"settings_dependencies" : {},
@@ -2488,7 +2577,7 @@
 				"default" : false,
 				"image" : "hcsr04.png",
 				"reboot_required" : false,
-				"py_dependencies" : ["hcsr04sensor"], 
+				"py_dependencies" : ["hcsr04sensor==1.7"], 
 				"apt_dependencies" : [],
 				"command_list" : [],
 				"settings_dependencies" : {}
@@ -2576,6 +2665,7 @@
 					},
 					"device": "ADS1115",
 					"module": "ads1115_adafruit",
+					"module_filename": "ads1115_adafruit",
 					"ports": [
 					  "ADC0",
 					  "ADC1",
@@ -2650,6 +2740,7 @@
 					},
 					"device": "ADS1115",
 					"module": "ads1115_adafruit",
+					"module_filename": "ads1115_adafruit",
 					"ports": [
 					  "ADC0",
 					  "ADC1",
@@ -2739,6 +2830,7 @@
 					},
 					"device": "ADS1115",
 					"module": "ads1115_adafruit",
+					"module_filename": "ads1115_adafruit",
 					"ports": [
 					  "ADC0",
 					  "ADC1",
@@ -2828,6 +2920,7 @@
 					},
 					"device": "ADS1115",
 					"module": "ads1115_adafruit",
+					"module_filename": "ads1115_adafruit",
 					"ports": [
 					  "ADC0",
 					  "ADC1",

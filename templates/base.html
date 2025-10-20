@@ -7,11 +7,15 @@
         {% block head %} {% endblock %}
 
         <!-- Bootstrap CSS -->
-        {% if page_theme == 'dark' %}
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/dark.bootstrap.min.css') }}" type="text/css" />
-        {% else %}
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css" />
-        {% endif %}
+        {% if page_theme is defined %} 
+			{% if page_theme == 'dark' %}
+			<link rel="stylesheet" href="{{ url_for('static', filename='css/dark.bootstrap.min.css') }}" type="text/css" />
+			{% else %}
+			<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css" />
+			{% endif %}
+		{% else %}
+			<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css" />
+		{% endif %}
 
 		<!-- Navbar CSS -->
 		<link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" type="text/css" /> 
@@ -22,9 +26,13 @@
         <link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon" type="image/x-icon" />
 
         <!-- WebApp Manifest -->
-        <link rel="manifest" href="{{ url_for('manifest') }}">
+        <link rel="manifest" href="{{ url_for('manifest_bp.manifest') }}">
 
-        <title>{% block title %}{% endblock %}{% if grill_name != '' %} | {{ grill_name }}{% endif %}</title>
+        <title>{% block title %}{% endblock %}
+			{% if grill_name is defined %}
+				{% if grill_name != '' %} | {{ grill_name }}{% endif %}
+			{% endif %}
+		</title>
 
     </head>
     <body class="{% block body_class %}{% endblock %}">
@@ -33,9 +41,11 @@
 			<a class="navbar-brand text-truncate" {% if request.MOBILE %}style="max-width: 210px;"{% endif %} href="/">
 				<img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="30" height="30" class="d-inline-block align-top" alt="">
 				<b>Pi<i class="text-danger">Fire</i></b>
+				{% if grill_name is defined %}
 				{% if grill_name != '' %}
-					| <small class="">{{ grill_name }}</small> 
+					| <small class="" id="navbarGrillName">{{ grill_name }}</small> 
 				{% endif %}
+				{% endif %}					
 			</a>
 			<div class="ml-auto d-flex order-0 order-lg-1">
 				{% block timer_toggler %}
@@ -142,11 +152,13 @@
 		{% block postcontainer %}{% endblock %}
 
 		{% block controlpanel %}
-			{% if settings['globals']['global_control_panel'] %}
-				<!-- Control Panel -->
-				{% from "_macro_control_panel.html" import render_container %}
-				{{ render_container(settings, control) }}
-				<!-- End Control Panel -->
+			{% if settings is defined %}
+				{% if settings['globals']['global_control_panel'] %}
+					<!-- Control Panel -->
+					{% from "_macro_control_panel.html" import render_container %}
+					{{ render_container(settings, control) }}
+					<!-- End Control Panel -->
+				{% endif %}
 			{% endif %}
 		{% endblock %}
 
@@ -192,9 +204,11 @@
 		{% endblock %}
 
 		{% block controlpanel_scripts %}
-			{% if settings['globals']['global_control_panel'] %}
-				<!-- Control Panel JS -->
-				<script src="{{ url_for('static', filename='js/control_panel.js') }}"></script>
+			{% if settings is defined %}
+				{% if settings['globals']['global_control_panel'] %}
+					<!-- Control Panel JS -->
+					<script src="{{ url_for('static', filename='js/control_panel.js') }}"></script>
+				{% endif %}
 			{% endif %}
 		{% endblock %}
 

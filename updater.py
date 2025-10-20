@@ -15,11 +15,11 @@
 '''
 
 from common import *
-import pkg_resources
+from importlib.metadata import version, PackageNotFoundError
+
 import subprocess
 import argparse
-
-DEBUG = False
+import logging
 
 '''
 ==============================================================================
@@ -176,28 +176,40 @@ def get_log(num_commits=10):
 
 def get_remote_version():
 	remote_url, error_msg = get_remote_url()
-	if error_msg == '':
-		# Reference command: git ls-remote --tags --sort="v:refname" git://github.com/nebhead/test-update.git
-		# 	| tail -n1 | sed "s/.*\\///;"
-		# Gets a list of the remote hashes/tags sorted by version, then takes the last (tail) and processes the
-		# 	output to remove the hash and ref/tags/
-		command = ['git', 'ls-remote', '--tags', '--sort=v:refname', remote_url]
+	current_branch, branch_error = get_branch()
+	
+	if error_msg == '' and branch_error == '':
+		# Instead of getting all tags, we'll get tags that are on the current branch
+		# First fetch the latest tags
+		fetch_command = ['git', 'fetch', '--tags']
+		fetch = subprocess.run(fetch_command, capture_output=True, text=True)
+		
+		if fetch.returncode != 0:
+			return "ERROR Fetching Tags.", fetch.stderr.replace('\n', ' | ')
+		
+		# Now get tags that contain commits from the current branch
+		# This command finds tags that are reachable from the branch
+		command = ['git', 'tag', '--sort=v:refname', '--merged', f'origin/{current_branch}']
 		versions = subprocess.run(command, capture_output=True, text=True)
+		
 		if versions.returncode == 0:
 			version_list = versions.stdout.split('\n')  # Make a list of versions from the output
-			if version_list != ['']:
-				# Get the last version from the sorted version list (-1 is actually an empty string, so go -2 to
-				# 	get the last item)
-				result = version_list[-2]
-				# Trickery to split the string after "refs/tags/" to get the version suffix
-				result = result.split("refs/tags/",1)[1]
+			# Remove empty entries
+			version_list = [v for v in version_list if v]
+			
+			if version_list:
+				# Get the latest tag from the list
+				result = version_list[-1]
 			else: 
-				result = "No versions found"
+				result = "No tags found on current branch"
 		else: 
 			result = "ERROR Getting Remote Version."
 			error_msg = versions.stderr.replace('\n', ' | ')
 	else: 
-		result = 'ERROR Getting Remote URL.'
+		result = 'ERROR Getting Remote URL or Branch.'
+		if error_msg: 
+			error_msg += ' | '
+		error_msg += branch_error
 	return(result, error_msg)
 
 def get_current_tag():
@@ -292,6 +304,10 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 		print(f'Percent: {percent}')
 		print(f'Status:  {status}')
 		print(f'Output:  {output}')
+	logger.debug(f'Percent: {percent}')
+	logger.info(f'Status:  {status}')
+	logger.debug(f'Output:  {output}')
+	# Update the status bar with the current status
 	set_updater_install_status(percent, status, output)
 	time.sleep(2)
 
@@ -307,16 +323,16 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 		''' Walk list of versions in updater_manifest, check for dependencies '''	
 		if (semantic_ver_is_lower(current_version_string, version_info['version'])) or \
 			((current_version_string == version_info['version']) and \
-			(current_build <  version_info['build'])):
+			(current_build < version_info['build'])):
 			
 			# If the current version (pre-update) is less than this version information, install dependencies, etc.
 			for section in version_info['dependencies']:
 				for module in version_info['dependencies'][section]['py_dependencies']:
 					try:
-						dist = pkg_resources.get_distribution(module)
-						print('{} ({}) is installed'.format(dist.key, dist.version))
-					except pkg_resources.DistributionNotFound:
-						print('{} is NOT installed'.format(module))
+						pkg_version = version(module)
+						logger.info(f"Found {module} version {pkg_version}")
+					except PackageNotFoundError:
+						logger.info(f"Package {module} not found, adding to dependencies")
 						py_dependencies.append(module)
 
 				for package in version_info['dependencies'][section]['apt_dependencies']:
@@ -333,6 +349,9 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 		print(f'py_dep: {py_dependencies}')
 		print(f'apt_dep:  {apt_dependencies}')
 		print(f'command:  {command_list}')
+	logger.debug(f'py_dep: {py_dependencies}')
+	logger.debug(f'apt_dep:  {apt_dependencies}')
+	logger.debug(f'command:  {command_list}')
 
 	# Calculate the percent done from remaining items to install
 	items_remaining = len(py_dependencies) + len(apt_dependencies) + len(command_list)
@@ -343,12 +362,13 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 
 	# Install Py dependencies
 	settings = read_settings()
-	if settings['globals']['venv']:
-		python_exec = 'bin/python'
+	python_exec = settings['globals'].get('python_exec', 'python')
+
+	if settings['globals'].get('uv', False):
+		launch_pip = ['uv', 'pip', 'install']
 	else:
-		python_exec = 'python'
-	
-	launch_pip = [python_exec, '-m', 'pip', 'install']
+		launch_pip = [python_exec, '-m', 'pip', 'install']
+
 	status = 'Installing Python Dependencies...'
 	output = ' - Installing Python Dependencies'
 	set_updater_install_status(percent, status, output)
@@ -356,6 +376,9 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 		print(f'Percent: {percent}')
 		print(f'Status:  {status}')
 		print(f'Output:  {output}')
+	logger.debug(f'Percent: {percent}')
+	logger.info(f'Status:  {status}')
+	logger.debug(f'Output:  {output}')
 
 	for py_item in py_dependencies:
 		command = []
@@ -370,6 +393,7 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 				if output:
 					set_wizard_install_status(percent, status, output.strip())
 					print(output.strip())
+					logger.info(output.strip())
 			return_code = process.poll()
 			result += return_code
 			print(f'Return Code: {return_code}')
@@ -381,6 +405,9 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 			print(f'Percent: {percent}')
 			print(f'Status:  {status}')
 			print(f'Output:  {output}')
+		logger.debug(f'Percent: {percent}')
+		logger.debug(f'Status:  {status}')
+		logger.info(f'Output:  {output}')
 
 	time.sleep(4)
 
@@ -404,6 +431,7 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 				if output:
 					set_updater_install_status(percent, status, output.strip())
 					print(output.strip())
+					logger.info(output.strip())
 			return_code = process.poll()
 			result += return_code
 			print(f'Return Code: {return_code}')
@@ -415,6 +443,9 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 			print(f'Percent: {percent}')
 			print(f'Status:  {status}')
 			print(f'Output:  {output}')
+		logger.debug(f'Percent: {percent}')
+		logger.debug(f'Status:  {status}')
+		logger.info(f'Output:  {output}')
 
 	time.sleep(4)
 
@@ -426,8 +457,14 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 		print(f'Percent: {percent}')
 		print(f'Status:  {status}')
 		print(f'Output:  {output}')
-	
+	logger.debug(f'Percent: {percent}')
+	logger.info(f'Status:  {status}')
+	logger.debug(f'Output:  {output}')
+
 	for command in command_list:
+		if "sudo" in command and "python" in command:
+			#replace "python" with python_exec in command list object
+			command = [python_exec if item == "python" else item for item in command]
 		process = subprocess.Popen(command, stdout=subprocess.PIPE, encoding='utf-8')
 		while True:
 			output = process.stdout.readline()
@@ -435,7 +472,8 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 				break
 			if output:
 				set_updater_install_status(percent, status, output.strip())
-				print(f'command output: {output.strip()}')
+				print(f'{output.strip()}')
+				logger.info(output.strip())
 		return_code = process.poll()
 		result += return_code
 		print(f'Return Code: {return_code}')
@@ -447,6 +485,9 @@ def install_dependencies(current_version_string='0.0.0', current_build=None):
 			print(f'Percent: {percent}')
 			print(f'Status:  {status}')
 			print(f'Output:  {output}')
+		logger.debug(f'Percent: {percent}')
+		logger.debug(f'Status:  {status}')
+		logger.debug(f'Output:  {output}')
 
 	time.sleep(4)
 
@@ -476,10 +517,29 @@ if __name__ == "__main__":
 	parser.add_argument('-b', '--branch', metavar='BRANCH', type=str, required=False, help="Change Branches")
 	parser.add_argument('-u', '--update', metavar='BRANCH', type=str, required=False, help="Update Current Branch")
 	parser.add_argument('-r', '--remote', action='store_true', required=False, help="Update Remote Branches")
+	parser.add_argument('-p', '--piplist', action='store_true', required=False, help="Output PIP List packages to JSON file.")
+	parser.add_argument('-v', '--uv', action='store_true', required=False, help="Set uv flag and clear venv flag in settings.json")
+	parser.add_argument('-l', '--legacyvenv', action='store_true', required=False, help="Set venv flag in settings.json")
+	parser.add_argument('-d', '--debug', action='store_true', required=False, help="Enable Debug Mode")
+	parser.add_argument('-i', '--installdependencies', action='store_true', required=False, help="Install Dependencies for current version")
 
 	args = parser.parse_args()
 
+	''' Setup Logger '''
+	if args.debug:
+		log_level = logging.DEBUG
+		DEBUG = True
+	else:
+		log_level = logging.INFO
+		DEBUG = False
+
+	logger = create_logger('updater', filename='./logs/update.log', messageformat='%(asctime)s | %(levelname)s | %(message)s', level=log_level)
+
+	# num_args = number of arguments passed to the script
+	num_args = 0
+
 	if args.update:
+		num_args += 1
 		settings = read_generic_json('settings.json')
 		current_version = settings['versions']['server']
 		current_build = settings['versions'].get('build', 0)
@@ -499,6 +559,7 @@ if __name__ == "__main__":
 		install_dependencies(current_version, current_build)
 
 	elif args.branch:
+		num_args += 1
 		settings = read_generic_json('settings.json')
 		current_version = settings['versions']['server']
 		current_build = settings['versions'].get('build', 0)
@@ -518,10 +579,64 @@ if __name__ == "__main__":
 		install_dependencies(current_version, current_build)
 
 	elif args.remote:
+		num_args += 1
 		error_msg = update_remote_branches()
 		if error_msg != '':
 			print(f'Error updating remote branches: {error_msg}')
 
-	else:
-		print('No Arguments Found. Use --help to see available arguments')
+	elif args.installdependencies:
+		num_args += 1
+		settings = read_generic_json('settings.json')
+		current_version = settings['versions']['server']
+		current_build = settings['versions'].get('build', 0)
+
+		percent = 10
+		status = f'Installing Dependencies for Current Version...'
+		output = f' - APT, Python and Command Dependencies for version {current_version} ({current_build})'
+		set_updater_install_status(percent, status, output)
+
+		install_dependencies(current_version, current_build)
+
+	if args.piplist:
+		num_args += 1
+		settings = read_settings()
+
+		# Get python executable
+		python_exec = settings['globals'].get('python_exec', 'python')
+
+		if settings['globals'].get('uv', False):
+			command = ['uv', 'pip', 'list', '--format=json']
+		else:
+			command = [python_exec, '-m', 'pip', 'list', '--format=json']
+
+		pip_list = subprocess.run(command, capture_output=True, text=True)
+		if pip_list.returncode == 0:
+			write_generic_json(json.loads(pip_list.stdout), 'pip_list.json')
+			#print(f'PIP List: {pip_list.stdout}')
+		else:
+			print(f'Error creating PIP List: {pip_list.stderr}')
+			pip_list = []
+			write_generic_json(pip_list, 'pip_list.json')
+	
+	if args.uv:
+		num_args += 1
+		settings = read_settings()
+		settings['globals']['uv'] = True
+		settings['globals']['venv'] = True
+		settings['globals']['python_exec'] = '.venv/bin/python'
+		write_generic_json(settings, 'settings.json')
+		print('Updated settings.json to set uv flag and set venv flag')
+	
+	if args.legacyvenv:
+		num_args += 1
+		settings = read_settings()
+		settings['globals']['uv'] = False
+		settings['globals']['venv'] = True
+		settings['globals']['python_exec'] = 'bin/python'
+		write_generic_json(settings, 'settings.json')
+		print('Updated settings.json to set venv flag and clear uv flag')
+
+	''' If no valid arguments are passed, print help message '''
+	if num_args == 0:
+		print('No valid arguments provided. Use -h for help.')
 

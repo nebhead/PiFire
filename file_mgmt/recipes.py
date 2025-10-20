@@ -17,8 +17,10 @@ import json
 import zipfile
 import pathlib
 
+from flask import current_app
 from common import read_settings, generate_uuid, convert_temp
 from file_mgmt.common import read_json_file_data
+from file_mgmt.media import unpack_thumb
 
 RECIPE_FOLDER = './recipes/'  # Path to recipe files
 
@@ -202,3 +204,30 @@ def convert_recipe_units(recipe, units):
             recipe['steps'][index]['settemps'][probe] = 0 if settemp == 0 else convert_temp(units, settemp)
         recipe['steps'][index]['hold_temp'] = 0 if step['hold_temp'] == 0 else convert_temp(units, step['hold_temp'])
     return(recipe)
+
+def get_recipefilelist(folder=None):
+    if folder is None:
+        folder = current_app.config['RECIPE_FOLDER']
+    # Grab list of Recipe Files
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+    dirfiles = os.listdir(folder)
+    recipefiles = []
+    for file in dirfiles:
+        if file.endswith('.pfrecipe'):
+            recipefiles.append(file)
+    return(recipefiles)
+
+def get_recipefilelist_details(recipefilelist):
+    recipefiledetails = []
+    for item in recipefilelist:
+        filename = RECIPE_FOLDER + item['filename']
+        recipefiledata, status = read_json_file_data(filename, 'metadata')
+        if status == 'OK':
+            thumbnail = unpack_thumb(recipefiledata['thumbnail'], filename, recipefiledata["id"]) if (
+                    'thumbnail' in recipefiledata) else ''
+            recipefiledetails.append(
+                {'filename': item['filename'], 'title': recipefiledata['title'], 'thumbnail': thumbnail})
+        else:
+            recipefiledetails.append({'filename': item['filename'], 'title': 'ERROR', 'thumbnail': ''})
+    return recipefiledetails

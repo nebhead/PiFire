@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+
+{% block title %}Updater{% endblock %}
+
+{% block timer_bar %} 
+{% endblock %}
+
+{% block notify %}
+<!-- Success -->
+  {% if (alert['type'] == 'success') %}
+  <br>
+  <div class="container">
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle"></i>&nbsp; <strong>Success.</strong> {{ alert['text'] }}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+    </div>
+  </div>
+  {% elif (alert['type'] == 'error') %}
+  <br>
+  <div class="container">
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle"></i>&nbsp; <strong>Error!</strong> {{ alert['text'] }}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>    
+	</div>
+  </div>
+  {% elif (alert['type'] == 'warning') %}
+  <br>
+  <div class="container">
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle"></i>&nbsp; <strong>Warning!</strong> {{ alert['text'] }}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+    </div>
+  </div>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<br>
+<div class="container">
+
+<!-- Status & Info Row -->
+<div class="row">
+	<div class="col mb-4">
+		<div class="card shadow">
+			<div class="card-header bg-info">
+				<i class="far fa-arrow-alt-circle-up"></i>&nbsp; Status
+			</div>
+			<div class="card-body text-center">
+				<div id="update_checking">
+					<div class="spinner-border text-primary" role="status" id="update_status_spinner">
+						<span class="sr-only">Loading...</span>
+					</div><br>
+					Checking for update...
+				</div>
+				<div id="update_available" style="display:none">
+					<form method="POST" action=/update>
+						<button type="button" class="btn btn-success btn-block shadow" data-toggle="modal" data-target="#updateModal">
+							<h1><i class="fas fa-cloud-download-alt"></i></h1>
+							<h4><strong>An update is available!</strong></h4>
+							You are currently <i id="commits_behind"></i> changes behind the latest on this branch. <br>
+							Click Here to Update
+						</button>
+						<button type="submit" class="btn btn-outline-success btn-block shadow" name="show_log" id="show_log" value="true">Show Changes</button>
+					</form>
+				</div>
+				<div id="update_failed" style="display:none">
+					<div class="alert alert-danger fade show" role="alert">
+						<h1><i class="fas fa-exclamation-triangle"></i></h1>
+						<strong>Error!</strong> The update check failed for some reason. Check your logs.
+					</div>
+					<button type="button" class="btn btn-outline-danger btn-block shadow" role="button" id="check_for_update">Check Again</button>
+				</div>
+				<div id="update_current" style="display:none">
+					<div class="alert alert-info fade show" role="alert">
+						<h1><i class="far fa-check-circle"></i></h1>
+						<strong>Great News!  You are up to date on this branch!</strong>
+					</div>
+					<button type="button" class="btn btn-outline-info btn-block shadow" role="button" id="check_for_update_2">Check Again</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="col mb-4">
+		<div class="card shadow">
+			<div class="card-header bg-info">
+				<i class="fas fa-info-circle"></i>&nbsp; Info
+			</div>
+			<div class="card-body">
+				<b>Current Version:</b>&nbsp;&nbsp; <i>{{ update_data['version'] }}</i><br>
+				<b>Release Notes:</b>&nbsp;&nbsp; <button type="button" class="btn btn-outline-info btn-sm" data-toggle="modal" data-target="#release_notes_modal">Show Release Notes...</button><br>
+				<b>Branch:</b>&nbsp;&nbsp; <i>{{ update_data['branch_target'] }}</i><br>
+				<b>Remote:</b>&nbsp;&nbsp; <i>{{ update_data['remote_url'] }}</i><br>
+				<b>Remote Version:</b>&nbsp;&nbsp; <i>{{ update_data['remote_version'] }}</i><br>
+			</div>
+		</div>
+	</div>	
+</div>
+<!-- Release Message Modal -->
+<div class="modal fade" id="release_notes_modal" tabindex="-1" aria-labelledby="release_notes_modal_title" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-scrollable modal-xl">
+	  <div class="modal-content">
+		<div class="modal-header">
+		  <h5 class="modal-title" id="release_notes_modal_title"><i class="fa-solid fa-gift"></i>&nbsp; Release Notes</h5>
+		  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		  </button>
+		</div>
+		<div class="modal-body">
+			<div id="release_notes_html">
+				Loading...
+			</div>
+		</div>
+		<div class="modal-footer">
+		  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+		</div>
+	  </div>
+	</div>
+  </div>
+  
+<!-- Branch Selector Card -->
+<form method="POST" action="/update">
+<div class="card shadow">
+	<div class="card-header bg-info">
+		<i class="fas fa-code-branch"></i>&nbsp; Branch Selector
+	</div>
+	<div class="card-body">
+
+		<!-- Select Branch Target -->
+		<div class="form-group">
+			<label for="branch_target">Select active branch: </label>
+			<select class="form-control" name="branch_target" id="branch_target">
+				{% for branch in update_data['branches'] %}
+				{% if branch == update_data['branch_target'] %}
+					<option value="{{branch}}" selected>{{ branch }}</option>
+				{% else %} 
+					<option value="{{branch}}">{{ branch }}</option>
+				{% endif %}
+				{% endfor %}
+			</select>
+		</div>
+		<br>
+		<!-- Checkout Selected Branch -->
+		<button type="button" class="btn btn-primary btn-block shadow" data-toggle="modal" data-target="#branchModal">
+			Checkout Branch
+		</button>
+		<br>
+		<button type="submit" class="btn btn-outline-primary btn-block shadow" name="update_remote_branches" value="true">
+			Check for Other Branches on the Remote
+		</button>
+	</div>
+</div>
+<br>
+
+<!-- Branch Modal -->
+<div class="modal fade" id="branchModal" data-keyboard="false" tabindex="-1" aria-labelledby="branchModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+		<div class="modal-header">
+			<h5 class="modal-title" id="branchModalLabel">Are you sure you want to change branches?</h5>
+			<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+			</button>
+		</div>
+		<div class="modal-body">
+			Changing branches will force a restart of the server.  This operation might overwrite code changes that have not been committed on the current branch.
+			<br><br>Are you sure you want to change the branch?  
+		</div>
+		<div class="modal-footer">
+			<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+			<button type="submit" class="btn btn-primary" name="change_branch" value="true">Confirm</button>
+		</div>
+		</div>
+	</div>
+</div>
+</form> 
+
+<!-- Update Modal -->
+<form method="POST" action=/update>
+<div class="modal fade" id="updateModal" data-keyboard="false" tabindex="-1" aria-labelledby="updateModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+		<div class="modal-header">
+			<h5 class="modal-title" id="updateModalLabel">Are you sure you want to download the latest on the {{ update_data['branch_target'] }} branch?</h5>
+			<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+			</button>
+		</div>
+		<div class="modal-body">
+			Downloading and updating to the latest version from the <b>{{ update_data['branch_target'] }}</b> branch 
+			will destory any <strong>code</strong> changes that might have been made. <i>(settings changes will be preserved)</i><br><br> 
+			<strong>NOTE: </strong>After the update, the server will be restarted.
+
+			<!-- Check box for confirmation -->
+			<div class="form-check">
+				<input class="form-check-input" type="checkbox" id="confirm_update" name="confirm_update" value="true" onchange="toggleUpdateButton()" required>
+				<label class="form-check-label" for="confirm_update">
+					I don't have a long cook planned right this minute and I am sure I want to update.
+				</label>
+			</div>
+		</div>
+		<div class="modal-footer">
+			<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+			<button type="submit" class="btn btn-primary" name="do_update" value="true">Confirm</button>
+		</div>
+		</div>
+	</div>
+</div>
+</form>
+
+<!-- Advanced Card - Default accordion card minimized buttons to force an update, upgrade, etc. -->
+<form method="POST" action=/update>
+<div class="card shadow">
+	<div class="card-header" id="headingAdvanced">
+		<button class="btn btn-danger text-light" type="button" data-toggle="collapse" data-target="#collapseAdvanced" aria-expanded="true" aria-controls="collapseAdvanced" style="opacity: 0.7;">
+			<i class="fas fa-cogs"></i>&nbsp; Advanced...
+		</button>
+	</div>
+
+	<div id="collapseAdvanced" class="collapse" aria-labelledby="headingAdvanced">
+		<div class="card-body text-center">
+			<i>The below options are provided for debug / development / testing only and should never be performed unless you know what you are doing! <br>You have been warned.</i>
+			<br><br>
+			<!-- Force Update -->
+			<button type="submit" class="btn btn-danger btn-block shadow" name="do_update" value="true">Force Update</button>
+			<br>
+			<!-- Force Upgrade -->
+			<button type="submit" class="btn btn-warning btn-block shadow" name="do_upgrade" value="true">Force Upgrade</button>
+			<br>
+		 </div>
+	 </div>
+</div>
+</form>
+
+</div> <!-- End of Container -->
+{% endblock %}
+
+{% block controlpanel %}{% endblock %}
+{% block controlpanel_scripts %}{% endblock %}
+
+{% block scripts %}
+	<!-- Updater Script -->
+	<script src="{{ url_for('update_bp.static', filename='update/js/updater.js') }}"></script>
+	<script>
+		// filepath: /home/ben/syncthing/Tech-Projects/PiFire/templates/updater.html
+		function toggleUpdateButton() {
+			const checkbox = document.getElementById('confirm_update');
+			const updateButton = document.getElementById('do_update');
+			updateButton.disabled = !checkbox.checked;
+		}
+	</script>
+{% endblock %}

@@ -23,8 +23,7 @@ import json
 import apprise
 import logging
 import math
-from common import write_settings, write_control, create_logger, read_history
-from sklearn.linear_model import LinearRegression
+from common import write_settings, write_control, create_logger, read_history, read_settings, read_control, read_pellet_db
 
 '''
 ==============================================================================
@@ -54,6 +53,9 @@ def check_notify(settings, control, in_data=None, pelletdb=None, grill_platform=
 
 	if settings['notify_services']['influxdb']['url'] != '' and settings['notify_services']['influxdb']['enabled']:
 		_send_influxdb_notification('GRILL_STATE', control, settings, pelletdb, in_data, grill_platform)
+
+	if settings['notify_services']['wled']['device_address'] != '' and settings['notify_services']['wled']['enabled']:
+		_send_wled_notification('GRILL_STATE', control, settings)
 
 	''' Get simple list of temperatures key:value pairs '''
 	probe_temp_list = {}
@@ -88,7 +90,7 @@ def check_notify(settings, control, in_data=None, pelletdb=None, grill_platform=
 				# If target temperature meets the condition, send notification and clear request/data
 				if _check_condition(item['condition'], probe_temp_list[item['label']], item['target']):
 					if item['type'] == 'probe':
-						send_notifications("Probe_Temp_Achieved", control, settings, pelletdb, label=item['label'], target=in_data['notify_targets'][item['label']])
+						send_notifications("Probe_Temp_Achieved", label=item['label'], target=in_data['notify_targets'][item['label']])
 						if control['mode'] == 'Recipe':
 							if control['recipe']['step_data']['trigger_temps'][item['label']] > 0:
 								control['recipe']['step_data']['triggered'] = True
@@ -96,7 +98,7 @@ def check_notify(settings, control, in_data=None, pelletdb=None, grill_platform=
 						control['notify_data'][index]['target'] = 0 
 						control['notify_data'][index]['eta'] = None 
 					if item['type'] in ['probe_limit_high', 'probe_limit_low'] and not item['triggered']:
-						send_notifications("Probe_Temp_Limit_Alarm", control, settings, pelletdb, label=item['label'], target=item['target'])
+						send_notifications("Probe_Temp_Limit_Alarm", label=item['label'], target=item['target'])
 						control['notify_data'][index]['triggered'] = True
 				elif item['type'] in ['probe_limit_high', 'probe_limit_low'] and item['triggered']:
 					# If the temperature goes back into the right range, reset the 'triggered' flag
@@ -104,7 +106,7 @@ def check_notify(settings, control, in_data=None, pelletdb=None, grill_platform=
 
 			elif item['type'] == 'timer':
 				if time.time() >= control['timer']['end']:
-					send_notifications("Timer_Expired", control, settings, pelletdb)
+					send_notifications("Timer_Expired")
 					if control['mode'] == 'Recipe':
 						if control['recipe']['step_data']['timer'] > 0:
 							control['recipe']['step_data']['triggered'] = True
@@ -116,11 +118,11 @@ def check_notify(settings, control, in_data=None, pelletdb=None, grill_platform=
 			elif item['type'] == 'hopper':
 				if (time.time() - item['last_check']) > (settings['pelletlevel']['warning_time'] * 60):
 					if pelletdb['current']['hopper_level'] <= settings['pelletlevel']['warning_level']:
-						send_notifications("Pellet_Level_Low", control, settings, pelletdb)
+						send_notifications("Pellet_Level_Low")
 						control['notify_data'][index]['last_check'] = time.time()
 			
 			elif item['type'] == 'test':
-				send_notifications("Test_Notify", control, settings, pelletdb)
+				send_notifications("Test_Notify")
 				control['notify_data'][index]['last_check'] = time.time()
 				control['notify_data'][index]['req'] = False
 
@@ -144,17 +146,18 @@ def check_notify(settings, control, in_data=None, pelletdb=None, grill_platform=
 
 	return control
 
-def send_notifications(notify_event, control, settings, pelletdb, label='Probe', target=0):
+def send_notifications(notify_event, label='Probe', target=0):
 	"""
 	Build and send notification based on notify_event and write to log.
 
 	:param notify_event: String Event
-	:param control: Control
-	:param settings: Settings
-	:param pelletdb: Pellet DB
+	:param label: Label
+	:param target: Target Value
 	"""
+	settings = read_settings()
+	control = read_control()
 	log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
-	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
+	eventLogger = create_logger('events', filename='./logs/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 	date = datetime.datetime.now()
 	now = date.strftime('%m-%d %H:%M')
 	time = date.strftime('%H:%M')
@@ -181,6 +184,7 @@ def send_notifications(notify_event, control, settings, pelletdb, label='Probe',
 		query_args = {"value1": 'Your timer has expired.'}
 		eventLogger.info(body_message)
 	elif "Pellet_Level_Low" in notify_event:
+		pelletdb = read_pellet_db()
 		title_message = "Low Pellet Level"
 		body_message = f"Your pellet level is currently at {pelletdb['current']['hopper_level']}%"
 		channel = 'pifire_pellet_alerts'
@@ -200,6 +204,7 @@ def send_notifications(notify_event, control, settings, pelletdb, label='Probe',
 		query_args = {"value1": str(settings['safety']['maxtemp'])}
 		eventLogger.info(body_message)
 	elif "Grill_Error_02" in notify_event:
+		control = read_control()
 		title_message = "Grill Error!"
 		body_message = "Grill temperature dropped below minimum startup temperature of " + str(
 			control['safety']['startuptemp']) + unit + "! Shutting down to prevent firepot overload. " + str(now)
@@ -207,6 +212,7 @@ def send_notifications(notify_event, control, settings, pelletdb, label='Probe',
 		query_args = {"value1": str(control['safety']['startuptemp'])}
 		eventLogger.info(body_message)
 	elif "Grill_Error_03" in notify_event:
+		control = read_control()
 		title_message = "Grill Error!"
 		body_message = "Grill temperature dropped below minimum startup temperature of " + str(
 			control['safety']['startuptemp']) + unit + "! Starting a re-ignite attempt, per user settings."
@@ -231,6 +237,12 @@ def send_notifications(notify_event, control, settings, pelletdb, label='Probe',
 		channel = 'pifire_test_message'
 		query_args = {"value1": "This is a test notification from PiFire."}
 		eventLogger.info(body_message)
+	elif "Control_Process_Stopped" in notify_event:
+		title_message = "Control Process Stopped!"
+		body_message = "The control process has encountered an issue and has been stopped. Check on your grill as soon as possible to prevent damage!"
+		channel = 'pifire_error_alerts'
+		query_args = {"value1": 'Control Process Stopped'}
+		eventLogger.info(body_message)
 	else:
 		title_message = "PiFire: Unknown Notification issue"
 		body_message = "Whoops! PiFire had the following unhandled notify event: " + notify_event + " at " + str(now)
@@ -250,7 +262,10 @@ def send_notifications(notify_event, control, settings, pelletdb, label='Probe',
 	if settings['notify_services']['onesignal']['app_id'] != '' and settings['notify_services']['onesignal']['enabled']:
 		_send_onesignal_notification(settings, title_message, body_message, channel)
 	if settings['notify_services']['mqtt']['broker'] != '' and settings['notify_services']['mqtt']['enabled']:
+		control = read_control()
 		_send_mqtt_notification(control, settings, notify_event=title_message)
+	if settings['notify_services']['wled']['device_address'] != '' and settings['notify_services']['wled']['enabled']:
+		_send_wled_notification(notify_event, control, settings)
 
 def _send_apprise_notifications(settings, title_message, body_message):
 	"""
@@ -261,7 +276,7 @@ def _send_apprise_notifications(settings, title_message, body_message):
 	:param body_message: Message Body
 	"""
 	log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
-	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
+	eventLogger = create_logger('events', filename='./logs/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 	if(len(settings['notify_services']['apprise']['locations'])):
 		eventLogger.info("Sending Apprise Notifications: " + ", ".join(settings['notify_services']['apprise']['locations']))
 		appriseHandler = apprise.Apprise()
@@ -284,7 +299,7 @@ def _send_pushover_notification(settings, title_message, body_message):
 	:param title_message: Message Title
 	:param body_message: Message Body
 	"""
-	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s')
+	eventLogger = create_logger('events', filename='./logs/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s')
 	if settings['globals']['debug_mode']:
 		eventLogger.setLevel(logging.DEBUG)
 	else:
@@ -326,7 +341,7 @@ def _send_pushbullet_notification(settings, title_message, body_message):
 	:param body_message: Message Body
 	:return:
 	"""
-	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s')
+	eventLogger = create_logger('events', filename='./logs/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s')
 	if settings['globals']['debug_mode']:
 		eventLogger.setLevel(logging.DEBUG)
 	else:
@@ -367,7 +382,7 @@ def _send_onesignal_notification(settings, title_message, body_message, channel)
 	:param channel: Android Notifications Channel
 	"""
 	log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
-	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
+	eventLogger = create_logger('events', filename='./logs/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 	app_id = settings['notify_services']['onesignal']['app_id']
 	devices = settings['notify_services']['onesignal']['devices']
 	url = "https://onesignal.com/api/v1/notifications"
@@ -421,7 +436,7 @@ def _send_ifttt_notification(settings, notify_event, query_args):
 	:param query_args: Query Args
 	"""
 	log_level = logging.DEBUG if settings['globals']['debug_mode'] else logging.INFO
-	eventLogger = create_logger('events', filename='/tmp/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
+	eventLogger = create_logger('events', filename='./logs/events.log', messageformat='%(asctime)s [%(levelname)s] %(message)s', level=log_level)
 	key = settings['notify_services']['ifttt']['APIKey']
 	url = 'https://maker.ifttt.com/trigger/' + notify_event + '/with/key/' + key
 
@@ -451,15 +466,46 @@ def _send_influxdb_notification(notify_event, control, settings, pelletdb, in_da
 		influx_handler = InfluxNotificationHandler(settings)
 	influx_handler.notify(notify_event, control, settings, pelletdb, in_data, grill_platform)
 
+def _smooth_temperatures(temperatures, window_size=3):
+	"""
+	Apply a simple moving average smoothing to the temperature data.
+	
+	Args:
+		temperatures: List of temperature readings
+		window_size: Size of the moving average window
+		
+	Returns:
+		List of smoothed temperature values
+	"""
+	if len(temperatures) < window_size:
+		return temperatures[:]
+		
+	smoothed = []
+	
+	# Keep first few points unchanged
+	for i in range(window_size // 2):
+		smoothed.append(temperatures[i])
+		
+	# Apply moving average
+	for i in range(window_size // 2, len(temperatures) - window_size // 2):
+		window = temperatures[i - window_size // 2:i + window_size // 2 + 1]
+		smoothed.append(sum(window) / len(window))
+		
+	# Keep last few points unchanged
+	for i in range(len(temperatures) - window_size // 2, len(temperatures)):
+		smoothed.append(temperatures[i])
+		
+	return smoothed
+
 def _estimate_eta(temperatures, target_temperature, interval_seconds=3, max_history_minutes=5, min_history_minutes=1):
 	"""
 	Estimates the ETA (Estimated Time of Arrival) for the food probe to reach a specific target temperature using 
-	Linear Interpolation from the SciPy library module.  
+	a simple linear regression implementation with smoothing and weighted regression.
 
 	Args:
 		temperatures: A list of temperatures measured by the food probe over time.
 		target_temperature: The desired target temperature.  Value should be larger than the temperatures in the list.
-		interval: Time between temperature readings.  Value between 1 and 60. 
+		interval_seconds: Time between temperature readings.  Value between 1 and 60. 
 		max_history_minutes:  Maximum minutes of history to use for calculating ETA 
 		min_history_minutes:  Minimum minutes of history to use for calculating ETA 
 
@@ -467,21 +513,19 @@ def _estimate_eta(temperatures, target_temperature, interval_seconds=3, max_hist
 		The estimated time (in seconds) it will take for the food probe to reach the target temperature.
 		None if the target temperature is already reached or the probe data is insufficient.
 	"""
-	eventLogger = create_logger('events', filename='/tmp/events.log')
+	eventLogger = create_logger('events', filename='./logs/events.log')
 
 	# Ensure target temperature is not already reached
 	if target_temperature <= max(temperatures):
-		#print('DEBUG: ETA: Target temperature already achieved.')
 		eventLogger.debug(f'ETA: Target temperature already achieved.')
 		return None
 
 	# Ensure that interval is between 1 and 60 seconds 
 	if interval_seconds > 60 or interval_seconds < 1:
-		#print('DEBUG: ETA: History data interval not between 1 and 60 seconds.')
 		eventLogger.debug(f'ETA: History data interval not between 1 and 60 seconds.')
 		return None
 
-    # Convert minutes to seconds
+	# Convert minutes to seconds
 	max_data_points = int(max_history_minutes * 60 / interval_seconds)
 	min_data_points = int(min_history_minutes * 60 / interval_seconds)
 
@@ -493,27 +537,61 @@ def _estimate_eta(temperatures, target_temperature, interval_seconds=3, max_hist
 	# Truncate data to fit within limits
 	temperatures = temperatures[-max_data_points:]
 
-	# Prepare data for linear regression
-	X = [[i] for i in range(len(temperatures))]  # Time steps as features
-	y = temperatures  # Temperature values as target
-
 	try:
-		# Fit the linear regression model
-		model = LinearRegression()
-		model.fit(X, y)
-
+		# Apply smoothing to reduce impact of fluctuations
+		smoothed_temps = _smooth_temperatures(temperatures, window_size=5)
+		
+		# Prepare for weighted linear regression
+		n = len(smoothed_temps)
+		x_values = list(range(n))
+		
+		# Create weights that emphasize more recent readings
+		# Exponential weighting - newer readings get more weight
+		weights = [math.exp(i/10) for i in range(n)]
+		weight_sum = sum(weights)
+		weights = [w / weight_sum for w in weights]  # Normalize weights
+		
+		# Calculate weighted means
+		mean_x = sum(x * w for x, w in zip(x_values, weights))
+		mean_y = sum(y * w for y, w in zip(smoothed_temps, weights))
+		
+		# Calculate weighted slope (m) and intercept (b) for y = mx + b
+		numerator = sum(w * (x - mean_x) * (y - mean_y) for x, y, w in zip(x_values, smoothed_temps, weights))
+		denominator = sum(w * (x - mean_x) ** 2 for x, w in zip(x_values, weights))
+		
+		# Avoid division by zero
+		if denominator == 0:
+			eventLogger.debug(f'ETA: Cannot calculate slope - no temperature change detected.')
+			return None
+			
+		slope = numerator / denominator
+		intercept = mean_y - slope * mean_x
+		
+		# If temperature isn't rising (or is falling), we can't predict ETA
+		if slope <= 0:
+			eventLogger.debug(f'ETA: Temperature not increasing, cannot estimate ETA.')
+			return None
+		
 		# Predict time to reach target temperature (assuming linear trend)
-		predicted_time = (target_temperature - y[-1]) / model.coef_[0] * interval_seconds
+		# Formula: (target - current) / rate_of_change
+		current_temp = smoothed_temps[-1]  # Use the smoothed temperature
+		predicted_time = (target_temperature - current_temp) / slope * interval_seconds
+		
+		# Log some debug information about the calculation
+		eventLogger.debug(f'ETA: Using smoothed temp: current={current_temp}, slope={slope:.4f}, predicted={predicted_time:.1f}s')
 		
 		# Ensure positive prediction
 		if predicted_time < 0:
 			eventLogger.debug(f'ETA: Estimated time is negative. [{predicted_time}]')
 			return None
-	except:
-		eventLogger.debug(f'ETA: Error calculating ETA.')
-		return None
+		if math.isinf(predicted_time) or math.isnan(predicted_time):
+			eventLogger.debug(f'ETA: Estimated time is infinite or NaN. [{predicted_time}]')
+			return None
 			
-	return int(predicted_time)
+		return int(predicted_time)
+	except Exception as e:
+		eventLogger.debug(f'ETA: Error calculating ETA: {str(e)}')
+		return None
 
 mqtt = None
 def _send_mqtt_notification(control, settings, 
@@ -584,3 +662,21 @@ def _check_condition(condition, current, target):
 		return current <= target
 	else:
 		return False
+	
+wled_handler = None
+def _send_wled_notification(notify_event, control, settings):
+	"""
+	Send WLED Notifications
+
+	:param notify_event: String Event
+	:param control: Control
+	:param settings: Settings
+	:param pelletdb: Pellet DB
+	:param in_data: In Data (Probe Temps)
+	:param grill_platform: Grill Platform
+	"""
+	global wled_handler
+	if not wled_handler:
+		from notify.wled_handler import WLEDNotificationHandler
+		wled_handler = WLEDNotificationHandler(settings)
+	wled_handler.notify(notify_event, control, settings)

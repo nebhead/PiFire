@@ -1,152 +1,143 @@
-<!-- Post Update Message for v1.8.0 -->
+<!-- Post Update Message for v1.10.0 -->
 <H1>
     <img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="50" height="50" class="d-inline-block align-top" alt="">
-    PiFire 1.9.6 Release - July 2025
+    PiFire 1.10.0 Release - TBD 2025
 </H1>
+
 <div class="row justify-content-center">
-    <div class="card" style="width:80%">
-        <div class="card-body">
+   <div class="card" style="width:80%">
+      <div class="card-body">
+
+            <div class="alert alert-danger" role="alert">
+               <i class="fa-solid fa-triangle-exclamation"></i>&nbsp; <b>WARNING:</b>
+               This is a development release.  Use this at your own risk.  There are known issues with this release. 
+            </div>
+            <br>
             <p>
-                This release contains bug fixes and feature updates since the previous version. 
+               This release contains bug fixes and feature updates since the previous version. 
+            </p> 
+            <br>
+            <p>
+               <i class="fa-regular fa-star"></i>&nbsp; <u>Here are just some of the <b>NEW</b> features that were added in this update:</u>
             </p>
-             
-             <br>
-             
-             <p>
-                 <i class="fa-regular fa-star"></i>&nbsp; <u>Here are just some of the <b>NEW</b> features that were added in this update:</u>
-             </p>
-             
-             <ul>
-                 <li>
-                    Minor overhaul of manual mode, moving the controls to the control panel so that you can control the grill outputs directly
-                    from the dashboard if you desire.  Buttons and PWM slider is responsive without reloading the page.  Improved manual mode instructions.  
-                 </li>
-                 <li>
-                    Added the ability to manually override outputs (igniter, auger, fan) on the default dashboard and on the flex touch display.  The user 
-                    can enable this in the safety settings, and select the amount of seconds to override the controller during operation.  Use with caution 
-                    as this can potentially leave the igniter on for extended periods of time.
-                 </li>
-                 <li>
-                    Added high and low limit temperature notifications for each probe.  This allows you to to set limits for the high and low temperatures
-                    and be notified when they exceed those limits during operation.  These limits do not expire, but will only trigger once they are exceeded.
-                    They will reset when the temperature falls below/above the high/low limit.  This feature also allows you to take some actions such as to 
-                    reignite the grill if the temperature goes too low or to shutdown if it goes too high.  
-                 </li>
-                 <li>
-                    Added iBBQ Bluetooth probe support.  Tested with Inkbird BT-4XS.  The device may take some time to be detected and setup before data is 
-                    is streamed out to the dashboard.  
-                 </li>
-                 <li>
-                    User @dogtreatfairy contributed two new controllers including an auto-center PID controller and a PID controller with Smith Predictor. 
-                    Github user @markalston contributed a new clamping PID controller.  
-                    Select these controllers in the settings page.  
-                 </li>
-                 <li>
-                    Added ST7789V with Encoder support.  This should still be considered experimental, as it uses an unsupported forked ST7789 library for display 
-                    support. Note that if you select this display version, it will install this forked library and will cause the original ST7789 library not to 
-                    function anymore.  
-                 </li>
-                 <li>
-                    Added option to delete all debug log files.  This can help with debugging issues, so that we have a clean log file to work with.
-                 </li>
-                 <li>
-                    Added support for Meater Bluetooth probes (Meater Pro is still under development).  This is a work in progress and may not be fully functional.  
-                    The probe must be configured in the Wizard before it can be used.  The probe will automatically connect to the PiFire device when the device is 
-                    powered on.  The probe will also automatically disconnect when the PiFire device is powered off.  The probe will also automatically reconnect if 
-                    the PiFire device is rebooted.  
-                 </li>
-                 <li>
-                    Added device status structure that can be retrieved from the /api/current route.  This includes the current state of the device, the current 
-                    configuration, and the current status of the probes.  This allows the dashboard to display connection status and/or battery status for bluetooth 
-                    probes.
-                 </li>
-                 <li>
-                    Added support for the ILI3941 display with the flex framework.  This utilizes the same framework as is being used for the DSI Touch display, and 
-                    will allow for the ILI9341 display to be customized, as well as allow for the use of different resolutions.  (note 480x320 is not currently implemented)
-                 </li>
-                 <li>
-                    Added bluetooth scanning in the configuration wizard so that you can select the hardware ID of a bluetooth device that you want to use.  It will
-                    flag hardware ids that are already in use, but it won't prevent you from setting them. 
-                 </li>
-                 <li>
-                    Update the probe configuration wizard to hide/show profile selection based on the probe device.  Only ADC devices should show profile selections. 
-                    Also hides/shows the probe enabled selection based on the probe type (AUX is by default hidden).
-                 </li>
-                 <li>
-                    Updated the probe configuration in the settings page.  The default dashboard also has probe configuration built in, using the cog in each of the probe cards.
-                 </li>
-                 <li>
-                    Removed hopper level from the different display types when no hopper level / distance sensor is enabled.  
-                 </li>
-                 <li>
-                    Added a button & menu option to the flex supported displays (DSI Touch / ILI9341f / Prototype Flex).
-                    Added a button/status icon in the status card for the default dashboard.  You can click on this icon during hold mode to toggle lid/door open.
-                 </li>
-                 <li>
-                    Added touch screen mode to the default dashboard configuration, which provides some visual and UI changes that will make using a touch screen 
-                    device easier.  
-                 </li>
-                 <li>
-                    Github user @markalston contributed the ST7789 240x240 display layout and support in a new module.
-                 </li>
-                 <li>
-                    Github user @wightmanjr contributed the ILI9488 320x480 display modules including encoder and button support.   
-                 </li>
-                 <li>
-                     Behind the scenes improvements including:  
-                     <ul>
-                         <li>
-                             Changed order of component installations when installing modules from the wizard.  The wizard will now install apt packages before 
-                             installing python modules to match dependencies for items like bluepy.    
-                         </li>
-                         <li>
-                           Added Lid/Door toggle API call which allows you to manually toggle on/off the lid/door open pause for the controller in Hold mode.
-                         </li>
-                         <li>
-                           Added a nicer Nginx server error landing page that will attempt to load the root ('/') every 10 seconds, provides a link to the Supervisor,
-                           and other helpful links.  This currently will only be available on new installations.
-                         </li>
-                     </ul>
-                 </li>
-             </ul>
-             
-             <p><i class="fa-solid fa-bug-slash"></i>&nbsp; <u>Here are some bug fixes in this update:</u></p>
-             
-             <ul>
-                 <li>
-                    Removed certain unsupported rotations from the ST7789 320x240 display configurations.  (90/270 degrees are not supported by the ST7789 driver module)
-                 </li>
-                 <li>
-                    Fixed a missing voltage bounds check for ADC probes using Celsius units.  This should prevent the probes from reporting invalid temperatures when probes 
-                    are not connected.
-                 </li>
-                 <li>
-                    Github user @markalston contributed a fix for the PID controllers to prevent divide by zero errors from crashing the control process. 
-                 </li>
-                 <li>
-                    Pinning all python modules to specific versions to prevent recent issues with the Redis python module deprecating a parameter in the connection call. 
-                 </li>
-                 <li>
-                    Fixed issue with install on Bullseye with Python 3.9 where greenlet was not building correctly. Pinned working version. 
-                 </li>
-                 <li>
-                    Fixed bug in Smith Predictor controller where a variable was incorrectly named, causing the controller to crash. 
-                 </li>
-                 <li>
-                    When in Celsius mode with standard ADC, prevent showing temperatures below 0C.  This will prevent probes that are unconnected from showing a negative temperature on the dashboard.
-                 </li>
-                 <li>
-                    Fixed issue where the ST7789 was attempting to install the latest version of numpy, which will cause a hang when building on the Raspberry Pi.  Install valid earlier version of numpy before attempting install of ST7789 module. 
-                 </li>
-                 <li>
-                    Added rotation support for the Raspberry Pi DSI Touch display.  This allows the display to be rotated 90/180/270 degrees and includes translation of the touch coordinates to match the display rotation.
-                 </li>
-             </ul>
-             
-        </div>
-    </div>
-    
-</div>
+            <ul>
+               <li>
+                  <b>Quality of Life:</b> Added Python Module List to the admin page (Admin > Module List).  This will show you the modules that are installed and their version numbers.  This is useful to debug common package version issues. 
+               </li>
+               <li>
+                  <b>Installer Improvements:</b> For fresh installations, Raspberry Pi OS 12 (Bookworm) (32/64-Bit) is recommended.  This is the last stable release of Raspberry Pi OS and is highly recommended for new installations.  If you are running an older version of Raspberry Pi OS, you can still upgrade.  For Bookworm 64-Bit, this new installer will install UV and will log the installation process to a file in your home directory.  Note: If you are using the DSI connected display, you will need to use only 32-Bit Raspberry Pi OS (Bullseye or Bookworm) due to the changes in display drivers in the 64-Bit version. 
+               </li>
+               <li>
+                  <b>Logging:</b> Added rotating log files to the PiFire logging system.  This will help keep the log files from growing too large and will allow you to easily view the logs in the log viewer page (Events > Logs).  The log files will be rotated every 1 MB and will keep the last 3 log files.
+               </li>
+               <li>
+                  <b>Safety:</b> Added notification capability to the process monitor, so that it can notify the user if the control script crashes.  Updated the default and basic dashboards to display an error message when a critical error is detected, such as the control process crashing. 
+               </li>
+               <li>
+                  <b>Settings Dashboard Select:</b> Added a screenshot when selecting dashboard.
+               </li>
+               <li>
+                  <b>System Information:</b> Added system information functions to the Grill Platform modules. Overhauled the system information card in the Admin page to display relevant information.
+               </li>
+               <li>
+                  <b>Hold After Start:</b> Added a toggle option (<a href="\settings">Settings > Startup & Shutdown</a>) to always ask what hold temperature to use after startup.  This will only work in the web interface currently.
+               </li>
+               <li>
+                  <b>iBBQ/xBBQ Support:</b> Added support for the iBBQ and xBBQ Bluetooth thermometers. Changes submitted by Discord user @faz (many thanks!) when they found that the newer firmware for this device (xBBQ) wasn't working properly.  With these changes, both the older version and the newer versions should be supported.
+               </li>
+               <li>
+                  <b>PWM/DC-Fan:</b> Added setting to select a custom duty cycle for the PWM/DC Fan during startup.  
+               </li>
+               <li>
+                  <b>Notifications:</b> Support for WLED notifications via presets.  Use a WLED device to show the current mode or certain notification events. 
+               </li>
+               <li>
+                  <b>Probes:</b> Added support for the 6-probe Inkbird IBT-6XS Bluetooth thermometer.  This is a popular Bluetooth thermometer that is widely available.  Many thanks to Discord user @Don Gray for contributing and testing this device.
+               </li>
+               <li>
+                  <b>Behind the scenes improvements including:</b>  
+                  <ul>
+                     <li>
+                        Changed install script to utilize UV for creating a VENV and installing dependencies.  This results in a much faster installation process, quicker upgrades and street cred.  Only applicable to Raspberry Pi OS 12 (Bookworm) 64-Bit and later.
+                     </li>
+                     <li>
+                        Changed the behavior of the control script so that controller configuration can be modified while in Hold mode.  This allows you to you to manually tune your PID, potentially, while running a test burn.  In the future, this may be extended to allow auto-tuning capabilities.
+                     </li>
+                     <li>
+                        Moved to Flask 3.1.0 which will allow PiFire to take advantage of the new security and performance updates. 
+                     </li>
+                     <li>
+                        Fresh installations will now pin all versions of the python package dependencies to improve reliability and stability. 
+                     </li>
+                     <li>
+                        Updated the board-config utility to gather os information in os_info.json. 
+                     </li>
+                     <li>
+                        Moved all Flask Web UI Routes to the Flask Blueprint system.  This will allow for easier management of the web UI in the future and it considerably cleans up the app.py file. 
+                     </li>
+                     <li>
+                        @weberbox updated the SocketIO code to support the latest version of the Android app.  Moved SocketIO to use Flask-SocketIO Blueprints for better organization.
+                     </li>
+                     <li>
+                        Moved the events.log file back to the /logs folder instead of the /tmp folder.  This is to ensure that the log file is not lost on reboot and can be easily accessed by the user.
+                     </li>
+                     <li>
+                        Added self-signed certificate generation to the installer script.  This will allow for HTTPS support out of the box.  Note that this is a self-signed certificate and will not be trusted by your browser.  You can replace it with a trusted certificate if you wish.
+                     </li>
+                     <li>
+                        Updated the installation script and board-config utility for Raspberry Pi Trixie installation.  Specifically check for OS Version ID and install appropriate packages.  
+                     </li>
+                  </ul>
+               </li>
+            </ul>
+            
+            <p><i class="fa-solid fa-bug-slash"></i>&nbsp; <u>Here are some bug fixes in this update:</u></p>
+            
+            <ul>
+               <li>
+                  Fixed bug with fresh installations where Redis python 6.0.0 deprecated charset encoding parameter.  Pinned to Redis Python 5.3.0 for now.
+               </li>
+               <li>
+                  Development Environment: Unable to complete wizard setup because it falsely detects real hardware. Root Caused to Python Exec when launching wizard.py
+               </li>
+               <li>
+                  With Socket IO changes from weberbox, unpack_thumb is broken in cookfile route. Root caused to added ID parameter in the cookfile module. 
+               </li>
+               <li>
+                  Global control panel fix in base.html where control was being over written to a boolean. 
+               </li>
+               <li>
+                  Cookfile: Uploading a new image/thumb after previously uploading an image or thumb would cause the page to crash.  
+               </li>
+               <li>
+                  Celsius mode shows negative temperatures when no probe is connected with ADC devices.  Changed to show 0C when no probe is connected or temperature is less than 0C.
+               </li>
+               <li>
+                  Fixed a bug where probe configuration was not being loaded by the Jinja template because it was not looking in the right blueprint path. 
+               </li>
+               <li>
+                  Added rotation to the Raspberry Pi DSI Display, which was previously missing.  This includes translation for the touch interface.  
+               </li>
+               <li>
+                  Fixed a bug where the control script would crash when predicting the ETA for a probe set temperature.  This was due to the Linear Regression model returning an infinite or NaN value. 
+               </li>
+               <li>
+                  Fixed a bug introduced into the Configuration Wizard with PCB / Board selection.  When moving to Flask Blueprints, missed the wizard configuration card location changes.  
+               </li>
+               <li>
+                  Updated board-config utility to use pwm-2chan instead of pwm for dtoverlay settings on the Raspberry Pi.  This is to ensure compatibility with the latest Raspberry Pi OS releases.
+               </li>
+               <li>
+                  Wizard would display probe profiles for devices that don't use a probe profile.  Now it should simply say NA (Not Applicable) for devices that do not use profiles (i.e. non-ADC devices).  
+               </li>
+               <li>
+                  Fixed various bugs/issues when installing on a Raspberry Pi 5.  Note that for DSI display to function correctly, you must use the 32-Bit Lite version of Raspberry Pi OS (Bookworm) due to changes in the 64-Bit display drivers.  Since the 32-Bit version of Raspberry Pi OS has a 64-Bit kernel, you must use the '-venv' option for the installer script.  
+               </li>
+            </ul>
+       
+         </div> <!-- End of Card Body -->
+   </div> <!-- End of Card -->
+</div> <!-- End of Row -->
 
 <br>
 <br>
