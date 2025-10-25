@@ -1,7 +1,7 @@
 <!-- Post Update Message for v1.10.0 -->
 <H1>
     <img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="50" height="50" class="d-inline-block align-top" alt="">
-    PiFire 1.10.0 Release - TBD 2025
+    PiFire 1.11.0 Release - TBD 2026
 </H1>
 
 <div class="row justify-content-center">
@@ -22,70 +22,13 @@
             </p>
             <ul>
                <li>
-                  <b>Quality of Life:</b> Added Python Module List to the admin page (Admin > Module List).  This will show you the modules that are installed and their version numbers.  This is useful to debug common package version issues. 
-               </li>
-               <li>
-                  <b>Installer Improvements:</b> For fresh installations, Raspberry Pi OS 12 (Bookworm) (32/64-Bit) is recommended.  This is the last stable release of Raspberry Pi OS and is highly recommended for new installations.  If you are running an older version of Raspberry Pi OS, you can still upgrade.  For Bookworm 64-Bit, this new installer will install UV and will log the installation process to a file in your home directory.  Note: If you are using the DSI connected display, you will need to use only 32-Bit Raspberry Pi OS (Bullseye or Bookworm) due to the changes in display drivers in the 64-Bit version. 
-               </li>
-               <li>
-                  <b>Logging:</b> Added rotating log files to the PiFire logging system.  This will help keep the log files from growing too large and will allow you to easily view the logs in the log viewer page (Events > Logs).  The log files will be rotated every 1 MB and will keep the last 3 log files.
-               </li>
-               <li>
-                  <b>Safety:</b> Added notification capability to the process monitor, so that it can notify the user if the control script crashes.  Updated the default and basic dashboards to display an error message when a critical error is detected, such as the control process crashing. 
-               </li>
-               <li>
-                  <b>Settings Dashboard Select:</b> Added a screenshot when selecting dashboard.
-               </li>
-               <li>
-                  <b>System Information:</b> Added system information functions to the Grill Platform modules. Overhauled the system information card in the Admin page to display relevant information.
-               </li>
-               <li>
-                  <b>Hold After Start:</b> Added a toggle option (<a href="\settings">Settings > Startup & Shutdown</a>) to always ask what hold temperature to use after startup.  This will only work in the web interface currently.
-               </li>
-               <li>
-                  <b>iBBQ/xBBQ Support:</b> Added support for the iBBQ and xBBQ Bluetooth thermometers. Changes submitted by Discord user @faz (many thanks!) when they found that the newer firmware for this device (xBBQ) wasn't working properly.  With these changes, both the older version and the newer versions should be supported.
-               </li>
-               <li>
-                  <b>PWM/DC-Fan:</b> Added setting to select a custom duty cycle for the PWM/DC Fan during startup.  
-               </li>
-               <li>
-                  <b>Notifications:</b> Support for WLED notifications via presets.  Use a WLED device to show the current mode or certain notification events. 
-               </li>
-               <li>
-                  <b>Probes:</b> Added support for the 6-probe Inkbird IBT-6XS Bluetooth thermometer.  This is a popular Bluetooth thermometer that is widely available.  Many thanks to Discord user @Don Gray for contributing and testing this device.
+                  <b>Title:</b> Details... 
                </li>
                <li>
                   <b>Behind the scenes improvements including:</b>  
                   <ul>
                      <li>
-                        Changed install script to utilize UV for creating a VENV and installing dependencies.  This results in a much faster installation process, quicker upgrades and street cred.  Only applicable to Raspberry Pi OS 12 (Bookworm) 64-Bit and later.
-                     </li>
-                     <li>
-                        Changed the behavior of the control script so that controller configuration can be modified while in Hold mode.  This allows you to you to manually tune your PID, potentially, while running a test burn.  In the future, this may be extended to allow auto-tuning capabilities.
-                     </li>
-                     <li>
-                        Moved to Flask 3.1.0 which will allow PiFire to take advantage of the new security and performance updates. 
-                     </li>
-                     <li>
-                        Fresh installations will now pin all versions of the python package dependencies to improve reliability and stability. 
-                     </li>
-                     <li>
-                        Updated the board-config utility to gather os information in os_info.json. 
-                     </li>
-                     <li>
-                        Moved all Flask Web UI Routes to the Flask Blueprint system.  This will allow for easier management of the web UI in the future and it considerably cleans up the app.py file. 
-                     </li>
-                     <li>
-                        @weberbox updated the SocketIO code to support the latest version of the Android app.  Moved SocketIO to use Flask-SocketIO Blueprints for better organization.
-                     </li>
-                     <li>
-                        Moved the events.log file back to the /logs folder instead of the /tmp folder.  This is to ensure that the log file is not lost on reboot and can be easily accessed by the user.
-                     </li>
-                     <li>
-                        Added self-signed certificate generation to the installer script.  This will allow for HTTPS support out of the box.  Note that this is a self-signed certificate and will not be trusted by your browser.  You can replace it with a trusted certificate if you wish.
-                     </li>
-                     <li>
-                        Updated the installation script and board-config utility for Raspberry Pi Trixie installation.  Specifically check for OS Version ID and install appropriate packages.  
+                        Details...
                      </li>
                   </ul>
                </li>
@@ -95,43 +38,7 @@
             
             <ul>
                <li>
-                  Fixed bug with fresh installations where Redis python 6.0.0 deprecated charset encoding parameter.  Pinned to Redis Python 5.3.0 for now.
-               </li>
-               <li>
-                  Development Environment: Unable to complete wizard setup because it falsely detects real hardware. Root Caused to Python Exec when launching wizard.py
-               </li>
-               <li>
-                  With Socket IO changes from weberbox, unpack_thumb is broken in cookfile route. Root caused to added ID parameter in the cookfile module. 
-               </li>
-               <li>
-                  Global control panel fix in base.html where control was being over written to a boolean. 
-               </li>
-               <li>
-                  Cookfile: Uploading a new image/thumb after previously uploading an image or thumb would cause the page to crash.  
-               </li>
-               <li>
-                  Celsius mode shows negative temperatures when no probe is connected with ADC devices.  Changed to show 0C when no probe is connected or temperature is less than 0C.
-               </li>
-               <li>
-                  Fixed a bug where probe configuration was not being loaded by the Jinja template because it was not looking in the right blueprint path. 
-               </li>
-               <li>
-                  Added rotation to the Raspberry Pi DSI Display, which was previously missing.  This includes translation for the touch interface.  
-               </li>
-               <li>
-                  Fixed a bug where the control script would crash when predicting the ETA for a probe set temperature.  This was due to the Linear Regression model returning an infinite or NaN value. 
-               </li>
-               <li>
-                  Fixed a bug introduced into the Configuration Wizard with PCB / Board selection.  When moving to Flask Blueprints, missed the wizard configuration card location changes.  
-               </li>
-               <li>
-                  Updated board-config utility to use pwm-2chan instead of pwm for dtoverlay settings on the Raspberry Pi.  This is to ensure compatibility with the latest Raspberry Pi OS releases.
-               </li>
-               <li>
-                  Wizard would display probe profiles for devices that don't use a probe profile.  Now it should simply say NA (Not Applicable) for devices that do not use profiles (i.e. non-ADC devices).  
-               </li>
-               <li>
-                  Fixed various bugs/issues when installing on a Raspberry Pi 5.  Note that for DSI display to function correctly, you must use the 32-Bit Lite version of Raspberry Pi OS (Bookworm) due to changes in the 64-Bit display drivers.  Since the 32-Bit version of Raspberry Pi OS has a 64-Bit kernel, you must use the '-venv' option for the installer script.  
+                  Bug Fix.
                </li>
             </ul>
        

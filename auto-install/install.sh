@@ -24,7 +24,7 @@
 # -uv:   Use this option to force the use of UV 
 
 # Install script version variable for logging
-INSTALL_SCRIPT_VERSION="1.10.x"
+INSTALL_SCRIPT_VERSION="1.11.x"
 DEV_INSTALLER="false"
 for arg in "$@"; do
   if [[ "$arg" == "-dev" ]]; then
