@@ -29,6 +29,7 @@ Display class definition
 class Display(DisplayBase):
 
 	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F', config={}):
+		self.config = config
 		super().__init__(dev_pins, buttonslevel, rotation, units, config)
 		self.last_direction = None
 
@@ -37,8 +38,9 @@ class Display(DisplayBase):
 		dc_pin = self.dev_pins['display']['dc']
 		led_pin = self.dev_pins['display']['led']
 		rst_pin = self.dev_pins['display']['rst']
+		spi_device = self.config.get('spi_device', 0)
 
-		self.serial = spi(port=0, device=0, gpio_DC=dc_pin, gpio_RST=rst_pin, bus_speed_hz=32000000,
+		self.serial = spi(port=0, device=spi_device, gpio_DC=dc_pin, gpio_RST=rst_pin, bus_speed_hz=32000000,
 						  reset_hold_time=0.2, reset_release_time=0.2)
 		self.device = ili9341(self.serial, active_low=False, width=320, height=240, gpio_LIGHT=led_pin,
 							  rotate=self.rotation)

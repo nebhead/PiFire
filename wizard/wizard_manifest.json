@@ -863,14 +863,16 @@
 					"system_spi0_ce0" : {
 						"friendly_name" : "SPI0 CE0 GPIO Pin",
 						"description" : "GPIO Pin for SPI0 bus/interface CE/CS0. (SPI Display Port)",
-						"options" : { "8" : "GPIO8", "7" : "GPIO7"},
-						"settings" : ["platform", "system", "SPI0", "CE0"]
+						"options" : { "8" : "GPIO8" },
+						"settings" : ["platform", "system", "SPI0", "CE0"],
+						"hidden" : true
 					},
 					"system_spi0_ce1" : {
 						"friendly_name" : "SPI0 CE1 GPIO Pin",
 						"description" : "GPIO Pin for SPI0 bus/interface CE/CS1. (SPI Aux Port)",
-						"options" : { "7" : "GPIO7", "8" : "GPIO8", "6" : "GPIO6" },
-						"settings" : ["platform", "system", "SPI0", "CE1"]
+						"options" : { "7" : "GPIO7" },
+						"settings" : ["platform", "system", "SPI0", "CE1"],
+						"hidden" : true
 					},
 					"real_hw" : {
 						"friendly_name" : "Real Hardware",
@@ -1905,6 +1907,16 @@
 						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
 						"default" : 0,
 						"hidden" : false
+					},
+					{
+						"option_name" : "spi_device",
+						"option_friendly_name" : "SPI Device / Chip Enable",
+						"option_description" : "Select the SPI device to use for the display (Usually 0).",
+						"option_type" : "list",
+						"list_values" : [0, 1],
+						"list_labels" : ["SPI Device 0 (CE0)", "SPI Device 1 (CE1)"],
+						"default" : 0,
+						"hidden" : false
 					}
 				]
 			},
@@ -1933,6 +1945,16 @@
 						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
 						"default" : 0,
 						"hidden" : false
+					},
+					{
+						"option_name" : "spi_device",
+						"option_friendly_name" : "SPI Device / Chip Enable",
+						"option_description" : "Select the SPI device to use for the display (Usually 0).",
+						"option_type" : "list",
+						"list_values" : [0, 1],
+						"list_labels" : ["SPI Device 0 (CE0)", "SPI Device 1 (CE1)"],
+						"default" : 0,
+						"hidden" : false
 					}
 				]
 			},
@@ -1956,6 +1978,16 @@
 						"option_type" : "list",
 						"list_values" : [0, 1, 2, 3],
 						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
+						"default" : 0,
+						"hidden" : false
+					},
+					{
+						"option_name" : "spi_device",
+						"option_friendly_name" : "SPI Device / Chip Enable",
+						"option_description" : "Select the SPI device to use for the display (Usually 0).",
+						"option_type" : "list",
+						"list_values" : [0, 1],
+						"list_labels" : ["SPI Device 0 (CE0)", "SPI Device 1 (CE1)"],
 						"default" : 0,
 						"hidden" : false
 					}
@@ -1988,6 +2020,16 @@
 						"option_type" : "list",
 						"list_values" : [0, 1, 2, 3],
 						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
+						"default" : 0,
+						"hidden" : false
+					},
+					{
+						"option_name" : "spi_device",
+						"option_friendly_name" : "SPI Device / Chip Enable",
+						"option_description" : "Select the SPI device to use for the display (Usually 0).",
+						"option_type" : "list",
+						"list_values" : [0, 1],
+						"list_labels" : ["SPI Device 0 (CE0)", "SPI Device 1 (CE1)"],
 						"default" : 0,
 						"hidden" : false
 					}
@@ -2045,6 +2087,16 @@
 						"list_labels" : ["Button", "Encoder", "Touch", "Touch + Button", "Touch + Encoder", "No Input"],
 						"default" : ["button", "touch"],
 						"hidden" : false
+					},
+					{
+						"option_name" : "spi_device",
+						"option_friendly_name" : "SPI Device / Chip Enable",
+						"option_description" : "Select the SPI device to use for the display (Usually 0).",
+						"option_type" : "list",
+						"list_values" : [0, 1],
+						"list_labels" : ["SPI Device 0 (CE0)", "SPI Device 1 (CE1)"],
+						"default" : 0,
+						"hidden" : false
 					}
 				]
 			},
@@ -2071,6 +2123,16 @@
 						"option_type" : "list",
 						"list_values" : [0, 1, 2, 3],
 						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
+						"default" : 0,
+						"hidden" : false
+					},
+					{
+						"option_name" : "spi_device",
+						"option_friendly_name" : "SPI Device / Chip Enable",
+						"option_description" : "Select the SPI device to use for the display (Usually 0).",
+						"option_type" : "list",
+						"list_values" : [0, 1],
+						"list_labels" : ["SPI Device 0 (CE0)", "SPI Device 1 (CE1)"],
 						"default" : 0,
 						"hidden" : false
 					}
@@ -2101,6 +2163,16 @@
 						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
 						"default" : 0,
 						"hidden" : false
+					},
+					{
+						"option_name" : "spi_device",
+						"option_friendly_name" : "SPI Device / Chip Enable",
+						"option_description" : "Select the SPI device to use for the display (Usually 0).",
+						"option_type" : "list",
+						"list_values" : [0, 1],
+						"list_labels" : ["SPI Device 0 (CE0)", "SPI Device 1 (CE1)"],
+						"default" : 0,
+						"hidden" : false
 					}
 				]
 			},
@@ -2124,6 +2196,16 @@
 						"option_type" : "list",
 						"list_values" : [0, 1, 2, 3],
 						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
+						"default" : 0,
+						"hidden" : false
+					},
+					{
+						"option_name" : "spi_device",
+						"option_friendly_name" : "SPI Device / Chip Enable",
+						"option_description" : "Select the SPI device to use for the display (Usually 0).",
+						"option_type" : "list",
+						"list_values" : [0, 1],
+						"list_labels" : ["SPI Device 0 (CE0)", "SPI Device 1 (CE1)"],
 						"default" : 0,
 						"hidden" : false
 					}
@@ -2158,6 +2240,16 @@
 						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
 						"default" : 0,
 						"hidden" : false
+					},
+					{
+						"option_name" : "spi_device",
+						"option_friendly_name" : "SPI Device / Chip Enable",
+						"option_description" : "Select the SPI device to use for the display (Usually 0).",
+						"option_type" : "list",
+						"list_values" : [0, 1],
+						"list_labels" : ["SPI Device 0 (CE0)", "SPI Device 1 (CE1)"],
+						"default" : 0,
+						"hidden" : false
 					}
 				]
 			},
@@ -2190,6 +2282,16 @@
 						"list_labels" : ["0 Degrees", "180 Degrees"],
 						"default" : 0,
 						"hidden" : false
+					},
+					{
+						"option_name" : "spi_device",
+						"option_friendly_name" : "SPI Device / Chip Enable",
+						"option_description" : "Select the SPI device to use for the display (Usually 0).",
+						"option_type" : "list",
+						"list_values" : [0, 1],
+						"list_labels" : ["SPI Device 0 (CE0)", "SPI Device 1 (CE1)"],
+						"default" : 0,
+						"hidden" : false
 					}
 				]
 			},
@@ -2218,6 +2320,16 @@
 						"list_labels" : ["0 Degrees", "180 Degrees"],
 						"default" : 0,
 						"hidden" : false
+					},
+					{
+						"option_name" : "spi_device",
+						"option_friendly_name" : "SPI Device / Chip Enable",
+						"option_description" : "Select the SPI device to use for the display (Usually 0).",
+						"option_type" : "list",
+						"list_values" : [0, 1],
+						"list_labels" : ["SPI Device 0 (CE0)", "SPI Device 1 (CE1)"],
+						"default" : 0,
+						"hidden" : false
 					}
 				]
 			},
@@ -2243,6 +2355,16 @@
 						"list_labels" : ["0 Degrees", "180 Degrees"],
 						"default" : 0,
 						"hidden" : false
+					},
+					{
+						"option_name" : "spi_device",
+						"option_friendly_name" : "SPI Device / Chip Enable",
+						"option_description" : "Select the SPI device to use for the display (Usually 0).",
+						"option_type" : "list",
+						"list_values" : [0, 1],
+						"list_labels" : ["SPI Device 0 (CE0)", "SPI Device 1 (CE1)"],
+						"default" : 0,
+						"hidden" : false
 					}
 				]
 			},
@@ -2266,6 +2388,16 @@
 						"option_type" : "list",
 						"list_values" : [0, 180],
 						"list_labels" : ["0 Degrees", "180 Degrees"],
+						"default" : 0,
+						"hidden" : false
+					},
+					{
+						"option_name" : "spi_device",
+						"option_friendly_name" : "SPI Device / Chip Enable",
+						"option_description" : "Select the SPI device to use for the display (Usually 0).",
+						"option_type" : "list",
+						"list_values" : [0, 1],
+						"list_labels" : ["SPI Device 0 (CE0)", "SPI Device 1 (CE1)"],
 						"default" : 0,
 						"hidden" : false
 					}
@@ -2294,6 +2426,16 @@
 						"option_type" : "list",
 						"list_values" : [0, 180],
 						"list_labels" : ["0 Degrees", "180 Degrees"],
+						"default" : 0,
+						"hidden" : false
+					},
+					{
+						"option_name" : "spi_device",
+						"option_friendly_name" : "SPI Device / Chip Enable",
+						"option_description" : "Select the SPI device to use for the display (Usually 0).",
+						"option_type" : "list",
+						"list_values" : [0, 1],
+						"list_labels" : ["SPI Device 0 (CE0)", "SPI Device 1 (CE1)"],
 						"default" : 0,
 						"hidden" : false
 					}
@@ -2444,6 +2586,16 @@
 						"list_labels" : ["0 Degrees", "90 Degrees", "180 Degrees", "270 Degrees"],
 						"default" : 0,
 						"hidden" : false
+					},
+					{
+						"option_name" : "spi_device",
+						"option_friendly_name" : "SPI Device / Chip Enable",
+						"option_description" : "Select the SPI device to use for the display (Usually 0).",
+						"option_type" : "list",
+						"list_values" : [0, 1],
+						"list_labels" : ["SPI Device 0 (CE0)", "SPI Device 1 (CE1)"],
+						"default" : 0,
+						"hidden" : false
 					}
 			        ]	
 			},
@@ -2467,6 +2619,16 @@
 						"option_type" : "list",
 						"list_values" : [0, 180],
 						"list_labels" : ["0 Degrees", "180 Degrees"],
+						"default" : 0,
+						"hidden" : false
+					},
+					{
+						"option_name" : "spi_device",
+						"option_friendly_name" : "SPI Device / Chip Enable",
+						"option_description" : "Select the SPI device to use for the display (Usually 0).",
+						"option_type" : "list",
+						"list_values" : [0, 1],
+						"list_labels" : ["SPI Device 0 (CE0)", "SPI Device 1 (CE1)"],
 						"default" : 0,
 						"hidden" : false
 					}

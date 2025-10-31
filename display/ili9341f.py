@@ -48,6 +48,7 @@ class Display(DisplayBase):
 			self.display_profile = 'profile_1'
 		else:
 			self.display_profile = 'profile_2'
+		self.config = config
 		super().__init__(dev_pins, buttonslevel, rotation, units, config)
 		self.eventLogger.debug('Display Initialized.')
 
@@ -56,6 +57,7 @@ class Display(DisplayBase):
 		dc_pin = self.dev_pins['display']['dc']
 		led_pin = self.dev_pins['display']['led']
 		rst_pin = self.dev_pins['display']['rst']
+		spi_device = self.config.get('spi_device', 0)
 
 		if self.rotation in [0, 2]:
 			translated_width = self.WIDTH
@@ -68,7 +70,7 @@ class Display(DisplayBase):
 		#self.eventLogger.debug(f'Display Width: {translated_width}')
 		#self.eventLogger.debug(f'Display Height: {translated_height}')
 
-		self.serial = spi(port=0, device=0, gpio_DC=dc_pin, gpio_RST=rst_pin, bus_speed_hz=32000000,
+		self.serial = spi(port=0, device=spi_device, gpio_DC=dc_pin, gpio_RST=rst_pin, bus_speed_hz=32000000,
 						  reset_hold_time=0.2, reset_release_time=0.2)
 		self.device = ili9341(self.serial, active_low=False, width=translated_width, height=translated_height, gpio_LIGHT=led_pin,
 							  rotate=self.rotation)
