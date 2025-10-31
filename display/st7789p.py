@@ -28,6 +28,7 @@ class Display:
 
 	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F', config={}):
 		# Init Global Variables and Constants
+		self.config = config
 		self.dev_pins = dev_pins
 		self.rotation = rotation
 		self.units = units
@@ -51,10 +52,11 @@ class Display:
 		dc_pin = self.dev_pins['display']['dc']
 		bl_pin = self.dev_pins['display']['led']
 		rst_pin = self.dev_pins['display']['rst']
+		spi_device = self.config.get('spi_device', 0)
 
 		self.device = ST7789.ST7789(
 			port=0,
-			cs=0, 
+			cs=spi_device,
 			dc=dc_pin,
 			backlight=bl_pin,
 			rst=rst_pin,

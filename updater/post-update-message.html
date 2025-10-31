@@ -1,7 +1,7 @@
 <!-- Post Update Message for v1.10.0 -->
 <H1>
     <img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="50" height="50" class="d-inline-block align-top" alt="">
-    PiFire 1.10.0 Release - October 2025
+    PiFire 1.10.1 Release - October 2025
 </H1>
 
 <div class="row justify-content-center">
@@ -127,6 +127,9 @@
                </li>
                <li>
                   Fixed various bugs/issues when installing on a Raspberry Pi 5.  Note that for DSI display to function correctly, you must use the 32-Bit Lite version of Raspberry Pi OS (Bookworm) due to changes in the 64-Bit display drivers.  Since the 32-Bit version of Raspberry Pi OS has a 64-Bit kernel, you must use the '-venv' option for the installer script.  
+               </li>
+               <li>
+                  <strong>1.10.1 Bug Fix:</strong> Fixed an issue where the SPI device number was not being properly configured for SPI displays.  This caused issues when using SPI device 1 instead of the default SPI device 0. SPI Device needs to be selected in the display configuration during the configuration wizard process.
                </li>
             </ul>
        

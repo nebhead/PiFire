@@ -29,6 +29,7 @@ Display class definition
 class Display(DisplayBase):
 
 	def __init__(self, dev_pins, buttonslevel='HIGH', rotation=0, units='F', config={}):
+		self.config = config
 		super().__init__(dev_pins, buttonslevel, rotation, units, config)
 
 	def _init_display_device(self):
@@ -36,12 +37,13 @@ class Display(DisplayBase):
 		dc_pin = self.dev_pins['display']['dc']
 		bl_pin = self.dev_pins['display']['led']
 		rst_pin = self.dev_pins['display']['rst']
+		spi_device = self.config.get('spi_device', 0)
 
 		self.device = ST7789.ST7789(
 			0, # PORT
-			0, # SPI Device Number (0 or 1)
+			spi_device, # SPI Device Number (0 or 1)
 			dc_pin, # DC Pin
-			spi_cs=0,
+			spi_cs=spi_device,
 			backlight=bl_pin,
 			rst=rst_pin,
 			width=320,
