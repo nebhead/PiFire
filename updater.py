@@ -28,10 +28,17 @@ import logging
 '''
 
 def get_available_branches():
+	# First, prune stale remote tracking branches
+	prune_command = ['git', 'remote', 'prune', 'origin']
+	prune = subprocess.run(prune_command, capture_output=True, text=True)
+	
 	command = ['git', 'branch', '-a']
 	branches = subprocess.run(command, capture_output=True, text=True)
 	branch_list = []
 	error_msg = ''
+	if prune.returncode != 0:
+		error_msg = f"Warning: Failed to prune remote branches - {prune.stderr.strip()}"
+	
 	if branches.returncode == 0:
 		input_list = branches.stdout.split("\n")
 		for line in input_list:
@@ -56,11 +63,12 @@ def update_remote_branches():
 	error_msg = ''
 	if remote_branches.returncode != 0:
 		error_msg = remote_branches.stderr 
-	# Fetch Branch Information Locally
-	command = ['git', 'fetch'] 
+	
+	# Fetch Branch Information Locally and prune stale references
+	command = ['git', 'fetch', '--prune'] 
 	fetch = subprocess.run(command, capture_output=True, text=True)
 	if fetch.returncode != 0:
-		error_msg += ' | ' + remote_branches.stderr 
+		error_msg += ' | ' + fetch.stderr 
 	return(error_msg)
 
 def get_branch():
