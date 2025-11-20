@@ -1,3 +1,4 @@
+pillow==11.1.0  # This version is compatible with Python 3.9+
 flask==3.1.0
 flask_mobility==2.0.1
 flask_qrcode==3.2.0
@@ -9,7 +10,6 @@ uuid==1.30
 apprise==1.9.3
 scikit-fuzzy==0.5.0
 ratelimitingfilter==1.5
-pillow==11.1.0  # This version is compatible with Python 3.9+
 paho-mqtt==2.1.0
 psutil==7.0.0
 rpi_hardware_pwm==0.2.2
