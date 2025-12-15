@@ -53,7 +53,7 @@ class Controller(ControllerBase):
 		super().__init__(config, units, cycle_data)
 		self.function_list.append('set_gains') 
 		self.function_list.append('get_k')
-		self._calculate_gains(config['PB'], config['Ti'], config['Td'])
+		self._calculate_gains(config.get('PB', 100.0), config.get('Ti', 180.0), config.get('Td', 45.0))
 
 		self.p = 0.0
 		self.i = 0.0
@@ -135,7 +135,7 @@ class Controller(ControllerBase):
 
 	def set_config(self,config):
 		super().set_config(config)
-		self._calculate_gains(config['PB'], config['Ti'], config['Td'])
+		self._calculate_gains(config.get('PB', 100.0), config.get('Ti', 180.0), config.get('Td', 45.0))
 		self.error = 0.0
 		self.inter = 0.0
 		self.derv = 0.0

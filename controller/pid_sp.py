@@ -45,15 +45,18 @@ class Controller(ControllerBase):
 		super().__init__(config, units, cycle_data)
 		self.function_list.append('set_gains') 
 		self.function_list.append('get_k')
-					
-		self._calculate_gains(config['PB'], config['Ti'], config['Td'])
+		
+		pb = config.get('PB', 60.0)
+		ti = config.get('Ti', 180.0)
+		td = config.get('Td', 45.0)
+		self._calculate_gains(pb, ti, td)
 
 		self.p = 0.0
 		self.i = 0.0
 		self.d = 0.0
 		self.u = 0
 
-		self.pb = config['PB']
+		self.pb = pb
 
 		self.units = units
 
@@ -63,12 +66,12 @@ class Controller(ControllerBase):
 		self.set_point = 0
 
 		self.center = 0.5
-		self.center_factor = config['center_factor']
+		self.center_factor = config.get('center_factor', 0.0010)
 		
-		self.tau = config['tau']
-		self.theta	= config['theta']
+		self.tau = config.get('tau', 115)
+		self.theta = config.get('theta', 65)
 		
-		self.stable_window = config['stable_window']
+		self.stable_window = config.get('stable_window', 12)
 		self.cycle_time = cycle_data['HoldCycleTime']
 
 		self.derv = 0.0
