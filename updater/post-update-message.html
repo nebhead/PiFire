@@ -1,7 +1,7 @@
 <!-- Post Update Message for v1.10.0 -->
 <H1>
     <img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="50" height="50" class="d-inline-block align-top" alt="">
-    PiFire 1.10.2 Release - November 2025
+    PiFire 1.10.3 Release - December 2025
 </H1>
 
 <div class="row justify-content-center">
@@ -133,6 +133,9 @@
                </li>
                <li>
                   Upgrader and installer improvements to improve robustness of the installation process.  Various fixes to ensure that the installation process completes successfully on all supported Raspberry Pi OS versions.   
+               </li>
+               <li>
+                  Fixed a bug where control script may crash if the user updates the controller while in Hold mode.  Now the controller configuration can be updated while in Hold mode without crashing the control script.
                </li>
             </ul>
        
