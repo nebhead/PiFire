@@ -254,6 +254,28 @@ def _start_fan(settings, duty_cycle=None):
 	else:
 		grill_platform.fan_on()
 
+def _init_controller(settings, control):
+	"""
+	Initialize the controller module and create a Controller object.
+
+	:param settings: Settings dictionary
+	:param control: Control dictionary
+	:return: Tuple of (controllerCore object, status string)
+	"""
+	status = 'Active'
+	try:
+		controller_type = settings['controller']['selected']
+		controller_module = importlib.import_module(f'controller.{controller_type}')
+	except:
+		controlLogger.exception(f'Error occurred loading controller module({controller_type}). Trace dump: ')
+		status = 'Inactive'
+		return None, status
+	
+	controllerCore = controller_module.Controller(settings['controller']['config'][controller_type], settings['globals']['units'], settings['cycle_data'])
+	controllerCore.set_target(control['primary_setpoint'])  # Initialize with Set Point for grill
+	
+	return controllerCore, status
+
 def _process_system_commands(grill_platform):
 	# Setup access to the system command queue 
 	system_commands = RedisQueue('control:systemq')
@@ -414,14 +436,9 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		'''
 			Load Controller Module (i.e. PID)
 		'''
-		try: 
-			controller_type = settings['controller']['selected']
-			controller_module = importlib.import_module(f'controller.{controller_type}')
-		except:
-			controlLogger.exception(f'Error occurred loading controller module({controller_type}). Trace dump: ')
+		controllerCore, controller_status = _init_controller(settings, control)
+		if controller_status == 'Inactive':
 			status = 'Inactive'
-		controllerCore = controller_module.Controller(settings['controller']['config'][controller_type], settings['globals']['units'], settings['cycle_data'])
-		controllerCore.set_target(control['primary_setpoint'])  # Initialize with Set Point for grill
 		eventLogger.debug('On Time = ' + str(OnTime) + ', OffTime = ' + str(OffTime) + ', CycleTime = ' + str(
 			CycleTime) + ', CycleRatio = ' + str(CycleRatio))
 
@@ -589,13 +606,11 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		if control['controller_update'] and mode == 'Hold':
 			control['controller_update'] = False
 			write_control(control, direct_write=True, origin='control')
-			# Update the controller with the new settings
-			if 'set_config' in controllerCore.supported_functions(): 
-				controllerCore.set_config(settings['controller']['config'][settings['controller']['selected']])
-				eventLogger.info('Controller Config Updated')
-			if 'set_cycle_data' in controllerCore.supported_functions():
-				controllerCore.set_cycle_data(settings['cycle_data'])
-				eventLogger.info('Controller Cycle Data Updated')
+			# Reinitialize the controller with the updated settings
+			settings = read_settings()
+			controllerCore, controller_status = _init_controller(settings, control)
+			if controller_status == 'Active':
+				eventLogger.info('Controller reinitialized with updated settings')
 
 		# Check if user changed hopper levels and update if required
 		if control['distance_update']:

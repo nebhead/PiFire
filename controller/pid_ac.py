@@ -45,7 +45,7 @@ class Controller(ControllerBase):
 		self.function_list.append('set_gains') 
 		self.function_list.append('get_k')
 
-		self._calculate_gains(config['PB'], config['Ti'], config['Td'])
+		self._calculate_gains(config.get('PB', 60.0), config.get('Ti', 180.0), config.get('Td', 45.0))
 
 		self.p = 0.0
 		self.i = 0.0
@@ -67,9 +67,9 @@ class Controller(ControllerBase):
 		self.new_target = False
 
 		self.center = 0.5
-		self.center_factor = config['center_factor']
+		self.center_factor = config.get('center_factor', 0.0010)
 
-		self.stable_window = config['stable_window']
+		self.stable_window = config.get('stable_window', 12)
 
 		self.derv = 0.0
 		self.inter = 0.0

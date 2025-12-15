@@ -46,7 +46,7 @@ class Controller(ControllerBase):
 		self.function_list.append('set_gains') 
 		self.function_list.append('get_k')
 
-		self._calculate_gains(config['PB'], config['Ti'], config['Td'])
+		self._calculate_gains(config.get('PB', 60.0), config.get('Ti', 180.0), config.get('Td', 45.0))
 
 		self.p = 0.0
 		self.i = 0.0
@@ -57,7 +57,7 @@ class Controller(ControllerBase):
 		self.error = 0.0
 		self.set_point = 0
 
-		self.center = config['center']
+		self.center = config.get('center', 0.5)
 
 		self.derv = 0.0
 		self.inter = 0.0
@@ -133,8 +133,8 @@ class Controller(ControllerBase):
 		self.inter = 0.0
 		self.derv = 0.0
 		self.last_update = time.time()
-		self._calculate_gains(config['PB'], config['Ti'], config['Td'])
-		self.center = config['center']
+		self._calculate_gains(config.get('PB', 60.0), config.get('Ti', 180.0), config.get('Td', 45.0))
+		self.center = config.get('center', 0.5)
 		if self.ki != 0:
 			self.inter_max = abs(self.center / self.ki)
 		else: 
