@@ -2212,7 +2212,7 @@
 				]
 			},
 			"ili9488b" : {
-				"friendly_name" : "ILI988 TFT with 3-Button Input",
+				"friendly_name" : "ILI9488 TFT with 3-Button Input",
 				"filename" : "ili9488b",
 				"description" : "The ILI9488 TFT Display Module LCD Screen is an affordable, popular display with a 480x320 resolution and color.  It comes in 2 different physical sizes, 3.5\" and 4.0\" with and without touch. This version of the module supports a three button input.",
 				"notes" : "Pinout:  Display - MISO = MISO(Pin 21), LED = GPIO05, SCK = SCLK(Pin 23), MOSI = MOSI(Pin 19), DC = GPIO24, RST = GPIO25, CS = CE0(Pin 24). Buttons - UP = GPIO16, DOWN = GPIO20, ENTER = GPIO21, GND = GND, VCC = 3.3V",
