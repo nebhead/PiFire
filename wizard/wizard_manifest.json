@@ -731,14 +731,14 @@
 					},
 					"triggerlevel" : {
 						"friendly_name" : "Relay Type",
-						"description" : "Select the trigger level for the relays attached to the platform.",
-						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
+						"description" : "Select the trigger level for the relays attached to the platform. (Default is Active High)",
+						"options" : { "HIGH" : "Active High", "LOW" : "Active Low" },
 						"settings" : ["platform", "triggerlevel"]
 					},
 					"dc_fan" : {
 						"friendly_name" : "Fan Type",
 						"description" : "Select if your platform supports a DC(PWM) fan or uses a regular AC Fan.",
-						"options" : { "True" : "DC Fan (PWM)", "False" : "AC Fan" },
+						"options" : { "False" : "AC Fan", "True" : "DC Fan (PWM)" },
 						"settings" : ["platform", "dc_fan"]
 					},
 					"output_auger" : {
