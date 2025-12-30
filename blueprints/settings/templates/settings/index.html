@@ -59,7 +59,7 @@
                         <a class="nav-link" id="v-pills-probe-profiles-tab" data-toggle="pill" href="#v-pills-probe-profiles" role="tab" aria-controls="v-pills-probe-profiles" aria-selected="false">Probe Profiles</a>
                         <a class="nav-link" id="v-pills-units-tab" data-toggle="pill" href="#v-pills-units" role="tab" aria-controls="v-pills-units" aria-selected="false">Units</a>
                         <a class="nav-link" id="v-pills-name-tab" data-toggle="pill" href="#v-pills-name" role="tab" aria-controls="v-pills-name" aria-selected="false">Grill Name</a>
-                        <a class="nav-link" id="v-pills-work-mode-tab" data-toggle="pill" href="#v-pills-work-mode" role="tab" aria-controls="v-pills-work-mode" aria-selected="false">Work Mode</a>
+                        <a class="nav-link" id="v-pills-work-mode-tab" data-toggle="pill" href="#v-pills-work-mode" role="tab" aria-controls="v-pills-work-mode" aria-selected="false">Controller Settings</a>
                         {% if settings['platform']['dc_fan'] %}
                         <a class="nav-link" id="v-pills-pwm-tab" data-toggle="pill" href="#v-pills-pwm" role="tab" aria-controls="v-pills-pwm" aria-selected="false">PWM Settings</a>
                         {% endif %}
@@ -293,13 +293,13 @@
                     </div><!-- End of Card -->
                     <br><br><br>
                 </div><!-- End of Tab -->
-                <!-- ============================ Work Mode Settings ========================== -->
+                <!-- ============================ Controller Settings ========================== -->
                 <div class="tab-pane fade" id="v-pills-work-mode" role="tabpanel" aria-labelledby="v-pills-work-mode-tab">
                     <div class="card shadow">
                         <form name="cycle_settings" action="/settings/cycle" method="POST">
                             <div class="card-header bg-primary text-white">
                                 <h5>
-                                    <i class="fas fa-tools"></i>&nbsp; Work Mode Settings
+                                    <i class="fas fa-tools"></i>&nbsp; Controller Settings
                                 </h5>
                             </div>
                         <div class="card-body">
