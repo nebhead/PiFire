@@ -1,0 +1,3 @@
+{% macro is_active(prefix) -%}
+{{ 'active' if request.path.rstrip('/').startswith(prefix) else '' }}
+{%- endmacro %}

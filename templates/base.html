@@ -1,3 +1,5 @@
+{% from "_macro_base.html" import is_active %}
+
 <!doctype html>
 <html lang="en">
     <head>
@@ -62,22 +64,25 @@
 			<div class="collapse navbar-collapse order-1 order-lg-0 d-lg-flex justify-content-lg-start mx-lg-0" id="navbarNav">
 				<ul class="navbar-nav mx-auto mx-lg-0 text-center">
 					<li class="nav-item">
-						<a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">Dashboard</a>
+						<a class="nav-link {{ is_active('/dash') }}" href="/">Dashboard</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link {% if request.path == '/recipes' %}active{% endif %}" href="/recipes">Recipes</a>
+						<a class="nav-link {{ is_active('/recipes') }}" href="/recipes">Recipes</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link {% if request.path == '/history' %}active{% endif %}" href="/history">History</a>
+						<a class="nav-link {{ is_active('/pellets') }}" href="/pellets">Pellets</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link {% if request.path == '/events' %}active{% endif %}" href="/events">Events</a>
+						<a class="nav-link {{ is_active('/history') }}" href="/history">History</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link {% if request.path == '/settings' %}active{% endif %}" href="/settings">Settings</a>
+						<a class="nav-link {{ is_active('/events') }}" href="/events">Events</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link {% if request.path == '/admin' %}active{% endif %}" href="/admin">Admin</a>
+						<a class="nav-link {{ is_active('/settings') }}" href="/settings">Settings</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link {{ is_active('/admin') }}" href="/admin">Admin</a>
 					</li>
 				</ul>
 			</div>
