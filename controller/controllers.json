@@ -405,7 +405,7 @@
             "image" : "fuzzy.png",
             "description" : "**EXPERIMENTAL** Use of this controller is at your own risk.  This is an attempt at designing a fuzzy logic controller for set temperature control.  It is currently using Scikit Fuzzy's Python Module to implement a relatively straightforward fuzzy logic controller.  This controller should be considered pre-Alpha and extremely experimental.  This module will store the fuzzy logic controller in an object, which is saved/pickled in the controller directory, named 'fuzzy.pickle'.  If any changes are made to the default fuzzy logic controller settings, then this pickle file should be deleted so that a new object can be created with new settings.  Note that it may take a very long time for the object to be generated on the Raspberry Pi due to the limited performance capabilities of that processor.",
             "author" : "Ben Parmeter",
-            "link" : "https://nebhead.github.io/PiFire", 
+            "link" : "http://docs.pifire.io", 
             "contributors" : [],
             "attributions" : ["Sci-Kit Fuzzy"],
             "recommendations" : {
@@ -423,7 +423,7 @@
             "image" : "",
             "description" : "**EXPERIMENTAL** This controller is NOT recommended for use at this time.  REQUIRES SCIKIT-LEARN which may not install on 32-bit OSes.  This is an attempt at designing a machine learning based controller for set temperature control.  It is currently using Scikit Learn Python Module to implement a relatively straightforward machine learning controller.  This controller should be considered pre-Alpha and extremely experimental.  This module will store the machine learning controller in an object, which is saved in the controller directory, named 'ml_model.joblib'.  If any changes are made to the default controller settings, then this joblib file should be deleted so that a new object can be created with new settings.  Note that it may take a very long time for the object to be generated on the Raspberry Pi due to the limited performance capabilities of that processor.",
             "author" : "Ben Parmeter",
-            "link" : "https://nebhead.github.io/PiFire", 
+            "link" : "http://docs.pifire.io", 
             "contributors" : [],
             "attributions" : ["Sci-Kit Learn"],
             "recommendations" : {

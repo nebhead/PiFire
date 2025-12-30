@@ -5,7 +5,7 @@
 
 ***Warning:*** *The creator of this project takes no responsibility for any damage that you may do to your personal property including modifications to your smoker grill if you choose to use this project.  The creator also takes no responsibility for any resulting harm or damages that may come from issues with the hardware or software design.*  ***This project is provided for educational purposes, and should be attempted only by individuals who wish to assume all risks involved.***
 
-***Note: (2020-12-29)*** *Full documentation including hardware and software installation guide are now located [here](https://nebhead.github.io/PiFire-Pages) at the [https://nebhead.github.io/PiFire-Pages](https://nebhead.github.io/PiFire-Pages).*
+***Note: (2025-12-29)*** *Full documentation including hardware and software installation guide are now located [here](http://docs.pifire.io) at the [http://docs.pifire.io](http://docs.pifire.io).*
 
 ### Introduction
 This project was inspired by user dborello and his excellent PiSmoker project (http://engineeredmusings.com/pismoker/ and https://github.com/DBorello/PiSmoker).  I encourage you to check it out and get a rough idea of how this all works.  This particular project was built around a Traeger Texas smoker grill platform, but should work for most older Traeger models (or other brands with similar parts like the older Pit Boss) built with similar parts (fan, auger, and igniter).  I've built the code in a way to be somewhat modular & extensible such that you can replace the grill platform with your own specific platform instead.  Newer Traeger grills with their newer wifi enabled controllers have DC components (instead of the AC Fan / Auger) and aren't covered by this project.  
@@ -96,7 +96,7 @@ And if you're interested in seeing more builds from other users, we have a discu
 
 ## Full Documentation / Hardware and Software Installation
 
-The full documentation has been moved to a GitHub page here: [https://nebhead.github.io/PiFire-Pages](https://nebhead.github.io/PiFire-Pages)
+The full documentation has been moved to a GitHub page here: [http://docs.pifire.io](http://docs.pifire.io)
 
 ### Discord
 I've added a discord server [here](https://discord.gg/F9mbCrbrZS) which can be a great resource for all who want to get more information, want to share their own builds, or just chat about pellet cooking.  Looking forward to seeing you there. 
@@ -115,7 +115,8 @@ I've added a discord server [here](https://discord.gg/F9mbCrbrZS) which can be a
 * 5/2024 - Release v1.7.0 - Lot's of new updates in this release with the UI, new features (i.e. exit startup temp, etc.) and new device support.  Some improvements to the tuning tools (including an auto-tuning tool).  Under the covers improvements for stability and cleanup.  As usual, submit issues to GitHub if you run into anything.  Enjoy!
 * 9/2024 - Release v1.8.0 - Overhaul of the configuration wizard and underlying platform pin definitions to support board selection and configuration versus the platform selection that was previously provided.  This allows much more flexibility when it comes to custom pinouts.  This version now supports the PCB v4.x modular design allowing the ability to mix and match probe devices, relay/fan hardware, etc.
 * **4/2025 - Release v1.9.0** - Almost too many new features and bug fixes to include in a short blurb here.  This release brings an overhaul to Manual Mode, moving the manual controls to the control panel with a PWM slider.  Added the ability to override outputs(igniter, auger, fan) on the default dashboard (and on the flex display).  Added new notifications for high and low temperature limits for each probe.  Added Bluetooth probe support for Inkbird iBBQ and some Meater devices.  Added three new PID controllers which further improve performance of the default PID.  New display support for different devices.  Some probe configuration can be done from the settings page and from the Default Dashboard.  Lid/Door Pause button added to Default Dashboard to manually pause the PID.  And much more!
-* **10/2025 - Release v1.10.0** - It only seems appropriate to release the v1.10.0 in October (the 10th month)!  Lot's of behind the scenes improvements to PiFire, improving the installer, updating package versions, improving the web front-end code structure so that it is more modular.  Also more feature improvements including the addition of a new Bluetooth device, WLED integration, etc.  More details in the release notes.    
+* **10/2025 - Release v1.10.0** - It only seems appropriate to release the v1.10.0 in October (the 10th month)!  Lot's of behind the scenes improvements to PiFire, improving the installer, updating package versions, improving the web front-end code structure so that it is more modular.  Also more feature improvements including the addition of a new Bluetooth device, WLED integration, etc.  More details in the release notes.
+* 12/2025 - Documentation has moved to [http://docs.pifire.io](http://docs.pifire.io). Many thanks to Discord user @therooster for securing the domain. 
 
 ### Credits
 
