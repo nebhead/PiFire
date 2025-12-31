@@ -91,7 +91,10 @@ function initProbeGauge(key) {
 		min: minTemp,
 		// custom label renderer
 		label: function(value) {
-				return Math.round(value);
+			if (mode == 'Stop' || mode == '') {
+				return '---';
+			}
+			return Math.round(value);
 		},
 		value: 0,
 		// Custom dial colors (Optional)
