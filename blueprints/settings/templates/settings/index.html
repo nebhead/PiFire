@@ -7,6 +7,18 @@
 {% block cssextend %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-colorpicker.min.css') }}" type="text/css" />
 <link rel="stylesheet" href="{{ url_for('settings_bp.static', filename='settings/css/settings.css') }}" type="text/css" />
+<style>
+    .nav-category-header {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 1rem;
+        pointer-events: none;
+    }
+    .nav-category-header:first-child {
+        margin-top: 0;
+    }
+</style>
 {% endblock %}
 
 {% block title %}Settings{% endblock %}
@@ -55,21 +67,29 @@
                 </a>
                 <div class="collapse navbar-collapse" id="settingsNav">
                     <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-                        <a class="nav-link active" id="v-pills-probes-tab" data-toggle="pill" href="#v-pills-probes" role="tab" aria-controls="v-pills-probes" aria-selected="true">Probe Settings</a>
-                        <a class="nav-link" id="v-pills-probe-profiles-tab" data-toggle="pill" href="#v-pills-probe-profiles" role="tab" aria-controls="v-pills-probe-profiles" aria-selected="false">Probe Profiles</a>
-                        <a class="nav-link" id="v-pills-units-tab" data-toggle="pill" href="#v-pills-units" role="tab" aria-controls="v-pills-units" aria-selected="false">Units</a>
+                        <!-- Frontend Settings -->
+                        <h6 class="nav-category-header text-muted font-weight-bold mt-2 mb-1 px-3">Frontend Settings</h6>
                         <a class="nav-link" id="v-pills-name-tab" data-toggle="pill" href="#v-pills-name" role="tab" aria-controls="v-pills-name" aria-selected="false">Grill Name</a>
+                        <a class="nav-link" id="v-pills-theme-tab" data-toggle="pill" href="#v-pills-theme" role="tab" aria-controls="v-pills-theme" aria-selected="false">Theme</a>
+                        <a class="nav-link" id="v-pills-dash-tab" data-toggle="pill" href="#v-pills-dash" role="tab" aria-controls="v-pills-dash" aria-selected="false">Dashboard</a>
+                        <a class="nav-link" id="v-pills-history-tab" data-toggle="pill" href="#v-pills-history" role="tab" aria-controls="v-pills-history" aria-selected="false">History</a>
+                        <a class="nav-link" id="v-pills-notifications-tab" data-toggle="pill" href="#v-pills-notifications" role="tab" aria-controls="v-pills-notifications" aria-selected="false">Notifications</a>
+                        
+                        <!-- Operations -->
+                        <h6 class="nav-category-header text-muted font-weight-bold mt-3 mb-1 px-3">Operations</h6>
+                        <a class="nav-link" id="v-pills-safety-tab" data-toggle="pill" href="#v-pills-safety" role="tab" aria-controls="v-pills-safety" aria-selected="false">Safety</a>
+                        <a class="nav-link" id="v-pills-startup-tab" data-toggle="pill" href="#v-pills-startup" role="tab" aria-controls="v-pills-startup" aria-selected="false">Startup & Shutdown</a>
                         <a class="nav-link" id="v-pills-work-mode-tab" data-toggle="pill" href="#v-pills-work-mode" role="tab" aria-controls="v-pills-work-mode" aria-selected="false">Controller Settings</a>
                         {% if settings['platform']['dc_fan'] %}
                         <a class="nav-link" id="v-pills-pwm-tab" data-toggle="pill" href="#v-pills-pwm" role="tab" aria-controls="v-pills-pwm" aria-selected="false">PWM Settings</a>
                         {% endif %}
-                        <a class="nav-link" id="v-pills-startup-tab" data-toggle="pill" href="#v-pills-startup" role="tab" aria-controls="v-pills-startup" aria-selected="false">Startup & Shutdown</a>
-                        <a class="nav-link" id="v-pills-dash-tab" data-toggle="pill" href="#v-pills-dash" role="tab" aria-controls="v-pills-dash" aria-selected="false">Dashboard</a>
-                        <a class="nav-link" id="v-pills-history-tab" data-toggle="pill" href="#v-pills-history" role="tab" aria-controls="v-pills-history" aria-selected="false">History</a>
-                        <a class="nav-link" id="v-pills-safety-tab" data-toggle="pill" href="#v-pills-safety" role="tab" aria-controls="v-pills-safety" aria-selected="false">Safety</a>
                         <a class="nav-link" id="v-pills-pellets-tab" data-toggle="pill" href="#v-pills-pellets" role="tab" aria-controls="v-pills-pellets" aria-selected="false">Pellets</a>
-                        <a class="nav-link" id="v-pills-theme-tab" data-toggle="pill" href="#v-pills-theme" role="tab" aria-controls="v-pills-theme" aria-selected="false">Theme</a>
-                        <a class="nav-link" id="v-pills-notifications-tab" data-toggle="pill" href="#v-pills-notifications" role="tab" aria-controls="v-pills-notifications" aria-selected="false">Notifications</a>
+                        
+                        <!-- Probe Settings -->
+                        <h6 class="nav-category-header text-muted font-weight-bold mt-3 mb-1 px-3">Probe Settings</h6>
+                        <a class="nav-link" id="v-pills-units-tab" data-toggle="pill" href="#v-pills-units" role="tab" aria-controls="v-pills-units" aria-selected="false">Units</a>
+                        <a class="nav-link active" id="v-pills-probes-tab" data-toggle="pill" href="#v-pills-probes" role="tab" aria-controls="v-pills-probes" aria-selected="true">Probe Configuration</a>
+                        <a class="nav-link" id="v-pills-probe-profiles-tab" data-toggle="pill" href="#v-pills-probe-profiles" role="tab" aria-controls="v-pills-probe-profiles" aria-selected="false">Probe Profiles</a>
                     </div>
                 </div>
             </nav>
