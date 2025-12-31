@@ -788,7 +788,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 			write_tr(in_data['probe_history']['tr'])
 
 		# Every 20 seconds, update ETA for any pending notifications
-		if (now - eta_toggle_time) > 20:
+		if (now - eta_toggle_time) > 20 and settings['globals'].get('eta_calculation', True):
 			eta_toggle_time = time.time()
 			update_eta = True
 		else:

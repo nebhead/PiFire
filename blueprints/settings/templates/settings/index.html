@@ -1037,7 +1037,7 @@
                     <div class="card shadow">
                         <div class="card-header bg-primary text-white">
                                 <h5>
-                                    <i class="fas fa-tools"></i>&nbsp; Dashboard Settings
+                                    <i class="fa-solid fa-gauge"></i>&nbsp; Dashboard Selection
                                 </h5>
                         </div>
                         <div class="card-body" id="dashboardSelectionCard">
@@ -1047,6 +1047,25 @@
                             <button type="button" class="btn btn-outline-danger" onclick="selectDashboard(document.getElementById('dashboardSelect').value);">Save</button>
                         </div>
                     </div><!-- End of Card -->
+                    <br><br>
+                    <div class="card shadow">
+                        <div class="card-header bg-primary text-white">
+                                <h5>
+                                    <i class="fas fa-tools"></i>&nbsp; Global Dashboard Settings
+                                </h5>
+                        </div>
+                        <div class="card-body" id="GlobalDashSettingsCard">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="dash_eta_calculation" name="dash_eta_calculation" {% if settings['globals']['eta_calculation'] %}checked{% endif %}>
+                                <label class="custom-control-label" for="dash_eta_calculation">
+                                    Enable ETA Calculations<br>
+                                    <span class="badge badge-info">INFO</span> 
+                                    <i>Enables estimated time to target calculations for probes on the dashboard, if supported by the selected dashboard.</i>
+                                </label>
+                            </div>
+                        </div>
+
+                    </div>
                     <br><br><br>
                 </div><!-- End of Tab -->
                 <!-- ============================ History Settings ========================== -->

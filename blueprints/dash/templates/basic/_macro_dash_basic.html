@@ -67,18 +67,21 @@
 					{% endif %}
 				{% endfor %}
 			</div>
-{% for notify_info in control['notify_data'] %}
+			{% for notify_info in control['notify_data'] %}
 				{% if notify_info['label'] == probe_data['label'] and notify_info['type'] == 'probe' %} 
-					{% if notify_info['req'] %}
+					{% if notify_info['req'] and settings['globals']['eta_calculation'] %}
 					<button type="button" class="btn btn-sm btn-primary shadow" id="{{ probe_data['label'] }}_eta_btn" data-toggle="tooltip" title="Estimated time to reach target temperature">
-					{% else %}
-					<button type="button" class="btn btn-sm btn-primary shadow" id="{{ probe_data['label'] }}_eta_btn" data-toggle="tooltip" title="Estimated time to reach target temperature" style="display:none">
-					{% endif %}
-				{% endif %}
-			{% endfor %}
 						<i class="fa-solid fa-hourglass-half"></i>&nbsp;
 						<i class="fa-solid fa-spinner fa-spin-pulse"></i>
 					</button>
+					{% else %}
+					<button type="button" class="btn btn-sm btn-primary shadow" id="{{ probe_data['label'] }}_eta_btn" data-toggle="tooltip" title="Estimated time to reach target temperature" style="display:none">
+						<i class="fa-solid fa-hourglass-half"></i>&nbsp;
+						<i class="fa-solid fa-spinner fa-spin-pulse"></i>
+					</button>
+					{% endif %}
+				{% endif %}
+			{% endfor %}
 		</div>
 	</div>
 </div>

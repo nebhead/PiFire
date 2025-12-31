@@ -127,6 +127,7 @@ def default_settings():
 		'venv' : True,  # Set to True if running in virtual environment (needed for Raspberry Pi OS Bookworm)
 		'python_exec' : '.venv/bin/python',  # Path to the python executable
 		'uv' : True,  # Set to True to enable UV for pip install
+		'eta_calculation' : True  # Set to True to enable ETA calculation for reaching target temperature
 	}
 
 	if os.path.exists('bin'):

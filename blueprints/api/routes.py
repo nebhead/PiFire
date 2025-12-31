@@ -85,6 +85,7 @@ def api_page(action=None, arg0=None, arg1=None, arg2=None, arg3=None):
 			status['ui_hash'] = create_ui_hash()
 			status['probe_status'] = probe_status
 			status['critical_error'] = control.get('critical_error', False)
+			status['eta_calculation'] = settings['globals'].get('eta_calculation', True)
 			return jsonify({'current':current_temps, 'notify_data':notify_data, 'status':status}), 201
 		elif action == 'hopper':
 			pelletdb = read_pellet_db()

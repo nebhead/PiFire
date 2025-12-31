@@ -147,7 +147,7 @@ function updateProbeCards() {
 							// Store Notify Data
 							notify_data[item] = JSON.parse(JSON.stringify(current.notify_data[item])); // Copy data to notify_data variable
 								// Update Page
-								updateNotificationCard(notify_data[item]);
+								updateNotificationCard(notify_data[item], current.status.eta_calculation);
 								initTarget(notify_data[item]);
 						};
 					};
@@ -373,7 +373,7 @@ function formatDuration(total_seconds) {
 };
 
 // Update the notification information for the probe cards
-function updateNotificationCard(notify_info) {
+function updateNotificationCard(notify_info, eta_calculation) {
 	const label = notify_info.label;
 	const req = notify_info.req;
 	const shutdown = notify_info.shutdown;
@@ -390,14 +390,18 @@ function updateNotificationCard(notify_info) {
 	if ((type == 'probe') && (notify_status[label]['probe']))  {
 		// Probe Notification Selected
 		// Show the Notification Bell, Target Temp and the ETA 
-	var eta = '<i class="fa-solid fa-spinner fa-spin-pulse"></i>';
-	if (notify_info.eta != null) {
-		eta = formatDuration(notify_info.eta);
-	};
+		var eta = '<i class="fa-solid fa-spinner fa-spin-pulse"></i>';
+		if (notify_info.eta != null) {
+			eta = formatDuration(notify_info.eta);
+		};
 		document.getElementById(notify_btn_id).innerHTML = '<i class="far fa-bell"></i>&nbsp; ' + target + '&deg;' + units;
-        document.getElementById(eta_btn_id).innerHTML = '<i class="fa-solid fa-hourglass-half"></i>&nbsp; ' + eta;
 		document.getElementById(notify_btn_id).className = 'btn btn-sm btn-primary';
-        $('#'+eta_btn_id).show();
+		if (eta_calculation) {
+			document.getElementById(eta_btn_id).innerHTML = '<i class="fa-solid fa-hourglass-half"></i>&nbsp; ' + eta;
+			$('#'+eta_btn_id).show();
+		} else {
+			$('#'+eta_btn_id).hide();
+		};
 	} else if ((!notify_status[label]['probe']) && ((notify_status[label]['probe_limit_high']) || (notify_status[label]['probe_limit_low']))) {
 		// Other Notification Selected
 		// Show the Notification Bell (Limit High / Low) Hide ETA
@@ -408,7 +412,11 @@ function updateNotificationCard(notify_info) {
 		// Other Notification Cancelled (Probe Notification Selected)
 		// Leave the Notification Bell, Target Temp and ETA shown
 		document.getElementById(notify_btn_id).className = 'btn btn-sm btn-primary';
-		$('#'+eta_btn_id).show();
+		if (eta_calculation) {
+			$('#'+eta_btn_id).show();
+		} else {
+			$('#'+eta_btn_id).hide();
+		};
 	} else {
 		// All Notifications Cancelled
 		// Turn off the Notification Bell

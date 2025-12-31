@@ -1019,4 +1019,23 @@ $(document).ready(function() {
 		updateSettingsAPI(settings, reload_page);
 	});
 
+	// Enable / Disable ETA on Dashboard
+	$('#dash_eta_calculation').change(function() {
+		if ($(this).is(':checked')) {
+			settings = {
+				'globals': {
+					'eta_calculation': true
+				}
+			};
+		} else {
+			settings = {
+				'globals': {
+					'eta_calculation': false
+				}
+			};
+		};
+		var reload_page = false; // Reload page to apply theme change
+		updateSettingsAPI(settings, reload_page);
+	});
+
 }); // End of document ready function
