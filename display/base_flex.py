@@ -430,6 +430,10 @@ class DisplayBase:
                     object_data['temps'][2] = self.in_data['PSP']
                     object_data['units'] = self.units 
                     #object_data['label'] = primary_key
+                    if self.status_data['mode'] == 'Stop':
+                        object_data['data']['stopped'] = True
+                    else:
+                        object_data['data']['stopped'] = False
                     self.display_object_list[self.dash_map['primary_gauge']].update_object_data(object_data)
             
                 ''' Update Food Probe Gauges and Values '''
@@ -447,6 +451,10 @@ class DisplayBase:
                         object_data['temps'][1] = self.in_data['NT'][key]
                         object_data['temps'][2] = 0  # There is no set temp for food probes 
                         object_data['units'] = self.units
+                        if self.status_data['mode'] == 'Stop':
+                            object_data['data']['stopped'] = True
+                        else:
+                            object_data['data']['stopped'] = False
                         self.display_object_list[self.dash_map[gauge]].update_object_data(object_data)
 
             ''' Update Output Status Icons '''

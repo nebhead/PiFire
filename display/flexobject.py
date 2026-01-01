@@ -185,6 +185,7 @@ class FlexObject:
 
 class GaugeCircle(FlexObject):
     def __init__(self, objectType, objectData, background):
+        objectData['data'] = objectData.get('data', {'stopped' : True})
         super().__init__(objectType, objectData, background)
 
     def _draw_object(self):
@@ -219,7 +220,11 @@ class GaugeCircle(FlexObject):
         draw.arc(coords, start=end_rad, end=45, fill=self.objectData['bg_color'], width=30)
 
         # Current Temperature (Large Centered)
-        cur_temp = str(self.objectData['temps'][0])[:5]
+        if self.objectData['data'].get('stopped', True):
+            cur_temp = '---'
+        else:
+            cur_temp = str(self.objectData['temps'][0])[:5]
+        
         if len(cur_temp) < 5:
             font_point_size = round(size[1] * 0.3)  # Font size as a ratio of the object size
         else:
@@ -227,7 +232,10 @@ class GaugeCircle(FlexObject):
         font = ImageFont.truetype(self.objectData['font'], font_point_size)
         font_bbox = font.getbbox(cur_temp)  # Grab the width of the text
         font_width = font_bbox[2] - font_bbox[0]
-        font_height = font_bbox[3] - font_bbox[1]
+        if self.objectData['data'].get('stopped', True):
+            font_height = font_point_size  # Approximate height for '---'
+        else:
+            font_height = font_bbox[3] - font_bbox[1]
         label_x = (size[0] // 2) - (font_width // 2)
         label_y = (size[1] // 2) - (font_height // 1.1)
         label_origin = (label_x, label_y)
@@ -364,6 +372,7 @@ class GaugeCircle(FlexObject):
 
 class GaugeCompact(FlexObject):
     def __init__(self, objectType, objectData, background):
+        objectData['data'] = objectData.get('data', {'stopped' : True})
         super().__init__(objectType, objectData, background)
 
     def _draw_object(self):
@@ -387,8 +396,14 @@ class GaugeCompact(FlexObject):
         gauge.paste(gauge_label, (40,30), gauge_label)
 
         # Draw Temperature Value
-        current_temp = self._draw_text(self.objectData['temps'][0], self.objectData['font'], 100, self.objectData['fg_color'])
-        gauge.paste(current_temp, (40, 75), current_temp)
+        if self.objectData['data'].get('stopped', True):
+            temp_displayed = '---'
+            text_position = (40, 110)
+        else:
+            temp_displayed = str(self.objectData['temps'][0])[:5]
+            text_position = (40, 75)
+        current_temp = self._draw_text(temp_displayed, self.objectData['font'], 100, self.objectData['fg_color'])
+        gauge.paste(current_temp, text_position, current_temp)
 
         # Determine if Displaying Notify Point AND Set Point 
         dual_temp = True if self.objectData['temps'][1] != 0 and self.objectData['temps'][2] != 0 else False 
