@@ -1109,11 +1109,11 @@
 						{
 							"label" : "cs", 
 							"friendly_name" : "SPI Chip Select (CS)",
-							"description" : "SPI Chip Select (CS/CEx) pin used for this device.",
+							"description" : "SPI Chip Select (CS/CEx) channel used for device.  This module supports CE0 and CE1 only.",
 							"type" : "list",
-							"list_values" : ["GPIO2", "GPIO3", "GPIO4", "GPIO5", "GPIO6", "GPIO12", "GPIO13", "GPIO14", "GPIO15", "GPIO16", "GPIO17", "GPIO18", "GPIO19", "GPIO20", "GPIO21", "GPIO22", "GPIO23", "GPIO24", "GPIO25", "GPIO26", "GPIO27"],
-							"list_labels" : ["D2", "D3", "D4", "D5", "D6", "D12", "D13", "D14", "D15", "D16", "D17", "D18", "D19", "D20", "D21", "D22", "D23", "D24", "D25", "D26", "D27"],
-							"default" : "D2",
+							"list_values" : ["1", "0"],
+							"list_labels" : ["CE1", "CE0"],
+							"default" : "1",
 							"hidden" : false
 						}, 
 						{
