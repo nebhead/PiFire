@@ -65,25 +65,31 @@ class GrillPlatform:
 		else:
 			self.selector = None
 
-		active_high = True if config.get('triggerlevel', 'HIGH') == 'HIGH' else False 
+		# Per-output trigger levels (with fallback to global triggerlevel for backwards compatibility)
+		global_level = config.get('triggerlevel', 'HIGH')
+		triggerlevels = config.get('triggerlevels', {})
+
+		def _active_high(output_name):
+			level = triggerlevels.get(output_name, global_level)
+			return level == 'HIGH'
 
 		if self.dc_fan:
 			self.current_fan_speed_percent = 100 # Hardware PWM library does not have a mechanism to retrieve the current duty cycle - initialize a variable to track this
 			self._ramp_thread = None
-			self.fan = OutputDevice(self.out_pins['dc_fan'], active_high=active_high, initial_value=False)
+			self.fan = OutputDevice(self.out_pins['dc_fan'], active_high=_active_high('dc_fan'), initial_value=False)
 			if self.out_pins['pwm'] in [13, 19]:
 				self.hardware_pwm_channel = 1 # Raspberry Pi maps GPIO13 & GPIO19 to Hardware PWM channel 1
-			else: 
+			else:
 				self.hardware_pwm_channel = 0 # Raspberry Pi maps GPIO12 & GPIO18 to Hardware PWM channel 0
 			self.pwm = HardwarePWM(pwm_channel=self.hardware_pwm_channel, hz=self.frequency)
 			self.logger.debug('Hardware PWM setup: Using PWM channel ' + str(self.hardware_pwm_channel) + ' and PWM frequency ' + str(self.frequency))
 
 		else:
-			self.fan = OutputDevice(self.out_pins['fan'], active_high=active_high, initial_value=False)
+			self.fan = OutputDevice(self.out_pins['fan'], active_high=_active_high('fan'), initial_value=False)
 
-		self.auger = OutputDevice(self.out_pins['auger'], active_high=active_high, initial_value=False)
-		self.igniter = OutputDevice(self.out_pins['igniter'], active_high=active_high, initial_value=False)
-		self.power = OutputDevice(self.out_pins['power'], active_high=active_high, initial_value=False)
+		self.auger = OutputDevice(self.out_pins['auger'], active_high=_active_high('auger'), initial_value=False)
+		self.igniter = OutputDevice(self.out_pins['igniter'], active_high=_active_high('igniter'), initial_value=False)
+		self.power = OutputDevice(self.out_pins['power'], active_high=_active_high('power'), initial_value=False)
 
 	def auger_on(self):
 		self.logger.debug('auger_on: Turning on auger')

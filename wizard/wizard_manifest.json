@@ -32,10 +32,40 @@
 						"settings" : ["platform", "standalone"]
 					},
 					"triggerlevel" : {
-						"friendly_name" : "Relay Type",
-						"description" : "Select the trigger level for the relays on the platform.  ",
+						"friendly_name" : "Default Relay Type",
+						"description" : "Select the default trigger level for all relays on the platform. Individual relay trigger levels can be overridden below.",
 						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
 						"settings" : ["platform", "triggerlevel"]
+					},
+					"triggerlevel_auger" : {
+						"friendly_name" : "Auger Relay Trigger Level",
+						"description" : "Select the trigger level for the auger relay.",
+						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevels", "auger"]
+					},
+					"triggerlevel_fan" : {
+						"friendly_name" : "Fan Relay Trigger Level",
+						"description" : "Select the trigger level for the fan relay.",
+						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevels", "fan"]
+					},
+					"triggerlevel_dc_fan" : {
+						"friendly_name" : "DC Fan Trigger Level",
+						"description" : "Select the trigger level for the DC fan relay.",
+						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevels", "dc_fan"]
+					},
+					"triggerlevel_igniter" : {
+						"friendly_name" : "Igniter Relay Trigger Level",
+						"description" : "Select the trigger level for the igniter relay.",
+						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevels", "igniter"]
+					},
+					"triggerlevel_power" : {
+						"friendly_name" : "Power Relay Trigger Level",
+						"description" : "Select the trigger level for the power gate relay.",
+						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevels", "power"]
 					},
 					"dc_fan" : {
 						"friendly_name" : "Fan Type",
@@ -184,10 +214,40 @@
 						"settings" : ["platform", "standalone"]
 					},
 					"triggerlevel" : {
-						"friendly_name" : "Relay Type",
-						"description" : "Select the trigger level for the relays on the platform.  ",
+						"friendly_name" : "Default Relay Type",
+						"description" : "Select the default trigger level for all relays on the platform. Individual relay trigger levels can be overridden below.",
 						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
 						"settings" : ["platform", "triggerlevel"]
+					},
+					"triggerlevel_auger" : {
+						"friendly_name" : "Auger Relay Trigger Level",
+						"description" : "Select the trigger level for the auger relay.",
+						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevels", "auger"]
+					},
+					"triggerlevel_fan" : {
+						"friendly_name" : "Fan Relay Trigger Level",
+						"description" : "Select the trigger level for the fan relay.",
+						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevels", "fan"]
+					},
+					"triggerlevel_dc_fan" : {
+						"friendly_name" : "DC Fan Trigger Level",
+						"description" : "Select the trigger level for the DC fan relay.",
+						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevels", "dc_fan"]
+					},
+					"triggerlevel_igniter" : {
+						"friendly_name" : "Igniter Relay Trigger Level",
+						"description" : "Select the trigger level for the igniter relay.",
+						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevels", "igniter"]
+					},
+					"triggerlevel_power" : {
+						"friendly_name" : "Power Relay Trigger Level",
+						"description" : "Select the trigger level for the power gate relay.",
+						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevels", "power"]
 					},
 					"dc_fan" : {
 						"friendly_name" : "Fan Type",
@@ -206,7 +266,7 @@
 					"output_dc_fan" : {
 						"friendly_name" : "DC Fan GPIO Pin",
 						"description" : "Select the GPIO used for the DC Fan.",
-						"options" : { "None" : "None" },  
+						"options" : { "None" : "None" },
 						"settings" : ["platform", "outputs", "dc_fan"],
 						"hidden" : true
 					},
@@ -361,10 +421,40 @@
 						"settings" : ["platform", "standalone"]
 					},
 					"triggerlevel" : {
-						"friendly_name" : "Relay Type",
-						"description" : "Select the trigger level for the relays on the platform.  ",
+						"friendly_name" : "Default Relay Type",
+						"description" : "Select the default trigger level for all relays on the platform. Individual relay trigger levels can be overridden below.",
 						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
 						"settings" : ["platform", "triggerlevel"]
+					},
+					"triggerlevel_auger" : {
+						"friendly_name" : "Auger Relay Trigger Level",
+						"description" : "Select the trigger level for the auger relay.",
+						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevels", "auger"]
+					},
+					"triggerlevel_fan" : {
+						"friendly_name" : "Fan Relay Trigger Level",
+						"description" : "Select the trigger level for the fan relay.",
+						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevels", "fan"]
+					},
+					"triggerlevel_dc_fan" : {
+						"friendly_name" : "DC Fan Trigger Level",
+						"description" : "Select the trigger level for the DC fan relay.",
+						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevels", "dc_fan"]
+					},
+					"triggerlevel_igniter" : {
+						"friendly_name" : "Igniter Relay Trigger Level",
+						"description" : "Select the trigger level for the igniter relay.",
+						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevels", "igniter"]
+					},
+					"triggerlevel_power" : {
+						"friendly_name" : "Power Relay Trigger Level",
+						"description" : "Select the trigger level for the power gate relay.",
+						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevels", "power"]
 					},
 					"dc_fan" : {
 						"friendly_name" : "Fan Type",
@@ -544,10 +634,45 @@
 						"settings" : ["platform", "standalone"]
 					},
 					"triggerlevel" : {
-						"friendly_name" : "Relay Type",
-						"description" : "Select the trigger level for the relays on the platform.  ",
+						"friendly_name" : "Default Relay Type",
+						"description" : "Select the default trigger level for all relays on the platform.",
 						"options" : { "HIGH" : "Active High" },
 						"settings" : ["platform", "triggerlevel"],
+						"hidden" : true
+					},
+					"triggerlevel_auger" : {
+						"friendly_name" : "Auger Relay Trigger Level",
+						"description" : "Select the trigger level for the auger relay.",
+						"options" : { "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevels", "auger"],
+						"hidden" : true
+					},
+					"triggerlevel_fan" : {
+						"friendly_name" : "Fan Relay Trigger Level",
+						"description" : "Select the trigger level for the fan relay.",
+						"options" : { "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevels", "fan"],
+						"hidden" : true
+					},
+					"triggerlevel_dc_fan" : {
+						"friendly_name" : "DC Fan Trigger Level",
+						"description" : "Select the trigger level for the DC fan relay.",
+						"options" : { "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevels", "dc_fan"],
+						"hidden" : true
+					},
+					"triggerlevel_igniter" : {
+						"friendly_name" : "Igniter Relay Trigger Level",
+						"description" : "Select the trigger level for the igniter relay.",
+						"options" : { "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevels", "igniter"],
+						"hidden" : true
+					},
+					"triggerlevel_power" : {
+						"friendly_name" : "Power Relay Trigger Level",
+						"description" : "Select the trigger level for the power gate relay.",
+						"options" : { "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevels", "power"],
 						"hidden" : true
 					},
 					"dc_fan" : {
@@ -730,10 +855,40 @@
 						"hidden" : true
 					},
 					"triggerlevel" : {
-						"friendly_name" : "Relay Type",
-						"description" : "Select the trigger level for the relays attached to the platform.",
+						"friendly_name" : "Default Relay Type",
+						"description" : "Select the default trigger level for all relays on the platform. Individual relay trigger levels can be overridden below.",
 						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
 						"settings" : ["platform", "triggerlevel"]
+					},
+					"triggerlevel_auger" : {
+						"friendly_name" : "Auger Relay Trigger Level",
+						"description" : "Select the trigger level for the auger relay.",
+						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevels", "auger"]
+					},
+					"triggerlevel_fan" : {
+						"friendly_name" : "Fan Relay Trigger Level",
+						"description" : "Select the trigger level for the fan relay.",
+						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevels", "fan"]
+					},
+					"triggerlevel_dc_fan" : {
+						"friendly_name" : "DC Fan Trigger Level",
+						"description" : "Select the trigger level for the DC fan relay.",
+						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevels", "dc_fan"]
+					},
+					"triggerlevel_igniter" : {
+						"friendly_name" : "Igniter Relay Trigger Level",
+						"description" : "Select the trigger level for the igniter relay.",
+						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevels", "igniter"]
+					},
+					"triggerlevel_power" : {
+						"friendly_name" : "Power Relay Trigger Level",
+						"description" : "Select the trigger level for the power gate relay.",
+						"options" : { "LOW" : "Active Low", "HIGH" : "Active High" },
+						"settings" : ["platform", "triggerlevels", "power"]
 					},
 					"dc_fan" : {
 						"friendly_name" : "Fan Type",

@@ -16,10 +16,14 @@ def get_settings_dependencies_values(settings, moduleData):
 	for setting, data in moduleData['settings_dependencies'].items():
 		setting_location = data['settings']
 		setting_value = settings
-		for setting_name in setting_location:
-			setting_value = setting_value[setting_name]
-		moduleSettings[setting] = setting_value 
-	return moduleSettings 
+		try:
+			for setting_name in setting_location:
+				setting_value = setting_value[setting_name]
+		except (KeyError, TypeError):
+			# Use the first option as default if the setting path doesn't exist yet
+			setting_value = list(data.get('options', {}).keys())[0] if data.get('options') else ''
+		moduleSettings[setting] = setting_value
+	return moduleSettings
 
 def wizardInstallInfoDefaults(wizardData, settings):
 	

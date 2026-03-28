@@ -61,19 +61,30 @@ class ADSDevice():
 		# Create the ADC object using the I2C bus
 		self.ads = ADS.ADS1115(self.i2c, address=i2c_bus_addr)
 		self.status = {}
+		self._error_count = 0
+		self._error_reported = False
 
 	def read_voltage(self, port):
 		adc_ports = {
-			'ADC0' : ADS.P0, 
-			'ADC1' : ADS.P1, 
-			'ADC2' : ADS.P2, 
+			'ADC0' : ADS.P0,
+			'ADC1' : ADS.P1,
+			'ADC2' : ADS.P2,
 			'ADC3' : ADS.P3
 		}
 		try:
 			read_data = AnalogIn(self.ads, adc_ports[port])
 			voltage = math.floor(read_data.voltage * 1000)
-		except:
+			if self._error_count > 0:
+				self._error_count = 0
+				self._error_reported = False
+				self.logger.info(f'ADS1115 I2C communication recovered on port {port}.')
+		except Exception as e:
 			self.logger.exception(f'Exception occurred while reading probe port {port}.  Trace dump: ')
+			self._error_count += 1
+			if not self._error_reported:
+				self._error_reported = True
+				self.status['error'] = f'I2C communication error on ADS1115 (port {port}): {type(e).__name__}. ' \
+					f'Probe readings may be unavailable. Check wiring and connections.'
 			voltage = 0
 		return voltage
 

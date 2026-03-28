@@ -23,6 +23,7 @@ var last_pmode_status = null;
 var last_lid_open_status = false;
 var last_probe_status = {};
 var display_mode = null;
+var last_probe_errors = {}; // Track I2C/device errors per probe to avoid repeated toasts
 
 var critical_error_message_viewed = false; // Flag to indicate if the critical error message has been viewed
 
@@ -452,11 +453,26 @@ function updateProbeCards() {
 			for (key in current.status.probe_status.F) {
 				const currentBattery = current.status.probe_status.F[key].status.battery_percentage || null;
 				const lastBattery = last_probe_status.F[key].status.battery_percentage || null;
-				
+
 				if (currentBattery !== lastBattery) {
 					updateProbeCardBatStatus(key, currentBattery);
 					last_probe_status.F[key].status.battery_percentage = currentBattery;
 				}
+			}
+
+			// Check for device errors (e.g. I2C communication failures) across all probe sections
+			var allProbeStatus = Object.assign({},
+				current.status.probe_status.P,
+				current.status.probe_status.F,
+				current.status.probe_status.AUX
+			);
+			for (key in allProbeStatus) {
+				var currentError = allProbeStatus[key].status.error || null;
+				var lastError = last_probe_errors[key] || null;
+				if (currentError && currentError !== lastError) {
+					showProbeErrorToast(key, currentError);
+				}
+				last_probe_errors[key] = currentError;
 			}
 		},
 		error: function() {
@@ -537,7 +553,18 @@ function updateProbeCardBatStatus(key, battery_percentage) {
 	//console.log('Update Probe Card Battery Status: ' + key + ' battery_percentage: ' + battery_percentage);
 };
 
-// Update the temperature for a specific probe/card 
+function showProbeErrorToast(key, errorMessage) {
+	var toastTitle = document.getElementById('toastTitle');
+	var toastMessage = document.getElementById('toastMessage');
+	if (toastTitle && toastMessage) {
+		toastTitle.innerHTML = '<i class="fas fa-exclamation-triangle text-danger"></i> Probe Error: ' + key;
+		toastMessage.textContent = errorMessage;
+		$('#notifyToast').toast({delay: 10000});
+		$('#notifyToast').toast('show');
+	}
+};
+
+// Update the temperature for a specific probe/card
 function updateTempCard(key, temp) {
 	//console.log('Update Temp Card: ' + key + ' temp: ' + temp);
 	var index = dashDataStruct.custom.hidden_cards.indexOf(key); // Index of cardID

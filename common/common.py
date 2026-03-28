@@ -171,7 +171,14 @@ def default_settings():
 		},
 		"current" : "custom",
 		"dc_fan": False,  # True if system has a DC Fan (Does not indicate PWM)
-		"triggerlevel": "LOW",  # Active LOW / Active HIGH for the Relay Outputs 
+		"triggerlevel": "LOW",  # Active LOW / Active HIGH for the Relay Outputs (legacy default)
+		"triggerlevels": {  # Per-output trigger levels
+			"auger": "LOW",
+			"fan": "LOW",
+			"dc_fan": "LOW",
+			"igniter": "LOW",
+			"power": "LOW"
+		},
 		"buttonslevel": "HIGH",  # Active LOW / Active HIGH for the button inputs 
 		"standalone": True,  # Standalone (without OEM controller present)
 		"real_hw" : True,  # Set to True if running on real hardware (i.e. Raspberry Pi), False if running in a test environment 
@@ -1352,6 +1359,17 @@ def upgrade_settings(prev_ver, settings, settings_default):
 				print(f'   Updating device: {device["device"]} - {device["module"]}')
 				device['module_filename'] = device['module']
 				settings['probe_settings']['probe_map']['probe_devices'][index] = device
+
+	''' Migrate single triggerlevel to per-output triggerlevels if not already present '''
+	if settings['platform'].get('triggerlevels', None) is None:
+		global_level = settings['platform'].get('triggerlevel', 'LOW')
+		settings['platform']['triggerlevels'] = {
+			'auger': global_level,
+			'fan': global_level,
+			'dc_fan': global_level,
+			'igniter': global_level,
+			'power': global_level
+		}
 
 	''' Import any new probe profiles '''
 	for profile in list(settings_default['probe_settings']['probe_profiles'].keys()):
@@ -3121,8 +3139,12 @@ def set_nested_key_value(data, key_list, value):
 		return data  # Reached the end of the key list, return the data
 
 	current_key = key_list[0]
-	# Check if the key exists and is a dictionary (except for the last key)
-	if current_key not in data or (len(key_list) > 1 and not isinstance(data[current_key], dict)):
+	# Create intermediate dicts if they don't exist, or raise if not a dict
+	if current_key not in data:
+		if len(key_list) > 1:
+			data[current_key] = {}
+		# else: will be set below
+	elif len(key_list) > 1 and not isinstance(data[current_key], dict):
 		raise KeyError(f"Key '{current_key}' not found or not a dictionary")
 
 	# Check if we reached the bottom level (last key in the list)
