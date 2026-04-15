@@ -537,6 +537,28 @@
                             <div class="card shadow">
                                 <div class="card-header">
                                     <h5>
+                                        <i class="fas fa-fan"></i>&nbsp; Fan PID Control Settings (HOLD Mode) <span class="badge badge-warning">Experimental</span>
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    When enabled, the system will use a secondary PID-driven fan cycling strategy in HOLD mode when the auger
+                                    duty cycle has reached its minimum. This cycles the fan on/off proportionally to the PID output to provide
+                                    additional fine-grained temperature control. This is intended for <strong>AC fans</strong> or <strong>DC fans 
+                                    without PWM control</strong> enabled. It is <em>not compatible</em> with PWM fan control.
+                                    <br><br>
+                                    <span class="text-warning"><i class="fas fa-exclamation-triangle"></i> <strong>Experimental:</strong> This feature may behave unexpectedly in some configurations. Use with caution.</span>
+                                    <br><br>
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="fan_pid_enable" name="fan_pid_enable" {% if settings['cycle_data'].get('FanPidEnabled', False) %}checked{% endif %}>
+                                        <label class="custom-control-label" for="fan_pid_enable">Enable Fan PID Control (Experimental)</label>
+                                    </div>
+                                    <br>
+                                </div><!-- End of card body -->
+                            </div><!-- End of Card -->
+                            <br>
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h5>
                                         <i class="fas fa-tachometer-alt"></i>&nbsp; Keep Warm Settings
                                     </h5>
                                 </div>

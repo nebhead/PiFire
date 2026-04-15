@@ -354,6 +354,10 @@ def settings_page(action=None):
             settings['cycle_data']['LidOpenThreshold'] = int(response['lid_open_threshold'])
         if is_not_blank(response, 'lid_open_pausetime'):
             settings['cycle_data']['LidOpenPauseTime'] = int(response['lid_open_pausetime'])
+        if is_checked(response, 'fan_pid_enable'):
+            settings['cycle_data']['FanPidEnabled'] = True
+        else:
+            settings['cycle_data']['FanPidEnabled'] = False
         if is_not_blank(response, 'sp_on_time'):
             settings['smoke_plus']['on_time'] = int(response['sp_on_time'])
         if is_not_blank(response, 'sp_off_time'):

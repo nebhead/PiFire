@@ -188,7 +188,8 @@ def default_settings():
 		'u_max' : 0.9,
 		'LidOpenDetectEnabled' : False,  #  Enable Lid Open Detection
 		'LidOpenThreshold' : 15,	 #  Percentage drop in temperature from the hold temp, to trigger lid open event
-		'LidOpenPauseTime' : 60  #  Number of seconds to pause when a lid open event is detected 
+		'LidOpenPauseTime' : 60,  #  Number of seconds to pause when a lid open event is detected 
+		'FanPidEnabled' : False  #  Enable Fan PID Control (Experimental) - AC or DC fans without PWM control
 	}
 
 	settings['controller'] = {
