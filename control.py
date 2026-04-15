@@ -713,10 +713,10 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 					# If ratio is less than min set auger ratio to min and control further via fan.
 					if CycleRatio < settings['cycle_data']['u_min']:
 						CycleRatio = settings['cycle_data']['u_min']
-						# FanPid control currently not enabled when using PWM control on DC fans.  Too many variables for me to deal with at the moment.
-						# It's far easier and just as effective (and probably better smoke) to simply cycle the fan than deal with cycling plus speed control.
-						# To use fanPid Control with DC fans simply disable the PWM control.
-						if not control['pwm_control']:
+						# FanPid control is only enabled when the user has enabled it in settings.
+						# It is not compatible with PWM control on DC fans (too many variables).
+						# To use FanPid Control with DC fans, disable PWM control and enable FanPidEnabled in settings.
+						if settings['cycle_data'].get('FanPidEnabled', False) and not control['pwm_control']:
 							ControlFanPid = True
 						else:
 							ControlFanPid = False
