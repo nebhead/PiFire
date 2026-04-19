@@ -1,7 +1,7 @@
 <!-- Post Update Message for v1.10.0 -->
 <H1>
     <img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="50" height="50" class="d-inline-block align-top" alt="">
-    PiFire 1.10.5 Release - January 2026
+    PiFire 1.10.6 Release - April 2026
 </H1>
 
 <div class="row justify-content-center">
@@ -142,6 +142,9 @@
                </li>
                <li>
                   Fixed a bug with the MAX31865 configuration where the CS/CEx pin options were incorrect.  Now only CE0 and CE1 are available for selection.  
+               </li>
+               <li>
+                  Fixed a bug where fan would stop running regardless of AC or DC mode when PWM Fan control was not enabled.  There is now a setting to enable PID fan control to allow the fan to be controlled by the PID controller.  This may be useful for some types of grills where the fan is used for temperature control. 
                </li>
             </ul>
        

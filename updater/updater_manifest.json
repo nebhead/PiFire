@@ -1,10 +1,10 @@
 {
   "metadata" : {
     "versions" : {
-      "server" : "1.10.5",
+      "server" : "1.10.6",
       "cookfile" : "1.5.0",
       "recipe" : "1.0.0",
-      "build" : 65
+      "build" : 66
     },
     "update_notes" : "",
     "update_warnings" : ""
