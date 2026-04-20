@@ -213,6 +213,10 @@ if grep -q "Raspberry Pi 5" /proc/device-tree/model 2>/dev/null; then
     $SUDO apt install python3-rpi-lgpio -y
 fi
 
+# Unblock Bluetooth in case it is blocked
+echo " + Unblocking Bluetooth (if blocked)" | tee -a ~/logs/pifire_install.log
+$SUDO rfkill unblock bluetooth | tee -a ~/logs/pifire_install.log
+
 # Grab project files
 echo "*************************************************************************" | tee -a ~/logs/pifire_install.log
 echo "**                                                                     **" | tee -a ~/logs/pifire_install.log
