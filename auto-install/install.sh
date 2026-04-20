@@ -82,6 +82,15 @@ else
         echo " !! Installation Failed, 'sudo' not found. Please install sudo.  Exiting" | tee -a ~/logs/pifire_install.log
         exit 1
     fi
+    # Authenticate once upfront and keep the sudo session alive for the duration of the install.
+    # This is needed on systems where sudo requires a password (e.g. Raspberry Pi OS Trixie+).
+    echo " *************************************************************************" | tee -a ~/logs/pifire_install.log
+    echo " + Please enter your sudo password to proceed with installation." | tee -a ~/logs/pifire_install.log
+    echo " *************************************************************************" | tee -a ~/logs/pifire_install.log
+    sudo -v || { echo " !! Failed to authenticate with sudo. Exiting." | tee -a ~/logs/pifire_install.log; exit 1; }
+    # Refresh sudo timestamp every 60 seconds in the background so it never expires mid-install
+    while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+    SUDO_KEEPALIVE_PID=$!
 fi
 
 # Detect OS architecture
@@ -171,7 +180,7 @@ echo "**      Running Apt Upgrade... (This could take several minutes)       **"
 echo "**                                                                     **" | tee -a ~/logs/pifire_install.log
 echo "*************************************************************************" | tee -a ~/logs/pifire_install.log
 # Upgrade packages, exit if failed
-$SUDO DEBIAN_FRONTEND=noninteractive apt-get upgrade -y \
+$SUDO env DEBIAN_FRONTEND=noninteractive apt-get upgrade -y \
     -o Dpkg::Options::=--force-confdef \
     -o Dpkg::Options::=--force-confold 2>&1 | tee -a ~/logs/pifire_install.log
 if [ ${PIPESTATUS[0]} -ne 0 ]; then
@@ -240,6 +249,50 @@ $SUDO usermod -a -G pifire root
 $SUDO chown -R $USER:pifire pifire 
 # Change ability for pifire group to read/write/execute 
 $SUDO chmod -R 777 /usr/local/bin
+
+# Install sudoers drop-in so the pifire group can run required system commands
+# without a password prompt (needed on Raspberry Pi OS Trixie+ which removed
+# the default passwordless sudo grant for the 'pi' user).
+echo " + Installing sudoers rules for pifire group" | tee -a ~/logs/pifire_install.log
+$SUDO tee /etc/sudoers.d/pifire > /dev/null <<'EOF'
+# Allow members of the pifire group to run system commands required by PiFire
+# without being prompted for a password.
+
+# System control (control.py, display modules, common.py)
+%pifire ALL=(ALL) NOPASSWD: /sbin/shutdown, /sbin/reboot, /usr/sbin/shutdown, /usr/sbin/reboot
+
+# Supervisor management (common.py restarts control/webapp processes)
+%pifire ALL=(ALL) NOPASSWD: /usr/bin/supervisorctl, /bin/supervisorctl
+%pifire ALL=(ALL) NOPASSWD: /bin/systemctl restart supervisor, /usr/bin/systemctl restart supervisor
+
+# Hardware utilities (grillplat/raspberry_pi_all.py)
+%pifire ALL=(ALL) NOPASSWD: /usr/bin/vcgencmd
+
+# Package management (updater.py, wizard.py apt installs)
+%pifire ALL=(ALL) NOPASSWD: /usr/bin/apt, /usr/bin/apt-get
+
+# Bluetooth (updater manifest rfkill command)
+%pifire ALL=(ALL) NOPASSWD: /usr/bin/rfkill, /usr/sbin/rfkill
+
+# File operations (updater manifest cp of supervisor conf files)
+%pifire ALL=(ALL) NOPASSWD: /bin/cp, /usr/bin/cp
+
+# Script execution (updater/wizard manifests run bash scripts for
+# udev rules, bluepy-helper setcap, ds18b20 1-wire setup, etc.)
+%pifire ALL=(ALL) NOPASSWD: /bin/bash, /usr/bin/bash
+
+# board-config.py (wizard manifest runs this via the venv python with sudo)
+%pifire ALL=(ALL) NOPASSWD: /usr/local/bin/pifire/.venv/bin/python
+%pifire ALL=(ALL) NOPASSWD: /usr/local/bin/pifire/bin/python
+EOF
+$SUDO chmod 0440 /etc/sudoers.d/pifire
+# Validate the file is syntactically correct before proceeding
+if ! $SUDO visudo -cf /etc/sudoers.d/pifire; then
+    echo " !! sudoers file validation failed. Removing and continuing without it." | tee -a ~/logs/pifire_install.log
+    $SUDO rm -f /etc/sudoers.d/pifire
+else
+    echo " + sudoers rules installed successfully." | tee -a ~/logs/pifire_install.log
+fi
 
 # Install UV (Universal Virtualenv) for Python 3.11+
 # If using 64-bit OS OR -uv option is set
