@@ -1,7 +1,7 @@
 <!-- Post Update Message for v1.10.0 -->
 <H1>
     <img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="50" height="50" class="d-inline-block align-top" alt="">
-    PiFire 1.10.8 Release - April 2026
+    PiFire 1.10.9 Release - April 2026
 </H1>
 
 <div class="row justify-content-center">
@@ -148,6 +148,9 @@
                </li>
                <li>
                   Changes to the Bluetooth support in the control script to improve stability and reliability of Bluetooth thermometer scanning.  This includes better error handling and reconnection logic for Bluetooth thermometers.
+               </li>
+               <li>
+                  Fixes to the installation script for Trixie.  Users are now required to enter your sudo password upfront at the beginning of the installation process, and the script will keep the sudo session alive for the duration of the installation.  This should prevent issues with the sudo session expiring mid-installation and improve the overall reliability of the installation process on Raspberry Pi OS Trixie and later.
                </li>
             </ul>
        
