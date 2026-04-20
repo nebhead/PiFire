@@ -4,7 +4,7 @@
       "server" : "1.11.0",
       "cookfile" : "1.5.0",
       "recipe" : "1.0.0",
-      "build" : 8
+      "build" : 9
     },
     "update_notes" : "",
     "update_warnings" : ""
@@ -139,6 +139,23 @@
           "py_dependencies": [],
           "apt_dependencies": [],
           "command_list" : [["bash", "/usr/local/bin/pifire/updater/upgrade.sh"]]
+        }
+      }
+    },
+    {
+      "version" : "1.10.9",
+      "build" : 69,
+      "reboot_required" : true,
+      "dependencies" : {
+        "app": {
+          "py_dependencies": [],
+          "apt_dependencies": [],
+          "command_list" : []
+        },
+        "control": {
+          "py_dependencies": ["bleak==3.0.1"],
+          "apt_dependencies": ["bluetooth", "bluez"],
+          "command_list" : [["sudo", "rfkill", "unblock", "bluetooth"]]
         }
       }
     },
