@@ -1,10 +1,10 @@
 {
   "metadata" : {
     "versions" : {
-      "server" : "1.10.6",
+      "server" : "1.10.7",
       "cookfile" : "1.5.0",
       "recipe" : "1.0.0",
-      "build" : 66
+      "build" : 67
     },
     "update_notes" : "",
     "update_warnings" : ""
@@ -139,6 +139,23 @@
           "py_dependencies": [],
           "apt_dependencies": [],
           "command_list" : [["bash", "/usr/local/bin/pifire/updater/upgrade.sh"]]
+        }
+      }
+    },
+    {
+      "version" : "1.10.7",
+      "build" : 67,
+      "reboot_required" : true,
+      "dependencies" : {
+        "app": {
+          "py_dependencies": [],
+          "apt_dependencies": [],
+          "command_list" : []
+        },
+        "control": {
+          "py_dependencies": ["bleak==3.0.1"],
+          "apt_dependencies": [],
+          "command_list" : []
         }
       }
     }
