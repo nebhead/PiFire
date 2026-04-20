@@ -250,37 +250,45 @@ class GrillPlatform:
 
 	def scan_bluetooth(self, arglist):
 		'''
-		 Scan for bluetooth device addresses
+		 Scan for bluetooth device addresses using bleak (modern BlueZ D-Bus API).
+		 bleak cooperates with bluetoothd rather than fighting it over raw HCI access,
+		 making it compatible with BlueZ 5.56+ unlike the unmaintained bluepy library.
 		'''
-		from bluepy import btle
-		#print('[DEBUG] Imported bluepy...')
+		import asyncio
 		try:
-			scanner = btle.Scanner()
-			#print('[DEBUG] Created scanner object...')
-			bt_devices = []
+			from bleak import BleakScanner
+		except ImportError:
+			return {
+				'result': 'ERROR',
+				'message': 'bleak is not installed. Run: pip install bleak',
+				'data': {'bt_devices': []}
+			}
 
-			for entry in scanner.scan(5):
-				name = entry.getValueText(9)
-				if name is None:
-					name = 'Unknown'
-				hw_id = entry.addr
-				info = ''
-				bt_devices.append({'name':name, 'hw_id':hw_id, 'info':info})
-				#print(f'[DEBUG] Found device: {name} ({hw_id})')
-			
-			data = {
-				'result' : 'OK',
-				'message' : 'The control script is running.',
-				'data' : {
-					'bt_devices' : bt_devices
-				}
-			}
+		bt_devices = []
+		result = 'OK'
+		message = 'Bluetooth scan completed successfully.'
+
+		async def _scan():
+			discovered = await BleakScanner.discover(timeout=5.0)
+			for dev in discovered:
+				name = dev.name or 'Unknown'
+				bt_devices.append({'name': name, 'hw_id': dev.address.lower(), 'info': ''})
+				self.logger.debug(f'scan_bluetooth: Found device {name} ({dev.address})')
+
+		try:
+			asyncio.run(_scan())
 		except Exception as e:
-			data = {
-				'result' : 'ERROR',
-				'message' : f'An error occurred while scanning for bluetooth devices: {str(e)}',
-				'data' : {}
+			result = 'ERROR'
+			message = f'Bluetooth scan error: {e}'
+			self.logger.error(f'scan_bluetooth: Error during scan - {e}')
+
+		data = {
+			'result' : result,
+			'message' : message,
+			'data' : {
+				'bt_devices' : bt_devices
 			}
+		}
 		return data
 	
 	def os_info(self, arglist):
