@@ -186,7 +186,7 @@ echo "**      Installing Dependencies... (This could take several minutes)   **"
 echo "**                                                                     **" | tee -a ~/logs/pifire_install.log
 echo "*************************************************************************" | tee -a ~/logs/pifire_install.log
 # Install dependencies, exit if failed
-$SUDO apt install python3-dev python3-pip python3-venv python3-scipy nginx git supervisor ttf-mscorefonts-installer redis-server gfortran libopenblas-dev liblapack-dev libopenjp2-7 libglib2.0-dev -y 2>&1 | tee -a ~/logs/pifire_install.log
+$SUDO apt install python3-dev python3-pip python3-venv python3-scipy nginx git supervisor ttf-mscorefonts-installer redis-server gfortran libopenblas-dev liblapack-dev libopenjp2-7 libglib2.0-dev bluetooth bluez-y 2>&1 | tee -a ~/logs/pifire_install.log
 if [ ${PIPESTATUS[0]} -ne 0 ]; then
     echo " !! Failed to install dependencies. Installation cannot continue." | tee -a ~/logs/pifire_install.log
     exit 1
@@ -203,6 +203,10 @@ if grep -q "Raspberry Pi 5" /proc/device-tree/model 2>/dev/null; then
     echo " + Raspberry Pi 5 detected, installing python3-rpi-lgpio" | tee -a ~/logs/pifire_install.log
     $SUDO apt install python3-rpi-lgpio -y
 fi
+
+# Unblock Bluetooth in case it is blocked
+echo " + Unblocking Bluetooth (if blocked)" | tee -a ~/logs/pifire_install.log
+$SUDO rfkill unblock bluetooth | tee -a ~/logs/pifire_install.log
 
 # Grab project files
 echo "*************************************************************************" | tee -a ~/logs/pifire_install.log

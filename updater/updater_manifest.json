@@ -1,10 +1,10 @@
 {
   "metadata" : {
     "versions" : {
-      "server" : "1.10.7",
+      "server" : "1.10.8",
       "cookfile" : "1.5.0",
       "recipe" : "1.0.0",
-      "build" : 67
+      "build" : 68
     },
     "update_notes" : "",
     "update_warnings" : ""
@@ -143,8 +143,8 @@
       }
     },
     {
-      "version" : "1.10.7",
-      "build" : 67,
+      "version" : "1.10.8",
+      "build" : 68,
       "reboot_required" : true,
       "dependencies" : {
         "app": {
@@ -154,8 +154,8 @@
         },
         "control": {
           "py_dependencies": ["bleak==3.0.1"],
-          "apt_dependencies": [],
-          "command_list" : []
+          "apt_dependencies": ["bluetooth", "bluez"],
+          "command_list" : [["sudo", "rfkill", "unblock", "bluetooth"]]
         }
       }
     }
