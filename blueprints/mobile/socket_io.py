@@ -167,7 +167,7 @@ def _get_dash_data(settings, pelletdb):
     errors = read_errors()
     warnings = read_warnings()
     notify_data = control['notify_data']
-    probe_device_info = read_generic_key('probe_device_info')
+    probe_device_info = read_generic_key('probe_device_info', [])
 
     timer_notify_data = _get_timer_notify_data(notify_data)
     food_probes = _get_probe_data('Food', settings, current, probe_device_info, notify_data)
