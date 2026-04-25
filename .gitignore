@@ -78,6 +78,13 @@ blueprints/example/
 *.1
 *.2
 *.3
+*.4
+*.5
+*.6
+*.7
+*.8
+*.9
+*.10
 
 # Test files are included in the repository
 # test_wled_suggested_presets.py
