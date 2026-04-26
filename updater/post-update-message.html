@@ -34,6 +34,9 @@
                   <b>Settings Page Improvements:</b> Organized into sections that make more sense (Frontend Settings, Operations, Probe Settings). Work Mode Settings is now Controller Settings to better reflect its purpose.
                </li>
                <li>
+                  <b>Bleak Based iBBQ and Meater Probes:</b> In an effort to move away from Bluepy libraries which may be unmaintained in the future, I've added alternative probe modules for both the Inkbird IBBQ devices and Meater devices.  These probe modules utilize the Bleak library instead, which should be maintained in the future and doesn't rely on certain OS level hacks (i.e. setcap permissions) to work properly.
+               </li>
+               <li>
                   <b>Behind the scenes improvements including:</b>  
                   <ul>
                      <li>
