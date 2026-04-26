@@ -17,6 +17,12 @@ PiFire Display Interface Library
 '''
 import time
 import multiprocessing
+import os
+
+# This display module does not use audio. Force SDL to a no-op audio backend
+# so ALSA warnings do not spam stderr/supervisor logs on Raspberry Pi.
+os.environ.setdefault('SDL_AUDIODRIVER', 'dummy')
+
 import pygame
 from pygame import image as PyImage
 
@@ -84,8 +90,8 @@ class Display(DisplayBase):
 		"""
 		Main display loop worker
 		"""
-		# Init Device
-		pygame.init()
+		# Init only required pygame subsystems (avoid mixer/audio init).
+		pygame.display.init()
 		# Set the pygame window name (for debug)
 		pygame.display.set_caption('PiFire Device Display')
 		# Create Display Surface
