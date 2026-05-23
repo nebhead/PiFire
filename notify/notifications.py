@@ -116,6 +116,9 @@ def check_notify(settings, control, in_data=None, pelletdb=None, grill_platform=
 					control['notify_data'][index]['req'] = False 
 
 			elif item['type'] == 'hopper':
+				# Suppress hopper alerts when the controller is explicitly stopped.
+				if control['mode'] == 'Stop':
+					continue
 				if (time.time() - item['last_check']) > (settings['pelletlevel']['warning_time'] * 60):
 					if pelletdb['current']['hopper_level'] <= settings['pelletlevel']['warning_level']:
 						send_notifications("Pellet_Level_Low")
