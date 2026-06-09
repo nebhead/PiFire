@@ -34,7 +34,6 @@ def pellets_page(action=None):
                 event['text'] = 'Successfully loaded profile and logged.'
                 backup_pellet_db(action='backup')
     elif request.method == 'GET' and action == 'hopperlevel':
-        control = {}
         control['hopper_check'] = True
         write_control(control, origin='app')
     elif request.method == 'POST' and action == 'editbrands':
