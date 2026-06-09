@@ -1,7 +1,7 @@
 <!-- Post Update Message for v1.10.0 -->
 <H1>
     <img src="{{ url_for('static', filename='img/launcher-icon-1x.png') }}" width="50" height="50" class="d-inline-block align-top" alt="">
-    PiFire 1.10.9 Release - April 2026
+    PiFire 1.10.10 Release - June 2026
 </H1>
 
 <div class="row justify-content-center">
@@ -151,6 +151,9 @@
                </li>
                <li>
                   Fixes to the installation script for Trixie.  Users are now required to enter your sudo password upfront at the beginning of the installation process, and the script will keep the sudo session alive for the duration of the installation.  This should prevent issues with the sudo session expiring mid-installation and improve the overall reliability of the installation process on Raspberry Pi OS Trixie and later.
+               </li>
+               <li>
+                  <strong>1.10.10 Bug Fix:</strong> Fixed a bug where the Pellet Manager page would crash when trying to refresh the hopper level.  This was due to an errant clearing of the control variables in the webapp code.  
                </li>
             </ul>
        
