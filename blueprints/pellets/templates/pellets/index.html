@@ -467,6 +467,18 @@
 <br><br><br>
 {% endblock %}
 
+{% block controlpanel %}
+<!-- Control Panel -->
+{% from "_macro_control_panel.html" import render_container %}
+{{ render_container(settings, control) }}
+<!-- End Control Panel -->
+{% endblock %}
+
+{% block controlpanel_scripts %}
+<!-- Control Panel JS -->
+<script src="{{ url_for('static', filename='js/control_panel.js') }}"></script>
+{% endblock %}
+
 {% block scripts %}
 <script>
     $(document).ready(function(){
