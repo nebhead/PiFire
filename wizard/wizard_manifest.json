@@ -1531,6 +1531,60 @@
 					]
 				}
 			},
+			"bt_igrill_alt" : {
+				"friendly_name" : "Bluetooth - Weber iGrill (Bleak Alt)",
+				"filename" : "bt_igrill_alt",
+				"description" : "This device module supports Bluetooth LE Weber iGrill devices (mini, mini v2, v2, v202, and v3) using the Bleak library. This module currently supports authentication, probe temperatures, and battery level.",
+				"default" : false,
+				"image" : "bt_ibbq.png",
+				"reboot_required" : false,
+				"py_dependencies" : ["bleak==3.0.1"],
+				"apt_dependencies" : [],
+				"command_list" : [],
+				"settings_dependencies" : {
+					"units" : {
+						"friendly_name" : "Temp Units",
+						"description" : "Select the temperature units to use for PiFire globally.  (This can be modified in settings later)",
+						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
+						"settings" : ["globals", "units"]
+					}
+				},
+				"device_specific" : {
+					"ports" : ["BT0", "BT1", "BT2", "BT3"],
+					"type" : "bluetooth",
+					"config" : [
+						{
+							"label" : "hardware_id",
+							"friendly_name" : "Hardware ID",
+							"description" : "This is the unique Hardware ID or Address of the peripheral (format: xx:xx:xx:xx:xx:xx).  This should be discovered during scanning.",
+							"type" : "bt_address",
+							"default" : "",
+							"hidden" : false
+						},
+						{
+							"label" : "transient",
+							"friendly_name" : "Transient",
+							"description" : "Select whether this device is fixed/always attached (default) or if it is transient/sometimes detached.",
+							"type" : "list",
+							"list_values" : ["True", "False"],
+							"list_labels" : ["Transient (sometimes detached)", "Fixed (always attached)"],
+							"default" : "True",
+							"hidden" : true
+						},
+						{
+							"label" : "num_probes",
+							"friendly_name" : "Number of Probes",
+							"description" : "Select the number of probes for this device.",
+							"type" : "int",
+							"min" : 2,
+							"max" : 4,
+							"step" : 1,
+							"default" : 4,
+							"hidden" : true
+						}
+					]
+				}
+			},
 			"bt_meater_exp" : {
 				"friendly_name" : "BT - Meater Experimental",
 				"filename" : "bt_meater_exp",
