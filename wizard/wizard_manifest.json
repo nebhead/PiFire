@@ -1283,6 +1283,51 @@
 					]
 				}
 			},
+			"kmeter_iso" : {
+				"friendly_name" : "KMeter-ISO M5Stack",
+				"filename" : "kmeter_iso",
+				"description" : "This I2C device reads one K-type thermocouple through an M5Stack KMeter-ISO Unit on /dev/i2c-1. Its raw error status register reports 0 when ready and a nonzero device error. The default address is 0x66. For additional units on the same bus, first assign each unit a unique 7-bit address using M5Stack-supported firmware or external tooling; PiFire does not change KMeter-ISO addresses.",
+				"default" : false,
+				"image" : "kmeter_iso.png",
+				"reboot_required" : false,
+				"py_dependencies" : ["smbus2==0.6.1"],
+				"apt_dependencies" : [],
+				"command_list" : [],
+				"settings_dependencies" : {
+					"units" : {
+						"friendly_name" : "Temp Units",
+						"description" : "Select the temperature units to use for PiFire globally.  (This can be modified in settings later)",
+						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
+						"settings" : ["globals", "units"]
+					}
+				},
+				"device_specific" : {
+					"ports" : ["KTT0"],
+					"type" : "thermocouple",
+					"config" : [
+						{
+							"label" : "i2c_bus_addr",
+							"friendly_name" : "I2C Bus Address",
+							"description" : "Select this device's unique I2C bus address. Default is 0x66. Configure additional KMeter-ISO addresses externally before adding them to PiFire.",
+							"type" : "list",
+							"list_values" : ["0x66", "0x67", "0x65", "0x64", "0x60"],
+							"list_labels" : ["0x66", "0x67", "0x65", "0x64", "0x60"],
+							"default" : "0x66",
+							"hidden" : false
+						},
+						{
+							"label" : "transient",
+							"friendly_name" : "Transient",
+							"description" : "Select whether this device is fixed/always attached (default) or if it is transient/sometimes detached.",
+							"type" : "list",
+							"list_values" : ["False", "True"],
+							"list_labels" : ["Fixed (always attached)", "Transient (sometimes detached)"],
+							"default" : "False",
+							"hidden" : true
+						}
+					]
+				}
+			},
 			"bt_ibbq" : {
 				"friendly_name" : "Bluetooth - iBBQ / Inkbird BT (4 Probes)",
 				"filename" : "bt_ibbq",
