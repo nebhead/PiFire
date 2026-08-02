@@ -193,6 +193,10 @@ class ReadProbes(ProbeInterface):
 
 	def read_all_ports(self, output_data):
 		'''Read the thermocouple and return zero for a failed fixed probe.'''
+		port = self.device_info['ports'][0]
+		if port not in self.port_map:
+			return self.output_data
+
 		value = self.device.temperature
 		if value is None:
 			value = 0
@@ -200,8 +204,6 @@ class ReadProbes(ProbeInterface):
 			value = round(value, 1)
 			if self.units == 'F':
 				value = self._to_fahrenheit(value)
-		port = self.device_info['ports'][0]
-
 		self.output_data['tr'][self.port_map[port]] = 0
 
 		if port == self.primary_port:
