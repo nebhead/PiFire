@@ -246,7 +246,7 @@
             "friendly_name" : "PID Smith Predictor",
             "module_name" : "pid_sp",
             "image" : "pid_sp.png",
-            "description" : "The Auto Center PID controller for PiFire, modified to include a Smith Predictor. This software was originally developed by GitHub user DBorello as part of his excellent PiSmoker project.  Slightly modified by @weberbox and @dogtreatfairy and adapted for PiFire. ",
+            "description" : "The Auto Center PID controller for PiFire uses an adaptive Smith predictor: gain, time constant, and dead time are learned from applied duty and temperature. This software was originally developed by GitHub user DBorello as part of his excellent PiSmoker project. Slightly modified by @weberbox and @dogtreatfairy and adapted for PiFire.",
             "author" : "Dan Borello",
             "link" : "https://github.com/DBorello/PiSmoker", 
             "contributors" : ["Ben Parmeter", "James Weber", "Ryan Steel"],
@@ -313,28 +313,6 @@
                     "option_max" : null, 
                     "option_step" : 0.0001,
                     "hidden" : false
-                },
-				{
-                    "option_name" : "tau",
-                    "option_friendly_name" : "Tau (s)", 
-					"option_description" : "Time constant for the Smith Predictor. This is the time it takes the system to reach 2/3 of it's final value after a Set Point change. Higher Tau decreases system sensitivity to model mismatch. [Default=115]",
-                    "option_type" : "float",
-                    "option_default" : 115,
-                    "option_min" : null,
-                    "option_max" : null, 
-                    "option_step" : 1,
-                    "hidden" : false
-                },
-				{
-					"option_name": "theta",
-					"option_friendly_name" : "Theta (s)", 
-					"option_description" : "Time delay in the system. Theta is measured after commanding a Set Point change as the time it takes from the initial commmand to seeing initial temperature rise. Higher Theta makes the system more sensitive to delays in the system. [Default=65]",
- 					"option_type" : "float",
-  					"option_default" : 65,
-   					"option_min" : null,
-    				"option_max" : null, 
-     				"option_step" : 1,
-      				"hidden" : false
                 }
             ]
         },
