@@ -432,7 +432,7 @@ class iGrill_Device:
 			return self.status
 
 
-class ReadProbes(ProbeInterface):
+class ReadProbes(ProbeInterface, uses_temp_queue=False):
 	def __init__(self, probe_info, device_info, units):
 		self.hardware_id = device_info['config'].get('hardware_id', None)
 		self.debug_enabled = _to_bool(device_info['config'].get('debug', IGRILL_DEBUG_DEFAULT), default=IGRILL_DEBUG_DEFAULT)
