@@ -74,6 +74,7 @@ class ProbesMain:
 		}
 		for device in self.probe_device_list:
 			device_data = device.read_all_ports(output_data)
+			device_data = device.apply_temp_queue(device_data)
 			for group in device_data:
 				for probe in device_data[group]:
 					output_data[group][probe] = device_data[group][probe]

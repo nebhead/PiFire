@@ -73,7 +73,7 @@ class KTTDevice():
 	def get_status(self):
 		return self.status
 
-class ReadProbes(ProbeInterface):
+class ReadProbes(ProbeInterface, uses_temp_queue=True):
 
 	def __init__(self, probe_info, device_info, units):
 		super().__init__(probe_info, device_info, units)
