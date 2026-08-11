@@ -1,6 +1,11 @@
 
 generated/
 
+# Agent scratch / tooling state - never commit
+.superpowers/
+.serena/
+.worktrees/
+
 *.pyc
 
 control.err.log

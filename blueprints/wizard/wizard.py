@@ -171,3 +171,82 @@ def prepare_wizard_data(form_data):
 				wizardInstallInfo['modules'][module]['config'][config.replace(module_ + 'config_', '')] = value
 
 	return(wizardInstallInfo)
+
+def find_platform_pin_collisions(settings_dependencies, submitted_settings):
+	"""
+	Detects GPIO pins assigned to more than one grill platform function in a submitted
+	wizard configuration.
+
+	Fields are checked when either of two things claims the pin before/independently of
+	control.py ever running:
+	  1. grillplat/raspberry_pi_all.py's GrillPlatform.__init__ turns the field into a pin
+	     object - mirrored exactly, so fields left inert by other settings (e.g. the AC fan
+	     pin on a DC-fan build, the selector pin on a standalone build) are never flagged:
+	       - outputs.auger, outputs.igniter, outputs.power are always claimed
+	       - outputs.fan is claimed only when dc_fan is False
+	       - outputs.dc_fan and outputs.pwm are claimed only when dc_fan is True
+	       - inputs.selector is claimed only when standalone is False
+	       - outputs.aux1..aux4 are claimed only when not 'None'
+	  2. board-config.py writes the pin into the boot config as a device-tree overlay, so the
+	     KERNEL claims it at boot, before GrillPlatform.__init__ ever runs - if an aux relay
+	     (or the selector) is assigned the same pin, GrillPlatform.__init__ loses that race
+	     and raises, which lands PiFire on the simulated prototype platform exactly as if the
+	     collision were with another GrillPlatform pin:
+	       - system.1WIRE is always claimed when set (dtoverlay=w1-gpio, board-config.py's
+	         set_onewire_gpio())
+	       - system.SPI0.CE0 and system.SPI0.CE1 are always claimed when set (the SPI0
+	         overlay enabled by board-config.py's enable_spi() fixes these pins)
+	       - inputs.shutdown is always claimed when set (dtoverlay=gpio-shutdown,
+	         board-config.py's enable_gpio_shutdown())
+
+	Deliberately NOT checked, despite also being pin-valued fields in the manifest:
+	device_display_*, device_distance_*, device_input_*. None of these are touched by
+	GrillPlatform.__init__ or by a board-config.py boot overlay verified for this guard, and
+	device_distance_trig in particular is hardcoded to the same pin as output_auger on the
+	pcb_4.x.x default, so treating it as claimed would refuse that board's own stock
+	configuration.
+
+	Parameters:
+	- settings_dependencies (dict): wizardData['modules']['grillplatform'][<profile>]['settings_dependencies'].
+	  Used only to look up each field's friendly_name for the error message.
+	- submitted_settings (dict): wizardInstallInfo['modules']['grillplatform']['settings'], the raw
+	  setting-name -> submitted-string-value mapping produced by prepare_wizard_data().
+
+	Returns:
+	- list of str: one human-readable error message per colliding pair of fields, naming both
+	  fields and the shared pin. Empty if there are no collisions.
+	"""
+	dc_fan = submitted_settings.get('dc_fan') == 'True'
+	standalone = submitted_settings.get('standalone') == 'True'
+
+	pin_fields = [
+		'output_auger', 'output_igniter', 'output_power',
+		'output_aux1', 'output_aux2', 'output_aux3', 'output_aux4',
+		'system_1wire', 'system_spi0_ce0', 'system_spi0_ce1',
+		'input_shutdown',
+	]
+	if dc_fan:
+		pin_fields += ['output_dc_fan', 'output_pwm']
+	else:
+		pin_fields.append('output_fan')
+	if not standalone:
+		pin_fields.append('input_selector')
+
+	claimed_by = {}  # pin value (str) -> (field name, friendly name)
+	errors = []
+	for field in pin_fields:
+		value = submitted_settings.get(field)
+		if value is None or value == 'None':
+			continue  # unset/'Not Installed' pins are never claimed
+
+		friendly_name = settings_dependencies.get(field, {}).get('friendly_name', field)
+		if value in claimed_by:
+			_, other_friendly_name = claimed_by[value]
+			errors.append(
+				f'{other_friendly_name} and {friendly_name} are both set to GPIO{value}. '
+				f'Each pin may only be assigned to one function.'
+			)
+		else:
+			claimed_by[value] = (field, friendly_name)
+
+	return errors

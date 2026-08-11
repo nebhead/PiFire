@@ -85,6 +85,13 @@ class GrillPlatform:
 		self.igniter = OutputDevice(self.out_pins['igniter'], active_high=active_high, initial_value=False)
 		self.power = OutputDevice(self.out_pins['power'], active_high=active_high, initial_value=False)
 
+		''' Auxiliary relays - only those with a real pin assigned are constructed '''
+		self.aux = {}
+		for aux_name in ['aux1', 'aux2', 'aux3', 'aux4']:
+			aux_pin = self.out_pins.get(aux_name, None)
+			if aux_pin is not None:
+				self.aux[aux_name] = OutputDevice(aux_pin, active_high=active_high, initial_value=False)
+
 	def auger_on(self):
 		self.logger.debug('auger_on: Turning on auger')
 		self.auger.on()
@@ -147,6 +154,45 @@ class GrillPlatform:
 	def power_off(self):
 		self.logger.debug('power_off: Powering off grill platform')
 		self.power.off()
+		''' Auxiliary relays cannot be energized without main power '''
+		self._all_aux_off()
+
+
+	def aux_names(self):
+		''' Return the list of configured auxiliary relay names. '''
+		return list(self.aux.keys())
+
+	def aux_on(self, name):
+		if name not in self.aux:
+			self.logger.debug(f'aux_on: Auxiliary relay [{name}] is not configured - ignoring.')
+			return
+		self.logger.debug(f'aux_on: Turning on auxiliary relay [{name}]')
+		self.aux[name].on()
+
+	def aux_off(self, name):
+		if name not in self.aux:
+			self.logger.debug(f'aux_off: Auxiliary relay [{name}] is not configured - ignoring.')
+			return
+		self.logger.debug(f'aux_off: Turning off auxiliary relay [{name}]')
+		self.aux[name].off()
+
+	def aux_toggle(self, name):
+		if name not in self.aux:
+			self.logger.debug(f'aux_toggle: Auxiliary relay [{name}] is not configured - ignoring.')
+			return
+		self.logger.debug(f'aux_toggle: Toggling auxiliary relay [{name}]')
+		self.aux[name].toggle()
+
+	def get_aux_status(self, name):
+		''' Return the state of an auxiliary relay, or None if it is not configured. '''
+		if name not in self.aux:
+			return None
+		return self.aux[name].is_active
+
+	def _all_aux_off(self):
+		''' De-energize every auxiliary relay.  Called whenever main power drops. '''
+		for name in self.aux:
+			self.aux[name].off()
 
 	def get_input_status(self):
 		if self.in_pins['selector'] is not None and self.standalone == False:
@@ -159,6 +205,8 @@ class GrillPlatform:
 		self.current['igniter'] = self.igniter.is_active
 		self.current['power'] = self.power.is_active
 		self.current['fan'] = self.fan.is_active
+		for name in self.aux:
+			self.current[name] = self.aux[name].is_active
 		if self.dc_fan:
 #			self.logger.debug('get_output_status: self.current_fan_speed_percent = ' + str(self.current_fan_speed_percent)) # This is a little verbose, even for debug logging
 			self.current['pwm'] = self.current_fan_speed_percent
@@ -208,6 +256,9 @@ class GrillPlatform:
 		self.igniter.close()
 		self.auger.close()
 		self.fan.close()
+		self._all_aux_off()
+		for name in self.aux:
+			self.aux[name].close()
 		self.pwm.stop()
 		if self.selector is not None:
 			self.selector.close()

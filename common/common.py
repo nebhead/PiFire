@@ -231,11 +231,21 @@ def default_settings():
 		},
 		"outputs": { 
 			"auger": 14,
+			"aux1": None,
+			"aux2": None,
+			"aux3": None,
+			"aux4": None,
 			"dc_fan": 26,
 			"fan": 15,
 			"igniter": 18,
 			"power": 4,
 			"pwm": 13
+		},
+		"aux_labels": {
+			"aux1": "Aux 1",
+			"aux2": "Aux 2",
+			"aux3": "Aux 3",
+			"aux4": "Aux 4"
 		},
 		"system" : {
 			"SPI0" : {
@@ -674,6 +684,8 @@ def default_control():
 		'power' : False,
 		'pwm' : 100
 	}
+
+	control['aux'] = {}  # Pending auxiliary relay requests, i.e. {'aux1' : True}.  Cleared once applied.
 
 	control['smartstart'] = {
 		'startuptemp' : 0,
@@ -2414,6 +2426,32 @@ def get_probe_info(probe_info):
 
 	return probe_structure 
 
+AUX_OUTPUT_NAMES = ['aux1', 'aux2', 'aux3', 'aux4']
+
+def get_aux_list(settings):
+	"""
+	Build the list of configured auxiliary relays.
+
+	An auxiliary relay is considered configured when its pin in
+	settings['platform']['outputs'] is not None.  Relays that are not
+	configured are omitted entirely, which is what hides them from every UI.
+
+	:param settings: Settings dictionary
+	:return: List of dictionaries, i.e. [{'name' : 'aux1', 'label' : 'Work Light'}]
+	"""
+	aux_list = []
+	outputs = settings['platform'].get('outputs', {})
+	labels = settings['platform'].get('aux_labels', {})
+
+	for name in AUX_OUTPUT_NAMES:
+		if outputs.get(name, None) is not None:
+			aux_list.append({
+				'name' : name,
+				'label' : labels.get(name, name)
+			})
+
+	return aux_list
+
 def read_probe_status(probe_info):
 	"""
 	Creates a structured status report for all probes in the system by combining probe configuration
@@ -3144,6 +3182,32 @@ def process_command(action=None, arglist=[], origin='unknown', direct_write=Fals
 			else:
 				data['result'] = 'ERROR'
 				data['message'] = f'Before changing manual outputs, system must be put into Manual mode.'
+
+		elif arglist[0] == 'aux':
+			'''
+			Auxiliary Relay Control 
+			Note: Auxiliary relays are never driven by the controller, so unlike the manual 
+			commands above, no mode change or safety override is required.  
+			/api/set/aux/{aux1|aux2|aux3|aux4}/{true/false/toggle}
+			'''
+			aux_names = [aux['name'] for aux in get_aux_list(settings)]
+
+			if arglist[1] not in aux_names:
+				data['result'] = 'ERROR'
+				data['message'] = f'Auxiliary relay [{arglist[1]}] is not configured.  Configured relays: {aux_names}'
+			else:
+				if arglist[2] == 'toggle':
+					status = read_status()
+					arglist[2] = 'false' if status['outpins'].get(arglist[1], False) else 'true'
+
+				if arglist[2] in ['true', 'false']:
+					if control.get('aux', None) is None:
+						control['aux'] = {}
+					control['aux'][arglist[1]] = True if arglist[2] == 'true' else False
+					write_control(control, direct_write=direct_write, origin=origin)
+				else:
+					data['result'] = 'ERROR'
+					data['message'] = f'Auxiliary relay command [{arglist[2]}] not recognized.  Use true, false or toggle.'
 
 		else:
 			data['result'] = 'ERROR'

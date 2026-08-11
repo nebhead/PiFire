@@ -1,6 +1,6 @@
 
 from flask import render_template, request, render_template_string, jsonify
-from common.common import read_settings, read_control, write_settings, write_control, read_generic_json, generate_uuid, convert_settings_units
+from common.common import read_settings, read_control, write_settings, write_control, read_generic_json, generate_uuid, convert_settings_units, get_aux_list
 from common.app import is_not_blank, is_checked
 
 from . import settings_bp
@@ -562,6 +562,24 @@ def settings_page(action=None):
         event['text'] = 'Successfully updated safety settings.'
 
         write_settings(settings)
+
+    if request.method == 'POST' and action == 'aux':
+        response = request.form
+
+        for aux in get_aux_list(settings):
+            field = f'aux_label_{aux["name"]}'
+            if field in response:
+                label = response[field].strip()[:25]
+                if label != '':
+                    settings['platform']['aux_labels'][aux['name']] = label
+
+        event['type'] = 'updated'
+        event['text'] = 'Successfully updated auxiliary relay settings.'
+
+        control['settings_update'] = True
+
+        write_settings(settings)
+        write_control(control, origin='app')
 
     if request.method == 'POST' and action == 'pellets':
         response = request.form

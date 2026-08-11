@@ -313,7 +313,7 @@
 </div>
 {% endmacro %}
 
-{% macro render_status_card() %}
+{% macro render_status_card(settings) %}
 <div class="card shadow">
 	<div class="card-header bg-primary text-white text-center">
 		<i class="fas fa-info-circle"></i>&nbsp; Status: <span id="mode_status" style="color:yellow"><b>Stop</b></span>
@@ -332,6 +332,13 @@
 					<td>
 						<span id="igniter_status"><i class="fas fa-fire fa-2x" data-toggle="tooltip" data-placement="top" title="Igniter ON" style="color:rgb(150, 150, 150)"></i></span>&nbsp;
 					</td>
+					{% for aux_name in ['aux1', 'aux2', 'aux3', 'aux4'] %}
+					{% if settings['platform']['outputs'].get(aux_name) is not none %}
+					<td>
+						<span id="{{ aux_name }}_status"><i class="fas fa-plug fa-2x" data-toggle="tooltip" data-placement="top" title="{{ settings['platform']['aux_labels'].get(aux_name, aux_name) }} OFF" data-label="{{ settings['platform']['aux_labels'].get(aux_name, aux_name) }}" style="color:rgb(150, 150, 150)"></i></span>&nbsp;
+					</td>
+					{% endif %}
+					{% endfor %}
 					<td>
 						<span id="pmode_status" class="fa-stack" style="vertical-align: top;">
 							<i class="far fa-square fa-stack-2x" style="color:rgb(150, 150, 150)" data-toggle="tooltip" data-placement="top" title="P-Mode"></i>
@@ -343,6 +350,11 @@
 					<td><span class="badge badge-secondary">Fan</span></td>
 					<td><span class="badge badge-secondary">Auger</span></td>
 					<td><span class="badge badge-secondary">Igniter</span></td>
+					{% for aux_name in ['aux1', 'aux2', 'aux3', 'aux4'] %}
+					{% if settings['platform']['outputs'].get(aux_name) is not none %}
+					<td><span class="badge badge-secondary">{{ settings['platform']['aux_labels'].get(aux_name, aux_name) }}</span></td>
+					{% endif %}
+					{% endfor %}
 					<td><span class="badge badge-secondary">P-Mode</span></td>
 				  </tr>
 				</tbody>

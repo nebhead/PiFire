@@ -73,6 +73,30 @@
 						"options" : { "4" : "GPIO4", "2" : "GPIO2", "3" : "GPIO3", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
 						"settings" : ["platform", "outputs", "power"]
 					},
+					"output_aux1" : {
+						"friendly_name" : "Auxiliary Relay 1 GPIO Pin",
+						"description" : "Select the GPIO used for auxiliary relay 1, or Not Installed if you do not have one. Auxiliary relays are never controlled by PiFire during a cook - they are yours to switch.",
+						"options" : { "None" : "Not Installed", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "outputs", "aux1"]
+					},
+					"output_aux2" : {
+						"friendly_name" : "Auxiliary Relay 2 GPIO Pin",
+						"description" : "Select the GPIO used for auxiliary relay 2, or Not Installed if you do not have one. Auxiliary relays are never controlled by PiFire during a cook - they are yours to switch.",
+						"options" : { "None" : "Not Installed", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "outputs", "aux2"]
+					},
+					"output_aux3" : {
+						"friendly_name" : "Auxiliary Relay 3 GPIO Pin",
+						"description" : "Select the GPIO used for auxiliary relay 3, or Not Installed if you do not have one. Auxiliary relays are never controlled by PiFire during a cook - they are yours to switch.",
+						"options" : { "None" : "Not Installed", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "outputs", "aux3"]
+					},
+					"output_aux4" : {
+						"friendly_name" : "Auxiliary Relay 4 GPIO Pin",
+						"description" : "Select the GPIO used for auxiliary relay 4, or Not Installed if you do not have one. Auxiliary relays are never controlled by PiFire during a cook - they are yours to switch.",
+						"options" : { "None" : "Not Installed", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "outputs", "aux4"]
+					},
 					"output_pwm" : {
 						"friendly_name" : "DC Fan PWM GPIO Pin",
 						"description" : "Select the GPIO used for the DC Fan PWM.  Note that this should be a PWM capable GPIO.",
@@ -229,6 +253,30 @@
 						"options" : { "4" : "GPIO4" },
 						"settings" : ["platform", "outputs", "power"],
 						"hidden" : true
+					},
+					"output_aux1" : {
+						"friendly_name" : "Auxiliary Relay 1 GPIO Pin",
+						"description" : "Select the GPIO used for auxiliary relay 1, or Not Installed if you do not have one. Auxiliary relays are never controlled by PiFire during a cook - they are yours to switch.",
+						"options" : { "None" : "Not Installed", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "outputs", "aux1"]
+					},
+					"output_aux2" : {
+						"friendly_name" : "Auxiliary Relay 2 GPIO Pin",
+						"description" : "Select the GPIO used for auxiliary relay 2, or Not Installed if you do not have one. Auxiliary relays are never controlled by PiFire during a cook - they are yours to switch.",
+						"options" : { "None" : "Not Installed", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "outputs", "aux2"]
+					},
+					"output_aux3" : {
+						"friendly_name" : "Auxiliary Relay 3 GPIO Pin",
+						"description" : "Select the GPIO used for auxiliary relay 3, or Not Installed if you do not have one. Auxiliary relays are never controlled by PiFire during a cook - they are yours to switch.",
+						"options" : { "None" : "Not Installed", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "outputs", "aux3"]
+					},
+					"output_aux4" : {
+						"friendly_name" : "Auxiliary Relay 4 GPIO Pin",
+						"description" : "Select the GPIO used for auxiliary relay 4, or Not Installed if you do not have one. Auxiliary relays are never controlled by PiFire during a cook - they are yours to switch.",
+						"options" : { "None" : "Not Installed", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "outputs", "aux4"]
 					},
 					"output_pwm" : {
 						"friendly_name" : "DC Fan PWM GPIO Pin",
@@ -407,6 +455,30 @@
 						"options" : { "4" : "GPIO4" },
 						"settings" : ["platform", "outputs", "power"],
 						"hidden" : true
+					},
+					"output_aux1" : {
+						"friendly_name" : "Auxiliary Relay 1 GPIO Pin",
+						"description" : "Select the GPIO used for auxiliary relay 1, or Not Installed if you do not have one. Auxiliary relays are never controlled by PiFire during a cook - they are yours to switch.",
+						"options" : { "None" : "Not Installed", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "outputs", "aux1"]
+					},
+					"output_aux2" : {
+						"friendly_name" : "Auxiliary Relay 2 GPIO Pin",
+						"description" : "Select the GPIO used for auxiliary relay 2, or Not Installed if you do not have one. Auxiliary relays are never controlled by PiFire during a cook - they are yours to switch.",
+						"options" : { "None" : "Not Installed", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "outputs", "aux2"]
+					},
+					"output_aux3" : {
+						"friendly_name" : "Auxiliary Relay 3 GPIO Pin",
+						"description" : "Select the GPIO used for auxiliary relay 3, or Not Installed if you do not have one. Auxiliary relays are never controlled by PiFire during a cook - they are yours to switch.",
+						"options" : { "None" : "Not Installed", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "outputs", "aux3"]
+					},
+					"output_aux4" : {
+						"friendly_name" : "Auxiliary Relay 4 GPIO Pin",
+						"description" : "Select the GPIO used for auxiliary relay 4, or Not Installed if you do not have one. Auxiliary relays are never controlled by PiFire during a cook - they are yours to switch.",
+						"options" : { "None" : "Not Installed", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "outputs", "aux4"]
 					},
 					"output_pwm" : {
 						"friendly_name" : "DC Fan PWM GPIO Pin",
@@ -592,6 +664,30 @@
 						"settings" : ["platform", "outputs", "power"],
 						"hidden" : true
 					},
+					"output_aux1" : {
+						"friendly_name" : "Auxiliary Relay 1 GPIO Pin",
+						"description" : "Select the GPIO used for auxiliary relay 1, or Not Installed if you do not have one. Auxiliary relays are never controlled by PiFire during a cook - they are yours to switch.",
+						"options" : { "None" : "Not Installed", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "outputs", "aux1"]
+					},
+					"output_aux2" : {
+						"friendly_name" : "Auxiliary Relay 2 GPIO Pin",
+						"description" : "Select the GPIO used for auxiliary relay 2, or Not Installed if you do not have one. Auxiliary relays are never controlled by PiFire during a cook - they are yours to switch.",
+						"options" : { "None" : "Not Installed", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "outputs", "aux2"]
+					},
+					"output_aux3" : {
+						"friendly_name" : "Auxiliary Relay 3 GPIO Pin",
+						"description" : "Select the GPIO used for auxiliary relay 3, or Not Installed if you do not have one. Auxiliary relays are never controlled by PiFire during a cook - they are yours to switch.",
+						"options" : { "None" : "Not Installed", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "outputs", "aux3"]
+					},
+					"output_aux4" : {
+						"friendly_name" : "Auxiliary Relay 4 GPIO Pin",
+						"description" : "Select the GPIO used for auxiliary relay 4, or Not Installed if you do not have one. Auxiliary relays are never controlled by PiFire during a cook - they are yours to switch.",
+						"options" : { "None" : "Not Installed", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "outputs", "aux4"]
+					},
 					"output_pwm" : {
 						"friendly_name" : "DC Fan PWM GPIO Pin",
 						"description" : "Select the GPIO used for the DC Fan PWM.  Note that this should be a PWM capable GPIO.",
@@ -775,6 +871,30 @@
 						"options" : { "22" : "GPIO22" },
 						"settings" : ["platform", "outputs", "power"],
 						"hidden" : true
+					},
+					"output_aux1" : {
+						"friendly_name" : "Auxiliary Relay 1 GPIO Pin",
+						"description" : "Select the GPIO used for auxiliary relay 1, or Not Installed if you do not have one. Auxiliary relays are never controlled by PiFire during a cook - they are yours to switch.",
+						"options" : { "None" : "Not Installed", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "outputs", "aux1"]
+					},
+					"output_aux2" : {
+						"friendly_name" : "Auxiliary Relay 2 GPIO Pin",
+						"description" : "Select the GPIO used for auxiliary relay 2, or Not Installed if you do not have one. Auxiliary relays are never controlled by PiFire during a cook - they are yours to switch.",
+						"options" : { "None" : "Not Installed", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "outputs", "aux2"]
+					},
+					"output_aux3" : {
+						"friendly_name" : "Auxiliary Relay 3 GPIO Pin",
+						"description" : "Select the GPIO used for auxiliary relay 3, or Not Installed if you do not have one. Auxiliary relays are never controlled by PiFire during a cook - they are yours to switch.",
+						"options" : { "None" : "Not Installed", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "outputs", "aux3"]
+					},
+					"output_aux4" : {
+						"friendly_name" : "Auxiliary Relay 4 GPIO Pin",
+						"description" : "Select the GPIO used for auxiliary relay 4, or Not Installed if you do not have one. Auxiliary relays are never controlled by PiFire during a cook - they are yours to switch.",
+						"options" : { "None" : "Not Installed", "2" : "GPIO2", "3" : "GPIO3", "4" : "GPIO4", "5" : "GPIO5", "6" : "GPIO6", "7" : "GPIO7", "8" : "GPIO8", "9" : "GPIO9", "10" : "GPIO10", "11" : "GPIO11", "12" : "GPIO12", "13" : "GPIO13", "14" : "GPIO14", "15" : "GPIO15", "16" : "GPIO16", "17" : "GPIO17", "18" : "GPIO18", "19" : "GPIO19", "20" : "GPIO20", "21" : "GPIO21", "22" : "GPIO22", "23" : "GPIO23", "24" : "GPIO24", "25" : "GPIO25", "26" : "GPIO26", "27" : "GPIO27" },
+						"settings" : ["platform", "outputs", "aux4"]
 					},
 					"output_pwm" : {
 						"friendly_name" : "DC Fan PWM GPIO Pin",

@@ -33,15 +33,21 @@ def wizard_page(action=None):
         if action=='finish':
             if control['mode'] == 'Stop':
                 wizardInstallInfo = prepare_wizard_data(r)
-                store_wizard_install_info(wizardInstallInfo)
-                set_wizard_install_status(0, 'Starting Install...', '')
-                os.system(f'{python_exec} wizard.py &')	# Kickoff Installation
-                return render_template(
-					                'wizard/wizard-finish.html', 
-									page_theme=settings['globals'].get('page_theme', 'light'),
-									grill_name=settings['globals'].get('grill_name', ''),
-									wizardData=wizardData
-									)
+                profile_selected = wizardInstallInfo['modules']['grillplatform']['profile_selected'][0]
+                settings_dependencies = wizardData['modules']['grillplatform'][profile_selected]['settings_dependencies']
+                errors += find_platform_pin_collisions(settings_dependencies, wizardInstallInfo['modules']['grillplatform']['settings'])
+                if not errors:
+                    store_wizard_install_info(wizardInstallInfo)
+                    set_wizard_install_status(0, 'Starting Install...', '')
+                    os.system(f'{python_exec} wizard.py &')	# Kickoff Installation
+                    return render_template(
+                                    'wizard/wizard-finish.html',
+                                    page_theme=settings['globals'].get('page_theme', 'light'),
+                                    grill_name=settings['globals'].get('grill_name', ''),
+                                    wizardData=wizardData
+                                    )
+                # else: fall through to the shared render below so the user sees the errors.
+                # Nothing is stored and no install is launched.
 
         if action=='modulecard':
             module = r['module']
