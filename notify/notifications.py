@@ -149,13 +149,14 @@ def check_notify(settings, control, in_data=None, pelletdb=None, grill_platform=
 
 	return control
 
-def send_notifications(notify_event, label='Probe', target=0):
+def send_notifications(notify_event, label='Probe', target=0, error_grill_temp=0):
 	"""
 	Build and send notification based on notify_event and write to log.
 
 	:param notify_event: String Event
 	:param label: Label
 	:param target: Target Value
+	:param error_grill_temp: Measured grill temperature for safety error notifications
 	"""
 	settings = read_settings()
 	control = read_control()
@@ -201,26 +202,38 @@ def send_notifications(notify_event, label='Probe', target=0):
 		eventLogger.info(body_message)
 	elif "Grill_Error_01" in notify_event:
 		title_message = "Grill Error!"
-		body_message = "Grill exceded maximum temperature limit of " + str(
-			settings['safety']['maxtemp']) + unit + "! Shutting down. " + str(now)
+		body_message = "Grill temperature " + str(error_grill_temp) + unit + \
+			" exceeded maximum temperature limit of " + str(settings['safety']['maxtemp']) + unit + \
+			"! Shutting down. " + str(now)
 		channel = 'pifire_error_alerts'
-		query_args = {"value1": str(settings['safety']['maxtemp'])}
+		query_args = {
+			"value1": str(settings['safety']['maxtemp']),
+			"value2": str(error_grill_temp),
+		}
 		eventLogger.info(body_message)
 	elif "Grill_Error_02" in notify_event:
 		control = read_control()
 		title_message = "Grill Error!"
-		body_message = "Grill temperature dropped below minimum startup temperature of " + str(
-			control['safety']['startuptemp']) + unit + "! Shutting down to prevent firepot overload. " + str(now)
+		body_message = "Grill temperature " + str(error_grill_temp) + unit + \
+			" dropped below minimum startup temperature of " + str(control['safety']['startuptemp']) + unit + \
+			"! Shutting down to prevent firepot overload. " + str(now)
 		channel = 'pifire_error_alerts'
-		query_args = {"value1": str(control['safety']['startuptemp'])}
+		query_args = {
+			"value1": str(control['safety']['startuptemp']),
+			"value2": str(error_grill_temp),
+		}
 		eventLogger.info(body_message)
 	elif "Grill_Error_03" in notify_event:
 		control = read_control()
 		title_message = "Grill Error!"
-		body_message = "Grill temperature dropped below minimum startup temperature of " + str(
-			control['safety']['startuptemp']) + unit + "! Starting a re-ignite attempt, per user settings."
+		body_message = "Grill temperature " + str(error_grill_temp) + unit + \
+			" dropped below minimum startup temperature of " + str(control['safety']['startuptemp']) + unit + \
+			"! Starting a re-ignite attempt, per user settings."
 		channel = 'pifire_error_alerts'
-		query_args = {"value1": str(control['safety']['startuptemp'])}
+		query_args = {
+			"value1": str(control['safety']['startuptemp']),
+			"value2": str(error_grill_temp),
+		}
 		eventLogger.info(body_message)
 	elif "Grill_Warning" in notify_event:
 		title_message = "Grill Warning!"
