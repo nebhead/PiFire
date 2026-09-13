@@ -17,6 +17,7 @@ PiFire Display Interface Library
 '''
 import time
 import multiprocessing
+import threading
 import os
 
 # This display module does not use audio. Force SDL to a no-op audio backend
@@ -25,6 +26,8 @@ os.environ.setdefault('SDL_AUDIODRIVER', 'dummy')
 
 import pygame
 from pygame import image as PyImage
+
+from gpiozero import Button
 
 from PIL import Image, ImageFilter
 from display.base_flex import DisplayBase
@@ -86,10 +89,112 @@ class Display(DisplayBase):
 		self.touch_pos = (0,0)
 		self.DEBOUNCE = 100  # ms 
 
+		if 'none' in self.config.get('input_types_supported', []):
+			self.input_enabled = False
+			self.eventLogger.debug('Input Disabled.')
+
+	def _init_hardware_input(self):
+		"""
+		Sets up GPIO button/encoder input. Must be called from within the display
+		loop's process, since the underlying callbacks set self.input_event and
+		would otherwise update a copy of self in the wrong process.
+		"""
+		if 'button' in self.config.get('input_types_supported', []):
+			# Init GPIO for button input, setup callbacks
+			self.up = self.dev_pins['input']['up_clk'] 		# UP - GPIO16
+			self.down = self.dev_pins['input']['down_dt']	# DOWN - GPIO20
+			self.enter = self.dev_pins['input']['enter_sw'] # ENTER - GPIO21
+			self.debounce_ms = 500  # number of milliseconds to debounce input
+			self.input_counter = 0
+
+			# ==== Buttons Setup =====
+			self.pull_up = self.buttonslevel == 'HIGH'
+
+			self.up_button = Button(pin=self.up, pull_up=self.pull_up, hold_time=0.25, hold_repeat=True)
+			self.down_button = Button(pin=self.down, pull_up=self.pull_up, hold_time=0.25, hold_repeat=True)
+			self.enter_button = Button(pin=self.enter, pull_up=self.pull_up)
+
+			self.up_button.when_pressed = self._up_callback
+			self.down_button.when_pressed = self._down_callback
+			self.enter_button.when_pressed = self._enter_callback
+			self.up_button.when_held = self._up_callback
+			self.down_button.when_held = self._down_callback
+			self.eventLogger.debug('Buttons Initialized.')
+
+		if 'encoder' in self.config.get('input_types_supported', []):
+			# Only import pyky040 if encoder input is actually selected, since it may not be installed otherwise
+			from pyky040 import pyky040
+
+			# Init constants and variables
+			clk_pin = self.dev_pins['input']['up_clk']  	# Clock - GPIO16
+			dt_pin = self.dev_pins['input']['down_dt']  	# DT - GPIO20
+			sw_pin = self.dev_pins['input']['enter_sw'] 	# Switch - GPIO21
+			self.input_counter = 0
+			self.last_direction = None
+			self.last_movement_time = 0
+			self.enter_received = False
+
+			# Init Device
+			self.encoder = pyky040.Encoder(CLK=clk_pin, DT=dt_pin, SW=sw_pin)
+			self.encoder.setup(scale_min=0, scale_max=100, step=1, inc_callback=self._inc_callback,
+							dec_callback=self._dec_callback, sw_callback=self._click_callback, polling_interval=200)
+
+			# Setup & Start Input Thread (thread is fine here since this runs inside the display worker process)
+			encoder_thread = threading.Thread(target=self.encoder.watch)
+			encoder_thread.daemon = True
+			encoder_thread.start()
+			self.eventLogger.debug('Encoder Initialized.')
+
+	''' Button Callbacks '''
+
+	def _enter_callback(self):
+		self.input_event = 'ENTER'
+
+	def _up_callback(self, held=False):
+		self.input_event = 'UP'
+
+	def _down_callback(self, held=False):
+		self.input_event = 'DOWN'
+
+	''' Encoder Callbacks '''
+
+	def _click_callback(self):
+		self.input_event = 'ENTER'
+		self.enter_received = True
+
+	def _inc_callback(self, v):
+		current_time = time.time()
+		if self.last_direction is None or self.last_direction == 'DOWN' or current_time - self.last_movement_time > 0.5:
+			if not self.enter_received:
+				self.input_event = 'DOWN'
+				self.input_counter += 1
+			self.last_direction = 'DOWN'
+			self.last_movement_time = current_time
+			if time.time() - self.last_movement_time < 0.3:
+				if self.enter_received:
+					self.enter_received = False
+					return  # if enter command is received during this time, execute the enter command and not the down
+
+	def _dec_callback(self, v):
+		current_time = time.time()
+		if self.last_direction is None or self.last_direction == 'UP' or current_time - self.last_movement_time > 0.5:
+			if not self.enter_received:
+				self.input_event = 'UP'
+				self.input_counter += 1
+			self.last_direction = 'UP'
+			self.last_movement_time = current_time
+			if time.time() - self.last_movement_time < 0.3:
+				if self.enter_received:
+					self.enter_received = False
+					return  # if enter command is received during this time, execute the enter command and not the up
+
 	def _display_loop(self):
 		"""
 		Main display loop worker
 		"""
+		# Buttons/encoder callbacks must be set up in this process so that input_event updates are visible here.
+		self._init_hardware_input()
+
 		# Init only required pygame subsystems (avoid mixer/audio init).
 		pygame.display.init()
 		# Set the pygame window name (for debug)
