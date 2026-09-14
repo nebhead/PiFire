@@ -622,7 +622,7 @@ class Meater_Device():
 		self.status['hardware_id'] = self.address
 		return self.status
 	
-class ReadProbes(ProbeInterface):
+class ReadProbes(ProbeInterface, uses_temp_queue=False):
 	def __init__(self, probe_info, device_info, units):
 		self.hardware_id = device_info['config'].get('hardware_id', None)
 		if self.hardware_id == '':

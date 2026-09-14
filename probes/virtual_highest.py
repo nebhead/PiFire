@@ -34,7 +34,7 @@ from probes.base import ProbeInterface
 *****************************************
 '''
 
-class ReadProbes(ProbeInterface):
+class ReadProbes(ProbeInterface, uses_temp_queue=False):
 
 	def __init__(self, probe_info, device_info, units):
 		super().__init__(probe_info, device_info, units)
