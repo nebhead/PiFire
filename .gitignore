@@ -109,3 +109,6 @@ test_*.py
 debug_*.py
 debug_*.html
 *_test.py
+!tests/
+!tests/**/*.py
+/adaptive_controller_state.json
