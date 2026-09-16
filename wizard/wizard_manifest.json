@@ -1643,7 +1643,7 @@
 				"filename" : "cloud_thermomaven",
 				"description" : "This device module supports ThermoMaven WiFi thermometers (G1, G2, G4, P1, P2, P4) through the ThermoMaven cloud, the same way the official app does.  The base station must be on WiFi and paired to your ThermoMaven account, and PiFire needs internet access; readings are reported as unavailable while offline.  Each probe exposes a MEAT (tip) port and an AMBIENT port, plus five AREA zone ports (tip to handle).  The AMBIENT port can be used as the Primary (grill) probe.  This module is experimental: it uses the unofficial API of the ThermoMaven app (protocol from github.com/djiesr/thermomaven-ha), so if ThermoMaven changes their service this device will show as disconnected.  Feedback is welcome.",
 				"default" : false,
-				"image" : "default.png",
+				"image" : "cloud_thermomaven.png",
 				"reboot_required" : false,
 				"py_dependencies" : ["paho-mqtt==2.1.0", "cryptography==50.0.1"], 
 				"apt_dependencies" : [],
