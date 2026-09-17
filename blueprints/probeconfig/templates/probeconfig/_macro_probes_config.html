@@ -199,6 +199,8 @@
                                 {{ render_input_list(moduleSection, mode, setting['label'], defaultConfig[setting['label']], setting['list_values'], setting['list_labels']) }}
                             {% elif setting['type'] == 'bt_address' %}
                                 {{ render_input_bt_address(moduleSection, mode, setting['label'], defaultConfig[setting['label']]) }}
+                            {% elif setting['type'] == 'password' %}
+                                {{ render_input_password(moduleSection, mode, setting['label'], defaultConfig[setting['label']]) }}
                             {% else %}
                                 {{ render_input_string(moduleSection, mode, setting['label'], defaultConfig[setting['label']]) }}
                             {% endif %}
@@ -209,6 +211,8 @@
                                 {{ render_input_list(moduleSection, mode, setting['label'], setting['default'], setting['list_values'], setting['list_labels']) }}
                             {% elif setting['type'] == 'bt_address' %}
                                 {{ render_input_bt_address(moduleSection, mode, setting['label'], defaultConfig[setting['label']]) }}
+                            {% elif setting['type'] == 'password' %}
+                                {{ render_input_password(moduleSection, mode, setting['label'], setting['default']) }}
                             {% else %}
                                 {{ render_input_string(moduleSection, mode, setting['label'], setting['default']) }}
                             {% endif %}
@@ -470,6 +474,14 @@
     <option value="{{ item }}"{% if default == item %} selected{% endif %}>{{ list_labels[loop.index0] }}</option>
     {% endfor %}
 </select>
+{% endmacro %}
+
+{% macro render_input_password(section, mode, label, default) %}
+<input type="password" class="form-control deviceSpecific{{ mode }}" 
+    value="{{ default }}" aria-label="{{ label }}" 
+    aria-describedby="{{name}}_addon" autocomplete="off"
+    id="{{ section }}_devspec_{{ label }}" 
+    name="{{ section }}_devspec_{{ label }}"/>
 {% endmacro %}
 
 {% macro render_input_string(section, mode, label, default) %}
