@@ -727,6 +727,10 @@ class MenuGeneric(FlexObject):
         draw = ImageDraw.Draw(canvas)  # Create drawing object 
         fg_color = self.objectData['color']
         bg_color = (0,0,0,255)
+        # Optional parallel list of per-button colour overrides (see button_list). An entry of
+        # None, or the list being absent/shorter than button_list, falls back to fg_color/white
+        # outline, i.e. today's single-colour rendering.
+        button_colors = self.objectData.get('button_colors')
 
         # Clear any touch areas that might have been defined before 
         self.objectData['touch_areas'] = []  
@@ -795,11 +799,21 @@ class MenuGeneric(FlexObject):
 
                 rect_size = (button_width, button_height)
                 rect_coords = (rect_position[0], rect_position[1], rect_position[0] + rect_size[0], rect_position[1] + rect_size[1])
+
+                # Per-button colour override, if provided; otherwise today's single menu colour
+                # with a plain white outline.
+                if button_colors is not None and index < len(button_colors) and button_colors[index] is not None:
+                    button_color = button_colors[index]
+                    button_outline = button_color
+                else:
+                    button_color = fg_color
+                    button_outline = (255,255,255,255)
+
                 if selected == index:
                     # Reverse colors if selected
-                    draw.rounded_rectangle(rect_coords, radius=8, outline=(255,255,255,255), fill=fg_color)
+                    draw.rounded_rectangle(rect_coords, radius=8, outline=button_outline, fill=button_color)
                 else:
-                    draw.rounded_rectangle(rect_coords, radius=8, outline=(255,255,255,255), fill=bg_color)
+                    draw.rounded_rectangle(rect_coords, radius=8, outline=button_outline, fill=bg_color)
 
                 # Put button text inside rectangle  
                 if len(self.objectData['button_text'][index]) > 25:
@@ -810,7 +824,7 @@ class MenuGeneric(FlexObject):
                     # Reverse colors if selected
                     label = self._draw_text(label_displayed, self.objectData['font'], 35, bg_color)
                 else:
-                    label = self._draw_text(label_displayed, self.objectData['font'], 35, fg_color)
+                    label = self._draw_text(label_displayed, self.objectData['font'], 35, button_color)
                 label_x = rect_position[0] + (rect_size[0] // 2) - (label.width // 2)
                 label_y = rect_position[1] + (rect_size[1] // 2) - (label.height // 2)
                 label_position = (label_x, label_y)

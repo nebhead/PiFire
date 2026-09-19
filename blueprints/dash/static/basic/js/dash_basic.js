@@ -15,6 +15,8 @@ var notify_status = {}; // store all notify statuses
 var last_fan_status = null;
 var last_auger_status = null;
 var last_igniter_status = null;
+var last_aux_status = {};
+var aux_labels = {};
 var last_pmode_status = null;
 var last_lid_open_status = false;
 var display_mode = null;
@@ -58,6 +60,29 @@ function initNotifyIndicators(probes) {
 };
 
 // Update temperatures on probe status cards
+// Auxiliary relay icons render as either <i> (before Font Awesome's SVG
+// conversion runs) or <svg> (after conversion, which replaces the <i>
+// element and moves the tooltip text into an inner <title> node). These
+// helpers update whichever form is currently in the DOM using only
+// property/textContent assignment (never innerHTML), so a user-supplied
+// label can never be parsed as markup.
+function getAuxIcon(container) {
+	return container.querySelector('svg, i');
+}
+
+function setAuxIconTooltip(icon, text) {
+	if (icon.tagName.toLowerCase() === 'svg') {
+		var titleEl = icon.querySelector('title');
+		if (titleEl === null) {
+			titleEl = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+			icon.insertBefore(titleEl, icon.firstChild);
+		}
+		titleEl.textContent = text;
+	} else {
+		icon.title = text;
+	}
+}
+
 function updateProbeCards() {
 	req = $.ajax({
 		url : '/api/current',
@@ -230,6 +255,31 @@ function updateProbeCards() {
 					document.getElementById('igniter_status').innerHTML = '<i class="fas fa-fire fa-2x" data-toggle="tooltip" data-placement="top" title="Igniter OFF" style="color:rgb(150, 150, 150)"></i>';
 				};
 			};
+
+			['aux1', 'aux2', 'aux3', 'aux4'].forEach(function(aux_name) {
+				if (!(aux_name in current.status.outpins)) {
+					return;
+				}
+				if (current.status.outpins[aux_name] != last_aux_status[aux_name]) {
+					last_aux_status[aux_name] = current.status.outpins[aux_name];
+					var element = document.getElementById(aux_name + '_status');
+					if (element === null) {
+						return;
+					}
+					var icon = getAuxIcon(element);
+					if (icon === null) {
+						return;
+					}
+					var label = aux_labels[aux_name] || aux_name;
+					if (last_aux_status[aux_name]) {
+						setAuxIconTooltip(icon, label + ' ON');
+						icon.style.color = 'rgb(0, 190, 0)';
+					} else {
+						setAuxIconTooltip(icon, label + ' OFF');
+						icon.style.color = 'rgb(150, 150, 150)';
+					}
+				}
+			});
 
 			if (current.status.p_mode != last_pmode_status) {
 				last_pmode_status = current.status.p_mode;
@@ -785,8 +835,20 @@ function dashClearErrorCounter() {
 $(document).ready(function(){
 	// Setup Listeners 
 	$('#reloadPage').click(function() {
-		// Reload page when server side changes detected. 
-		location.reload(); 
+		// Reload page when server side changes detected.
+		location.reload();
+	});
+
+	['aux1', 'aux2', 'aux3', 'aux4'].forEach(function(aux_name) {
+		var element = document.getElementById(aux_name + '_status');
+		if (element === null) {
+			return;
+		}
+		var icon = getAuxIcon(element);
+		aux_labels[aux_name] = (icon !== null && icon.dataset.label) ? icon.dataset.label : aux_name;
+		$('#' + aux_name + '_status').click(function() {
+			cp_api_set('aux/' + aux_name + '/toggle');
+		});
 	});
 
 	// Initialize Dashboard Data

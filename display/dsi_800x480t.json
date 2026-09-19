@@ -371,8 +371,8 @@
                 "title_text" : "Main Menu", 
                 "color" : [255,255,255,255],
                 "data" : {},
-                "button_list" : ["menu_close", "menu_prime", "menu_startup", "cmd_monitor", "menu_system", "menu_close"],
-                "button_text" : ["Close Menu", "Prime", "Startup", "Monitor", "System", "Close"], 
+                "button_list" : ["menu_close", "menu_prime", "menu_startup", "cmd_monitor", "menu_system", "menu_aux", "menu_close"],
+                "button_text" : ["Close Menu", "Prime", "Startup", "Monitor", "System", "Auxiliary", "Close"], 
                 "button_value" : [],
                 "touch_areas" : []
             },
@@ -387,8 +387,8 @@
                 "title_text" : "Main Menu", 
                 "color" : [255,255,255,255],
                 "data" : {},
-                "button_list" : ["menu_close", "cmd_lid_open", "input_hold", "cmd_shutdown", "cmd_stop", "cmd_smoke", "cmd_splus", "menu_pmode", "menu_system", "menu_close"],
-                "button_text" : ["Close Menu", "Lid Open", "Hold", "Shutdown", "Stop", "Smoke", "Smoke+", "PMode", "System", "Close"], 
+                "button_list" : ["menu_close", "cmd_lid_open", "input_hold", "cmd_shutdown", "cmd_stop", "cmd_smoke", "cmd_splus", "menu_pmode", "menu_system", "menu_aux", "menu_close"],
+                "button_text" : ["Close Menu", "Lid Open", "Hold", "Shutdown", "Stop", "Smoke", "Smoke+", "PMode", "System", "Auxiliary", "Close"], 
                 "button_value" : [],
                 "touch_areas" : []
             },
@@ -403,8 +403,8 @@
                 "title_text" : "Main Menu", 
                 "color" : [255,255,255,255],
                 "data" : {},
-                "button_list" : ["menu_close", "cmd_stop", "menu_system", "menu_close"],
-                "button_text" : ["Close Menu", "Stop", "System", "Close"], 
+                "button_list" : ["menu_close", "cmd_stop", "menu_system", "menu_aux", "menu_close"],
+                "button_text" : ["Close Menu", "Stop", "System", "Auxiliary", "Close"], 
                 "button_value" : [],
                 "touch_areas" : []
             },
@@ -419,8 +419,8 @@
                 "title_text" : "Main Menu", 
                 "color" : [255,255,255,255],
                 "data" : {},
-                "button_list" : ["menu_close", "cmd_next_step", "cmd_shutdown", "cmd_stop", "cmd_splus", "menu_system", "menu_close"],
-                "button_text" : ["Close Menu", "Next Step", "Shutdown", "Stop", "Smoke+", "System", "Close"], 
+                "button_list" : ["menu_close", "cmd_next_step", "cmd_shutdown", "cmd_stop", "cmd_splus", "menu_system", "menu_aux", "menu_close"],
+                "button_text" : ["Close Menu", "Next Step", "Shutdown", "Stop", "Smoke+", "System", "Auxiliary", "Close"], 
                 "button_value" : [],
                 "touch_areas" : []
             },
@@ -582,6 +582,22 @@
                 },
                 "button_list" : ["menu_close", "menu_close"],
                 "button_text" : ["Close Menu", "OK"], 
+                "button_value" : [],
+                "touch_areas" : []
+            },
+            "aux" : {
+                "type" : "menu",
+                "position" : [100, 40],
+                "animation_enabled" : false, 
+                "size" : [600, 400],
+                "glow" : false,
+                "font" : "trebuc.ttf",
+                "label" : "aux_menu",
+                "title_text" : "Auxiliary", 
+                "color" : [255,255,255,255],
+                "data" : {},
+                "button_list" : ["menu_close"],
+                "button_text" : ["Close Menu"], 
                 "button_value" : [],
                 "touch_areas" : []
             }
@@ -971,8 +987,8 @@
                 "title_text" : "Main Menu", 
                 "color" : [255,255,255,255],
                 "data" : {},
-                "button_list" : ["menu_close", "menu_prime", "menu_startup", "cmd_monitor", "menu_system", "menu_close"],
-                "button_text" : ["Close Menu", "Prime", "Startup", "Monitor", "System", "Close"], 
+                "button_list" : ["menu_close", "menu_prime", "menu_startup", "cmd_monitor", "menu_system", "menu_aux", "menu_close"],
+                "button_text" : ["Close Menu", "Prime", "Startup", "Monitor", "System", "Auxiliary", "Close"], 
                 "button_value" : [],
                 "touch_areas" : []
             },
@@ -987,8 +1003,8 @@
                 "title_text" : "Main Menu", 
                 "color" : [255,255,255,255],
                 "data" : {},
-                "button_list" : ["menu_close", "cmd_lid_open", "input_hold", "cmd_shutdown", "cmd_stop", "cmd_smoke", "cmd_splus", "menu_pmode", "menu_system", "menu_close"],
-                "button_text" : ["Close Menu", "Lid Open", "Hold", "Shutdown", "Stop", "Smoke", "Smoke+", "PMode", "System", "Close"], 
+                "button_list" : ["menu_close", "cmd_lid_open", "input_hold", "cmd_shutdown", "cmd_stop", "cmd_smoke", "cmd_splus", "menu_pmode", "menu_system", "menu_aux", "menu_close"],
+                "button_text" : ["Close Menu", "Lid Open", "Hold", "Shutdown", "Stop", "Smoke", "Smoke+", "PMode", "System", "Auxiliary", "Close"], 
                 "button_value" : [],
                 "touch_areas" : []
             },
@@ -1003,8 +1019,8 @@
                 "title_text" : "Main Menu", 
                 "color" : [255,255,255,255],
                 "data" : {},
-                "button_list" : ["menu_close", "cmd_stop", "menu_system", "menu_close"],
-                "button_text" : ["Close Menu", "Stop", "System", "Close"], 
+                "button_list" : ["menu_close", "cmd_stop", "menu_system", "menu_aux", "menu_close"],
+                "button_text" : ["Close Menu", "Stop", "System", "Auxiliary", "Close"], 
                 "button_value" : [],
                 "touch_areas" : []
             },
@@ -1019,8 +1035,8 @@
                 "title_text" : "Main Menu", 
                 "color" : [255,255,255,255],
                 "data" : {},
-                "button_list" : ["menu_close", "cmd_next_step", "cmd_shutdown", "cmd_stop", "cmd_splus", "menu_system", "menu_close"],
-                "button_text" : ["Close Menu", "Next Step", "Shutdown", "Stop", "Smoke+", "System", "Close"], 
+                "button_list" : ["menu_close", "cmd_next_step", "cmd_shutdown", "cmd_stop", "cmd_splus", "menu_system", "menu_aux", "menu_close"],
+                "button_text" : ["Close Menu", "Next Step", "Shutdown", "Stop", "Smoke+", "System", "Auxiliary", "Close"], 
                 "button_value" : [],
                 "touch_areas" : []
             },
@@ -1182,6 +1198,22 @@
                 },
                 "button_list" : ["menu_close", "menu_close"],
                 "button_text" : ["Close Menu", "OK"], 
+                "button_value" : [],
+                "touch_areas" : []
+            },
+            "aux" : {
+                "type" : "menu",
+                "position" : [20, 40],
+                "animation_enabled" : false, 
+                "size" : [440, 320],
+                "glow" : false,
+                "font" : "trebuc.ttf",
+                "label" : "aux_menu",
+                "title_text" : "Auxiliary", 
+                "color" : [255,255,255,255],
+                "data" : {},
+                "button_list" : ["menu_close"],
+                "button_text" : ["Close Menu"], 
                 "button_value" : [],
                 "touch_areas" : []
             }

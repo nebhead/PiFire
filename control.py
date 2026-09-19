@@ -148,6 +148,7 @@ try:
 	DisplayModule = importlib.import_module(f'display.{display_name}')
 	display_config = settings['display']['config'][display_name]
 	display_config['probe_info'] = get_probe_info(settings['probe_settings']['probe_map']['probe_info'])
+	display_config['aux_info'] = get_aux_list(settings)
 	disp_rotation = display_config.get('rotation', 0)
 
 except:
@@ -301,6 +302,42 @@ def _process_system_commands(grill_platform):
 				'data' : {}
 			}
 		system_output.push(result)
+
+def _process_aux_requests(grill_platform, control):
+	"""
+	Apply any pending auxiliary relay requests.
+
+	Auxiliary relays are user owned - the controller never drives them - so this is
+	deliberately NOT gated on Manual mode or settings['safety']['allow_manual_changes'],
+	and it does not participate in the manual_override timers.
+
+	Requests are transient: they are cleared as soon as they have been applied, so that
+	Stop mode resetting the control structure cannot strand a stale desired state.
+
+	Takes the caller's in-memory `control` dict (rather than re-reading it) and mutates it
+	in place, so that any later stale write of that same object by the caller carries the
+	cleared aux state instead of resurrecting the just-applied request.
+	"""
+	requests = control.get('aux', {})
+
+	if not requests:
+		return
+
+	configured = grill_platform.aux_names()
+
+	for name, state in requests.items():
+		if name not in configured:
+			eventLogger.debug(f'Auxiliary relay [{name}] is not configured - ignoring request.')
+			continue
+		if state:
+			grill_platform.aux_on(name)
+			eventLogger.debug(f'Auxiliary Relay [{name}] ON')
+		else:
+			grill_platform.aux_off(name)
+			eventLogger.debug(f'Auxiliary Relay [{name}] OFF')
+
+	control['aux'] = {}
+	write_control(control, direct_write=True, origin='control')
 
 def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device):
 	"""
@@ -579,6 +616,7 @@ def _work_cycle(mode, grill_platform, probe_complex, display_device, dist_device
 		control = read_control()
 
 		_process_system_commands(grill_platform)
+		_process_aux_requests(grill_platform, control)
 
 		# Check if new mode has been requested
 		if control['updated']:
@@ -1286,6 +1324,7 @@ while True:
 
 	# Check for system commands
 	_process_system_commands(grill_platform)
+	_process_aux_requests(grill_platform, control)
 
 	# Check if there were updates to any of the settings that were flagged
 	if control['settings_update']:

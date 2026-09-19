@@ -214,7 +214,8 @@ def _get_dash_data(settings, pelletdb):
         'outputs': {
             'fan': status['outpins']['fan'],
             'auger': status['outpins']['auger'],
-            'igniter': status['outpins']['igniter']
+            'igniter': status['outpins']['igniter'],
+            'aux': {aux['name']: status['outpins'].get(aux['name'], False) for aux in get_aux_list(settings)}
         },
         'recipeStatus': {
             'recipeMode': status['recipe'],

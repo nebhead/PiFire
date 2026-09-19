@@ -49,6 +49,13 @@ class GrillPlatform:
 		self.out_pins['power'] = False
 		self.in_pins['selector'] = False
 
+		''' Auxiliary relays - only those with a real pin assigned exist '''
+		self.aux = {}
+		configured_outputs = config.get('outputs', {})
+		for aux_name in ['aux1', 'aux2', 'aux3', 'aux4']:
+			if configured_outputs.get(aux_name, None) is not None:
+				self.aux[aux_name] = False
+
 	def auger_on(self):
 		self.out_pins['auger'] = True
 
@@ -96,6 +103,39 @@ class GrillPlatform:
 
 	def power_off(self):
 		self.out_pins['power'] = False
+		''' Auxiliary relays cannot be energized without main power '''
+		self._all_aux_off()
+
+	def aux_names(self):
+		''' Return the list of configured auxiliary relay names. '''
+		return list(self.aux.keys())
+
+	def aux_on(self, name):
+		if name not in self.aux:
+			self.logger.debug(f'aux_on: Auxiliary relay [{name}] is not configured - ignoring.')
+			return
+		self.aux[name] = True
+
+	def aux_off(self, name):
+		if name not in self.aux:
+			self.logger.debug(f'aux_off: Auxiliary relay [{name}] is not configured - ignoring.')
+			return
+		self.aux[name] = False
+
+	def aux_toggle(self, name):
+		if name not in self.aux:
+			self.logger.debug(f'aux_toggle: Auxiliary relay [{name}] is not configured - ignoring.')
+			return
+		self.aux[name] = not self.aux[name]
+
+	def get_aux_status(self, name):
+		''' Return the state of an auxiliary relay, or None if it is not configured. '''
+		return self.aux.get(name, None)
+
+	def _all_aux_off(self):
+		''' De-energize every auxiliary relay.  Called whenever main power drops. '''
+		for name in self.aux:
+			self.aux[name] = False
 
 	def get_input_status(self):
 		return (self.in_pins['selector'])
@@ -109,6 +149,8 @@ class GrillPlatform:
 		self.current['igniter'] = self.out_pins['igniter']
 		self.current['power'] = self.out_pins['power']
 		self.current['fan'] = self.out_pins['fan']
+		for name in self.aux:
+			self.current[name] = self.aux[name]
 		if self.dc_fan:
 			self.current['pwm'] = 100 - (self.out_pins['pwm'] * 100)
 			self.current['frequency'] = self.frequency

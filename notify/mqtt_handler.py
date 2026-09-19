@@ -19,7 +19,7 @@ import json
 import logging
 import time
 from socket import getfqdn
-from common import create_logger
+from common import create_logger, get_aux_list
 import psutil
 #from common import write_control
 
@@ -61,6 +61,10 @@ class MqttNotificationHandler:
 			
 			# These list the devices aka attributes that will be published to mqtt
 			self.DEVICE_SENSORS = ['auger','igniter','power','fan','notify_event']
+			''' Auxiliary relays are published alongside the fixed outputs when configured '''
+			aux_list = get_aux_list(settings)
+			self._aux_names = set(aux['name'] for aux in aux_list)
+			self.DEVICE_SENSORS += [aux['name'] for aux in aux_list]
 			self.CONTROL_SENSORS = ['mode','next_mode','s_plus','pwm_control','duty_cycle','status','primary_setpoint']
 			self.PID_CONFIG_SENSORS = ['PB','Td','Ti','center']
 			self.PID_CYCLE_TIME_SENSORS = ['HoldCycleTime','LidOpenPauseTime','LidOpenThreshold','PMode','SmokeCycleTime','u_max','u_min']
@@ -299,7 +303,7 @@ class MqttNotificationHandler:
 						discovery['payload_on'] = True
 						discovery['payload_off'] = False
 						
-						if device not in {'auger','igniter','power','fan'}:
+						if device not in set(['auger','igniter','power','fan']) | self._aux_names:
 							discovery['enabled_by_default'] = False
 
 					elif datatype == str:
