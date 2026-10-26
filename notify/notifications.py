@@ -24,6 +24,7 @@ import apprise
 import logging
 import math
 from common import write_settings, write_control, create_logger, read_history, read_settings, read_control, read_pellet_db
+from notify.mobile_push import build_alert as build_mobile_alert, publish_alert as publish_mobile_alert, send_mobile_push
 
 '''
 ==============================================================================
@@ -98,7 +99,7 @@ def check_notify(settings, control, in_data=None, pelletdb=None, grill_platform=
 						control['notify_data'][index]['target'] = 0 
 						control['notify_data'][index]['eta'] = None 
 					if item['type'] in ['probe_limit_high', 'probe_limit_low'] and not item['triggered']:
-						send_notifications("Probe_Temp_Limit_Alarm", label=item['label'], target=item['target'])
+						send_notifications("Probe_Temp_Limit_Alarm", label=item['label'], target=item['target'], limit_type=item['type'])
 						control['notify_data'][index]['triggered'] = True
 				elif item['type'] in ['probe_limit_high', 'probe_limit_low'] and item['triggered']:
 					# If the temperature goes back into the right range, reset the 'triggered' flag
@@ -149,7 +150,7 @@ def check_notify(settings, control, in_data=None, pelletdb=None, grill_platform=
 
 	return control
 
-def send_notifications(notify_event, label='Probe', target=0, error_grill_temp=0):
+def send_notifications(notify_event, label='Probe', target=0, error_grill_temp=0, limit_type=None):
 	"""
 	Build and send notification based on notify_event and write to log.
 
@@ -157,6 +158,7 @@ def send_notifications(notify_event, label='Probe', target=0, error_grill_temp=0
 	:param label: Label
 	:param target: Target Value
 	:param error_grill_temp: Measured grill temperature for safety error notifications
+	:param limit_type: 'probe_limit_high' or 'probe_limit_low' for Probe_Temp_Limit_Alarm
 	"""
 	settings = read_settings()
 	control = read_control()
@@ -282,6 +284,13 @@ def send_notifications(notify_event, label='Probe', target=0, error_grill_temp=0
 		_send_mqtt_notification(control, settings, notify_event=title_message)
 	if settings['notify_services']['wled']['device_address'] != '' and settings['notify_services']['wled']['enabled']:
 		_send_wled_notification(notify_event, control, settings)
+	if settings['notify_services']['mobile_push']['enabled']:
+		# Mobile app (API v2): one alert for any open app (live stream) and for phones registered for app push
+		mobile_alert = build_mobile_alert(notify_event, settings, control, label=label, target=target,
+			error_grill_temp=error_grill_temp, limit_type=limit_type, title=title_message, body=body_message)
+		if mobile_alert is not None:
+			publish_mobile_alert(mobile_alert)
+			send_mobile_push(mobile_alert)
 
 def _send_apprise_notifications(settings, title_message, body_message):
 	"""

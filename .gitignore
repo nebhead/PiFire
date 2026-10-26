@@ -109,3 +109,4 @@ test_*.py
 debug_*.py
 debug_*.html
 *_test.py
+push_devices.json

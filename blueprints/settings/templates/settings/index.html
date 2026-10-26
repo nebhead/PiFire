@@ -1607,10 +1607,79 @@
                                 </div><!-- End of card body -->
                             </div><!-- End of Card -->
                             <br>
+                            <!-- PiFire App Push (mobile API v2) -->
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h5>PiFire App Push</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input"
+                                               id="mobile_push_enabled"
+                                               name="mobile_push_enabled" {% if settings['notify_services']['mobile_push']['enabled'] %}checked{% endif %}>
+                                        <label class="custom-control-label" for="mobile_push_enabled">App Push Enabled</label>
+                                    </div>
+                                    <br>
+                                    {% for device in mobile_devices %}
+                                    <div class="card shadow">
+                                        <div class="card-header bg-light text-white">
+                                            <h5>
+                                                <a href="#mobile_device{{ device['id'] }}" data-toggle="collapse">
+                                                    <i class="far fa-caret-square-down"></i>&nbsp; {{ device['device_name'] or 'Unnamed device' }}
+                                                </a>
+                                            </h5>
+                                        </div>
+                                        <div id="mobile_device{{ device['id'] }}" class="collapse">
+                                            <div class="card-body">
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text"><i class="fas fa-info-circle"></i>&nbsp; App Version</span>
+                                                    </div>
+                                                    <input type="text" class="form-control" value="{{ device['app_version'] }}" readonly style="min-width: 11ch;">
+                                                </div>
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text"><i class="far fa-calendar-alt"></i>&nbsp; Registered</span>
+                                                    </div>
+                                                    <input type="text" class="form-control" value="{{ device['registered_text'] }}" readonly style="min-width: 11ch;">
+                                                </div>
+                                            </div>
+                                            <div class="card-footer bg-light">
+                                                <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#DeleteMobileDeviceModal{{ device['id'] }}">Delete</button>
+                                                <div class="modal" id="DeleteMobileDeviceModal{{ device['id'] }}">
+                                                    <div class="modal-dialog">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h4 class="modal-title">Delete Device {{ device['device_name'] or 'Unnamed device' }}</h4>
+                                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                            </div>
+                                                            <div class="modal-body"> This phone stops getting push notifications from this grill until the app registers it again.</div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                                                <button type="submit" class="btn btn-danger" name="delete_mobile_device" value="{{ device['id'] }}">Delete</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <br>
+                                    {% else %}
+                                    <i class="small">No phones registered yet. Open the PiFire app on your phone and connect to this grill to register it.</i>
+                                    <br><br>
+                                    {% endfor %}
+                                    <span class="badge badge-warning">NOTE:</span>
+                                    <i class="small"> You can download the Android application from <a href="https://github.com/weberbox/PiFire-Android" target="blank">Github</a> </i>
+                                    <br>
+                                </div><!-- End of card body -->
+                            </div><!-- End of Card -->
+                            <br>
+                            {% if settings['notify_services']['onesignal']['devices'] %}
                             <!-- Android Push Notifications -->
                             <div class="card shadow-sm">
                                 <div class="card-header">
-                                    <h5>Push Notifications</h5>
+                                    <h5>OneSignal Push (Older App Versions)</h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="custom-control custom-switch">
@@ -1702,11 +1771,15 @@
                                     <br>
                                     {% endfor %}
                                     <span class="badge badge-warning">NOTE:</span>
-                                    <i class="small"> You can download the Android application from <a href="https://github.com/weberbox/PiFire-Android" target="blank">Github</a> </i>
+                                    <i class="small"> These phones run an older version of the PiFire app. Updating the app moves them to PiFire App Push above.</i>
                                     <br>
                                 </div><!-- End of card body -->
                             </div><!-- End of Card -->
                             <br>
+                            {% elif settings['notify_services']['onesignal']['enabled'] %}
+                            <!-- Section hidden while no phone uses OneSignal: keep its switch as it is on save. -->
+                            <input type="hidden" name="onesignal_enabled" value="on">
+                            {% endif %}
                             <!-- InfluxDB Notifications -->
                             <div class="card shadow-sm">
                                 <div class="card-header">
