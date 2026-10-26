@@ -1,7 +1,9 @@
 
+import time
 from flask import render_template, request, render_template_string, jsonify
 from common.common import read_settings, read_control, write_settings, write_control, read_generic_json, generate_uuid, convert_settings_units
 from common.app import is_not_blank, is_checked
+from notify.mobile_push import list_devices as list_mobile_devices, remove_device as remove_mobile_device
 
 from . import settings_bp
 
@@ -168,6 +170,14 @@ def settings_page(action=None):
             settings['notify_services']['mqtt']['homeassistant_autodiscovery_topic'] = response['mqtt_auto_d']
         if 'mqtt_freq' in response:
             settings['notify_services']['mqtt']['update_sec'] = response['mqtt_freq']
+
+        if is_checked(response, 'mobile_push_enabled'):
+            settings['notify_services']['mobile_push']['enabled'] = True
+        else:
+            settings['notify_services']['mobile_push']['enabled'] = False
+
+        if 'delete_mobile_device' in response:
+            remove_mobile_device(response['delete_mobile_device'])
 
         if 'delete_device' in response:
             DeviceID = response['delete_device']
@@ -626,10 +636,15 @@ def settings_page(action=None):
         write_settings(settings)
         return(jsonify({'result' : 'success'}))
 
+    mobile_devices = list_mobile_devices()
+    for device in mobile_devices:
+        device['registered_text'] = time.strftime('%Y-%m-%d %H:%M', time.localtime(device.get('registered') or 0))
+
     return render_template(
                             'settings/index.html',
                             alert=event,
                             settings=settings,
+                            mobile_devices=mobile_devices,
                             control=control,
                             controller_metadata=controller['metadata'],
                             page_theme=settings['globals'].get('page_theme', 'light'),

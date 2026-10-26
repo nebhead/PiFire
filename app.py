@@ -117,6 +117,10 @@ from blueprints.mobile import mobile_bp, socket_io
 mobile_bp.socketio = socketio
 app.register_blueprint(mobile_bp, url_prefix='/mobile')
 
+# Mobile app API v2 (HTTP + SSE), alongside Socket.IO until older apps are gone
+from blueprints.mobile.v2 import mobile_v2_bp
+app.register_blueprint(mobile_v2_bp, url_prefix='/mobile/v2')
+
 '''
 ==============================================================================
  Main Program Start

@@ -538,6 +538,11 @@ def default_notify_services():
 		'devices' : {}
 	}
 
+	# PiFire app push (mobile API v2). Devices and their keys live in push_devices.json, not here.
+	services['mobile_push'] = {
+		'enabled': True
+	}
+
 	services['influxdb'] = {
 		'enabled': False,
 		'url': '',
