@@ -28,6 +28,16 @@ from probes.temp_queue import TempQueue
 '''
 
 class ProbeInterface:
+	def __init_subclass__(cls, *, uses_temp_queue=None, **kwargs):
+		super().__init_subclass__(**kwargs)
+		if uses_temp_queue is None:
+			raise TypeError(
+				'ProbeInterface subclasses must declare '
+				'uses_temp_queue=True or uses_temp_queue=False'
+			)
+		if not isinstance(uses_temp_queue, bool):
+			raise TypeError('uses_temp_queue must be True or False')
+		cls.uses_temp_queue = uses_temp_queue
 
 	def __init__(self, probe_info, device_info, units):
 		self.units = units 
@@ -93,8 +103,9 @@ class ProbeInterface:
 	def _build_ports(self):
 		''' Build ports objects. '''
 		self.port_queues = {}
-		for port in self.port_map:
-			self.port_queues[port] = TempQueue(qlength=10, units=self.units)
+		if self.uses_temp_queue:
+			for port in self.port_map:
+				self.port_queues[port] = TempQueue(qlength=10, units=self.units)
 
 	def _temp_to_resistance(self, temp, probe_profile):
 		'''
@@ -204,15 +215,9 @@ class ProbeInterface:
 			''' Convert Voltage to Temperature and Tr '''
 			port_values[port], self.output_data['tr'][self.port_map[port]] = self._voltage_to_temp(port_values[port], self.probe_profiles[port], port=port)
 
-			''' Enqueue the Temperature Readings to Port Queues '''
-			if port_values[port] == None:
-				''' If the read value is None, pass that to the output instead of adding to the queue '''
-				output_value = None
-			else:
-				self.port_queues[port].enqueue(port_values[port])
-				output_value = self.port_queues[port].average() 
+			output_value = port_values[port]
 
-			''' Get average temperature from the queue and store it in the output data structure'''
+			''' Store converted temperature in the output data structure '''
 			if port == self.primary_port:
 				self.output_data['primary'][self.port_map[port]] = output_value
 			elif port in self.food_ports:
@@ -225,8 +230,35 @@ class ProbeInterface:
 		
 		return self.output_data
 
+	def apply_temp_queue(self, output_data):
+		'''Apply this device's probe values to its per-port TempQueue.'''
+		if not self.uses_temp_queue:
+			return output_data
+
+		for port, label in self.port_map.items():
+			if port == self.primary_port:
+				group = 'primary'
+			elif port in self.food_ports:
+				group = 'food'
+			elif port in self.aux_ports:
+				group = 'aux'
+			else:
+				continue
+
+			if label not in output_data[group]:
+				continue
+
+			value = output_data[group][label]
+			if value is None:
+				continue
+
+			output_data[group][label] = self.port_queues[port].enqueue(value)
+
+		return output_data
+
 	def update_units(self, units):
 		self.units = 'C' if units == 'C' else 'F'
+		self._build_ports()
 		self._init_device()
 
 	def set_profiles(self, probe_info):
