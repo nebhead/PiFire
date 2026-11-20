@@ -416,7 +416,7 @@ class ThermoMavenDevice:
 		}
 
 
-class ReadProbes(ProbeInterface):
+class ReadProbes(ProbeInterface, uses_temp_queue=True):
 	def __init__(self, probe_info, device_info, units):
 		super().__init__(probe_info, device_info, units)
 
@@ -436,17 +436,12 @@ class ReadProbes(ProbeInterface):
 			value = self._convert(values.get(port))
 			label = self.port_map[port]
 			self.output_data['tr'][label] = 0
-			if value is not None:
-				self.port_queues[port].enqueue(value)
-				output_value = self.port_queues[port].average()
-			else:
-				output_value = None
 			if port == self.primary_port:
-				self.output_data['primary'][label] = output_value
+				self.output_data['primary'][label] = value
 			elif port in self.food_ports:
-				self.output_data['food'][label] = output_value
+				self.output_data['food'][label] = value
 			elif port in self.aux_ports:
-				self.output_data['aux'][label] = output_value
+				self.output_data['aux'][label] = value
 		return self.output_data
 
 	def update_units(self, units):
