@@ -1638,6 +1638,84 @@
 					]
 				}			
 			},
+			"cloud_thermomaven" : {
+				"friendly_name" : "Cloud - ThermoMaven (G1 / G2 / G4 / P-Series)",
+				"filename" : "cloud_thermomaven",
+				"description" : "This device module supports ThermoMaven WiFi thermometers (G1, G2, G4, P1, P2, P4) through the ThermoMaven cloud, the same way the official app does.  The base station must be on WiFi and paired to your ThermoMaven account, and PiFire needs internet access; readings are reported as unavailable while offline.  Each probe exposes a MEAT (tip) port and an AMBIENT port, plus five AREA zone ports (tip to handle).  The AMBIENT port can be used as the Primary (grill) probe.  This module is experimental: it uses the unofficial API of the ThermoMaven app (protocol from github.com/djiesr/thermomaven-ha), so if ThermoMaven changes their service this device will show as disconnected.  Feedback is welcome.",
+				"default" : false,
+				"image" : "cloud_thermomaven.png",
+				"reboot_required" : false,
+				"py_dependencies" : ["paho-mqtt==2.1.0", "cryptography==50.0.1"], 
+				"apt_dependencies" : [],
+				"command_list" : [],
+				"settings_dependencies" : {
+					"units" : {
+						"friendly_name" : "Temp Units",
+						"description" : "Select the temperature units to use for PiFire globally.  (This can be modified in settings later)",
+						"options" : {"F" : "Fahrenheit", "C": "Celsius"},
+						"settings" : ["globals", "units"]
+					}
+				},
+				"device_specific" : {
+					"ports" : ["P1_MEAT", "P1_AMBIENT", "P1_AREA1", "P1_AREA2", "P1_AREA3", "P1_AREA4", "P1_AREA5"],
+					"type" : "cloud",
+					"config" : [
+						{
+							"label" : "email", 
+							"friendly_name" : "ThermoMaven Account Email",
+							"description" : "The email address used to sign in to the ThermoMaven app.",
+							"type" : "string", 
+							"default" : "",
+							"hidden" : false
+						},
+						{
+							"label" : "password", 
+							"friendly_name" : "ThermoMaven Account Password",
+							"description" : "The password for the ThermoMaven app account.  It is stored in settings.json on this device only.",
+							"type" : "password", 
+							"default" : "",
+							"hidden" : false
+						},
+						{
+							"label" : "region", 
+							"friendly_name" : "Region / Country Code",
+							"description" : "Two-letter country code selected in the ThermoMaven app (e.g. US, CA, UK, DE).  European codes use the EU servers.",
+							"type" : "string", 
+							"default" : "US",
+							"hidden" : false
+						},
+						{
+							"label" : "device_id", 
+							"friendly_name" : "Device ID (optional)",
+							"description" : "Leave empty to use the first thermometer on the account.  Set to a specific device ID when the account has more than one thermometer.",
+							"type" : "string", 
+							"default" : "",
+							"hidden" : false
+						},
+						{
+							"label" : "num_probes", 
+							"friendly_name" : "Number of Probes",
+							"description" : "1 for G1/P1, 2 for G2/P2, 4 for G4/P4.  Ports are named P1_ to P4_.",
+							"type" : "int", 
+							"min" : 1,
+							"max" : 4,
+							"step" : 1,
+							"default" : 1,
+							"hidden" : false
+						},
+						{
+							"label" : "transient", 
+							"friendly_name" : "Transient",
+							"description" : "Select whether this device is fixed/always attached (default) or if it is transient/sometimes detached.",
+							"type" : "list", 
+							"list_values" : ["True", "False"],
+							"list_labels" : ["Transient (sometimes detached)", "Fixed (always attached)"],
+							"default" : "True",
+							"hidden" : true
+						}
+					]
+				}
+			},
 			"prototype" : {
 				"friendly_name" : "Prototype",
 				"filename" : "prototype",
